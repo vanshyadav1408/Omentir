@@ -1,4 +1,3 @@
-import { isLocalMode } from "./runtime-mode.ts";
 
 export const LOCAL_SESSION_COOKIE = "omentir_local_session";
 export const LOCAL_USER_ID = "local";
@@ -62,10 +61,6 @@ export function localCookieOptions(env: NodeJS.ProcessEnv = process.env) {
     path: "/",
     maxAge: SESSION_SECONDS,
   };
-}
-
-export function assertLocalMode() {
-  if (!isLocalMode()) throw new Error("Local authentication is disabled.");
 }
 
 export function passwordsMatch(supplied: string, expected: string) {

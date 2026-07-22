@@ -3,6 +3,7 @@ import { isLocalMode } from "@/lib/runtime-mode";
 import { NextResponse, type NextRequest } from "next/server";
 import { logAutomationRun, updateWorkspaceBilling } from "@/lib/server/data";
 import { syncMailingListPlan } from "@/lib/server/mailing-list";
+import { readTextBody, RequestBodyTooLargeError } from "@/lib/server/request-body";
 import {
   getConfiguredWhopPlanIds,
   getWhopClient,
@@ -158,22 +159,24 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     const message = error instanceof Error ? error.message : "Whop client init failed.";
     console.error("[whop webhook] client init failed:", message);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: "Webhook service is unavailable." }, { status: 500 });
   }
 
   let event;
   try {
-    const body = await request.text();
+    const body = await readTextBody(request, 256 * 1024);
     const headers = Object.fromEntries(request.headers);
     event = whop.webhooks.unwrap(body, { headers });
   } catch (error) {
-    // Surface the real reason (bad key, encoding, stale timestamp, ...) so the
-    // failure is visible in the Whop delivery log and server logs
-    // instead of a generic "invalid signature".
+    if (error instanceof RequestBodyTooLargeError) {
+      return NextResponse.json({ error: error.message }, { status: 413 });
+    }
+    // Keep verification detail in server logs without returning provider or
+    // configuration information to an unauthenticated caller.
     const message = error instanceof Error ? error.message : "Webhook verification failed.";
     console.error("[whop webhook] verification failed:", message);
     return NextResponse.json(
-      { error: `Whop webhook verification failed: ${message}` },
+      { error: "Whop webhook verification failed." },
       { status: 401 },
     );
   }

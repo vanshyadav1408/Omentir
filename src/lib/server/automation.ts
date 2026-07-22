@@ -93,6 +93,7 @@ import {
   isFirstDegreeConnection,
   listRecentInboundMessages,
   listSentInvitationProviderIds,
+  profileSearchKeys,
   searchLinkedInProfiles,
   sendConnectionRequest,
   sendLinkedInMessage,
@@ -312,6 +313,22 @@ async function runAgents(mode: AutomationSafetyMode) {
 
       const criteria = await normalizeAgentSearch(agent, profile);
       const targetLocations = agentTargetLocations(agent, profile);
+
+      // Daily searches largely return the same people. Known leads must not be
+      // re-scored (burns an AI call each and churns their stored fitScore) and
+      // must not count as newly discovered. Mirrors the signal engine's
+      // existing-lead handling. Loaded before the search so leads already in
+      // this agent's group can be paged past entirely - otherwise a mature
+      // agent re-reads the same first page every day and discovers nobody new.
+      // Leads in OTHER groups still surface so they get adopted into this one.
+      const existingLeads = await listLeads(agent.workspaceId, undefined, 5000);
+      const existingLeadsById = new Map(existingLeads.map((lead) => [lead.id, lead]));
+      const groupLeadKeys = new Set(
+        existingLeads
+          .filter((lead) => lead.groupIds?.includes(agent.targetGroupId))
+          .flatMap((lead) => profileSearchKeys(lead)),
+      );
+
       const rawLeads = await searchLinkedInProfiles({
         accountId: account.accountId,
         // The agent's own target locations are the contract with the user;
@@ -322,14 +339,8 @@ async function runAgents(mode: AutomationSafetyMode) {
           planLimits(workspace.billing?.plan).dailyDiscoveredLeads,
         ),
         agent,
+        excludeKeys: groupLeadKeys,
       });
-
-      // Daily searches largely return the same people. Known leads must not be
-      // re-scored (burns an AI call each and churns their stored fitScore) and
-      // must not count as newly discovered. Mirrors the signal engine's
-      // existing-lead handling.
-      const existingLeads = await listLeads(agent.workspaceId, undefined, 5000);
-      const existingLeadsById = new Map(existingLeads.map((lead) => [lead.id, lead]));
 
       for (const rawLead of rawLeads) {
         // Hard location gate. LinkedIn classic search ignores the agent's

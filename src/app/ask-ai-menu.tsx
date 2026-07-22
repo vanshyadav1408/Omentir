@@ -1,5 +1,3 @@
-import { RepliesIllustration } from "./landing-illustrations";
-import Reveal from "./scroll-reveal";
 
 const ASK_AI_QUESTION =
   "Can you explain how Omentir works, who it is best for, and whether it could help my business generate more sales conversations?";
@@ -113,46 +111,6 @@ export function AskAiIcon({
         fill={bot.gradient ? `url(#${gradientId})` : bot.iconColor ?? "currentColor"}
       />
     </svg>
-  );
-}
-
-/**
- * Landing-page "ask your favorite AI about Omentir" card. Same 8 links as the
- * header dropdown, rendered as pill buttons inside a bordered surface card.
- */
-export function AskAiSection() {
-  return (
-    <section id="ask-ai" className="mx-auto max-w-7xl min-w-0 px-4 py-12 md:px-8 md:py-24">
-      <Reveal className="min-w-0 rounded-2xl border-2 border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface-container)] px-4 py-8 md:px-12 md:py-12">
-        <div className="flex h-20 items-center justify-center md:h-24">
-          <RepliesIllustration />
-        </div>
-        <h2 className="mt-4 text-center text-[1.75rem] font-semibold leading-tight tracking-tight text-[var(--md-sys-color-on-surface)] md:text-4xl">
-          Still deciding on <span className="text-gradient-brand">Omentir</span>?
-        </h2>
-        <p className="mx-auto mt-2 max-w-2xl text-center text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)] md:mt-4 md:text-base md:leading-8">
-          Ask the AI you already trust what it thinks.
-        </p>
-        <div className="mx-auto mt-6 grid max-w-3xl grid-cols-2 gap-2 md:mt-8 md:max-w-4xl md:grid-cols-4 md:gap-3">
-          {ASK_AI_LINKS.map((bot) => (
-            <a
-              key={bot.name}
-              href={bot.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`Ask ${bot.name} about Omentir`}
-              className="m3-btn m3-btn-outlined h-12 w-full gap-1.5 rounded-full bg-[var(--md-sys-color-surface)] px-3 text-sm font-medium md:h-14 md:text-base"
-            >
-              Ask
-              <span className="flex items-center gap-1">
-                <AskAiIcon bot={bot} size={20} gradientId="askai-gemini-landing" />
-                {bot.name}
-              </span>
-            </a>
-          ))}
-        </div>
-      </Reveal>
-    </section>
   );
 }
 

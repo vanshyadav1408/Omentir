@@ -42,13 +42,13 @@ function initials(name: string) {
     .join("");
 }
 
-function FlameScore({ score }: { score: number }) {
-  const filled = score >= 80 ? 3 : score >= 60 ? 2 : score >= 30 ? 1 : 0;
+function FitScore({ score }: { score: number }) {
   return (
-    <span className="inline-flex items-center gap-0.5 text-base leading-none" aria-label={`Fit score ${score}`}>
-      {[1, 2, 3].map((flame) => (
-        <span key={flame} className={filled >= flame ? "" : "grayscale opacity-30"}>🔥</span>
-      ))}
+    <span
+      className="text-lg font-semibold leading-none tabular-nums text-[var(--md-sys-color-on-surface)]"
+      aria-label={`Fit score ${score}`}
+    >
+      {score}
     </span>
   );
 }
@@ -184,9 +184,9 @@ export default function StepLeadPreview({
                   </div>
 
                   <div className="shrink-0 text-right">
-                    <FlameScore score={lead.fitScore || 0} />
+                    <FitScore score={lead.fitScore || 0} />
                     <p className="mt-1 text-[11px] font-medium text-[var(--md-sys-color-on-surface-variant)]">
-                      {lead.fitScore || 0}% fit
+                      fit score
                     </p>
                   </div>
                 </div>

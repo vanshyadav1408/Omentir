@@ -21,7 +21,7 @@ Create a token in Omentir under Settings > AI Agents and send it on every REST r
 Authorization: Bearer <omentir_agent_token>
 \`\`\`
 
-MCP clients that cannot set headers may use \`/api/agent/v1/mcp?key=<omentir_agent_token>\`. The query-string fallback is MCP-only. Treat the token and connector URL as secrets.
+Tokens are never accepted in URLs. Use a client that supports MCP authorization headers and keep the token in its secret store.
 
 ## Recommended Workflow
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createLocalSession, localCookieOptions, LOCAL_SESSION_COOKIE, passwordsMatch } from "@/lib/local-session";
 import { isLocalMode, isLocalPasswordRequired } from "@/lib/runtime-mode";
 import { getAppBaseUrl } from "@/lib/server/runtime-config";
+import { readJsonBody, RequestBodyTooLargeError } from "@/lib/server/request-body";
 
 const attempts = new Map<string, { count: number; blockedUntil: number }>();
 
@@ -10,7 +11,15 @@ export async function POST(request: NextRequest) {
   if (request.headers.get("origin") !== getAppBaseUrl()) {
     return NextResponse.json({ error: "Invalid request origin." }, { status: 403 });
   }
-  const body = (await request.json().catch(() => null)) as { password?: string } | null;
+  let body: { password?: string } | null;
+  try {
+    body = await readJsonBody<{ password?: string }>(request, 8 * 1024);
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) {
+      return NextResponse.json({ error: error.message }, { status: 413 });
+    }
+    throw error;
+  }
   const key = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
   if (isLocalPasswordRequired()) {
     const state = attempts.get(key);

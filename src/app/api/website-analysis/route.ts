@@ -8,6 +8,8 @@ import {
   upsertProductProfile,
 } from "@/lib/server/data";
 import { analyzeWebsiteOrSearch } from "@/lib/server/gemini";
+import { rateLimitRequest } from "@/lib/request-rate-limit";
+import { readJsonBody, RequestBodyTooLargeError } from "@/lib/server/request-body";
 
 export const dynamic = "force-dynamic";
 
@@ -24,8 +26,23 @@ async function getSignedInWorkspaceId(userId: string) {
 
 export async function POST(request: NextRequest) {
   const { userId } = await auth();
-  const body = (await request.json().catch(() => ({}))) as { websiteUrl?: string };
-  const websiteUrl = body.websiteUrl?.trim();
+  if (!rateLimitRequest(request, "website-analysis", {
+    perSource: userId ? 30 : 10,
+    global: 200,
+    windowMs: 60 * 60 * 1000,
+  })) {
+    return NextResponse.json({ error: "Too many website analysis requests." }, { status: 429 });
+  }
+  let body: { websiteUrl?: string } | null;
+  try {
+    body = await readJsonBody<{ websiteUrl?: string }>(request, 8 * 1024);
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) {
+      return NextResponse.json({ error: error.message }, { status: 413 });
+    }
+    throw error;
+  }
+  const websiteUrl = body?.websiteUrl?.trim();
 
   if (!websiteUrl) {
     return NextResponse.json({ error: "Website URL is required." }, { status: 400 });
@@ -79,6 +96,9 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     const message = error instanceof Error ? error.message : "Website analysis failed.";
 
-    return NextResponse.json({ error: message }, { status: 422 });
+    return NextResponse.json(
+      { error: userId ? message : "Website analysis failed." },
+      { status: 422 },
+    );
   }
 }

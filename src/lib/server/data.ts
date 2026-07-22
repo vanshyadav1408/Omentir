@@ -219,6 +219,38 @@ export async function getWorkspace(userId: string) {
   return ensureWorkspace(userId);
 }
 
+export async function createLinkedInConnectToken(workspaceId: string) {
+  await ensureWorkspace(workspaceId);
+  const token = randomBytes(32).toString("base64url");
+  const createdAt = nowIso();
+  const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
+  await collection<{
+    workspaceId: string;
+    createdAt: string;
+    expiresAt: string;
+    consumedAt?: string;
+  }>("linkedInConnectTokens").doc(hashId(token)).set({ workspaceId, createdAt, expiresAt });
+  return token;
+}
+
+export async function consumeLinkedInConnectToken(token: string) {
+  if (!token) return null;
+  const ref = collection<{
+    workspaceId: string;
+    createdAt: string;
+    expiresAt: string;
+    consumedAt?: string;
+  }>("linkedInConnectTokens").doc(hashId(token));
+
+  return getDb().runTransaction(async (transaction) => {
+    const snap = await transaction.get(ref);
+    const value = snap.data();
+    if (!value || value.consumedAt || Date.parse(value.expiresAt) <= Date.now()) return null;
+    transaction.update(ref, { consumedAt: nowIso() });
+    return value.workspaceId;
+  });
+}
+
 // Raw scan for tick-level features that visit every workspace (e.g. daily
 // digests). Docs are returned as stored - callers needing default-filled
 // settings should go through getWorkspace for that workspace instead.
@@ -488,7 +520,8 @@ export async function saveLinkedInAccount(
   const limit = linkedInAccountLimit(workspace.billing?.plan);
   const timestamp = nowIso();
   const id = `${workspaceId}-${cleanId(input.accountId) || "linkedin"}`;
-  const existing = await collection<LinkedInAccount>("linkedinAccounts").doc(id).get();
+  const accountRef = collection<LinkedInAccount>("linkedinAccounts").doc(id);
+  const existing = await accountRef.get();
   const existingAccount = existing.exists ? (existing.data() as LinkedInAccount) : null;
   if (!existingAccount && input.status === "connected") {
     const connectedAccounts = await listLinkedInAccounts(workspaceId);
@@ -508,7 +541,22 @@ export async function saveLinkedInAccount(
     updatedAt: timestamp,
   };
 
-  await collection<LinkedInAccount>("linkedinAccounts").doc(id).set(account, { merge: true });
+  const ownerRef = collection<{ accountId: string; workspaceId: string; createdAt: string }>(
+    "linkedInAccountOwners",
+  ).doc(hashId(input.accountId));
+  await getDb().runTransaction(async (transaction) => {
+    const ownerSnap = await transaction.get(ownerRef);
+    const owner = ownerSnap.data();
+    if (owner && (owner.accountId !== input.accountId || owner.workspaceId !== workspaceId)) {
+      throw new Error("This LinkedIn account is already connected to another workspace.");
+    }
+    transaction.set(
+      ownerRef,
+      { accountId: input.accountId, workspaceId, createdAt: owner?.createdAt || timestamp },
+      { merge: true },
+    );
+    transaction.set(accountRef, account, { merge: true });
+  });
   return account;
 }
 
@@ -551,7 +599,7 @@ export async function getDueAgents(limit = 25) {
     .get();
   return snap.docs
     .map((doc) => doc.data())
-    .filter((agent) => isAgentDueForRun(agent))
+    .filter((agent) => agent.mode !== "outreach" && isAgentDueForRun(agent))
     .sort((a, b) => a.nextRunAt.localeCompare(b.nextRunAt))
     .slice(0, limit);
 }
@@ -560,6 +608,7 @@ export async function getDueAgents(limit = 25) {
 // point (UI, agent API, MCP) funnels through createAgent/updateAgent, so this
 // is the single gate. Partial setups produce network-biased, off-ICP leads.
 function assertAgentSetupComplete(input: CreateAgentInput) {
+  if (input.mode === "outreach") return;
   const missing: string[] = [];
   if (!input.prompt?.trim()) missing.push("prospect definition (prompt)");
   if (!input.filters?.titles?.some((value) => value.trim())) missing.push("job titles");

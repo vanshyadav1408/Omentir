@@ -109,7 +109,7 @@ export type Agent = {
   workspaceId: string;
   name: string;
   linkedInAccountId?: string;
-  mode: "prompt" | "filters" | "signals";
+  mode: "prompt" | "filters" | "signals" | "outreach";
   prompt: string;
   filters: {
     titles: string[];

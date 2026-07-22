@@ -22,14 +22,7 @@ export async function requireAgentApiContext(request: NextRequest): Promise<
 > {
   const authorization = request.headers.get("authorization") || "";
   const match = authorization.match(/^Bearer\s+(.+)$/i);
-  // Fallback only for the MCP connector endpoint, because some MCP clients
-  // cannot set custom headers. REST endpoints stay bearer-only so credentials
-  // do not leak through URLs, access logs, referrers, or copied links.
-  const queryToken =
-    request.nextUrl.pathname === "/api/agent/v1/mcp"
-      ? request.nextUrl.searchParams.get("key")
-      : null;
-  const token = match?.[1] || queryToken || "";
+  const token = match?.[1] || "";
   if (!token) {
     return { ok: false, response: agentApiError("Bearer token required.", 401) };
   }

@@ -64,34 +64,6 @@ function useThemeCycle() {
   return { cycle, icon, label, preference, resolved };
 }
 
-/**
- * Compact icon cycle for the sidebar footer (light → dark → system).
- * ThemeProvider SSR/first paint is always preference "dark" / resolved "dark",
- * so icon + label match on server and client without a hydrated gate. Never
- * omit the label span based on mount state — that creates a DOM structure
- * mismatch (the exact hydration error seen in the mobile drawer footer).
- */
-export function ThemeCycleButton({ collapsed = false }: { collapsed?: boolean }) {
-  const { cycle, icon, label } = useThemeCycle();
-
-  return (
-    <button
-      type="button"
-      onClick={cycle}
-      title={label}
-      aria-label={`Theme: ${label}. Click to change.`}
-      className={`flex min-h-12 w-full cursor-pointer items-center rounded-full py-2 text-sm font-medium text-[var(--md-sys-color-on-surface-variant)] transition hover:bg-[var(--md-sys-state-hover)] hover:text-[var(--md-sys-color-on-surface)] ${
-        collapsed ? "justify-center gap-0 px-2" : "gap-3 px-3"
-      }`}
-    >
-      <span className="material-symbols-outlined leading-none" aria-hidden="true">
-        {icon}
-      </span>
-      {!collapsed ? <span className="translate-y-[1px]">{label}</span> : null}
-    </button>
-  );
-}
-
 /** 48×48 icon button for marketing header (same light → dark → system cycle). */
 export function MarketingThemeButton() {
   const { cycle, icon, label } = useThemeCycle();

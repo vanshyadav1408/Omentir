@@ -13,6 +13,8 @@ const hostedIdentity = readFileSync(
   new URL("../src/lib/hosted-identity.ts", import.meta.url),
   "utf8",
 );
+const firebaseConfig = readFileSync(new URL("../firebase.json", import.meta.url), "utf8");
+const firestoreRules = readFileSync(new URL("../firestore.rules", import.meta.url), "utf8");
 
 test("the public environment template cannot start with known credentials", () => {
   for (const name of [
@@ -32,6 +34,12 @@ test("the public environment template cannot start with known credentials", () =
 
 test("the public application repository contains no production deployment workflow", () => {
   assert.equal(existsSync(publicDeployWorkflow), false);
+});
+
+test("direct Firestore clients are denied because all application data uses the Admin SDK", () => {
+  assert.match(firebaseConfig, /"rules": "firestore\.rules"/);
+  assert.match(firestoreRules, /allow read, write: if false;/);
+  assert.doesNotMatch(firestoreRules, /if true|request\.auth/);
 });
 
 test("hosted provider identifiers are supplied by deployment config, not source", () => {

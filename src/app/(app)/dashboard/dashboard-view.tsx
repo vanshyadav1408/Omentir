@@ -82,12 +82,13 @@ function Initials({ name }: { name: string }) {
   );
 }
 
-function FlameRow() {
+function FitScore({ score }: { score: number }) {
   return (
-    <span className="flex shrink-0 items-center gap-0.5 text-base leading-none">
-      <span>🔥</span>
-      <span>🔥</span>
-      <span>🔥</span>
+    <span
+      className="shrink-0 text-sm font-semibold leading-none tabular-nums text-[var(--md-sys-color-on-surface)]"
+      aria-label={`Fit score ${score}`}
+    >
+      {score}
     </span>
   );
 }
@@ -514,7 +515,7 @@ export default function DashboardView({
                         ) : null}
                       </p>
                     </div>
-                    <FlameRow />
+                    <FitScore score={lead.fitScore || 0} />
                   </li>
                 ))
               )}

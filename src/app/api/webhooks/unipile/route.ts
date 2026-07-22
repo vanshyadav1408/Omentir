@@ -14,6 +14,7 @@ import {
 } from "@/lib/server/inbound";
 import { passwordsMatch } from "@/lib/local-session";
 import { rateLimit } from "@/lib/request-rate-limit";
+import { readJsonBody, RequestBodyTooLargeError } from "@/lib/server/request-body";
 
 export const dynamic = "force-dynamic";
 
@@ -73,15 +74,23 @@ type UnipileWebhook = {
 };
 
 export async function POST(request: NextRequest) {
-  const source = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-  if (!rateLimit(`unipile-webhook:${source}`, 600, 60_000)) {
-    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
-  }
   if (!isAuthorized(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  if (!rateLimit("unipile-webhook:authorized", 600, 60_000)) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  }
 
-  const payload = (await request.json()) as UnipileWebhook;
+  let payload: UnipileWebhook | null;
+  try {
+    payload = await readJsonBody<UnipileWebhook>(request, 128 * 1024);
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) {
+      return NextResponse.json({ error: error.message }, { status: 413 });
+    }
+    throw error;
+  }
+  if (!payload) return NextResponse.json({ error: "Invalid payload." }, { status: 400 });
   const eventName = payload.event || payload.type || "";
   const normalizedEventName = eventName.toLowerCase();
   const isReply =
@@ -106,7 +115,10 @@ export async function POST(request: NextRequest) {
   const account = payload.account_id
     ? await getLinkedInAccountByAccountId(payload.account_id)
     : null;
-  const workspaceId = payload.workspace_id || account?.workspaceId;
+  if (account && payload.workspace_id && payload.workspace_id !== account.workspaceId) {
+    return NextResponse.json({ error: "Webhook workspace does not match its account." }, { status: 400 });
+  }
+  const workspaceId = account?.workspaceId || payload.workspace_id;
   if (!workspaceId) {
     return NextResponse.json(
       { error: "workspace_id or known account_id is required in webhook payload." },

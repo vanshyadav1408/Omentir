@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { saveLinkedInAccount } from "@/lib/server/data";
-import { passwordsMatch } from "@/lib/local-session";
+import { consumeLinkedInConnectToken, saveLinkedInAccount } from "@/lib/server/data";
+import { listUnipileLinkedInAccounts } from "@/lib/server/unipile";
 import { rateLimit } from "@/lib/request-rate-limit";
+import { readJsonBody, RequestBodyTooLargeError } from "@/lib/server/request-body";
 
 export const dynamic = "force-dynamic";
 
@@ -17,35 +18,40 @@ type UnipileCallback = {
   avatar_url?: string;
 };
 
-function isAuthorized(request: NextRequest) {
-  const secret = process.env.UNIPILE_CONNECT_CALLBACK_SECRET || process.env.UNIPILE_WEBHOOK_SECRET;
-  if (!secret) return false;
-
-  const supplied =
-    request.headers.get("x-omentir-connect-secret") ||
-    request.nextUrl.searchParams.get("secret") ||
-    "";
-  return passwordsMatch(supplied, secret);
-}
-
 export async function POST(request: NextRequest) {
-  const source = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-  if (!rateLimit(`connect-callback:${source}`, 120, 60_000)) {
+  if (!rateLimit("connect-callback:global", 300, 60_000)) {
     return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }
-  if (!isAuthorized(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  let payload: UnipileCallback | null;
+  try {
+    payload = await readJsonBody<UnipileCallback>(request, 32 * 1024);
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) {
+      return NextResponse.json({ error: error.message }, { status: 413 });
+    }
+    throw error;
   }
-
-  const payload = (await request.json()) as UnipileCallback;
-
-  if (payload.status !== "CREATION_SUCCESS" || !payload.account_id || !payload.name) {
+  if (!payload || payload.status !== "CREATION_SUCCESS" || !payload.account_id || !payload.name) {
     return NextResponse.json({ ok: true, ignored: true });
   }
 
-  await saveLinkedInAccount(payload.name, {
+  if (!/^[A-Za-z0-9_-]{40,64}$/.test(payload.name)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const workspaceId = await consumeLinkedInConnectToken(payload.name);
+  if (!workspaceId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const providerAccount = (await listUnipileLinkedInAccounts()).find(
+    (account) => account.id === payload.account_id,
+  );
+  if (!providerAccount) {
+    return NextResponse.json({ error: "Provider account was not found." }, { status: 400 });
+  }
+
+  await saveLinkedInAccount(workspaceId, {
     accountId: payload.account_id,
     displayName:
+      providerAccount.name ||
       payload.account_name ||
       payload.display_name ||
       payload.user_full_name ||

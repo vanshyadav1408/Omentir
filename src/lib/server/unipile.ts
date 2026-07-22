@@ -780,19 +780,30 @@ async function searchLinkedIn<T>(input: {
   url?: string;
   limit: number;
   locationIds?: string[];
+  // Items rejected by `take` are fetched but neither returned nor counted, so
+  // the search pages past them toward `limit` accepted items. This is how a
+  // repeat of yesterday's query digs below the first page instead of returning
+  // the same already-known people again.
+  take?: (item: T) => boolean;
+  // Bounds how deep a mostly-rejected result set can page; never binds for
+  // callers without `take` (their limits fit in the first pages anyway).
+  maxPages?: number;
 }) {
   if (!isUnipileConfigured()) return [];
 
+  const maxPages = input.maxPages ?? 8;
   const items: T[] = [];
   let cursor: string | undefined;
 
   // Unipile reads limit from the query string and pages with a cursor; a
   // single un-paginated request only ever returns the first page.
-  while (items.length < input.limit) {
+  for (let page = 0; page < maxPages && items.length < input.limit; page += 1) {
     const result = await request<UnipileListResponse<T>>(
       withQuery("/api/v1/linkedin/search", {
         account_id: input.accountId,
-        limit: Math.min(input.limit - items.length, 50),
+        // With a take filter most of a page may be rejected, so always request
+        // full pages; without one, only fetch what is still missing.
+        limit: input.take ? 50 : Math.min(input.limit - items.length, 50),
       }),
       {
         method: "POST",
@@ -810,7 +821,7 @@ async function searchLinkedIn<T>(input: {
 
     const pageItems = getListItems<T>(result);
     if (!pageItems.length) break;
-    items.push(...pageItems);
+    items.push(...(input.take ? pageItems.filter(input.take) : pageItems));
 
     const nextCursor = result.cursor || result.paging?.cursor;
     if (!nextCursor) break;
@@ -886,7 +897,7 @@ function linkedInIdentifier(value: string) {
 }
 
 export async function createLinkedInAuthLink(input: {
-  workspaceId: string;
+  callbackToken: string;
   successRedirectUrl: string;
   failureRedirectUrl: string;
   notifyUrl: string;
@@ -901,7 +912,7 @@ export async function createLinkedInAuthLink(input: {
       providers: ["LINKEDIN"],
       api_url: config.baseUrl,
       expiresOn,
-      name: input.workspaceId,
+      name: input.callbackToken,
       success_redirect_url: input.successRedirectUrl,
       failure_redirect_url: input.failureRedirectUrl,
       notify_url: input.notifyUrl,
@@ -1007,6 +1018,19 @@ async function resolveLinkedInLocationIds(accountId: string, locations: string[]
   return Array.from(ids);
 }
 
+// Identity keys for matching a search result against already-saved leads:
+// the lowercase provider id plus the lowercase public identifier from the
+// profile URL, so a match on either field identifies the same person even
+// when the two records carry different URL formats.
+export function profileSearchKeys(
+  profile: Pick<Partial<Lead>, "providerProfileId" | "linkedInUrl">,
+) {
+  const keys: string[] = [];
+  if (profile.providerProfileId) keys.push(profile.providerProfileId.toLowerCase());
+  if (profile.linkedInUrl) keys.push(linkedInIdentifier(profile.linkedInUrl).toLowerCase());
+  return keys;
+}
+
 export async function searchLinkedInProfiles(input: {
   accountId: string;
   criteria: {
@@ -1017,6 +1041,11 @@ export async function searchLinkedInProfiles(input: {
   };
   limit: number;
   agent: Agent;
+  // profileSearchKeys of leads the caller already has. The search skips these
+  // and pages deeper until it accumulates `limit` genuinely new profiles -
+  // without this, a mature agent re-reads the same first page of the same
+  // query every day and discovers nobody.
+  excludeKeys?: Set<string>;
 }) {
   // One search per title/keyword. Joining every criterion into a single
   // keyword string produces an AND query that matches almost nobody.
@@ -1042,6 +1071,12 @@ export async function searchLinkedInProfiles(input: {
 
   const profiles = new Map<string, ReturnType<typeof normalizeUnipileProfile>>();
   const perQueryLimit = Math.max(Math.ceil(input.limit / queries.length), 10);
+  const excluded = input.excludeKeys;
+  const takeFresh =
+    excluded?.size
+      ? (item: UnipileProfile) =>
+          !profileSearchKeys(normalizeUnipileProfile(item)).some((key) => excluded.has(key))
+      : undefined;
 
   for (const keywords of queries) {
     if (profiles.size >= input.limit) break;
@@ -1053,6 +1088,9 @@ export async function searchLinkedInProfiles(input: {
       keywords,
       limit: perQueryLimit,
       locationIds,
+      take: takeFresh,
+      // Up to 250 scanned results per query when known profiles clog the top.
+      maxPages: takeFresh ? 5 : undefined,
     });
 
     for (const item of items) {

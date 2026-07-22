@@ -26,6 +26,7 @@ import {
   listLinkedInPostReactions,
   listLinkedInPostsForProfile,
   normalizeLinkedInActor,
+  profileSearchKeys,
   retrieveLinkedInProfile,
   searchLinkedInPosts,
   searchLinkedInProfiles,
@@ -340,6 +341,7 @@ async function collectFromKeyword(input: {
   candidates: Map<string, Candidate>;
   keyword: string;
   targetLocations: string[];
+  excludeKeys?: Set<string>;
   includePosts?: boolean;
 }) {
   const sourceLabel = `LinkedIn keyword "${input.keyword}"`;
@@ -357,6 +359,7 @@ async function collectFromKeyword(input: {
       },
       limit: KEYWORD_PROFILE_LIMIT,
       agent: input.agent,
+      excludeKeys: input.excludeKeys,
     });
 
     for (const lead of profiles) {
@@ -409,6 +412,7 @@ async function collectFromTitle(input: {
   candidates: Map<string, Candidate>;
   title: string;
   targetLocations: string[];
+  excludeKeys?: Set<string>;
 }) {
   const sourceLabel = `LinkedIn title "${input.title}"`;
 
@@ -426,6 +430,7 @@ async function collectFromTitle(input: {
       },
       limit: TITLE_PROFILE_LIMIT,
       agent: input.agent,
+      excludeKeys: input.excludeKeys,
     });
 
     for (const lead of profiles) {
@@ -545,6 +550,16 @@ export async function runPeopleEngineForAgent(input: {
   };
   const existingLeads = await listLeads(input.agent.workspaceId, undefined, 5000);
   const existingLeadIds = new Set(existingLeads.map((lead) => lead.id));
+  // People searches page past leads already in this agent's group: LinkedIn
+  // returns the same first page for the same query day after day, so without
+  // this a mature agent re-reads yesterday's results and discovers nobody new.
+  // Leads in OTHER groups are not excluded - surfacing them here is how they
+  // get adopted into this agent's group.
+  const groupLeadKeys = new Set(
+    existingLeads
+      .filter((lead) => lead.groupIds?.includes(input.agent.targetGroupId))
+      .flatMap((lead) => profileSearchKeys(lead)),
+  );
   const criteria = await planPeopleSearch(input.agent, input.profile).catch(() => ({
     titles: input.agent.filters.titles,
     industries: input.agent.filters.industries,
@@ -616,6 +631,7 @@ export async function runPeopleEngineForAgent(input: {
         candidates,
         title: source.value,
         targetLocations,
+        excludeKeys: groupLeadKeys,
       });
       continue;
     }
@@ -627,6 +643,7 @@ export async function runPeopleEngineForAgent(input: {
         candidates,
         keyword: source.value,
         targetLocations,
+        excludeKeys: groupLeadKeys,
       });
       continue;
     }

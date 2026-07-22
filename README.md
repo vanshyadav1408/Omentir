@@ -62,6 +62,7 @@ Open `http://localhost:3000`. If `LOCAL_APP_PASSWORD` is configured, sign in wit
 
 1. Create a dedicated Firebase project. Enable Firestore and create a service account. Never reuse the hosted Omentir project.
 2. Deploy the required indexes with `firebase deploy --only firestore:indexes`, or create the indexes from Firestore error links. The source is `firestore.indexes.json`.
+   - Also deploy `firebase deploy --only firestore:rules`. Omentir reaches Firestore only through the server-side Admin SDK, so the shipped `firestore.rules` denies all direct browser/client access. Keep it deployed — it stops anyone from reading or writing your data with a leaked project ID or web API key.
 3. Create a Unipile account and obtain its DSN, API key, and webhook secret. Unipile is paid and LinkedIn can restrict automated accounts.
 4. Create a Gemini API key. For Vertex instead, set `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION`, and `GOOGLE_APPLICATION_CREDENTIALS_JSON`, enable Vertex AI, and grant the service account Vertex AI User.
 

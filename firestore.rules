@@ -1,0 +1,22 @@
+rules_version = '2';
+
+// Omentir reaches Firestore ONLY through the Firebase Admin SDK on the server
+// (see src/lib/server/firebase.ts). The Admin SDK runs with privileged
+// credentials and bypasses these rules entirely, so the application keeps full
+// access to every collection. No part of Omentir uses the client-side Firebase
+// SDK, so a browser must never talk to Firestore directly.
+//
+// These rules therefore DENY all direct client access. This is the secure
+// default for a self-hosted deployment: it means that even if someone learns
+// your Firebase project ID, they cannot read or write your data from a browser
+// or a leaked web API key. All legitimate access flows through the server.
+//
+// Do NOT loosen these rules to "let the frontend authenticate" — route data
+// access through the server (Next.js route handlers / server actions) instead.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -83,9 +83,7 @@ export function validateRuntimeConfig(env: NodeJS.ProcessEnv = process.env) {
   }
   rejectPlaceholder(required(env, "UNIPILE_DSN"), "UNIPILE_DSN");
   requiredSecret(env, "UNIPILE_API_KEY");
-  const webhookSecret = requiredSecret(env, "UNIPILE_WEBHOOK_SECRET");
-  const callbackSecret = env.UNIPILE_CONNECT_CALLBACK_SECRET?.trim() || webhookSecret;
-  rejectPlaceholder(callbackSecret, "UNIPILE_CONNECT_CALLBACK_SECRET");
+  requiredSecret(env, "UNIPILE_WEBHOOK_SECRET");
   if (env.GEMINI_API_KEY?.trim()) {
     rejectPlaceholder(env.GEMINI_API_KEY, "GEMINI_API_KEY");
   } else {

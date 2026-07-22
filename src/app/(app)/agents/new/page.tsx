@@ -6,6 +6,7 @@ import {
   createCampaignAction,
   deleteAgentAction,
   draftAgentSetupAction,
+  importLinkedInCsvLeadsAction,
   saveProductProfileAction,
   updateAgentAction,
   updateAgentForSetupAction,
@@ -58,6 +59,27 @@ async function createAgentFromSetup(formData: FormData) {
     } catch (cleanupError) {
       console.error("Failed to clean up agent after launch error.", cleanupError);
     }
+    throw error;
+  }
+  redirect("/agents");
+}
+
+async function createOutreachOnlyAgentFromSetup(formData: FormData) {
+  "use server";
+  const groupName = String(formData.get("groupName") || "").trim();
+  formData.set("name", String(formData.get("name") || groupName || "LinkedIn outreach").trim());
+  formData.set("mode", "outreach");
+  const createdAgent = await createAgentForSetupAction(formData);
+  formData.set("agentId", createdAgent.agentId);
+  formData.set("groupId", createdAgent.groupId);
+  try {
+    await importLinkedInCsvLeadsAction(formData);
+    await createCampaignAction(formData);
+  } catch (error) {
+    const cleanup = new FormData();
+    cleanup.set("agentId", createdAgent.agentId);
+    try { await deleteAgentAction(cleanup); }
+    catch (cleanupError) { console.error("Failed to clean up outreach agent after launch error.", cleanupError); }
     throw error;
   }
   redirect("/agents");
@@ -161,7 +183,7 @@ export default async function NewAgentPage({
     const existingAgents = await listAgents(workspace.id);
     const agentLimit = planLimits(workspace.billing?.plan).agents;
     if (isAtPlanLimit(existingAgents.length, agentLimit)) {
-      if (params.mode !== "leads") {
+      if (params.mode !== "leads" && params.mode !== "outreach") {
         const campaigns = await listCampaigns(workspace.id);
         const campaignGroupIds = new Set(campaigns.map((campaign) => campaign.groupId));
         const resumableAgent = existingAgents.find(
@@ -184,10 +206,13 @@ export default async function NewAgentPage({
           ? launchExistingAgentFromSetup
           : agent
             ? updateAgentAction
-            : createAgentFromSetup
+            : params.mode === "outreach"
+              ? createOutreachOnlyAgentFromSetup
+              : createAgentFromSetup
       }
       prepareAgent={createAgentAndDiscoverLeadsAction}
       leadsOnly={!agent && params.mode === "leads"}
+      outreachOnly={!agent && params.mode === "outreach"}
       draftSetup={draftAgentSetupAction}
       saveProductProfile={saveProductProfileAction}
       initialAgent={agent}

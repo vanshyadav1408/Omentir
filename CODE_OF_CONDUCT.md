@@ -8,4 +8,4 @@ Harassment, discriminatory language, threats, sexualized attention, publishing p
 
 ## Enforcement
 
-Report conduct concerns privately to `vanshyadav.1408@gmail.com`. The project owner may remove content or restrict participation when necessary.
+Report conduct concerns privately to `hi@omentir.com`. The project owner may remove content or restrict participation when necessary.

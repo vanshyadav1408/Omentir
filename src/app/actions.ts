@@ -5,12 +5,7 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import {
-  buildCampaignSteps,
-  parseBasicCampaignFlow,
-  parseCampaignSequence,
-  trailingStepsAfterSecondMessage,
-} from "@/lib/server/campaign-sequence";
+import { buildCampaignSteps } from "@/lib/server/campaign-sequence";
 import {
   createAgent,
   createAgentApiKey,
@@ -21,28 +16,25 @@ import {
   disconnectLinkedInAccount,
   enrollGroupInCampaign,
   ensureWorkspace,
-  getCampaign,
+  getAgent,
   getLinkedInAccount,
   getLinkedInAccountByAccountId,
   getLinkedInAccountForWorkspace,
   getProductProfile,
   listLeads,
   pauseAgent,
-  pauseCampaign,
   resumeAgent,
-  resumeCampaign,
   revokeAgentApiKey,
-  deleteCampaign,
-  remapCampaignEnrollments,
-  saveLinkedInAccount,
   setAverageTicketSize,
   updateAgent,
-  updateCampaign,
   updateWorkspaceOnboarding,
   updateWorkspaceNotificationEmail,
   updateWorkspaceSettings,
   upsertProductProfile,
+  upsertLead,
 } from "@/lib/server/data";
+import { parseLinkedInLeadCsv } from "@/lib/linkedin-csv";
+import { normalizeLinkedInProfileUrl } from "@/lib/server/firebase";
 import { sendContactFormEmail, sendNewSignupNotification } from "@/lib/server/email";
 import { executeScheduledActionNow } from "@/lib/server/automation";
 import { analyzeWebsiteOrSearch, draftAgentSetupWithGemini } from "@/lib/server/gemini";
@@ -327,11 +319,6 @@ export async function analyzeWebsiteAction(formData: FormData) {
   revalidatePath("/dashboard");
 }
 
-export async function completeOnboardingAction(formData: FormData) {
-  await analyzeWebsiteAction(formData);
-  redirect("/onboarding");
-}
-
 export async function completeOnboardingQuestionsAction(formData: FormData) {
   const workspace = await requireWorkspace();
   const websiteUrl = String(formData.get("websiteUrl") || "").trim();
@@ -507,23 +494,6 @@ export async function revokeAgentApiKeyAction(formData: FormData) {
   revalidatePath("/api-keys");
 }
 
-export async function saveLinkedInAccountAction(formData: FormData) {
-  const workspace = await requireWorkspace();
-  const accountId = String(formData.get("accountId") || "").trim();
-  const displayName = String(formData.get("displayName") || "LinkedIn").trim();
-  const avatarUrl = String(formData.get("avatarUrl") || "").trim();
-
-  if (!accountId) throw new Error("Unipile account id is required.");
-
-  await saveLinkedInAccount(workspace.id, {
-    accountId,
-    displayName,
-    ...(avatarUrl ? { avatarUrl } : {}),
-    status: "connected",
-  });
-  revalidatePath("/settings");
-}
-
 export async function disconnectLinkedInAccountAction(formData?: FormData) {
   const workspace = await requireWorkspace();
   const linkedInAccountId = String(formData?.get("linkedInAccountId") || "").trim();
@@ -542,11 +512,6 @@ export async function disconnectLinkedInAccountAction(formData?: FormData) {
   revalidatePath("/dashboard");
 }
 
-export async function connectLinkedInAccountAction(formData: FormData) {
-  await saveLinkedInAccountAction(formData);
-  redirect("/dashboard");
-}
-
 async function createAgentFromForm(
   workspace: Awaited<ReturnType<typeof requireWorkspace>>,
   formData: FormData,
@@ -559,7 +524,7 @@ async function createAgentFromForm(
 
   return createAgent(workspace.id, {
     name: String(formData.get("name") || groupName).trim(),
-    mode: rawMode === "prompt" || rawMode === "filters" ? rawMode : "signals",
+    mode: rawMode === "prompt" || rawMode === "filters" || rawMode === "outreach" ? rawMode : "signals",
     prompt: String(formData.get("prompt") || "").trim(),
     filters: {
       titles: listFromForm(formData, "titles", []),
@@ -586,12 +551,36 @@ export async function createAgentForSetupAction(formData: FormData) {
   return { agentId: agent.id, groupId: agent.targetGroupId };
 }
 
-export async function createAgentAction(formData: FormData) {
+export async function importLinkedInCsvLeadsAction(formData: FormData) {
   const workspace = await requireWorkspace();
   requireActiveSubscription(workspace);
-  await createAgentFromForm(workspace, formData);
-
-  revalidateWorkspaceDataPages();
+  const agentId = String(formData.get("agentId") || "").trim();
+  const groupId = String(formData.get("groupId") || "").trim();
+  const agent = agentId ? await getAgent(workspace.id, agentId) : null;
+  if (!agent || agent.targetGroupId !== groupId || agent.mode !== "outreach") {
+    throw new Error("Outreach agent not found.");
+  }
+  const leads = parseLinkedInLeadCsv(String(formData.get("csvContents") || ""));
+  const existingLeads = await listLeads(workspace.id, undefined, 5000);
+  const existingByUrl = new Map(
+    existingLeads.map((lead) => [normalizeLinkedInProfileUrl(lead.linkedInUrl), lead]),
+  );
+  for (const lead of leads) {
+    const existing = existingByUrl.get(normalizeLinkedInProfileUrl(lead.linkedInUrl));
+    await upsertLead(workspace.id, groupId, {
+      ...lead,
+      // A person may already belong to another agent. Preserve that source so
+      // pausing this campaign never changes the ownership of existing outreach.
+      sourceAgentId: existing?.sourceAgentId || agent.id,
+      fitScore: 100,
+      scoreReasons: ["Imported by the user from CSV"],
+      summary: "Imported from CSV for outreach.",
+      leadReason: "Imported by the user from CSV",
+      outreachStatus: "new",
+    });
+  }
+  revalidatePath("/leads");
+  return { imported: leads.length };
 }
 
 async function updateAgentFromForm(
@@ -608,7 +597,7 @@ async function updateAgentFromForm(
 
   return updateAgent(workspace.id, agentId, {
     name: String(formData.get("name") || groupName).trim(),
-    mode: rawMode === "prompt" || rawMode === "filters" ? rawMode : "signals",
+    mode: rawMode === "prompt" || rawMode === "filters" || rawMode === "outreach" ? rawMode : "signals",
     prompt: String(formData.get("prompt") || "").trim(),
     filters: {
       titles: listFromForm(formData, "titles", []),
@@ -760,42 +749,6 @@ export async function deleteGroupAction(formData: FormData) {
   revalidateWorkspaceDataPages();
 }
 
-export async function pauseCampaignAction(formData: FormData) {
-  const workspace = await requireWorkspace();
-  const campaignId = String(formData.get("campaignId") || "").trim();
-
-  if (!campaignId) throw new Error("Campaign id is required.");
-
-  await pauseCampaign(workspace.id, campaignId);
-  revalidateWorkspaceDataPages();
-}
-
-export async function resumeCampaignAction(formData: FormData) {
-  const workspace = await requireWorkspace();
-  requireActiveSubscription(workspace);
-  const campaignId = String(formData.get("campaignId") || "").trim();
-
-  if (!campaignId) throw new Error("Campaign id is required.");
-
-  const campaign = await getCampaign(workspace.id, campaignId);
-  if (!campaign) throw new Error("Campaign not found.");
-  await assertCampaignCanRun(workspace.id, campaign.groupId, campaign.steps, {
-    linkedInAccountId: campaign.linkedInAccountId,
-  });
-  await resumeCampaign(workspace.id, campaignId);
-  revalidateWorkspaceDataPages();
-}
-
-export async function deleteCampaignAction(formData: FormData) {
-  const workspace = await requireWorkspace();
-  const campaignId = String(formData.get("campaignId") || "").trim();
-
-  if (!campaignId) throw new Error("Campaign id is required.");
-
-  await deleteCampaign(workspace.id, campaignId);
-  revalidateWorkspaceDataPages();
-}
-
 export async function createCampaignAction(formData: FormData) {
   const workspace = await requireWorkspace();
   requireActiveSubscription(workspace);
@@ -844,49 +797,6 @@ export async function createCampaignAction(formData: FormData) {
   }
 
   revalidateWorkspaceDataPages();
-}
-
-export async function updateCampaignWorkflowAction(formData: FormData) {
-  const workspace = await requireWorkspace();
-  requireActiveSubscription(workspace);
-  const campaignId = String(formData.get("campaignId") || "").trim();
-
-  if (!campaignId) throw new Error("Campaign id is required.");
-
-  const campaign = await getCampaign(workspace.id, campaignId);
-  if (!campaign) throw new Error("Campaign not found.");
-  if (campaign.status === "active") {
-    throw new Error("Pause the campaign before editing its workflow.");
-  }
-
-  const sequenceSteps = parseCampaignSequence(formData.get("sequence"));
-  const steps =
-    sequenceSteps ||
-    parseBasicCampaignFlow(
-      formData,
-      workspace.settings.firstMessageDelayMinutes,
-    );
-  const preservedSteps = sequenceSteps ? [] : trailingStepsAfterSecondMessage(campaign.steps);
-  const name = String(formData.get("name") || campaign.name || "LinkedIn campaign").trim();
-  const account = await requireSelectedLinkedInAccount(workspace.id, formData);
-
-  const nextSteps = [...steps, ...preservedSteps];
-  await updateCampaign(workspace.id, campaignId, {
-    name,
-    linkedInAccountId: account.id,
-    steps: nextSteps,
-  });
-  // Realign in-flight leads so editing the workflow doesn't drift their step
-  // position (currentStepIndex indexes the steps array by position).
-  await remapCampaignEnrollments(workspace.id, campaignId, campaign.steps, nextSteps);
-  revalidateWorkspaceDataPages();
-  revalidatePath(`/campaigns/${campaignId}`);
-  revalidatePath(`/campaigns/${campaignId}/edit`);
-}
-
-export async function getCurrentUserEmail() {
-  const user = await currentUser();
-  return user?.primaryEmailAddress?.emailAddress || user?.emailAddresses[0]?.emailAddress || "";
 }
 
 export async function sendLinkedInChatMessageAction(formData: FormData) {

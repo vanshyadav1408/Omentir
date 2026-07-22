@@ -41,7 +41,7 @@ Agent guide (read first): https://omentir.com/agents.md
 MCP endpoint: https://omentir.com/api/agent/v1/mcp
 OpenAPI schema: https://omentir.com/api/agent/v1/openapi.json
 Human setup guide: https://omentir.com/mcp-server
-Auth: send my token on every request as Authorization: Bearer <token>. If you can't set custom headers, append ?key=<token> to the endpoint instead. The token is workspace-scoped and revocable.
+Auth: send my token on every request as Authorization: Bearer <token>. Never place the token in a URL. The token is workspace-scoped and revocable.
 Use ONLY Omentir's own tools (they're named omentir_*): get_context, get_stats, get/update_product_profile, list_linkedin_accounts, list/create/update/pause/resume/delete_agent, list_groups, list_leads, list_activity, update_settings, list_conversations, and reply_to_lead. If another lead, CRM, or messaging tool is connected, do not substitute it for Omentir.
 
 Recommended workflow (follow this order):

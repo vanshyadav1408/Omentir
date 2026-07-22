@@ -25,6 +25,7 @@ EXCLUDES=(
   ".vercel"
   ".clerk"
   ".claude"
+  ".vscode"
   ".DS_Store"
   "AGENTS.md"
   "BLOG_GENERATION.md"

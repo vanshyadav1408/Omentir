@@ -62,6 +62,7 @@ type AgentSetupProps = {
   // scores leads into its group but no campaign is created, so the user
   // contacts leads manually from the Leads section.
   leadsOnly?: boolean;
+  outreachOnly?: boolean;
 };
 
 type StepKey = "icp" | "signals" | "leads" | "campaign" | "review";
@@ -664,10 +665,11 @@ export default function AgentSetup({
   linkedInAccounts = [],
   setupMode = false,
   leadsOnly = false,
+  outreachOnly = false,
 }: AgentSetupProps) {
   const isEditing = Boolean(initialAgent);
   const router = useRouter();
-  const [step, setStep] = useState<StepKey>("icp");
+  const [step, setStep] = useState<StepKey>(outreachOnly ? "leads" : "icp");
   const [pending, startTransition] = useTransition();
   const [drafting, setDrafting] = useState(false);
   const [draftError, setDraftError] = useState("");
@@ -676,6 +678,8 @@ export default function AgentSetup({
   const [submitError, setSubmitError] = useState("");
   const [preparedAgent, setPreparedAgent] = useState<PreparedAgent | null>(null);
   const [preparedAgentId, setPreparedAgentId] = useState("");
+  const [csvContents, setCsvContents] = useState("");
+  const [csvFileName, setCsvFileName] = useState("");
   const [name, setName] = useState(initialAgent?.name || "New Agent");
   const [groupName, setGroupName] = useState(initialAgent?.targetGroupName || "");
   const [linkedInAccountId, setLinkedInAccountId] = useState(
@@ -779,8 +783,13 @@ export default function AgentSetup({
       ["campaign", "4", "Outreach", "Message & sequence"],
       ["review", "5", "Review", "Launch your agent"],
     ] as const;
+    if (outreachOnly) return [
+      ["leads", "1", "CSV", "Upload LinkedIn profiles"],
+      ["campaign", "2", "Outreach", "Message & sequence"],
+      ["review", "3", "Review", "Launch your agent"],
+    ] as const;
     return leadsOnly ? all.slice(0, 3) : all;
-  }, [leadsOnly]);
+  }, [leadsOnly, outreachOnly]);
 
   // The step whose Continue button launches the agent instead of advancing.
   const finalStep: StepKey = leadsOnly ? "leads" : "review";
@@ -801,7 +810,7 @@ export default function AgentSetup({
     };
   }, [displayStepIndex, stepIndex]);
 
-  const setupIcpComplete =
+  const setupIcpComplete = outreachOnly ||
     titles.length > 0 &&
     industries.length > 0 &&
     locations.length > 0 &&
@@ -809,6 +818,7 @@ export default function AgentSetup({
     prompt.trim().length > 0;
 
   function previousStep(value: StepKey): StepKey {
+    if (outreachOnly && value === "campaign") return "leads";
     if (value === "review") return "campaign";
     if (value === "campaign") return "leads";
     if (value === "leads") return "signals";
@@ -834,9 +844,13 @@ export default function AgentSetup({
           setDiscoveryError("Name your lead group to continue.");
           return;
         }
+        if (outreachOnly && !csvContents.trim()) {
+          setDiscoveryError("Choose a CSV file with LinkedIn profiles to continue.");
+          return;
+        }
         // Step headers allow jumping, so re-check the ICP here: discovery
         // must never run against a partially configured agent.
-        if (!setupIcpComplete) {
+        if (!outreachOnly && !setupIcpComplete) {
           setDiscoveryError(
             "Fill every ICP field (job titles, industries, locations, keywords, and the lead description) before discovering leads.",
           );
@@ -1061,10 +1075,12 @@ export default function AgentSetup({
               style={{ fontFamily: "var(--font-varta)" }}
               className="text-[20px] font-semibold tracking-tight text-zinc-950"
             >
-              Set filters &amp; scoring
+              {outreachOnly ? "Upload your LinkedIn accounts" : "Set filters & scoring"}
             </h2>
             <p className="mt-1 text-[14px] font-medium text-zinc-700">
-              Choose where qualified leads should go and how strict the agent should be.
+              {outreachOnly
+                ? "Bring your own CSV of people you want to contact. Importing does not send messages."
+                : "Choose where qualified leads should go and how strict the agent should be."}
             </p>
           </div>
           <TextInput
@@ -1079,6 +1095,28 @@ export default function AgentSetup({
             placeholder="e.g. High-intent SaaS leaders"
             required
           />
+          {outreachOnly ? (
+            <label className="grid cursor-pointer gap-2 rounded-md border border-dashed border-zinc-300 bg-zinc-50 p-5 hover:border-[#ba3871]">
+              <span className="text-[14px] font-semibold text-zinc-900">LinkedIn profiles CSV</span>
+              <span className="text-[13px] leading-5 text-zinc-600">
+                Required column: LinkedIn URL. Optional: Name, First Name, Last Name, Title, Company, Location. Up to 500 unique profiles.
+              </span>
+              <input
+                type="file"
+                accept=".csv,text/csv"
+                className="text-sm text-zinc-700 file:mr-3 file:rounded-md file:border-0 file:bg-[#ba3871] file:px-3 file:py-2 file:font-semibold file:text-white"
+                onChange={async (event) => {
+                  const file = event.target.files?.[0];
+                  setDiscoveryError("");
+                  if (!file) { setCsvContents(""); setCsvFileName(""); return; }
+                  if (file.size > 1_000_000) { setCsvContents(""); setDiscoveryError("CSV files must be smaller than 1 MB."); return; }
+                  setCsvFileName(file.name);
+                  setCsvContents(await file.text());
+                }}
+              />
+              {csvFileName ? <span className="text-[12px] font-medium text-emerald-700">Ready to import: {csvFileName}</span> : null}
+            </label>
+          ) : null}
           {discoveryError ? (
             <p className="text-[13px] font-light text-red-600">{discoveryError}</p>
           ) : null}
@@ -1564,7 +1602,7 @@ export default function AgentSetup({
 
   function openEditStep(action: SeqAction) {
     setEditStepId(action.id);
-    setEditStepMode(action.mode === "ai" ? "ai" : "manual");
+    setEditStepMode("manual");
     setEditStepMessage(action.manualMessage);
     setEditStepWait(action.waitValue);
     setEditStepWaitUnit(action.waitUnit === "minutes" ? "hours" : action.waitUnit);
@@ -1850,46 +1888,12 @@ export default function AgentSetup({
               </div>
 
               <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-5 py-5">
-                {/* Same message / AI Icebreaker tabs - shown for all step types */}
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setEditStepMode("manual")}
-                    className={
-                      "rounded-lg border p-4 text-left transition " +
-                      (editStepMode === "manual"
-                        ? "border-[#e85e6b] bg-[#fff5f6]"
-                        : "border-zinc-200 bg-white hover:bg-zinc-50")
-                    }
-                  >
-                    <div style={{ fontFamily: "var(--font-varta)" }} className="text-[14px] font-semibold text-zinc-950">
-                      Same message for everyone
-                    </div>
-                    <div className="mt-0.5 text-[12px] font-medium text-zinc-700">Use variables to craft your message</div>
-                  </button>
-                  <div className="relative">
-                    <span
-                      style={{ fontFamily: "var(--font-varta)" }}
-                      className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-[#ba3871] px-2.5 py-0.5 text-[11px] font-semibold text-white"
-                    >
-                      Recommended
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setEditStepMode("ai")}
-                      className={
-                        "w-full rounded-lg border p-4 text-left transition " +
-                        (editStepMode === "ai"
-                          ? "border-[#e85e6b] bg-[#fff5f6]"
-                          : "border-zinc-200 bg-white hover:bg-zinc-50")
-                      }
-                    >
-                      <div style={{ fontFamily: "var(--font-varta)" }} className="text-[14px] font-semibold text-zinc-950">
-                        AI Icebreaker *
-                      </div>
-                      <div className="mt-0.5 text-[12px] font-medium text-zinc-700">Personalized first message, generated by AI for each lead</div>
-                    </button>
+                {/* Manual outreach: every step sends the message you write. */}
+                <div className="rounded-lg border border-[#e85e6b] bg-[#fff5f6] p-4 text-center">
+                  <div style={{ fontFamily: "var(--font-varta)" }} className="text-[14px] font-semibold text-zinc-950">
+                    Same message for everyone
                   </div>
+                  <div className="mt-0.5 text-[12px] font-medium text-zinc-700">Use variables to craft your message</div>
                 </div>
 
                 {/* Include note toggle - only for connect step in manual mode */}
@@ -1948,51 +1952,6 @@ export default function AgentSetup({
                       Preview message for a lead -&gt;
                     </button>
                   </div>
-                ) : editStepMode === "ai" ? (
-                  editingAction.kind === "connect" ? (
-                    /* AI outreach sends bare invites - no note is attached. */
-                    <div className="rounded-lg border border-[#f6c6d3] bg-[#fff5f6] p-4">
-                      <div style={{ fontFamily: "var(--font-varta)" }} className="text-[14px] font-semibold text-zinc-950">No invitation note</div>
-                      <p className="mt-2 text-[13px] font-light leading-5 text-zinc-600">
-                        With AI outreach, the connection request is sent without a note - bare
-                        invites get accepted more often. AI personalization starts with the
-                        first message after the lead accepts.
-                      </p>
-                    </div>
-                  ) : (
-                  /* AI mode info panel */
-                  <div className="rounded-lg border border-[#f6c6d3] bg-[#fff5f6] p-4">
-                    <div className="flex items-center gap-2">
-                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-[#ba3871]">
-                        <svg className="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <circle cx="12" cy="12" r="9" /><path d="M12 3v18" />
-                        </svg>
-                      </span>
-                      <div>
-                        <div style={{ fontFamily: "var(--font-varta)" }} className="text-[14px] font-semibold text-zinc-950">AI-powered Icebreaker</div>
-                        <span style={{ fontFamily: "var(--font-varta)" }} className="rounded-full bg-[#ede7ff] px-2 py-0.5 text-[11px] font-semibold text-[#7c5dff]">RECOMMENDED</span>
-                      </div>
-                    </div>
-                    <p className="mt-3 text-[13px] font-light leading-5 text-zinc-600">
-                      Your AI writes a unique first message for every lead, using their profile, company, and detected buying signals.
-                    </p>
-                    <div style={{ fontFamily: "var(--font-varta)" }} className="mt-3 text-[13px] font-semibold text-zinc-900">How it works</div>
-                    <ul className="mt-1 grid gap-1 text-[13px] font-light text-zinc-600">
-                      <li>- AI analyzes the lead (profile, company, signals)</li>
-                      <li>- AI generates a personalized icebreaker in real time</li>
-                      <li>- You can preview &amp; edit before it&apos;s sent</li>
-                      <li>Preview and edit before it&apos;s sent</li>
-                    </ul>
-                    <button
-                      type="button"
-                      onClick={() => setPreviewOpen(true)}
-                      style={{ fontFamily: "var(--font-varta)" }}
-                      className="mt-4 w-full cursor-pointer rounded-lg bg-[#ba3871] py-2.5 text-[13px] font-semibold text-white"
-                    >
-                      Generate preview for a sample lead
-                    </button>
-                  </div>
-                  )
                 ) : null}
 
                 {/* Wait time - only for non-first steps */}
@@ -2138,6 +2097,7 @@ export default function AgentSetup({
       <input type="hidden" name="groupId" value="__new__" />
       <input type="hidden" name="newGroupName" value={groupName} />
       <input type="hidden" name="preparedAgentId" value={preparedAgentId} />
+      {outreachOnly ? <textarea hidden name="csvContents" value={csvContents} readOnly /> : null}
       <input type="hidden" name="prompt" value={prompt} />
       {titles.map((value) => <input key={`title-${value}`} type="hidden" name="titles" value={value} />)}
       {industries.map((value) => <input key={`industry-${value}`} type="hidden" name="industries" value={value} />)}
@@ -2166,7 +2126,7 @@ export default function AgentSetup({
       ) : (
         <input type="hidden" name="manualDefaultOutreach" value="on" />
       )}
-      <input type="hidden" name="mode" value="signals" />
+      <input type="hidden" name="mode" value={outreachOnly ? "outreach" : "signals"} />
 
       {!setupMode ? (
         <>

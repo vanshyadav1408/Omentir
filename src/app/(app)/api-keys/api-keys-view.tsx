@@ -33,37 +33,6 @@ type ConnectMethod = {
 
 const CONNECT_METHODS: ConnectMethod[] = [
   {
-    icon: "cable",
-    title: "Claude.ai & ChatGPT (custom connector)",
-    blurb:
-      "These connectors can't send custom headers, so your key travels in the URL. Treat the full URL like a password - anyone with it can act as your workspace.",
-    details: [
-      "Use this setup only for hosted chat apps that ask for a single MCP server URL.",
-      "Do not paste this URL into public docs, tickets, screenshots, or shared chats.",
-      "If the URL leaks, revoke the key here and create a replacement.",
-    ],
-    steps: [
-      {
-        text: "Open your app's connector settings. In Claude: Settings → Connectors → Add custom connector. In ChatGPT: Settings → Connectors → Create.",
-      },
-      {
-        text: "Name it \"Omentir\" and paste this as the server / MCP URL, replacing <your-key> with a key you created above:",
-        code: `${siteUrl}/api/agent/v1/mcp?key=<your-key>`,
-      },
-      {
-        text: "Save. Your agent can now call every omentir_ tool. Ask it \"what's live in my Omentir workspace?\" to confirm.",
-      },
-      {
-        text: "A good first reply should mention your product profile, LinkedIn connection status, active or paused lead finders, lead counts, and any setup blockers.",
-      },
-    ],
-    troubleshooting: [
-      "401 Bearer token required: the app did not include the key. Confirm the URL includes ?key=<your-key>.",
-      "401 Invalid or revoked agent token: create a fresh key and replace the old URL.",
-      "402 Active subscription required: the workspace needs an active Omentir subscription before agents can operate it.",
-    ],
-  },
-  {
     icon: "terminal",
     title: "Claude Code, Cursor & other MCP clients",
     blurb:
@@ -97,7 +66,7 @@ const CONNECT_METHODS: ConnectMethod[] = [
     troubleshooting: [
       "If no Omentir tools appear, reload the MCP client or restart the editor/terminal session.",
       "If tools appear but calls fail, confirm the Authorization header is exactly Bearer <your-key>.",
-      "If your client does not support headers, use the custom connector URL format instead.",
+      "If your client does not support authorization headers, it cannot securely connect until it adds that support.",
     ],
   },
   {

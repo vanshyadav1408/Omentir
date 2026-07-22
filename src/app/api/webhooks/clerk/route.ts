@@ -4,6 +4,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { isLocalMode } from "@/lib/runtime-mode";
 import { scheduleSignupWelcomeEmail } from "@/lib/server/email";
+import { readTextBody, RequestBodyTooLargeError } from "@/lib/server/request-body";
 import {
   currentMailingListPlan,
   unsubscribeUrlFor,
@@ -30,6 +31,14 @@ function fullName(data: { first_name: string | null; last_name: string | null })
 
 export async function POST(request: NextRequest) {
   if (isLocalMode()) return new NextResponse(null, { status: 404 });
+  try {
+    await readTextBody(request.clone(), 256 * 1024);
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) {
+      return NextResponse.json({ error: error.message }, { status: 413 });
+    }
+    throw error;
+  }
   let event;
 
   try {

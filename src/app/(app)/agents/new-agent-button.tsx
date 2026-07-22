@@ -59,7 +59,7 @@ export default function NewAgentButton({
                 </span>
                 <span className="min-w-0">
                   <span className="block text-sm font-semibold text-[var(--md-sys-color-on-surface)]">
-                    Find leads only
+                    Only Lead
                   </span>
                   <span className="mt-0.5 block text-xs leading-5 text-[var(--md-sys-color-on-surface-variant)]">
                     Discovers and scores matching people into a lead group. You review them in
@@ -72,19 +72,35 @@ export default function NewAgentButton({
                 href="/agents/new"
                 className="group flex items-start gap-3 rounded-lg border border-[var(--md-sys-color-outline-variant)] px-4 py-3.5 transition hover:border-[#ba3871] hover:bg-[rgba(186,56,113,0.05)]"
               >
-                <span
-                  className="material-symbols-outlined mt-0.5 text-xl font-light leading-none text-[#ba3871]"
-                  aria-hidden="true"
-                >
+                <span className="material-symbols-outlined mt-0.5 text-xl font-light leading-none text-[#ba3871]" aria-hidden="true">
                   send
                 </span>
                 <span className="min-w-0">
                   <span className="block text-sm font-semibold text-[var(--md-sys-color-on-surface)]">
-                    Find leads + outreach
+                    Leads + outreach
                   </span>
                   <span className="mt-0.5 block text-xs leading-5 text-[var(--md-sys-color-on-surface-variant)]">
-                    Also runs your LinkedIn connect and message sequence on the leads
-                    automatically.
+                    Also runs your LinkedIn connect and message sequence on the leads automatically.
+                  </span>
+                </span>
+              </Link>
+
+              <Link
+                href="/agents/new?mode=outreach"
+                className="group flex items-start gap-3 rounded-lg border border-[var(--md-sys-color-outline-variant)] px-4 py-3.5 transition hover:border-[#ba3871] hover:bg-[rgba(186,56,113,0.05)]"
+              >
+                <span
+                  className="material-symbols-outlined mt-0.5 text-xl font-light leading-none text-[#ba3871]"
+                  aria-hidden="true"
+                >
+                  upload_file
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-semibold text-[var(--md-sys-color-on-surface)]">
+                    Outreach Only <span className="font-normal">(Bring your own CSV)</span>
+                  </span>
+                  <span className="mt-0.5 block text-xs leading-5 text-[var(--md-sys-color-on-surface-variant)]">
+                    Upload LinkedIn profiles and set up messaging without lead discovery.
                   </span>
                 </span>
               </Link>

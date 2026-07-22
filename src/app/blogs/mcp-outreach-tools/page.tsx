@@ -38,11 +38,11 @@ const faqItems = [
   },
   {
     question: "How do I authorize my MCP client to access my workspace?",
-    answer: "Generate a secure agent token in Settings → AI Agents. Pass this token as an Authorization Bearer header or as a query parameter in your client setup."
+    answer: "Generate a secure agent token in Settings → AI Agents. Pass this token only as an Authorization Bearer header in your client setup."
   },
   {
     question: "Can I connect my agent if my client does not support headers?",
-    answer: "Yes. Omentir provides query parameter fallback paths (e.g., adding ?key=token) to support clients like ChatGPT Custom GPTs that do not allow custom bearer headers."
+    answer: "No. Tokens in URLs leak into logs and copied links, so Omentir requires a client that supports Authorization headers."
   },
   {
     question: "What happens if my agent triggers a tool error during a campaign?",
@@ -130,7 +130,8 @@ export default function BlogPost() {
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
         <li><strong>Name:</strong> omentir</li>
         <li><strong>Type:</strong> SSE</li>
-        <li><strong>URL:</strong> https://omentir.com/api/agent/v1/mcp?key=[your_omentir_agent_token]</li>
+        <li><strong>URL:</strong> https://omentir.com/api/agent/v1/mcp</li>
+        <li><strong>Header:</strong> Authorization: Bearer [your_omentir_agent_token]</li>
       </ul>
       <p>
         Once added, Cursor will discover Omentir's tools automatically, allowing you to ask the IDE agent to build campaigns or check responses directly from your editor.
@@ -161,7 +162,7 @@ export default function BlogPost() {
         Save the file and restart your CLI session to verify the connection.
       </p>
       <p>
-        For <a href="https://chatgpt.com" target="_blank" rel="noopener" className="text-blue-600 hover:underline">ChatGPT</a> or clients that do not support custom headers, use the query-parameter fallback: <code>https://omentir.com/api/agent/v1/mcp?key=&lt;your_omentir_agent_token&gt;</code>. Treat that URL like a password. Do not paste it into shared docs, screenshots, or public issue trackers.
+        Clients that do not support custom authorization headers cannot securely connect to Omentir. Never place an agent token in the endpoint URL, shared docs, screenshots, or public issue trackers.
       </p>
 
       <h2 id="mcp-tool-catalog" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">

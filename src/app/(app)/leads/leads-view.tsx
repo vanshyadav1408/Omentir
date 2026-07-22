@@ -37,13 +37,13 @@ function timeAgo(iso?: string) {
   return `${d}d ago`;
 }
 
-function FlameScore({ score }: { score: number }) {
-  const filled = score >= 80 ? 3 : score >= 60 ? 2 : score >= 30 ? 1 : 0;
+function FitScore({ score }: { score: number }) {
   return (
-    <span className="inline-flex items-center gap-0.5 text-base leading-none">
-      <span className={filled >= 1 ? "" : "grayscale opacity-30"}>🔥</span>
-      <span className={filled >= 2 ? "" : "grayscale opacity-30"}>🔥</span>
-      <span className={filled >= 3 ? "" : "grayscale opacity-30"}>🔥</span>
+    <span
+      className="text-[14px] font-semibold leading-none tabular-nums text-zinc-950"
+      aria-label={`Fit score ${score}`}
+    >
+      {score}
     </span>
   );
 }
@@ -484,7 +484,7 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
                         ) : null}
                       </div>
                       <div className="shrink-0 text-right">
-                        <FlameScore score={lead.fitScore || 0} />
+                        <FitScore score={lead.fitScore || 0} />
                         <div className="mt-1 text-[11px] font-medium text-zinc-600">{timeAgo(lead.createdAt)}</div>
                       </div>
                     </div>
@@ -635,7 +635,7 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
 
                   {/* AI Score — numerical column */}
                   <div className="m3-table-num flex justify-end">
-                    <FlameScore score={lead.fitScore || 0} />
+                    <FitScore score={lead.fitScore || 0} />
                   </div>
 
                   {/* Imported — numerical/time column */}

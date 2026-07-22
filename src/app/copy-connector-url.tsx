@@ -2,9 +2,8 @@
 
 import { useState } from "react";
 
-// Small copy-to-clipboard control for the MCP connector URL. Clicking the
-// button copies the whole URL (endpoint + `?key=<key>`) so the user only has
-// to swap `<key>` for the API key from their Omentir dashboard.
+// Small copy-to-clipboard control for the public MCP endpoint. Credentials are
+// configured separately as an Authorization header and never appear in URLs.
 export default function CopyConnectorUrl({ url }: { url: string }) {
   const [copied, setCopied] = useState(false);
 

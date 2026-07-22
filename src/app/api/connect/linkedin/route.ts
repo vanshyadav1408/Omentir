@@ -2,6 +2,7 @@ import { auth } from "@/lib/server/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { createLinkedInAuthLink } from "@/lib/server/unipile";
 import { getAppBaseUrl } from "@/lib/server/runtime-config";
+import { createLinkedInConnectToken } from "@/lib/server/data";
 
 export const dynamic = "force-dynamic";
 
@@ -18,15 +19,10 @@ export async function GET(request: NextRequest) {
   const failurePath = isReconnect ? "/reconnect?error=1" : "/connect?error=1";
 
   try {
-    const callbackSecret =
-      process.env.UNIPILE_CONNECT_CALLBACK_SECRET || process.env.UNIPILE_WEBHOOK_SECRET;
-    if (!callbackSecret) {
-      throw new Error("UNIPILE_CONNECT_CALLBACK_SECRET is required.");
-    }
     const notifyUrl = new URL(`${appUrl}/api/connect/callback`);
-    notifyUrl.searchParams.set("secret", callbackSecret);
+    const callbackToken = await createLinkedInConnectToken(userId);
     const url = await createLinkedInAuthLink({
-      workspaceId: userId,
+      callbackToken,
       successRedirectUrl: `${appUrl}${isReconnect ? "/reconnect/success" : "/connect/success"}`,
       failureRedirectUrl: `${appUrl}${failurePath}`,
       notifyUrl: notifyUrl.toString(),

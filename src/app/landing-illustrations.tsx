@@ -4,11 +4,6 @@
    abstract, friendly proportions; simple or no facial detail. */
 
 const PINK = "#ba3871";
-const PINK_SOFT = "#e892b2";
-const SURFACE = "#ffffff";
-const SURFACE_DIM = "#f0eeea";
-const SURFACE_DEEP = "#e4e2dc";
-const INK_SOFT = "rgba(23, 23, 23, 0.12)";
 
 /* Theme-aware palette: these resolve through globals.css so the same shapes
    read correctly on light surfaces and the dark charcoal ladder. */
@@ -20,31 +15,6 @@ const T_RAISED = "var(--md-sys-color-surface-container-highest)";
 const T_RAISED_SOFT = "var(--md-sys-color-surface-container-high)";
 const T_INK = "var(--md-sys-color-on-surface)";
 const T_PINK_PASTEL = "var(--md-ref-primary-70)";
-
-/** Soft light-source gradient defs reused by illustrations. */
-function SoftLightDefs({ idPrefix }: { idPrefix: string }) {
-  return (
-    <defs>
-      <radialGradient id={`${idPrefix}-glow`} cx="30%" cy="25%" r="70%">
-        <stop offset="0%" stopColor="#ffffff" stopOpacity="0.55" />
-        <stop offset="55%" stopColor="#ffffff" stopOpacity="0.08" />
-        <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
-      </radialGradient>
-      <radialGradient id={`${idPrefix}-pink-glow`} cx="40%" cy="30%" r="65%">
-        <stop offset="0%" stopColor={PINK_SOFT} stopOpacity="0.45" />
-        <stop offset="100%" stopColor={PINK} stopOpacity="0" />
-      </radialGradient>
-      <radialGradient id={`${idPrefix}-pink-orb`} cx="35%" cy="30%" r="70%">
-        <stop offset="0%" stopColor={PINK_SOFT} />
-        <stop offset="100%" stopColor={PINK} />
-      </radialGradient>
-      <radialGradient id={`${idPrefix}-card`} cx="25%" cy="20%" r="85%">
-        <stop offset="0%" stopColor="#ffffff" />
-        <stop offset="100%" stopColor={SURFACE_DIM} />
-      </radialGradient>
-    </defs>
-  );
-}
 
 function Sparkle({
   cx,
@@ -147,75 +117,6 @@ export function BookDemosIllustration() {
   );
 }
 
-export function AgentControlIllustration() {
-  return (
-    <svg viewBox="0 0 220 130" fill="none" aria-hidden className="h-full w-auto">
-      <SoftLightDefs idPrefix="ac" />
-      <ellipse cx="110" cy="120" rx="80" ry="8" fill={INK_SOFT} />
-      {/* abstract agent: head + soft body, no face detail */}
-      <rect x="22" y="18" width="8" height="14" rx="4" fill={PINK_SOFT} transform="translate(21 0)" />
-      <circle cx="47" cy="18" r="6" fill={`url(#ac-pink-orb)`} />
-      <rect x="20" y="30" width="54" height="48" rx="16" fill={`url(#ac-card)`} />
-      <rect x="20" y="30" width="54" height="48" rx="16" fill="url(#ac-glow)" />
-      <circle cx="38" cy="50" r="6" fill={`url(#ac-pink-orb)`} />
-      <circle cx="56" cy="50" r="6" fill={`url(#ac-pink-orb)`} />
-      <rect x="34" y="62" width="26" height="6" rx="3" fill="rgba(23,23,23,0.1)" />
-      {/* soft connector blobs */}
-      <circle cx="88" cy="54" r="4" fill={PINK_SOFT} opacity={0.5} />
-      <circle cx="102" cy="60" r="3.5" fill={PINK} opacity={0.35} />
-      {/* dashboard card */}
-      <rect x="118" y="34" width="86" height="64" rx="14" fill={`url(#ac-card)`} />
-      <rect x="118" y="34" width="86" height="64" rx="14" fill="url(#ac-glow)" />
-      <path
-        d="M118 50 v-2 a14 14 0 0 1 14 -14 h58 a14 14 0 0 1 14 14 v2 z"
-        fill={`url(#ac-pink-orb)`}
-      />
-      <rect x="130" y="60" width="50" height="6" rx="3" fill="rgba(23,23,23,0.12)" />
-      <rect x="130" y="72" width="36" height="5" rx="2.5" fill="rgba(23,23,23,0.08)" />
-      <rect x="130" y="82" width="44" height="5" rx="2.5" fill="rgba(23,23,23,0.08)" />
-      <circle cx="196" cy="102" r="16" fill={`url(#ac-pink-orb)`} />
-      <circle cx="196" cy="102" r="16" fill="url(#ac-glow)" />
-      <path d="M188 101 L193 106 L206 92 L201 88 L193 97 L192 95 Z" fill="#ffffff" />
-      <Sparkle cx={96} cy={24} size={14} />
-      <Sparkle cx={28} cy={98} size={10} fill={PINK_SOFT} />
-    </svg>
-  );
-}
-
-export function TokenKeyIllustration() {
-  return (
-    <svg viewBox="0 0 160 90" fill="none" aria-hidden className="h-full w-auto">
-      <SoftLightDefs idPrefix="tk" />
-      <ellipse cx="80" cy="82" rx="52" ry="6" fill={INK_SOFT} />
-      <circle cx="52" cy="45" r="22" fill={`url(#tk-card)`} />
-      <circle cx="52" cy="45" r="22" fill="url(#tk-glow)" />
-      <circle cx="52" cy="45" r="9" fill={`url(#tk-pink-orb)`} />
-      <rect x="70" y="41" width="56" height="8" rx="4" fill={SURFACE_DEEP} />
-      <rect x="106" y="49" width="6" height="14" rx="3" fill={SURFACE_DEEP} />
-      <rect x="120" y="49" width="6" height="18" rx="3" fill={SURFACE_DEEP} />
-      <Sparkle cx={128} cy={18} size={12} />
-    </svg>
-  );
-}
-
-export function ConnectPlugIllustration() {
-  return (
-    <svg viewBox="0 0 160 90" fill="none" aria-hidden className="h-full w-auto">
-      <SoftLightDefs idPrefix="cp" />
-      <ellipse cx="80" cy="82" rx="50" ry="6" fill={INK_SOFT} />
-      <rect x="12" y="42" width="28" height="8" rx="4" fill={SURFACE_DEEP} opacity={0.7} />
-      <rect x="36" y="30" width="28" height="24" rx="8" fill={`url(#cp-pink-orb)`} />
-      <rect x="36" y="30" width="28" height="24" rx="8" fill="url(#cp-glow)" />
-      <rect x="60" y="34" width="14" height="6" rx="3" fill={PINK_SOFT} />
-      <rect x="60" y="44" width="14" height="6" rx="3" fill={PINK_SOFT} />
-      <rect x="78" y="22" width="44" height="38" rx="12" fill={`url(#cp-card)`} />
-      <rect x="78" y="22" width="44" height="38" rx="12" fill="url(#cp-glow)" />
-      <circle cx="100" cy="41" r="7" fill={`url(#cp-pink-orb)`} />
-      <Sparkle cx={136} cy={60} size={10} />
-    </svg>
-  );
-}
-
 export function FounderGrowthIllustration() {
   return (
     <svg viewBox="0 0 200 120" fill="none" aria-hidden className="h-full w-auto">
@@ -307,118 +208,3 @@ export function PaperPlaneIllustration() {
   );
 }
 
-export function HotLeadsIllustration() {
-  return (
-    <svg viewBox="0 0 200 120" fill="none" aria-hidden className="h-full w-auto">
-      <SoftLightDefs idPrefix="hl" />
-      <ellipse cx="100" cy="110" rx="64" ry="7" fill={INK_SOFT} />
-      <rect x="26" y="36" width="106" height="52" rx="14" fill={`url(#hl-card)`} />
-      <rect x="26" y="36" width="106" height="52" rx="14" fill="url(#hl-glow)" />
-      <circle cx="50" cy="58" r="11" fill={`url(#hl-pink-orb)`} />
-      <rect x="68" y="50" width="48" height="6" rx="3" fill="rgba(23,23,23,0.14)" />
-      <rect x="68" y="62" width="32" height="5" rx="2.5" fill="rgba(23,23,23,0.08)" />
-      {/* flame as stacked soft blobs */}
-      <ellipse cx="158" cy="68" rx="14" ry="18" fill={`url(#hl-pink-orb)`} />
-      <ellipse cx="158" cy="56" rx="9" ry="14" fill={PINK_SOFT} opacity={0.85} />
-      <ellipse cx="158" cy="48" rx="5" ry="8" fill="#ffd0e0" opacity={0.9} />
-      <Sparkle cx={36} cy={18} size={12} />
-    </svg>
-  );
-}
-
-export function RepliesIllustration() {
-  return (
-    <svg viewBox="0 0 200 120" fill="none" aria-hidden className="h-full w-auto">
-      <SoftLightDefs idPrefix="rp" />
-      <ellipse cx="100" cy="110" rx="64" ry="7" fill={INK_SOFT} />
-      <path d="M58 50 84 58M142 50l-26 8M100 78v12" stroke={T_PRIMARY} strokeWidth="4" strokeLinecap="round" opacity="0.25" />
-      <circle cx="52" cy="48" r="18" fill={T_RAISED} />
-      <circle cx="52" cy="48" r="12" fill={T_INK} />
-      <path d="M52 39v18M43 48h18" stroke={T_RAISED} strokeWidth="4" strokeLinecap="round" opacity="0.9" />
-      <circle cx="148" cy="48" r="18" fill="#F3E0D8" />
-      <path d="M148 37c4 6 6 12 0 22-6-10-4-16 0-22Z" fill="#D97757" />
-      <circle cx="100" cy="92" r="18" fill="#E5DDF7" />
-      <path d="M100 80c2 6 6 10 12 12-6 2-10 6-12 12-2-6-6-10-12-12 6-2 10-6 12-12Z" fill="#8E6DCF" />
-      <circle cx="100" cy="58" r="31" fill={`url(#rp-pink-orb)`} />
-      <circle cx="100" cy="58" r="31" fill="url(#rp-glow)" />
-      <path
-        d="M100 37c3 10 8 16 18 21-10 5-15 11-18 21-3-10-8-16-18-21 10-5 15-11 18-21Z"
-        fill={T_ON_PRIMARY}
-      />
-      <Sparkle cx={168} cy={24} size={12} />
-    </svg>
-  );
-}
-
-export function EmptyChartIllustration() {
-  return (
-    <svg viewBox="0 0 200 120" fill="none" aria-hidden className="h-full w-auto">
-      <SoftLightDefs idPrefix="ec" />
-      <ellipse cx="100" cy="110" rx="60" ry="7" fill={INK_SOFT} />
-      {/* axes as soft filled bars, not stroked lines */}
-      <rect x="38" y="22" width="6" height="72" rx="3" fill={SURFACE_DEEP} />
-      <rect x="38" y="88" width="126" height="6" rx="3" fill={SURFACE_DEEP} />
-      <rect x="48" y="56" width="116" height="4" rx="2" fill={SURFACE_DIM} />
-      {/* area under curve */}
-      <path
-        d="M48 84 L76 70 L104 76 L132 52 L158 38 L158 90 L48 90 Z"
-        fill={PINK}
-        opacity={0.12}
-      />
-      {/* rising dots + connecting soft ribbons as thick rounded rects along segments */}
-      <circle cx="76" cy="70" r="6" fill={SURFACE} />
-      <circle cx="76" cy="70" r="5" fill={PINK_SOFT} />
-      <circle cx="132" cy="52" r="6" fill={SURFACE} />
-      <circle cx="132" cy="52" r="5" fill={PINK_SOFT} />
-      <circle cx="158" cy="38" r="7" fill={`url(#ec-pink-orb)`} />
-      <circle cx="158" cy="38" r="7" fill="url(#ec-glow)" />
-      <Sparkle cx={176} cy={70} size={12} />
-    </svg>
-  );
-}
-
-export function ActivityPulseIllustration() {
-  return (
-    <svg viewBox="0 0 200 120" fill="none" aria-hidden className="h-full w-auto">
-      <SoftLightDefs idPrefix="ap2" />
-      <ellipse cx="100" cy="110" rx="64" ry="7" fill={INK_SOFT} />
-      <rect x="30" y="30" width="132" height="60" rx="16" fill={`url(#ap2-card)`} />
-      <rect x="30" y="30" width="132" height="60" rx="16" fill="url(#ap2-glow)" />
-      {/* pulse as filled rounded polygon bars */}
-      <rect x="42" y="57" width="18" height="6" rx="3" fill={PINK_SOFT} opacity={0.5} />
-      <rect x="62" y="42" width="8" height="36" rx="4" fill={`url(#ap2-pink-orb)`} />
-      <rect x="74" y="50" width="8" height="28" rx="4" fill={PINK_SOFT} />
-      <rect x="86" y="36" width="8" height="48" rx="4" fill={`url(#ap2-pink-orb)`} />
-      <rect x="98" y="48" width="8" height="24" rx="4" fill={PINK_SOFT} opacity={0.8} />
-      <rect x="110" y="54" width="28" height="6" rx="3" fill={PINK_SOFT} opacity={0.5} />
-      <circle cx="150" cy="60" r="6" fill={`url(#ap2-pink-orb)`} />
-      <Sparkle cx={176} cy={20} size={12} />
-    </svg>
-  );
-}
-
-export function InboxIllustration() {
-  return (
-    <svg viewBox="0 0 200 120" fill="none" aria-hidden className="h-full w-auto">
-      <SoftLightDefs idPrefix="ib" />
-      <ellipse cx="100" cy="110" rx="64" ry="7" fill={INK_SOFT} />
-      <g transform="rotate(-6 100 38)">
-        <rect x="64" y="14" width="72" height="42" rx="10" fill={`url(#ib-card)`} />
-        <rect x="64" y="14" width="72" height="42" rx="10" fill="url(#ib-glow)" />
-        <path d="M66 18 L100 40 L134 18" fill={SURFACE_DIM} />
-        <path d="M66 18 L100 40 L134 18 L134 14 L66 14 Z" fill={PINK} opacity={0.12} />
-      </g>
-      <path
-        d="M40 62v20a12 12 0 0 0 12 12h96a12 12 0 0 0 12-12V62h-30l-8 12h-44l-8-12z"
-        fill={`url(#ib-card)`}
-      />
-      <path
-        d="M40 62v20a12 12 0 0 0 12 12h96a12 12 0 0 0 12-12V62h-30l-8 12h-44l-8-12z"
-        fill="url(#ib-glow)"
-      />
-      <circle cx="160" cy="58" r="10" fill={`url(#ib-pink-orb)`} />
-      <circle cx="160" cy="58" r="10" fill="url(#ib-glow)" />
-      <Sparkle cx={26} cy={38} size={12} />
-    </svg>
-  );
-}

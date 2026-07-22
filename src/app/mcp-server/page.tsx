@@ -64,8 +64,8 @@ const setupSteps: SetupStep[] = [
     number: "3.",
     title: "Connect to your agent",
     description:
-      "Copy the connector URL below and paste it into your agent. Replace <key> with the API key you copied from your Omentir dashboard. Treat the full URL like a password.",
-    copyUrl: `${mcpEndpoint}?key=<key>`,
+      "Use the endpoint below in an MCP client that supports headers, then configure Authorization: Bearer <key> in the client's secret or header settings.",
+    copyUrl: mcpEndpoint,
     image: "/connect-to-your-agent.avif",
     alt: "Connecting an AI agent to Omentir with an API key",
   },
@@ -135,7 +135,7 @@ const faqItems = [
   {
     question: "How do I authenticate?",
     answer:
-      "Create a token in Omentir under Settings → AI Agents, then send it as `Authorization: Bearer <token>` on every request. Clients that can't set custom headers (ChatGPT and claude.ai custom connectors) can append it as a query parameter instead: `?key=<token>`. Each token is scoped to exactly one workspace and can be revoked anytime.",
+      "Create a token in Omentir under Settings → AI Agents, then send it as `Authorization: Bearer <token>` on every request. Tokens are never accepted in URLs. Each token is scoped to exactly one workspace and can be revoked anytime.",
   },
   {
     question: "Which MCP methods are supported?",

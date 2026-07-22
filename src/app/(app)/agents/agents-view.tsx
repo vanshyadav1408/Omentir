@@ -66,6 +66,7 @@ function formatCreatedAt(iso?: string) {
 }
 
 function modeLabel(agent: Agent) {
+  if (agent.mode === "outreach") return "Outreach Only";
   if (agent.mode === "signals") return "Signals";
   if (agent.mode === "filters") return "Filters";
   return "Prompt";
