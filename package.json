@@ -1,0 +1,40 @@
+{
+  "name": "omentir",
+  "type": "module",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "dev": "NODE_OPTIONS=--disable-warning=DEP0205 next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "lint:baseline": "node scripts/check-lint-baseline.mjs",
+    "test": "node --experimental-strip-types --test tests/*.test.mjs",
+    "postinstall": "rm -rf .next",
+    "snapshot:public": "bash scripts/create-public-snapshot.sh",
+    "secrets:scan": "bash scripts/scan-secrets.sh"
+  },
+  "dependencies": {
+    "@clerk/nextjs": "^7.3.0",
+    "@google/genai": "^1.51.0",
+    "@whop/sdk": "^0.0.39",
+    "firebase-admin": "^13.8.0",
+    "next": "16.2.10",
+    "posthog-js": "^1.374.2",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "resend": "^6.12.2",
+    "zod": "^4.4.2"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.4",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

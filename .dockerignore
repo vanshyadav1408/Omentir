@@ -1,0 +1,11 @@
+.git
+.github
+.next
+node_modules
+.env
+.env.*
+!.env.example
+npm-debug.log*
+OPEN_SOURCE.md
+solution.md
+Design Prompt.md

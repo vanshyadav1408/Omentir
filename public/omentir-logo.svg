@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="currentColor" role="img" aria-label="Omentir">
+  <g transform="translate(100 100) rotate(22.5)">
+    <rect x="-7" y="-90" width="14" height="180" rx="2"/>
+    <rect x="-7" y="-90" width="14" height="180" rx="2" transform="rotate(45)"/>
+    <rect x="-7" y="-90" width="14" height="180" rx="2" transform="rotate(90)"/>
+    <rect x="-7" y="-90" width="14" height="180" rx="2" transform="rotate(135)"/>
+  </g>
+</svg>

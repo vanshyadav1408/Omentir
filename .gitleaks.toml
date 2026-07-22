@@ -1,0 +1,46 @@
+# Gitleaks configuration for the public Omentir repository.
+#
+# Extends the full default gitleaks ruleset; every rule stays active except one.
+#
+# The default "linkedin-client-id" rule flags any ~14-character token that sits
+# near the word "LinkedIn". Omentir is a LinkedIn-outreach product, so that rule
+# fires on ordinary source and content — SEO keyword lists in blog posts, body
+# prose that mentions a LinkedIn profile, and even variable names such as
+# `linkedInThreads` — none of which are credentials. A LinkedIn OAuth client ID
+# is a public identifier in any case; the client *secret* is the sensitive value
+# and is caught by the generic high-entropy and secret-keyword rules that remain
+# enabled here.
+[extend]
+useDefault = true
+disabledRules = ["linkedin-client-id"]
+
+# Path allowlist. gitleaks with --no-git scans every file on disk, including
+# vendored and build output that a git-aware scan would skip via .gitignore.
+# `private-infra/` never ships in the public snapshot but is excluded here so a
+# working-tree scan of the private repo does not report on deploy tooling.
+[allowlist]
+paths = [
+  '''(^|/)node_modules/''',
+  '''(^|/)\.next/''',
+  '''(^|/)private-infra/''',
+]
+
+# Public provider identifiers are not authorization secrets, but Omentir does
+# not publish its hosted account identifiers. Keep them in deployment env only.
+[[rules]]
+id = "omentir-whop-resource-id"
+description = "Whop business, product, or plan identifier"
+regex = '''\b(?:biz|prod|plan)_[A-Za-z0-9_-]{8,}\b'''
+keywords = ["biz_", "prod_", "plan_"]
+
+[[rules]]
+id = "omentir-posthog-project-key"
+description = "PostHog project API key"
+regex = '''\bphc_[A-Za-z0-9_-]{16,}\b'''
+keywords = ["phc_"]
+
+[[rules]]
+id = "omentir-google-api-key"
+description = "Google or Gemini API key"
+regex = '''\bAIza[A-Za-z0-9_-]{20,}\b'''
+keywords = ["AIza"]
