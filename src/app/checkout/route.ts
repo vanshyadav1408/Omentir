@@ -24,12 +24,12 @@ export async function GET(request: NextRequest) {
     const user = await currentUser();
     const email = user?.primaryEmailAddress?.emailAddress;
     const successUrl = new URL("/subscription-creation-successful", appUrl);
-    const sourceUrl = new URL("/upgrade", appUrl);
 
+    // @whop/sdk 0.0.42 removed the source_url attribution field from
+    // checkout configurations; there is no replacement.
     const checkout = await getWhopClient().checkoutConfigurations.create({
       plan_id: planId,
       redirect_url: successUrl.toString(),
-      source_url: sourceUrl.toString(),
       metadata: {
         workspaceId: userId,
         clerkUserId: userId,
@@ -37,6 +37,10 @@ export async function GET(request: NextRequest) {
         plan,
       },
     });
+
+    if (!checkout.purchase_url) {
+      throw new Error("Whop checkout configuration returned no purchase_url.");
+    }
 
     // Whop hosted checkout prefills the email field from the `email` query param:
     // https://docs.whop.com/manage-your-business/payment-processing/checkout-branding

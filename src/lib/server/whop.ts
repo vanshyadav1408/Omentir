@@ -91,7 +91,7 @@ export async function getWhopCheckoutPlanId(billingPlan: BillingPlan = "solo") {
 
   if (configuredPlanId?.startsWith("prod_")) {
     const productPlans = await whop.plans.list({
-      company_id: companyId,
+      account_id: companyId,
       product_ids: [configuredPlanId],
       first: 20,
       order: "created_at",
@@ -111,7 +111,7 @@ export async function getWhopCheckoutPlanId(billingPlan: BillingPlan = "solo") {
   }
 
   const plans = await whop.plans.list({
-    company_id: companyId,
+    account_id: companyId,
     plan_types: ["renewal"],
     release_methods: ["buy_now"],
     visibilities: ["visible"],

@@ -3,10 +3,20 @@ export type WhopPlanCandidate = {
   created_at: string;
   member_count: number | null;
   plan_type: string;
-  product?: { title?: string | null } | null;
+  // @whop/sdk 0.0.42 types the plan's product as `unknown`, so the title is
+  // narrowed at runtime instead of trusted from the type.
+  product?: unknown;
   release_method: string;
   visibility: string;
 };
+
+function productTitle(product: unknown): string | undefined {
+  if (product && typeof product === "object" && "title" in product) {
+    const title = (product as { title?: unknown }).title;
+    if (typeof title === "string") return title;
+  }
+  return undefined;
+}
 
 export function chooseCheckoutPlan(
   plans: WhopPlanCandidate[],
@@ -18,7 +28,7 @@ export function chooseCheckoutPlan(
         plan.plan_type === "renewal" &&
         plan.release_method === "buy_now" &&
         (options.includeHidden || plan.visibility === "visible") &&
-        (plan.product?.title?.toLowerCase().includes("omentir") ?? true),
+        (productTitle(plan.product)?.toLowerCase().includes("omentir") ?? true),
     )
     .sort((a, b) => {
       const memberDelta = (b.member_count ?? 0) - (a.member_count ?? 0);
