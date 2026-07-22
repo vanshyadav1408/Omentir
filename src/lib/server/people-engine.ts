@@ -157,7 +157,10 @@ function parseLinkedInSource(value: string): ParsedLinkedInSource | null {
     return {
       identifier,
       isCompany: companyIndex >= 0,
-      label: url.hostname.includes("linkedin.com") ? value : url.toString(),
+      label:
+        url.hostname === "linkedin.com" || url.hostname.endsWith(".linkedin.com")
+          ? value
+          : url.toString(),
     };
   } catch {
     return null;

@@ -42,7 +42,7 @@ const TIMEZONES = TIMEZONE_IDS.map((tz) => {
   });
   const parts = formatter.formatToParts(now);
   const offsetPart = parts.find((p) => p.type === "timeZoneName")?.value || "GMT";
-  const offset = offsetPart === "GMT" ? "GMT+00:00" : offsetPart.replace("GMT", "GMT");
+  const offset = offsetPart === "GMT" ? "GMT+00:00" : offsetPart;
   return `(${offset}) ${tz}`;
 });
 
