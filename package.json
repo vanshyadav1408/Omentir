@@ -16,16 +16,16 @@
     "secrets:scan": "bash scripts/scan-secrets.sh"
   },
   "dependencies": {
-    "@clerk/nextjs": "^7.3.0",
-    "@google/genai": "^1.51.0",
-    "@whop/sdk": "^0.0.39",
+    "@clerk/nextjs": "^7.5.22",
+    "@google/genai": "^1.52.0",
+    "@whop/sdk": "^0.0.42",
     "firebase-admin": "^13.8.0",
     "next": "16.2.11",
     "posthog-js": "^1.374.2",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "resend": "^6.12.2",
-    "zod": "^4.4.2"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
