@@ -18,7 +18,7 @@
   "dependencies": {
     "@clerk/nextjs": "^7.3.0",
     "@google/genai": "^1.51.0",
-    "@whop/sdk": "^0.0.39",
+    "@whop/sdk": "^0.0.42",
     "firebase-admin": "^13.8.0",
     "next": "16.2.11",
     "posthog-js": "^1.374.2",
