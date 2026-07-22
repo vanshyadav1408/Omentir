@@ -24,7 +24,7 @@
     "posthog-js": "^1.374.2",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "resend": "^6.12.2",
+    "resend": "^6.18.0",
     "zod": "^4.4.2"
   },
   "devDependencies": {
