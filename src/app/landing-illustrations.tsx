@@ -4,6 +4,9 @@
    abstract, friendly proportions; simple or no facial detail. */
 
 const PINK = "#ba3871";
+const PINK_SOFT = "#e892b2";
+const SURFACE_DIM = "#f0eeea";
+const INK_SOFT = "rgba(23, 23, 23, 0.12)";
 
 /* Theme-aware palette: these resolve through globals.css so the same shapes
    read correctly on light surfaces and the dark charcoal ladder. */
@@ -15,6 +18,31 @@ const T_RAISED = "var(--md-sys-color-surface-container-highest)";
 const T_RAISED_SOFT = "var(--md-sys-color-surface-container-high)";
 const T_INK = "var(--md-sys-color-on-surface)";
 const T_PINK_PASTEL = "var(--md-ref-primary-70)";
+
+/** Soft light-source gradient defs reused by illustrations. */
+function SoftLightDefs({ idPrefix }: { idPrefix: string }) {
+  return (
+    <defs>
+      <radialGradient id={`${idPrefix}-glow`} cx="30%" cy="25%" r="70%">
+        <stop offset="0%" stopColor="#ffffff" stopOpacity="0.55" />
+        <stop offset="55%" stopColor="#ffffff" stopOpacity="0.08" />
+        <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+      </radialGradient>
+      <radialGradient id={`${idPrefix}-pink-glow`} cx="40%" cy="30%" r="65%">
+        <stop offset="0%" stopColor={PINK_SOFT} stopOpacity="0.45" />
+        <stop offset="100%" stopColor={PINK} stopOpacity="0" />
+      </radialGradient>
+      <radialGradient id={`${idPrefix}-pink-orb`} cx="35%" cy="30%" r="70%">
+        <stop offset="0%" stopColor={PINK_SOFT} />
+        <stop offset="100%" stopColor={PINK} />
+      </radialGradient>
+      <radialGradient id={`${idPrefix}-card`} cx="25%" cy="20%" r="85%">
+        <stop offset="0%" stopColor="#ffffff" />
+        <stop offset="100%" stopColor={SURFACE_DIM} />
+      </radialGradient>
+    </defs>
+  );
+}
 
 function Sparkle({
   cx,
@@ -208,3 +236,26 @@ export function PaperPlaneIllustration() {
   );
 }
 
+export function RepliesIllustration() {
+  return (
+    <svg viewBox="0 0 200 120" fill="none" aria-hidden className="h-full w-auto">
+      <SoftLightDefs idPrefix="rp" />
+      <ellipse cx="100" cy="110" rx="64" ry="7" fill={INK_SOFT} />
+      <path d="M58 50 84 58M142 50l-26 8M100 78v12" stroke={T_PRIMARY} strokeWidth="4" strokeLinecap="round" opacity="0.25" />
+      <circle cx="52" cy="48" r="18" fill={T_RAISED} />
+      <circle cx="52" cy="48" r="12" fill={T_INK} />
+      <path d="M52 39v18M43 48h18" stroke={T_RAISED} strokeWidth="4" strokeLinecap="round" opacity="0.9" />
+      <circle cx="148" cy="48" r="18" fill="#F3E0D8" />
+      <path d="M148 37c4 6 6 12 0 22-6-10-4-16 0-22Z" fill="#D97757" />
+      <circle cx="100" cy="92" r="18" fill="#E5DDF7" />
+      <path d="M100 80c2 6 6 10 12 12-6 2-10 6-12 12-2-6-6-10-12-12 6-2 10-6 12-12Z" fill="#8E6DCF" />
+      <circle cx="100" cy="58" r="31" fill={`url(#rp-pink-orb)`} />
+      <circle cx="100" cy="58" r="31" fill="url(#rp-glow)" />
+      <path
+        d="M100 37c3 10 8 16 18 21-10 5-15 11-18 21-3-10-8-16-18-21 10-5 15-11 18-21Z"
+        fill={T_ON_PRIMARY}
+      />
+      <Sparkle cx={168} cy={24} size={12} />
+    </svg>
+  );
+}
