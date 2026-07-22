@@ -2,7 +2,9 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Omentir is an open-source AI sales workspace for finding qualified LinkedIn prospects, drafting contextual outreach, running human-paced campaigns, and handling replies.
+Omentir is an open-source alternative to LinkedIn outreach and automation tools like [HeyReach](https://heyreach.io) and [Gojiberry](https://gojiberry.ai). 
+
+It's an AI sales workspace for finding qualified LinkedIn prospects, drafting contextual outreach, running human-paced campaigns, and handling replies — but you own the code and run it on your own infrastructure.
 
 Use the managed product at [omentir.com](https://omentir.com), or self-host the same application code with your own Firebase, Gemini, and Unipile accounts.
 
