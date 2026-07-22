@@ -20,7 +20,7 @@
     "@google/genai": "^1.51.0",
     "@whop/sdk": "^0.0.39",
     "firebase-admin": "^13.8.0",
-    "next": "16.2.10",
+    "next": "16.2.11",
     "posthog-js": "^1.374.2",
     "react": "19.2.4",
     "react-dom": "19.2.4",
