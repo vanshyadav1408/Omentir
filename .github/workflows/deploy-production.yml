@@ -1,0 +1,80 @@
+name: Deploy Production
+
+# Runs only for commits that reach main, plus manual dispatch. Neither trigger
+# is reachable by a fork or an outside contributor: pushing to main and
+# dispatching a workflow both require write access to this repository.
+#
+# Deploy secrets live in the `production` GitHub Environment, not at repository
+# level, so only the `deploy` job below can read them. The environment is
+# restricted to the main branch, and GitHub never exposes secrets to workflows
+# triggered by pull requests from forks.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: omentir-production
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx tsc --noEmit --pretty false
+      - run: npm test
+      - run: npm run lint:baseline
+      - run: npm run build
+
+  deploy:
+    needs: verify
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+    steps:
+      - name: Deploy to VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+          APP_COMMIT_SHA: ${{ github.sha }}
+          APP_REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          for required in VPS_HOST VPS_USER VPS_SSH_KEY; do
+            if [ -z "${!required}" ]; then
+              echo "Missing required secret: $required" >&2
+              exit 1
+            fi
+          done
+
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/omentir_vps
+          chmod 600 ~/.ssh/omentir_vps
+
+          # Prefer a pinned host key so the runner cannot be tricked into
+          # trusting an impostor host. Fall back to a scan if none is set.
+          if [ -n "$VPS_KNOWN_HOSTS" ]; then
+            printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          else
+            echo "VPS_KNOWN_HOSTS is not set; falling back to ssh-keyscan." >&2
+            ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
+          fi
+          chmod 600 ~/.ssh/known_hosts
+
+          ssh -i ~/.ssh/omentir_vps -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            "$VPS_USER@$VPS_HOST" \
+            "APP_COMMIT_SHA=$APP_COMMIT_SHA APP_REPOSITORY=$APP_REPOSITORY bash ~/scripts/deploy-omentir.sh"

@@ -45,7 +45,8 @@ next-env.d.ts
 /.clerk/
 
 # local agent/editor settings
-/.claude/settings.local.json
+/.claude/
+/.vscode/
 
 .vercel
 .env.local
