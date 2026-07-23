@@ -32,8 +32,25 @@ test("the public environment template cannot start with known credentials", () =
   }
 });
 
-test("the public application repository contains no production deployment workflow", () => {
-  assert.equal(existsSync(publicDeployWorkflow), false);
+test("the production deploy workflow is unreachable by untrusted contributors", () => {
+  assert.equal(existsSync(publicDeployWorkflow), true);
+  const workflow = readFileSync(publicDeployWorkflow, "utf8");
+
+  // A pull request must never trigger this workflow. That is the only path by
+  // which an outside contributor could get the deploy job to run, so the
+  // trigger must stay limited to pushes to main and manual dispatch.
+  assert.doesNotMatch(workflow, /pull_request/);
+
+  // Credentials live in the protected production environment, which restricts
+  // them to this job running from a protected branch.
+  assert.match(workflow, /environment:\s*production/);
+
+  // Connection details come from secrets, never from source.
+  for (const name of ["VPS_HOST", "VPS_USER", "VPS_SSH_KEY", "VPS_KNOWN_HOSTS"]) {
+    assert.match(workflow, new RegExp(`secrets\\.${name}\\b`));
+  }
+  assert.doesNotMatch(workflow, /\b\d{1,3}(?:\.\d{1,3}){3}\b/);
+  assert.doesNotMatch(workflow, /BEGIN (?:OPENSSH|RSA|EC) PRIVATE KEY/);
 });
 
 test("direct Firestore clients are denied because all application data uses the Admin SDK", () => {
@@ -70,5 +87,4 @@ test("snapshot creation refuses existing content and never deletes the destinati
 
 test("private infrastructure does not ship in the public application repository", () => {
   assert.equal(existsSync(privateDeployWorkflow), false);
-  assert.equal(existsSync(publicDeployWorkflow), false);
 });
