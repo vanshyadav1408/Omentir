@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { hostedContactEmail } from "@/lib/hosted-identity";
+import { hostedContactEmail, hostedGithubRepo } from "@/lib/hosted-identity";
 import { AskAiMenu } from "./ask-ai-menu";
+import GithubStarButton from "./github-star-button";
 import HeaderAuth from "./header-auth";
 import LogoMark from "./logo-mark";
 import MarketingHeaderFrame from "./marketing-header-frame";
@@ -20,6 +21,8 @@ export function MarketingHeader({ transparentAtTop = false }: { transparentAtTop
           <LogoMark className="h-8 w-8 md:h-9 md:w-9" />
           <span className="truncate">Omentir</span>
         </Link>
+
+        <GithubStarButton />
 
         <nav className="hidden min-w-0 flex-1 items-center justify-center gap-1 text-sm font-medium text-[var(--md-sys-color-on-surface-variant)] md:flex lg:absolute lg:left-1/2 lg:flex-none lg:-translate-x-1/2">
           <Link href="/for-agents" className="m3-state-layer rounded-full px-3 py-2 transition-colors hover:text-[var(--md-sys-color-on-surface)]">For Agents</Link>
@@ -52,6 +55,7 @@ const footerColumns: Array<[string, ...Array<[label: string, href: string]>]> = 
     ["For Agents", "/for-agents"],
     ["MCP Server", "/mcp-server"],
     ["Blogs", "/blogs"],
+    ["Open Source", "/blogs/omentir-is-now-open-source"],
   ],
   [
     "Company",
@@ -67,6 +71,7 @@ const footerSocialLinks = [
   { label: "Email", href: `mailto:${hostedContactEmail()}`, orderClassName: "order-3" },
   { label: "LinkedIn", href: "https://www.linkedin.com/company/121943897", orderClassName: "order-1" },
   { label: "Twitter", href: "https://x.com/OmentirAI", orderClassName: "order-2" },
+  { label: "GitHub", href: `https://github.com/${hostedGithubRepo()}`, orderClassName: "order-4" },
 ];
 
 function FooterSocialIcon({ label }: { label: string }) {
@@ -82,6 +87,14 @@ function FooterSocialIcon({ label }: { label: string }) {
     return (
       <svg viewBox="0 0 24 24" className="h-7 w-7" fill="currentColor" aria-hidden="true">
         <path d="m14.2 10.6 6.6-7.6h-1.6l-5.7 6.6L8.9 3H3.6l6.9 10-6.9 8h1.6l6-7 4.8 7h5.3l-7.1-10.4Zm-2.1 2.5-.7-1L5.9 4.2h2.2l4.5 6.4.7 1 5.8 8.2h-2.2l-4.8-6.7Z" />
+      </svg>
+    );
+  }
+
+  if (label === "GitHub") {
+    return (
+      <svg viewBox="0 0 16 16" className="h-7 w-7" fill="currentColor" aria-hidden="true">
+        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z" />
       </svg>
     );
   }
@@ -105,7 +118,8 @@ export function MarketingFooter() {
             Omentir
           </div>
           <p className="mt-4 max-w-sm text-sm leading-6 text-zinc-400">
-            Find your next customers with Omentir.
+            Find your next customers with Omentir. Open source and MIT
+            licensed.
           </p>
           <div className="mt-5 flex items-center gap-6">
             {footerSocialLinks.map((item) => (

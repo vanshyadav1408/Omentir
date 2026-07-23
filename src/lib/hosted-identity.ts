@@ -60,3 +60,8 @@ export function hostedNewSignupTo() {
 export function hostedWelcomeFrom() {
   return envOr("HOSTED_WELCOME_FROM", "Vansh from Omentir <hi@omentir.com>");
 }
+
+/** Public source repository, shown in marketing as `owner/name`. */
+export function hostedGithubRepo() {
+  return envOr("HOSTED_GITHUB_REPO", "vanshyadav1408/Omentir");
+}

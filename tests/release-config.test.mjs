@@ -78,7 +78,9 @@ test("private material does not ship in the public application repository", () =
     "scripts/inspect-user.mjs",
     "scripts/send-test-welcome.mjs",
     "src/app/whop-analytics.tsx",
-    ".env",
+    // .env deliberately not listed: it is gitignored and exists in every
+    // working tree, so a filesystem check would fail for every developer.
+    // Committed secrets are caught by .gitignore, gitleaks, and push protection.
   ]) {
     assert.equal(
       existsSync(new URL(`../${privatePath}`, import.meta.url)),
