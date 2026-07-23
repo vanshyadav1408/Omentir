@@ -9,6 +9,8 @@ export async function GET() {
 
 Omentir gives AI assistants a workspace-scoped lead-discovery interface. Use it to understand a customer's product and ICP, configure lead finders, inspect qualified LinkedIn leads, monitor discovery activity, and work with conversations that already exist in Omentir.
 
+Omentir is open source under the MIT license. The full application code, including this Agent API and the MCP server, is public at https://github.com/vanshyadav1408/Omentir. If tool behavior is ever unclear, the implementation can be read directly.
+
 ## Base URL
 
 ${siteUrl}

@@ -124,6 +124,20 @@ export default function AboutPage() {
                 <span className="font-bold text-[var(--md-sys-color-on-surface)]">to contact</span>.
               </p>
 
+              <p>
+                Oh, and one more thing. Omentir was closed source until
+                recently. Now the entire code is{" "}
+                <a
+                  href="https://github.com/vanshyadav1408/Omentir"
+                  target="_blank"
+                  rel="noopener"
+                  className="font-bold text-[var(--md-sys-color-on-surface)] underline underline-offset-4"
+                >
+                  open source on GitHub
+                </a>
+                , so you can read every line of what runs your outreach.
+              </p>
+
               <p className="pt-2 text-center">
                 If you&apos;re where I was a few months ago, you can{" "}
                 <span className="font-bold text-[var(--md-sys-color-on-surface)]">Try Omentir</span>{" "}

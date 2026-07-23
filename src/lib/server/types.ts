@@ -35,8 +35,8 @@ export type Workspace = {
   ownerId: string;
   name: string;
   notificationEmail?: string;
-  // IANA timezone (e.g. "Asia/Kolkata") used for local-time features like the
-  // daily digest send hour. Unset means UTC.
+  // IANA timezone (e.g. "America/New_York") used for local-time features like
+  // the daily digest send hour. Unset means UTC.
   timezone?: string;
   billing?: WorkspaceBilling;
   onboarding?: WorkspaceOnboarding;

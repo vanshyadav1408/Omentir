@@ -6,8 +6,8 @@ import { getAppBaseUrl } from "@/lib/server/runtime-config";
 
 export const dynamic = "force-dynamic";
 
-// Behind nginx/PM2, request.url origin is localhost:3000 — never use it for
-// browser redirects. Prefer configured public URL, then production host.
+// Behind a reverse proxy, request.url origin is often localhost:3000 — never
+// use it for browser redirects. Prefer the configured public APP_BASE_URL.
 export async function GET(request: NextRequest) {
   if (isLocalMode()) return new NextResponse(null, { status: 404 });
   const { userId } = await auth();

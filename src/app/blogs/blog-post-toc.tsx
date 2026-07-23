@@ -58,7 +58,7 @@ export function BlogPostMobileToc({ tocItems }: BlogPostTocProps) {
   if (tocItems.length === 0) return null;
 
   return (
-    <div className="mb-6 block rounded-xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container)] p-4 shadow-[var(--md-sys-card-elevation-rest)] md:hidden">
+    <div className="blog-post-toc mb-6 block rounded-xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container)] p-4 shadow-[var(--md-sys-card-elevation-rest)] md:hidden">
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
@@ -137,7 +137,7 @@ export function BlogPostDesktopToc({ tocItems }: BlogPostTocProps) {
   if (tocItems.length === 0) return null;
 
   return (
-    <aside className="sticky top-24 hidden w-full shrink-0 self-start border-l border-[var(--md-sys-color-outline-variant)] py-1 pl-5 md:block">
+    <aside className="blog-post-toc sticky top-24 hidden w-full shrink-0 self-start border-l border-[var(--md-sys-color-outline-variant)] py-1 pl-5 md:block">
       <h4
         style={{ fontFamily: "var(--font-varta)" }}
         className="mb-4 text-xs font-bold uppercase tracking-wider text-[var(--md-sys-color-primary)]"

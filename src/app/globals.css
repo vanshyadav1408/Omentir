@@ -190,7 +190,7 @@ html[data-theme="dark"] {
   --google-primary: #f2b8c6;
   --google-primary-container: #6b1a40;
   --google-on-primary-container: #ffd9e6;
-  --google-on-primary: #3b001f;
+  --google-on-primary: #000000;
 
   /* Typography alpha hierarchy — secondary kept bright enough for long-form body */
   --google-text-primary: rgba(255, 255, 255, 0.92);
@@ -2429,6 +2429,42 @@ html[data-theme="dark"] .blog-article a {
 html.dark .blog-article a:hover,
 html[data-theme="dark"] .blog-article a:hover {
   color: var(--md-ref-primary-80, #f2b8c6) !important;
+}
+
+/* Filled pink links/buttons must not inherit the article link color. */
+:is(html.dark, html[data-theme="dark"]) .blog-article :is(a, button).m3-btn-filled,
+:is(html.dark, html[data-theme="dark"]) .blog-article :is(a, button)[class~="bg-[#ba3871]"],
+:is(html.dark, html[data-theme="dark"]) .blog-article :is(a, button)[class~="bg-[var(--md-sys-color-primary)]"],
+:is(html.dark, html[data-theme="dark"]) .blog-article :is(a, button)[class~="bg-[var(--md-sys-color-seed)]"] {
+  color: var(--md-sys-color-on-primary) !important;
+}
+
+/* V2 launch CTAs keep distinct, readable fills in dark mode. */
+html.dark .blog-article .v2-dashboard-button,
+html[data-theme="dark"] .blog-article .v2-dashboard-button {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+html.dark .blog-article .v2-pricing-button,
+html[data-theme="dark"] .blog-article .v2-pricing-button {
+  background-color: var(--md-sys-color-seed) !important;
+  border-color: var(--md-sys-color-seed) !important;
+  color: #000000 !important;
+}
+
+html.dark .blog-article a.blog-github-button,
+html[data-theme="dark"] .blog-article a.blog-github-button {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+/* Let the table of contents blend into the dark blog canvas. */
+html.dark .blog-post-page .blog-post-toc,
+html[data-theme="dark"] .blog-post-page .blog-post-toc {
+  background-color: var(--google-bg) !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
 }
 
 /* Callout / highlight cards (warm paper → elevated charcoal) */

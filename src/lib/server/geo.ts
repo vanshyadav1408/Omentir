@@ -2,10 +2,10 @@ import type { Agent, ProductProfile } from "./types";
 
 // Location enforcement for lead discovery. LinkedIn returns whatever the
 // searching account's network surfaces, ignoring the target country entirely -
-// so an India-based account keyword-searching "Head of Sales" gets India-heavy
-// results even when the agent targets the US/UK. We enforce the target country
-// ourselves by matching each discovered lead's profile location against the
-// agent's target locations and dropping the ones that clearly don't belong.
+// so a search for "Head of Sales" often over-weights the account owner's home
+// market even when the agent targets another region. We enforce the target
+// country ourselves by matching each discovered lead's profile location against
+// the agent's target locations and dropping the ones that clearly don't belong.
 //
 // Matching is deliberately country-level and alias-aware: LinkedIn locations
 // rarely name the country ("San Francisco Bay Area", "Greater London",

@@ -12,6 +12,17 @@ export interface BlogItem {
 
 export const ALL_BLOGS: BlogItem[] = [
   {
+    slug: "omentir-is-now-open-source",
+    title: "Omentir is now open source",
+    description: "Until today, Omentir's code was private. Now the full source code is public on GitHub under the MIT license. Here is why we did it and what it means for you.",
+    publishedDate: "July 23, 2026",
+    updatedDate: "July 23, 2026",
+    category: "Updates",
+    readTime: "4 min read",
+    bannerSrc: "/omentir-open-source-banner-dark.png",
+    bannerAlt: "Omentir open source announcement banner",
+  },
+  {
     slug: "introducing-omentir-v2",
     title: "Introducing Omentir v2",
     description: "Omentir v2 introduces simpler pricing, Agent API, and connectors for AI agents to make outreach dead simple.",
@@ -1440,4 +1451,3 @@ export const ALL_BLOGS: BlogItem[] = [
 ];
 
 export const CATEGORIES = ["All", "Updates", "Playbooks", "Outreach", "Guides", "Case Studies", "Copywriting", "Automation", "Comparisons"];
-

@@ -157,6 +157,11 @@ const faqItems = [
     answer:
       "Point it at omentir.com/agents.md. It's a markdown guide written for assistants: the recommended call order (context → product profile → existing agents → discovery → activity → leads), the full tool list, and guardrails for retries, asynchronous results, and existing conversations.",
   },
+  {
+    question: "Is the MCP server open source?",
+    answer:
+      "Yes. Omentir was closed source until July 2026 and is now fully open source under the MIT license. The hosted MCP server runs the same code that is public on GitHub, so you can inspect every tool's implementation - or self-host the whole application with Docker.",
+  },
 ];
 
 export default function McpServerPage() {

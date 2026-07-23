@@ -234,6 +234,11 @@ const faqItems = [
     answer:
       "Point it at omentir.com/agents.md - a machine-readable guide with the recommended workflow, tool list, and guardrails. MCP agents also discover every tool automatically through tools/list.",
   },
+  {
+    question: "Is the Agent API open source?",
+    answer:
+      "Yes. Omentir started closed source and is now fully open source under the MIT license. The entire application, including the Agent API routes and the MCP server, is public on GitHub, so you can read the exact implementation behind every endpoint before wiring an agent to it.",
+  },
 ];
 
 // REST surface under /api/agent/v1 - methods verified against the route files.

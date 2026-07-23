@@ -342,13 +342,13 @@ export default function BlogPost() {
       <div className="my-10 flex flex-wrap gap-3">
         <Link
           href="/dashboard"
-          className="inline-flex h-11 items-center justify-center rounded-md bg-black px-5 text-sm font-semibold text-white transition hover:bg-zinc-800"
+          className="v2-dashboard-button inline-flex h-11 items-center justify-center rounded-md bg-black px-5 text-sm font-semibold text-white transition hover:bg-zinc-800"
         >
           Dashboard
         </Link>
         <Link
           href="/pricing"
-          className="inline-flex h-11 items-center justify-center rounded-md border border-black px-5 text-sm font-semibold text-black transition hover:bg-black hover:text-white"
+          className="v2-pricing-button inline-flex h-11 items-center justify-center rounded-md border border-[var(--md-sys-color-seed)] bg-[var(--md-sys-color-seed)] px-5 text-sm font-semibold text-black transition hover:brightness-95"
         >
           Pricing
         </Link>

@@ -192,6 +192,7 @@ export const organizationJsonLd = {
   sameAs: [
     "https://www.linkedin.com/company/121943897",
     "https://x.com/OmentirAI",
+    "https://github.com/vanshyadav1408/Omentir",
   ],
   contactPoint: {
     "@type": "ContactPoint",
@@ -204,6 +205,7 @@ export const organizationJsonLd = {
     "B2B outbound sales",
     "AI SDR software",
     "sales prospecting",
+    "open-source sales software",
   ],
 };
 
@@ -233,6 +235,7 @@ export const softwareApplicationJsonLd = {
   ],
   applicationCategory: "BusinessApplication",
   operatingSystem: "Web",
+  license: "https://github.com/vanshyadav1408/Omentir/blob/main/LICENSE",
   url: siteUrl,
   description: defaultDescription,
   inLanguage: "en-US",

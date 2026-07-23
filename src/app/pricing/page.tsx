@@ -41,6 +41,11 @@ const faqItems = [
       "Enterprise is custom and built for teams that need unlimited LinkedIn accounts, unlimited AI agents, managed campaigns, SSO, onboarding, and a dedicated support manager.",
   },
   {
+    question: "Can I self-host Omentir instead of paying?",
+    answer:
+      "Yes. Omentir is open source under the MIT license, and the repository ships with a Docker setup for running it on your own infrastructure with your own Firebase, Unipile, and AI provider accounts. The paid plans are the managed version: we run the servers, providers, updates, and support for you.",
+  },
+  {
     question: "Can I control sending limits?",
     answer:
       "Yes. Omentir is built around safe, human-paced outreach. Users can control sending limits from Settings, and campaigns still respect LinkedIn provider, billing, and infrastructure limits.",

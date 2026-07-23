@@ -276,9 +276,9 @@ function parseBrowser(userAgent: string) {
   return userAgent ? "Unknown" : "Unknown";
 }
 
-function formatIstTime(date = new Date()) {
-  return new Intl.DateTimeFormat("en-IN", {
-    timeZone: "Asia/Kolkata",
+function formatUtcTime(date = new Date()) {
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "UTC",
     dateStyle: "medium",
     timeStyle: "long",
   }).format(date);
@@ -353,7 +353,7 @@ export async function completeOnboardingQuestionsAction(formData: FormData) {
         os: parseOs(userAgent),
         browser: parseBrowser(userAgent),
         answers: onboarding,
-        signedUpAtIst: formatIstTime(),
+        signedUpAtUtc: formatUtcTime(),
       });
     } catch (error) {
       console.error("Failed to send new signup notification", error);

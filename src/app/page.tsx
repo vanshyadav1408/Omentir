@@ -343,6 +343,16 @@ const comparisonRows: { dimension: string; cells: ComparisonCell[] }[] = [
     ],
   },
   {
+    dimension: "Open source",
+    cells: [
+      { text: "Fully open source - MIT licensed, self-hostable, every line public on GitHub", mark: "yes" },
+      { text: "Closed source", mark: "no" },
+      { text: "Closed source", mark: "no" },
+      { text: "Closed source", mark: "no" },
+      { text: "Closed source", mark: "no" },
+    ],
+  },
+  {
     dimension: "Pricing & setup",
     cells: [
       { text: "$29/month, live in minutes", mark: "yes" },
@@ -490,6 +500,11 @@ const faqItems = [
       "Completely. The AI writes context-aware drafts using each prospect's profile and your product, and you can edit them, approve them, or write every message yourself. AI also handles replies for you until you decide to step in.",
   },
   {
+    question: "Is Omentir open source?",
+    answer:
+      "Yes. Omentir started out closed source, but in July 2026 we made the full source code public on GitHub under the MIT license - the same code that runs the hosted product. You can read exactly how outreach and account safety work, or even self-host it with Docker.",
+  },
+  {
     question: "How much does Omentir cost?",
     answer:
       "Basic is $29/month and includes 1 LinkedIn account, 1 AI agent, 1 campaign, and 50 leads per day. The Startup plan is $59/month and supports up to 3 LinkedIn accounts and 3 AI agents. Teams that need managed campaigns, SSO, or custom support can book a demo for Enterprise.",
@@ -549,6 +564,27 @@ export default function Home() {
         <section className="relative z-10 w-full">
           <div className="relative mx-auto flex min-h-screen w-full max-w-4xl min-w-0 flex-col items-center justify-center px-4 py-24 text-center md:px-8 md:py-32">
             <div className="mx-auto flex w-full min-w-0 flex-col items-center">
+              <Link
+                href="/blogs/omentir-is-now-open-source"
+                className="hero-enter mb-6 inline-flex items-center gap-2 rounded-full border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container)] px-4 py-1.5 text-xs font-medium text-[var(--md-sys-color-on-surface-variant)] transition-colors hover:text-[var(--md-sys-color-on-surface)] md:text-sm"
+              >
+                <span className="text-gradient-brand font-semibold">New</span>
+                Omentir is now open source
+                <svg
+                  viewBox="0 0 10 16"
+                  aria-hidden="true"
+                  className="h-3.5 w-2"
+                  fill="none"
+                >
+                  <path
+                    d="M1 8h7M5 4l4 4-4 4"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </Link>
               <HeroCopyToggle>
                 <div className="hero-enter hero-enter-delay-2 flex w-full min-w-0 flex-col items-center">
                   <HeroCta />
@@ -682,6 +718,20 @@ export default function Home() {
               </span>
               {", because in Quenya, it means "}
               <span className="font-bold text-[var(--md-sys-color-on-surface)]">to contact</span>.
+            </p>
+
+            <p>
+              Oh, and one more thing. Omentir was closed source until recently.
+              Now the entire code is{" "}
+              <a
+                href="https://github.com/vanshyadav1408/Omentir"
+                target="_blank"
+                rel="noopener"
+                className="font-bold text-[var(--md-sys-color-on-surface)] underline underline-offset-4"
+              >
+                open source on GitHub
+              </a>
+              , so you can read every line of what runs your outreach.
             </p>
 
             <p className="pt-2 text-center">

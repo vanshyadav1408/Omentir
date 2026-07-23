@@ -624,7 +624,7 @@ type NewSignupNotificationInput = {
     companySize: string;
     goal: string;
   };
-  signedUpAtIst: string;
+  signedUpAtUtc: string;
 };
 
 function buildNewSignupNotificationEmail(input: NewSignupNotificationInput) {
@@ -637,7 +637,7 @@ function buildNewSignupNotificationEmail(input: NewSignupNotificationInput) {
     ["Device Type", input.deviceType],
     ["OS", input.os],
     ["Browser", input.browser],
-    ["Time they signup (IST)", input.signedUpAtIst],
+    ["Signup time (UTC)", input.signedUpAtUtc],
     ["Where did you hear about us?", input.answers.source],
     ["What is your job?", input.answers.role],
     ["Company size", input.answers.companySize],

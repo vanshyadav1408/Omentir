@@ -64,12 +64,12 @@ export default function BlogsList({ blogs, categories }: BlogsListProps) {
 
   // Curate 6 featured articles
   const featuredSlugs = useMemo(() => [
+    "omentir-is-now-open-source",
     "introducing-omentir-v2",
     "openclaw-vs-chatgpt-sales",
     "mcp-outreach-tools",
     "openclaw-outreach-flows",
-    "mcp-linkedin-outreach",
-    "agent-led-sales-outreach"
+    "mcp-linkedin-outreach"
   ], []);
 
   const featuredBlogs = useMemo(() => {
