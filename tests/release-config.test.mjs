@@ -4,7 +4,6 @@ import test from "node:test";
 
 const envExample = readFileSync(new URL("../.env.example", import.meta.url), "utf8");
 const publicDeployWorkflow = new URL("../.github/workflows/deploy-production.yml", import.meta.url);
-const privateDeployWorkflow = new URL("../private-infra/deploy-production.yml", import.meta.url);
 const hostedIdentity = readFileSync(
   new URL("../src/lib/hosted-identity.ts", import.meta.url),
   "utf8",
