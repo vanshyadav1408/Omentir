@@ -2,18 +2,40 @@ import type { MetadataRoute } from "next";
 import { ALL_BLOGS } from "./blogs/blog-data";
 import { siteUrl } from "./seo";
 
+// `lastModified` is hardcoded per route rather than set to build time on
+// purpose: stamping `new Date()` would tell crawlers every page changed on
+// every deploy, and Google discounts a lastmod signal it finds inaccurate.
+// Bump a route's date when that page's content meaningfully changes.
+// `/blogs` is the exception — it is derived below from the newest post, which
+// is genuinely when the index last changed.
 const publicRoutes = [
-  { path: "/", changeFrequency: "weekly", priority: 1.0 },
+  { path: "/", changeFrequency: "weekly", priority: 1.0, lastModified: "2026-07-18" },
   { path: "/blogs", changeFrequency: "weekly", priority: 0.9 },
-  { path: "/pricing", changeFrequency: "monthly", priority: 0.8 },
-  { path: "/for-agents", changeFrequency: "monthly", priority: 0.8 },
-  { path: "/mcp-server", changeFrequency: "monthly", priority: 0.8 },
-  { path: "/about", changeFrequency: "monthly", priority: 0.7 },
-  { path: "/llms.txt", changeFrequency: "monthly", priority: 0.4 },
-  { path: "/agents.md", changeFrequency: "monthly", priority: 0.4 },
-  { path: "/privacy-policy", changeFrequency: "yearly", priority: 0.3 },
-  { path: "/terms-of-service", changeFrequency: "yearly", priority: 0.3 },
-] as const;
+  { path: "/pricing", changeFrequency: "monthly", priority: 0.8, lastModified: "2026-07-16" },
+  { path: "/for-agents", changeFrequency: "monthly", priority: 0.8, lastModified: "2026-07-22" },
+  { path: "/mcp-server", changeFrequency: "monthly", priority: 0.8, lastModified: "2026-07-22" },
+  { path: "/about", changeFrequency: "monthly", priority: 0.7, lastModified: "2026-07-17" },
+  { path: "/llms.txt", changeFrequency: "monthly", priority: 0.4, lastModified: "2026-07-17" },
+  { path: "/agents.md", changeFrequency: "monthly", priority: 0.4, lastModified: "2026-07-22" },
+  { path: "/privacy-policy", changeFrequency: "yearly", priority: 0.3, lastModified: "2026-07-06" },
+  { path: "/terms-of-service", changeFrequency: "yearly", priority: 0.3, lastModified: "2026-07-06" },
+] as const satisfies ReadonlyArray<{
+  path: string;
+  changeFrequency: "weekly" | "monthly" | "yearly";
+  priority: number;
+  lastModified?: string;
+}>;
+
+function blogDate(blog: (typeof ALL_BLOGS)[number]) {
+  return new Date(blog.updatedDate || blog.publishedDate);
+}
+
+function latestBlogDate() {
+  return ALL_BLOGS.reduce((newest, blog) => {
+    const date = blogDate(blog);
+    return date > newest ? date : newest;
+  }, new Date(0));
+}
 
 const highIntentBlogSlugs = new Set([
   "instantly-alternatives-autonomous-ai-salesman",
@@ -50,15 +72,19 @@ const highIntentBlogSlugs = new Set([
 ]);
 
 export default function sitemap(): MetadataRoute.Sitemap {
+  const blogsIndexDate = latestBlogDate();
+
   const mainRoutes = publicRoutes.map((route) => ({
     url: `${siteUrl}${route.path}`,
+    lastModified:
+      route.path === "/blogs" ? blogsIndexDate : new Date(route.lastModified),
     changeFrequency: route.changeFrequency,
     priority: route.priority,
   }));
 
   const blogRoutes = ALL_BLOGS.map((blog) => ({
     url: `${siteUrl}/blogs/${blog.slug}`,
-    lastModified: new Date(blog.updatedDate || blog.publishedDate),
+    lastModified: blogDate(blog),
     images: [`${siteUrl}${blog.bannerSrc}`],
     changeFrequency: "monthly" as const,
     priority: highIntentBlogSlugs.has(blog.slug) ? 0.75 : 0.6,

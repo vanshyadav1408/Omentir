@@ -70,6 +70,7 @@ export function validateRuntimeConfig(env: NodeJS.ProcessEnv = process.env) {
   }
 
   const sessionSecret = requiredSecret(env, "LOCAL_SESSION_SECRET");
+  // Password is required unless LOCAL_ALLOW_OPEN_ACCESS=true (explicit opt-in).
   if (isLocalPasswordRequired(env)) {
     const password = requiredSecret(env, "LOCAL_APP_PASSWORD");
     requireEntropy(password, "LOCAL_APP_PASSWORD", 12, 6);

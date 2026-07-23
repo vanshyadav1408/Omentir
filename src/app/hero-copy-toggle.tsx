@@ -95,7 +95,14 @@ export default function HeroCopyToggle({ children }: { children: ReactNode }) {
         </p>
       </div>
       <div className="hero-outreach-agentic-copy">
-        <h1
+        {/* Both copy variants render server-side and are swapped with CSS, so a
+            second <h1> here would put two of them in the crawled markup and split
+            the page's strongest on-page signal. The normal-outreach copy above
+            owns the only <h1>; this variant carries the same heading semantics
+            for assistive tech via role/aria-level, which search parsers ignore. */}
+        <div
+          role="heading"
+          aria-level={1}
           style={{ fontFamily: "var(--font-google-sans)" }}
           className="hero-enter w-full max-w-5xl text-[clamp(1.5rem,7vw,1.75rem)] leading-[1.15] font-bold tracking-tight text-[var(--md-sys-color-on-surface)] md:text-5xl md:leading-tight lg:text-6xl lg:leading-tight"
         >
@@ -106,7 +113,7 @@ export default function HeroCopyToggle({ children }: { children: ReactNode }) {
               agents={["OpenClaw", "Cursor", "ChatGPT", "Hermes Agent", "Gemini"]}
             />
           </span>
-        </h1>
+        </div>
         <p
           style={{ fontFamily: "var(--font-roboto)" }}
           className="hero-enter hero-enter-delay-1 mt-4 max-w-2xl text-[0.9375rem] leading-6 text-[var(--md-sys-color-on-surface-variant)] md:mt-6 md:text-base md:leading-8 lg:text-lg"

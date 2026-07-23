@@ -13,7 +13,7 @@ import {
   processInboundMessage,
 } from "@/lib/server/inbound";
 import { passwordsMatch } from "@/lib/local-session";
-import { rateLimit } from "@/lib/request-rate-limit";
+import { rateLimitRequestShared } from "@/lib/request-rate-limit";
 import { readJsonBody, RequestBodyTooLargeError } from "@/lib/server/request-body";
 
 export const dynamic = "force-dynamic";
@@ -77,7 +77,14 @@ export async function POST(request: NextRequest) {
   if (!isAuthorized(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if (!rateLimit("unipile-webhook:authorized", 600, 60_000)) {
+  if (
+    !(await rateLimitRequestShared(request, "unipile-webhook", {
+      sourceKey: "authorized-provider",
+      perSource: 600,
+      global: 600,
+      windowMs: 60_000,
+    }))
+  ) {
     return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }
 

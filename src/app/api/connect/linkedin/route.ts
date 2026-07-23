@@ -19,13 +19,12 @@ export async function GET(request: NextRequest) {
   const failurePath = isReconnect ? "/reconnect?error=1" : "/connect?error=1";
 
   try {
-    const notifyUrl = new URL(`${appUrl}/api/connect/callback`);
     const callbackToken = await createLinkedInConnectToken(userId);
     const url = await createLinkedInAuthLink({
       callbackToken,
       successRedirectUrl: `${appUrl}${isReconnect ? "/reconnect/success" : "/connect/success"}`,
       failureRedirectUrl: `${appUrl}${failurePath}`,
-      notifyUrl: notifyUrl.toString(),
+      notifyUrl: `${appUrl}/api/connect/callback`,
     });
 
     return NextResponse.redirect(url);

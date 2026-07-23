@@ -1,6 +1,8 @@
 import { auth } from "@/lib/server/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { findPreviewLeadsWithGemini } from "@/lib/server/gemini";
+import { rateLimitRequestShared } from "@/lib/request-rate-limit";
+import { readJsonBody, RequestBodyTooLargeError } from "@/lib/server/request-body";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +17,27 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+  if (
+    !(await rateLimitRequestShared(request, "lead-preview", {
+      sourceKey: userId,
+      perSource: 10,
+      global: 100,
+      windowMs: 60 * 60 * 1000,
+    }))
+  ) {
+    return NextResponse.json({ error: "Too many lead preview requests." }, { status: 429 });
+  }
+
+  let body: Record<string, unknown>;
+  try {
+    body = (await readJsonBody<Record<string, unknown>>(request, 32 * 1024)) || {};
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) {
+      return NextResponse.json({ error: error.message }, { status: 413 });
+    }
+    throw error;
+  }
+
   const websiteUrl = String(body.websiteUrl || "").trim().slice(0, 500);
   const productOverview = String(body.productOverview || "").trim().slice(0, 4000);
 

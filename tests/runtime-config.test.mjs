@@ -33,8 +33,19 @@ test("disabled automation permits a local instance without a cron secret", () =>
   assert.equal(validateRuntimeConfig({ ...withoutCron, AUTOMATION_DISABLED: "true" }).mode, "local");
 });
 
-test("local password is optional but validated when configured", () => {
-  assert.equal(validateRuntimeConfig({ ...local, LOCAL_APP_PASSWORD: "" }).mode, "local");
+test("local password is required unless open access is explicitly allowed", () => {
+  assert.throws(
+    () => validateRuntimeConfig({ ...local, LOCAL_APP_PASSWORD: "" }),
+    /LOCAL_APP_PASSWORD/,
+  );
+  assert.equal(
+    validateRuntimeConfig({
+      ...local,
+      LOCAL_APP_PASSWORD: "",
+      LOCAL_ALLOW_OPEN_ACCESS: "true",
+    }).mode,
+    "local",
+  );
   assert.throws(
     () => validateRuntimeConfig({ ...local, LOCAL_APP_PASSWORD: "short" }),
     /at least 12/,

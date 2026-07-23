@@ -6,7 +6,9 @@ services:
     restart: unless-stopped
     stop_grace_period: 30s
     ports:
-      - "3000:3000"
+      # Bind loopback by default so a passwordless or misconfigured instance
+      # is not exposed on the public network interface.
+      - "127.0.0.1:3000:3000"
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
       interval: 30s

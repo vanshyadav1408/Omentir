@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSurvey } from "@/app/surveys/survey-data";
 import { getDb, nowIso } from "@/lib/server/firebase";
-import { rateLimitRequest } from "@/lib/request-rate-limit";
+import { rateLimitRequestShared } from "@/lib/request-rate-limit";
 import { readJsonBody, RequestBodyTooLargeError } from "@/lib/server/request-body";
 
 export const dynamic = "force-dynamic";
@@ -16,11 +16,13 @@ type SubmitBody = {
 };
 
 export async function POST(request: NextRequest) {
-  if (!rateLimitRequest(request, "survey-submit", {
-    perSource: 10,
-    global: 300,
-    windowMs: 60 * 1000,
-  })) {
+  if (
+    !(await rateLimitRequestShared(request, "survey-submit", {
+      perSource: 10,
+      global: 300,
+      windowMs: 60 * 1000,
+    }))
+  ) {
     return NextResponse.json({ error: "Too many survey submissions." }, { status: 429 });
   }
   let body: SubmitBody | null;

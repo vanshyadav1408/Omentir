@@ -770,9 +770,6 @@ export default function AgentSetup({
   // Inline wait-time editor between sequence blocks
   const [editWaitId, setEditWaitId] = useState<string | null>(null);
 
-  // Preview modal
-  const [previewOpen, setPreviewOpen] = useState(false);
-  const [previewLead, setPreviewLead] = useState("");
   const [setupStepError, setSetupStepError] = useState("");
 
   const steps = useMemo(() => {
@@ -1888,14 +1885,6 @@ export default function AgentSetup({
               </div>
 
               <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-5 py-5">
-                {/* Manual outreach: every step sends the message you write. */}
-                <div className="rounded-lg border border-[#e85e6b] bg-[#fff5f6] p-4 text-center">
-                  <div style={{ fontFamily: "var(--font-varta)" }} className="text-[14px] font-semibold text-zinc-950">
-                    Same message for everyone
-                  </div>
-                  <div className="mt-0.5 text-[12px] font-medium text-zinc-700">Use variables to craft your message</div>
-                </div>
-
                 {/* Include note toggle - only for connect step in manual mode */}
                 {editingAction.kind === "connect" && editStepMode === "manual" ? (
                   <div className="flex items-center justify-between rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3">
@@ -1941,16 +1930,6 @@ export default function AgentSetup({
                       ))}
                       <span className="ml-auto text-[12px] font-medium text-zinc-600">{editStepMessage.length}/1900</span>
                     </div>
-
-                    {/* Preview link */}
-                    <button
-                      type="button"
-                      onClick={() => setPreviewOpen(true)}
-                      style={{ fontFamily: "var(--font-varta)" }}
-                      className="self-start text-[13px] font-semibold text-[#e85e6b] hover:underline"
-                    >
-                      Preview message for a lead -&gt;
-                    </button>
                   </div>
                 ) : null}
 
@@ -1993,58 +1972,6 @@ export default function AgentSetup({
                   className="m3-dialog-btn m3-dialog-btn--filled"
                 >
                   Save step
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : null}
-
-        {/* -- Preview modal -- */}
-        {previewOpen ? (
-          <div
-            className="m3-dialog-scrim z-[60]"
-            role="presentation"
-            onClick={() => setPreviewOpen(false)}
-          >
-            <div
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="agent-preview-title"
-              className="m3-dialog-surface"
-              onClick={(event) => event.stopPropagation()}
-            >
-              <h2 id="agent-preview-title" className="m3-dialog-title">
-                Preview message
-              </h2>
-              <p className="m3-dialog-body">
-                Select a lead to see how the message will look
-              </p>
-              <div className="mt-4 grid gap-1.5">
-                <span className="text-[13px] font-medium text-[var(--md-sys-color-on-surface)]">
-                  Select contact
-                </span>
-                <SelectField
-                  options={[{ value: "lead1", label: "Sample Lead 1" }, { value: "lead2", label: "Sample Lead 2" }]}
-                  value={previewLead}
-                  onChange={setPreviewLead}
-                  placeholder="Choose a lead..."
-                />
-              </div>
-              {previewLead ? (
-                <div className="mt-4 rounded-lg bg-[var(--md-sys-color-surface-container-low)] p-3 text-[13px] leading-5 text-[var(--md-sys-color-on-surface-variant)]">
-                  {editStepMessage
-                    .replace("{{firstName}}", "Alex")
-                    .replace("{{lastName}}", "Johnson")
-                    .replace("{{company}}", "Acme Corp") || <span className="italic">No message to preview.</span>}
-                </div>
-              ) : null}
-              <div className="m3-dialog-actions">
-                <button
-                  type="button"
-                  onClick={() => setPreviewOpen(false)}
-                  className="m3-dialog-btn m3-dialog-btn--text"
-                >
-                  Close
                 </button>
               </div>
             </div>

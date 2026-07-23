@@ -38,13 +38,21 @@ async function expectedWhopPlan(
   const configuredPlans = getConfiguredWhopPlanIds();
   const hasConfiguredPlan = Boolean(configuredPlans.solo || configuredPlans.startup);
 
-  // Configured plan ids are the strongest signal, but checkout metadata (set
-  // by our own /checkout route, on a signature-verified webhook) must still
-  // activate purchases whose plan id isn't configured - otherwise a paying
-  // customer on the other plan is silently ignored.
+  // Never default to a plan when ids are missing — misconfigured deploys must
+  // fail closed rather than activating every payment as "startup".
+  if (!hasConfiguredPlan) {
+    await logAutomationRun({
+      kind: "webhook",
+      status: "completed",
+      message: `Ignored Whop activation ${sourceId}: no WHOP_*_PLAN_ID configured.`,
+    });
+    return null;
+  }
+
+  // Configured plan ids are the strongest signal; checkout metadata (set by
+  // our /checkout route on a signature-verified webhook) covers plan labels.
   const plan = planFromWhopPayload(payload) || requestedPlanFromMetadata(metadata);
   if (plan) return plan;
-  if (!hasConfiguredPlan) return "startup";
 
   await logAutomationRun({
     kind: "webhook",

@@ -8,7 +8,7 @@ import {
   upsertProductProfile,
 } from "@/lib/server/data";
 import { analyzeWebsiteOrSearch } from "@/lib/server/gemini";
-import { rateLimitRequest } from "@/lib/request-rate-limit";
+import { rateLimitRequestShared } from "@/lib/request-rate-limit";
 import { readJsonBody, RequestBodyTooLargeError } from "@/lib/server/request-body";
 
 export const dynamic = "force-dynamic";
@@ -26,13 +26,21 @@ async function getSignedInWorkspaceId(userId: string) {
 
 export async function POST(request: NextRequest) {
   const { userId } = await auth();
-  if (!rateLimitRequest(request, "website-analysis", {
-    perSource: userId ? 30 : 10,
-    global: 200,
-    windowMs: 60 * 60 * 1000,
-  })) {
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (
+    !(await rateLimitRequestShared(request, "website-analysis", {
+      sourceKey: userId,
+      perSource: 20,
+      global: 120,
+      windowMs: 60 * 60 * 1000,
+    }))
+  ) {
     return NextResponse.json({ error: "Too many website analysis requests." }, { status: 429 });
   }
+
   let body: { websiteUrl?: string } | null;
   try {
     body = await readJsonBody<{ websiteUrl?: string }>(request, 8 * 1024);
@@ -48,35 +56,33 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Website URL is required." }, { status: 400 });
   }
 
-  const workspaceId = userId ? await getSignedInWorkspaceId(userId) : null;
+  const workspaceId = await getSignedInWorkspaceId(userId);
 
   try {
     const analysis = await analyzeWebsiteOrSearch(websiteUrl);
 
-    if (workspaceId) {
-      const existing = await getProductProfile(workspaceId);
-      await upsertProductProfile(workspaceId, {
-        websiteUrl,
-        description: analysis.productOverview,
-        companyName: analysis.companyName,
-        industry: analysis.industry,
-        companySize: analysis.companySize,
-        painPointsText: analysis.painPointsText,
-        keyFeatures: analysis.keyFeatures,
-        socialProof: analysis.socialProof,
-        linkedInCompanyPage: existing?.linkedInCompanyPage || "",
-        targetBuyers: analysis.targetBuyers,
-        buyerTitles: analysis.buyerTitles,
-        industries: analysis.industries,
-        companySizes: analysis.companySizes,
-        painPoints: analysis.painPoints,
-        keywords: analysis.keywords,
-        preferredLocations: analysis.preferredLocations,
-      });
+    const existing = await getProductProfile(workspaceId);
+    await upsertProductProfile(workspaceId, {
+      websiteUrl,
+      description: analysis.productOverview,
+      companyName: analysis.companyName,
+      industry: analysis.industry,
+      companySize: analysis.companySize,
+      painPointsText: analysis.painPointsText,
+      keyFeatures: analysis.keyFeatures,
+      socialProof: analysis.socialProof,
+      linkedInCompanyPage: existing?.linkedInCompanyPage || "",
+      targetBuyers: analysis.targetBuyers,
+      buyerTitles: analysis.buyerTitles,
+      industries: analysis.industries,
+      companySizes: analysis.companySizes,
+      painPoints: analysis.painPoints,
+      keywords: analysis.keywords,
+      preferredLocations: analysis.preferredLocations,
+    });
 
-      revalidatePath("/my-product");
-      revalidatePath("/dashboard");
-    }
+    revalidatePath("/my-product");
+    revalidatePath("/dashboard");
 
     return NextResponse.json({
       productOverview: analysis.productOverview,
@@ -95,10 +101,6 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Website analysis failed.";
-
-    return NextResponse.json(
-      { error: userId ? message : "Website analysis failed." },
-      { status: 422 },
-    );
+    return NextResponse.json({ error: message }, { status: 422 });
   }
 }

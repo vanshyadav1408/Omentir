@@ -33,6 +33,10 @@ function useReducedMotion() {
  * Opacity-only transition on a wrapper; **always** renders live `children` so
  * React streaming ($RS) can patch the RSC slot during hydration/resume.
  * Never copy `children` into state — that breaks streaming segment swaps.
+ *
+ * Visibility is fail-safe: if a transition is aborted mid-fade (fast re-nav,
+ * reduced-motion flip, Strict Mode remount), content is restored to visible
+ * so dashboard buttons never end up stuck at opacity 0 / unclickable.
  */
 export default function AppPageTransition({ children }: { children: ReactNode }) {
   const pathname = usePathname() ?? "";
@@ -43,24 +47,39 @@ export default function AppPageTransition({ children }: { children: ReactNode })
 
   useEffect(() => {
     if (!mounted) return;
-    if (pathname === pathRef.current) return;
+
+    // Same path (including effect re-runs after pathRef was already updated):
+    // never leave the pane stuck faded-out.
+    if (pathname === pathRef.current) {
+      setVisible(true);
+      return;
+    }
 
     pathRef.current = pathname;
-    const outMs = reducedMotion ? REDUCED_MS : FADE_HALF_MS;
-
+    let cancelled = false;
     setVisible(false);
+    const outMs = reducedMotion ? REDUCED_MS : FADE_HALF_MS;
     const outTimer = window.setTimeout(() => {
-      setVisible(true);
+      if (!cancelled) setVisible(true);
     }, outMs);
 
-    return () => window.clearTimeout(outTimer);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(outTimer);
+      // Aborted transition must not leave the next route invisible/unclickable.
+      setVisible(true);
+    };
   }, [pathname, mounted, reducedMotion]);
+
+  const show = !mounted || visible;
 
   return (
     <div
       className={`m3-page-fade-through h-full min-h-0 ${
-        !mounted || visible ? "m3-page-fade-through--in" : "m3-page-fade-through--out"
+        show ? "m3-page-fade-through--in" : "m3-page-fade-through--out"
       }`}
+      // Ghost of the previous page must not steal clicks while it fades out.
+      style={show ? undefined : { pointerEvents: "none" }}
     >
       {children}
     </div>

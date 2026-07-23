@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
+import { createPortal } from "react-dom";
 import { setAverageTicketSizeAction } from "@/app/actions";
 import AnalysisChart from "@/app/analysis-chart";
 import { useSidebarResource } from "@/app/use-sidebar-resource";
 import NewAgentButton from "@/app/(app)/agents/new-agent-button";
 import { Skeleton } from "@/app/app-skeletons";
 import { useBodyScrollLock } from "@/app/use-body-scroll-lock";
+import { useHydrated } from "@/app/use-hydrated";
 import type {
   Agent,
   CampaignEnrollmentPreview,
@@ -135,6 +137,7 @@ export default function DashboardView({
     averageTicketSize ? String(averageTicketSize) : "",
   );
   const [savingTicket, startSavingTicket] = useTransition();
+  const hydrated = useHydrated();
   useBodyScrollLock(dealModalOpen);
 
   function openDealModal() {
@@ -613,55 +616,60 @@ export default function DashboardView({
         </div>
       </div>
 
-      {dealModalOpen ? (
-        <div
-          className="m3-modal-scrim z-[90]"
-          role="presentation"
-          onClick={() => setDealModalOpen(false)}
-        >
-          <section
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="deal-size-title"
-            className="m3-modal-surface"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <h2 id="deal-size-title" className="m3-dialog-title">
-              Average ticket size
-            </h2>
-            <p className="m3-dialog-body">Your typical deal value per customer.</p>
-            <form onSubmit={submitDealSize} className="mt-6">
-              <TextField
-                autoFocus
-                inputMode="numeric"
-                value={ticketDraft}
-                onChange={(event) => setTicketDraft(event.target.value)}
-                label="Amount"
-                placeholder="5,000"
-                leadingIcon={<span className="text-[16px] font-medium">$</span>}
-              />
-              <div className="m3-dialog-actions">
-                <button
-                  type="button"
-                  onClick={() => setDealModalOpen(false)}
-                  className="m3-dialog-btn m3-dialog-btn--text"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={savingTicket || !ticketDraft.trim()}
-                  aria-busy={savingTicket}
-                  className="m3-dialog-btn m3-dialog-btn--filled"
-                >
-                  {savingTicket ? <span className="m3-dialog-btn__spinner" aria-hidden /> : null}
-                  Save
-                </button>
-              </div>
-            </form>
-          </section>
-        </div>
-      ) : null}
+      {dealModalOpen && hydrated
+        ? createPortal(
+            <div
+              className="m3-modal-scrim z-[200]"
+              role="presentation"
+              onClick={() => setDealModalOpen(false)}
+            >
+              <section
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="deal-size-title"
+                className="m3-modal-surface"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <h2 id="deal-size-title" className="m3-dialog-title">
+                  Average ticket size
+                </h2>
+                <p className="m3-dialog-body">Your typical deal value per customer.</p>
+                <form onSubmit={submitDealSize} className="mt-6">
+                  <TextField
+                    autoFocus
+                    inputMode="numeric"
+                    value={ticketDraft}
+                    onChange={(event) => setTicketDraft(event.target.value)}
+                    label="Amount"
+                    placeholder="5,000"
+                    leadingIcon={<span className="text-[16px] font-medium">$</span>}
+                  />
+                  <div className="m3-dialog-actions">
+                    <button
+                      type="button"
+                      onClick={() => setDealModalOpen(false)}
+                      className="m3-dialog-btn m3-dialog-btn--text"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={savingTicket || !ticketDraft.trim()}
+                      aria-busy={savingTicket}
+                      className="m3-dialog-btn m3-dialog-btn--filled"
+                    >
+                      {savingTicket ? (
+                        <span className="m3-dialog-btn__spinner" aria-hidden />
+                      ) : null}
+                      Save
+                    </button>
+                  </div>
+                </form>
+              </section>
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }

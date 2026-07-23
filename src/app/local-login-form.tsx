@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import LogoMark from "./logo-mark";
 import { TextField } from "./ui/text-field";
+import { safeReturnPath } from "@/lib/safe-return-path";
 
 export default function LocalLoginForm({
   returnTo = "/dashboard",
@@ -25,7 +26,7 @@ export default function LocalLoginForm({
       body: JSON.stringify({ password }),
     });
     if (response.ok) {
-      window.location.assign(returnTo.startsWith("/") ? returnTo : "/dashboard");
+      window.location.assign(safeReturnPath(returnTo));
       return;
     }
     const result = (await response.json().catch(() => null)) as { error?: string } | null;

@@ -22,6 +22,7 @@ export async function POST(request: NextRequest) {
   if (!rateLimit("connect-callback:global", 300, 60_000)) {
     return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }
+
   let payload: UnipileCallback | null;
   try {
     payload = await readJsonBody<UnipileCallback>(request, 32 * 1024);

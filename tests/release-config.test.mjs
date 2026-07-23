@@ -68,35 +68,7 @@ test("snapshot creation refuses existing content and never deletes the destinati
   }
 });
 
-test("a staged private deployment verifies and deploys the same approved application commit", () => {
-  if (!existsSync(privateDeployWorkflow)) {
-    assert.equal(existsSync(publicDeployWorkflow), false);
-    return;
-  }
-  const deployWorkflow = readFileSync(privateDeployWorkflow, "utf8");
-  assert.doesNotMatch(deployWorkflow, /^\s+push:/m, "production deployment must not run on every push");
-  assert.match(
-    deployWorkflow,
-    /repository: \$\{\{ steps\.commit\.outputs\.app_repository \}\}/,
-    "verification must check out from the explicitly selected public application repository",
-  );
-  assert.match(
-    deployWorkflow,
-    /ref: \$\{\{ steps\.commit\.outputs\.app_commit_sha \}\}/,
-    "verification must check out the requested application commit",
-  );
-  assert.match(
-    deployWorkflow,
-    /APP_REPOSITORY: \$\{\{ needs\.verify\.outputs\.app_repository \}\}/,
-    "deployment must consume the repository verified by the previous job",
-  );
-  assert.match(
-    deployWorkflow,
-    /APP_COMMIT_SHA: \$\{\{ needs\.verify\.outputs\.app_commit_sha \}\}/,
-    "deployment must consume the SHA verified by the previous job",
-  );
-  assert.ok(
-    deployWorkflow.indexOf("Check out requested application commit") < deployWorkflow.indexOf("npm ci"),
-    "dependencies must be installed from the requested application commit",
-  );
+test("private infrastructure does not ship in the public application repository", () => {
+  assert.equal(existsSync(privateDeployWorkflow), false);
+  assert.equal(existsSync(publicDeployWorkflow), false);
 });

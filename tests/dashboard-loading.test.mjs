@@ -20,3 +20,25 @@ test("the dashboard mounts before its client-side data requests begin", () => {
     "backend-driven dashboard regions should retain their own loading state",
   );
 });
+
+test("the authenticated shell does not preload every route and data resource", () => {
+  const layout = readFileSync(
+    new URL("../src/app/(app)/layout.tsx", import.meta.url),
+    "utf8",
+  );
+  const sidebar = readFileSync(
+    new URL("../src/app/sidebar.tsx", import.meta.url),
+    "utf8",
+  );
+
+  assert.doesNotMatch(
+    layout,
+    /AppDataPrefetch/,
+    "background data warm-up competes with the page the user is opening",
+  );
+  assert.doesNotMatch(
+    sidebar,
+    /router\.prefetch/,
+    "preloading every dynamic app route creates duplicate auth and Firestore renders",
+  );
+});

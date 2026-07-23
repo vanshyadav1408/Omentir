@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import LogoMark from "./logo-mark";
 import { useHydrated } from "./use-hydrated";
@@ -13,14 +13,6 @@ const primaryNav = [
   { href: "/messages", label: "Messages", icon: "inbox" },
   { href: "/leads", label: "Leads", icon: "identity_platform" },
 ];
-const sidebarPrefetchHrefs = [
-  ...primaryNav.map((item) => item.href),
-  "/api-keys",
-  "/my-product",
-  "/settings",
-  "/contact",
-];
-
 const STORAGE_KEY = "omentir-sidebar-collapsed";
 
 /* 48px touch target; 24px icons. Active = primary-container (T90) + on-primary-container (T10). */
@@ -101,7 +93,6 @@ function getPageTitle(pathname: string) {
 
 export default function Sidebar({ localMode = false }: { localMode?: boolean }) {
   const pathname = usePathname() ?? "";
-  const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const hydrated = useHydrated();
@@ -119,15 +110,6 @@ export default function Sidebar({ localMode = false }: { localMode?: boolean }) 
     });
     return () => cancelAnimationFrame(frame);
   }, []);
-
-  useEffect(() => {
-    const frame = requestAnimationFrame(() => {
-      sidebarPrefetchHrefs
-        .filter((href) => !localMode || (href !== "/api-keys" && href !== "/contact"))
-        .forEach((href) => router.prefetch(href));
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [localMode, router]);
 
   // Close mobile sidebar on route change.
   useEffect(() => {
@@ -239,13 +221,16 @@ export default function Sidebar({ localMode = false }: { localMode?: boolean }) 
         </div>
       </div>
 
-      {/* Mobile scrim — Pattern D: always mounted so exit can fade (300ms) */}
+      {/* Mobile scrim — Pattern D: always mounted so exit can fade (300ms).
+          When closed, CSS sets pointer-events:none + visibility:hidden so it
+          cannot steal dashboard clicks (a prior bug when only opacity was 0). */}
       <div
         className={`m3-drawer-scrim fixed inset-0 z-[95] bg-black/40 md:hidden ${
           mobileOpen ? "m3-drawer-scrim--open" : "m3-drawer-scrim--closed"
         }`}
         onClick={() => setMobileOpen(false)}
         aria-hidden={!mobileOpen}
+        inert={!mobileOpen ? true : undefined}
       />
 
       {/* Mobile modal drawer: 80% width, 28px rounded leading edge */}
@@ -254,6 +239,7 @@ export default function Sidebar({ localMode = false }: { localMode?: boolean }) 
           mobileOpen ? "m3-drawer--open" : "m3-drawer--closed"
         }`}
         aria-hidden={!mobileOpen}
+        inert={!mobileOpen ? true : undefined}
       >
         <div className="flex h-14 shrink-0 items-center justify-between px-4">
           <Link

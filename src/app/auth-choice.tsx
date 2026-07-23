@@ -1,9 +1,35 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import LogoMark from "./logo-mark";
 import { TextField } from "./ui/text-field";
+
+/**
+ * Clerk bot-protection host. Only mount after hydration so clerk-js does not
+ * call into @clerk/ui while Next/Turbopack is still hydrating (that race logs
+ * "Component renderer did not mount within 10s"). Must exist by the time
+ * signUp.create / signIn.create run — render it inside those forms.
+ */
+function ClerkCaptcha() {
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => setReady(true));
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+
+  if (!ready) return null;
+
+  return (
+    <div
+      id="clerk-captcha"
+      data-cl-theme="dark"
+      data-cl-size="flexible"
+      className="mx-auto w-full"
+    />
+  );
+}
 
 type ClerkFactor = {
   strategy?: string;
@@ -129,8 +155,15 @@ function getErrorMessage(error: unknown) {
 
 async function getLoadedClerk(): Promise<LoadedClerkBrowser | null> {
   if (typeof window === "undefined") return null;
-  const clerk = window.Clerk;
 
+  // Clerk injects window.Clerk from the async clerk-js script. Wait briefly so a
+  // fast click right after first paint does not race the script tag.
+  const deadline = Date.now() + 8_000;
+  let clerk = window.Clerk;
+  while (!clerk && Date.now() < deadline) {
+    await new Promise((resolve) => window.setTimeout(resolve, 50));
+    clerk = window.Clerk;
+  }
   if (!clerk) return null;
 
   if (!clerk.loaded && clerk.load) {
@@ -769,13 +802,14 @@ export default function AuthChoice({
 
             {error ? <p className={errorText}>{error}</p> : null}
 
+            {/* Inside the form that calls signIn/signUp.create (Clerk bot protection). */}
+            <ClerkCaptcha />
+
             <button type="submit" disabled={disabled} className={primarySubmit}>
               {loading ? "Please wait..." : isSignup ? "Create Account" : "Login"}
             </button>
           </form>
         )}
-
-        <div id="clerk-captcha" />
 
         <p className="mt-8 text-center text-base text-[var(--md-sys-color-on-surface-variant)]">
           {isSignup ? "Already have an account?" : "Need an account?"}{" "}

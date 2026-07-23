@@ -127,8 +127,12 @@ export default function NavigationFeedback() {
   }, [startNavigation]);
 
   useEffect(() => {
-    if (!pending || pathname === sourcePathRef.current) return;
-    finishNavigation();
+    if (!pending) return;
+    // Path changed → navigation landed. Also clear if we're still "pending"
+    // on the same path after the fallback window (e.g. soft-nav aborted).
+    if (pathname !== sourcePathRef.current) {
+      finishNavigation();
+    }
   }, [finishNavigation, pathname, pending]);
 
   return (

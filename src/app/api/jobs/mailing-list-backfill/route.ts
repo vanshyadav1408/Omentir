@@ -5,6 +5,7 @@ import {
   upsertMailingListEntry,
 } from "@/lib/server/mailing-list";
 import { isLocalMode } from "@/lib/runtime-mode";
+import { bearerOrHeaderSecretMatches } from "@/lib/local-session";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -12,10 +13,11 @@ export const maxDuration = 300;
 function isAuthorized(request: NextRequest) {
   const secret = process.env.CRON_SECRET || process.env.AUTOMATION_JOB_SECRET;
   if (!secret) return false;
-
-  const auth = request.headers.get("authorization");
-  const cronSecret = request.headers.get("x-cron-secret");
-  return auth === `Bearer ${secret}` || cronSecret === secret;
+  return bearerOrHeaderSecretMatches(
+    request.headers.get("authorization"),
+    request.headers.get("x-cron-secret"),
+    secret,
+  );
 }
 
 // One-time import of every Clerk user into the mailingList collection. Safe to

@@ -4,6 +4,7 @@ import AuthChoice from "../auth-choice";
 import OnboardingHeader from "../onboarding-header";
 import { createPageMetadata } from "../seo";
 import { isLocalMode, isLocalPasswordRequired } from "@/lib/runtime-mode";
+import { safeReturnPath } from "@/lib/safe-return-path";
 import LocalLoginForm from "../local-login-form";
 
 export const metadata = createPageMetadata({
@@ -22,7 +23,12 @@ export default async function LoginPage({
   if (userId) redirect("/dashboard");
   if (isLocalMode()) {
     const { next } = await searchParams;
-    return <LocalLoginForm returnTo={next} passwordRequired={isLocalPasswordRequired()} />;
+    return (
+      <LocalLoginForm
+        returnTo={safeReturnPath(next)}
+        passwordRequired={isLocalPasswordRequired()}
+      />
+    );
   }
   return (
     <>

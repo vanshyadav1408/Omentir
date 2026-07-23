@@ -66,3 +66,14 @@ export function localCookieOptions(env: NodeJS.ProcessEnv = process.env) {
 export function passwordsMatch(supplied: string, expected: string) {
   return constantTimeEqual(supplied, expected);
 }
+
+/** Constant-time bearer / header secret check for job and webhook auth. */
+export function bearerOrHeaderSecretMatches(
+  authorizationHeader: string | null,
+  headerSecret: string | null,
+  expected: string,
+) {
+  if (!expected) return false;
+  const bearer = authorizationHeader?.match(/^Bearer\s+(.+)$/i)?.[1] ?? "";
+  return passwordsMatch(bearer, expected) || passwordsMatch(headerSecret || "", expected);
+}

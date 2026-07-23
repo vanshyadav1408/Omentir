@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAppBaseUrl } from "@/lib/server/runtime-config";
-import { requireAgentApiContext } from "@/lib/server/agent-api";
+import { readAgentApiJsonBody, requireAgentApiContext } from "@/lib/server/agent-api";
 import {
   AgentApiOperationError,
   agentMcpTools,
@@ -145,7 +145,9 @@ export async function POST(request: NextRequest) {
   const auth = await requireAgentApiContext(request);
   if (!auth.ok) return auth.response;
 
-  const rpc = (await request.json().catch(() => null)) as JsonRpcRequest | null;
+  const parsed = await readAgentApiJsonBody<JsonRpcRequest>(request);
+  if (!parsed.ok) return parsed.response;
+  const rpc = parsed.body;
   if (!rpc || rpc.jsonrpc !== "2.0" || typeof rpc.method !== "string") {
     return rpcError(undefined, -32600, "Invalid JSON-RPC request.");
   }

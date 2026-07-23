@@ -127,13 +127,19 @@ export default async function RootLayout({
       </head>
       <body className="flex min-h-screen flex-col">
         {/* ClerkProvider inside body avoids Next 16 / Turbopack races where the
-            provider wraps <html> before hydration and Clerk UI chunks stall. */}
+            provider wraps <html> before hydration and Clerk UI chunks stall.
+            prefetchUI={false}: this app uses custom login/signup (window.Clerk /
+            control APIs), not <SignIn/> / <SignUp/>. Prefetching @clerk/ui on
+            every page made Turbopack hydrate race the UI renderer and log
+            "[Clerk UI] Component renderer did not mount within 10s". UI still
+            loads on demand when bot-protection captcha needs it. */}
         {localMode ? application : <ClerkProvider
           signInUrl="/login"
           signUpUrl="/signup"
           signInFallbackRedirectUrl="/dashboard"
           signUpFallbackRedirectUrl="/onboarding"
           afterSignOutUrl="/"
+          prefetchUI={false}
         >
           {application}
         </ClerkProvider>}

@@ -1,6 +1,7 @@
+import { auth } from "@/lib/server/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { fetchWebsitePages } from "@/lib/server/website";
-import { rateLimitRequest } from "@/lib/request-rate-limit";
+import { rateLimitRequestShared } from "@/lib/request-rate-limit";
 import { readJsonBody, RequestBodyTooLargeError } from "@/lib/server/request-body";
 
 export const dynamic = "force-dynamic";
@@ -13,13 +14,22 @@ function hostFromUrl(websiteUrl: string) {
 }
 
 export async function POST(request: NextRequest) {
-  if (!rateLimitRequest(request, "website-preview", {
-    perSource: 30,
-    global: 500,
-    windowMs: 60 * 60 * 1000,
-  })) {
+  const { userId } = await auth();
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (
+    !(await rateLimitRequestShared(request, "website-preview", {
+      sourceKey: userId,
+      perSource: 20,
+      global: 200,
+      windowMs: 60 * 60 * 1000,
+    }))
+  ) {
     return NextResponse.json({ error: "Too many website preview requests." }, { status: 429 });
   }
+
   let body: { websiteUrl?: string } | null;
   try {
     body = await readJsonBody<{ websiteUrl?: string }>(request, 8 * 1024);

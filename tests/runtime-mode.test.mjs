@@ -1,9 +1,15 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { isAutomationDisabled, isLocalMode, isLocalPasswordRequired } from "../src/lib/runtime-mode.ts";
+import {
+  isAutomationDisabled,
+  isLocalMode,
+  isLocalOpenAccessAllowed,
+  isLocalPasswordRequired,
+} from "../src/lib/runtime-mode.ts";
 import { createLocalSession, passwordsMatch, verifyLocalSession } from "../src/lib/local-session.ts";
 import { getAutomationSafetyMode } from "../src/lib/server/automation-safety.ts";
 import { planLimits } from "../src/lib/plan-limits.ts";
+import { safeReturnPath } from "../src/lib/safe-return-path.ts";
 import { readFileSync } from "node:fs";
 
 test("local mode is explicit and does not infer from missing hosted keys", () => {
@@ -12,13 +18,22 @@ test("local mode is explicit and does not infer from missing hosted keys", () =>
   assert.equal(isLocalMode({ RUN_LOCALLY: "false" }), false);
 });
 
-test("local password protection is enabled only when a password is configured", () => {
-  assert.equal(isLocalPasswordRequired({}), false);
-  assert.equal(isLocalPasswordRequired({ LOCAL_APP_PASSWORD: "  " }), false);
+test("local password is required unless open access is explicitly allowed", () => {
+  assert.equal(isLocalPasswordRequired({}), true);
+  assert.equal(isLocalPasswordRequired({ LOCAL_APP_PASSWORD: "  " }), true);
   assert.equal(isLocalPasswordRequired({ LOCAL_APP_PASSWORD: "configured" }), true);
+  assert.equal(isLocalOpenAccessAllowed({ LOCAL_ALLOW_OPEN_ACCESS: "true" }), true);
+  assert.equal(
+    isLocalPasswordRequired({ LOCAL_ALLOW_OPEN_ACCESS: "true" }),
+    false,
+  );
+  assert.equal(
+    isLocalPasswordRequired({ LOCAL_ALLOW_OPEN_ACCESS: "true", LOCAL_APP_PASSWORD: "configured" }),
+    true,
+  );
 });
 
-test("passwordless local mode still creates a signed session from a welcome screen", () => {
+test("passwordless local mode is opt-in via LOCAL_ALLOW_OPEN_ACCESS", () => {
   const loginPage = readFileSync(new URL("../src/app/login/page.tsx", import.meta.url), "utf8");
   const loginForm = readFileSync(new URL("../src/app/local-login-form.tsx", import.meta.url), "utf8");
   const loginRoute = readFileSync(
@@ -27,6 +42,8 @@ test("passwordless local mode still creates a signed session from a welcome scre
   );
 
   assert.match(loginPage, /passwordRequired=\{isLocalPasswordRequired\(\)\}/);
+  assert.match(loginPage, /safeReturnPath\(next\)/);
+  assert.match(loginForm, /safeReturnPath\(returnTo\)/);
   assert.match(loginForm, /Welcome to Omentir/);
   assert.match(loginForm, /Continue to dashboard/);
   assert.match(loginForm, /height: 36, minHeight: 36, marginInline: "auto"/);
@@ -34,6 +51,16 @@ test("passwordless local mode still creates a signed session from a welcome scre
   assert.doesNotMatch(loginForm, /m3-card|m3-card-outlined/);
   assert.match(loginRoute, /if \(isLocalPasswordRequired\(\)\)/);
   assert.match(loginRoute, /await createLocalSession/);
+});
+
+test("safeReturnPath rejects open redirects", () => {
+  assert.equal(safeReturnPath("/dashboard"), "/dashboard");
+  assert.equal(safeReturnPath("/agents?tab=1"), "/agents?tab=1");
+  assert.equal(safeReturnPath("//evil.com"), "/dashboard");
+  assert.equal(safeReturnPath("/\\evil.com"), "/dashboard");
+  assert.equal(safeReturnPath("https://evil.com"), "/dashboard");
+  assert.equal(safeReturnPath("/%2f%2fevil.com"), "/dashboard");
+  assert.equal(safeReturnPath(null), "/dashboard");
 });
 
 test("AUTOMATION_DISABLED is an explicit kill switch", () => {
@@ -80,7 +107,6 @@ test("self-hosted app shell removes hosted-only navigation without changing host
   assert.match(layout, /<Sidebar localMode=\{isLocalMode\(\)\} \/>/);
   assert.match(sidebar, /!localMode \? \([\s\S]*href="\/api-keys"/);
   assert.match(sidebar, /!localMode \? \([\s\S]*href="\/contact"/);
-  assert.match(sidebar, /href !== "\/api-keys" && href !== "\/contact"/);
 });
 
 test("self-hosted settings remove email notifications and account session controls", () => {

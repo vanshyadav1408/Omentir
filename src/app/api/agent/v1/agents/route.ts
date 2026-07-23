@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAgentApiContext } from "@/lib/server/agent-api";
+import { readAgentApiJsonBody, requireAgentApiContext } from "@/lib/server/agent-api";
 import {
   AgentApiOperationError,
   createAgentResource,
@@ -21,11 +21,11 @@ export async function POST(request: NextRequest) {
   const auth = await requireAgentApiContext(request);
   if (!auth.ok) return auth.response;
 
+  const body = await readAgentApiJsonBody(request);
+  if (!body.ok) return body.response;
+
   try {
-    return NextResponse.json(
-      await createAgentResource(auth.context, await request.json().catch(() => ({}))),
-      { status: 201 },
-    );
+    return NextResponse.json(await createAgentResource(auth.context, body.body), { status: 201 });
   } catch (error) {
     if (error instanceof AgentApiOperationError) {
       return NextResponse.json(
@@ -41,10 +41,11 @@ export async function PATCH(request: NextRequest) {
   const auth = await requireAgentApiContext(request);
   if (!auth.ok) return auth.response;
 
+  const body = await readAgentApiJsonBody(request);
+  if (!body.ok) return body.response;
+
   try {
-    return NextResponse.json(
-      await updateAgentResource(auth.context, await request.json().catch(() => ({}))),
-    );
+    return NextResponse.json(await updateAgentResource(auth.context, body.body));
   } catch (error) {
     if (error instanceof AgentApiOperationError) {
       return NextResponse.json(
@@ -60,10 +61,11 @@ export async function DELETE(request: NextRequest) {
   const auth = await requireAgentApiContext(request);
   if (!auth.ok) return auth.response;
 
+  const body = await readAgentApiJsonBody(request);
+  if (!body.ok) return body.response;
+
   try {
-    return NextResponse.json(
-      await deleteAgentResource(auth.context, await request.json().catch(() => ({}))),
-    );
+    return NextResponse.json(await deleteAgentResource(auth.context, body.body));
   } catch (error) {
     if (error instanceof AgentApiOperationError) {
       return NextResponse.json(

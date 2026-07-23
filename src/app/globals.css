@@ -1466,9 +1466,15 @@ html.dark .m3-ai-loading-scrim--transparent {
 }
 .m3-drawer--closed {
   transform: translateX(-100%);
+  /* Off-screen is not enough: without this the closed drawer still sits above
+     the main pane (z-index 100) and intermittently eats dashboard/nav clicks,
+     especially while the close animation is mid-flight or after a partial paint.
+     Keep visibility for the slide-out animation; only block hit-testing. */
+  pointer-events: none;
 }
 .m3-drawer--open {
   transform: translateX(0);
+  pointer-events: auto;
 }
 .m3-drawer-scrim {
   transition: opacity var(--md-sys-motion-duration-long)
@@ -1480,6 +1486,7 @@ html.dark .m3-ai-loading-scrim--transparent {
 }
 .m3-drawer-scrim--open {
   opacity: 1;
+  pointer-events: auto;
 }
 
 /* ── §29 Dropdown menus & pickers (M3 Menu) ────────────────────────────────
@@ -1984,6 +1991,7 @@ html.dark .m3-dialog-surface {
   .m3-drawer--open {
     transform: none;
     opacity: 1;
+    pointer-events: auto;
   }
 }
 
