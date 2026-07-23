@@ -12,7 +12,6 @@
     "lint:baseline": "node scripts/check-lint-baseline.mjs",
     "test": "node --experimental-strip-types --test tests/*.test.mjs",
     "postinstall": "rm -rf .next",
-    "snapshot:public": "bash scripts/create-public-snapshot.sh",
     "secrets:scan": "bash scripts/scan-secrets.sh"
   },
   "dependencies": {

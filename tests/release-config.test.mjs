@@ -3,10 +3,6 @@ import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 
 const envExample = readFileSync(new URL("../.env.example", import.meta.url), "utf8");
-const snapshotScript = readFileSync(
-  new URL("../scripts/create-public-snapshot.sh", import.meta.url),
-  "utf8",
-);
 const publicDeployWorkflow = new URL("../.github/workflows/deploy-production.yml", import.meta.url);
 const privateDeployWorkflow = new URL("../private-infra/deploy-production.yml", import.meta.url);
 const hostedIdentity = readFileSync(
@@ -65,9 +61,11 @@ test("hosted provider identifiers are supplied by deployment config, not source"
   assert.doesNotMatch(hostedIdentity, /\bAIza[A-Za-z0-9_-]{20,}\b/);
 });
 
-test("snapshot creation refuses existing content and never deletes the destination", () => {
-  assert.match(snapshotScript, /snapshot destination must be new or empty/);
-  assert.doesNotMatch(snapshotScript, /--delete|\brm\s+-/);
+// Development now happens directly in this repository, so there is no longer a
+// sanitized snapshot step between private work and what ships. What used to be
+// enforced by the snapshot script's exclude list is enforced here instead: the
+// private-only paths must simply never exist in this tree.
+test("private material does not ship in the public application repository", () => {
   for (const privatePath of [
     "AGENTS.md",
     "BLOG_GENERATION.md",
@@ -76,15 +74,17 @@ test("snapshot creation refuses existing content and never deletes the destinati
     "OPEN_SOURCE.md",
     "solution.md",
     "private-infra",
+    "private-infra/deploy-production.yml",
     "scripts/grant-subscription.mjs",
     "scripts/inspect-user.mjs",
     "scripts/send-test-welcome.mjs",
     "src/app/whop-analytics.tsx",
+    ".env",
   ]) {
-    assert.match(snapshotScript, new RegExp(`"${privatePath.replaceAll(".", "\\.")}"`));
+    assert.equal(
+      existsSync(new URL(`../${privatePath}`, import.meta.url)),
+      false,
+      `${privatePath} must not exist in the public repository`,
+    );
   }
-});
-
-test("private infrastructure does not ship in the public application repository", () => {
-  assert.equal(existsSync(privateDeployWorkflow), false);
 });

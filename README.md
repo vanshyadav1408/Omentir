@@ -264,7 +264,6 @@ Useful operator scripts:
 |---|---|
 | `npm test` | Unit / contract tests (including security hardening checks) |
 | `npm run secrets:scan` | Local secret scan helper |
-| `npm run snapshot:public` | Build a sanitized tree for review (excludes `.env`, private tooling paths, etc.) |
 
 ---
 
