@@ -8,6 +8,14 @@
         { "fieldPath": "status", "order": "ASCENDING" },
         { "fieldPath": "nextActionAt", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "campaignEnrollments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "workspaceId", "order": "ASCENDING" },
+        { "fieldPath": "nextActionAt", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": [

@@ -6,6 +6,14 @@ import { hashAgentApiToken } from "@/lib/agent-api-token";
 import { planLimits } from "@/lib/plan-limits";
 import { getDb, nowIso, cleanId, normalizeLinkedInProfileUrl } from "./firebase";
 import { hasIntervalElapsed, isAgentDueForRun, nextDailyAgentRunAt } from "./scheduling";
+import {
+  DEFAULT_AGENT_RUN_HOUR,
+  SPACING_MINUTES,
+  nextLocalAgentRunAt,
+  planSendSchedule,
+  zonedParts,
+  type SendActionKind,
+} from "./send-schedule";
 import { remapStepIndex } from "./enrollment-remap";
 import { addInviteLimitSignal } from "./outreach-rules";
 import type {
@@ -85,6 +93,7 @@ type LegacyProductProfile = ProductProfile & {
 type CreateAgentInput = Pick<Agent, "name" | "mode" | "prompt" | "filters" | "targetGroupName"> & {
   linkedInAccountId?: string;
   signalSources?: AgentSignalSources;
+  runAtHour?: number;
 };
 
 type UpsertLeadSignalInput = Omit<
@@ -607,6 +616,11 @@ export async function getDueAgents(limit = 25) {
 // An agent may not start without a complete targeting setup - every entry
 // point (UI, agent API, MCP) funnels through createAgent/updateAgent, so this
 // is the single gate. Partial setups produce network-biased, off-ICP leads.
+function normalizeRunAtHour(hour: number | undefined) {
+  if (hour === undefined || !Number.isFinite(hour)) return DEFAULT_AGENT_RUN_HOUR;
+  return Math.min(23, Math.max(0, Math.trunc(hour)));
+}
+
 function assertAgentSetupComplete(input: CreateAgentInput) {
   if (input.mode === "outreach") return;
   const missing: string[] = [];
@@ -633,6 +647,7 @@ export async function createAgent(
 
   const group = await createOrGetGroup(workspaceId, input.targetGroupName, "Created by AI Agent");
   const timestamp = nowIso();
+  const runAtHour = normalizeRunAtHour(input.runAtHour);
   const ref = collection<Agent>("agents").doc();
   const agent: Agent = {
     id: ref.id,
@@ -644,10 +659,13 @@ export async function createAgent(
     prompt: input.prompt,
     filters: input.filters,
     signalSources: withDefaultSignalSources(input.signalSources),
+    runAtHour,
     targetGroupId: group.id,
     targetGroupName: group.name,
     status: "active",
-    nextRunAt: timestamp,
+    // Anchored to the chosen local hour rather than this instant, so the agent
+    // does not run discovery at whatever minute the user happened to click.
+    nextRunAt: nextLocalAgentRunAt(runAtHour, workspace.timezone),
     createdAt: timestamp,
     updatedAt: timestamp,
   };
@@ -674,6 +692,14 @@ export async function updateAgent(
       ? await renameGroup(workspaceId, agent.targetGroupId, input.targetGroupName)
       : { id: agent.targetGroupId, name: agent.targetGroupName };
 
+  // Editing an agent must not move its daily run: nextRunAt used to be reset to
+  // now on every save, so tweaking job titles at 11pm permanently moved
+  // discovery to 11pm. It is only recomputed when the user actually changes the
+  // hour, and only ever from that hour.
+  const workspace = await getWorkspace(workspaceId);
+  const previousHour = normalizeRunAtHour(agent.runAtHour);
+  const runAtHour = normalizeRunAtHour(input.runAtHour ?? agent.runAtHour);
+
   const patch: Partial<Agent> = {
     name: input.name || input.targetGroupName || agent.name,
     // Spread conditionally: Firestore rejects undefined values, and an update
@@ -683,11 +709,14 @@ export async function updateAgent(
     prompt: input.prompt,
     filters: input.filters,
     signalSources: withDefaultSignalSources(input.signalSources),
+    runAtHour,
     targetGroupId: group.id,
     targetGroupName: group.name,
     status: agent.status === "paused" ? "paused" : "active",
     runStartedAt: FieldValue.delete() as unknown as string,
-    nextRunAt: nowIso(),
+    ...(runAtHour === previousHour
+      ? {}
+      : { nextRunAt: nextLocalAgentRunAt(runAtHour, workspace.timezone) }),
     updatedAt: nowIso(),
   };
 
@@ -695,12 +724,25 @@ export async function updateAgent(
   return { ...agent, ...patch } as Agent;
 }
 
+// Tomorrow's occurrence of the agent's chosen local hour. Falls back to the
+// old "+24h from the last slot" arithmetic if the workspace can't be read, so
+// a transient Firestore error can never leave nextRunAt in the past (which
+// would keep the agent due on every tick).
+async function nextAgentSlot(agent: Agent) {
+  try {
+    const workspace = await getWorkspace(agent.workspaceId);
+    return nextLocalAgentRunAt(normalizeRunAtHour(agent.runAtHour), workspace.timezone);
+  } catch {
+    return nextDailyAgentRunAt(agent.nextRunAt);
+  }
+}
+
 export async function markAgentRun(agent: Agent, ok: boolean) {
   await collection<Agent>("agents").doc(agent.id).update({
     status: ok ? "active" : "error",
     lastRunAt: nowIso(),
     runStartedAt: FieldValue.delete(),
-    nextRunAt: nextDailyAgentRunAt(agent.nextRunAt),
+    nextRunAt: await nextAgentSlot(agent),
     updatedAt: nowIso(),
   });
 }
@@ -711,7 +753,7 @@ export async function markAgentRun(agent: Agent, ok: boolean) {
 // every tick, re-reading its workspace forever for nothing.
 export async function deferAgentRun(agent: Agent) {
   await collection<Agent>("agents").doc(agent.id).update({
-    nextRunAt: nextDailyAgentRunAt(agent.nextRunAt),
+    nextRunAt: await nextAgentSlot(agent),
     updatedAt: nowIso(),
   });
 }
@@ -759,6 +801,10 @@ export async function resumeAgent(workspaceId: string, agentId: string) {
     throw new Error("Agent not found.");
   }
 
+  // Resume deliberately runs once straight away - the user just pressed
+  // Resume and expects to see activity. Unlike the old updateAgent behaviour
+  // this is not a permanent re-anchor: markAgentRun snaps the following run
+  // back to the agent's chosen local hour.
   await ref.update({
     status: "active",
     runStartedAt: FieldValue.delete(),
@@ -1435,43 +1481,141 @@ export async function enrollNewLeadsInCampaign(workspaceId: string, campaign: Ca
   const snaps = await getDb().getAll(...refs);
 
   const timestamp = nowIso();
-  const batch = getDb().batch();
-  let added = 0;
-
-  // Campaigns that open with a connection request can only send one invite per
-  // INVITE_SPACING_MINUTES per account, so ladder the scheduled times to match
-  // that drip - stamping them all "now" shows a bogus pile-up on the Actions
-  // page and churns the due queue every tick.
-  const startsWithConnect = campaign.steps[0]?.type === "connect";
-  const scheduledAt = (position: number) =>
-    startsWithConnect
-      ? new Date(Date.parse(timestamp) + position * INVITE_SPACING_MINUTES * 60 * 1000).toISOString()
-      : timestamp;
-
-  snaps.forEach((snap, index) => {
-    const lead = leads[index];
+  const pending = snaps
+    .map((snap, index) => ({ snap, ref: refs[index], lead: leads[index] }))
     // Skip if already enrolled in this campaign, or already being contacted by
     // any campaign (prevents the same person getting hit by two campaigns).
-    if (snap.exists) return;
-    if (lead.outreachStatus !== "new") return;
+    .filter(({ snap, lead }) => !snap.exists && lead.outreachStatus === "new");
 
+  if (pending.length === 0) return 0;
+
+  // Every new enrollment gets its real send time up front, from the same
+  // planner the Actions page reads. The old ladder stamped `now + position *
+  // 10min` regardless of the daily cap, so with a 10/day limit lead 40 of 75
+  // advertised a slot 6.5 hours out that it could not possibly hit, then
+  // churned on hourly defers for days. The planner spreads them across as many
+  // local days as the caps and the send window actually require.
+  const startsWithConnect = campaign.steps[0]?.type === "connect";
+  const workspace = await getWorkspace(workspaceId);
+  const plan = await planActionSlots({
+    workspace,
+    campaign,
+    actions: pending.map(({ ref }) => ({
+      id: ref.id,
+      kind: startsWithConnect ? "invite" : "message",
+      earliestAt: Date.parse(timestamp),
+    })),
+  });
+
+  const batch = getDb().batch();
+  for (const { ref, lead } of pending) {
     const enrollment: CampaignEnrollment = {
-      id: refs[index].id,
+      id: ref.id,
       workspaceId,
       campaignId: campaign.id,
       leadId: lead.id,
       status: "queued",
       currentStepIndex: 0,
-      nextActionAt: scheduledAt(added),
+      nextActionAt: new Date(plan.get(ref.id) ?? Date.parse(timestamp)).toISOString(),
       createdAt: timestamp,
       updatedAt: timestamp,
     };
-    batch.set(refs[index], enrollment);
-    added += 1;
-  });
+    batch.set(ref, enrollment);
+  }
 
-  if (added > 0) await batch.commit();
-  return added;
+  await batch.commit();
+  return pending.length;
+}
+
+// Future slots already reserved on a LinkedIn account's line, so a new plan
+// never lands on top of outreach that is already scheduled. Scoped to the
+// account rather than the campaign because the spacing rule is per-account:
+// two campaigns sharing one LinkedIn account share one drip.
+async function listReservedActionSlots(workspaceId: string, linkedInAccountId?: string) {
+  const campaigns = await listCampaigns(workspaceId);
+  const sharingAccount = new Set(
+    campaigns
+      .filter((entry) => (entry.linkedInAccountId || "") === (linkedInAccountId || ""))
+      .map((entry) => entry.id),
+  );
+  if (sharingAccount.size === 0) return [];
+
+  try {
+    // Requires composite index (workspaceId ASC, nextActionAt ASC).
+    const snap = await collection<CampaignEnrollment>("campaignEnrollments")
+      .where("workspaceId", "==", workspaceId)
+      .where("nextActionAt", ">=", nowIso())
+      .select("campaignId", "nextActionAt", "status")
+      .limit(1000)
+      .get();
+
+    return snap.docs
+      .map((doc) => doc.data())
+      .filter(
+        (enrollment) =>
+          sharingAccount.has(enrollment.campaignId) &&
+          !["stopped", "replied"].includes(enrollment.status),
+      )
+      .map((enrollment) => Date.parse(enrollment.nextActionAt))
+      .filter((ms) => Number.isFinite(ms));
+  } catch (error) {
+    // Index still building after a deploy. Reserved slots are an optimisation
+    // for the *plan*; the transactional claimActionSlot is what actually
+    // prevents two sends sharing a slot, so degrading to "nothing reserved"
+    // costs plan accuracy for a few minutes, never correctness.
+    console.warn(
+      "[data] reserved slot lookup failed; planning without reservations:",
+      error instanceof Error ? error.message : error,
+    );
+    return [];
+  }
+}
+
+// The Firestore half of planning: reserved slots plus today's spent quota.
+// Split out from planActionSlots so a caller processing many enrollments (the
+// tick) can fetch it ONCE per account and reuse it. Doing it per enrollment
+// meant two queries for every deferral, every two minutes.
+export type SchedulingContext = {
+  reservedSlots: number[];
+  usedByDay: Record<string, { invites: number; messages: number }>;
+};
+
+export async function loadSchedulingContext(
+  workspace: Workspace,
+  campaign: Campaign,
+): Promise<SchedulingContext> {
+  const [reservedSlots, usedByDay] = await Promise.all([
+    listReservedActionSlots(workspace.id, campaign.linkedInAccountId),
+    getDailyQuotaUsage(workspace.id, workspace.timezone),
+  ]);
+  return { reservedSlots, usedByDay };
+}
+
+// Single entry point for "when should these actions actually fire". Gathers the
+// live constraints (window, timezone, caps, already-spent quota, reserved
+// slots) and hands them to the pure planner.
+export async function planActionSlots(input: {
+  workspace: Workspace;
+  campaign: Campaign;
+  actions: { id: string; kind: SendActionKind; earliestAt: number }[];
+  // Extra slots claimed earlier in the same tick that are not yet persisted.
+  additionalReserved?: number[];
+  // Pre-fetched context, to avoid re-reading it per enrollment.
+  context?: SchedulingContext;
+}) {
+  const { workspace, campaign } = input;
+  const context = input.context || (await loadSchedulingContext(workspace, campaign));
+
+  return planSendSchedule({
+    nowMs: Date.now(),
+    timezone: workspace.timezone,
+    window: campaign.sendWindow || "always",
+    dailyInviteLimit: workspace.settings.dailyInviteLimit,
+    dailyMessageLimit: workspace.settings.dailyMessageLimit,
+    usedByDay: context.usedByDay,
+    reservedSlots: [...context.reservedSlots, ...(input.additionalReserved || [])],
+    actions: input.actions,
+  });
 }
 
 // Initial enrollment at campaign creation is just the incremental enroller with
@@ -2028,15 +2172,43 @@ export async function listAutomationRuns(workspaceId: string, limit = 100) {
   }
 }
 
+// The quota day is the workspace's LOCAL calendar day. Keying on the UTC day
+// meant a US workspace's "daily" allowance reset mid-afternoon, and because
+// quota-blocked enrollments retry hourly, the whole day's volume resumed the
+// moment the UTC boundary passed - a ~100-minute burst at 00:00 UTC (20:00
+// local in New York, 05:30 in Kolkata) rather than a drip through the day.
+// The doc id changes shape on rollout, so a workspace may get one extra
+// partial day's allowance once; under-sending is the only alternative and a
+// single day's overlap is the cheaper side of that trade.
+function quotaDayKey(timezone: string | undefined) {
+  return zonedParts(timezone, Date.now()).dayKey;
+}
+
 export async function hasDailyQuotaRemaining(
   workspaceId: string,
   kind: "invites" | "messages",
   limit: number,
+  timezone?: string,
 ) {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = quotaDayKey(timezone);
   const snap = await getDb().collection("usageDays").doc(`${workspaceId}-${today}`).get();
   const current = Number(snap.data()?.[kind] || 0);
   return current < limit;
+}
+
+// How much of each local day's allowance is already spent, for the planner's
+// usedByDay input. Only today is read: future days are always empty, and the
+// planner treats a missing key as zero.
+export async function getDailyQuotaUsage(workspaceId: string, timezone?: string) {
+  const today = quotaDayKey(timezone);
+  const snap = await getDb().collection("usageDays").doc(`${workspaceId}-${today}`).get();
+  const data = snap.data() || {};
+  return {
+    [today]: {
+      invites: Number(data.invites || 0),
+      messages: Number(data.messages || 0),
+    },
+  };
 }
 
 // Reserves one unit of today's quota. Call this only after the LinkedIn send
@@ -2046,8 +2218,9 @@ export async function consumeDailyQuota(
   workspaceId: string,
   kind: "invites" | "messages",
   limit: number,
+  timezone?: string,
 ) {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = quotaDayKey(timezone);
   const ref = getDb().collection("usageDays").doc(`${workspaceId}-${today}`);
 
   return getDb().runTransaction(async (transaction) => {
@@ -2127,18 +2300,24 @@ export async function claimSystemTask(taskId: string, intervalMs: number) {
   });
 }
 
-// Persistent per-account invite drip: connection requests are the signal
-// LinkedIn rate-checks hardest, so consecutive invites from one account must
-// be spaced out across ticks (a per-tick budget alone multiplies with the
-// tick cadence). Claimed transactionally before the send; returns null when
-// the slot is claimed, or the ISO time the next invite is allowed. A claimed
-// slot that ends up not sending under-sends rather than over-sends, which is
-// the safe direction.
-export const INVITE_SPACING_MINUTES = 10;
-
-export async function claimInviteSendSlot(workspaceId: string, linkedInAccountId: string) {
-  const ref = getDb().collection("inviteSpacing").doc(linkedInAccountId);
-  const intervalMs = INVITE_SPACING_MINUTES * 60 * 1000;
+// Persistent per-account action drip: at most one outbound action per account
+// per SPACING_MINUTES, across ticks, webhooks and manual runs. This used to
+// cover invites only, so messages and AI replies had no spacing at all and
+// went 1-3 per two-minute tick. Now invites, follow-ups and replies share one
+// line, which is what the planner in send-schedule.ts allocates against.
+// Claimed transactionally before the send; returns null when the slot is
+// claimed, or the ISO time the next action is allowed. A claimed slot that
+// ends up not sending under-sends rather than over-sends - the safe direction.
+//
+// Scoped per LinkedIn account, not per workspace: the spacing exists to look
+// human to LinkedIn, which rate-checks per account.
+export async function claimActionSlot(workspaceId: string, linkedInAccountId: string) {
+  // Distinct from the old `inviteSpacing` collection: the semantics changed
+  // (all actions, not just invites), so starting a fresh doc avoids inheriting
+  // an invite-only cursor. Worst case one extra action in the first window
+  // after rollout.
+  const ref = getDb().collection("actionSpacing").doc(linkedInAccountId);
+  const intervalMs = SPACING_MINUTES * 60 * 1000;
 
   return getDb().runTransaction(async (transaction) => {
     const snap = await transaction.get(ref);

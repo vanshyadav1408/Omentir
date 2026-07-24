@@ -40,7 +40,7 @@ import { executeScheduledActionNow } from "@/lib/server/automation";
 import { analyzeWebsiteOrSearch, draftAgentSetupWithGemini } from "@/lib/server/gemini";
 import { requireActiveSubscription } from "@/lib/server/subscription";
 import { deleteLinkedInAccount, sendLinkedInChatMessage } from "@/lib/server/unipile";
-import type { CampaignStep } from "@/lib/server/types";
+import type { CampaignStep, SendWindow } from "@/lib/server/types";
 import { isLocalMode } from "@/lib/runtime-mode";
 
 async function requireWorkspace() {
@@ -539,7 +539,16 @@ async function createAgentFromForm(
     },
     linkedInAccountId: account.id,
     targetGroupName: groupName,
+    runAtHour: parseRunAtHour(formData.get("runAtHour")),
   });
+}
+
+// Hour of the workspace's local day for lead discovery. Anything unparseable
+// falls through to the default (an hour before business hours open) rather
+// than to "whenever this form was submitted".
+function parseRunAtHour(value: FormDataEntryValue | null) {
+  const hour = Number(String(value || "").trim());
+  return Number.isFinite(hour) && hour >= 0 && hour <= 23 ? Math.trunc(hour) : undefined;
 }
 
 export async function createAgentForSetupAction(formData: FormData) {
@@ -749,6 +758,14 @@ export async function deleteGroupAction(formData: FormData) {
   revalidateWorkspaceDataPages();
 }
 
+// Campaigns created before the picker existed have no stored value and keep
+// sending round the clock, so an unrecognised value must resolve to "always"
+// rather than silently narrowing an existing campaign's hours.
+function parseSendWindow(value: FormDataEntryValue | null): SendWindow {
+  const raw = String(value || "").trim();
+  return raw === "business" || raw === "extended" ? raw : "always";
+}
+
 export async function createCampaignAction(formData: FormData) {
   const workspace = await requireWorkspace();
   requireActiveSubscription(workspace);
@@ -781,6 +798,7 @@ export async function createCampaignAction(formData: FormData) {
     status,
     steps,
     replyHandling: formData.get("replyHandling") === "handoff" ? "handoff" : "ai",
+    sendWindow: parseSendWindow(formData.get("sendWindow")),
     // Firestore rejects undefined properties - only set intent when provided.
     ...(formData.get("campaignGoal")
       ? { campaignGoal: formData.get("campaignGoal") === "demo" ? ("demo" as const) : ("warm" as const) }

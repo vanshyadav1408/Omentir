@@ -17,14 +17,16 @@ import {
   claimDailyNotification,
   claimNotificationAfterInterval,
   claimEnrollmentAction,
-  claimInviteSendSlot,
+  claimActionSlot,
   claimSystemTask,
   createConversationMessage,
   consumeDailyQuota,
   deferAgentRun,
   getInviteCooldown,
   hasDailyQuotaRemaining,
-  INVITE_SPACING_MINUTES,
+  loadSchedulingContext,
+  planActionSlots,
+  type SchedulingContext,
   enrollNewLeadsInCampaign,
   leadDocId,
   listAutomationRuns,
@@ -80,6 +82,7 @@ import {
 } from "./outreach-rules";
 import { isHotReply, isTerminalReplyIntent } from "./reply-automation-policy";
 import { localDayAndHour } from "./scheduling";
+import { isWithinSendWindow, type SendActionKind } from "./send-schedule";
 import { hasActiveSubscription } from "./subscription";
 import { getAppBaseUrl } from "./runtime-config";
 import {
@@ -164,16 +167,17 @@ const ENROLLMENT_RETRY_MINUTES = 6 * 60;
 const ENROLLMENT_COOLDOWN_MINUTES = 24 * 60;
 const MISSING_ACCOUNT_RETRY_MINUTES = 60;
 
-// Human-like pacing. Connection requests are the signal LinkedIn rate-checks
-// hardest, so they drip strictly: at most 1 per tick per account AND at most
-// one per INVITE_SPACING_MINUTES (data.ts) per account, enforced across ticks
-// (and manual runs) by the persistent claimInviteSendSlot gate - never a
-// burst. Deferred invites are laddered INVITE_SPACING_MINUTES apart so the
-// Actions page shows the real drip schedule instead of a pile-up on one
-// timestamp. Messages stay budgeted at a random 1-3 per tick per account.
+// Human-like pacing. Every outbound action - invite, follow-up, AI reply -
+// now shares one per-account drip of at most one per SPACING_MINUTES, enforced
+// across ticks and manual runs by the persistent claimActionSlot gate. Anything
+// that cannot go now is handed to the planner (send-schedule.ts), which returns
+// the real next slot inside the campaign's send window and under the local-day
+// caps, rather than a ladder that ignored both.
 const PACING_MIN_PER_TICK = 1;
 const PACING_MAX_PER_TICK = 3;
-const PACING_DEFER_MINUTES = 10;
+// Only used when the planner itself fails (Firestore error); a short defer so
+// the enrollment retries rather than stranding.
+const PACING_FALLBACK_MINUTES = 10;
 
 // A cannot_resend_yet rejection is treated as being about the recipient (a
 // previous invite to the same person is pending or was withdrawn - LinkedIn
@@ -197,10 +201,20 @@ type TickBudget = {
   // Per-tick cache of this LinkedIn account's invite cooldown: undefined = not yet
   // fetched, null = none active.
   inviteCooldownUntil?: string | null;
-  // When the account's next invite slot opens (set after a send or a blocked
-  // slot claim). Used as the base of the deferral ladder below.
-  nextInviteOpenAtMs?: number;
-  deferredInvites: number;
+  // Slots handed out by the planner earlier in this same tick. They are already
+  // written to their enrollments, but a Firestore query issued moments later
+  // may not see them yet, so they ride along as additionalReserved to stop two
+  // enrollments in one tick being planned onto the same minute.
+  slotsPlannedThisTick: number[];
+  // Reserved slots + spent quota, read once per account per tick. Without this
+  // every deferred enrollment re-ran two Firestore queries on every tick.
+  // The quota snapshot goes stale as this tick sends, which can only make the
+  // planner optimistic about today; hasDailyQuotaRemaining is still checked
+  // live at send time, so the result is a re-plan next tick, never an
+  // over-send. Correct per-account even when two campaigns share the account:
+  // the context depends only on workspace + account, and each campaign's own
+  // send window is applied per call inside planActionSlots.
+  schedulingContext?: SchedulingContext;
 };
 
 function randomInt(min: number, max: number) {
@@ -211,20 +225,52 @@ function newTickBudget(): TickBudget {
   return {
     connects: 1,
     messages: randomInt(PACING_MIN_PER_TICK, PACING_MAX_PER_TICK),
-    deferredInvites: 0,
+    slotsPlannedThisTick: [],
   };
 }
 
-// Deferred invites are laddered one INVITE_SPACING_MINUTES step apart behind
-// the account's next open slot, so the Actions page shows the real drip
-// schedule (10:00, 10:10, 10:20, ...) instead of piling every queued request
-// onto the same timestamp.
-function nextInviteLadderSlot(budget: TickBudget) {
-  const spacingMs = INVITE_SPACING_MINUTES * 60 * 1000;
-  const base = budget.nextInviteOpenAtMs ?? Date.now() + spacingMs;
-  const slot = base + budget.deferredInvites * spacingMs;
-  budget.deferredInvites += 1;
-  return new Date(slot).toISOString();
+// The single "when can this actually go out" answer, used for every deferral
+// that represents a pending send. Policy parks (paused campaign, invite
+// cooldown, 21-day give-up) deliberately do NOT come through here - they are
+// "re-evaluate later", not "send later", and forcing them into a send slot
+// would burn scheduling capacity on work that is not going to send.
+async function reserveSendSlot(input: {
+  budget: TickBudget;
+  workspace: Workspace;
+  campaign: Campaign;
+  enrollmentId: string;
+  kind: SendActionKind;
+  earliestAt?: number;
+}) {
+  const { budget, workspace, campaign } = input;
+  try {
+    budget.schedulingContext ??= await loadSchedulingContext(workspace, campaign);
+    const plan = await planActionSlots({
+      workspace,
+      campaign,
+      context: budget.schedulingContext,
+      additionalReserved: budget.slotsPlannedThisTick,
+      actions: [
+        {
+          id: input.enrollmentId,
+          kind: input.kind,
+          earliestAt: input.earliestAt ?? Date.now(),
+        },
+      ],
+    });
+    const slot = plan.get(input.enrollmentId);
+    if (slot === undefined) return addMinutes(PACING_FALLBACK_MINUTES);
+    budget.slotsPlannedThisTick.push(slot);
+    return new Date(slot).toISOString();
+  } catch (error) {
+    // Planning is a read-heavy path; a Firestore hiccup must not strand the
+    // enrollment. Fall back to the old fixed defer so it retries soon.
+    console.warn(
+      "[automation] send-slot planning failed; using fallback defer:",
+      error instanceof Error ? error.message : error,
+    );
+    return addMinutes(PACING_FALLBACK_MINUTES);
+  }
 }
 
 type SourceAgentPausedLookup = (workspaceId: string, agentId: string) => Promise<boolean>;
@@ -500,10 +546,15 @@ async function runEnrollment(
   campaign: Campaign,
   budgetForAccount: (linkedInAccountId: string) => TickBudget,
   sourceAgentPaused: SourceAgentPausedLookup,
+  // A manual "Run now" is the user explicitly choosing this moment, so it may
+  // send outside the campaign's window. The per-account spacing still applies:
+  // that one protects the LinkedIn account, not the recipient's evening.
+  options: { ignoreSendWindow?: boolean } = {},
 ) {
   const updateCurrentEnrollment = (patch: Partial<CampaignEnrollment>) =>
     updateEnrollment(enrollment.workspaceId, enrollment.id, patch);
   const workspace = await getWorkspace(enrollment.workspaceId);
+  const sendWindow = campaign.sendWindow || "always";
   const account = await getLinkedInAccountForWorkspace(
     enrollment.workspaceId,
     campaign.linkedInAccountId,
@@ -634,6 +685,36 @@ async function runEnrollment(
       return "reply-intent-stop";
     }
 
+    // Gate before drafting, not after: a Gemini call per deferred attempt was
+    // pure waste, and the draft would be stale by the time the slot opened.
+    if (!options.ignoreSendWindow && !isWithinSendWindow(sendWindow, workspace.timezone, Date.now())) {
+      await updateCurrentEnrollment({
+        nextActionAt: await reserveSendSlot({
+          budget,
+          workspace,
+          campaign,
+          enrollmentId: enrollment.id,
+          kind: "reply",
+        }),
+      });
+      return "outside-send-window";
+    }
+
+    const replySlotAt = await claimActionSlot(enrollment.workspaceId, account.id);
+    if (replySlotAt) {
+      await updateCurrentEnrollment({
+        nextActionAt: await reserveSendSlot({
+          budget,
+          workspace,
+          campaign,
+          enrollmentId: enrollment.id,
+          kind: "reply",
+          earliestAt: Date.parse(replySlotAt),
+        }),
+      });
+      return "reply-spaced";
+    }
+
     const profile = await getProductProfile(enrollment.workspaceId);
     const body = await draftCampaignReplyMessage({
       lead,
@@ -672,6 +753,15 @@ async function runEnrollment(
       direction: "outbound",
       providerMessageId: sendResult.id,
     });
+    // An AI reply is a LinkedIn message like any other, so it counts against
+    // the daily message budget. It previously did not, which meant the planner
+    // reserved capacity for replies that reality never spent.
+    await consumeDailyQuota(
+      enrollment.workspaceId,
+      "messages",
+      workspace.settings.dailyMessageLimit,
+      workspace.timezone,
+    );
     await updateLead(enrollment.workspaceId, lead.id, { outreachStatus: "replied" });
     await updateCurrentEnrollment({
       status: "replied",
@@ -735,9 +825,20 @@ async function runEnrollment(
       account,
       fromStepIndex: enrollment.currentStepIndex + 1,
     });
+    // The wait's delay sets the EARLIEST the next message may go; the planner
+    // then moves it to the first real slot at or after that inside the send
+    // window. This is what stops a connection accepted at 03:04 from firing
+    // its "15 minutes later" message at 03:19.
     await updateCurrentEnrollment({
       currentStepIndex: enrollment.currentStepIndex + 1,
-      nextActionAt: addMinutes(step.delayMinutes),
+      nextActionAt: await reserveSendSlot({
+        budget,
+        workspace,
+        campaign,
+        enrollmentId: enrollment.id,
+        kind: "message",
+        earliestAt: Date.now() + step.delayMinutes * 60 * 1000,
+      }),
       ...(nextMessageDraft ? { nextMessageDraft } : {}),
     });
     return "wait";
@@ -762,44 +863,86 @@ async function runEnrollment(
       return "invite-cooldown";
     }
 
+    // Outside this campaign's send window: reschedule to the next opening
+    // rather than sending at 3am. Manual "Run now" bypasses this - the user
+    // explicitly chose the moment - which is why the check lives here and not
+    // in the shared claim.
+    if (!options.ignoreSendWindow && !isWithinSendWindow(sendWindow, workspace.timezone, Date.now())) {
+      await updateCurrentEnrollment({
+        nextActionAt: await reserveSendSlot({
+          budget,
+          workspace,
+          campaign,
+          enrollmentId: enrollment.id,
+          kind: "invite",
+        }),
+      });
+      return "outside-send-window";
+    }
+
     // Human-like pacing: only a few invites per account per tick. This gate
     // must run before the 1st-degree profile check below - otherwise every
     // queued enrollment performs a live profile view on every tick while
     // waiting its turn, which is exactly the high-volume profile access
     // pattern LinkedIn flags.
     if (budget.connects <= 0) {
-      await updateCurrentEnrollment({ nextActionAt: nextInviteLadderSlot(budget) });
+      await updateCurrentEnrollment({
+        nextActionAt: await reserveSendSlot({
+          budget,
+          workspace,
+          campaign,
+          enrollmentId: enrollment.id,
+          kind: "invite",
+        }),
+      });
       return "connect-paced";
     }
 
     // Bail before profile views / AI drafting when today's invite budget is
     // already spent - those work units were previously wasted on invite-limit.
+    // The planner rolls the enrollment to the next LOCAL day that has capacity,
+    // instead of the old hourly churn that made every workspace resume in a
+    // burst the instant the UTC day flipped.
     if (
       !(await hasDailyQuotaRemaining(
         enrollment.workspaceId,
         "invites",
         workspace.settings.dailyInviteLimit,
+        workspace.timezone,
       ))
     ) {
-      await updateCurrentEnrollment({ nextActionAt: addMinutes(60) });
+      await updateCurrentEnrollment({
+        nextActionAt: await reserveSendSlot({
+          budget,
+          workspace,
+          campaign,
+          enrollmentId: enrollment.id,
+          kind: "invite",
+        }),
+      });
       return "invite-limit";
     }
 
-    // Strict drip: at most one invite per account per INVITE_SPACING_MINUTES,
-    // across ticks and manual runs. Claimed before the profile check below so
-    // a waiting queue doesn't burn a live profile view on every tick; a claim
+    // Strict drip: at most one action per account per SPACING_MINUTES, across
+    // ticks and manual runs. Claimed before the profile check below so a
+    // waiting queue doesn't burn a live profile view on every tick; a claim
     // that ends up not sending (already connected, Unipile rejection) only
-    // delays the next invite - it can never over-send.
-    const nextInviteAllowedAt = await claimInviteSendSlot(enrollment.workspaceId, account.id);
-    if (nextInviteAllowedAt) {
+    // delays the next action - it can never over-send.
+    const nextSlotAllowedAt = await claimActionSlot(enrollment.workspaceId, account.id);
+    if (nextSlotAllowedAt) {
       budget.connects = 0;
-      budget.nextInviteOpenAtMs ??= Date.parse(nextInviteAllowedAt);
-      await updateCurrentEnrollment({ nextActionAt: nextInviteLadderSlot(budget) });
+      await updateCurrentEnrollment({
+        nextActionAt: await reserveSendSlot({
+          budget,
+          workspace,
+          campaign,
+          enrollmentId: enrollment.id,
+          kind: "invite",
+          earliestAt: Date.parse(nextSlotAllowedAt),
+        }),
+      });
       return "invite-spaced";
     }
-    // Slot claimed: the next invite from this account opens one spacing window
-    // from now; anything else deferred this tick ladders behind that.
-    budget.nextInviteOpenAtMs = Date.now() + INVITE_SPACING_MINUTES * 60 * 1000;
 
     // Already a 1st-degree connection (connected manually or via another
     // campaign): skip the redundant invite and move straight to messaging.
@@ -872,6 +1015,7 @@ async function runEnrollment(
       enrollment.workspaceId,
       "invites",
       workspace.settings.dailyInviteLimit,
+      workspace.timezone,
     );
     if (!counted) {
       // Race: another path exhausted the limit after our pre-check. Invite
@@ -908,9 +1052,37 @@ async function runEnrollment(
     return "message-before-connection";
   }
 
+  // A reply is the one action that may already be overdue when it gets here,
+  // so it is planned as kind "reply" and outranks queued invites for the next
+  // free slot. It still respects the send window: an AI reply at 03:19 is the
+  // same unnatural behaviour whether or not a human triggered it.
+  const messageKind: SendActionKind =
+    enrollment.status === "reply_received" ? "reply" : "message";
+
+  if (!options.ignoreSendWindow && !isWithinSendWindow(sendWindow, workspace.timezone, Date.now())) {
+    await updateCurrentEnrollment({
+      nextActionAt: await reserveSendSlot({
+        budget,
+        workspace,
+        campaign,
+        enrollmentId: enrollment.id,
+        kind: messageKind,
+      }),
+    });
+    return "outside-send-window";
+  }
+
   // Human-like pacing: only a few messages per account per tick.
   if (budget.messages <= 0) {
-    await updateCurrentEnrollment({ nextActionAt: addMinutes(PACING_DEFER_MINUTES) });
+    await updateCurrentEnrollment({
+      nextActionAt: await reserveSendSlot({
+        budget,
+        workspace,
+        campaign,
+        enrollmentId: enrollment.id,
+        kind: messageKind,
+      }),
+    });
     return "message-paced";
   }
 
@@ -919,10 +1091,38 @@ async function runEnrollment(
       enrollment.workspaceId,
       "messages",
       workspace.settings.dailyMessageLimit,
+      workspace.timezone,
     ))
   ) {
-    await updateCurrentEnrollment({ nextActionAt: addMinutes(60) });
+    await updateCurrentEnrollment({
+      nextActionAt: await reserveSendSlot({
+        budget,
+        workspace,
+        campaign,
+        enrollmentId: enrollment.id,
+        kind: messageKind,
+      }),
+    });
     return "message-limit";
+  }
+
+  // Messages now share the per-account drip with invites. Previously they had
+  // no spacing at all and went 1-3 per two-minute tick, so a burst of
+  // follow-ups could fire within a few minutes of each other.
+  const nextMessageSlotAt = await claimActionSlot(enrollment.workspaceId, account.id);
+  if (nextMessageSlotAt) {
+    budget.messages = 0;
+    await updateCurrentEnrollment({
+      nextActionAt: await reserveSendSlot({
+        budget,
+        workspace,
+        campaign,
+        enrollmentId: enrollment.id,
+        kind: messageKind,
+        earliestAt: Date.parse(nextMessageSlotAt),
+      }),
+    });
+    return "message-spaced";
   }
 
   const profile = await getProductProfile(enrollment.workspaceId);
@@ -1012,6 +1212,7 @@ async function runEnrollment(
     enrollment.workspaceId,
     "messages",
     workspace.settings.dailyMessageLimit,
+    workspace.timezone,
   );
   await updateLead(enrollment.workspaceId, lead.id, { outreachStatus: "messaged" });
   // Final AI message of the ladder just went out: don't let the sequence idle
@@ -1108,6 +1309,9 @@ export async function executeScheduledActionNow(workspaceId: string, enrollmentI
         campaign,
         () => manualBudget,
         newSourceAgentPausedLookup(),
+        // The user pressed "Run now"; honouring the campaign's send window here
+        // would silently do nothing outside business hours.
+        { ignoreSendWindow: true },
       );
       await safeLogAutomationRun({
         workspaceId,

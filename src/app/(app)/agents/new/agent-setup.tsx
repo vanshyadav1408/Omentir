@@ -63,7 +63,37 @@ type AgentSetupProps = {
   // contacts leads manually from the Leads section.
   leadsOnly?: boolean;
   outreachOnly?: boolean;
+  // Workspace IANA timezone, shown next to the send-window picker so the user
+  // knows whose 9am they are choosing.
+  timezone?: string;
 };
+
+const SEND_WINDOW_OPTIONS = [
+  {
+    id: "business" as const,
+    label: "Business hours",
+    hours: "Mon-Fri, 9am - 6pm",
+    detail: "Most natural. Nothing sends evenings or weekends.",
+  },
+  {
+    id: "extended" as const,
+    label: "Extended hours",
+    hours: "Every day, 7am - 10pm",
+    detail: "More volume, still never overnight.",
+  },
+  {
+    id: "always" as const,
+    label: "Around the clock",
+    hours: "24/7",
+    detail: "Highest volume. Can send at 3am local time.",
+  },
+];
+
+const RUN_HOUR_OPTIONS = Array.from({ length: 24 }, (_, hour) => {
+  const suffix = hour < 12 ? "am" : "pm";
+  const display = hour % 12 === 0 ? 12 : hour % 12;
+  return { value: String(hour), label: `${display}:00 ${suffix}` };
+});
 
 type StepKey = "icp" | "signals" | "leads" | "campaign" | "review";
 type SeqKind = "connect" | "message" | "follow";
@@ -666,6 +696,7 @@ export default function AgentSetup({
   setupMode = false,
   leadsOnly = false,
   outreachOnly = false,
+  timezone = "",
 }: AgentSetupProps) {
   const isEditing = Boolean(initialAgent);
   const router = useRouter();
@@ -690,6 +721,15 @@ export default function AgentSetup({
     [linkedInAccounts],
   );
   const [outreachMode, setOutreachMode] = useState<"automatic" | "manual">("automatic");
+  // Business hours is the default for new agents: sending at 3am is the single
+  // most unnatural thing automated outreach can do. Existing campaigns are
+  // untouched and keep sending round the clock until their owner changes it.
+  const [sendWindow, setSendWindow] = useState<"always" | "business" | "extended">(
+    initialAgent ? "always" : "business",
+  );
+  // Discovery runs an hour before business hours open, so leads found today are
+  // queued and ready the moment sending starts.
+  const [runAtHour, setRunAtHour] = useState<number>(initialAgent?.runAtHour ?? 8);
   const [replyHandling, setReplyHandling] = useState<"ai" | "handoff">("ai");
   const [campaignGoal, setCampaignGoal] = useState<"warm" | "demo">("warm");
   const [messageTone, setMessageTone] = useState<"professional" | "conversational" | "direct">(
@@ -1324,12 +1364,60 @@ export default function AgentSetup({
           </p>
         </div>
 
+        {/* Send window. Sits at the top of outreach settings because it governs
+            every other choice below it: the sequence's waits, the daily caps
+            and the drip are all expressed inside these hours. */}
+        <div>
+          <div
+            style={{ fontFamily: "var(--font-varta)" }}
+            className="text-[12px] font-bold uppercase tracking-wider text-zinc-900"
+          >
+            When should outreach go out?
+          </div>
+          <p className="mt-1 text-[13px] font-medium text-zinc-700">
+            Interpreted in your workspace timezone{timezone ? ` (${timezone})` : ""}. Messages that
+            come due outside these hours wait for the next opening instead of sending overnight.
+          </p>
+          <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
+            {SEND_WINDOW_OPTIONS.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => setSendWindow(option.id)}
+                className={
+                  "rounded-md border p-4 text-left transition " +
+                  (sendWindow === option.id
+                    ? "border-[#e85e6b] bg-[#fff5f6]"
+                    : "border-zinc-200 bg-white hover:bg-zinc-50")
+                }
+              >
+                <div
+                  style={{ fontFamily: "var(--font-varta)" }}
+                  className="text-[15px] font-semibold text-zinc-950"
+                >
+                  {option.label}
+                </div>
+                <div className="mt-1 text-[13px] font-medium text-zinc-700">{option.hours}</div>
+                <div className="mt-1 text-[12px] font-medium text-zinc-500">{option.detail}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+
         <SelectField
           label="LinkedIn account"
           options={linkedInAccountSelectOptions}
           value={linkedInAccountId}
           onChange={setLinkedInAccountId}
           placeholder="Select LinkedIn account"
+        />
+
+        <SelectField
+          label="Find new leads at"
+          options={RUN_HOUR_OPTIONS}
+          value={String(runAtHour)}
+          onChange={(value) => setRunAtHour(Number(value))}
+          placeholder="Pick an hour"
         />
 
         {/* AI / Manual selector */}
@@ -2053,6 +2141,8 @@ export default function AgentSetup({
       ) : (
         <input type="hidden" name="manualDefaultOutreach" value="on" />
       )}
+      <input type="hidden" name="sendWindow" value={sendWindow} />
+      <input type="hidden" name="runAtHour" value={String(runAtHour)} />
       <input type="hidden" name="mode" value={outreachOnly ? "outreach" : "signals"} />
 
       {!setupMode ? (

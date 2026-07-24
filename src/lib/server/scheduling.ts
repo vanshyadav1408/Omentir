@@ -2,6 +2,9 @@ import type { Agent } from "./types";
 
 export const STUCK_AGENT_RUN_MS = 30 * 60 * 1000;
 
+// nextLocalAgentRunAt and DEFAULT_AGENT_RUN_HOUR live in send-schedule.ts,
+// alongside the timezone primitives they are built from.
+
 export function nextDailyAgentRunAt(nextRunAt: string | undefined, nowMs = Date.now()) {
   const nextRunDate = new Date(nextRunAt || nowMs);
 

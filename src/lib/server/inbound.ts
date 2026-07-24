@@ -17,6 +17,7 @@ import {
   listCampaignEnrollments,
   listCampaigns,
   logAutomationRun,
+  planActionSlots,
   stopLeadEnrollments,
   updateEnrollment,
   updateLead,
@@ -90,6 +91,41 @@ export async function draftUpcomingMessagePreview(input: {
   }
 }
 
+// Webhook-side wrapper around the send planner. Provider events land at
+// arbitrary hours, so every enrollment woken from here gets a real slot inside
+// the campaign's send window rather than "now" or "now + wait". Falls back to
+// the naive time if planning fails: a slightly-off schedule beats dropping the
+// acceptance or reply signal entirely.
+async function planFirstAvailableSlot(input: {
+  workspaceId: string;
+  campaign: Campaign | undefined;
+  enrollmentId: string;
+  kind: "message" | "reply";
+  earliestAt: number;
+}) {
+  const fallback = new Date(input.earliestAt).toISOString();
+  if (!input.campaign) return fallback;
+
+  try {
+    const workspace = await getWorkspace(input.workspaceId);
+    const plan = await planActionSlots({
+      workspace,
+      campaign: input.campaign,
+      actions: [
+        { id: input.enrollmentId, kind: input.kind, earliestAt: input.earliestAt },
+      ],
+    });
+    const slot = plan.get(input.enrollmentId);
+    return slot === undefined ? fallback : new Date(slot).toISOString();
+  } catch (error) {
+    console.error(
+      `[automation] slot planning failed for enrollment ${input.enrollmentId}:`,
+      error,
+    );
+    return fallback;
+  }
+}
+
 // Records an accepted connection request on one enrollment: store the
 // acceptance and start the configured post-acceptance wait before calling
 // Gemini - a drafting/provider failure must never lose the primary acceptance
@@ -105,16 +141,24 @@ export async function applyConnectionAccepted(input: {
 }) {
   const { workspaceId, lead, enrollment, campaign } = input;
   const currentStep = campaign?.steps[enrollment.currentStepIndex];
+  // The wait step's delay is the EARLIEST the first message may go, not the
+  // time it goes. Acceptances arrive whenever the lead happens to click, so
+  // without the planner a 3am acceptance produced a 3:15am first message.
+  const earliestAt =
+    Date.now() + (currentStep?.type === "wait" ? currentStep.delayMinutes * 60 * 1000 : 0);
+  const nextActionAt = await planFirstAvailableSlot({
+    workspaceId,
+    campaign,
+    enrollmentId: enrollment.id,
+    kind: "message",
+    earliestAt,
+  });
+
   await updateEnrollment(workspaceId, enrollment.id, {
     status: "connected",
     ...(currentStep?.type === "wait"
-      ? {
-          currentStepIndex: enrollment.currentStepIndex + 1,
-          nextActionAt: new Date(
-            Date.now() + currentStep.delayMinutes * 60 * 1000,
-          ).toISOString(),
-        }
-      : { nextActionAt: new Date().toISOString() }),
+      ? { currentStepIndex: enrollment.currentStepIndex + 1, nextActionAt }
+      : { nextActionAt }),
   });
 
   try {
@@ -250,12 +294,26 @@ export async function processInboundMessage(input: {
   if (isTerminalReplyIntent(classification.intent) || isHotInterest) {
     await stopLeadEnrollments(workspaceId, lead.id);
   } else if (aiReplyEnrollments.length) {
-    const now = new Date().toISOString();
+    // Replies are planned as kind "reply", so they outrank queued cold invites
+    // for the next free slot - but they still land inside the send window
+    // rather than firing back at 3am just because that is when it arrived.
+    const armed = await Promise.all(
+      aiReplyEnrollments.map(async (enrollment) => ({
+        enrollment,
+        nextActionAt: await planFirstAvailableSlot({
+          workspaceId,
+          campaign: campaigns.find((item) => item.id === enrollment.campaignId),
+          enrollmentId: enrollment.id,
+          kind: "reply",
+          earliestAt: Date.now(),
+        }),
+      })),
+    );
     await Promise.all([
-      ...aiReplyEnrollments.map((enrollment) =>
+      ...armed.map(({ enrollment, nextActionAt }) =>
         updateEnrollment(workspaceId, enrollment.id, {
           status: "reply_received",
-          nextActionAt: now,
+          nextActionAt,
         }),
       ),
       // A lead can sit in both an AI campaign and a hand-off campaign; the

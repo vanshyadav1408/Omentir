@@ -119,6 +119,11 @@ export type Agent = {
   };
   signalSources?: AgentSignalSources;
   peopleEngineCursor?: PeopleEngineCursor;
+  // Hour of the local day (0-23, workspace timezone) this agent runs lead
+  // discovery. Unset means DEFAULT_AGENT_RUN_HOUR. Editing an agent must not
+  // change it - the run time is the user's choice, not a side effect of when
+  // they last saved.
+  runAtHour?: number;
   targetGroupId: string;
   targetGroupName: string;
   status: "active" | "paused" | "running" | "error";
@@ -245,6 +250,13 @@ export type CampaignStep =
       messageTemplate: string;
     };
 
+// When this campaign is allowed to send, interpreted in the workspace's
+// timezone. "always" is the historical behaviour (24/7, including 3am Sunday);
+// "business" is Mon-Fri 09:00-18:00; "extended" is every day 07:00-22:00.
+// Campaigns sharing a LinkedIn account may disagree - each action is checked
+// against its own campaign's window, so no arbitration is needed.
+export type SendWindow = "always" | "business" | "extended";
+
 export type Campaign = {
   id: string;
   workspaceId: string;
@@ -253,6 +265,9 @@ export type Campaign = {
   groupId: string;
   status: "draft" | "active" | "paused";
   steps: CampaignStep[];
+  // Unset means "always", so campaigns created before this field keep their
+  // existing round-the-clock behaviour until the user picks a window.
+  sendWindow?: SendWindow;
   // Who owns the conversation once a lead replies. "ai" (default, also for
   // campaigns created before this field existed): the sequence stops and AI
   // handles the conversation until hot or terminal intent. "handoff": all

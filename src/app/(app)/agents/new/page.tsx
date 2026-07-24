@@ -216,6 +216,7 @@ export default async function NewAgentPage({
       draftSetup={draftAgentSetupAction}
       saveProductProfile={saveProductProfileAction}
       initialAgent={agent}
+      timezone={workspace.timezone}
       linkedInAccounts={linkedInAccounts.map((account) => ({
         id: account.id,
         displayName: account.displayName,
