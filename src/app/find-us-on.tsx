@@ -1,9 +1,13 @@
 import Image from "next/image";
 
 /**
- * Directory listing badges. Both light and dark assets are always in the DOM;
- * visibility is toggled with `html.dark` (set by the blocking theme-init script
- * before paint). This avoids React hydration mismatches from client theme state.
+ * Directory listing badges. Only the on-dark artwork is fetched — the app has a
+ * single dark theme, so the light asset that used to sit alongside it under
+ * `dark:hidden` was never painted.
+ *
+ * Note the two providers name their files by ink colour, not by the background
+ * they belong on, and they disagree: directree's "darkmode" file is the one for
+ * a dark page, while Backlink Dirs' is "badge-listed-light" (light ink).
  */
 const BADGES = [
   {
@@ -11,16 +15,14 @@ const BADGES = [
     alt: "Verified on directree",
     width: 200,
     height: 37,
-    lightSrc: "https://www.directree.io/badge/directree-badge-lightmode.svg",
-    darkSrc: "https://www.directree.io/badge/directree-badge-darkmode.svg",
+    src: "https://www.directree.io/badge/directree-badge-darkmode.svg",
   },
   {
     href: "https://backlinkdirs.com/item/omentir",
     alt: "Listed on Backlink Dirs",
     width: 170,
     height: 40,
-    lightSrc: "https://backlinkdirs.com/badges/badge-listed-dark.svg",
-    darkSrc: "https://backlinkdirs.com/badges/badge-listed-light.svg",
+    src: "https://backlinkdirs.com/badges/badge-listed-light.svg",
   },
 ] as const;
 
@@ -40,24 +42,14 @@ export default function FindUsOn() {
             href={badge.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center rounded-lg p-2 ring-1 ring-[var(--md-sys-color-outline-variant)] transition hover:bg-[var(--md-sys-state-hover)] dark:bg-[var(--md-sys-color-surface-container-high)]"
+            className="inline-flex items-center justify-center rounded-lg bg-[var(--md-sys-color-surface-container-high)] p-2 ring-1 ring-[var(--md-sys-color-outline-variant)] transition hover:bg-[var(--md-sys-state-hover)]"
           >
             <Image
-              src={badge.lightSrc}
+              src={badge.src}
               alt={badge.alt}
               width={badge.width}
               height={badge.height}
               unoptimized
-              className="dark:hidden"
-            />
-            <Image
-              src={badge.darkSrc}
-              alt=""
-              width={badge.width}
-              height={badge.height}
-              unoptimized
-              className="hidden dark:block"
-              aria-hidden
             />
           </a>
         ))}

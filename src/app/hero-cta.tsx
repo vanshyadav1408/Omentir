@@ -24,7 +24,7 @@ export default async function HeroCta() {
       <div className="w-full">
         <Form
           action="/signup"
-          className="mx-auto mt-8 flex w-full max-w-72 flex-col items-center justify-center gap-3 md:mt-10 md:max-w-none md:flex-row md:items-end"
+          className="mx-auto mt-8 flex w-full max-w-64 flex-col items-center justify-center gap-2.5 md:mt-10 md:max-w-none md:flex-row md:items-end md:gap-3"
         >
           <TextField
             id="website-url"
@@ -38,21 +38,26 @@ export default async function HeroCta() {
             placeholder="https://yourcompany.com"
             required
             variant="outlined"
-            className="w-full max-w-72"
+            /* --hero: 46px on phones, 56px from md up (see globals.css). */
+            className="m3-text-field--hero w-full max-w-64 md:max-w-72"
           />
           <button
             type="submit"
-            className="m3-btn m3-btn-filled-secondary h-12 w-full shrink-0 whitespace-nowrap px-6 text-base md:h-14 md:w-auto"
+            className="m3-btn m3-btn-filled-secondary m3-btn--hero w-full shrink-0 whitespace-nowrap md:w-auto"
           >
             Get started
           </button>
         </Form>
       </div>
+      {/* One proof point per row on phones, where the sentence otherwise wrapped
+          mid-claim; a single centred line from md up. */}
       <p
         style={{ fontFamily: "var(--font-roboto)" }}
-        className="mx-auto mt-4 max-w-xs px-4 text-[0.8125rem] leading-5 font-normal text-zinc-600 md:max-w-none md:px-0 md:text-sm"
+        className="mx-auto mt-4 flex max-w-xs flex-col items-center gap-0.5 px-4 text-[0.75rem] leading-5 font-normal text-zinc-600 md:max-w-none md:flex-row md:justify-center md:gap-1.5 md:px-0 md:text-sm"
       >
-        Agent Ready. Costs less than $1/day. Used by 50+ startups.
+        <span>Agent Ready.</span>
+        <span>Costs less than $1/day.</span>
+        <span>Used by 50+ startups.</span>
       </p>
     </>
   );

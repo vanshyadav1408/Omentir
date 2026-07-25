@@ -135,7 +135,7 @@ export const agentToolInputSchemas = {
       sendWindow: {
         enum: ["always", "business", "extended"],
         description:
-          "When this agent's outreach may send, in the workspace time zone: always (24/7), business (Mon-Fri 09:00-18:00), or extended (daily 07:00-22:00). Applies to every sequence built on the agent's lead group.",
+          "When this agent's outreach may send: always (24/7), business (Mon-Fri 09:00-18:00), or extended (daily 07:00-22:00). The hours are measured in each lead's own time zone, resolved from their profile location, falling back to the workspace zone when it cannot be placed. Applies to every sequence built on the agent's lead group.",
       },
       status: {
         enum: ["active", "paused"],

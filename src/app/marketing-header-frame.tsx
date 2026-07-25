@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 /** Fixed shell classes — never rebuild this string per render (hydration-safe). */
 const FRAME_BASE =
   "fixed inset-x-0 top-0 z-[100] h-16 w-full transition-[background-color,backdrop-filter] duration-300 ease-[cubic-bezier(0.2,0,0,1)]";
-const FRAME_SOLID = "bg-[var(--md-sys-color-surface-container)]/90 backdrop-blur-xl";
+const FRAME_SOLID = "bg-[var(--md-sys-header-surface)]/90 backdrop-blur-xl";
 const FRAME_CLEAR = "bg-transparent";
 
 export default function MarketingHeaderFrame({

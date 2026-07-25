@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import JsonLd from "../json-ld";
 import { MarketingPage } from "../marketing-shell";
@@ -45,21 +46,23 @@ export default function AboutPage() {
       <MarketingPage
         eyebrow="Company"
         title="We are building AI agents for sales & marketing."
-        titleStyle={{ fontFamily: "var(--font-varta)" }}
         description="Omentir helps founders, SDRs, and small sales teams find potential buyers, organize them into groups, and run LinkedIn campaigns from their own account."
         centeredHeader
       >
         <div className="mx-auto max-w-3xl py-8 sm:py-12">
           <div className="rounded-[1.4rem] border-2 border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface-container)] px-6 py-10 shadow-[var(--md-sys-elevation-2)] sm:px-12 sm:py-14">
+            {/* A real <img>, not <object>: the app's CSP sends
+                object-src 'none', so the photo never loaded and every visitor
+                saw the "VY" fallback initials instead. */}
             <div className="mx-auto flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-2 border-[var(--md-sys-color-surface-container)] bg-[var(--md-sys-color-primary)] text-2xl font-bold text-[var(--md-sys-color-on-primary)] shadow-[var(--md-sys-elevation-1)]">
-              <object
-                data="/founder.jpg"
-                type="image/jpeg"
-                aria-label="Vansh, founder of Omentir"
+              <Image
+                src="/founder.jpg"
+                alt="Vansh, founder of Omentir"
+                width={192}
+                height={192}
+                priority
                 className="h-full w-full object-cover"
-              >
-                <span className="flex h-full w-full items-center justify-center">VY</span>
-              </object>
+              />
             </div>
 
             <h2

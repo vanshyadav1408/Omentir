@@ -34,7 +34,7 @@ const runAtHour = {
 const sendWindow = {
   enum: ["always", "business", "extended"],
   description:
-    "When the agent's outreach may send, in the workspace time zone: always (24/7), business (Mon-Fri 09:00-18:00), extended (daily 07:00-22:00). Applies to every sequence built on the agent's lead group.",
+    "When the agent's outreach may send: always (24/7), business (Mon-Fri 09:00-18:00), extended (daily 07:00-22:00). The hours are measured in each lead's own time zone, resolved from their profile location, falling back to the workspace zone when it cannot be placed. Applies to every sequence built on the agent's lead group.",
 } as const;
 
 export async function GET() {
@@ -315,7 +315,7 @@ export async function GET() {
                     timeZone: {
                       type: "string",
                       description:
-                        'IANA time zone name (for example "America/New_York"). Daily limits reset at its local midnight and every send window is measured in it.',
+                        'IANA time zone name (for example "America/New_York") the workspace schedules in. Daily limits reset at its local midnight, and it is the fallback send-window zone for leads whose location cannot be placed (send windows are otherwise measured in each lead\'s own zone).',
                     },
                   },
                 },

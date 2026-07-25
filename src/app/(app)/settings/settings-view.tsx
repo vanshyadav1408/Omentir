@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import type { LinkedInAccount, Workspace } from "@/lib/server/types";
 import { ContentReveal, LinkedInAccountsSkeleton } from "@/app/app-skeletons";
-import { ThemePreferenceControl } from "@/app/theme-toggle";
 import { useSidebarResource } from "@/app/use-sidebar-resource";
 import SignOutButton from "./sign-out-button";
 import { SelectField } from "@/app/ui/select";
@@ -523,14 +522,6 @@ export default function SettingsView({
                     options={DATE_FORMATS}
                   />
                 </div>
-
-                <div className="my-8 h-px bg-zinc-200" />
-
-                <SectionHeader
-                  title="Appearance"
-                  description="Material 3 light and dark surfaces. System follows your device preference."
-                />
-                <ThemePreferenceControl />
 
                 <div className="my-8 h-px bg-zinc-200" />
 

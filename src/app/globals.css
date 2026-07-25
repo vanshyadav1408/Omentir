@@ -4,19 +4,71 @@
    `node scripts/build-icon-font.mjs` after adding a new icon name. */
 @import "./icon-font.css";
 
-/* Class-based dark mode (html.dark) so users can override system preference. */
+/* Dark is the only theme, but the `dark:` variant is deliberately kept and
+   pinned to the `.dark` class instead of being deleted. `<html>` always carries
+   that class, so any surviving or newly written `dark:` utility simply always
+   applies. Dropping this line would hand `dark:` back to Tailwind's default
+   prefers-color-scheme implementation, which would silently reintroduce
+   light-mode branching on devices set to light. */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* ── Material 3 single-seed tonal system ──────────────────────────────────
-   Seed only: #ba3871. All brand-derived roles come from this one color via
-   color-mix (HCT-style tone ladder approximation: T0–T100). Do not invent
-   new brand hues. Neutral surfaces stay warm off-white (product canvas). */
-:root {
-  color-scheme: light;
-  --background: #fbfaf6;
-  --foreground: #171717;
+/* ── Material 3 single-seed tonal system (dark only) ──────────────────────
+   Dark is the only theme, so this is the whole palette — there is no light
+   block to override and no `html.dark` token layer to keep in sync.
 
-  /* Seed + 13-tone primary scale (T0…T100) */
+   Seed only: #ba3871. All brand-derived roles come from that one color via
+   color-mix (HCT-style tone ladder approximation: T0–T100). Do not invent new
+   brand hues. Surfaces follow Google's M3 dark fidelity (Gmail / Drive / Cloud
+   Console): exact charcoals, never pure black, with depth expressed as tonal
+   elevation (lighter surface = higher) instead of shadows. */
+:root {
+  color-scheme: dark;
+
+  /* ── Surface ladder, near-black ──────────────────────────────────────────
+     Google's ladder (#131314 → #303134) shifted down 9 points per channel, so
+     the canvas reads as black instead of dark grey and every elevated step
+     moves with it — the steps between rungs are unchanged, which is what keeps
+     tonal elevation legible. Not pure #000 at the bottom: the ladder needs
+     somewhere darker than the lowest card, and #000 haloes light text on OLED.
+     Change these five together; individual greys elsewhere reference them
+     rather than restating hex.
+
+     Now that dark is the only theme, the whole ladder sits lower: the top rungs
+     used to read as light grey slabs against the canvas, which was tolerable as
+     one option of three and wrong as the only look. Every grey in the product
+     is derived from these six values (including the Tailwind zinc/neutral/stone
+     remaps below), so they are the single place to tune overall darkness. */
+  --google-bg: #08080a;
+  --google-surface: #121314;
+  --google-surface-low: #0d0e0f;
+  --google-surface-high: #191a1c;
+  --google-surface-highest: #202124;
+  /* Hairline dividers, not a visible grey rule: the old #3b3e3d drew 1400+
+     borders that dominated at this canvas darkness. */
+  --google-border: #2a2c2e;
+
+  /* Desaturated brand accents (seed #ba3871 → pastel / deep container).
+     Roles mirror Google blue #A8C7FA / #0842A0 / #D3E3FD without switching hue. */
+  --google-primary: #f2b8c6;
+  --google-primary-container: #6b1a40;
+  --google-on-primary-container: #ffd9e6;
+  --google-on-primary: #000000;
+
+  /* Typography alpha hierarchy — secondary kept bright enough for long-form body */
+  --google-text-primary: rgba(255, 255, 255, 0.92);
+  --google-text-secondary: rgba(255, 255, 255, 0.82);
+  --google-text-disabled: rgba(255, 255, 255, 0.38);
+
+  /* Semantic */
+  --google-error: #f2b8b5;
+  --google-error-container: #8c1d18;
+
+  --background: var(--google-bg);
+  --foreground: var(--google-text-primary);
+
+  /* Seed + 13-tone primary scale (T0…T100). Seed-derived rather than
+     theme-derived, so it is unchanged from the two-theme era: the landing
+     illustrations and prose accents pick tones off this ladder directly. */
   --md-sys-color-seed: #ba3871;
   --md-ref-primary-0: #000000;
   --md-ref-primary-10: color-mix(in srgb, var(--md-sys-color-seed) 78%, #000000);
@@ -32,40 +84,107 @@
   --md-ref-primary-99: color-mix(in srgb, var(--md-sys-color-seed) 2%, #ffffff);
   --md-ref-primary-100: #ffffff;
 
-  /* M3 role map from tonal scale */
-  --md-sys-color-primary: var(--md-ref-primary-40); /* buttons / high emphasis */
-  --md-sys-color-on-primary: var(--md-ref-primary-100);
-  --md-sys-color-primary-container: var(--md-ref-primary-90); /* nav pills, soft badges */
-  --md-sys-color-on-primary-container: var(--md-ref-primary-10);
-  --md-sys-color-secondary: #171717;
-  --md-sys-color-on-secondary: #ffffff;
-  --md-sys-color-surface: #fbfaf6; /* canvas ~T98 product surface */
-  --md-sys-color-on-surface: #171717;
-  --md-sys-color-surface-container-lowest: #fbfaf6;
-  --md-sys-color-surface-container-low: #f7f5f0;
-  --md-sys-color-surface-container: #ffffff; /* app bars / cards (tone contrast, not borders) */
-  --md-sys-color-surface-container-high: rgba(23, 23, 23, 0.05);
-  --md-sys-color-surface-container-highest: rgba(23, 23, 23, 0.08);
-  --md-sys-color-surface-bright: #ffffff;
-  --md-sys-color-outline: #d4d4d8; /* zinc-300 */
-  --md-sys-color-outline-variant: #e4e4e7; /* zinc-200 */
-  --md-sys-color-on-surface-variant: #52525b; /* zinc-600 */
-  --md-sys-color-inverse-surface: #2c2c2c;
-  --md-sys-color-inverse-on-surface: rgba(255, 255, 255, 0.87);
+  /* M3 role map → Google dark palette. Note primary is the pastel accent, not
+     tone 40 of the ladder: the seed itself is too dark to sit on charcoal. */
+  --md-sys-color-primary: var(--google-primary);
+  --md-sys-color-on-primary: var(--google-on-primary);
+  --md-sys-color-primary-container: var(--google-primary-container);
+  --md-sys-color-on-primary-container: var(--google-on-primary-container);
+  --md-sys-color-secondary: #e3e3e3;
+  --md-sys-color-on-secondary: #1e1f20;
+
+  --md-sys-color-surface: var(--google-bg);
+  --md-sys-color-on-surface: var(--google-text-primary);
+  --md-sys-color-surface-container-lowest: var(--google-bg);
+  --md-sys-color-surface-container-low: var(--google-surface-low);
+  --md-sys-color-surface-container: var(--google-surface); /* app bars / cards (tone contrast, not borders) */
+  /* The fixed marketing header's solid fill. Its own role because the header
+     spans the canvas rather than sitting on it: it takes the canvas tone so it
+     reads black with the page instead of floating as a lighter card tone. */
+  --md-sys-header-surface: var(--google-bg);
+  --md-sys-color-surface-container-high: var(--google-surface-high);
+  --md-sys-color-surface-container-highest: var(--google-surface-highest);
+  --md-sys-color-surface-bright: var(--google-surface-highest);
+  --md-sys-color-outline: var(--google-border);
+  --md-sys-color-outline-variant: var(--google-border);
+  --md-sys-color-on-surface-variant: var(--google-text-secondary);
+  --md-sys-color-inverse-surface: #e3e3e3;
+  --md-sys-color-inverse-on-surface: #1e1f20;
+
+  /* ── Tailwind v4 palette remap ───────────────────────────────────────────
+     Components still carry light-era utilities (bg-white, text-zinc-900) in
+     hundreds of places, so the palette is remapped once here instead of being
+     rewritten per call site: bg-white → elevated charcoal card, text-zinc-950
+     → near-white. `text-white` is forced back to pure white further down so
+     text on filled primary buttons stays readable. Declared outside `@theme`
+     on purpose — unlayered, so these beat Tailwind's own theme layer. */
+  --color-background: var(--google-bg);
+  --color-foreground: var(--google-text-primary);
+  --color-white: var(--google-surface);
+  --color-black: #e8eaed;
+  --color-zinc-50: var(--google-surface-high);
+  --color-zinc-100: var(--google-surface-highest);
+  --color-zinc-200: var(--google-border);
+  /* Heavier rules and grey chips. Kept a step above the hairline border, but
+     well below the old #5f6368, which read as mid-grey furniture. */
+  --color-zinc-300: #3a3d40;
+  --color-zinc-400: rgba(255, 255, 255, 0.45);
+  --color-zinc-500: rgba(255, 255, 255, 0.78);
+  --color-zinc-600: rgba(255, 255, 255, 0.82);
+  --color-zinc-700: rgba(255, 255, 255, 0.86);
+  --color-zinc-800: rgba(255, 255, 255, 0.9);
+  --color-zinc-900: rgba(255, 255, 255, 0.92);
+  --color-zinc-950: rgba(255, 255, 255, 0.94);
+  --color-neutral-50: var(--google-surface-high);
+  --color-neutral-100: var(--google-surface-highest);
+  --color-neutral-200: var(--google-border);
+  --color-neutral-800: rgba(255, 255, 255, 0.87);
+  --color-neutral-900: rgba(255, 255, 255, 0.9);
+  --color-neutral-950: rgba(255, 255, 255, 0.92);
+  --color-stone-50: var(--google-surface-high);
+  --color-stone-100: var(--google-surface-highest);
+  --color-stone-200: var(--google-border);
+  --color-stone-800: rgba(255, 255, 255, 0.87);
+  --color-stone-900: rgba(255, 255, 255, 0.9);
+  --color-stone-950: rgba(255, 255, 255, 0.92);
+  --color-gray-50: var(--google-surface-high);
+  --color-gray-100: var(--google-surface-highest);
+  --color-gray-200: var(--google-border);
+  --color-gray-600: rgba(255, 255, 255, 0.7);
+  --color-gray-700: rgba(255, 255, 255, 0.75);
+  --color-gray-800: rgba(255, 255, 255, 0.87);
+  --color-gray-900: rgba(255, 255, 255, 0.9);
+  --color-gray-950: rgba(255, 255, 255, 0.92);
+  --color-slate-50: var(--google-surface-high);
+  --color-slate-100: var(--google-surface-highest);
+  --color-slate-200: var(--google-border);
+  --color-slate-600: rgba(255, 255, 255, 0.7);
+  --color-slate-700: rgba(255, 255, 255, 0.75);
+  --color-slate-800: rgba(255, 255, 255, 0.87);
+  --color-slate-900: rgba(255, 255, 255, 0.9);
+  --color-slate-950: rgba(255, 255, 255, 0.92);
+  /* Links stay pastel (readable on charcoal) */
+  --color-blue-600: #a8c7fa;
+  --color-blue-700: #8ab4f8;
+  --color-blue-500: #a8c7fa;
 
   /* Semantic error (M3) */
-  --md-sys-color-error: #b3261e;
-  --md-sys-color-on-error: #ffffff;
-  --md-sys-color-error-container: #f9dedc;
-  --md-sys-color-on-error-container: #410e0b;
+  --md-sys-color-error: var(--google-error);
+  --md-sys-color-on-error: #601410;
+  --md-sys-color-error-container: var(--google-error-container);
+  --md-sys-color-on-error-container: #f9dedc;
 
-  /* Text field (M3 / Google outlined) */
-  --md-sys-color-field-outline: #747775; /* muted resting border */
-  --md-sys-color-field-outline-hover: #1f1f1f;
-  --md-sys-color-field-fill: #f0f4f9;
-  --md-sys-color-field-fill-hover: #e4e9f0;
-  --md-sys-color-field-text: #1f1f1f; /* high-contrast charcoal entry */
-  --md-sys-color-field-label: #747775;
+  /* Text field (M3 / Google outlined): resting --google-border / focus pastel
+     primary 2px. Fields rest a rung BELOW the card they sit on
+     (--google-surface-low, not -high): on a canvas this dark a lighter fill
+     made every input read as a grey block, where a darker one reads as the
+     well the text goes into. */
+  --md-sys-color-field-outline: var(--google-border);
+  --md-sys-color-field-outline-hover: color-mix(in srgb, #fff 50%, var(--google-border));
+  --md-sys-color-field-fill: var(--google-surface-low);
+  --md-sys-color-field-fill-hover: var(--google-surface);
+  --md-sys-color-field-text: var(--google-text-primary);
+  --md-sys-color-field-label: var(--google-text-secondary);
   --md-sys-text-field-height: 56px;
   --md-sys-text-field-radius: var(--md-sys-shape-corner-medium); /* 12px — matches auth card softness */
 
@@ -83,31 +202,32 @@
   --md-sys-nav-nest-indent: 12px;
 
   /* Typography emphasis (M3) */
-  --md-sys-color-text-high: rgba(23, 23, 23, 0.87);
-  --md-sys-color-text-medium: rgba(23, 23, 23, 0.6);
-  --md-sys-color-text-disabled: rgba(23, 23, 23, 0.38);
+  --md-sys-color-text-high: var(--google-text-primary);
+  --md-sys-color-text-medium: var(--google-text-secondary);
+  --md-sys-color-text-disabled: var(--google-text-disabled);
 
-  /* Skeleton: solid muted fills (not near-invisible overlays on white).
-     Highlight is a slightly lighter band for the shimmer sweep. */
-  --md-sys-color-skeleton-base: #e3e3e3;
-  --md-sys-color-skeleton-highlight: #f1f1f1;
+  /* Skeletons: elevated charcoal bands, clearly visible against the card
+     surface. Highlight is the lighter band the shimmer sweeps across. */
+  --md-sys-color-skeleton-base: #2c2d2f;
+  --md-sys-color-skeleton-highlight: #3c3d40;
 
   /* State layers */
-  --md-sys-state-hover: rgba(0, 0, 0, 0.04);
-  --md-sys-state-pressed: rgba(0, 0, 0, 0.08);
+  --md-sys-state-hover: rgba(255, 255, 255, 0.08);
+  --md-sys-state-pressed: rgba(255, 255, 255, 0.12);
 
-  /* §29 M3 dropdown menus & pickers */
+  /* §29 M3 dropdown menus & pickers — highest surface, kept floating with
+     elevation even though cards do not use shadows */
   --md-sys-menu-radius: 8px;
   --md-sys-menu-elevation:
-    0 2px 6px 2px rgba(0, 0, 0, 0.15),
-    0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    0 2px 6px 2px rgba(0, 0, 0, 0.3),
+    0 1px 2px 0 rgba(0, 0, 0, 0.45);
   --md-sys-menu-item-height: 48px;
   --md-sys-menu-item-height-compact: 36px;
   --md-sys-menu-item-padding-x: 16px;
-  --md-sys-menu-surface: #ffffff;
-  --md-sys-menu-on-surface: #1f1f1f;
-  --md-sys-menu-hover: rgba(31, 31, 31, 0.08);
-  --md-sys-menu-pressed: rgba(31, 31, 31, 0.12);
+  --md-sys-menu-surface: var(--google-surface-highest);
+  --md-sys-menu-on-surface: var(--google-text-primary);
+  --md-sys-menu-hover: rgba(255, 255, 255, 0.08);
+  --md-sys-menu-pressed: rgba(255, 255, 255, 0.12);
   --md-sys-menu-selected: var(--md-sys-color-primary);
 
   /* M3 shape scale */
@@ -118,33 +238,22 @@
   --md-sys-shape-corner-extra-large: 28px;
   --md-sys-shape-corner-full: 100px;
 
-  /* M3 elevation (soft ambient, not harsh black) */
-  --md-sys-elevation-1:
-    0 1px 3px 0 rgba(0, 0, 0, 0.1),
-    0 1px 2px -1px rgba(0, 0, 0, 0.1);
-  --md-sys-elevation-2:
-    0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -2px rgba(0, 0, 0, 0.1);
-  --md-sys-elevation-3:
-    0 10px 15px -3px rgba(0, 0, 0, 0.1),
-    0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  /* Elevation: depth is surface tone only, so every shadow ramp collapses to
+     none. Kept as tokens rather than deleted so call sites need no edits. */
+  --md-sys-elevation-1: none;
+  --md-sys-elevation-2: none;
+  --md-sys-elevation-3: none;
+  --md-sys-card-elevation-rest: none;
+  --md-sys-card-elevation-hover: none;
 
-  /* M3 card elevation (exact resting / hover pair) */
-  --md-sys-card-elevation-rest:
-    0 1px 3px rgba(0, 0, 0, 0.05),
-    0 1px 2px rgba(0, 0, 0, 0.1);
-  --md-sys-card-elevation-hover:
-    0 4px 6px rgba(0, 0, 0, 0.08),
-    0 2px 4px rgba(0, 0, 0, 0.1);
-
-  /* Filled-card tonal overlays (primary brand at 4% / 8%) */
-  --md-sys-card-filled-rest: color-mix(in srgb, var(--md-sys-color-primary) 4%, var(--md-sys-color-surface));
-  --md-sys-card-filled-hover: color-mix(in srgb, var(--md-sys-color-primary) 8%, var(--md-sys-color-surface));
+  /* Filled cards step up the surface ladder instead of tinting with brand */
+  --md-sys-card-filled-rest: var(--google-surface);
+  --md-sys-card-filled-hover: var(--google-surface-high);
 
   /* Data table */
-  --md-sys-table-row-hover: rgba(0, 0, 0, 0.02);
-  --md-sys-table-divider: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent);
-  --md-sys-table-header-border: color-mix(in srgb, var(--md-sys-color-on-surface) 14%, transparent);
+  --md-sys-table-row-hover: rgba(255, 255, 255, 0.04);
+  --md-sys-table-divider: var(--google-border);
+  --md-sys-table-header-border: var(--google-border);
 
   /* M3 motion — web-optimized cubic-beziers (no spring physics) */
   --md-sys-motion-easing-standard: cubic-bezier(0.2, 0, 0, 1); /* default spatial */
@@ -171,167 +280,6 @@
     "Helvetica Neue",
     Arial,
     sans-serif;
-}
-
-/* ── Google M3 dark theme (Gmail / Drive / Cloud Console fidelity) ────────
-   Exact charcoal surfaces — never pure black. Depth = tonal elevation only
-   (lighter surface = higher). Brand seed stays #ba3871; dark primary is a
-   desaturated pastel of the seed (same role as Google’s #A8C7FA for blue). */
-html.dark,
-html[data-theme="dark"] {
-  color-scheme: dark;
-
-  /* ── Exact Google surface ladder ─────────────────────────────────────── */
-  --google-bg: #131314;
-  --google-surface: #1e1f20;
-  --google-surface-low: #1a1a1c;
-  --google-surface-high: #282a2c;
-  --google-surface-highest: #303134;
-  --google-border: #444746;
-
-  /* Desaturated brand accents (seed #ba3871 → pastel / deep container).
-     Roles mirror Google blue #A8C7FA / #0842A0 / #D3E3FD without switching hue. */
-  --google-primary: #f2b8c6;
-  --google-primary-container: #6b1a40;
-  --google-on-primary-container: #ffd9e6;
-  --google-on-primary: #000000;
-
-  /* Typography alpha hierarchy — secondary kept bright enough for long-form body */
-  --google-text-primary: rgba(255, 255, 255, 0.92);
-  --google-text-secondary: rgba(255, 255, 255, 0.82);
-  --google-text-disabled: rgba(255, 255, 255, 0.38);
-
-  /* Semantic */
-  --google-error: #f2b8b5;
-  --google-error-container: #8c1d18;
-
-  /* Map product tokens → Google dark palette */
-  --background: var(--google-bg);
-  --foreground: var(--google-text-primary);
-
-  --md-sys-color-seed: #ba3871;
-  --md-sys-color-primary: var(--google-primary);
-  --md-sys-color-on-primary: var(--google-on-primary);
-  --md-sys-color-primary-container: var(--google-primary-container);
-  --md-sys-color-on-primary-container: var(--google-on-primary-container);
-
-  --md-sys-color-secondary: #e3e3e3;
-  --md-sys-color-on-secondary: #1e1f20;
-
-  --md-sys-color-surface: var(--google-bg);
-  --md-sys-color-on-surface: var(--google-text-primary);
-  --md-sys-color-surface-container-lowest: var(--google-bg);
-  --md-sys-color-surface-container-low: var(--google-surface-low);
-  --md-sys-color-surface-container: var(--google-surface);
-  --md-sys-color-surface-container-high: var(--google-surface-high);
-  --md-sys-color-surface-container-highest: var(--google-surface-highest);
-  --md-sys-color-surface-bright: var(--google-surface-highest);
-
-  /* ── Tailwind v4 color tokens (makes bg-white / text-zinc-* flip globally) ─
-     bg-white → elevated charcoal card. text-zinc-950 → near-white.
-     text-white is forced back to pure white below so primary buttons stay readable. */
-  --color-background: var(--google-bg);
-  --color-foreground: var(--google-text-primary);
-  --color-white: #1e1f20;
-  --color-black: #e8eaed;
-  --color-zinc-50: #282a2c;
-  --color-zinc-100: #303134;
-  --color-zinc-200: #444746;
-  --color-zinc-300: #5f6368;
-  --color-zinc-400: rgba(255, 255, 255, 0.45);
-  --color-zinc-500: rgba(255, 255, 255, 0.78);
-  --color-zinc-600: rgba(255, 255, 255, 0.82);
-  --color-zinc-700: rgba(255, 255, 255, 0.86);
-  --color-zinc-800: rgba(255, 255, 255, 0.9);
-  --color-zinc-900: rgba(255, 255, 255, 0.92);
-  --color-zinc-950: rgba(255, 255, 255, 0.94);
-  --color-neutral-50: #282a2c;
-  --color-neutral-100: #303134;
-  --color-neutral-200: #444746;
-  --color-neutral-800: rgba(255, 255, 255, 0.87);
-  --color-neutral-900: rgba(255, 255, 255, 0.9);
-  --color-neutral-950: rgba(255, 255, 255, 0.92);
-  --color-stone-50: #282a2c;
-  --color-stone-100: #303134;
-  --color-stone-200: #444746;
-  --color-stone-800: rgba(255, 255, 255, 0.87);
-  --color-stone-900: rgba(255, 255, 255, 0.9);
-  --color-stone-950: rgba(255, 255, 255, 0.92);
-  --color-gray-50: #282a2c;
-  --color-gray-100: #303134;
-  --color-gray-200: #444746;
-  --color-gray-600: rgba(255, 255, 255, 0.7);
-  --color-gray-700: rgba(255, 255, 255, 0.75);
-  --color-gray-800: rgba(255, 255, 255, 0.87);
-  --color-gray-900: rgba(255, 255, 255, 0.9);
-  --color-gray-950: rgba(255, 255, 255, 0.92);
-  --color-slate-50: #282a2c;
-  --color-slate-100: #303134;
-  --color-slate-200: #444746;
-  --color-slate-600: rgba(255, 255, 255, 0.7);
-  --color-slate-700: rgba(255, 255, 255, 0.75);
-  --color-slate-800: rgba(255, 255, 255, 0.87);
-  --color-slate-900: rgba(255, 255, 255, 0.9);
-  --color-slate-950: rgba(255, 255, 255, 0.92);
-  /* Links stay pastel (readable on charcoal) */
-  --color-blue-600: #a8c7fa;
-  --color-blue-700: #8ab4f8;
-  --color-blue-500: #a8c7fa;
-
-  --md-sys-color-outline: var(--google-border);
-  --md-sys-color-outline-variant: var(--google-border);
-  --md-sys-color-on-surface-variant: var(--google-text-secondary);
-  --md-sys-color-inverse-surface: #e3e3e3;
-  --md-sys-color-inverse-on-surface: #1e1f20;
-
-  --md-sys-color-error: var(--google-error);
-  --md-sys-color-on-error: #601410;
-  --md-sys-color-error-container: var(--google-error-container);
-  --md-sys-color-on-error-container: #f9dedc;
-
-  /* Outlined inputs: resting #444746 / focus pastel primary 2px.
-     Filled fields rest on surface-high (#282A2C). */
-  --md-sys-color-field-outline: var(--google-border);
-  --md-sys-color-field-outline-hover: color-mix(in srgb, #fff 50%, var(--google-border));
-  --md-sys-color-field-fill: var(--google-surface-high);
-  --md-sys-color-field-fill-hover: var(--google-surface-highest);
-  --md-sys-color-field-text: var(--google-text-primary);
-  --md-sys-color-field-label: var(--google-text-secondary);
-
-  --md-sys-color-text-high: var(--google-text-primary);
-  --md-sys-color-text-medium: var(--google-text-secondary);
-  --md-sys-color-text-disabled: var(--google-text-disabled);
-
-  /* Dark skeletons: elevated charcoal bands, clearly visible on #1E1F20 */
-  --md-sys-color-skeleton-base: #2c2d2f;
-  --md-sys-color-skeleton-highlight: #3c3d40;
-
-  --md-sys-state-hover: rgba(255, 255, 255, 0.08);
-  --md-sys-state-pressed: rgba(255, 255, 255, 0.12);
-
-  /* §29 menus: highest surface + fine border; keep menu elevation for float */
-  --md-sys-menu-surface: var(--google-surface-highest);
-  --md-sys-menu-on-surface: var(--google-text-primary);
-  --md-sys-menu-hover: rgba(255, 255, 255, 0.08);
-  --md-sys-menu-pressed: rgba(255, 255, 255, 0.12);
-  --md-sys-menu-selected: var(--md-sys-color-primary);
-  --md-sys-menu-elevation:
-    0 2px 6px 2px rgba(0, 0, 0, 0.3),
-    0 1px 2px 0 rgba(0, 0, 0, 0.45);
-
-  /* Dark mode: no elevation shadows — depth is surface tone only */
-  --md-sys-elevation-1: none;
-  --md-sys-elevation-2: none;
-  --md-sys-elevation-3: none;
-  --md-sys-card-elevation-rest: none;
-  --md-sys-card-elevation-hover: none;
-
-  --md-sys-card-filled-rest: var(--google-surface);
-  --md-sys-card-filled-hover: var(--google-surface-high);
-
-  --md-sys-table-row-hover: rgba(255, 255, 255, 0.04);
-  --md-sys-table-divider: var(--google-border);
-  --md-sys-table-header-border: var(--google-border);
 }
 
 @theme inline {
@@ -806,7 +754,10 @@ select:not([class*="border-0"]):not([class*="border-none"]):focus-visible {
   inset: var(--m3-tf-border-width);
   z-index: 0;
   border-radius: calc(var(--md-sys-text-field-radius) - var(--m3-tf-border-width));
-  background: var(--md-sys-color-surface-container);
+  /* A rung below the card it sits on, so a field reads as a recessed well
+     rather than a lighter grey slab - the same interior the filled variant
+     uses (--md-sys-color-field-fill). */
+  background: var(--md-sys-color-surface-container-low);
   pointer-events: none;
 }
 
@@ -845,6 +796,53 @@ select:not([class*="border-0"]):not([class*="border-none"]):focus-visible {
 .m3-text-field--center .m3-text-field__outline-end {
   flex: 1 1 auto;
   min-width: 12px;
+}
+
+/* Hero CTA field — 46px on phones, full 56px from md up. The hero stacks the
+   field above the button on mobile, where two 56px controls plus the headline
+   push the fold; the desktop row keeps the standard height. */
+.m3-text-field--hero {
+  --md-sys-text-field-height: 46px;
+}
+.m3-text-field--hero .m3-text-field__shell {
+  min-height: 46px;
+}
+.m3-text-field--hero .m3-text-field__input {
+  height: 46px;
+  padding: 17px 14px 5px;
+  font-size: 14px;
+  line-height: 20px;
+}
+.m3-text-field--hero .m3-text-field__label {
+  font-size: 14px;
+}
+.m3-text-field--hero[data-floated="true"] .m3-text-field__label,
+.m3-text-field--hero[data-floated="true"] .m3-text-field__notch-spacer {
+  font-size: 11px;
+  line-height: 15px;
+}
+
+@media (min-width: 768px) {
+  .m3-text-field--hero {
+    --md-sys-text-field-height: 56px;
+  }
+  .m3-text-field--hero .m3-text-field__shell {
+    min-height: 56px;
+  }
+  .m3-text-field--hero .m3-text-field__input {
+    height: 56px;
+    padding: 16px 16px 8px;
+    font-size: 16px;
+    line-height: 24px;
+  }
+  .m3-text-field--hero .m3-text-field__label {
+    font-size: 16px;
+  }
+  .m3-text-field--hero[data-floated="true"] .m3-text-field__label,
+  .m3-text-field--hero[data-floated="true"] .m3-text-field__notch-spacer {
+    font-size: 12px;
+    line-height: 16px;
+  }
 }
 
 /* Compact toolbar fields (search, dense filters) — 40px instead of 56px */
@@ -1687,7 +1685,7 @@ html.dark .m3-dialog-scrim {
 /* Dark: subtle structural edge against scrim */
 html.dark .m3-modal-surface,
 html.dark .m3-dialog-surface {
-  border: 1px solid #444746;
+  border: 1px solid var(--google-border);
 }
 
 /* Multi-step / full-flow surfaces that exceed the basic dialog max width */
@@ -2105,11 +2103,92 @@ html.dark .m3-dialog-surface {
 html.marketing-menu-open [data-marketing-header] {
   background-color: color-mix(
     in srgb,
-    var(--md-sys-color-surface-container) 92%,
+    var(--md-sys-header-surface) 92%,
     transparent
   ) !important;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+}
+
+/* ── Hero type scale ──────────────────────────────────────────────────────
+   The landing hero is the reference: every marketing hero uses these faces,
+   weights, tracking, leading and step sizes so the pages read as one product
+   instead of four different type systems. Defined here rather than repeated as
+   utility strings per page, because those drifted apart every time one page
+   was touched.
+
+   Two display steps, not one: .hero-display is for a headline of a few words
+   (the landing's "Convert LinkedIn users…", "Omentir works with…"), while
+   .hero-display-sentence is the same type one rung down for full-sentence
+   titles like "Simple pricing for every size of business." — at the larger
+   step those wrap to five lines on a laptop. Mobile is identical for both. */
+.hero-display,
+.hero-display-sentence {
+  font-family: var(--font-google-sans);
+  font-size: clamp(1.725rem, 8.05vw, 2.0125rem);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+}
+
+@media (min-width: 768px) {
+  .hero-display {
+    font-size: 3.45rem;
+    line-height: 1.25;
+  }
+  .hero-display-sentence {
+    font-size: 2.75rem;
+    line-height: 1.2;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero-display {
+    font-size: 5.175rem;
+    line-height: 1.25;
+  }
+  .hero-display-sentence {
+    font-size: 3.5rem;
+    line-height: 1.2;
+  }
+}
+
+/* Hero description / lede under the headline. */
+.hero-lede {
+  font-family: var(--font-roboto);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .hero-lede {
+    font-size: 1rem;
+    line-height: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero-lede {
+    font-size: 1.125rem;
+  }
+}
+
+/* Hero call-to-action buttons: 44px on phones, 56px from md up — the same
+   ladder as .m3-text-field--hero, so a field and a button sharing a hero row
+   line up. */
+.m3-btn--hero {
+  height: 2.75rem;
+  padding-inline: 1.25rem;
+  font-size: 0.875rem;
+}
+
+@media (min-width: 768px) {
+  .m3-btn--hero {
+    height: 3.5rem;
+    padding-inline: 1.5rem;
+    font-size: 1rem;
+  }
 }
 
 /* Hero background grid. Squarish lines drawn with two repeating gradients,
@@ -2118,8 +2197,8 @@ html.marketing-menu-open [data-marketing-header] {
 .hero-grid-bg {
   --hero-grid-line: rgba(15, 23, 42, 0.08);
   background-image:
-    repeating-linear-gradient(45deg, var(--hero-grid-line) 0 1px, transparent 1px 28px),
-    repeating-linear-gradient(-45deg, var(--hero-grid-line) 0 1px, transparent 1px 28px);
+    repeating-linear-gradient(45deg, var(--hero-grid-line) 0 1px, transparent 1px 14px),
+    repeating-linear-gradient(-45deg, var(--hero-grid-line) 0 1px, transparent 1px 14px);
   background-position: center top;
   -webkit-mask-image: linear-gradient(
     to bottom,
@@ -2141,6 +2220,12 @@ html.marketing-menu-open [data-marketing-header] {
   );
   mask-mode: alpha;
   -webkit-mask-mode: alpha;
+  /* Half a pixel of blur takes the hard edge off the 1px lines so the diamonds
+     read as texture behind the copy rather than as crisp graphics competing
+     with it. Kept under 1px on purpose: the lattice must still be legible as
+     rhombuses. The backdrop is its own aria-hidden layer, so nothing in the
+     hero's text is softened by this. */
+  filter: blur(0.5px);
 }
 
 /* White diamond lines at low intensity on dark canvas (readable, not loud). */
@@ -2157,7 +2242,16 @@ html[data-theme="dark"] .hero-grid-bg {
 
 html.dark .marketing-cta,
 html[data-theme="dark"] .marketing-cta {
-  background: color-mix(in srgb, var(--md-sys-color-seed) 52%, #131314);
+  background: color-mix(in srgb, var(--md-sys-color-seed) 52%, var(--google-bg));
+}
+
+/* ── Social brand marks (see brand-marks.tsx) ──────────────────────────────
+   One monochrome treatment for every mark: black on light, white on dark, so a
+   row of logos reads as one set instead of five competing brand colours. A
+   class rather than a text-[#hex] utility because the dark theme remaps
+   arbitrary text colours with !important — correct for text, wrong for a logo. */
+.brand-mono {
+  color: var(--md-sys-color-on-surface);
 }
 
 /* Landing page entrance, scroll-reveal, and float animations */
@@ -2191,21 +2285,6 @@ html[data-theme="dark"] .marketing-cta {
 
 .hero-enter-delay-2 {
   animation-delay: 260ms;
-}
-
-/* The hero outreach-mode checkbox also swaps the "get started" steps section
-   further down the landing page. Falls back to the normal steps in browsers
-   without :has() support. */
-.outreach-mode-agentic {
-  display: none;
-}
-
-main:has(.hero-outreach-toggle:checked) .outreach-mode-normal {
-  display: none;
-}
-
-main:has(.hero-outreach-toggle:checked) .outreach-mode-agentic {
-  display: block;
 }
 
 /* App-page entrance: the marketing hero's fade-up, shortened so in-app
@@ -2844,48 +2923,15 @@ textarea:-webkit-autofill:focus {
   border-bottom-color: transparent;
 }
 
-/* Authenticated product UI (.dashboard-shell) — LIGHT only.
-   Must not run under html.dark or it freezes zinc borders/text as mid-gray
-   on charcoal surfaces (broken “white→black only” dark mode). */
-html:not(.dark) .dashboard-shell :where(.border-zinc-50, .border-zinc-100, .border-zinc-200, .border-zinc-300) {
-  border-color: #5e5e68;
-}
+/* ── Dark remaps (full tonal system, not “invert background”) ──────────────
+   Every surface, ink, border, and chip that a component still expresses as a
+   light Tailwind utility is remapped to the charcoal ladder + alpha text.
 
-html:not(.dark) .dashboard-shell
-  :where(.divide-zinc-50, .divide-zinc-100, .divide-zinc-200)
-  > :not(:last-child) {
-  border-color: #5e5e68;
-}
-
-html:not(.dark) .dashboard-shell [class*="rounded-"].border-zinc-200:not(input):not(textarea):not(select):not(:focus):not(:focus-within),
-html:not(.dark) .dashboard-shell [class*="rounded-"].border-zinc-100:not(input):not(textarea):not(select):not(:focus):not(:focus-within) {
-  border-color: #5e5e68;
-}
-
-html:not(.dark) .dashboard-shell :where(.text-zinc-800, .text-zinc-700) {
-  color: #3f3f46;
-}
-
-html:not(.dark) .dashboard-shell :where(.text-zinc-600) {
-  color: #52525b;
-}
-
-html:not(.dark) .dashboard-shell :where(.text-zinc-500) {
-  color: #71717a;
-}
-
-html:not(.dark) .dashboard-shell :where(.hover\:text-zinc-700, .hover\:text-zinc-600):hover {
-  color: #3f3f46;
-}
-
-/* ── Dark theme remaps (full tonal system, not “invert background”) ────────
-   Every surface, ink, border, and chip used as a light Tailwind utility is
-   remapped to Google charcoal ladder + alpha text. Prefer class selectors
-   (not only :where) so we beat utility layers reliably. */
-html.dark,
-html[data-theme="dark"] {
-  color-scheme: dark;
-}
+   These stay scoped to `html.dark` rather than being flattened to bare class
+   selectors: the scope is what lets them outrank Tailwind's own utility layer
+   without a specificity fight. `<html>` carries `dark` unconditionally (see
+   layout.tsx), so the scope is a constant, not a mode check. Prefer class
+   selectors (not only :where) so we beat utility layers reliably. */
 
 /* Canvas + inherited ink */
 html.dark body,
@@ -2913,7 +2959,7 @@ html.dark .m3-card-filled,
 html[data-theme="dark"] .bg-white,
 html[data-theme="dark"] .m3-card-elevated,
 html[data-theme="dark"] .m3-card-outlined {
-  background-color: #1e1f20 !important;
+  background-color: var(--google-surface) !important;
   color: rgba(255, 255, 255, 0.9) !important;
 }
 
@@ -3009,8 +3055,11 @@ html.dark [class~="bg-[#171717]"] {
   color: var(--md-sys-color-on-secondary) !important;
 }
 
-/* Marketing footer keeps the same near-black light-theme look in dark mode
-   (do not remap bg/text via dark zinc/white token flips). */
+/* The footer is an intentionally near-black slab with light ink on it, so it
+   opts out of the token remaps above: `color-scheme: light` here is scoped to
+   this subtree (form-control rendering + the local zinc ramp below), not a
+   leftover of the removed light theme. Do not remap its bg/text via the dark
+   zinc/white token flips. */
 html.dark .marketing-footer,
 html.dark [class~="bg-[#111111]"].marketing-footer,
 html.dark .marketing-footer[class~="bg-[#111111]"] {
@@ -3339,7 +3388,7 @@ html.dark .analysis-chart {
   --analysis-chart-label: rgba(255, 255, 255, 0.6);
   --analysis-chart-hover-rule: rgba(255, 255, 255, 0.16);
   --analysis-chart-point-fill: var(--md-sys-color-surface-container-low);
-  --analysis-chart-tooltip-bg: var(--google-surface-highest, #303134);
+  --analysis-chart-tooltip-bg: var(--google-surface-highest, #27282b);
   --analysis-chart-tooltip-shadow: none;
 }
 
@@ -3443,7 +3492,7 @@ html.dark [class~="bg-white/90"],
 html.dark [class~="bg-white/80"],
 html.dark [class~="bg-white/70"],
 html[data-theme="dark"] .bg-white {
-  background-color: #1e1f20 !important;
+  background-color: var(--google-surface) !important;
   color: rgba(255, 255, 255, 0.9) !important;
 }
 
@@ -3452,7 +3501,7 @@ html.dark .border-black,
 html.dark [class~="border-black"],
 html.dark .border-2.border-black,
 html.dark [class*="border-black"] {
-  border-color: #444746 !important;
+  border-color: var(--google-border) !important;
 }
 
 html.dark [class~="border-black/10"],
@@ -3507,7 +3556,7 @@ html.dark article.bg-white,
 html.dark .rounded-2xl.bg-white,
 html.dark .rounded-xl.bg-white,
 html.dark .rounded-lg.bg-white {
-  background-color: #1e1f20 !important;
+  background-color: var(--google-surface) !important;
   color: rgba(255, 255, 255, 0.9) !important;
 }
 

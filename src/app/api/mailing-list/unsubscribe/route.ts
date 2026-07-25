@@ -38,9 +38,9 @@ function page(title: string, body: string) {
     <style>
       :root {
         color-scheme: dark;
-        --bg: #131314;
-        --surface: #1E1F20;
-        --border: #444746;
+        --bg: #0a0a0b;
+        --surface: #151617;
+        --border: #3b3e3d;
         --text-primary: rgba(255, 255, 255, 0.90);
         --text-secondary: rgba(255, 255, 255, 0.70);
         --primary: #F2B8C6;

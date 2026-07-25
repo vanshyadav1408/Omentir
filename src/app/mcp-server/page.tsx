@@ -5,7 +5,7 @@ import CopyConnectorUrl from "../copy-connector-url";
 import FaqAccordion from "../faq-accordion";
 import { PaperPlaneIllustration } from "../landing-illustrations";
 import JsonLd from "../json-ld";
-import { MarketingFooter, MarketingHeader } from "../marketing-shell";
+import { HeroGridBackdrop, MarketingFooter, MarketingHeader } from "../marketing-shell";
 import Reveal from "../scroll-reveal";
 import {
   createBreadcrumbJsonLd,
@@ -180,88 +180,90 @@ export default function McpServerPage() {
   return (
     <main className="min-h-screen overflow-x-hidden bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)]">
       <JsonLd id="mcp-server-jsonld" data={jsonLd} />
-      <MarketingHeader />
+      <MarketingHeader transparentAtTop />
 
-      {/* Hero */}
-      <section className="mx-auto flex min-h-screen w-full max-w-4xl min-w-0 flex-col items-center justify-center px-4 py-24 text-center sm:px-8 sm:py-32">
-        <h1
-          style={{ fontFamily: "var(--font-varta)" }}
-          className="text-[2rem] leading-[1.12] font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] md:whitespace-nowrap md:text-5xl md:leading-tight lg:text-[3.5rem] xl:text-6xl"
-        >
-          Omentir works with{" "}
-          <AgentTypewriter agents={["ChatGPT", "Gemini", "Grok", "Claude"]} />
-        </h1>
-        <p className="mx-auto mt-6 max-w-2xl text-base leading-8 text-[var(--md-sys-color-on-surface-variant)] sm:text-lg">
-          One connector links Omentir with your favorite chat apps, so they can
-          configure lead finders, inspect ICP-fit buyers, and explain discovery
-          results from the MCP server you connect once.
-        </p>
-        <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <Link
-            href="#explore"
-            className="m3-btn m3-btn-filled-secondary h-11 px-5 text-sm"
-          >
-            Explore more
-          </Link>
-          <Link
-            href="/api-keys"
-            className="m3-btn m3-btn-outlined h-11 px-5 text-sm"
-          >
-            Get API key
-          </Link>
-        </div>
-      </section>
+      <div className="relative">
+        {/* Diamond grid spans the hero and fades out over the steps below. */}
+        <HeroGridBackdrop />
 
-      {/* Setup steps */}
-      <section id="explore" className="mx-auto max-w-7xl min-w-0 px-4 py-16 sm:px-8 sm:py-24">
-        <Reveal className="mx-auto max-w-2xl text-center">
-          <h2
-            style={{ fontFamily: "var(--font-varta)" }}
-            className="text-2xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-3xl lg:text-4xl"
-          >
-            Get started in <span className="text-gradient-brand">four steps</span>
-          </h2>
-        </Reveal>
-        <div className="mt-12 space-y-14 sm:mt-16 sm:space-y-20">
-          {setupSteps.map((step, index) => {
-            const imageFirst = index % 2 === 0;
-            return (
-              <Reveal
-                key={step.title}
-                className="grid items-center gap-6 lg:grid-cols-2 lg:gap-10"
-              >
-                <div
-                  className={`mx-auto w-full max-w-md overflow-hidden rounded-xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container)] shadow-[0_18px_60px_rgba(15,23,42,0.08)] ${
-                    imageFirst ? "lg:order-1" : "lg:order-2"
-                  }`}
+        {/* Hero */}
+        <section className="relative z-10 mx-auto flex min-h-screen w-full max-w-4xl min-w-0 flex-col items-center justify-center px-4 py-24 text-center sm:px-8 sm:py-32">
+          <h1 className="hero-display text-[var(--md-sys-color-on-surface)]">
+            Omentir works with{" "}
+            <AgentTypewriter agents={["ChatGPT", "Gemini", "Grok", "Claude"]} />
+          </h1>
+          <p className="hero-lede mx-auto mt-6 max-w-2xl text-[var(--md-sys-color-on-surface-variant)]">
+            One connector links Omentir with your favorite chat apps, so they can
+            configure lead finders, inspect ICP-fit buyers, and explain discovery
+            results from the MCP server you connect once.
+          </p>
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <Link
+              href="#explore"
+              className="m3-btn m3-btn-filled-secondary m3-btn--hero"
+            >
+              Explore more
+            </Link>
+            <Link
+              href="/api-keys"
+              className="m3-btn m3-btn-outlined m3-btn--hero"
+            >
+              Get API key
+            </Link>
+          </div>
+        </section>
+
+        {/* Setup steps */}
+        <section id="explore" className="relative z-10 mx-auto max-w-7xl min-w-0 px-4 py-16 sm:px-8 sm:py-24">
+          <Reveal className="mx-auto max-w-2xl text-center">
+            <h2
+              style={{ fontFamily: "var(--font-varta)" }}
+              className="text-2xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-3xl lg:text-4xl"
+            >
+              Get started in <span className="text-gradient-brand">four steps</span>
+            </h2>
+          </Reveal>
+          <div className="mt-12 space-y-14 sm:mt-16 sm:space-y-20">
+            {setupSteps.map((step, index) => {
+              const imageFirst = index % 2 === 0;
+              return (
+                <Reveal
+                  key={step.title}
+                  className="grid items-center gap-6 lg:grid-cols-2 lg:gap-10"
                 >
-                  <Image
-                    src={step.image}
-                    alt={step.alt}
-                    width={1448}
-                    height={1086}
-                    className="h-auto w-full"
-                  />
-                </div>
-                <div className={imageFirst ? "lg:order-2" : "lg:order-1"}>
-                  <div className="mx-auto max-w-sm text-center lg:text-left">
-                    <h3
-                      style={{ fontFamily: "var(--font-varta)" }}
-                      className="text-xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-2xl"
-                    >
-                      {step.number} {step.title}
-                    </h3>
-                    <p className="mt-3 text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)] sm:text-base">
-                      {step.description}
-                    </p>
-                    {step.copyUrl ? <CopyConnectorUrl url={step.copyUrl} /> : null}
+                  <div
+                    className={`mx-auto w-full max-w-md overflow-hidden rounded-xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container)] shadow-[0_18px_60px_rgba(15,23,42,0.08)] ${
+                      imageFirst ? "lg:order-1" : "lg:order-2"
+                    }`}
+                  >
+                    <Image
+                      src={step.image}
+                      alt={step.alt}
+                      width={1448}
+                      height={1086}
+                      className="h-auto w-full"
+                    />
                   </div>
-                </div>
-              </Reveal>
-            );
-          })}
-        </div>
-      </section>
+                  <div className={imageFirst ? "lg:order-2" : "lg:order-1"}>
+                    <div className="mx-auto max-w-sm text-center lg:text-left">
+                      <h3
+                        style={{ fontFamily: "var(--font-varta)" }}
+                        className="text-xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-2xl"
+                      >
+                        {step.number} {step.title}
+                      </h3>
+                      <p className="mt-3 text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)] sm:text-base">
+                        {step.description}
+                      </p>
+                      {step.copyUrl ? <CopyConnectorUrl url={step.copyUrl} /> : null}
+                    </div>
+                  </div>
+                </Reveal>
+              );
+            })}
+          </div>
+        </section>
+      </div>
 
       {/* Tool catalog */}
       <section className="mx-auto max-w-7xl min-w-0 px-4 py-16 sm:px-8 sm:py-24">

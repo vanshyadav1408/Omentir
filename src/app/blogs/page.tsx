@@ -1,5 +1,5 @@
 import JsonLd from "../json-ld";
-import { MarketingHeader, MarketingFooter } from "../marketing-shell";
+import { HeroGridBackdrop, MarketingHeader, MarketingFooter } from "../marketing-shell";
 import BlogsList from "./blogs-list";
 import { CATEGORIES, liveBlogs } from "./blog-data";
 import { createBlogCollectionJsonLd, createPageMetadata } from "../seo";
@@ -25,10 +25,12 @@ export default function BlogsIndexPage() {
       <JsonLd id="blogs-jsonld" data={jsonLd} />
 
       {/* Global Omentir Navigation */}
-      <MarketingHeader />
+      <MarketingHeader transparentAtTop />
 
       {/* Hero Section */}
       <section className="relative w-full border-b border-[var(--md-sys-color-outline-variant)]">
+        {/* Diamond grid, contained by the hero so it fades out at the divider. */}
+        <HeroGridBackdrop height="h-full" />
         <div
           className="grid min-h-[45vh] w-full sm:min-h-[50vh] lg:min-h-[55vh]"
           style={{ gridTemplate: '"hero" 1fr / 1fr' }}

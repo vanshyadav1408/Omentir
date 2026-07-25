@@ -27,7 +27,9 @@ export default function CopyPromptBlock({ prompt }: { prompt: string }) {
       >
         {copied ? "Copied" : "Copy"}
       </button>
-      <pre className="max-h-28 overflow-auto whitespace-pre-wrap break-words px-4 py-3 pr-16 text-left text-[11px] leading-5 text-zinc-200 sm:text-[12px]">
+      {/* Fixed light-on-dark: this panel is always the dark #171717 slab, so the
+          text cannot use a zinc token that the dark palette maps to a grey. */}
+      <pre className="max-h-28 overflow-auto whitespace-pre-wrap break-words px-4 py-3 pr-16 text-left text-[11px] leading-5 text-white/80 sm:text-[12px]">
         {prompt}
       </pre>
     </div>

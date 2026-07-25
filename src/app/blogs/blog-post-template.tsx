@@ -2,7 +2,7 @@ import { Children, isValidElement, type ReactNode } from "react";
 import Link from "next/link";
 import FaqAccordion from "../faq-accordion";
 import JsonLd from "../json-ld";
-import { MarketingHeader, MarketingFooter } from "../marketing-shell";
+import { HeroGridBackdrop, MarketingHeader, MarketingFooter } from "../marketing-shell";
 import BlogPostGrid from "./blog-post-grid";
 import { createBlogJsonLd, createBreadcrumbJsonLd, createFAQJsonLd, siteUrl } from "../seo";
 import { ALL_BLOGS, isBlogLive } from "./blog-data";
@@ -88,10 +88,13 @@ export default function BlogPostTemplate({
     <main className="blog-post-page relative isolate min-h-screen bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)]">
       <JsonLd id={`blog-jsonld-${slug}`} data={jsonLd} />
       {/* Shared Global Marketing Header */}
-      <MarketingHeader />
+      <MarketingHeader transparentAtTop />
 
       {/* Dedicated Premium Hero Section */}
       <section className="relative z-0 w-full border-b border-[var(--md-sys-color-outline-variant)]">
+        {/* Diamond grid, contained by the hero so it fades out at the divider
+            rather than running down the article. */}
+        <HeroGridBackdrop height="h-full" />
         <div
           className="grid min-h-[50vh] w-full sm:min-h-[55vh] lg:min-h-[60vh]"
           style={{ gridTemplate: '"hero" 1fr / 1fr' }}

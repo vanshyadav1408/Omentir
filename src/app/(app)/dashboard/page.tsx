@@ -11,11 +11,6 @@ import { hasActiveSubscription } from "@/lib/server/subscription";
 import DashboardView from "./dashboard-view";
 import { createPageMetadata } from "@/app/seo";
 import { isLocalMode } from "@/lib/runtime-mode";
-import {
-  buildEarlyFetchScript,
-  DASHBOARD_RESOURCE,
-  LINKEDIN_INBOX_RESOURCE,
-} from "@/app/sidebar-early-fetch";
 
 export const metadata = createPageMetadata({
   title: "Dashboard - Omentir",
@@ -40,13 +35,8 @@ async function DashboardContent({
 }) {
   return (
     <>
-      {/* Starts both dashboard requests as the HTML is parsed, so they are
-          already in flight (often finished) by the time the view hydrates. */}
-      <script
-        dangerouslySetInnerHTML={{
-          __html: buildEarlyFetchScript([DASHBOARD_RESOURCE, LINKEDIN_INBOX_RESOURCE]),
-        }}
-      />
+      {/* The reads behind this view are started before hydration from the root
+          layout's early-fetch script (see sidebar-early-fetch). */}
       <DashboardView
         agents={[]}
         leads={[]}

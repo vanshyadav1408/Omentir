@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import FaqAccordion from "./faq-accordion";
-import HeroCopyToggle from "./hero-copy-toggle";
+import HeroCopy from "./hero-copy";
 import HeroCta from "./hero-cta";
 import {
   AgenticPromptIllustration,
@@ -12,7 +12,7 @@ import {
   PaperPlaneIllustration,
   PersonalizeIllustration,
 } from "./landing-illustrations";
-import { MarketingFooter, MarketingHeader } from "./marketing-shell";
+import { HeroGridBackdrop, MarketingFooter, MarketingHeader } from "./marketing-shell";
 import FindUsOn from "./find-us-on";
 import JsonLd from "./json-ld";
 import { LogoGlyph } from "./logo-mark";
@@ -74,41 +74,6 @@ const steps = [
       "Review scored leads, pick the best-fit prospects, and decide who should get your manual follow-up.",
     image: "/review-leads-for-manual-outreach.avif",
     alt: "Lead review table in Omentir",
-  },
-];
-
-const agenticSteps = [
-  {
-    number: "1.",
-    title: "Connect LinkedIn",
-    description:
-      "Securely connect your LinkedIn account so Omentir can run outreach from your own profile.",
-    image: "/connect-linkedin.avif",
-    alt: "Connect LinkedIn screen in Omentir",
-  },
-  {
-    number: "2.",
-    title: "Get your API key",
-    description:
-      "Create an Omentir agent key from your workspace and keep it ready for your MCP connector.",
-    image: "/get-your-api-key.avif",
-    alt: "Creating an Omentir API key for agentic outreach",
-  },
-  {
-    number: "3.",
-    title: "Connect to your agent",
-    description:
-      "Paste your key into your agent connector URL so Claude, ChatGPT, or your AI can call Omentir.",
-    image: "/connect-to-your-agent.avif",
-    alt: "Connecting an AI agent to Omentir with an API key",
-  },
-  {
-    number: "4.",
-    title: "Request your AI",
-    description:
-      "Ask your agent to find ICP-fit buyers, create outreach, and report back with the next best action.",
-    image: "/request-your-ai.avif",
-    alt: "Prompting an AI agent to run Omentir outreach",
   },
 ];
 
@@ -214,40 +179,22 @@ function WhoItsFor() {
 
 function HowItWorks() {
   return (
-    <>
-      <div className="outreach-mode-normal mx-auto w-full max-w-5xl min-w-0">
-        <Reveal className="mx-auto max-w-3xl text-center">
-          <h2
-            style={{ fontFamily: "var(--font-varta)" }}
-            className="text-[1.75rem] font-semibold leading-tight tracking-tight text-[var(--md-sys-color-on-surface)] md:text-3xl lg:text-4xl"
-          >
-            Get started in a <span className="text-gradient-brand">few steps</span>
-          </h2>
-          <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)] md:mt-4 md:max-w-3xl md:text-base">
-            After you sign up, you&apos;ll be taken into the dashboard, where you can
-            connect your account, share your ideal customer profile and outreach
-            method.
-          </p>
-        </Reveal>
-        <OutreachSteps items={steps} />
-      </div>
-      <div className="outreach-mode-agentic mx-auto w-full max-w-5xl min-w-0">
-        <Reveal className="mx-auto max-w-3xl text-center">
-          <h2
-            style={{ fontFamily: "var(--font-varta)" }}
-            className="text-[1.75rem] font-semibold leading-tight tracking-tight text-[var(--md-sys-color-on-surface)] md:text-3xl lg:text-4xl"
-          >
-            Start agentic outreach in a{" "}
-            <span className="text-gradient-brand">few steps</span>
-          </h2>
-          <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)] md:mt-4 md:max-w-3xl md:text-base">
-            Connect the agent you already use - it drives Omentir through our
-            MCP server and runs your outreach end to end.
-          </p>
-        </Reveal>
-        <OutreachSteps items={agenticSteps} />
-      </div>
-    </>
+    <div className="mx-auto w-full max-w-5xl min-w-0">
+      <Reveal className="mx-auto max-w-3xl text-center">
+        <h2
+          style={{ fontFamily: "var(--font-varta)" }}
+          className="text-[1.75rem] font-semibold leading-tight tracking-tight text-[var(--md-sys-color-on-surface)] md:text-3xl lg:text-4xl"
+        >
+          Get started in a <span className="text-gradient-brand">few steps</span>
+        </h2>
+        <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)] md:mt-4 md:max-w-3xl md:text-base">
+          After you sign up, you&apos;ll be taken into the dashboard, where you can
+          connect your account, share your ideal customer profile and outreach
+          method.
+        </p>
+      </Reveal>
+      <OutreachSteps items={steps} />
+    </div>
   );
 }
 
@@ -556,40 +503,16 @@ export default function Home() {
       <div className="relative">
         {/* Diamond grid spans the hero and fades out around the
             "Get started in a few steps" heading below. */}
-        <div
-          aria-hidden
-          className="hero-grid-bg pointer-events-none absolute inset-x-0 top-0 z-0 h-[175vh]"
-        />
+        <HeroGridBackdrop />
         {/* Hero spacing matches /for-agents: full viewport, centered, py-24 clear of fixed header */}
         <section className="relative z-10 w-full">
           <div className="relative mx-auto flex min-h-screen w-full max-w-4xl min-w-0 flex-col items-center justify-center px-4 py-24 text-center md:px-8 md:py-32">
             <div className="mx-auto flex w-full min-w-0 flex-col items-center">
-              <Link
-                href="/blogs/omentir-is-now-open-source"
-                className="hero-enter mb-6 inline-flex items-center gap-2 rounded-full border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container)] px-4 py-1.5 text-xs font-medium text-[var(--md-sys-color-on-surface-variant)] transition-colors hover:text-[var(--md-sys-color-on-surface)] md:text-sm"
-              >
-                <span className="text-gradient-brand font-semibold">New</span>
-                Omentir is now open source
-                <svg
-                  viewBox="0 0 10 16"
-                  aria-hidden="true"
-                  className="h-3.5 w-2"
-                  fill="none"
-                >
-                  <path
-                    d="M1 8h7M5 4l4 4-4 4"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </Link>
-              <HeroCopyToggle>
+              <HeroCopy>
                 <div className="hero-enter hero-enter-delay-2 flex w-full min-w-0 flex-col items-center">
                   <HeroCta />
                 </div>
-              </HeroCopyToggle>
+              </HeroCopy>
             </div>
           </div>
         </section>

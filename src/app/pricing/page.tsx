@@ -72,18 +72,17 @@ export default function PricingPage() {
         centeredHeader
         heroFullHeight
         contentClassName="max-w-7xl"
-        titleClassName="[font-family:var(--font-google-sans)] font-bold"
         heroActions={
           <div className="flex w-full flex-col items-center justify-center gap-3 sm:w-auto sm:flex-row">
             <Link
               href="/"
-              className="m3-btn m3-btn-filled h-11 w-full px-5 text-sm sm:w-auto"
+              className="m3-btn m3-btn-filled m3-btn--hero w-full sm:w-auto"
             >
               Explore
             </Link>
             <Link
               href="#faq"
-              className="m3-btn m3-btn-outlined h-11 w-full bg-white/90 px-5 text-sm sm:w-auto"
+              className="m3-btn m3-btn-outlined m3-btn--hero w-full bg-white/90 sm:w-auto"
             >
               FAQs
             </Link>

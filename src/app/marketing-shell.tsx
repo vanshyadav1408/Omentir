@@ -6,7 +6,6 @@ import HeaderAuth from "./header-auth";
 import LogoMark from "./logo-mark";
 import MarketingHeaderFrame from "./marketing-header-frame";
 import { MarketingMobileMenuButton } from "./marketing-mobile-nav";
-import { MarketingThemeButton } from "./theme-toggle";
 
 export function MarketingHeader({ transparentAtTop = false }: { transparentAtTop?: boolean }) {
   return (
@@ -35,9 +34,8 @@ export function MarketingHeader({ transparentAtTop = false }: { transparentAtTop
         {/* ml-auto keeps actions on the right: on mobile the nav is hidden, and on lg
             the nav is absolutely centered (out of flex flow), so nothing else pushes right */}
         <div className="ml-auto flex min-w-0 shrink-0 items-center gap-1 md:gap-2">
-          {/* Desktop: theme + auth CTAs */}
+          {/* Desktop: auth CTAs */}
           <div className="hidden items-center gap-2 md:flex">
-            <MarketingThemeButton />
             <HeaderAuth />
           </div>
           {/* Mobile: hamburger on the right → full-screen menu (icon becomes close) */}
@@ -45,6 +43,25 @@ export function MarketingHeader({ transparentAtTop = false }: { transparentAtTop
         </div>
       </header>
     </MarketingHeaderFrame>
+  );
+}
+
+/**
+ * The diamond-grid hero backdrop (`.hero-grid-bg` in globals.css). Shared so
+ * every marketing hero draws the same pattern at the same intensity instead of
+ * each page keeping its own copy of the positioning.
+ *
+ * Drop it as the first child of a `relative` wrapper around the hero. It is
+ * taller than the hero on purpose: its mask fades the lines out across the
+ * section below, so that section belongs inside the wrapper too. Because it is
+ * positioned, siblings that must paint above the lines need `relative z-10`.
+ */
+export function HeroGridBackdrop({ height = "h-[175vh]" }: { height?: string }) {
+  return (
+    <div
+      aria-hidden
+      className={`hero-grid-bg pointer-events-none absolute inset-x-0 top-0 z-0 ${height}`}
+    />
   );
 }
 
@@ -198,9 +215,12 @@ export function MarketingPage({
 }: MarketingPageProps) {
   const header = (
     <>
+      {/* Same hero type as the landing page (globals.css): identical face,
+          weight, tracking and mobile step. These titles are full sentences, so
+          they take the -sentence display step from md up. */}
       <h1
         style={titleStyle}
-        className={`text-[1.75rem] font-semibold leading-tight tracking-tight text-[var(--md-sys-color-on-surface)] md:text-4xl lg:text-5xl ${
+        className={`hero-display-sentence text-[var(--md-sys-color-on-surface)] ${
           centeredHeader ? "mx-auto max-w-4xl text-center" : "max-w-4xl"
         } ${titleClassName}`}
       >
@@ -208,7 +228,7 @@ export function MarketingPage({
       </h1>
       {description ? (
         <p
-          className={`mt-4 max-w-2xl text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)] md:mt-5 md:text-base md:leading-8 lg:text-lg ${
+          className={`hero-lede mt-4 max-w-2xl text-[var(--md-sys-color-on-surface-variant)] md:mt-5 ${
             centeredHeader ? "mx-auto text-center" : ""
           }`}
         >
@@ -225,23 +245,34 @@ export function MarketingPage({
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)]">
-      <MarketingHeader />
+      <MarketingHeader transparentAtTop />
       {heroFullHeight ? (
-        <>
+        <div className="relative">
+          {/* Diamond grid behind the full-height hero, fading into the content. */}
+          <HeroGridBackdrop height="h-[130vh]" />
           <section
-            className={`mx-auto flex min-h-[100svh] w-full ${contentClassName} min-w-0 flex-col justify-center px-4 pt-14 pb-16 md:px-8`}
+            className={`relative z-10 mx-auto flex min-h-[100svh] w-full ${contentClassName} min-w-0 flex-col justify-center px-4 pt-14 pb-16 md:px-8`}
           >
             {header}
           </section>
-          <section className={`mx-auto w-full ${contentClassName} min-w-0 px-4 pb-16 md:px-8 md:pb-24`}>
+          <section
+            className={`relative z-10 mx-auto w-full ${contentClassName} min-w-0 px-4 pb-16 md:px-8 md:pb-24`}
+          >
             {children}
           </section>
-        </>
+        </div>
       ) : (
-        <section className={`mx-auto w-full ${contentClassName} min-w-0 px-4 pb-16 pt-28 md:px-8 md:pb-24 md:pt-32`}>
-          {header}
-          <div className="mt-10 md:mt-12">{children}</div>
-        </section>
+        // Short hero: the grid covers the heading block and fades before the
+        // body copy starts, so long legal text never reads through the lines.
+        <div className="relative">
+          <HeroGridBackdrop height="h-[60vh]" />
+          <section
+            className={`relative z-10 mx-auto w-full ${contentClassName} min-w-0 px-4 pb-16 pt-28 md:px-8 md:pb-24 md:pt-32`}
+          >
+            {header}
+            <div className="mt-10 md:mt-12">{children}</div>
+          </section>
+        </div>
       )}
       <MarketingFooter />
     </main>

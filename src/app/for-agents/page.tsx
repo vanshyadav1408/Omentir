@@ -5,7 +5,7 @@ import CopyPromptBlock from "../copy-prompt-block";
 import FaqAccordion from "../faq-accordion";
 import { PaperPlaneIllustration } from "../landing-illustrations";
 import JsonLd from "../json-ld";
-import { MarketingFooter, MarketingHeader } from "../marketing-shell";
+import { HeroGridBackdrop, MarketingFooter, MarketingHeader } from "../marketing-shell";
 import Reveal from "../scroll-reveal";
 import {
   createBreadcrumbJsonLd,
@@ -315,133 +315,164 @@ export default function ForAgentsPage() {
   return (
     <main className="min-h-screen overflow-x-hidden bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)]">
       <JsonLd id="for-agents-jsonld" data={jsonLd} />
-      <MarketingHeader />
+      <MarketingHeader transparentAtTop />
 
-      {/* Hero: what this page is, before anything else */}
-      <section className="mx-auto flex min-h-screen w-full max-w-4xl min-w-0 flex-col items-center justify-center px-4 py-24 text-center sm:px-8 sm:py-32">
-        <h1
-          style={{ fontFamily: "var(--font-varta)" }}
-          className="text-[2rem] leading-[1.12] font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] md:whitespace-nowrap md:text-5xl md:leading-tight lg:text-[3.5rem] xl:text-6xl"
-        >
-          Omentir works with{" "}
-          <AgentTypewriter />
-        </h1>
-        <p className="mx-auto mt-6 max-w-2xl text-base leading-8 text-[var(--md-sys-color-on-surface-variant)] sm:text-lg">
-          Connect the assistant you already use and it can configure lead
-          finders, inspect ICP-fit buyers, and explain discovery progress from
-          the chat you are used to.
-        </p>
-        <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <Link
-            href="#explore"
-            className="m3-btn m3-btn-filled-secondary h-11 px-5 text-sm"
-          >
-            Explore more
-          </Link>
-          <Link
-            href="/api-keys"
-            className="m3-btn m3-btn-outlined h-11 px-5 text-sm"
-          >
-            Get API key
-          </Link>
-        </div>
-      </section>
+      <div className="relative">
+        {/* Diamond grid spans the hero and fades out over the steps below. */}
+        <HeroGridBackdrop />
 
-      {/* How to connect */}
-      <section id="explore" className="mx-auto max-w-7xl min-w-0 px-4 py-16 sm:px-8 sm:py-24">
-        <Reveal className="mx-auto max-w-2xl text-center">
-          <h2
-            style={{ fontFamily: "var(--font-varta)" }}
-            className="text-2xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-3xl lg:text-4xl"
-          >
-            Connect in <span className="text-gradient-brand">four steps</span>
-          </h2>
-        </Reveal>
-        <div className="mt-12 space-y-14 sm:mt-16 sm:space-y-20">
-          {connectSteps.map((step, index) => {
-            const imageFirst = index % 2 === 0;
-            return (
-              <Reveal
-                key={step.title}
-                className="grid items-center gap-6 lg:grid-cols-2 lg:gap-10"
-              >
-                <div
-                  className={`mx-auto w-full max-w-md overflow-hidden rounded-xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container)] shadow-[0_18px_60px_rgba(15,23,42,0.08)] ${
-                    imageFirst ? "lg:order-1" : "lg:order-2"
-                  }`}
-                >
-                  <Image
-                    src={step.image}
-                    alt={step.alt}
-                    width={1600}
-                    height={1200}
-                    className="h-auto w-full"
-                  />
-                </div>
-                <div className={imageFirst ? "lg:order-2" : "lg:order-1"}>
-                  <div className="mx-auto max-w-md text-center lg:text-left">
-                    <h3
-                      style={{ fontFamily: "var(--font-varta)" }}
-                      className="text-xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-2xl"
-                    >
-                      {step.number} {step.title}
-                    </h3>
-                    <p className="mt-3 text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)] sm:text-base">
-                      {step.description}
-                    </p>
-                    {step.copyPrompt ? <CopyPromptBlock prompt={step.copyPrompt} /> : null}
-                  </div>
-                </div>
-              </Reveal>
-            );
-          })}
-        </div>
-
-        <Reveal className="mx-auto mt-20 max-w-2xl text-center sm:mt-28">
-          <h2
-            style={{ fontFamily: "var(--font-varta)" }}
-            className="text-2xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-3xl lg:text-4xl"
-          >
-            Or wire it up <span className="text-gradient-brand">over the API</span>
-          </h2>
-          <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)] sm:text-base">
-            Prefer to build directly? Every capability is a plain REST endpoint -
-            no MCP client required.
+        {/* Hero: what this page is, before anything else */}
+        <section className="relative z-10 mx-auto flex min-h-screen w-full max-w-4xl min-w-0 flex-col items-center justify-center px-4 py-24 text-center sm:px-8 sm:py-32">
+          <h1 className="hero-display text-[var(--md-sys-color-on-surface)]">
+            Omentir works with{" "}
+            <AgentTypewriter />
+          </h1>
+          <p className="hero-lede mx-auto mt-6 max-w-2xl text-[var(--md-sys-color-on-surface-variant)]">
+            Connect the assistant you already use and it can configure lead
+            finders, inspect ICP-fit buyers, and explain discovery progress from
+            the chat you are used to.
           </p>
-        </Reveal>
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <Link
+              href="#explore"
+              className="m3-btn m3-btn-filled-secondary m3-btn--hero"
+            >
+              Explore more
+            </Link>
+            <Link
+              href="/api-keys"
+              className="m3-btn m3-btn-outlined m3-btn--hero"
+            >
+              Get API key
+            </Link>
+          </div>
+        </section>
 
-        <Reveal className="mx-auto mt-10 max-w-4xl sm:mt-12">
-          <div className="overflow-hidden rounded-2xl border-2 border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface-container)] shadow-[var(--md-sys-card-elevation-rest)]">
-            <div className="border-b border-[var(--md-sys-color-outline-variant)] px-5 py-4 sm:px-6">
-              <h3
-                style={{ fontFamily: "var(--font-varta)" }}
-                className="text-lg font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-xl"
-              >
-                REST API endpoints
-              </h3>
-              <p className="mt-1.5 text-[13px] leading-6 text-[var(--md-sys-color-on-surface-variant)]">
-                Not an MCP client? Every tool is also a plain HTTP endpoint. Send your
-                agent token as <code className="rounded bg-[var(--md-sys-color-surface-container-high)] px-1.5 py-0.5 text-[12px] text-[var(--md-sys-color-on-surface)]">Authorization: Bearer &lt;token&gt;</code> on each request.
-              </p>
-              <div className="mt-3 flex flex-col gap-1.5 text-[12px] sm:flex-row sm:items-center sm:gap-4">
-                <span className="text-[var(--md-sys-color-on-surface-variant)]">
-                  Base URL{" "}
-                  <code className="rounded bg-[var(--md-sys-color-surface-container-high)] px-1.5 py-0.5 text-[var(--md-sys-color-on-surface)]">{siteUrl}/api/agent/v1</code>
-                </span>
-                <span className="text-[var(--md-sys-color-on-surface-variant)]">
-                  MCP{" "}
-                  <code className="rounded bg-[var(--md-sys-color-surface-container-high)] px-1.5 py-0.5 text-[var(--md-sys-color-on-surface)]">POST /mcp</code>
-                </span>
+        {/* How to connect */}
+        <section id="explore" className="relative z-10 mx-auto max-w-7xl min-w-0 px-4 py-16 sm:px-8 sm:py-24">
+          <Reveal className="mx-auto max-w-2xl text-center">
+            <h2
+              style={{ fontFamily: "var(--font-varta)" }}
+              className="text-2xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-3xl lg:text-4xl"
+            >
+              Connect in <span className="text-gradient-brand">four steps</span>
+            </h2>
+          </Reveal>
+          <div className="mt-12 space-y-14 sm:mt-16 sm:space-y-20">
+            {connectSteps.map((step, index) => {
+              const imageFirst = index % 2 === 0;
+              return (
+                <Reveal
+                  key={step.title}
+                  className="grid items-center gap-6 lg:grid-cols-2 lg:gap-10"
+                >
+                  <div
+                    className={`mx-auto w-full max-w-md overflow-hidden rounded-xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container)] shadow-[0_18px_60px_rgba(15,23,42,0.08)] ${
+                      imageFirst ? "lg:order-1" : "lg:order-2"
+                    }`}
+                  >
+                    <Image
+                      src={step.image}
+                      alt={step.alt}
+                      width={1600}
+                      height={1200}
+                      className="h-auto w-full"
+                    />
+                  </div>
+                  <div className={imageFirst ? "lg:order-2" : "lg:order-1"}>
+                    <div className="mx-auto max-w-md text-center lg:text-left">
+                      <h3
+                        style={{ fontFamily: "var(--font-varta)" }}
+                        className="text-xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-2xl"
+                      >
+                        {step.number} {step.title}
+                      </h3>
+                      <p className="mt-3 text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)] sm:text-base">
+                        {step.description}
+                      </p>
+                      {step.copyPrompt ? <CopyPromptBlock prompt={step.copyPrompt} /> : null}
+                    </div>
+                  </div>
+                </Reveal>
+              );
+            })}
+          </div>
+
+          <Reveal className="mx-auto mt-20 max-w-2xl text-center sm:mt-28">
+            <h2
+              style={{ fontFamily: "var(--font-varta)" }}
+              className="text-2xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-3xl lg:text-4xl"
+            >
+              Or wire it up <span className="text-gradient-brand">over the API</span>
+            </h2>
+            <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)] sm:text-base">
+              Prefer to build directly? Every capability is a plain REST endpoint -
+              no MCP client required.
+            </p>
+          </Reveal>
+
+          <Reveal className="mx-auto mt-10 max-w-4xl sm:mt-12">
+            <div className="overflow-hidden rounded-2xl border-2 border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface-container)] shadow-[var(--md-sys-card-elevation-rest)]">
+              <div className="border-b border-[var(--md-sys-color-outline-variant)] px-5 py-4 sm:px-6">
+                <h3
+                  style={{ fontFamily: "var(--font-varta)" }}
+                  className="text-lg font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-xl"
+                >
+                  REST API endpoints
+                </h3>
+                <p className="mt-1.5 text-[13px] leading-6 text-[var(--md-sys-color-on-surface-variant)]">
+                  Not an MCP client? Every tool is also a plain HTTP endpoint. Send your
+                  agent token as <code className="rounded bg-[var(--md-sys-color-surface-container-high)] px-1.5 py-0.5 text-[12px] text-[var(--md-sys-color-on-surface)]">Authorization: Bearer &lt;token&gt;</code> on each request.
+                </p>
+                <div className="mt-3 flex flex-col gap-1.5 text-[12px] sm:flex-row sm:items-center sm:gap-4">
+                  <span className="text-[var(--md-sys-color-on-surface-variant)]">
+                    Base URL{" "}
+                    <code className="rounded bg-[var(--md-sys-color-surface-container-high)] px-1.5 py-0.5 text-[var(--md-sys-color-on-surface)]">{siteUrl}/api/agent/v1</code>
+                  </span>
+                  <span className="text-[var(--md-sys-color-on-surface-variant)]">
+                    MCP{" "}
+                    <code className="rounded bg-[var(--md-sys-color-surface-container-high)] px-1.5 py-0.5 text-[var(--md-sys-color-on-surface)]">POST /mcp</code>
+                  </span>
+                </div>
+              </div>
+              <div className="divide-y divide-[var(--md-sys-color-outline-variant)]">
+                {restEndpoints.map((endpoint) => (
+                  <EndpointRow key={`${endpoint.method} ${endpoint.path}`} {...endpoint} />
+                ))}
+              </div>
+              <div className="border-t border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-low)] px-5 py-3.5 text-[12px] leading-6 text-[var(--md-sys-color-on-surface-variant)] sm:px-6">
+                Lead-finder lifecycle actions are available through both MCP and REST.
+                Full request and response shapes are in the{" "}
+                <a
+                  href="/api/agent/v1/openapi.json"
+                  className="font-medium text-[var(--md-sys-color-on-surface)] underline underline-offset-2 hover:text-[var(--md-sys-color-primary)]"
+                >
+                  OpenAPI schema
+                </a>
+                .
               </div>
             </div>
-            <div className="divide-y divide-[var(--md-sys-color-outline-variant)]">
-              {restEndpoints.map((endpoint) => (
-                <EndpointRow key={`${endpoint.method} ${endpoint.path}`} {...endpoint} />
-              ))}
-            </div>
-            <div className="border-t border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-low)] px-5 py-3.5 text-[12px] leading-6 text-[var(--md-sys-color-on-surface-variant)] sm:px-6">
-              Lead-finder lifecycle actions are available through both MCP and REST.
-              Full request and response shapes are in the{" "}
+          </Reveal>
+          <Reveal className="mx-auto mt-8 max-w-2xl">
+            <p className="text-center text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)]">
+              Client-by-client setup instructions (Claude Code, Cursor, ChatGPT,
+              claude.ai connectors) live on the{" "}
+              <Link
+                href="/mcp-server"
+                className="font-medium text-[var(--md-sys-color-on-surface)] underline underline-offset-2 hover:text-[var(--md-sys-color-primary)]"
+              >
+                MCP Server page
+              </Link>
+              . Not an MCP agent? The same capabilities are plain REST endpoints
+              under <code className="rounded bg-[var(--md-sys-color-surface-container-high)] px-1.5 py-0.5 text-[12px] text-[var(--md-sys-color-on-surface)]">/api/agent/v1</code>.
+              Agents can teach themselves everything from{" "}
+              <a
+                href="/agents.md"
+                className="font-medium text-[var(--md-sys-color-on-surface)] underline underline-offset-2 hover:text-[var(--md-sys-color-primary)]"
+              >
+                omentir.com/agents.md
+              </a>{" "}
+              and the{" "}
               <a
                 href="/api/agent/v1/openapi.json"
                 className="font-medium text-[var(--md-sys-color-on-surface)] underline underline-offset-2 hover:text-[var(--md-sys-color-primary)]"
@@ -449,39 +480,10 @@ export default function ForAgentsPage() {
                 OpenAPI schema
               </a>
               .
-            </div>
-          </div>
-        </Reveal>
-        <Reveal className="mx-auto mt-8 max-w-2xl">
-          <p className="text-center text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)]">
-            Client-by-client setup instructions (Claude Code, Cursor, ChatGPT,
-            claude.ai connectors) live on the{" "}
-            <Link
-              href="/mcp-server"
-              className="font-medium text-[var(--md-sys-color-on-surface)] underline underline-offset-2 hover:text-[var(--md-sys-color-primary)]"
-            >
-              MCP Server page
-            </Link>
-            . Not an MCP agent? The same capabilities are plain REST endpoints
-            under <code className="rounded bg-[var(--md-sys-color-surface-container-high)] px-1.5 py-0.5 text-[12px] text-[var(--md-sys-color-on-surface)]">/api/agent/v1</code>.
-            Agents can teach themselves everything from{" "}
-            <a
-              href="/agents.md"
-              className="font-medium text-[var(--md-sys-color-on-surface)] underline underline-offset-2 hover:text-[var(--md-sys-color-primary)]"
-            >
-              omentir.com/agents.md
-            </a>{" "}
-            and the{" "}
-            <a
-              href="/api/agent/v1/openapi.json"
-              className="font-medium text-[var(--md-sys-color-on-surface)] underline underline-offset-2 hover:text-[var(--md-sys-color-primary)]"
-            >
-              OpenAPI schema
-            </a>
-            .
-          </p>
-        </Reveal>
-      </section>
+            </p>
+          </Reveal>
+        </section>
+      </div>
 
       {/* Full tool catalog */}
       <section className="mx-auto max-w-7xl min-w-0 px-4 py-16 sm:px-8 sm:py-24">

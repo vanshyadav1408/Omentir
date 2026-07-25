@@ -1,6 +1,8 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useState, useTransition } from "react";
+import { LinkedInMark, TelegramMark, WhopMark, XMark } from "@/app/brand-marks";
 import { TextAreaField, TextField } from "@/app/ui/text-field";
 import { hostedContactEmail, hostedSupportEmail } from "@/lib/hosted-identity";
 
@@ -9,9 +11,19 @@ type ContactChannel = {
   label: string;
   description: string;
   href: string;
-  icon: string;
+  /** Official brand mark where the channel has one, else a Material glyph. */
+  icon: ReactNode;
   external: boolean;
 };
+
+/** Material Symbols fallback for channels with no brand mark of their own. */
+function GlyphIcon({ name }: { name: string }) {
+  return (
+    <span className="material-symbols-outlined brand-mono text-[22px]" aria-hidden="true">
+      {name}
+    </span>
+  );
+}
 
 function hostedChannels(): ContactChannel[] {
   const contact = hostedContactEmail();
@@ -21,7 +33,7 @@ function hostedChannels(): ContactChannel[] {
       label: "LinkedIn",
       description: "Message Vansh on LinkedIn",
       href: "https://www.linkedin.com/in/vanshyadav1408/",
-      icon: "work",
+      icon: <LinkedInMark className="brand-mono text-[21px]" />,
       external: true,
     },
     {
@@ -29,7 +41,7 @@ function hostedChannels(): ContactChannel[] {
       label: "X (Twitter)",
       description: "@omentirai",
       href: "https://x.com/omentirai",
-      icon: "alternate_email",
+      icon: <XMark className="brand-mono text-[18px]" />,
       external: true,
     },
     {
@@ -37,7 +49,7 @@ function hostedChannels(): ContactChannel[] {
       label: "Email",
       description: contact,
       href: `mailto:${contact}`,
-      icon: "mail",
+      icon: <GlyphIcon name="mail" />,
       external: false,
     },
     {
@@ -45,7 +57,7 @@ function hostedChannels(): ContactChannel[] {
       label: "Telegram",
       description: "@vansh14b",
       href: "https://t.me/vansh14b",
-      icon: "send",
+      icon: <TelegramMark className="brand-mono text-[22px]" />,
       external: true,
     },
     {
@@ -53,7 +65,7 @@ function hostedChannels(): ContactChannel[] {
       label: "Whop support",
       description: "Chat via your Whop membership",
       href: "https://whop.com/joined/omentir/",
-      icon: "forum",
+      icon: <WhopMark className="brand-mono text-[12px]" />,
       external: true,
     },
   ];
@@ -242,10 +254,10 @@ export default function ContactView({
                       rel={channel.external ? "noopener noreferrer" : undefined}
                       className="m3-card flex min-h-16 items-center gap-3 rounded-2xl bg-[var(--md-sys-color-surface-container)] px-4 py-3 transition-[background-color,box-shadow] duration-150 hover:bg-[var(--md-sys-color-surface-container-high)]"
                     >
-                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)]">
-                        <span className="material-symbols-outlined text-[22px]" aria-hidden="true">
-                          {channel.icon}
-                        </span>
+                      {/* Neutral chip, not the pink primary container: these
+                          are brand marks now, and each carries its own colour. */}
+                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[var(--md-sys-color-surface-container-high)]">
+                        {channel.icon}
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block text-sm font-semibold text-[var(--md-sys-color-on-surface)]">

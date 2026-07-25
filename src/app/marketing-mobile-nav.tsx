@@ -5,7 +5,6 @@ import { useUser } from "@clerk/nextjs";
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { ASK_AI_LINKS, AskAiIcon } from "./ask-ai-menu";
-import { useTheme, type ThemePreference } from "./theme-provider";
 
 const NAV_LINKS = [
   { href: "/for-agents", label: "For Agents" },
@@ -13,12 +12,6 @@ const NAV_LINKS = [
   { href: "/pricing", label: "Pricing" },
   { href: "/blogs", label: "Blogs" },
 ] as const;
-
-const THEME_OPTIONS: Array<{ value: ThemePreference; label: string; icon: string }> = [
-  { value: "light", label: "Light", icon: "light_mode" },
-  { value: "dark", label: "Dark", icon: "dark_mode" },
-  { value: "system", label: "System", icon: "contrast" },
-];
 
 /** 48×48 touch target; constant string → identical SSR and client HTML. */
 const MENU_TRIGGER_CLASS =
@@ -29,14 +22,13 @@ const CLOSE_BUTTON_CLASS =
 
 /**
  * Full-screen mobile menu sheet. Mounted only after open (post-interaction),
- * so Clerk session / theme preference never participate in SSR hydration.
+ * so the Clerk session never participates in SSR hydration.
  */
 function MobileMenuSheet({
   onClose,
 }: {
   onClose: () => void;
 }) {
-  const { preference, setPreference } = useTheme();
   const { isSignedIn } = useUser();
   const [portalReady, setPortalReady] = useState(false);
   const [askAiOpen, setAskAiOpen] = useState(false);
@@ -144,39 +136,6 @@ function MobileMenuSheet({
             </div>
           ) : null}
         </nav>
-
-        <div className="mt-8 border-t border-[var(--md-sys-color-outline-variant)] pt-6">
-          <p className="px-1 text-xs font-semibold uppercase tracking-wide text-[var(--md-sys-color-on-surface-variant)]">
-            Appearance
-          </p>
-          <div className="mt-3 flex gap-2" role="radiogroup" aria-label="Color theme">
-            {THEME_OPTIONS.map((option) => {
-              const active = preference === option.value;
-              return (
-                <button
-                  key={option.value}
-                  type="button"
-                  role="radio"
-                  aria-checked={active}
-                  onClick={() => setPreference(option.value)}
-                  className={`flex min-h-16 flex-1 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-2xl px-2 py-3.5 text-sm font-semibold transition ${
-                    active
-                      ? "bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)]"
-                      : "bg-[var(--md-sys-color-surface-container)] text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-state-hover)]"
-                  }`}
-                >
-                  <span
-                    className={`material-symbols-outlined text-[26px] leading-none ${active ? "ms-filled" : ""}`}
-                    aria-hidden="true"
-                  >
-                    {option.icon}
-                  </span>
-                  {option.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
 
         <div className="mt-auto flex w-full flex-col gap-3 pt-10">
           {isSignedIn ? (
