@@ -30,9 +30,13 @@ test("every lead-preview stage is bounded by one shared budget", () => {
   // Retries used to be able to stack past the proxy window: a 40s grounded call
   // plus a 15s draft that itself retried twice.
   assert.match(gemini, /const remainingMs = \(\) => budgetMs - \(Date\.now\(\) - startedAt\)/);
-  assert.match(gemini, /Math\.min\(15_000, remainingMs\(\)\)/);
+  assert.match(gemini, /Math\.min\(20_000, remainingMs\(\)\)/);
+  // The retry loop respects the same budget, or a quota error turns a 20s cap
+  // into ~46s of wall clock.
+  assert.match(gemini, /startedAt \+ budgetMs,/);
+  assert.match(gemini, /deadlineAt === undefined \? Infinity : deadlineAt - Date\.now\(\)/);
   assert.match(gemini, /Math\.min\(38_000, remainingMs\(\)\)/);
-  assert.match(route, /mode === "fast" \? \{ mode, budgetMs: 28_000 \}/);
+  assert.match(route, /mode === "fast" \? \{ mode, budgetMs: 32_000 \}/);
 });
 
 test("the draft net runs alongside the grounded call, not after it", () => {
@@ -88,4 +92,14 @@ test("the Gemini diagnostics job reports runtime config without leaking secrets"
   // Reports which credential path is in use, never the credential itself.
   assert.match(gemini, /hasServiceAccount/);
   assert.doesNotMatch(gemini.slice(gemini.indexOf("runGeminiDiagnostics")), /apiKey:|private_key/);
+});
+
+test("grounded calls do not inherit a pinned older GEMINI_MODEL", () => {
+  // Production pinned gemini-3.5-flash, which fails grounded calls outright
+  // (3/3: two deadlines and a 429) while answering plain calls fine - so the
+  // preview's search pass was dead in one environment only.
+  assert.match(gemini, /const SEARCH_MODEL = process\.env\.GEMINI_SEARCH_MODEL \|\| DEFAULT_MODEL;/);
+  assert.doesNotMatch(gemini, /const SEARCH_MODEL = process\.env\.GEMINI_SEARCH_MODEL \|\| MODEL;/);
+  const example = read(".env.example");
+  assert.match(example, /GEMINI_SEARCH_MODEL/);
 });

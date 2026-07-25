@@ -75,8 +75,9 @@ export async function POST(request: NextRequest) {
         keywords: strings(body.keywords, 14),
       },
       // The fast pass must beat the proxy window with room to spare; the
-      // grounded pass gets the rest of it.
-      mode === "fast" ? { mode, budgetMs: 28_000 } : { mode, budgetMs: 45_000 },
+      // grounded pass gets the rest of it. Both are wall clock for the whole
+      // stage chain, retries included.
+      mode === "fast" ? { mode, budgetMs: 32_000 } : { mode, budgetMs: 48_000 },
     );
 
     if (!leads.length) {

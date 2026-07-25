@@ -13,8 +13,16 @@ import type {
 
 export type { ReplyIntent };
 
-const MODEL = process.env.GEMINI_MODEL || "gemini-3.6-flash";
-const SEARCH_MODEL = process.env.GEMINI_SEARCH_MODEL || MODEL;
+const DEFAULT_MODEL = "gemini-3.6-flash";
+const MODEL = process.env.GEMINI_MODEL || DEFAULT_MODEL;
+// Deliberately NOT falling back to MODEL. Search-grounded calls are the most
+// latency-sensitive thing here, and an older pinned model cannot serve them:
+// measured on gemini-3.5-flash, the lead-preview grounded call failed 3/3
+// (37.5s deadline, 38.0s abort, 429) where 3.6-flash answers in 15-28s. A stale
+// GEMINI_MODEL in one environment silently broke the onboarding lead preview in
+// production for weeks while it worked everywhere else. Set
+// GEMINI_SEARCH_MODEL explicitly to override this.
+const SEARCH_MODEL = process.env.GEMINI_SEARCH_MODEL || DEFAULT_MODEL;
 const GEMINI_MAX_RETRIES = 2;
 const LINKEDIN_MESSAGE_LIMIT = 8000;
 
@@ -240,18 +248,35 @@ function normalizeStringList(value: unknown) {
     .filter(Boolean);
 }
 
-async function generateJson<T>(prompt: string, fallback: T, temperature?: number, timeoutMs?: number) {
+/**
+ * `timeoutMs` caps a single attempt; `deadlineAt` caps the whole retry loop.
+ * Without the second one a quota error turns a 15s cap into ~46s of wall clock
+ * (three attempts plus backoff), which is how the onboarding preview's "fast"
+ * pass spent 37.9s in production against a 28s budget.
+ */
+async function generateJson<T>(
+  prompt: string,
+  fallback: T,
+  temperature?: number,
+  timeoutMs?: number,
+  deadlineAt?: number,
+) {
   const config = getGeminiConfig();
   if (!config) return fallback;
   const client = getClient(config);
+  const remainingMs = () => (deadlineAt === undefined ? Infinity : deadlineAt - Date.now());
 
   for (let attempt = 0; attempt <= GEMINI_MAX_RETRIES; attempt += 1) {
+    const attemptMs = Math.min(timeoutMs ?? Infinity, remainingMs());
+    if (attemptMs <= 1_000) {
+      throw new Error("Deadline expired before the model answered.");
+    }
     try {
       const requestConfig = {
         ...(temperature === undefined ? {} : { temperature }),
         // Callers a user is actively waiting on pass a deadline; without one
         // a stalled upstream call hangs the request until the proxy kills it.
-        ...(timeoutMs === undefined ? {} : { httpOptions: { timeout: timeoutMs } }),
+        ...(Number.isFinite(attemptMs) ? { httpOptions: { timeout: attemptMs } } : {}),
       };
       const response = await client.models.generateContent({
         model: MODEL,
@@ -273,7 +298,16 @@ async function generateJson<T>(prompt: string, fallback: T, temperature?: number
       if (!retryable || attempt === GEMINI_MAX_RETRIES) {
         throw new Error(message);
       }
-      await wait(500 * 2 ** attempt);
+      const backoffMs = 500 * 2 ** attempt;
+      // A retry that cannot fit in what's left of the budget would only be
+      // killed mid-flight, so report the cause the caller can act on instead.
+      if (remainingMs() - backoffMs <= 1_000) {
+        throw new Error(message);
+      }
+      // Silent retries hid sustained quota pressure: the call still succeeded,
+      // just slowly enough to blow the caller's deadline.
+      console.error(`[gemini] retrying after attempt ${attempt + 1}: ${message.slice(0, 200)}`);
+      await wait(backoffMs);
     }
   }
 
@@ -661,7 +695,9 @@ ${dataBlock}`;
   // a retry can't push the request past the proxy window.
   const draftAttempt = async (temperature: number) => {
     const at = Date.now();
-    const timeoutMs = Math.min(15_000, remainingMs());
+    // 20s, not 15s: a slower model in production needs the headroom, and the
+    // deadline below is what actually keeps the stage inside the budget now.
+    const timeoutMs = Math.min(20_000, remainingMs());
     if (timeoutMs <= 1_000) {
       note(`draft-${temperature}`, "no time left in the request budget");
       return [];
@@ -672,6 +708,7 @@ ${dataBlock}`;
         fallback,
         temperature,
         timeoutMs,
+        startedAt + budgetMs,
       );
       const leads = normalizePreviewLeads(parsed.leads);
       logStage(`draft-${temperature}`, at, parsed.leads, leads.length);

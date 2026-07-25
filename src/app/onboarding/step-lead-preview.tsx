@@ -219,7 +219,7 @@ export default function StepLeadPreview({
         (error: Error) => error,
       );
 
-      const fastTask = fetchLeads("fast", 40_000).then(
+      const fastTask = fetchLeads("fast", 45_000).then(
         (leads) => {
           if (!cancelled && !groundedLanded) {
             setState({ status: "ready", leads, upgrading: true });
