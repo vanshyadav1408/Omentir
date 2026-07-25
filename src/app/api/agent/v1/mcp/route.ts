@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
     name: "omentir-agent-mcp",
     title: "Omentir Lead Discovery",
     description:
-      "Workspace-scoped Streamable HTTP MCP endpoint for configuring Omentir lead finders and inspecting discovered leads.",
+      "Workspace-scoped Streamable HTTP MCP endpoint for configuring Omentir lead finders, inspecting discovered leads, and reading the planned outreach schedule.",
     endpoint: "/api/agent/v1/mcp",
     transport: "streamable-http",
     protocolVersion: CURRENT_PROTOCOL_VERSION,
@@ -164,13 +164,13 @@ export async function POST(request: NextRequest) {
       serverInfo: {
         name: "omentir-agent-mcp",
         title: "Omentir Lead Discovery",
-        version: "1.2.0",
+        version: "1.3.0",
         description:
-          "Configure lead finders, monitor discovery, inspect ICP-fit leads, and work with existing Omentir conversations.",
+          "Configure lead finders, monitor discovery and the outreach send schedule, inspect ICP-fit leads, and work with existing Omentir conversations.",
         websiteUrl: `${getAppBaseUrl()}/mcp-server`,
       },
       instructions:
-        "Call omentir_get_context first. List existing agents before creating one. Lead discovery is asynchronous, so inspect activity before treating an empty lead list as final.",
+        "Call omentir_get_context first: it returns the workspace time zone that every timestamp should be reported in, plus today's remaining invite and message allowance. List existing agents before creating one. Lead discovery is asynchronous, so inspect activity before treating an empty lead list as final. Outreach sends on a planned schedule - read omentir_list_scheduled_actions for exact times instead of estimating them.",
     });
   }
 

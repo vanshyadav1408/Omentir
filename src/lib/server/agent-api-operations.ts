@@ -12,26 +12,33 @@ import {
   findLeadForWorkspace,
   getCampaign,
   getConversation,
+  getDailyQuotaUsage,
   getLinkedInAccountForWorkspace,
   getProductProfile,
   listAgents,
   listAutomationRuns,
   listCampaignEnrollments,
+  listCampaigns,
   listLinkedInAccounts,
   listConversations,
   listGroups,
   listLeads,
   pauseAgent,
   resumeAgent,
+  setSendWindowForGroup,
   updateAgent,
   updateLead,
   updateWorkspaceSettings,
+  updateWorkspaceTimezone,
   upsertProductProfile,
 } from "./data";
 import { sumAgentLeadTotals } from "@/lib/agent-lead-totals";
+import { listScheduledActions } from "./scheduled-actions";
+import { SPACING_MINUTES } from "./send-schedule";
 import { sendLinkedInMessage } from "./unipile";
+import { isValidTimeZone, resolveTimeZone } from "@/lib/time-zone";
 import type { AgentApiContext } from "./agent-api";
-import type { Agent } from "./types";
+import type { Agent, Campaign } from "./types";
 
 export class AgentApiOperationError extends Error {
   status: number;
@@ -59,6 +66,12 @@ const agentSignalSourcesSchema = z.object({
   keywords: z.array(z.string().trim().min(1)).default([]),
 });
 
+// Hour of the workspace's local day discovery runs at, same 0-23 range as the
+// picker on the agent form. Omitted means Omentir's default hour.
+const runAtHourSchema = z.number().int().min(0).max(23);
+
+const sendWindowSchema = z.enum(["always", "business", "extended"]);
+
 export const createAgentPayloadSchema = z.object({
   name: z.string().trim().min(1).max(120).optional(),
   groupName: z.string().trim().min(1).max(120),
@@ -71,6 +84,7 @@ export const createAgentPayloadSchema = z.object({
     founderUrls: [],
     keywords: [],
   }),
+  runAtHour: runAtHourSchema.optional(),
 });
 
 // Partial edit: omitted fields keep the agent's current values, exactly like
@@ -84,6 +98,10 @@ export const updateAgentPayloadSchema = z.object({
   prompt: z.string().trim().min(1).max(4000).optional(),
   filters: agentFiltersSchema.optional(),
   signalSources: agentSignalSourcesSchema.optional(),
+  runAtHour: runAtHourSchema.optional(),
+  // The window lives on the campaigns built on this agent's lead group, so a
+  // change here applies to all of them - exactly what the agent edit form does.
+  sendWindow: sendWindowSchema.optional(),
   status: z.enum(["active", "paused"]).optional(),
 });
 
@@ -117,6 +135,10 @@ export const updateSettingsPayloadSchema = z.object({
   firstMessageDelayMinutes: z.number().int().min(5).max(10080).optional(),
   aiFollowUpDelayMinutes: z.number().int().min(0).max(10080).optional(),
   aiFollowUpEnabled: z.boolean().optional(),
+  // Stored on the workspace rather than in settings, but it is the same picker
+  // on the same Settings page - and it decides which local day the daily caps
+  // reset on and when each send window opens.
+  timeZone: z.string().trim().min(1).max(80).optional(),
 });
 
 export const listLeadsPayloadSchema = z.object({
@@ -140,23 +162,60 @@ export const listActivityPayloadSchema = z.object({
   limit: z.number().int().min(1).max(200).default(100),
 });
 
+export const listScheduledActionsPayloadSchema = z.object({
+  // Only the leads a single lead finder sourced, matching the Actions page filter.
+  agentId: z.string().trim().min(1).optional(),
+  limit: z.number().int().min(1).max(200).default(50),
+});
+
 export async function getAgentWorkspaceContext(context: AgentApiContext) {
   const workspaceId = context.workspace.id;
-  const [profile, linkedInAccounts, agents, groups, leads] =
+  const [profile, linkedInAccounts, agents, groups, leads, quotaUsage] =
     await Promise.all([
       getProductProfile(workspaceId),
       listLinkedInAccounts(workspaceId),
       listAgents(workspaceId),
       listGroups(workspaceId),
       listLeads(workspaceId),
+      getDailyQuotaUsage(workspaceId, context.workspace.timezone),
     ]);
+
+  const timeZone = resolveTimeZone(context.workspace.timezone);
+  const [today, usedToday] = Object.entries(quotaUsage)[0] || [
+    "",
+    { invites: 0, messages: 0 },
+  ];
+  const { dailyInviteLimit, dailyMessageLimit } = context.workspace.settings;
 
   return {
     workspace: {
       id: context.workspace.id,
       name: context.workspace.name,
       billingStatus: context.workspace.billing?.status ?? null,
+      // Every timestamp this API returns is a UTC ISO instant; the workspace
+      // renders and counts all of them in this zone, so report times in it.
+      timeZone,
       settings: context.workspace.settings,
+    },
+    // What the scheduler will actually allow today, so progress can be
+    // explained without guessing why a queue is not moving.
+    sending: {
+      timeZone,
+      today,
+      invites: {
+        used: usedToday.invites,
+        limit: dailyInviteLimit,
+        remaining: Math.max(0, dailyInviteLimit - usedToday.invites),
+      },
+      messages: {
+        used: usedToday.messages,
+        limit: dailyMessageLimit,
+        remaining: Math.max(0, dailyMessageLimit - usedToday.messages),
+      },
+      // Invites, follow-ups and replies share one line per LinkedIn account.
+      spacingMinutes: SPACING_MINUTES,
+      guidance:
+        "Caps reset at local midnight in timeZone. Each lead finder's send window (always, business, extended) decides the hours its outreach may go out. Use omentir_list_scheduled_actions for the exact planned send times.",
     },
     setup: {
       hasProductProfile: Boolean(profile?.description?.trim()),
@@ -195,10 +254,15 @@ export async function getAgentWorkspaceContext(context: AgentApiContext) {
       productProfile: "/api/agent/v1/product-profile",
       linkedinAccounts: "/api/agent/v1/linkedin-accounts",
       agents: "/api/agent/v1/agents",
+      groups: "/api/agent/v1/groups",
       leads: "/api/agent/v1/leads",
       activity: "/api/agent/v1/activity",
+      scheduledActions: "/api/agent/v1/scheduled-actions",
       conversations: "/api/agent/v1/conversations",
+      stats: "/api/agent/v1/stats",
+      settings: "/api/agent/v1/settings",
       openapi: "/api/agent/v1/openapi.json",
+      guide: "/agents.md",
     },
   };
 }
@@ -250,8 +314,38 @@ export async function getWorkspaceStatsResource(context: AgentApiContext) {
   };
 }
 
+// The send window is stored on the campaigns built on an agent's lead group, so
+// an agent's effective window has to be read back from them. An agent with no
+// campaign discovers leads but never sends: campaigns are created in the
+// Omentir app, not over this API, and that distinction is the difference
+// between "no leads contacted yet" and "outreach was never set up".
+function agentOutreachSummary(agent: Agent, campaigns: Campaign[]) {
+  const own = campaigns.filter((campaign) => campaign.groupId === agent.targetGroupId);
+  const active = own.filter((campaign) => campaign.status === "active");
+  return {
+    // Unset on a campaign means the historical round-the-clock behaviour.
+    sendWindow: (active[0] || own[0])?.sendWindow || (own.length ? "always" : null),
+    outreach: {
+      configured: own.length > 0,
+      activeSequences: active.length,
+      replyHandling: (active[0] || own[0])?.replyHandling || null,
+    },
+  };
+}
+
 export async function listAgentResources(context: AgentApiContext) {
-  return { agents: await listAgents(context.workspace.id) };
+  const [agents, campaigns] = await Promise.all([
+    listAgents(context.workspace.id),
+    listCampaigns(context.workspace.id),
+  ]);
+
+  return {
+    timeZone: resolveTimeZone(context.workspace.timezone),
+    agents: agents.map((agent) => ({
+      ...agent,
+      ...agentOutreachSummary(agent, campaigns),
+    })),
+  };
 }
 
 export async function getProductProfileResource(context: AgentApiContext) {
@@ -324,6 +418,7 @@ export async function createAgentResource(context: AgentApiContext, payload: unk
     signalSources: input.signalSources,
     linkedInAccountId: account.id,
     targetGroupName: input.groupName,
+    runAtHour: input.runAtHour,
   });
 
   return {
@@ -331,8 +426,19 @@ export async function createAgentResource(context: AgentApiContext, payload: unk
     leadGroup: { id: agent.targetGroupId, name: agent.targetGroupName },
     discovery: {
       status: "scheduled",
+      // UTC instant; the hour it lands on is runAtHour in the workspace zone.
       nextRunAt: agent.nextRunAt,
+      runAtHour: agent.runAtHour ?? null,
+      timeZone: resolveTimeZone(context.workspace.timezone),
       guidance: "Use omentir_list_leads with this lead group id to inspect results.",
+    },
+    // A new lead finder only discovers and scores people. Outreach sequences
+    // are built in the Omentir app, so say so rather than implying messages
+    // will start going out on their own.
+    outreach: {
+      configured: false,
+      guidance:
+        "This lead finder discovers and scores leads only. Set up its outreach sequence in Omentir under Agents; after that omentir_list_scheduled_actions shows the planned sends.",
     },
   };
 }
@@ -369,6 +475,7 @@ export async function updateAgentResource(context: AgentApiContext, payload: unk
     input.signalSources,
     input.linkedInAccountId,
     input.groupName,
+    input.runAtHour,
   ].some((value) => value !== undefined);
   let updated = agent;
   if (changesAgentConfiguration) {
@@ -380,6 +487,9 @@ export async function updateAgentResource(context: AgentApiContext, payload: unk
       signalSources: input.signalSources ?? agent.signalSources,
       ...(linkedInAccountId ? { linkedInAccountId } : {}),
       targetGroupName: input.groupName ?? agent.targetGroupName,
+      // Omitted keeps the agent's current hour: editing targeting must never
+      // move discovery to whenever the edit happened to be made.
+      runAtHour: input.runAtHour,
     });
   }
   if (input.status === "paused") {
@@ -390,7 +500,19 @@ export async function updateAgentResource(context: AgentApiContext, payload: unk
     updated = { ...updated, status: "active" };
   }
 
-  return { agent: updated };
+  // Applied to every sequence built on this agent's lead group, like the window
+  // picker on the agent edit form.
+  const sequencesRewindowed =
+    input.sendWindow === undefined
+      ? 0
+      : await setSendWindowForGroup(context.workspace.id, updated.targetGroupId, input.sendWindow);
+
+  return {
+    agent: updated,
+    ...(input.sendWindow === undefined
+      ? {}
+      : { sendWindow: input.sendWindow, sequencesRewindowed }),
+  };
 }
 
 export async function updateWorkspaceSettingsResource(context: AgentApiContext, payload: unknown) {
@@ -399,17 +521,35 @@ export async function updateWorkspaceSettingsResource(context: AgentApiContext, 
     throw new AgentApiOperationError("Invalid settings payload.", 400, parsed.error.flatten());
   }
 
+  const { timeZone, ...settingsInput } = parsed.data;
   // Drop keys sent explicitly as undefined/null-ish: updateWorkspaceSettings
   // merges over current settings, and Firestore rejects undefined values.
   const patch = Object.fromEntries(
-    Object.entries(parsed.data).filter(([, value]) => value !== undefined),
+    Object.entries(settingsInput).filter(([, value]) => value !== undefined),
   );
-  if (!Object.keys(patch).length) {
+  if (!Object.keys(patch).length && !timeZone) {
     throw new AgentApiOperationError("Provide at least one setting to update.", 400);
   }
+  // Rejected rather than stored: a bad zone would silently reinterpret every
+  // send window and daily cap reset in the workspace.
+  if (timeZone && !isValidTimeZone(timeZone)) {
+    throw new AgentApiOperationError(
+      'Unknown time zone. Use an IANA name such as "America/New_York".',
+      400,
+    );
+  }
 
-  const settings = await updateWorkspaceSettings(context.workspace.id, patch);
-  return { settings };
+  const [settings] = await Promise.all([
+    Object.keys(patch).length
+      ? updateWorkspaceSettings(context.workspace.id, patch)
+      : Promise.resolve(context.workspace.settings),
+    timeZone ? updateWorkspaceTimezone(context.workspace.id, timeZone) : Promise.resolve(),
+  ]);
+
+  return {
+    settings,
+    timeZone: resolveTimeZone(timeZone || context.workspace.timezone),
+  };
 }
 
 export async function listLeadResources(context: AgentApiContext, payload: unknown) {
@@ -526,6 +666,38 @@ export async function listActivityResources(context: AgentApiContext, payload: u
   return { activity: await listAutomationRuns(context.workspace.id, parsed.data.limit) };
 }
 
+// The Actions page feed: every outreach action already assigned a real send
+// time by the planner, in send order. These are committed slots rather than
+// "now + delay" estimates, so they can be reported to a user as exact times.
+export async function listScheduledActionResources(
+  context: AgentApiContext,
+  payload: unknown,
+) {
+  const parsed = listScheduledActionsPayloadSchema.safeParse(payload || {});
+  if (!parsed.success) {
+    throw new AgentApiOperationError(
+      "Invalid scheduled actions payload.",
+      400,
+      parsed.error.flatten(),
+    );
+  }
+
+  const { agentId, limit } = parsed.data;
+  if (agentId && !(await getAgent(context.workspace.id, agentId))) {
+    throw new AgentApiOperationError("Agent not found.", 404);
+  }
+
+  const actions = await listScheduledActions(context.workspace.id, { agentId });
+
+  return {
+    // Each `at` is a UTC instant the workspace reads in this zone.
+    timeZone: resolveTimeZone(context.workspace.timezone),
+    scheduledActions: actions.slice(0, limit),
+    totalScheduled: actions.length,
+    returned: Math.min(actions.length, limit),
+  };
+}
+
 export async function replyToLeadResource(context: AgentApiContext, payload: unknown) {
   const parsed = replyToLeadPayloadSchema.safeParse(payload);
   if (!parsed.success) {
@@ -616,6 +788,8 @@ export async function callAgentTool(
   if (name === "omentir_list_groups") return listGroupResources(context);
   if (name === "omentir_list_linkedin_accounts") return listLinkedInAccountResources(context);
   if (name === "omentir_list_activity") return listActivityResources(context, args);
+  if (name === "omentir_list_scheduled_actions")
+    return listScheduledActionResources(context, args);
   if (name === "omentir_pause_agent") return pauseAgentResource(context, args);
   if (name === "omentir_resume_agent") return resumeAgentResource(context, args);
   if (name === "omentir_delete_agent") return deleteAgentResource(context, args);

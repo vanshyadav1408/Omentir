@@ -444,8 +444,12 @@ export async function getProductProfile(workspaceId: string) {
 export async function upsertProductProfile(
   workspaceId: string,
   input: Omit<ProductProfile, "id" | "workspaceId" | "createdAt" | "updatedAt">,
+  // Callers that already read the profile (the form actions merge their fields
+  // over the stored ones) pass it in so this doesn't repeat the query. Pass
+  // null for "known to not exist"; omit to let this read it.
+  knownExisting?: ProductProfile | null,
 ) {
-  const existing = await getProductProfile(workspaceId);
+  const existing = knownExisting === undefined ? await getProductProfile(workspaceId) : knownExisting;
   const timestamp = nowIso();
   const id = existing?.id || workspaceId;
   const profile: ProductProfile = {

@@ -23,15 +23,29 @@ const signalSources = {
   },
 } as const;
 
+const runAtHour = {
+  type: "integer",
+  minimum: 0,
+  maximum: 23,
+  description:
+    "Hour of the workspace's local day to run discovery, in the workspace time zone. Omitted keeps the current hour (default: an hour before business hours open).",
+} as const;
+
+const sendWindow = {
+  enum: ["always", "business", "extended"],
+  description:
+    "When the agent's outreach may send, in the workspace time zone: always (24/7), business (Mon-Fri 09:00-18:00), extended (daily 07:00-22:00). Applies to every sequence built on the agent's lead group.",
+} as const;
+
 export async function GET() {
   const siteUrl = getAppBaseUrl();
   return NextResponse.json({
     openapi: "3.1.0",
     info: {
       title: "Omentir Agent API",
-      version: "1.2.0",
+      version: "1.3.0",
       description:
-        "Workspace-scoped API for AI assistants that configure lead finders, inspect ICP-fit leads, monitor discovery, and work with existing LinkedIn conversations.",
+        "Workspace-scoped API for AI assistants that configure lead finders, inspect ICP-fit leads, monitor discovery and the outreach send schedule, and work with existing LinkedIn conversations. Every timestamp is a UTC ISO instant; the workspace reads and counts them in its own time zone, returned as `timeZone` by /context.",
     },
     servers: [{ url: siteUrl }],
     security: [{ bearerAuth: [] }],
@@ -51,6 +65,7 @@ export async function GET() {
             prompt: { type: "string", maxLength: 4000 },
             filters: agentFilters,
             signalSources,
+            runAtHour,
           },
         },
         AgentUpdate: {
@@ -65,6 +80,8 @@ export async function GET() {
             prompt: { type: "string", maxLength: 4000 },
             filters: agentFilters,
             signalSources,
+            runAtHour,
+            sendWindow,
             status: { enum: ["active", "paused"] },
           },
         },
@@ -86,7 +103,8 @@ export async function GET() {
       "/api/agent/v1/context": {
         get: {
           operationId: "getWorkspaceContext",
-          summary: "Read workspace readiness, product context, lead counts, settings, and API entrypoints.",
+          summary:
+            "Read workspace readiness, product context, lead counts, settings, the workspace time zone, today's remaining invite and message allowance, and API entrypoints.",
           responses: { "200": { description: "Workspace context" } },
         },
       },
@@ -112,6 +130,27 @@ export async function GET() {
             { name: "limit", in: "query", required: false, schema: { type: "integer", minimum: 1, maximum: 200, default: 100 } },
           ],
           responses: { "200": { description: "Activity list" } },
+        },
+      },
+      "/api/agent/v1/scheduled-actions": {
+        get: {
+          operationId: "listScheduledActions",
+          summary:
+            "List upcoming outreach in send order with each action's exact planned send time, the message or connection note that will go out, and any blocking reason.",
+          parameters: [
+            {
+              name: "agentId",
+              in: "query",
+              required: false,
+              description: "Only actions for leads sourced by this lead finder.",
+              schema: { type: "string" },
+            },
+            { name: "limit", in: "query", required: false, schema: { type: "integer", minimum: 1, maximum: 200, default: 50 } },
+          ],
+          responses: {
+            "200": { description: "Planned send schedule" },
+            "404": { description: "Agent not found" },
+          },
         },
       },
       "/api/agent/v1/mcp": {
@@ -147,7 +186,8 @@ export async function GET() {
       "/api/agent/v1/agents": {
         get: {
           operationId: "listLeadFinders",
-          summary: "List lead-finding agents in the workspace.",
+          summary:
+            "List lead-finding agents in the workspace with each one's discovery hour, send window, and whether an outreach sequence is set up for it.",
           responses: { "200": { description: "Agent list" } },
         },
         post: {
@@ -161,7 +201,8 @@ export async function GET() {
         },
         patch: {
           operationId: "updateLeadFinder",
-          summary: "Update, pause, or resume a lead finder. Only supplied fields change.",
+          summary:
+            "Update, pause, or resume a lead finder, including its discovery hour and the send window its outreach uses. Only supplied fields change.",
           requestBody: {
             required: true,
             content: { "application/json": { schema: { $ref: "#/components/schemas/AgentUpdate" } } },
@@ -257,7 +298,8 @@ export async function GET() {
       "/api/agent/v1/settings": {
         put: {
           operationId: "updateWorkspaceSettings",
-          summary: "Update workspace outreach safety settings. Only supplied fields change.",
+          summary:
+            "Update workspace outreach safety settings and the time zone they are measured in. Only supplied fields change.",
           requestBody: {
             required: true,
             content: {
@@ -270,12 +312,20 @@ export async function GET() {
                     firstMessageDelayMinutes: { type: "integer", minimum: 5, maximum: 10080 },
                     aiFollowUpDelayMinutes: { type: "integer", minimum: 0, maximum: 10080 },
                     aiFollowUpEnabled: { type: "boolean" },
+                    timeZone: {
+                      type: "string",
+                      description:
+                        'IANA time zone name (for example "America/New_York"). Daily limits reset at its local midnight and every send window is measured in it.',
+                    },
                   },
                 },
               },
             },
           },
-          responses: { "200": { description: "Updated settings" } },
+          responses: {
+            "200": { description: "Updated settings" },
+            "400": { description: "Nothing to update, or an unknown time zone" },
+          },
         },
       },
     },

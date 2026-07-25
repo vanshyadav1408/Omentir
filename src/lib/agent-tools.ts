@@ -77,6 +77,13 @@ export const agentToolInputSchemas = {
           keywords: { type: "array", items: { type: "string" } },
         },
       },
+      runAtHour: {
+        type: "integer",
+        minimum: 0,
+        maximum: 23,
+        description:
+          "Hour of the workspace's local day to run discovery, in the workspace time zone. Defaults to an hour before business hours open.",
+      },
     },
   },
   omentir_update_agent: {
@@ -118,6 +125,18 @@ export const agentToolInputSchemas = {
           keywords: { type: "array", items: { type: "string" } },
         },
       },
+      runAtHour: {
+        type: "integer",
+        minimum: 0,
+        maximum: 23,
+        description:
+          "Hour of the workspace's local day to run discovery. Omitted keeps the agent's current hour.",
+      },
+      sendWindow: {
+        enum: ["always", "business", "extended"],
+        description:
+          "When this agent's outreach may send, in the workspace time zone: always (24/7), business (Mon-Fri 09:00-18:00), or extended (daily 07:00-22:00). Applies to every sequence built on the agent's lead group.",
+      },
       status: {
         enum: ["active", "paused"],
         description: "Resume the lead finder immediately or pause future discovery runs.",
@@ -147,6 +166,11 @@ export const agentToolInputSchemas = {
       },
       aiFollowUpDelayMinutes: { type: "integer", minimum: 0, maximum: 10080 },
       aiFollowUpEnabled: { type: "boolean" },
+      timeZone: {
+        type: "string",
+        description:
+          'IANA time zone name (for example "America/New_York") the workspace schedules in: daily limits reset at its local midnight and every send window is measured in it.',
+      },
     },
     additionalProperties: false,
   },
@@ -198,6 +222,17 @@ export const agentToolInputSchemas = {
     },
     additionalProperties: false,
   },
+  omentir_list_scheduled_actions: {
+    type: "object",
+    properties: {
+      agentId: {
+        type: "string",
+        description: "Only actions for leads sourced by this lead finder.",
+      },
+      limit: { type: "integer", minimum: 1, maximum: 200 },
+    },
+    additionalProperties: false,
+  },
   omentir_pause_agent: {
     type: "object",
     required: ["agentId"],
@@ -230,7 +265,8 @@ export const agentToolInputSchemas = {
 const agentMcpToolDefinitions = [
   {
     name: "omentir_get_context",
-    description: "Read workspace readiness, product profile, setup status, counts, and API resources.",
+    description:
+      "Read workspace readiness, product profile, setup status, counts, API resources, the workspace time zone, and how much of today's invite and message allowance is left.",
     inputSchema: agentToolInputSchemas.omentir_get_context,
   },
   {
@@ -250,25 +286,26 @@ const agentMcpToolDefinitions = [
   },
   {
     name: "omentir_list_agents",
-    description: "List Omentir discovery agents in the token workspace.",
+    description:
+      "List Omentir discovery agents in the token workspace, including each one's discovery hour, send window, and whether an outreach sequence is set up for it.",
     inputSchema: agentToolInputSchemas.omentir_list_agents,
   },
   {
     name: "omentir_create_agent",
     description:
-      "Create an ICP discovery agent and target lead group. Requires a prompt plus at least one job title, industry, location, and keyword - agents cannot start with a partial setup.",
+      "Create an ICP discovery agent and target lead group. Requires a prompt plus at least one job title, industry, location, and keyword - agents cannot start with a partial setup. The new agent discovers and scores leads only; its outreach sequence is set up in the Omentir app.",
     inputSchema: agentToolInputSchemas.omentir_create_agent,
   },
   {
     name: "omentir_update_agent",
     description:
-      "Update an existing discovery agent: rename it, change its prompt, mode, filters, or signal sources, switch its LinkedIn account, or rename its lead group. Only provided fields change.",
+      "Update an existing discovery agent: rename it, change its prompt, mode, filters, signal sources, or daily discovery hour, switch its LinkedIn account, rename its lead group, or change the send window its outreach uses. Only provided fields change.",
     inputSchema: agentToolInputSchemas.omentir_update_agent,
   },
   {
     name: "omentir_update_settings",
     description:
-      "Update workspace outreach settings: daily connection-request and message limits, first-message delay, and AI follow-up behaviour. Only provided fields change.",
+      "Update workspace outreach settings: daily connection-request and message limits, first-message delay, AI follow-up behaviour, and the workspace time zone that send windows and daily limit resets are measured in. Only provided fields change.",
     inputSchema: agentToolInputSchemas.omentir_update_settings,
   },
   {
@@ -300,6 +337,12 @@ const agentMcpToolDefinitions = [
     name: "omentir_list_activity",
     description: "List recent automation activity runs (the workspace activity feed).",
     inputSchema: agentToolInputSchemas.omentir_list_activity,
+  },
+  {
+    name: "omentir_list_scheduled_actions",
+    description:
+      "List upcoming outreach in send order with each action's exact planned send time, the message or connection note that will go out, and why anything is blocked. These are committed slots from Omentir's send planner, not estimates.",
+    inputSchema: agentToolInputSchemas.omentir_list_scheduled_actions,
   },
   {
     name: "omentir_pause_agent",
@@ -337,6 +380,7 @@ const readOnlyTools = new Set([
   "omentir_list_groups",
   "omentir_list_linkedin_accounts",
   "omentir_list_activity",
+  "omentir_list_scheduled_actions",
 ]);
 
 const destructiveTools = new Set(["omentir_delete_agent"]);

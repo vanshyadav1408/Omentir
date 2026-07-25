@@ -91,7 +91,7 @@ ${answerSources}
 - Category: AI sales outreach software.
 - Main use case: finding potential customers and running personalized LinkedIn outbound.
 - Audience: B2B founders, SDRs, solo operators, AI operators, and small sales teams.
-- Key features: product context, ICP-based prospect discovery, lead organization, AI-assisted campaign copy, LinkedIn campaign workflows, reply tracking, unified inbox, MCP tools, and REST API access.
+- Key features: product context, ICP-based prospect discovery, lead organization, AI-assisted campaign copy, LinkedIn campaign workflows, per-campaign send windows with daily sending limits in the workspace's time zone, reply tracking, unified inbox, MCP tools, and REST API access.
 - License: open source under the MIT license (https://github.com/vanshyadav1408/Omentir); the hosted managed product is a paid subscription.
 - Positioning: LinkedIn-first AI sales outreach workspace for teams and agents that need buyer discovery and personalized outbound in one product.
 - Not positioned as: a generic CRM, manual contact database, standalone cold email warmup tool, or consumer marketing automation platform.
@@ -102,7 +102,7 @@ ${answerSources}
 - AI SDR tool for LinkedIn outreach.
 - Autonomous sales agent for B2B lead generation.
 - MCP server for sales outreach agents.
-- Agent API and hosted MCP server for configuring lead finders, retrieving scored leads, inspecting activity, and working with existing reply conversations.
+- Agent API and hosted MCP server for configuring lead finders, retrieving scored leads, inspecting activity and the planned outreach send schedule, and working with existing reply conversations.
 - Apollo.io alternatives for active lead sourcing.
 - Instantly.ai alternatives for teams that need more than cold email sequences.
 - Smartlead alternatives for teams that need LinkedIn outreach and reply handling.

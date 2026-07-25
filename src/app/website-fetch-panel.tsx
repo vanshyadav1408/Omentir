@@ -1,7 +1,8 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
+import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import AiLoadingOverlay from "./ai-loading-overlay";
 import { continueWithProductProfileAction } from "./actions";
@@ -34,6 +35,36 @@ function normalizeWebsite(website: string) {
   return website.trim();
 }
 
+// Saving the profile and landing on step 2 is a server round trip, so the press
+// has to be acknowledged immediately or the button reads as dead. useFormStatus
+// only reports the form it is rendered inside, hence the separate component;
+// the signed-out branch navigates client-side and passes its own pending flag.
+function ContinueButton({
+  label,
+  pendingLabel,
+  isPending = false,
+  className,
+}: {
+  label: string;
+  pendingLabel: string;
+  isPending?: boolean;
+  className: string;
+}) {
+  const { pending } = useFormStatus();
+  const busy = pending || isPending;
+
+  return (
+    <button
+      type="submit"
+      disabled={busy}
+      aria-busy={busy}
+      className={`${className} disabled:cursor-wait disabled:opacity-70`}
+    >
+      {busy ? pendingLabel : label}
+    </button>
+  );
+}
+
 export default function WebsiteFetchPanel({
   website,
   isSignedIn,
@@ -48,6 +79,7 @@ export default function WebsiteFetchPanel({
     productOverview: "",
   });
   const overviewRef = useRef<HTMLTextAreaElement>(null);
+  const [isNavigating, startNavigating] = useTransition();
   const writingData = state.status === "writing" ? state.data : null;
   const isWorking = state.status === "fetching" || state.status === "writing";
 
@@ -122,7 +154,7 @@ export default function WebsiteFetchPanel({
 
   function handleSignedOutContinue(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    router.push(continueHref);
+    startNavigating(() => router.push(continueHref));
   }
 
   const readyData = state.status === "ready" ? state.data : null;
@@ -144,7 +176,7 @@ export default function WebsiteFetchPanel({
       <AiLoadingOverlay
         open={isWorking}
         title="Fetching your product information with AI"
-        note="Usually takes 20 seconds"
+        note="Usually takes 10 seconds"
         transparent={false}
       />
       <form
@@ -230,14 +262,14 @@ export default function WebsiteFetchPanel({
               required={state.status === "manual"}
             />
 
-            <button
-              type="submit"
+            <ContinueButton
+              label={isSignedIn ? "Find leads" : "Continue"}
+              pendingLabel={isSignedIn ? "Finding leads..." : "Continuing..."}
+              isPending={isNavigating}
               className={`inline-flex h-10 cursor-pointer items-center rounded-md bg-[#ba3871] px-5 pt-[3px] text-sm font-semibold text-white transition hover:brightness-[0.98] ${
                 isSignedIn ? "self-end" : "self-start"
               }`}
-            >
-              {isSignedIn ? "Find leads" : "Continue"}
-            </button>
+            />
           </form>
         </section>
       ) : null}

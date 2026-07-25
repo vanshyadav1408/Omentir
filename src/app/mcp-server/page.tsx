@@ -79,12 +79,14 @@ const setupSteps: SetupStep[] = [
   },
 ];
 
-// Mirrors the live MCP tool list in src/lib/agent-tools.ts - keep in sync.
+// Mirrors the live MCP tool list in src/lib/agent-tools.ts; the completeness of
+// this catalog and the tool count below are asserted by
+// tests/agent-api-surface.test.mjs.
 const toolGroups = [
   {
     group: "Context & product profile",
     tools: [
-      { name: "omentir_get_context", description: "Read workspace readiness, product profile, setup status, and counts." },
+      { name: "omentir_get_context", description: "Read workspace readiness, product profile, counts, the workspace time zone, and today's remaining send allowance." },
       { name: "omentir_get_product_profile", description: "Read the product profile used for ICP matching and personalization." },
       { name: "omentir_update_product_profile", description: "Update the product profile used to qualify and rank leads." },
     ],
@@ -93,20 +95,21 @@ const toolGroups = [
     group: "Lead discovery",
     tools: [
       { name: "omentir_create_agent", description: "Create an ICP discovery agent and its target lead group." },
-      { name: "omentir_update_agent", description: "Edit an agent's name, prompt, filters, signal sources, LinkedIn account, or lead group." },
-      { name: "omentir_list_agents", description: "List the discovery agents running in the workspace." },
+      { name: "omentir_update_agent", description: "Edit an agent's name, prompt, filters, signal sources, LinkedIn account, lead group, discovery hour, or send window." },
+      { name: "omentir_list_agents", description: "List the discovery agents running in the workspace, with each one's discovery hour and send window." },
       { name: "omentir_list_leads", description: "Search, filter, sort, and list discovered leads." },
       { name: "omentir_get_lead", description: "Read one exact lead and its complete qualification record." },
       { name: "omentir_list_groups", description: "List the lead groups in the workspace." },
     ],
   },
   {
-    group: "Workspace & discovery status",
+    group: "Workspace & send schedule",
     tools: [
       { name: "omentir_list_linkedin_accounts", description: "List connected LinkedIn accounts available for discovery." },
       { name: "omentir_list_activity", description: "Inspect recent discovery runs and operational status." },
+      { name: "omentir_list_scheduled_actions", description: "Read queued outreach with each action's exact planned send time and draft." },
       { name: "omentir_get_stats", description: "Read lead, agent, and existing outreach metrics." },
-      { name: "omentir_update_settings", description: "Set daily connection-request and message limits, first-message delay, and AI follow-up behaviour." },
+      { name: "omentir_update_settings", description: "Set daily connection-request and message limits, first-message delay, AI follow-up behaviour, and the workspace time zone." },
     ],
   },
   {
@@ -130,7 +133,7 @@ const faqItems = [
   {
     question: "What is the Omentir MCP server?",
     answer:
-      "It's a hosted Model Context Protocol endpoint at omentir.com/api/agent/v1/mcp. Any MCP-capable client - Claude, ChatGPT, Cursor, Hermes, OpenClaw, or a custom assistant - connects with a workspace-scoped token and gets seventeen tools for product context, lead-finder configuration, discovery status, lead inspection, and existing conversations. Nothing to install or self-host.",
+      "It's a hosted Model Context Protocol endpoint at omentir.com/api/agent/v1/mcp. Any MCP-capable client - Claude, ChatGPT, Cursor, Hermes, OpenClaw, or a custom assistant - connects with a workspace-scoped token and gets nineteen tools for product context, lead-finder configuration, discovery status, lead inspection, the outreach send schedule, and existing conversations. Nothing to install or self-host.",
   },
   {
     question: "How do I authenticate?",
@@ -155,7 +158,7 @@ const faqItems = [
   {
     question: "How should my agent learn the recommended workflow?",
     answer:
-      "Point it at omentir.com/agents.md. It's a markdown guide written for assistants: the recommended call order (context → product profile → existing agents → discovery → activity → leads), the full tool list, and guardrails for retries, asynchronous results, and existing conversations.",
+      "Point it at omentir.com/agents.md. It's a markdown guide written for assistants: the recommended call order (context → product profile → existing agents → discovery → activity → leads → send schedule), the full tool list, how time zones, send windows and daily limits work, and guardrails for retries, asynchronous results, and existing conversations.",
   },
   {
     question: "Is the MCP server open source?",
@@ -270,8 +273,8 @@ export default function McpServerPage() {
             Every tool the server <span className="text-gradient-brand">exposes</span>
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)] sm:text-base">
-            Eighteen focused tools cover lead discovery and existing conversations. Clients
-            discover them automatically via <code className="rounded bg-[var(--md-sys-color-surface-container-high)] px-1.5 py-0.5 text-[12px] text-[var(--md-sys-color-on-surface)]">tools/list</code>.
+            Nineteen focused tools cover lead discovery, the send schedule, and existing
+            conversations. Clients discover them automatically via <code className="rounded bg-[var(--md-sys-color-surface-container-high)] px-1.5 py-0.5 text-[12px] text-[var(--md-sys-color-on-surface)]">tools/list</code>.
           </p>
         </Reveal>
         <div className="mx-auto mt-12 grid max-w-5xl gap-6 sm:mt-16 sm:grid-cols-2">
@@ -341,7 +344,7 @@ export default function McpServerPage() {
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-base leading-7 text-white/90">
               Create a workspace, mint an agent token, and your MCP client is
-              finding buyers and sending outreach in minutes - end to end.
+              finding buyers and tracking their outreach in minutes.
             </p>
             <Link
               href="/signup"

@@ -49,6 +49,12 @@ async function requireWorkspace() {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
   const workspace = await ensureWorkspace(userId);
+  // currentUser() is a Clerk API round trip and the email write is a Firestore
+  // write, both on the critical path of every single action. The address only
+  // needs capturing once, so skip both once the workspace has one. A workspace
+  // that never got an email (older signups) still backfills on the next action.
+  if (workspace.notificationEmail) return workspace;
+
   const user = await currentUser();
   const email =
     user?.primaryEmailAddress?.emailAddress || user?.emailAddresses[0]?.emailAddress || "";
@@ -423,7 +429,7 @@ export async function saveProductProfileAction(formData: FormData) {
       "averageTicketSize",
       currentProfile?.averageTicketSize,
     ),
-  });
+  }, currentProfile);
 
   revalidatePath("/my-product");
   revalidatePath("/dashboard");
