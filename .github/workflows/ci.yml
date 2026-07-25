@@ -19,6 +19,12 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # gitleaks below scans the pushed commit range, so the base commit has
+          # to exist locally. At the default depth of 1 it does not: git fails
+          # with "unknown revision", gitleaks reports "scanned ~0 bytes" and
+          # exits 1, and the secret scan silently never runs.
+          fetch-depth: 0
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22
