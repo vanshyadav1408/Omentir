@@ -56,8 +56,6 @@ export default function BlogPost() {
       title="MCP Outreach Tools: How to Configure Model Context Protocol for Sales"
       description="Learn how to connect and configure the hosted Model Context Protocol server. Master client configuration, authentication, and agent tools."
       slug="mcp-outreach-tools"
-      publishedDate="April 6, 2026"
-      updatedDate="April 6, 2026"
       bannerSrc="/mcp-outreach-tools.avif"
       bannerAlt="Model Context Protocol (MCP) server setup and client tools configuration dashboard illustration"
       tocItems={tocItems}

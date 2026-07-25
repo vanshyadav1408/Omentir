@@ -7,8 +7,9 @@ import type { FormEvent, ReactNode } from "react";
 import LogoMark from "@/app/logo-mark";
 import AiLoadingOverlay from "@/app/ai-loading-overlay";
 import { SelectField, type SelectOption } from "@/app/ui/select";
+import { useWorkspaceTimeZone } from "@/app/workspace-time-zone";
 import { TextAreaField, TextField } from "@/app/ui/text-field";
-import type { Agent } from "@/lib/server/types";
+import type { Agent, SendWindow } from "@/lib/server/types";
 import {
   INDUSTRY_SUGGESTIONS,
   KEYWORD_SUGGESTIONS,
@@ -56,6 +57,9 @@ type AgentSetupProps = {
   saveProductProfile?: (formData: FormData) => void | Promise<void>;
   profile?: CompanyProfile | null;
   initialAgent?: Agent | null;
+  // The window the agent's existing campaign is already sending in. Lives on
+  // the campaign, not the agent, so it has to be passed in separately.
+  initialSendWindow?: SendWindow;
   linkedInAccounts?: { id: string; displayName: string; accountId: string; avatarUrl?: string }[];
   setupMode?: boolean;
   // Leads-only agents stop after the Leads step: the agent discovers and
@@ -692,6 +696,7 @@ export default function AgentSetup({
   saveProductProfile,
   profile,
   initialAgent,
+  initialSendWindow,
   linkedInAccounts = [],
   setupMode = false,
   leadsOnly = false,
@@ -700,6 +705,10 @@ export default function AgentSetup({
 }: AgentSetupProps) {
   const isEditing = Boolean(initialAgent);
   const router = useRouter();
+  // Workspaces that have never saved a zone still get a real name here, from
+  // the same detection the rest of the app formats its times with.
+  const workspaceTimeZone = useWorkspaceTimeZone();
+  const sendWindowTimeZone = timezone || workspaceTimeZone;
   const [step, setStep] = useState<StepKey>(outreachOnly ? "leads" : "icp");
   const [pending, startTransition] = useTransition();
   const [drafting, setDrafting] = useState(false);
@@ -721,11 +730,14 @@ export default function AgentSetup({
     [linkedInAccounts],
   );
   const [outreachMode, setOutreachMode] = useState<"automatic" | "manual">("automatic");
-  // Business hours is the default for new agents: sending at 3am is the single
-  // most unnatural thing automated outreach can do. Existing campaigns are
-  // untouched and keep sending round the clock until their owner changes it.
-  const [sendWindow, setSendWindow] = useState<"always" | "business" | "extended">(
-    initialAgent ? "always" : "business",
+  // Business hours is the default for NEW agents: sending at 3am is the single
+  // most unnatural thing automated outreach can do. An existing agent opens on
+  // the window its campaign is actually sending in - and campaigns created
+  // before the picker existed have none stored, so they show (and keep) "always"
+  // until their owner changes it. Saving this form now writes the window back,
+  // so defaulting to "business" here would silently narrow every old campaign.
+  const [sendWindow, setSendWindow] = useState<SendWindow>(
+    initialSendWindow ?? (initialAgent ? "always" : "business"),
   );
   // Discovery runs an hour before business hours open, so leads found today are
   // queued and ready the moment sending starts.
@@ -1375,7 +1387,7 @@ export default function AgentSetup({
             When should outreach go out?
           </div>
           <p className="mt-1 text-[13px] font-medium text-zinc-700">
-            Interpreted in your workspace timezone{timezone ? ` (${timezone})` : ""}. Messages that
+            Interpreted in your workspace timezone{sendWindowTimeZone ? ` (${sendWindowTimeZone})` : ""}. Messages that
             come due outside these hours wait for the next opening instead of sending overnight.
           </p>
           <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">

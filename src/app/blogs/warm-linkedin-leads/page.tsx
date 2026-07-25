@@ -62,8 +62,6 @@ export default function BlogPost() {
       title="Warm LinkedIn Leads: How to Turn Intent Signals Into Sales Conversations"
       description="A practical guide to handling warm LinkedIn leads: how to spot real intent, choose the next move, respond quickly, and avoid over-automating promising conversations."
       slug="warm-linkedin-leads"
-      publishedDate="April 28, 2026"
-      updatedDate="April 28, 2026"
       bannerSrc="/warm-linkedin-leads.avif"
       bannerAlt="Warm LinkedIn leads workflow"
       faqItems={faqItems}

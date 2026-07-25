@@ -62,8 +62,6 @@ export default function BlogPost() {
       title="LinkedIn Demo Booking: Turn Interested Replies Into Scheduled Calls"
       description="A practical guide to turning warm LinkedIn replies into qualified demo bookings without rushing the buyer, dropping calendar links too early, or losing momentum."
       slug="linkedin-demo-booking"
-      publishedDate="May 10, 2026"
-      updatedDate="May 10, 2026"
       bannerSrc="/linkedin-demo-booking.avif"
       bannerAlt="LinkedIn demo booking workflow"
       faqItems={faqItems}

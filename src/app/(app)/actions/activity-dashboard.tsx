@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { runScheduledActionNowAction } from "@/app/actions";
 import MobileHeaderPortal from "@/app/mobile-header-portal";
 import type { ScheduledAction } from "@/lib/server/scheduled-actions";
+import { useWorkspaceTimeZone } from "@/app/workspace-time-zone";
 
 type Lead = NonNullable<ScheduledAction["lead"]>;
 type LeadActions = { lead: Lead; actions: ScheduledAction[] };
@@ -151,9 +152,15 @@ function ActionDetails({ action, timeZone, pending, confirming, feedback, onConf
 
 // mobileCaption (mobile-only): hides the page title + inline timezone picker,
 // docks the picker into the fixed app bar, and shows the caption above the list.
-export default function ActionsDashboard({ items, title, serverNow, timezone = "UTC", headerActions, intro, mobileCaption }: { items: ScheduledAction[]; title: string; serverNow: number; timezone?: string; headerActions?: ReactNode; intro?: ReactNode; loadLiveItems?: boolean; mobileCaption?: string }) {
+export default function ActionsDashboard({ items, title, serverNow, timezone, headerActions, intro, mobileCaption }: { items: ScheduledAction[]; title: string; serverNow: number; timezone?: string; headerActions?: ReactNode; intro?: ReactNode; loadLiveItems?: boolean; mobileCaption?: string }) {
   const router = useRouter();
-  const [timeZone, setTimeZone] = useState(timezone || "UTC");
+  // The picker can move this view to another zone (useful when a prospect is
+  // elsewhere), but it always opens on the workspace's own zone.
+  const workspaceTimeZone = useWorkspaceTimeZone();
+  const defaultTimeZone = timezone || workspaceTimeZone;
+  const [pickedTimeZone, setPickedTimeZone] = useState("");
+  const timeZone = pickedTimeZone || defaultTimeZone;
+  const setTimeZone = setPickedTimeZone;
   const [selectedLeadId, setSelectedLeadId] = useState(items.find((item) => item.lead)?.lead?.id || "");
   const [selectedId, setSelectedId] = useState(items.find((item) => item.lead)?.id || "");
   const [mobileDetailsOpen, setMobileDetailsOpen] = useState(false);

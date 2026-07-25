@@ -55,8 +55,6 @@ export default function BlogPost() {
       title="Scaling from $0 to $10k MRR: The Outbound Engine Strategy"
       description="Stop guessing how to grow your startup. Copy this pipeline math blueprint, configure multi-profile outreach, and build a predictable engine to reach $10k MRR."
       slug="scaling-to-ten-k-mrr"
-      publishedDate="February 14, 2026"
-      updatedDate="February 14, 2026"
       bannerSrc="/scaling-to-ten-k-mrr.avif"
       bannerAlt="Outbound sales pipeline mathematics and MRR scaling trajectory diagram"
       tocItems={tocItems}

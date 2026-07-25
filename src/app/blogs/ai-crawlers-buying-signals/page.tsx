@@ -53,8 +53,6 @@ export default function BlogPost() {
       title="How AI Crawlers Analyze B2B Websites for Buying Signals"
       description="Understand the mechanics of AI crawlers. Learn how real-time website crawls extract integrations, hiring signals, and business triggers."
       slug="ai-crawlers-buying-signals"
-      publishedDate="March 12, 2026"
-      updatedDate="March 12, 2026"
       bannerSrc="/ai-crawlers-buying-signals.avif"
       bannerAlt="AI crawler data extraction and buying signal processing diagram"
       tocItems={tocItems}

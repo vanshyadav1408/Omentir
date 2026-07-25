@@ -53,8 +53,6 @@ export default function BlogPost() {
       title="11x.ai vs. Gojiberry: Head-to-Head Comparison of Autonomous SDRs"
       description="Compare 11x.ai (Alice) and Gojiberry head-to-head. Analyze their workflows, data discovery, copywriting engines, safety limits, and pricing models."
       slug="11x-ai-vs-gojiberry"
-      publishedDate="March 18, 2026"
-      updatedDate="March 18, 2026"
       bannerSrc="/11x-ai-vs-gojiberry.avif"
       bannerAlt="11x.ai Alice versus Gojiberry autonomous SDR comparison illustration"
       tocItems={tocItems}

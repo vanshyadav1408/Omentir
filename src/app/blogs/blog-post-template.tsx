@@ -5,7 +5,7 @@ import JsonLd from "../json-ld";
 import { MarketingHeader, MarketingFooter } from "../marketing-shell";
 import BlogPostGrid from "./blog-post-grid";
 import { createBlogJsonLd, createBreadcrumbJsonLd, createFAQJsonLd, siteUrl } from "../seo";
-import { ALL_BLOGS } from "./blog-data";
+import { ALL_BLOGS, isBlogLive } from "./blog-data";
 
 export interface TocItem {
   id: string;
@@ -18,8 +18,6 @@ export interface BlogPostTemplateProps {
   title: string;
   description: string;
   slug: string;
-  publishedDate?: string;
-  updatedDate?: string;
   author?: {
     name: string;
     avatarUrl: string;
@@ -46,8 +44,6 @@ export default function BlogPostTemplate({
   title,
   description,
   slug,
-  publishedDate = "May 20, 2026",
-  updatedDate = "May 21, 2026",
   author = { name: "Vansh Yadav", avatarUrl: "/founder.jpg" },
   bannerSrc,
   bannerAlt = "Blog post banner image",
@@ -57,8 +53,14 @@ export default function BlogPostTemplate({
 }: BlogPostTemplateProps) {
   const blogItem = ALL_BLOGS.find((b) => b.slug === slug);
   const category = blogItem ? blogItem.category : "Playbooks";
+  // Dates come from blog-data and are never passed in per page: the byline, the
+  // JSON-LD and the sitemap all have to agree, and a page-level override is how
+  // they silently stop agreeing.
+  const publishedDate = blogItem?.publishedDate ?? "";
+  const updatedDate = blogItem?.updatedDate || publishedDate;
   const relatedBlogs = ALL_BLOGS.filter(
-    (blog) => blog.slug !== slug && blog.category === category
+    (blog) =>
+      blog.slug !== slug && blog.category === category && isBlogLive(blog)
   ).slice(0, 3);
   const hasVisibleFaqs = hasFaqSection(children);
   const faqTocItem = tocItems.find((item) => item.label.toLowerCase().includes("faq"));

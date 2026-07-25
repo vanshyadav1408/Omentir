@@ -62,8 +62,6 @@ export default function BlogPost() {
       title="OpenClaw LinkedIn Leads: How to Run Prospecting Through an Agent"
       description="A practical workflow for using OpenClaw as the operator layer for LinkedIn lead discovery, qualification, and safe outreach handoff."
       slug="openclaw-linkedin-leads"
-      publishedDate="May 15, 2026"
-      updatedDate="May 15, 2026"
       bannerSrc="/openclaw-linkedin-leads.avif"
       bannerAlt="Agent-led LinkedIn prospecting workflow"
       faqItems={faqItems}

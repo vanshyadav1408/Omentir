@@ -55,8 +55,6 @@ export default function BlogPost() {
       title="Sales Leads from LinkedIn: How to Build a B2B Sourcing Pipeline"
       description="Learn how to build a high-quality B2B sales lead pipeline from LinkedIn. Master profile enrichment, intent scoring, and safe message personalization."
       slug="sales-leads-from-linkedin"
-      publishedDate="April 5, 2026"
-      updatedDate="April 5, 2026"
       bannerSrc="/sales-leads-from-linkedin.avif"
       bannerAlt="Sales leads from LinkedIn and B2B enrichment pipeline illustration"
       tocItems={tocItems}

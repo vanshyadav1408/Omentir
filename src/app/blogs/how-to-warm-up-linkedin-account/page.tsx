@@ -59,8 +59,6 @@ export default function BlogPost() {
       title="How to Warm Up a LinkedIn Account for Outbound Automation"
       description="Setting up a new sales profile? Follow this 14-day warmup schedule and gradual ramp-up limits to keep your account safe from restrictions."
       slug="how-to-warm-up-linkedin-account"
-      publishedDate="February 9, 2026"
-      updatedDate="February 9, 2026"
       bannerSrc="/how-to-warm-up-linkedin-account.avif"
       bannerAlt="14-day LinkedIn profile warmup schedule and gradual daily volume limits chart"
       tocItems={tocItems}

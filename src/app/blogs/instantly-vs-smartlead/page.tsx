@@ -52,8 +52,6 @@ export default function BlogPost() {
       title="Instantly.ai vs. Smartlead: The Battle of Cold Email Throttling Engines"
       description="Compare Instantly.ai and Smartlead head-to-head. Analyze multi-inbox rotation patterns, email warm-up networks, throttling mechanics, and deliverability protection."
       slug="instantly-vs-smartlead"
-      publishedDate="March 19, 2026"
-      updatedDate="March 19, 2026"
       bannerSrc="/instantly-vs-smartlead.avif"
       bannerAlt="Instantly.ai versus Smartlead cold email throttling comparison chart illustration"
       tocItems={tocItems}

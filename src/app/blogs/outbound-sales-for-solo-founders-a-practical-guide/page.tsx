@@ -39,8 +39,6 @@ export default function BlogPost() {
       title="Outbound Sales for Solo Founders: A Practical Guide"
       description="A zero-fluff outbound sales framework tailored for solo B2B founders to validate markets, find early customers, and manage pipeline."
       slug="outbound-sales-for-solo-founders-a-practical-guide"
-      publishedDate="June 16, 2026"
-      updatedDate="June 16, 2026"
       bannerSrc="/outbound-sales-for-solo-founders-a-practical-guide-v2.avif"
       bannerAlt="Outbound Sales for Solo Founders: A Practical Guide outreach concept art"
       faqItems={faqItems}

@@ -9,6 +9,8 @@ import { useSidebarResource } from "@/app/use-sidebar-resource";
 import SignOutButton from "./sign-out-button";
 import { SelectField } from "@/app/ui/select";
 import { M3NotchedOutline, TextField } from "@/app/ui/text-field";
+import { useWorkspaceTimeZone } from "@/app/workspace-time-zone";
+import { formatZonedDate } from "@/lib/time-zone";
 
 type SettingsViewProps = {
   workspace: Workspace;
@@ -68,6 +70,11 @@ function timezoneOption(timezone?: string) {
     TIMEZONES.find((option) => option.endsWith(") UTC")) ||
     TIMEZONES[0]
   );
+}
+
+/** "(GMT+5:30) Asia/Kolkata" -> "Asia/Kolkata", the form's stored value. */
+function timezoneName(option: string) {
+  return option.split(") ").at(-1)?.trim() || "UTC";
 }
 const DATE_FORMATS = [
   "May 12, 2025 (MMM D, YYYY)",
@@ -361,7 +368,12 @@ export default function SettingsView({
   const linkedInAccountsLoading = linkedInAccountsResource.loading;
 
   const [language, setLanguage] = useState("English");
-  const [timezone, setTimezone] = useState(() => timezoneOption(workspace.timezone));
+  // Follows the workspace zone (detected on first load when none is stored)
+  // until the user picks one, so the field always shows the zone the rest of
+  // the app is formatting in rather than a stale "UTC".
+  const timeZone = useWorkspaceTimeZone();
+  const [pickedTimezone, setPickedTimezone] = useState("");
+  const timezone = pickedTimezone || timezoneOption(timeZone);
   const [dateFormat, setDateFormat] = useState("May 12, 2025 (MMM D, YYYY)");
   const [dailyInvites, setDailyInvites] = useState(workspace.settings.dailyInviteLimit);
   const [dailyMessages, setDailyMessages] = useState(workspace.settings.dailyMessageLimit);
@@ -384,6 +396,7 @@ export default function SettingsView({
     formData.set("dailyMessageLimit", String(dailyMessages));
     formData.set("firstMessageDelayMinutes", String(firstDelay * 60));
     formData.set("aiFollowUpDelayMinutes", String(workspace.settings.aiFollowUpDelayMinutes));
+    formData.set("timezone", timezoneName(timezone));
     if (aiFollowUp) formData.set("aiFollowUpEnabled", "on");
     startTransition(() => saveAction(formData));
   }
@@ -493,10 +506,14 @@ export default function SettingsView({
                     <SearchableSelectField
                       label="Time zone"
                       value={timezone}
-                      onChange={setTimezone}
+                      onChange={setPickedTimezone}
                       options={TIMEZONES}
                       placeholder="Search timezone, city, or region..."
                     />
+                    <p className="mt-1.5 text-[11px] font-medium text-zinc-600">
+                      Every date and time in Omentir is shown in this zone, and your
+                      outreach send windows and daily limits follow it too.
+                    </p>
                   </div>
                   <SelectField
                     label="Date format"
@@ -648,12 +665,7 @@ export default function SettingsView({
                             LinkedIn account
                           </div>
                           <div className="text-[11px] font-medium text-zinc-600">
-                            Connected on{" "}
-                            {new Date(account.createdAt).toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                            })}
+                            Connected on {formatZonedDate(account.createdAt, timeZone)}
                           </div>
                         </div>
                         <div className="flex w-full shrink-0 flex-col items-stretch gap-2 sm:w-auto sm:flex-row sm:items-center">
@@ -751,12 +763,12 @@ export default function SettingsView({
                       </div>
                       <p className="mt-1 text-[13px] font-medium text-zinc-700">
                         Renews on{" "}
-                        {workspace.billing?.currentPeriodEnd
-                          ? new Date(workspace.billing.currentPeriodEnd).toLocaleDateString(
-                              "en-US",
-                              { month: "long", day: "numeric", year: "numeric" },
-                            )
-                          : "Jun 2, 2025"}
+                        {formatZonedDate(
+                          workspace.billing?.currentPeriodEnd,
+                          timeZone,
+                          { month: "long", day: "numeric", year: "numeric" },
+                          "Jun 2, 2025",
+                        )}
                       </p>
                     </div>
                     <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${billing.cls}`}>

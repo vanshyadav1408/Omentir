@@ -53,8 +53,6 @@ export default function BlogPost() {
       title="Why Static Templates are Dead: The Shift to Dynamic AI Outreach"
       description="Understand why static email sequences are failing. Learn how dynamic outreach uses real-time buyer context and intent signals to drive conversions."
       slug="why-static-templates-are-dead"
-      publishedDate="March 8, 2026"
-      updatedDate="March 8, 2026"
       bannerSrc="/why-static-templates-are-dead.avif"
       bannerAlt="Static outreach templates versus dynamic AI outreach deliverability comparison diagram"
       tocItems={tocItems}

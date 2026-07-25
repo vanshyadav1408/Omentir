@@ -55,8 +55,6 @@ export default function BlogPost() {
       title="Sales Pitch Personalization: How to Build Modular B2B LinkedIn Outreach"
       description="Learn how to write personalized B2B sales pitches that get replies. Master modular messaging templates, signal-led hooks, and safe LinkedIn delivery."
       slug="sales-pitch-personalization"
-      publishedDate="April 14, 2026"
-      updatedDate="April 14, 2026"
       bannerSrc="/sales-pitch-personalization.avif"
       bannerAlt="Sales pitch personalization and modular B2B outreach sequence builder graphic"
       tocItems={tocItems}

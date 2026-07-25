@@ -55,8 +55,6 @@ export default function BlogPost() {
       title="Automated Website Analysis: The Key to Understanding Your Competitors"
       description="Discover how to build an automated competitor intelligence pipeline that scrapes pricing tables, extracts positioning copy, and drafts battlecards."
       slug="automated-website-competitor-analysis"
-      publishedDate="March 5, 2026"
-      updatedDate="March 5, 2026"
       bannerSrc="/automated-website-competitor-analysis.avif"
       bannerAlt="Automated competitor website crawler and battlecard generator diagram"
       tocItems={tocItems}

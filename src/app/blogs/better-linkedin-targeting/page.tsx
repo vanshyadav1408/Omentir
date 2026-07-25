@@ -55,8 +55,6 @@ export default function BlogPost() {
       title="Better LinkedIn Targeting: How to Build Clean B2B Prospect Lists"
       description="Stop wasting connection invites on low-fit prospects. Master Boolean search filters, negative exclusions, and technographic triggers on LinkedIn."
       slug="better-linkedin-targeting"
-      publishedDate="April 3, 2026"
-      updatedDate="April 3, 2026"
       bannerSrc="/better-linkedin-targeting.avif"
       bannerAlt="Better LinkedIn targeting and advanced B2B search parameters dashboard illustration"
       tocItems={tocItems}

@@ -40,8 +40,6 @@ export default function BlogPost() {
       title="The Modern Outbound Stack: Integrating Lead Scrapers, Enrichment, and AI SDRs"
       description="An architectural blueprint of the modern B2B sales development stack. Learn how to combine scraper tools, waterfall systems, and autonomous AI salesman."
       slug="modern-outbound-stack-lead-scrapers-enrichment-ai-sdrs"
-      publishedDate="June 11, 2026"
-      updatedDate="June 11, 2026"
       bannerSrc="/modern-outbound-stack-lead-scrapers-enrichment-ai-sdrs.avif"
       bannerAlt="Modern outbound technology stack integrating scrapers enrichment and AI SDRs graphic"
       tocItems={tocItems as any}

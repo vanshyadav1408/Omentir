@@ -37,8 +37,6 @@ export default function BlogPost() {
       title="LinkedIn Outreach for Founders: The 15-Minute Daily Routine"
       description="A high-efficiency, 15-minute daily LinkedIn outreach routine for busy B2B founders to maintain a consistent sales pipeline."
       slug="linkedin-outreach-for-founders-the-15-minute-daily-routine"
-      publishedDate="June 24, 2026"
-      updatedDate="June 24, 2026"
       bannerSrc="/linkedin-outreach-for-founders-the-15-minute-daily-routine.avif"
       bannerAlt="LinkedIn Outreach for Founders: The 15-Minute Daily Routine outreach concept art"
       faqItems={faqItems}

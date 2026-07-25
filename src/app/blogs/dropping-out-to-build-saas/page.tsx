@@ -53,8 +53,6 @@ export default function BlogPost() {
       title="Dropping Out to Build SaaS: Hard Lessons from the Mountain to First MRR"
       description="An honest founder journey on dropping out to build software, validating via direct outbound, and reaching initial MRR milestones."
       slug="dropping-out-to-build-saas"
-      publishedDate="February 26, 2026"
-      updatedDate="February 26, 2026"
       bannerSrc="/dropping-out-to-build-saas.avif"
       bannerAlt="Founder journey from dropping out to initial software MRR milestones chart"
       tocItems={tocItems}

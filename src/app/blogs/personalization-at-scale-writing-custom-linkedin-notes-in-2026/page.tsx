@@ -38,8 +38,6 @@ export default function BlogPost() {
       title="Personalization at Scale: Writing Custom LinkedIn Notes in 2026"
       description="Learn how modern sales teams balance personalization and efficiency using intent signals and context engines in 2026."
       slug="personalization-at-scale-writing-custom-linkedin-notes-in-2026"
-      publishedDate="June 29, 2026"
-      updatedDate="June 29, 2026"
       bannerSrc="/personalization-at-scale-writing-custom-linkedin-notes-in-2026.avif"
       bannerAlt="Personalization at Scale: Writing Custom LinkedIn Notes in 2026 outreach concept art"
       faqItems={faqItems}

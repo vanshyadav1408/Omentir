@@ -18,6 +18,8 @@ import type {
 } from "@/lib/server/types";
 import { TextField } from "@/app/ui/text-field";
 import MobileHeaderPortal from "@/app/mobile-header-portal";
+import { useWorkspaceTimeZone } from "@/app/workspace-time-zone";
+import { formatZonedDate, formatZonedDateTime, zonedDayKey } from "@/lib/time-zone";
 
 type InboxThread =
   | {
@@ -240,6 +242,7 @@ export default function MessagesView({
   senderAccounts?: Array<{ accountId: string; displayName: string; avatarUrl?: string }>;
 }) {
   const router = useRouter();
+  const timeZone = useWorkspaceTimeZone();
   const messageDataResource = useSidebarResource(
     "conversations,leadPreviews",
     { conversations, leads },
@@ -681,14 +684,14 @@ export default function MessagesView({
                         const previous = selected.messages[index - 1];
                         const showDate =
                           !previous ||
-                          new Date(previous.createdAt).toDateString() !==
-                            new Date(message.createdAt).toDateString();
+                          zonedDayKey(previous.createdAt, timeZone) !==
+                            zonedDayKey(message.createdAt, timeZone);
                         return (
                           <div key={message.id}>
                             {showDate ? (
                               <div className="mb-3 flex justify-center">
                                 <span className="rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-[10px] font-semibold text-zinc-700">
-                                  {new Date(message.createdAt).toLocaleDateString("en-US", {
+                                  {formatZonedDate(message.createdAt, timeZone, {
                                     month: "short",
                                     day: "numeric",
                                   })}
@@ -713,7 +716,10 @@ export default function MessagesView({
                                 }`}
                               >
                                 <div className="whitespace-pre-wrap break-words">{message.body}</div>
-                                <div className="mt-1 text-[10px] font-medium text-zinc-600">
+                                <div
+                                  className="mt-1 text-[10px] font-medium text-zinc-600"
+                                  title={formatZonedDateTime(message.createdAt, timeZone)}
+                                >
                                   {timeAgo(message.createdAt)}
                                 </div>
                               </div>

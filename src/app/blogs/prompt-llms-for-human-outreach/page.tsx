@@ -57,8 +57,6 @@ export default function BlogPost() {
       title="How to Prompt LLMs to Write Outreach Messages That Feel Human"
       description="Stop sending robotic sales messages. Copy these prompt rules, styling constraints, and negative lists to make your AI outreach copy sound authentic."
       slug="prompt-llms-for-human-outreach"
-      publishedDate="March 2, 2026"
-      updatedDate="March 2, 2026"
       bannerSrc="/prompt-llms-for-human-outreach.avif"
       bannerAlt="Robotic AI sales copy versus natural human conversational copy comparison diagram"
       tocItems={tocItems}

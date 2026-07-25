@@ -37,8 +37,6 @@ export default function BlogPost() {
       title="The Art of the LinkedIn Follow-Up: How to Re-Engage Ghosted Leads"
       description="Master the psychology of follow-ups on LinkedIn. Learn how to craft value-first follow-up sequences that get replies without being annoying."
       slug="the-art-of-the-linkedin-follow-up-how-to-re-engage-ghosted-leads"
-      publishedDate="June 25, 2026"
-      updatedDate="June 25, 2026"
       bannerSrc="/the-art-of-the-linkedin-follow-up-how-to-re-engage-ghosted-leads.avif"
       bannerAlt="The Art of the LinkedIn Follow-Up outreach concept art"
       faqItems={faqItems}

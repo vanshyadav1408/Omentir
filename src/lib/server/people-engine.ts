@@ -44,10 +44,12 @@ import type {
 // whose job needs the product are not discarded for imperfect title wording.
 const QUALIFIED_SCORE_THRESHOLD = 65;
 const DEFAULT_DAILY_QUALIFIED_LEAD_CAP = 75;
-// Each enrichment is a live LinkedIn profile view through the user's account.
-// Keep the full daily run aligned with the qualified-lead target, while the
-// setup flow still passes a smaller initialLeadTarget to keep creation snappy.
-const DEFAULT_MAX_ENRICHMENTS_PER_RUN = DEFAULT_DAILY_QUALIFIED_LEAD_CAP;
+// Each enrichment is a live LinkedIn profile view through the user's account,
+// drawn from the same 75/day account-wide budget that outreach (first-degree
+// checks) and inbox loads use. Capping the engine below the full budget keeps
+// those flows from starving; unenriched candidates are still scored on their
+// search data, so this cap bounds enrichment quality, not lead discovery.
+const DEFAULT_MAX_ENRICHMENTS_PER_RUN = 50;
 const PEOPLE_ENGINE_RUN_MS = 15 * 60 * 1000;
 const STOP_BUFFER_MS = 15 * 1000;
 const SOURCE_POST_LIMIT = 5;
@@ -511,14 +513,25 @@ function primarySignal(candidate: Candidate) {
   );
 }
 
-function candidatePriority(candidate: Candidate, targetTitles: string[]) {
+function candidatePriority(
+  candidate: Candidate,
+  targetTitles: string[],
+  targetLocations: string[],
+) {
   const signalWeight = candidate.signals.reduce((total, signal) => {
     if (signal.signalType === "post_comment") return total + 3;
     if (signal.signalType === "post_reaction") return total + 1;
     return total + 2;
   }, 0);
   const titleWeight = matchesTargetTitle(candidate.lead.title || "", targetTitles) ? 5 : 0;
-  return signalWeight + titleWeight + Math.max(0, candidate.signals.length - 1) * 2;
+  // A location we can already see in-region outranks an unknown one: post
+  // engagers from global posts mostly enrich into out-of-region rejects, and
+  // every such enrichment wastes a profile view from the daily budget.
+  const locationWeight =
+    candidate.lead.location && matchesTargetLocation(candidate.lead.location, targetLocations)
+      ? 4
+      : 0;
+  return signalWeight + titleWeight + locationWeight + Math.max(0, candidate.signals.length - 1) * 2;
 }
 
 function sourceKey(kind: PeopleEngineSource["kind"], value: string) {
@@ -680,7 +693,8 @@ export async function runPeopleEngineForAgent(input: {
     )
     .sort(
       (left, right) =>
-        candidatePriority(right, matchTitles) - candidatePriority(left, matchTitles),
+        candidatePriority(right, matchTitles, targetLocations) -
+        candidatePriority(left, matchTitles, targetLocations),
     );
 
   for (const candidate of rankedCandidates) {
@@ -837,6 +851,21 @@ export async function runPeopleEngineForAgent(input: {
       break;
     }
   }
+
+  // Persist the funnel counters: "the agent finds no leads" is only
+  // diagnosable when each run says where its candidates died.
+  await logAutomationRun({
+    workspaceId: input.agent.workspaceId,
+    kind: "people_engine",
+    status: "completed",
+    message:
+      `Agent ${input.agent.id}: ${candidates.size} candidates -> ${leadsAdded} new leads ` +
+      `(${existingQualifiedLeads} already known, ${lowScoreCandidates} low score, ` +
+      `${outOfRegionCandidates} out of region, ${enrichments} profile views spent` +
+      `${timeBudgetExpired ? ", stopped at time budget" : ""}).`,
+  }).catch((error) => {
+    console.error("[people-engine] failed to log run summary:", error);
+  });
 
   return {
     candidates: candidates.size,

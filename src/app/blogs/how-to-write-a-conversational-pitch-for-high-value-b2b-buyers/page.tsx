@@ -39,8 +39,6 @@ export default function BlogPost() {
       title="How to Write a Conversational Pitch for High-Value B2B Buyers"
       description="Shift from transactional sales pitches to natural, conversational dialogues that build trust with enterprise-level B2B decision makers."
       slug="how-to-write-a-conversational-pitch-for-high-value-b2b-buyers"
-      publishedDate="June 23, 2026"
-      updatedDate="June 23, 2026"
       bannerSrc="/how-to-write-a-conversational-pitch-for-high-value-b2b-buyers.avif"
       bannerAlt="How to Write a Conversational Pitch for High-Value B2B Buyers outreach concept art"
       faqItems={faqItems}

@@ -39,8 +39,6 @@ export default function BlogPost() {
       title="How to Use LinkedIn to Book 5 B2B Demos Every Week"
       description="A repeatable outbound sales system for B2B companies to consistently book 5 high-quality product demos per week using LinkedIn."
       slug="how-to-use-linkedin-to-book-5-b2b-demos-every-week"
-      publishedDate="June 22, 2026"
-      updatedDate="June 22, 2026"
       bannerSrc="/how-to-use-linkedin-to-book-5-b2b-demos-every-week.avif"
       bannerAlt="How to Use LinkedIn to Book 5 B2B Demos Every Week outreach concept art"
       faqItems={faqItems}

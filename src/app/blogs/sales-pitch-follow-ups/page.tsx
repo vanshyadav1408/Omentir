@@ -54,8 +54,6 @@ export default function BlogPost() {
       title="Sales Pitch Follow-Ups: High-Converting Copywriting Frameworks"
       description="Stop sending 'just bumping this' messages. Master 3 conversational follow-up frameworks, response triggers, and safe campaign pacing."
       slug="sales-pitch-follow-ups"
-      publishedDate="April 1, 2026"
-      updatedDate="April 1, 2026"
       bannerSrc="/sales-pitch-follow-ups.avif"
       bannerAlt="Sales pitch follow-ups and B2B copywriting sequence illustration"
       tocItems={tocItems}

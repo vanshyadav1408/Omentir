@@ -54,8 +54,6 @@ export default function BlogPost() {
       title="AI SDR LinkedIn Playbook: How to Operationalize Autonomous Outbound"
       description="Stop wondering what an AI SDR actually does. Discover the operational routine, delegation frameworks, and daily pacing safety rules to run an autonomous sales agent on LinkedIn."
       slug="ai-sdr-linkedin-playbook"
-      publishedDate="April 23, 2026"
-      updatedDate="April 23, 2026"
       bannerSrc="/ai-sdr-linkedin-playbook.avif"
       bannerAlt="AI SDR LinkedIn operational playbook"
       tocItems={tocItems}

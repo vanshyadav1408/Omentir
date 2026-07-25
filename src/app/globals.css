@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Self-hosted Material Symbols subset (@font-face). Regenerate with
+   `node scripts/build-icon-font.mjs` after adding a new icon name. */
+@import "./icon-font.css";
+
 /* Class-based dark mode (html.dark) so users can override system preference. */
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -3008,6 +3012,21 @@ html.dark .marketing-footer[class~="bg-[#111111]"] {
   --color-zinc-400: #a1a1aa;
   --color-zinc-500: #71717a;
   --color-zinc-600: #52525b;
+}
+
+/* The dark-theme text-zinc-* remaps further down carry !important, so they
+   outrank Tailwind's un-prefixed `hover:text-white` utility and freeze the
+   footer's social icons and link columns at their rest colour — no hover
+   feedback at all in dark mode, and the rest colour comes out as the dark
+   "disabled" grey rather than the light zinc ramp the footer sets up above.
+   The footer is the same near-black surface in both themes, so it opts back
+   out here: local zinc token at rest, pure white on hover. */
+html.dark .marketing-footer .text-zinc-400 {
+  color: var(--color-zinc-400) !important;
+}
+
+html.dark .marketing-footer .hover\:text-white:hover {
+  color: #ffffff !important;
 }
 
 /* Soft icon wells / pastel chips → dark tonal containers */

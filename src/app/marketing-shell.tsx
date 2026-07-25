@@ -72,6 +72,7 @@ const footerSocialLinks = [
   { label: "LinkedIn", href: "https://www.linkedin.com/company/121943897", orderClassName: "order-1" },
   { label: "Twitter", href: "https://x.com/OmentirAI", orderClassName: "order-2" },
   { label: "GitHub", href: `https://github.com/${hostedGithubRepo()}`, orderClassName: "order-4" },
+  { label: "Product Hunt", href: "https://www.producthunt.com/products/omentir", orderClassName: "order-5" },
 ];
 
 function FooterSocialIcon({ label }: { label: string }) {
@@ -87,6 +88,14 @@ function FooterSocialIcon({ label }: { label: string }) {
     return (
       <svg viewBox="0 0 24 24" className="h-7 w-7" fill="currentColor" aria-hidden="true">
         <path d="m14.2 10.6 6.6-7.6h-1.6l-5.7 6.6L8.9 3H3.6l6.9 10-6.9 8h1.6l6-7 4.8 7h5.3l-7.1-10.4Zm-2.1 2.5-.7-1L5.9 4.2h2.2l4.5 6.4.7 1 5.8 8.2h-2.2l-4.8-6.7Z" />
+      </svg>
+    );
+  }
+
+  if (label === "Product Hunt") {
+    return (
+      <svg viewBox="0 0 24 24" className="h-7 w-7" fill="currentColor" aria-hidden="true">
+        <path d="M13.604 8.4h-3.405V12h3.405c.995 0 1.801-.806 1.801-1.801 0-.993-.805-1.799-1.801-1.799zM12 0C5.372 0 0 5.372 0 12s5.372 12 12 12 12-5.372 12-12S18.628 0 12 0zm1.604 14.4h-3.405V18H7.801V6h5.804c2.319 0 4.2 1.88 4.2 4.199 0 2.321-1.881 4.201-4.201 4.201z" />
       </svg>
     );
   }

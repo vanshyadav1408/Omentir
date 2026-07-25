@@ -62,8 +62,6 @@ export default function BlogPost() {
       title="Personalized Sales Pitches: Build Messages Buyers Can Actually Answer"
       description="A practical framework for writing personalized sales pitches from account context, buyer role, timing, proof, and one clear next step."
       slug="personalized-sales-pitches"
-      publishedDate="April 26, 2026"
-      updatedDate="April 26, 2026"
       bannerSrc="/personalized-sales-pitches.avif"
       bannerAlt="Personalized sales pitches workflow"
       faqItems={faqItems}

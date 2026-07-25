@@ -3,6 +3,9 @@ import type { Metadata } from "next";
 import Sidebar from "@/app/sidebar";
 import { noIndexRobots } from "@/app/seo";
 import AppPageTransition from "@/app/app-page-transition";
+import AppDataPrefetch from "@/app/(app)/app-data-prefetch";
+import { WorkspaceTimeZoneProvider } from "@/app/workspace-time-zone";
+import { getWorkspace } from "@/lib/server/data";
 import { isLocalMode } from "@/lib/runtime-mode";
 
 export const metadata: Metadata = {
@@ -19,17 +22,32 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     await auth.protect({ unauthenticatedUrl: "/login" });
   }
 
+  // Read for the timezone alone, and never at the cost of the shell: a failed
+  // workspace read leaves the provider to fall back to the browser's zone
+  // rather than blanking every authenticated page.
+  const timeZone = userId
+    ? await getWorkspace(userId)
+        .then((workspace) => workspace.timezone)
+        .catch(() => undefined)
+    : undefined;
+
   return (
-    <div className="dashboard-shell flex h-screen max-w-full overflow-hidden overflow-x-hidden bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)]">
-      <Sidebar localMode={isLocalMode()} />
-      <main className="h-screen w-full min-w-0 flex-1 overflow-hidden">
-        {/* Mobile: 56px compact app bar; navigation stays in the drawer. */}
-        <section className="flex h-full w-full flex-col pt-14 md:pt-0">
-          <div className="min-h-0 flex-1">
-            <AppPageTransition>{children}</AppPageTransition>
-          </div>
-        </section>
-      </main>
-    </div>
+    <WorkspaceTimeZoneProvider timeZone={timeZone}>
+      <div className="dashboard-shell flex h-screen max-w-full overflow-hidden overflow-x-hidden bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)]">
+        <Sidebar localMode={isLocalMode()} />
+        <main className="h-screen w-full min-w-0 flex-1 overflow-hidden">
+          {/* Mobile: 56px compact app bar; navigation stays in the drawer. */}
+          <section className="flex h-full w-full flex-col pt-14 md:pt-0">
+            <div className="min-h-0 flex-1">
+              <AppPageTransition>{children}</AppPageTransition>
+            </div>
+          </section>
+        </main>
+        {/* Rendered last so its effect runs after the current page's data hooks
+            have registered their requests, and mounted here (not per page) so it
+            warms the other pages once per app session rather than on every nav. */}
+        <AppDataPrefetch />
+      </div>
+    </WorkspaceTimeZoneProvider>
   );
 }

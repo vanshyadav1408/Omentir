@@ -54,8 +54,6 @@ export default function BlogPost() {
       title="AI Demo Booking Flow: How to Automate B2B Scheduling on LinkedIn"
       description="Learn how to build an autonomous demo booking flow. Master intent qualification, Calendly integrations, and objection handling on LinkedIn."
       slug="ai-demo-booking-flow"
-      publishedDate="March 28, 2026"
-      updatedDate="March 28, 2026"
       bannerSrc="/ai-demo-booking-flow.avif"
       bannerAlt="AI demo booking flow and B2B scheduling automation illustration"
       tocItems={tocItems}

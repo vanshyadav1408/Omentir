@@ -6,6 +6,7 @@ import { createPortal } from "react-dom";
 import { setAverageTicketSizeAction } from "@/app/actions";
 import AnalysisChart from "@/app/analysis-chart";
 import { useSidebarResource } from "@/app/use-sidebar-resource";
+import { DASHBOARD_RESOURCE, LINKEDIN_INBOX_RESOURCE } from "@/app/sidebar-early-fetch";
 import NewAgentButton from "@/app/(app)/agents/new-agent-button";
 import { Skeleton } from "@/app/app-skeletons";
 import { useBodyScrollLock } from "@/app/use-body-scroll-lock";
@@ -15,7 +16,7 @@ import type {
   CampaignEnrollmentPreview,
   Conversation,
   Group,
-  LeadPreview,
+  LeadDashboardPreview,
   LinkedInInboxThread,
 } from "@/lib/server/types";
 import { sumAgentLeadTotals } from "@/lib/agent-lead-totals";
@@ -23,7 +24,7 @@ import { TextField } from "@/app/ui/text-field";
 
 type DashboardViewProps = {
   agents: Agent[];
-  leads: LeadPreview[];
+  leads: LeadDashboardPreview[];
   enrollments: CampaignEnrollmentPreview[];
   conversations: Conversation[];
   linkedInThreads: LinkedInInboxThread[];
@@ -52,7 +53,7 @@ const selectLinkedInThreads = (data: Record<string, unknown>) =>
 const selectDashboardData = (data: Record<string, unknown>) => ({
   agents: data.agents as Agent[] || [],
   groups: data.groups as Group[] || [],
-  leads: data.leads as LeadPreview[] || [],
+  leads: data.leads as LeadDashboardPreview[] || [],
   enrollments: data.enrollments as CampaignEnrollmentPreview[] || [],
   conversations: data.conversations as Conversation[] || [],
 });
@@ -105,7 +106,7 @@ export default function DashboardView({
   averageTicketSize,
 }: DashboardViewProps) {
   const dashboardResource = useSidebarResource(
-    "agents,groups,leadPreviews,enrollmentPreviews,conversations",
+    DASHBOARD_RESOURCE,
     { agents, groups: [] as Group[], leads, enrollments, conversations },
     selectDashboardData,
   );
@@ -118,7 +119,7 @@ export default function DashboardView({
   } = dashboardResource.value;
   const dashboardLoading = dashboardResource.loading;
   const linkedInInboxResource = useSidebarResource(
-    "linkedinInbox",
+    LINKEDIN_INBOX_RESOURCE,
     linkedInThreads,
     selectLinkedInThreads,
   );

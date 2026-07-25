@@ -53,8 +53,6 @@ export default function BlogPost() {
       title="How to Extract an Ideal Customer Profile (ICP) from Your Website"
       description="Learn how to use AI web crawlers to analyze your value proposition, reverse-engineer your target buyers, and construct a precise ICP schema."
       slug="extract-icp-from-website"
-      publishedDate="March 14, 2026"
-      updatedDate="March 14, 2026"
       bannerSrc="/extract-icp-from-website.avif"
       bannerAlt="Ideal Customer Profile extraction from landing page copy diagram"
       tocItems={tocItems}

@@ -240,17 +240,23 @@ function normalizeStringList(value: unknown) {
     .filter(Boolean);
 }
 
-async function generateJson<T>(prompt: string, fallback: T, temperature?: number) {
+async function generateJson<T>(prompt: string, fallback: T, temperature?: number, timeoutMs?: number) {
   const config = getGeminiConfig();
   if (!config) return fallback;
   const client = getClient(config);
 
   for (let attempt = 0; attempt <= GEMINI_MAX_RETRIES; attempt += 1) {
     try {
+      const requestConfig = {
+        ...(temperature === undefined ? {} : { temperature }),
+        // Callers a user is actively waiting on pass a deadline; without one
+        // a stalled upstream call hangs the request until the proxy kills it.
+        ...(timeoutMs === undefined ? {} : { httpOptions: { timeout: timeoutMs } }),
+      };
       const response = await client.models.generateContent({
         model: MODEL,
         contents: prompt,
-        ...(temperature === undefined ? {} : { config: { temperature } }),
+        ...(Object.keys(requestConfig).length ? { config: requestConfig } : {}),
       });
 
       // An empty body is a model-side kill (e.g. MALFORMED_FUNCTION_CALL when
@@ -398,7 +404,17 @@ Base every field on what search actually returns about this specific website. If
 
 Website: ${websiteUrl.slice(0, 500)}`;
 
+  // The user is waiting on this during onboarding step 1, so the retry loop
+  // gets one total budget rather than 3 independent timeouts (which could run
+  // past 180s, long past nginx's ~60s window). Each attempt is capped by
+  // whatever is left, so the whole loop cannot overrun the budget.
+  const deadline = Date.now() + 50_000;
+
   for (let attempt = 0; attempt <= GEMINI_MAX_RETRIES; attempt += 1) {
+    const remainingMs = deadline - Date.now();
+    // Below this there is no time for a useful attempt; fail fast to the
+    // manual-entry message instead of burning the last seconds.
+    if (remainingMs < 10_000) break;
     try {
       const response = await client.models.generateContent({
         model: SEARCH_MODEL,
@@ -406,9 +422,12 @@ Website: ${websiteUrl.slice(0, 500)}`;
         config: {
           temperature: 0.2,
           tools: [{ googleSearch: {} }],
-          responseMimeType: "application/json",
-          maxOutputTokens: 8192,
-          httpOptions: { timeout: 60_000 },
+          // No responseMimeType and no maxOutputTokens - see the note in
+          // findPreviewLeadsWithGemini. With them this call returned nothing
+          // usable in 3/3 runs (72s empty body, 119s cancel, and a 429 those
+          // long grounded calls provoke themselves). Without them it answers
+          // in 16-25s for this 14-field spec; parseJson strips the fence.
+          httpOptions: { timeout: Math.min(35_000, remainingMs) },
         },
       });
       const parsed = parseJson<typeof fallback>(response.text || "", fallback);
@@ -430,6 +449,9 @@ Website: ${websiteUrl.slice(0, 500)}`;
     "We couldn't read this website or find information about it online. Check the address, or type your product overview manually.",
   );
 }
+
+/** How many example leads onboarding step 2 asks for and renders. */
+export const PREVIEW_LEAD_COUNT = 5;
 
 export type PreviewLead = {
   name: string;
@@ -474,7 +496,7 @@ function normalizePreviewLeads(leads: unknown, minScore = 55): PreviewLead[] {
       seen.add(key);
       return true;
     })
-    .slice(0, 3)
+    .slice(0, PREVIEW_LEAD_COUNT)
     .map((lead) => ({
       name: lead.name,
       title: lead.title,
@@ -517,7 +539,7 @@ Company sizes: ${JSON.stringify(input.companySizes.slice(0, 8))}
 Buyer pain points: ${JSON.stringify(input.painPoints.slice(0, 10))}
 Search keywords: ${JSON.stringify(input.keywords.slice(0, 14))}`;
 
-  const searchPrompt = `Find exactly 3 real people who are strong potential customers for the product below.
+  const searchPrompt = `Find exactly ${PREVIEW_LEAD_COUNT} real people who are strong potential customers for the product below.
 
 Goal: show the user that Omentir can find people whose JOBS need this product right now.
 
@@ -526,7 +548,7 @@ Method:
 2. Brainstorm 8-12 buyer job titles across every angle: who writes the check (economic buyer), who does the work daily (end user), who publicly complains about the pain (champion), adjacent functions that inherit the problem, plus common LinkedIn variants (Head of X, VP X, X Manager, X Lead, Founder/Owner when SMBs buy).
 3. Use web search to find real, currently employed people in those jobs at different companies (not the product company). Try several angles: LinkedIn-indexed profiles, company team pages, conference speaker bios, podcast guests, press quotes, "top X" industry lists.
 4. Each person must have a job where buying or championing this product is plausible because of their responsibilities - not a random executive.
-5. Diversify: three different companies, preferably different title variants of the same buyer function. Industries and company sizes below are soft hints, not hard filters.
+5. Diversify: a different company for each person, preferably different title variants of the same buyer function. Industries and company sizes below are soft hints, not hard filters.
 6. If one title angle finds nobody, switch to a different buyer function or title variant instead of giving up - a B2B product always has findable buyers.
 
 Return only JSON with this shape:
@@ -541,14 +563,14 @@ ${dataBlock}`;
   // The search-method prompt makes non-search calls hallucinate tool calls,
   // which Vertex kills with MALFORMED_FUNCTION_CALL (empty text, zero leads).
   // Every call without the googleSearch tool must use this prompt instead.
-  const noSearchPrompt = `Suggest exactly 3 real people who are strong potential customers for the product below.
+  const noSearchPrompt = `Suggest exactly ${PREVIEW_LEAD_COUNT} real people who are strong potential customers for the product below.
 
 You have no tools. Do not call any tool or function - reply with JSON text only.
 
 Method:
 1. Infer the concrete problem the product solves and which business functions own that problem.
-2. Pick 3 real, publicly known professionals (well-known operators, founders, or executives in the buyer function) whose current job makes buying or championing this product plausible. Never pick people at the product company itself.
-3. Use three different companies.
+2. Pick ${PREVIEW_LEAD_COUNT} real, publicly known professionals (well-known operators, founders, or executives in the buyer function) whose current job makes buying or championing this product plausible. Never pick people at the product company itself.
+3. Use a different company for each person.
 
 Return only JSON with this shape:
 ${jsonShape}
@@ -559,66 +581,65 @@ avatarUrl: always an empty string.
 
 ${dataBlock}`;
 
+  // Measured at 10-12s per call, so 15s is a generous ceiling that still keeps
+  // the top-up attempt inside the request budget.
   const findWithoutSearch = async (temperature: number) => {
-    const parsed = await generateJson<typeof fallback>(noSearchPrompt, fallback, temperature).catch(
-      () => fallback,
-    );
+    const parsed = await generateJson<typeof fallback>(
+      noSearchPrompt,
+      fallback,
+      temperature,
+      15_000,
+    ).catch(() => fallback);
     return normalizePreviewLeads(parsed.leads);
   };
 
-  for (let attempt = 0; attempt <= GEMINI_MAX_RETRIES; attempt += 1) {
-    try {
-      const response = await client.models.generateContent({
-        model: SEARCH_MODEL,
-        contents: searchPrompt,
-        config: {
-          // Enough temperature to expand buyer personas creatively; hotter on
-          // retries so a failed attempt explores different title angles.
-          temperature: attempt === 0 ? 0.5 : 0.8,
-          tools: [{ googleSearch: {} }],
-          responseMimeType: "application/json",
-          // gemini thinking tokens count against this budget; a small cap
-          // truncates the JSON mid-array and reads as "no leads found".
-          maxOutputTokens: 8192,
-          // The SDK forwards this as the server deadline. Search-grounded
-          // thinking calls on this prompt regularly need 60-75s; 65s produced
-          // frequent deadline failures.
-          httpOptions: { timeout: 75_000 },
-        },
-      });
-      let leads = normalizePreviewLeads(
-        parseJson<typeof fallback>(response.text || "", fallback).leads,
-      );
-      if (leads.length < 3) {
-        leads = normalizePreviewLeads([...leads, ...(await findWithoutSearch(0.7))]);
-      }
-      if (leads.length) return leads;
-    } catch (error) {
-      const message = getGeminiErrorMessage(error, config.project);
-      console.error(`[lead-preview] search attempt ${attempt} failed: ${message.slice(0, 300)}`);
+  // Onboarding blocks on this call, and the whole request must finish inside
+  // the reverse proxy's window - a slow success is indistinguishable from a
+  // failure for the user. So: one search-grounded attempt with a hard 40s
+  // deadline racing a fast no-search draft in parallel. Prefer search results
+  // (real, current people) when they land in time; otherwise ship the draft.
+  // Worst case is 40s (search deadline) + 15s (top-up draft), because the
+  // parallel draft has always resolved by the time the search deadline hits.
+  const searchAttempt = async () => {
+    const response = await client.models.generateContent({
+      model: SEARCH_MODEL,
+      contents: searchPrompt,
+      config: {
+        temperature: 0.5,
+        tools: [{ googleSearch: {} }],
+        // Deliberately no responseMimeType and no maxOutputTokens. Grounded
+        // search plus constrained JSON decoding makes Vertex spend 75-95s and
+        // then return an empty candidate - measured 9 times, 9 empty bodies,
+        // which is why this call had never once produced a lead in
+        // production. Unconstrained, the same prompt returns clean JSON in
+        // 15-28s (6/6 runs, 3 leads each), and parseJson already strips any
+        // stray markdown fence. Do not "restore" either option.
+        httpOptions: { timeout: 40_000 },
+      },
+    });
+    return normalizePreviewLeads(parseJson<typeof fallback>(response.text || "", fallback).leads);
+  };
 
-      // Search-grounded calls fail often here (Vertex quota, deadlines). The
-      // no-search fallback is fast and reliable, so rescue with it before
-      // burning another long search attempt.
-      const rescued = await findWithoutSearch(0.6);
-      if (rescued.length) return rescued;
+  const searchPromise = searchAttempt().catch((error) => {
+    const message = getGeminiErrorMessage(error, config.project);
+    console.error(`[lead-preview] search attempt failed: ${message.slice(0, 300)}`);
+    return [] as PreviewLead[];
+  });
+  const draftPromise = findWithoutSearch(0.7);
 
-      const retryable = /429|quota|rate|resource_exhausted|temporar|abort|deadline|timeout/i.test(
-        message,
-      );
-      if (!retryable || attempt === GEMINI_MAX_RETRIES) {
-        throw new Error(
-          "We couldn't find example leads right now. Please try again in a minute.",
-        );
-      }
-      await wait(2000 * 2 ** attempt);
-    }
-  }
+  const searchLeads = await searchPromise;
+  if (searchLeads.length >= PREVIEW_LEAD_COUNT) return searchLeads;
 
-  // Search attempts parsed but never yielded a usable lead. Last resort: ask
-  // without search so onboarding still shows people in the buyer jobs instead
-  // of a dead "no leads found" screen.
-  return findWithoutSearch(0.8);
+  let leads = normalizePreviewLeads([...searchLeads, ...(await draftPromise)]);
+  if (leads.length >= PREVIEW_LEAD_COUNT) return leads;
+
+  // Short or empty (parse failure, refusal, or duplicate people across both
+  // calls). One hotter retry without search tops the list up so the step
+  // never shows a thin or dead "no leads found" screen.
+  leads = normalizePreviewLeads([...leads, ...(await findWithoutSearch(0.9))]);
+  if (leads.length) return leads;
+
+  throw new Error("We couldn't find example leads right now. Please try again in a minute.");
 }
 
 export type AgentSetupDraft = {
@@ -853,17 +874,21 @@ export async function scoreLeadForProduct(
     throw new Error("Gemini is not configured for lead scoring.");
   }
 
-  if (!lead.title?.trim() || !lead.company?.trim()) {
+  // Only a missing title is unscorable. A missing company is common when the
+  // profile-view budget blocked enrichment and the lead only carries search
+  // data - those must still be judged on title + signal context, otherwise
+  // budget exhaustion silently zeroes daily lead discovery.
+  if (!lead.title?.trim()) {
     return {
       fitScore: 45,
-      scoreReasons: ["The enriched profile is missing a current title or company."],
+      scoreReasons: ["The profile carries no current job title to judge fit from."],
       summary: lead.summary || "",
     };
   }
 
   if (
     profile?.companyName?.trim() &&
-    lead.company.trim().toLowerCase() === profile.companyName.trim().toLowerCase()
+    lead.company?.trim().toLowerCase() === profile.companyName.trim().toLowerCase()
   ) {
     return {
       fitScore: 0,

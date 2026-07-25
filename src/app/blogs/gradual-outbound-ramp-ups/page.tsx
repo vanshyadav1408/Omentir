@@ -57,8 +57,6 @@ export default function BlogPost() {
       title="The Importance of Gradual Outbound Ramp-Ups for New Profiles"
       description="Stop burning new outreach profiles. Discover how platform security algorithms analyze volume spikes, and learn how to configure a safe 4-week ramp-up curve."
       slug="gradual-outbound-ramp-ups"
-      publishedDate="February 3, 2026"
-      updatedDate="February 3, 2026"
       bannerSrc="/gradual-outbound-ramp-ups.avif"
       bannerAlt="Outbound volume ramp-up curve and social platform safety margins diagram"
       tocItems={tocItems}

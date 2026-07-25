@@ -55,8 +55,6 @@ export default function BlogPost() {
       title="ChatGPT Reply Drafts: How to Write High-Converting LinkedIn Responses"
       description="Stop letting hot leads go cold. Master structured ChatGPT prompts to classify LinkedIn replies and write context-grounded response drafts."
       slug="chatgpt-reply-drafts"
-      publishedDate="March 25, 2026"
-      updatedDate="March 25, 2026"
       bannerSrc="/chatgpt-reply-drafts.avif"
       bannerAlt="ChatGPT reply drafts and B2B inbox response templates illustration"
       tocItems={tocItems}

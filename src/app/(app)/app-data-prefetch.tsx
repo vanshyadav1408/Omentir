@@ -1,19 +1,35 @@
 "use client";
 
 import { useEffect } from "react";
-import { prefetchSidebarResource } from "@/app/use-sidebar-resource";
+import { prefetchSidebarResource, whenSidebarRequestsSettle } from "@/app/use-sidebar-resource";
+import { LINKEDIN_INBOX_RESOURCE } from "@/app/sidebar-early-fetch";
 
-// These match the resource sets used by each view. useSidebarResource splits
-// them into reusable pieces, so overlapping pages only warm what is missing.
+// Every resource the main app pages read, in the order they are most likely to
+// be visited. useSidebarResource caches per resource name (and lets a heavier
+// projection stand in for a lighter one), so this list is deduped against
+// whatever the current page already loaded:
+//
+//   /leads      groups, leadPreviews
+//   /agents     agents, groups, leadAgentRefs*, enrollmentPreviews, linkedinConnected
+//   /messages   conversations, leadPreviews, linkedinInbox
+//   /dashboard  agents, groups, leadDashboardPreviews*, enrollmentPreviews,
+//               conversations, linkedinInbox
+//   /settings   linkedinAccounts
+//   /api-keys   agentApiKeys
+//
+// (*) satisfied by a cached leadPreviews, so the one lead query below warms the
+// lead reads on all three of Leads, Agents and Dashboard.
+//
+// /actions and /campaigns are deliberately absent: the first renders entirely on
+// the server and the second redirects to /agents.
 const PAGE_RESOURCES = [
-  "groups,leadPreviews", // leads
-  "conversations,leadPreviews", // messages
-  "linkedinInbox", // messages + dashboard
-  "agents,groups,leadAgentRefs,enrollmentPreviews", // agents
-  "linkedinConnected", // agents + campaigns
-  "campaigns,groups,enrollmentPreviews", // campaigns
-  "activityItems", // activity
-  "agents,leadPreviews,enrollmentPreviews,conversations", // dashboard
+  "groups,leadPreviews",
+  "agents,enrollmentPreviews",
+  "conversations",
+  LINKEDIN_INBOX_RESOURCE,
+  "linkedinConnected",
+  "linkedinAccounts",
+  "agentApiKeys",
 ];
 
 // Warms the sidebar-data cache for every main app page while the user sits on
@@ -22,14 +38,18 @@ const PAGE_RESOURCES = [
 export default function AppDataPrefetch() {
   useEffect(() => {
     let cancelled = false;
-    // Give the current page's own requests a head start, then warm only the
-    // still-missing resources one at a time to keep the server load gentle.
+    // Let the current page's own hooks register their requests, wait for those
+    // to finish, and only then warm anything. Starting on a fixed timer alone
+    // used to overlap them, so the page the user is staring at had to share
+    // bandwidth with - and sometimes duplicate - the background reads. The
+    // warming itself stays one request at a time to keep server load gentle.
     const timer = setTimeout(async () => {
+      await whenSidebarRequestsSettle();
       for (const resource of PAGE_RESOURCES) {
         if (cancelled) return;
         await prefetchSidebarResource(resource);
       }
-    }, 1000);
+    }, 500);
     return () => {
       cancelled = true;
       clearTimeout(timer);

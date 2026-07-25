@@ -202,6 +202,24 @@ export type LeadPreview = Pick<
   | "updatedAt"
 >;
 
+// Narrower projection for the dashboard, which never renders the long-form
+// fields. summary/scoreReasons/signalUrl alone are ~55% of a LeadPreview
+// payload, so dropping them roughly halves the dashboard's slowest query.
+export type LeadDashboardPreview = Pick<
+  Lead,
+  | "id"
+  | "linkedInUrl"
+  | "avatarUrl"
+  | "name"
+  | "title"
+  | "company"
+  | "fitScore"
+  | "sourceAgentId"
+  | "outreachStatus"
+  | "createdAt"
+  | "updatedAt"
+>;
+
 export type LeadSignalType =
   | "post_comment"
   | "post_reaction"

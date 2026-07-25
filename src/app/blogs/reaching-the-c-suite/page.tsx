@@ -56,8 +56,6 @@ export default function BlogPost() {
       title="Reaching the C-Suite: How Small Teams Target High-Level Execs"
       description="Stop wasting outreach on low-level managers. Copy this playbook to target CEOs, CTOs, and VPs using concise, grounded outreach."
       slug="reaching-the-c-suite"
-      publishedDate="February 16, 2026"
-      updatedDate="February 16, 2026"
       bannerSrc="/reaching-the-c-suite.avif"
       bannerAlt="Small team targeting B2B C-suite executives outbound framework diagram"
       tocItems={tocItems}

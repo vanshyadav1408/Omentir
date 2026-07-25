@@ -62,8 +62,6 @@ export default function BlogPost() {
       title="LinkedIn Lead Scoring: A Practical Rubric for Better Outreach"
       description="A practical LinkedIn lead scoring rubric for ranking prospects by fit, signal strength, relationship context, timing, and the next best outreach action."
       slug="linkedin-lead-scoring"
-      publishedDate="April 27, 2026"
-      updatedDate="April 27, 2026"
       bannerSrc="/linkedin-lead-scoring.avif"
       bannerAlt="LinkedIn lead scoring workflow"
       faqItems={faqItems}

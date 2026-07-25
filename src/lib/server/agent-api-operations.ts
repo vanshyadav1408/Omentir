@@ -563,6 +563,7 @@ export async function replyToLeadResource(context: AgentApiContext, payload: unk
       context.workspace.id,
       "messages",
       context.workspace.settings.dailyMessageLimit,
+      context.workspace.timezone,
     ))
   ) {
     throw new AgentApiOperationError("Daily message limit reached. Try again tomorrow.", 429);
@@ -579,6 +580,7 @@ export async function replyToLeadResource(context: AgentApiContext, payload: unk
     context.workspace.id,
     "messages",
     context.workspace.settings.dailyMessageLimit,
+    context.workspace.timezone,
   );
   await createConversationMessage({
     workspaceId: context.workspace.id,

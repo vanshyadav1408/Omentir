@@ -34,8 +34,6 @@ export default function BlogPost() {
       title="AI Reply Handling: Turn Casual LinkedIn Responses Into Booked Calls"
       description="Learn how to classify, prioritize, and respond to incoming LinkedIn messages using AI, while keeping a human-in-the-loop to build trust and increase demo bookings."
       slug="ai-reply-handling"
-      publishedDate="April 17, 2026"
-      updatedDate="April 17, 2026"
       bannerSrc="/ai-reply-handling.avif"
       bannerAlt="AI reply classification and response drafting workflow on LinkedIn"
       tocItems={tocItems}

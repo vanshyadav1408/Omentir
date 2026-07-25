@@ -36,8 +36,6 @@ export default function BlogPost() {
       title="Why High-Ticket B2B Outreach Needs the Human-in-the-Loop AI Salesman"
       description="Enterprise, high-ACV campaigns require human-in-the-loop validation, careful enrichment, and clear reply classification."
       slug="why-high-ticket-outreach-needs-human-in-the-loop-ai-salesman"
-      publishedDate="June 10, 2026"
-      updatedDate="June 10, 2026"
       bannerSrc="/why-high-ticket-outreach-needs-human-in-the-loop-ai-salesman.avif"
       bannerAlt="Why High-Ticket B2B Outreach Needs the Human-in-the-Loop AI Salesman workflow concept art"
       tocItems={tocItems as any}

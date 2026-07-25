@@ -38,8 +38,6 @@ export default function BlogPost() {
       title="LinkedIn Outbound vs. Cold Emailing: Which Works Best in 2026?"
       description="A detailed comparison of LinkedIn prospecting and cold email outreach. Learn the pros, cons, and when to use each in 2026."
       slug="linkedin-outbound-vs-cold-emailing-which-works-best-in-2026"
-      publishedDate="July 4, 2026"
-      updatedDate="July 4, 2026"
       bannerSrc="/linkedin-outbound-vs-cold-emailing-which-works-best-in-2026.avif"
       bannerAlt="LinkedIn Outbound vs. Cold Emailing: Which Works Best in 2026? outreach concept art"
       faqItems={faqItems}

@@ -39,8 +39,6 @@ export default function BlogPost() {
       title="Artisan AI Alternatives: Multi-Channel Sales Agent Options"
       description="Evaluate Artisan AI and other autonomous SDR agents. Compare single-channel automation versus multi-channel campaigns to find the best outbound salesman for your business."
       slug="artisan-ai-alternatives-multi-channel-sales-agents"
-      publishedDate="May 26, 2026"
-      updatedDate="May 26, 2026"
       bannerSrc="/artisan-ai-alternatives-multi-channel-sales-agents.avif"
       bannerAlt="Artisan AI Alternatives comparison dashboard overview"
       tocItems={tocItems as any}

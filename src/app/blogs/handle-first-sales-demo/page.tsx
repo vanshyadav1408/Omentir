@@ -57,8 +57,6 @@ export default function BlogPost() {
       title="How to Handle Your First Sales Demo and Close the Deal"
       description="Stop losing hot leads on sales calls. Master this 30-minute sales demo playbook to run active discovery, handle objections, and close B2B deals."
       slug="handle-first-sales-demo"
-      publishedDate="February 23, 2026"
-      updatedDate="February 23, 2026"
       bannerSrc="/handle-first-sales-demo.avif"
       bannerAlt="B2B sales demo structure and closing pipeline diagram"
       tocItems={tocItems}

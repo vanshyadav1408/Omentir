@@ -55,8 +55,6 @@ export default function BlogPost() {
       title="OpenClaw Outreach Flows: How to Build B2B Execution Loops"
       description="Learn how to build autonomous outbound workflows using OpenClaw agent loops. Master campaign state nodes, context variables, and safe LinkedIn pacing."
       slug="openclaw-outreach-flows"
-      publishedDate="April 7, 2026"
-      updatedDate="April 7, 2026"
       bannerSrc="/openclaw-outreach-flows.avif"
       bannerAlt="OpenClaw outreach flows and autonomous campaign state loops dashboard illustration"
       tocItems={tocItems}

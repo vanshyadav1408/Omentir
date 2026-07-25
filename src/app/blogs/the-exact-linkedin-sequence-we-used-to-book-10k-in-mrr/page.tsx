@@ -39,8 +39,6 @@ export default function BlogPost() {
       title="The Exact LinkedIn Sequence We Used to Book $10k in MRR"
       description="A detailed breakdown of the exact multi-step LinkedIn outreach strategy, copywriting, and daily cadence used to generate $10k in MRR."
       slug="the-exact-linkedin-sequence-we-used-to-book-10k-in-mrr"
-      publishedDate="June 14, 2026"
-      updatedDate="June 14, 2026"
       bannerSrc="/the-exact-linkedin-sequence-we-used-to-book-10k-in-mrr.avif"
       bannerAlt="The Exact LinkedIn Sequence We Used to Book $10k in MRR outreach concept art"
       faqItems={faqItems}

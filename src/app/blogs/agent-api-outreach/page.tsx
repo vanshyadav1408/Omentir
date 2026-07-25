@@ -56,8 +56,6 @@ export default function BlogPost() {
       title="Agent API Outreach: How to Integrate REST Endpoints for Sales"
       description="Learn how to build custom outbound sales integrations. Master raw REST API endpoints, token authentication, lead ingestion, and reply hooks."
       slug="agent-api-outreach"
-      publishedDate="March 24, 2026"
-      updatedDate="March 24, 2026"
       bannerSrc="/agent-api-outreach.avif"
       bannerAlt="Agent API outreach and B2B REST endpoint integration graphic"
       tocItems={tocItems}

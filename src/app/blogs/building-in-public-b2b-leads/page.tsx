@@ -56,8 +56,6 @@ export default function BlogPost() {
       title="Building in Public: How Transparency Drives B2B Leads"
       description="Stop hiding your startup journey. Discover how to share revenue milestones, code challenges, and campaign metrics to build authority and drive B2B inbound leads."
       slug="building-in-public-b2b-leads"
-      publishedDate="February 13, 2026"
-      updatedDate="February 13, 2026"
       bannerSrc="/building-in-public-b2b-leads.avif"
       bannerAlt="Building publicly on social networks and B2B inbound lead generation diagram"
       tocItems={tocItems}

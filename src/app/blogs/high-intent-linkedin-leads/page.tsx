@@ -56,8 +56,6 @@ export default function BlogPost() {
       title="High-Intent LinkedIn Leads: How to Spot Buying Signals and Book B2B Meetings"
       description="Learn how to identify high-intent LinkedIn leads using real-time signals like job changes, funding, and posts, and how to write personalized B2B outreach."
       slug="high-intent-linkedin-leads"
-      publishedDate="April 16, 2026"
-      updatedDate="April 16, 2026"
       bannerSrc="/high-intent-linkedin-leads.avif"
       bannerAlt="High-intent LinkedIn B2B sales leads and buying signals dashboard illustration"
       tocItems={tocItems}

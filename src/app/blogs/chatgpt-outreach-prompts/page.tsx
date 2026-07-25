@@ -55,8 +55,6 @@ export default function BlogPost() {
       title="ChatGPT Outreach Prompts: How to Write High-Converting B2B LinkedIn Copy"
       description="Stop sending generic AI sales pitches. Master structured ChatGPT outreach prompts, context injection rules, and validation rubrics for LinkedIn."
       slug="chatgpt-outreach-prompts"
-      publishedDate="April 9, 2026"
-      updatedDate="April 9, 2026"
       bannerSrc="/chatgpt-outreach-prompts.avif"
       bannerAlt="ChatGPT sales outreach prompt templates and B2B copywriting workspace illustration"
       tocItems={tocItems}

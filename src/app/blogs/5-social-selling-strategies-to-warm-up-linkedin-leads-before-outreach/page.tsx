@@ -39,8 +39,6 @@ export default function BlogPost() {
       title="5 Social Selling Strategies to Warm Up LinkedIn Leads Before Outreach"
       description="Discover 5 highly effective social selling tactics to build familiarity and warm up prospects before sending a direct connection request."
       slug="5-social-selling-strategies-to-warm-up-linkedin-leads-before-outreach"
-      publishedDate="June 17, 2026"
-      updatedDate="June 17, 2026"
       bannerSrc="/5-social-selling-strategies-to-warm-up-linkedin-leads-before-outreach.avif"
       bannerAlt="5 Social Selling Strategies to Warm Up LinkedIn Leads Before Outreach outreach concept art"
       faqItems={faqItems}

@@ -53,8 +53,6 @@ export default function BlogPost() {
       title="Why Traditional Lead Databases Fail Without an Autonomous Sourcing Layer"
       description="Learn why static B2B directories decay and how to build an active, real-time data enrichment waterfall to protect your domain deliverability."
       slug="why-traditional-databases-fail"
-      publishedDate="March 17, 2026"
-      updatedDate="March 17, 2026"
       bannerSrc="/why-traditional-databases-fail.avif"
       bannerAlt="B2B lead database decay rate versus real-time autonomous sourcing layer diagram"
       tocItems={tocItems}

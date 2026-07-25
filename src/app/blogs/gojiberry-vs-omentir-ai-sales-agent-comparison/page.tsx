@@ -39,8 +39,6 @@ export default function BlogPost() {
       title="Gojiberry vs. Omentir: Comparison of two popular outreach tools"
       description="A comprehensive B2B comparison between Gojiberry and Omentir. Learn which autonomous AI sales agent is best for your SaaS or agency pipeline."
       slug="gojiberry-vs-omentir-ai-sales-agent-comparison"
-      publishedDate="May 19, 2026"
-      updatedDate="May 19, 2026"
       bannerSrc="/gojiberry-vs-omentir-ai-sales-agent-comparison.avif"
       bannerAlt="Gojiberry versus Omentir AI Sales Agent comparison concept art"
       tocItems={tocItems as any}

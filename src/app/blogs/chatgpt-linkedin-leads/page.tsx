@@ -62,8 +62,6 @@ export default function BlogPost() {
       title="ChatGPT LinkedIn Leads: A Practical Founder Workflow"
       description="Use ChatGPT to turn LinkedIn research into a focused, qualified lead list without scraping blindly or writing generic outreach."
       slug="chatgpt-linkedin-leads"
-      publishedDate="May 16, 2026"
-      updatedDate="May 16, 2026"
       bannerSrc="/chatgpt-linkedin-leads.avif"
       bannerAlt="Minimal AI workflow showing LinkedIn lead signals moving into a qualified shortlist"
       faqItems={faqItems}

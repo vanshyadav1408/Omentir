@@ -198,6 +198,17 @@ export default async function NewAgentPage({
       if (!agent) return <AgentLimitReached limit={agentLimit} />;
     }
   }
+
+  // The send window lives on the campaign, but it is edited on this form, so an
+  // existing agent has to open showing the window it is actually sending in -
+  // otherwise saving an unrelated edit would quietly reset it to 24/7.
+  const existingSendWindow =
+    agent && !isResumingOutreach
+      ? (await listCampaigns(workspace.id)).find(
+          (campaign) => campaign.groupId === agent.targetGroupId,
+        )?.sendWindow
+      : undefined;
+
   return (
     <AgentSetup
       key={agent?.id || "new-agent"}
@@ -216,6 +227,7 @@ export default async function NewAgentPage({
       draftSetup={draftAgentSetupAction}
       saveProductProfile={saveProductProfileAction}
       initialAgent={agent}
+      initialSendWindow={existingSendWindow}
       timezone={workspace.timezone}
       linkedInAccounts={linkedInAccounts.map((account) => ({
         id: account.id,

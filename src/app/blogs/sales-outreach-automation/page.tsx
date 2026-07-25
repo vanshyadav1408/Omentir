@@ -55,8 +55,6 @@ export default function BlogPost() {
       title="Sales Outreach Automation: How to Build a Modern, Safe Outbound Machine"
       description="Stop running manual spreadsheets and messaging campaigns. Learn how to build an automated sales outreach system that integrates intent data, respects pacing limits, and drives demos."
       slug="sales-outreach-automation"
-      publishedDate="April 21, 2026"
-      updatedDate="April 21, 2026"
       bannerSrc="/sales-outreach-automation.avif"
       bannerAlt="Sales outreach automation architecture and workflow diagram"
       tocItems={tocItems}

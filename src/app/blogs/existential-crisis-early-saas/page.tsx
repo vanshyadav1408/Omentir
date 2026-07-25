@@ -55,8 +55,6 @@ export default function BlogPost() {
       title="Navigating the Existential Crisis of Early SaaS Development"
       description="Manage the psychological hurdles of bootstrapping a startup. Learn how to avoid feature bloat, build sales habits, and maintain momentum."
       slug="existential-crisis-early-saas"
-      publishedDate="February 18, 2026"
-      updatedDate="February 18, 2026"
       bannerSrc="/existential-crisis-early-saas.avif"
       bannerAlt="Early stage B2B startup psychological peaks and valleys diagram"
       tocItems={tocItems}

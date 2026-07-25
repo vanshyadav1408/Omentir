@@ -38,8 +38,6 @@ export default function BlogPost() {
       title="Instantly.ai alternatives: Find the best alternatives to Instantly AI"
       description="An in-depth, technical comparison of cold email sequence tools like Instantly.ai versus modern, multi-channel autonomous AI salesman."
       slug="instantly-alternatives-autonomous-ai-salesman"
-      publishedDate="May 17, 2026"
-      updatedDate="May 17, 2026"
       bannerSrc="/instantly-alternatives-autonomous-ai-salesman.avif"
       bannerAlt="Instantly alternatives and autonomous sales agent comparison graphic"
       tocItems={tocItems as any}

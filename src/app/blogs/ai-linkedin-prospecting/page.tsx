@@ -62,8 +62,6 @@ export default function BlogPost() {
       title="AI LinkedIn Prospecting: Build a Signal-Led Lead Workflow"
       description="A practical guide to AI LinkedIn prospecting, from signal discovery and batch review to ranked lead queues that are ready for human-paced outreach."
       slug="ai-linkedin-prospecting"
-      publishedDate="May 4, 2026"
-      updatedDate="May 4, 2026"
       bannerSrc="/ai-linkedin-prospecting.avif"
       bannerAlt="AI LinkedIn prospecting workflow"
       faqItems={faqItems}

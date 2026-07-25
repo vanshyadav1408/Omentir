@@ -60,8 +60,6 @@ export default function BlogPost() {
       title="The Ultimate Guide to LinkedIn Account Health and Safety"
       description="Protect your valuable sales assets. Learn how platform security scoring, session persistence, API routes, and paced outboxes prevent account restrictions."
       slug="linkedin-account-health-safety"
-      publishedDate="February 8, 2026"
-      updatedDate="February 8, 2026"
       bannerSrc="/linkedin-account-health-safety.avif"
       bannerAlt="LinkedIn profile security pillars and automated outbox throttling diagram"
       tocItems={tocItems}

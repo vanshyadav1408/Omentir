@@ -39,8 +39,6 @@ export default function BlogPost() {
       title="Is Apollo's Database Enough? Why You Need a Context-Aware AI Outreach Layer"
       description="Why raw business profiles are no longer enough. Learn how context-aware AI active sourcing outperforms static database searches in 2026 B2B outbound."
       slug="is-apollos-database-enough-context-aware-ai-outreach"
-      publishedDate="June 5, 2026"
-      updatedDate="June 5, 2026"
       bannerSrc="/is-apollos-database-enough-context-aware-ai-outreach.avif"
       bannerAlt="Is Apollo database enough vs context-aware AI outreach layer analysis graphic"
       tocItems={tocItems as any}

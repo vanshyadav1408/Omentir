@@ -42,8 +42,6 @@ export default function BlogPost() {
       title="Clay vs. Gojiberry: Sourcing-Heavy Enrichment vs. Autonomous Prospecting"
       description="Compare Clay's waterfall data enrichment with Gojiberry's autonomous sales prospecting, including when a unified multi-channel workflow is useful."
       slug="clay-vs-gojiberry-enrichment-vs-autonomous-prospecting"
-      publishedDate="June 6, 2026"
-      updatedDate="June 6, 2026"
       bannerSrc="/clay-vs-gojiberry-enrichment-vs-autonomous-prospecting.avif"
       bannerAlt="Clay versus Gojiberry AI sales prospecting and enrichment comparison"
       tocItems={tocItems as any}

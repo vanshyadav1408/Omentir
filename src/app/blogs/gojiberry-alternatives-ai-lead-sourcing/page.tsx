@@ -37,8 +37,6 @@ export default function BlogPost() {
       title="Gojiberry Alternatives: The Best AI-Powered Lead Sourcing Platforms"
       description="Discover the best Gojiberry alternatives for B2B lead sourcing. Compare Omentir, Clay, Apollo, and other AI SDRs to build a high-performing outbound engine."
       slug="gojiberry-alternatives-ai-lead-sourcing"
-      publishedDate="May 25, 2026"
-      updatedDate="May 25, 2026"
       bannerSrc="/gojiberry-alternatives-ai-lead-sourcing.avif"
       bannerAlt="AI-powered lead sourcing platforms and autonomous outreach engines compared"
       tocItems={tocItems as any}

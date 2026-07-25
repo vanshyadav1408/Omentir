@@ -54,8 +54,6 @@ export default function BlogPost() {
       title="Human-Paced Outreach: Why Safe Pacing Outperforms Bulk Spam"
       description="Discover the technical and psychological reasons why warm, paced sales outreach outperforms bulk messaging, and how to configure safe limits for LinkedIn."
       slug="human-paced-outreach"
-      publishedDate="April 20, 2026"
-      updatedDate="April 20, 2026"
       bannerSrc="/human-paced-outreach.avif"
       bannerAlt="Human-paced outbound sales safety and compliance"
       tocItems={tocItems}

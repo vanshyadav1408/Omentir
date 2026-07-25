@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { Geist_Mono, Google_Sans, Roboto } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
+import { ICON_FONT_URL } from "./icon-font-url";
 import { defaultDescription, defaultKeywords, defaultOgImage, siteUrl } from "./seo";
 import NavigationFeedback from "./navigation-feedback";
 import { PostHogProvider } from "./posthog-provider";
@@ -116,13 +117,18 @@ export default async function RootLayout({
       }
     >
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        {/* Material Symbols Outlined (variable: opsz/wght/FILL/GRAD) — M3 icon system */}
-        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+        {/* Material Symbols Outlined (variable: opsz/wght/FILL/GRAD) — M3 icon
+            system. Self-hosted subset (~50KB) instead of Google's ~4MB font:
+            the CDN version cost two extra origin handshakes plus a stylesheet
+            round-trip before the font request even started, and font-display
+            block held every icon invisible until it finished. Preloaded so the
+            fetch starts with the HTML rather than after CSS parses. */}
         <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block"
+          rel="preload"
+          as="font"
+          type="font/woff2"
+          href={ICON_FONT_URL}
+          crossOrigin="anonymous"
         />
       </head>
       <body className="flex min-h-screen flex-col">

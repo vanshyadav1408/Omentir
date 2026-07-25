@@ -55,8 +55,6 @@ export default function BlogPost() {
       title="Machine Learning in B2B Sales: Finding Patterns in Buying Signals"
       description="Understand the mathematical models behind automated prospecting. Discover how classification, semantic search, and feedback loops optimize sales pipeline."
       slug="machine-learning-in-b2b-sales"
-      publishedDate="March 3, 2026"
-      updatedDate="March 3, 2026"
       bannerSrc="/machine-learning-in-b2b-sales.avif"
       bannerAlt="Machine learning models and B2B sales buying signals analysis diagram"
       tocItems={tocItems}

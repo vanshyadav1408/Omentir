@@ -55,8 +55,6 @@ export default function BlogPost() {
       title="B2B Lead Gen with AI: Build a Context-Aware Outbound Machine"
       description="Ditch generic databases and bulk sequences. Discover how to design a modern B2B lead generation workflow combining AI intent signals, programmatic enrichment, and safe LinkedIn outreach."
       slug="b2b-lead-gen-with-ai"
-      publishedDate="April 24, 2026"
-      updatedDate="April 24, 2026"
       bannerSrc="/b2b-lead-gen-with-ai.avif"
       bannerAlt="B2B lead generation and AI outbound workflow"
       tocItems={tocItems}

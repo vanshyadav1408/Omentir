@@ -53,8 +53,6 @@ export default function BlogPost() {
       title="Why Your B2B Outbound Stack Needs an AI Salesman, Not Just a Sequencer"
       description="Linear sequence tools are failing in modern B2B sales. Discover why the future belongs to context-aware, autonomous AI sales agents that dynamically research, draft, and nurture leads."
       slug="why-outbound-needs-ai-salesman"
-      publishedDate="March 26, 2026"
-      updatedDate="March 26, 2026"
       bannerSrc="/why-outbound-needs-ai-salesman.avif"
       bannerAlt="Outbound sales stack comparing linear sequencers with context-aware AI sales agents diagram"
       tocItems={tocItems}

@@ -39,8 +39,6 @@ export default function BlogPost() {
       title="Beyond Database Scraping: How AI Salesman Qualify Leads Autonomously"
       description="Ditch static B2B databases and manual scrapers. Learn how multi-stage AI salesman utilize real-time website crawling and semantic reasoning to qualify leads autonomously."
       slug="beyond-database-scraping-how-ai-salesman-qualify-leads"
-      publishedDate="May 31, 2026"
-      updatedDate="May 31, 2026"
       bannerSrc="/beyond-database-scraping-how-ai-salesman-qualify-leads.avif"
       bannerAlt="Autonomous AI Lead Sourcing and Qualification Graphic"
       tocItems={tocItems as any}

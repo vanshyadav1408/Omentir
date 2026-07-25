@@ -58,8 +58,6 @@ export default function BlogPost() {
       title="Understanding the Psychology of Spam: Why Prospects Report Messages"
       description="Stop getting blocked by B2B buyers. Discover the emotional triggers that cause spam reports and learn how to write low-friction, relevant outreach."
       slug="psychology-of-spam-outreach"
-      publishedDate="February 5, 2026"
-      updatedDate="February 5, 2026"
       bannerSrc="/psychology-of-spam-outreach.avif"
       bannerAlt="Outbound sales copy spam triggers and prospect response psychology diagram"
       tocItems={tocItems}

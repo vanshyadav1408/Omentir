@@ -62,8 +62,6 @@ export default function BlogPost() {
       title="AI Sales Pitch Guide: Turn Product Facts Into Buyer-Relevant Copy"
       description="A practical guide to using AI to create sharper B2B sales pitches without fake claims, generic benefits, or over-automated messages."
       slug="ai-sales-pitch-guide"
-      publishedDate="May 11, 2026"
-      updatedDate="May 11, 2026"
       bannerSrc="/ai-sales-pitch-guide.avif"
       bannerAlt="AI sales pitch strategy workflow"
       faqItems={faqItems}

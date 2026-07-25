@@ -54,8 +54,6 @@ export default function BlogPost() {
       title="Outbound Sales with AI: Redesigning Modern B2B Teams"
       description="Learn how to build and structure an AI-native sales organization. Master task delegation, operational workflows, and safe LinkedIn outreach."
       slug="outbound-sales-with-ai"
-      publishedDate="March 30, 2026"
-      updatedDate="March 30, 2026"
       bannerSrc="/outbound-sales-with-ai.avif"
       bannerAlt="Outbound sales with AI and AI-native B2B sales organization graphic"
       tocItems={tocItems}

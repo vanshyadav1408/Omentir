@@ -53,8 +53,6 @@ export default function BlogPost() {
       title="5 AI Prompts That Generate Compelling LinkedIn Outreach Copy"
       description="Stop sending generic templates. Copy these 5 tested AI prompts to write personalized connection notes and follow-ups that get replies."
       slug="prompts-for-linkedin-copy"
-      publishedDate="March 11, 2026"
-      updatedDate="March 11, 2026"
       bannerSrc="/prompts-for-linkedin-copy.avif"
       bannerAlt="5 AI prompts for LinkedIn outreach and copywriting templates illustration"
       tocItems={tocItems}

@@ -10,6 +10,8 @@ import NewAgentButton from "@/app/(app)/agents/new-agent-button";
 import { useBodyScrollLock } from "@/app/use-body-scroll-lock";
 import { useToast, userFacingError } from "@/app/toast";
 import MobileHeaderPortal from "@/app/mobile-header-portal";
+import { useWorkspaceTimeZone } from "@/app/workspace-time-zone";
+import { zonedDayKey } from "@/lib/time-zone";
 
 type LeadsViewProps = {
   groups: Group[];
@@ -92,7 +94,7 @@ function csvCell(value: string) {
   return /[",\n\r]/.test(guarded) ? `"${guarded.replace(/"/g, '""')}"` : guarded;
 }
 
-function buildLeadsCsv(rows: LeadPreview[]) {
+function buildLeadsCsv(rows: LeadPreview[], timeZone: string) {
   const header = [
     "Name",
     "Title",
@@ -120,7 +122,9 @@ function buildLeadsCsv(rows: LeadPreview[]) {
       lead.signalText || "",
       lead.signalUrl || "",
       OUTREACH_STATUS_LABELS[lead.outreachStatus] || lead.outreachStatus,
-      lead.createdAt ? new Date(lead.createdAt).toISOString().slice(0, 10) : "",
+      // The workspace's calendar day, not UTC's - a lead added at 11pm local
+      // otherwise exports under tomorrow's date.
+      zonedDayKey(lead.createdAt, timeZone),
     ]
       .map(csvCell)
       .join(","),
@@ -150,6 +154,7 @@ const selectLeadsData = (data: Record<string, unknown>) => ({
 });
 
 export default function LeadsView({ groups, leads }: LeadsViewProps) {
+  const timeZone = useWorkspaceTimeZone();
   const leadsResource = useSidebarResource(
     "groups,leadPreviews",
     { groups, leads },
@@ -240,7 +245,7 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-+|-+$/g, "") || "lead-group";
-    downloadCsv(`${slug}-leads.csv`, buildLeadsCsv(rows));
+    downloadCsv(`${slug}-leads.csv`, buildLeadsCsv(rows, timeZone));
   }
 
   async function confirmDeleteGroup() {

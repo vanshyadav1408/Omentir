@@ -55,8 +55,6 @@ export default function BlogPost() {
       title="How to Find Product-Market Fit (PMF) on LinkedIn"
       description="Stop guessing what B2B buyers want. Copy this playbook to segment your audience, test value propositions, and find PMF using targeted LinkedIn outreach."
       slug="find-pmf-on-linkedin"
-      publishedDate="February 24, 2026"
-      updatedDate="February 24, 2026"
       bannerSrc="/find-pmf-on-linkedin.avif"
       bannerAlt="Product-market fit validation funnel and LinkedIn campaign metrics diagram"
       tocItems={tocItems}

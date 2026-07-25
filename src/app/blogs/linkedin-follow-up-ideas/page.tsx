@@ -55,8 +55,6 @@ export default function BlogPost() {
       title="LinkedIn Follow-Up Ideas: How to Re-Engage Quiet B2B Prospects"
       description="Stop sending generic 'just bumping this' messages. Discover 5 signal-based LinkedIn follow-up ideas and templates that re-engage quiet B2B prospects."
       slug="linkedin-follow-up-ideas"
-      publishedDate="April 18, 2026"
-      updatedDate="April 18, 2026"
       bannerSrc="/linkedin-follow-up-ideas.avif"
       bannerAlt="LinkedIn B2B sales follow-up templates and strategy"
       tocItems={tocItems}

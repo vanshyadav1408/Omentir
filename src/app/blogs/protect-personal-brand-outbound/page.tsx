@@ -55,8 +55,6 @@ export default function BlogPost() {
       title="Protecting Your Personal Brand While Automating Outbound Sales"
       description="Stop sending generic sales pitches. Learn how to use human-in-the-loop review queues, grounded prompts, and safe pacing to build a brand-aligned outreach pipeline."
       slug="protect-personal-brand-outbound"
-      publishedDate="February 7, 2026"
-      updatedDate="February 7, 2026"
       bannerSrc="/protect-personal-brand-outbound.avif"
       bannerAlt="Outbound sales automation and brand reputation protection diagram"
       tocItems={tocItems}

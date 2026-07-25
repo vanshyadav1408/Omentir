@@ -62,8 +62,6 @@ export default function BlogPost() {
       title="ChatGPT Sales Messages: Write Better First Touches With Context"
       description="A practical guide to using ChatGPT for B2B sales messages that are specific, short, safe to send, and grounded in real buyer context."
       slug="chatgpt-sales-messages"
-      publishedDate="May 2, 2026"
-      updatedDate="May 2, 2026"
       bannerSrc="/chatgpt-sales-messages.avif"
       bannerAlt="ChatGPT sales message drafting workflow"
       faqItems={faqItems}

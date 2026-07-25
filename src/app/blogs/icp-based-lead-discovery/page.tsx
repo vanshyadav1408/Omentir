@@ -55,8 +55,6 @@ export default function BlogPost() {
       title="ICP-Based Lead Discovery: How to Build a Dynamic LinkedIn Search Workflow"
       description="Learn how to convert your static B2B Ideal Customer Profile into precise search parameters, automate lead discovery, and personalize your LinkedIn outreach."
       slug="icp-based-lead-discovery"
-      publishedDate="April 15, 2026"
-      updatedDate="April 15, 2026"
       bannerSrc="/icp-based-lead-discovery.avif"
       bannerAlt="ICP-based lead discovery and target audience search workflow illustration"
       tocItems={tocItems}

@@ -27,6 +27,12 @@ export const SPACING_MINUTES = 10;
 // bump back.
 export const ACTION_PRIORITY = { reply: 0, message: 1, invite: 2 } as const;
 
+// Ceiling on the constraint passes one action may take. Each pass advances the
+// candidate by at least one calendar move, so a satisfiable plan settles in far
+// fewer than this - a queue deep enough to need 512 local days has bigger
+// problems than its schedule.
+const MAX_PLAN_PASSES = 512;
+
 export type SendActionKind = keyof typeof ACTION_PRIORITY;
 
 type WindowBounds = {
@@ -68,8 +74,20 @@ function safeTimeZone(timezone: string | undefined) {
   }
 }
 
-export function zonedParts(timezone: string | undefined, ms: number): ZonedParts {
-  const parts = new Intl.DateTimeFormat("en-US", {
+// Constructing an Intl.DateTimeFormat is far more expensive than using one, and
+// the planner calls zonedParts several times per constraint pass. Cached per
+// timezone, which is a bounded set (one per workspace) and never invalidated,
+// since a zone's formatter is a pure function of its name.
+const formatterCache = new Map<string, Intl.DateTimeFormat>();
+
+function zonedFormatter(timezone: string | undefined) {
+  // Keyed on the raw input so the validation probe in safeTimeZone - itself a
+  // formatter construction - is also paid only once per distinct zone.
+  const key = timezone || "";
+  const cached = formatterCache.get(key);
+  if (cached) return cached;
+
+  const formatter = new Intl.DateTimeFormat("en-US", {
     timeZone: safeTimeZone(timezone),
     year: "numeric",
     month: "2-digit",
@@ -79,7 +97,13 @@ export function zonedParts(timezone: string | undefined, ms: number): ZonedParts
     minute: "2-digit",
     second: "2-digit",
     hourCycle: "h23",
-  }).formatToParts(new Date(ms));
+  });
+  formatterCache.set(key, formatter);
+  return formatter;
+}
+
+export function zonedParts(timezone: string | undefined, ms: number): ZonedParts {
+  const parts = zonedFormatter(timezone).formatToParts(new Date(ms));
   const get = (type: Intl.DateTimeFormatPart["type"]) =>
     parts.find((part) => part.type === type)?.value || "";
 
@@ -243,6 +267,45 @@ export type SchedulePlanInput = {
   spacingMinutes?: number;
 };
 
+// The first time at or after `from` that clears every reserved slot by a full
+// spacing interval. `taken` is sorted, so one forward scan resolves an entire
+// contiguous ladder: stepping past reserved slots one per constraint pass made
+// planning quadratic and, past the pass cap below, made it give up mid-ladder
+// and return a colliding time.
+function clearOfReservedSlots(taken: number[], from: number, spacingMs: number) {
+  // Skip the reservations entirely behind the interval. `taken` grows to one
+  // entry per planned action, and without this every pass rescans the whole
+  // history to reach the handful of slots near the candidate.
+  let low = 0;
+  let high = taken.length;
+  while (low < high) {
+    const mid = (low + high) >> 1;
+    if (taken[mid] + spacingMs <= from) low = mid + 1;
+    else high = mid;
+  }
+
+  let slot = from;
+  for (let index = low; index < taken.length; index += 1) {
+    // Sorted ascending and `slot` only moves forward, so the first reservation
+    // that clears the interval guarantees every later one does too.
+    if (taken[index] - slot >= spacingMs) break;
+    if (taken[index] + spacingMs > slot) slot = taken[index] + spacingMs;
+  }
+  return slot;
+}
+
+// Keeps `taken` sorted without re-sorting the whole array per action.
+function insertSorted(taken: number[], value: number) {
+  let low = 0;
+  let high = taken.length;
+  while (low < high) {
+    const mid = (low + high) >> 1;
+    if (taken[mid] < value) low = mid + 1;
+    else high = mid;
+  }
+  taken.splice(low, 0, value);
+}
+
 // Deterministic assignment of real send times. Same inputs always produce the
 // same output, which is what lets the Actions page display the planner's
 // answer verbatim instead of maintaining a second, drifting estimate.
@@ -274,9 +337,12 @@ export function planSendSchedule(input: SchedulePlanInput): Map<string, number> 
     let candidate = Math.max(action.earliestAt, input.nowMs);
 
     // Each pass fixes one constraint and re-checks the others, since snapping
-    // into a window can push past a day boundary and vice versa. The bound is
-    // generous but finite so a pathological config can never spin the tick.
-    for (let pass = 0; pass < 512; pass += 1) {
+    // into a window can push past a day boundary and vice versa. Each pass now
+    // resolves a whole class of conflict rather than one slot, so a pass is a
+    // calendar move (next opening bell, next day) and the bound is only ever
+    // reached by a config that cannot be satisfied at all.
+    let settled = false;
+    for (let pass = 0; pass < MAX_PLAN_PASSES; pass += 1) {
       const inWindow = nextSendWindowOpen(input.window, input.timezone, candidate);
       if (inWindow !== candidate) {
         candidate = inWindow;
@@ -284,11 +350,9 @@ export function planSendSchedule(input: SchedulePlanInput): Map<string, number> 
       }
 
       // Push clear of every reserved slot within one spacing interval.
-      const blocking = taken.find(
-        (slot) => Math.abs(slot - candidate) < spacingMs,
-      );
-      if (blocking !== undefined) {
-        candidate = blocking + spacingMs;
+      const cleared = clearOfReservedSlots(taken, candidate, spacingMs);
+      if (cleared !== candidate) {
+        candidate = cleared;
         continue;
       }
 
@@ -300,12 +364,23 @@ export function planSendSchedule(input: SchedulePlanInput): Map<string, number> 
       }
 
       used.set(dayKey, { ...dayUsed, [quotaKind]: dayUsed[quotaKind] + 1 });
+      settled = true;
       break;
     }
 
+    // Exhausting the passes means the returned time violates at least one
+    // constraint. claimActionSlot still stops it becoming a real double-send,
+    // but silence here is what turned a planning failure into the invisible
+    // re-plan churn this planner exists to remove.
+    if (!settled) {
+      console.warn(
+        `[send-schedule] gave up planning ${action.kind} ${action.id} after ${MAX_PLAN_PASSES} passes; ` +
+          `slot ${new Date(candidate).toISOString()} may violate spacing or daily caps`,
+      );
+    }
+
     result.set(action.id, candidate);
-    taken.push(candidate);
-    taken.sort((a, b) => a - b);
+    insertSorted(taken, candidate);
   }
 
   return result;

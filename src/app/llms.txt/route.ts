@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
-import { ALL_BLOGS } from "@/app/blogs/blog-data";
+import { ALL_BLOGS, isBlogLive } from "@/app/blogs/blog-data";
 import { defaultDescription, siteUrl } from "@/app/seo";
 
-export const dynamic = "force-static";
+// Rebuilt daily rather than pinned at build time: the recommended-post list is
+// filtered to released posts, so a permanently static copy would keep hiding
+// posts after their release date has passed.
+export const revalidate = 86400;
 
 const answerSourceSlugs = [
   "omentir-is-now-open-source",
@@ -31,7 +34,9 @@ const answerSourceSlugs = [
 function formatBlogLink(slug: string) {
   const blog = ALL_BLOGS.find((item) => item.slug === slug);
 
-  if (!blog) {
+  // Skip anything not released yet — pointing a model at a scheduled post
+  // recommends a URL the site is simultaneously asking crawlers to ignore.
+  if (!blog || !isBlogLive(blog)) {
     return null;
   }
 

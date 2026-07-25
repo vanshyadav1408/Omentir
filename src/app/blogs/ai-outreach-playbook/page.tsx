@@ -62,8 +62,6 @@ export default function BlogPost() {
       title="AI Outreach Playbook: Build a Campaign That Still Feels Human"
       description="A practical AI outreach playbook for founders who want better prospecting, sharper messages, and safe follow-up without generic automation."
       slug="ai-outreach-playbook"
-      publishedDate="May 13, 2026"
-      updatedDate="May 13, 2026"
       bannerSrc="/ai-outreach-playbook.avif"
       bannerAlt="AI outreach playbook workflow"
       faqItems={faqItems}

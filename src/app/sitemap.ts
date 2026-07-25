@@ -1,6 +1,11 @@
 import type { MetadataRoute } from "next";
-import { ALL_BLOGS } from "./blogs/blog-data";
+import { ALL_BLOGS, isBlogLive, liveBlogs } from "./blogs/blog-data";
 import { siteUrl } from "./seo";
+
+// Posts release on a date-driven schedule (see `isBlogLive`), so a sitemap
+// cached at build time would keep omitting posts that have since gone live.
+// Rebuild daily — the release dates only have day granularity.
+export const revalidate = 86400;
 
 // `lastModified` is hardcoded per route rather than set to build time on
 // purpose: stamping `new Date()` would tell crawlers every page changed on
@@ -26,12 +31,17 @@ const publicRoutes = [
   lastModified?: string;
 }>;
 
+// Parsed as UTC to match the article JSON-LD; reading these bare calendar days
+// as local time makes lastmod disagree with datePublished by a day on any
+// server east of UTC.
 function blogDate(blog: (typeof ALL_BLOGS)[number]) {
-  return new Date(blog.updatedDate || blog.publishedDate);
+  return new Date(`${blog.updatedDate || blog.publishedDate} UTC`);
 }
 
+// Released posts only: a scheduled post carries a future date, and advertising
+// that as the index's lastmod claims a change that has not happened yet.
 function latestBlogDate() {
-  return ALL_BLOGS.reduce((newest, blog) => {
+  return ALL_BLOGS.filter((blog) => isBlogLive(blog)).reduce((newest, blog) => {
     const date = blogDate(blog);
     return date > newest ? date : newest;
   }, new Date(0));
@@ -82,7 +92,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: route.priority,
   }));
 
-  const blogRoutes = ALL_BLOGS.map((blog) => ({
+  // Scheduled posts are deliberately absent: listing a page as noindex in the
+  // sitemap asks a crawler to fetch what it is then told to ignore.
+  const blogRoutes = liveBlogs().map((blog) => ({
     url: `${siteUrl}/blogs/${blog.slug}`,
     lastModified: blogDate(blog),
     images: [`${siteUrl}${blog.bannerSrc}`],

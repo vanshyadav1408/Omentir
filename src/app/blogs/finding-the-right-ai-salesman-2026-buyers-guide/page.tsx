@@ -39,8 +39,6 @@ export default function BlogPost() {
       title="Finding the Right AI Salesman: The 2026 Buyer's Guide for Growth Teams"
       description="Evaluate autonomous SDR agents and AI salesman in 2026. A comprehensive buying rubric covering safety, deliverability, data cascading, and multi-channel personalization."
       slug="finding-the-right-ai-salesman-2026-buyers-guide"
-      publishedDate="June 7, 2026"
-      updatedDate="June 7, 2026"
       bannerSrc="/finding-the-right-ai-salesman-2026-buyers-guide.avif"
       bannerAlt="Finding the Right AI Salesman evaluation checklist concept art"
       tocItems={tocItems as any}

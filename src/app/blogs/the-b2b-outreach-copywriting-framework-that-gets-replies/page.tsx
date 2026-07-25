@@ -38,8 +38,6 @@ export default function BlogPost() {
       title="The B2B Outreach Copywriting Framework That Gets Replies"
       description="Master the structure of cold outreach copywriting. Learn the exact sentence-by-sentence framework that maximizes replies from B2B leads."
       slug="the-b2b-outreach-copywriting-framework-that-gets-replies"
-      publishedDate="July 3, 2026"
-      updatedDate="July 3, 2026"
       bannerSrc="/the-b2b-outreach-copywriting-framework-that-gets-replies.avif"
       bannerAlt="The B2B Outreach Copywriting Framework That Gets Replies outreach concept art"
       faqItems={faqItems}

@@ -55,8 +55,6 @@ export default function BlogPost() {
       title="AI Prospect Research: How to Synthesize B2B Target Data at Scale"
       description="Learn how to use AI to analyze company blogs, posts, and job listings on LinkedIn to build structured research profiles that convert."
       slug="ai-prospect-research"
-      publishedDate="April 11, 2026"
-      updatedDate="April 11, 2026"
       bannerSrc="/ai-prospect-research.avif"
       bannerAlt="AI prospect research and profile data synthesis dashboard illustration"
       tocItems={tocItems}

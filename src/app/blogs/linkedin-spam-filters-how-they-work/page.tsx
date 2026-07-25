@@ -57,8 +57,6 @@ export default function BlogPost() {
       title="LinkedIn Spam Filters: How They Work and How to Bypass Them"
       description="Protect your sales assets from automated restrictions. Learn how social platform algorithms analyze outreach text, links, and speed, and how to stay safe."
       slug="linkedin-spam-filters-how-they-work"
-      publishedDate="February 2, 2026"
-      updatedDate="February 2, 2026"
       bannerSrc="/linkedin-spam-filters-how-they-work.avif"
       bannerAlt="Social platform automated spam filters and copywriting variance diagram"
       tocItems={tocItems}

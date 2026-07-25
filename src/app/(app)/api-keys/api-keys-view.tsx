@@ -7,6 +7,8 @@ import { useSidebarResource } from "@/app/use-sidebar-resource";
 import { ApiKeyRowsSkeleton, ContentReveal } from "@/app/app-skeletons";
 import { TextField } from "@/app/ui/text-field";
 import { useBodyScrollLock } from "@/app/use-body-scroll-lock";
+import { useWorkspaceTimeZone } from "@/app/workspace-time-zone";
+import { formatZonedDate } from "@/lib/time-zone";
 
 type ApiKeysViewProps = {
   agentApiKeys: AgentApiKey[];
@@ -233,6 +235,7 @@ export default function ApiKeysView({
   createAgentApiKeyAction,
   revokeAgentApiKeyAction,
 }: ApiKeysViewProps) {
+  const timeZone = useWorkspaceTimeZone();
   const [pending, startTransition] = useTransition();
   const [keyLabel, setKeyLabel] = useState("");
   const [createdKey, setCreatedKey] = useState("");
@@ -333,18 +336,9 @@ export default function ApiKeysView({
                       </div>
                       <div className="mt-0.5 text-[13px] font-medium text-zinc-700">
                         <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-[11px]">{key.tokenPrefix}...</code>
-                        {" "}· Created{" "}
-                        {new Date(key.createdAt).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
+                        {" "}· Created {formatZonedDate(key.createdAt, timeZone)}
                         {key.lastUsedAt
-                          ? ` · Last used ${new Date(key.lastUsedAt).toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                            })}`
+                          ? ` · Last used ${formatZonedDate(key.lastUsedAt, timeZone)}`
                           : " · Never used"}
                       </div>
                     </div>

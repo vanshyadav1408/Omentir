@@ -37,8 +37,6 @@ export default function BlogPost() {
       title="10 LinkedIn Cold Message Templates That Actually Book Demos"
       description="Explore 10 proven, low-friction LinkedIn cold message templates designed for B2B sales teams and founders to start conversations and book meetings."
       slug="10-linkedin-cold-message-templates-that-actually-book-demos"
-      publishedDate="June 12, 2026"
-      updatedDate="June 12, 2026"
       bannerSrc="/10-linkedin-cold-message-templates-that-actually-book-demos.avif"
       bannerAlt="10 LinkedIn Cold Message Templates That Actually Book Demos outreach concept art"
       faqItems={faqItems}

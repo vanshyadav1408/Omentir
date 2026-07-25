@@ -55,8 +55,6 @@ export default function BlogPost() {
       title="The Metric That Matters: How to Measure Early Outbound Success"
       description="Stop optimizing for vanity connection counts. Learn how to track opportunity conversion rates, cost-per-opportunity, and pipeline velocity."
       slug="measure-early-outbound-success"
-      publishedDate="February 22, 2026"
-      updatedDate="February 22, 2026"
       bannerSrc="/measure-early-outbound-success.avif"
       bannerAlt="B2B sales metrics dashboard displaying conversion rates and opportunity costs illustration"
       tocItems={tocItems}

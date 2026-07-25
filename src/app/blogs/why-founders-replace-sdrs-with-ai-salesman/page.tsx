@@ -46,8 +46,6 @@ export default function BlogPost() {
       title="Why Modern B2B Founders are Replacing Traditional SDRs with AI Salesman"
       description="An in-depth economic and operational review of why growth-stage founders are transitioning from manual cold outreach teams to autonomous AI sales agents."
       slug="why-founders-replace-sdrs-with-ai-salesman"
-      publishedDate="June 3, 2026"
-      updatedDate="June 3, 2026"
       bannerSrc="/why-founders-replace-sdrs-with-ai-salesman.avif"
       bannerAlt="Why Modern B2B Founders are Replacing Traditional SDRs with AI Salesman banner"
       faqItems={faqItems}

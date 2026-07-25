@@ -53,8 +53,6 @@ export default function BlogPost() {
       title="Programmatic Personalization: How to Write 100 Unique Cold Messages"
       description="Learn how to build a programmatic personalization pipeline. Access copyable TypeScript workflows to crawl sites, call LLM APIs, and automate sales copy."
       slug="programmatic-personalization"
-      publishedDate="March 13, 2026"
-      updatedDate="March 13, 2026"
       bannerSrc="/programmatic-personalization.avif"
       bannerAlt="Programmatic personalization data flow and script execution diagram"
       tocItems={tocItems}

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
   ACTION_PRIORITY,
@@ -256,4 +257,108 @@ test("out-of-range run hours are clamped rather than throwing", () => {
   const now = mondayAt(IST, 12);
   assert.equal(localOf(IST, Date.parse(nextLocalAgentRunAt(-5, IST, now))), "2026-07-28 00:00");
   assert.equal(localOf(IST, Date.parse(nextLocalAgentRunAt(99, IST, now))), "2026-07-27 23:00");
+});
+
+// A deep queue is the case the planner exists for, so it has to hold up at
+// depth. Both of these were real failures: stepping past reserved slots one per
+// constraint pass made planning quadratic AND made it give up mid-ladder,
+// returning a time that collided with a slot it had already handed out.
+const spacingMs = SPACING_MINUTES * 60 * 1000;
+
+const collisionsIn = (times) =>
+  [...times]
+    .sort((a, b) => a - b)
+    .filter((slot, index, sorted) => index > 0 && slot - sorted[index - 1] < spacingMs).length;
+
+test("a deep reserved ladder never plans onto an occupied slot", () => {
+  const now = mondayAt(NY, 9);
+  // 700 back-to-back reservations - past the pass ceiling, where the planner
+  // used to silently return a slot 0 minutes from an existing one.
+  const reservedSlots = Array.from({ length: 700 }, (_, index) => now + index * spacingMs);
+
+  const plan = planSendSchedule({
+    nowMs: now,
+    timezone: NY,
+    window: "always",
+    dailyInviteLimit: 100,
+    dailyMessageLimit: 100,
+    reservedSlots,
+    actions: [{ id: "late", kind: "invite", earliestAt: now }],
+  });
+
+  const slot = plan.get("late");
+  const nearest = Math.min(...reservedSlots.map((reserved) => Math.abs(reserved - slot)));
+  assert.ok(
+    nearest >= spacingMs,
+    `planned ${nearest / 60000}min from a reserved slot, needs ${SPACING_MINUTES}min`,
+  );
+});
+
+test("planning a large batch stays spaced and stays fast", () => {
+  const now = mondayAt(NY, 9);
+  const started = Date.now();
+  const plan = planSendSchedule({
+    nowMs: now,
+    timezone: NY,
+    window: "business",
+    dailyInviteLimit: 10,
+    dailyMessageLimit: 20,
+    actions: Array.from({ length: 600 }, (_, index) => ({
+      id: `lead-${index}`,
+      kind: "invite",
+      earliestAt: now,
+    })),
+  });
+  const elapsed = Date.now() - started;
+
+  assert.equal(plan.size, 600);
+  assert.equal(collisionsIn(plan.values()), 0);
+  for (const slot of plan.values()) {
+    assert.ok(isWithinSendWindow("business", NY, slot), `${localOf(NY, slot)} is outside the window`);
+  }
+  // Runs synchronously inside the tick, once per campaign. The pre-fix planner
+  // took ~35s for this; the ceiling is loose enough not to be flaky on CI but
+  // tight enough to catch a return to quadratic behaviour.
+  assert.ok(elapsed < 3000, `planning 600 actions took ${elapsed}ms`);
+});
+
+// The scheduling controls live on the agent form but are read by two different
+// server paths (the agent doc for the run hour, the campaign doc for the send
+// window). Both were rendered on the edit form while the update path ignored
+// them, so changing either after launch silently did nothing.
+const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
+
+test("the agent edit form's scheduling controls reach the server", () => {
+  const actions = read("src/app/actions.ts");
+  const updateForm = actions.slice(
+    actions.indexOf("async function updateAgentFromForm"),
+    actions.indexOf("export async function updateAgentForSetupAction"),
+  );
+  assert.match(
+    updateForm,
+    /runAtHour: parseRunAtHour\(formData\.get\("runAtHour"\)\)/,
+    "editing an agent must persist the discovery hour, not just create",
+  );
+
+  // The edit path never calls createCampaignAction, so the window has to be
+  // applied to the agent's existing campaigns explicitly.
+  const updateAction = actions.slice(
+    actions.indexOf("export async function updateAgentAction"),
+    actions.indexOf("export async function draftAgentSetupAction"),
+  );
+  assert.match(updateAction, /setSendWindowForGroup\(/);
+  assert.match(updateAction, /parseSendWindow\(formData\.get\("sendWindow"\)\)/);
+});
+
+test("the edit form opens on the window its campaign actually sends in", () => {
+  // Now that saving writes the window back, an edit form that always opened on
+  // a default would reset every campaign that disagreed with it.
+  assert.match(
+    read("src/app/(app)/agents/new/page.tsx"),
+    /initialSendWindow=\{existingSendWindow\}/,
+  );
+  assert.match(
+    read("src/app/(app)/agents/new/agent-setup.tsx"),
+    /useState<SendWindow>\(\s*initialSendWindow \?\? \(initialAgent \? "always" : "business"\)/,
+  );
 });

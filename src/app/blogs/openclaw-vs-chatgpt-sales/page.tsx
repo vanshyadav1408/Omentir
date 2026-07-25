@@ -62,8 +62,6 @@ export default function BlogPost() {
       title="OpenClaw vs ChatGPT for Sales: Which Agent Belongs Where?"
       description="A practical comparison of OpenClaw and ChatGPT for B2B sales workflows, including prospecting, outreach drafting, agent operations, and safe LinkedIn execution."
       slug="openclaw-vs-chatgpt-sales"
-      publishedDate="May 7, 2026"
-      updatedDate="May 7, 2026"
       bannerSrc="/openclaw-vs-chatgpt-sales.avif"
       bannerAlt="OpenClaw versus ChatGPT sales workflow comparison"
       faqItems={faqItems}

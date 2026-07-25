@@ -62,8 +62,6 @@ export default function BlogPost() {
       title="AI Follow-Up Playbook: Keep Sales Conversations Moving"
       description="A practical AI follow-up playbook for deciding when to follow up, what to say, when to pause, and how to keep outreach human-paced."
       slug="ai-follow-up-playbook"
-      publishedDate="May 5, 2026"
-      updatedDate="May 5, 2026"
       bannerSrc="/ai-follow-up-playbook.avif"
       bannerAlt="AI follow-up playbook workflow"
       faqItems={faqItems}

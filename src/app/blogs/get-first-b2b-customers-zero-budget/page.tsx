@@ -55,8 +55,6 @@ export default function BlogPost() {
       title="How to Get Your First 10 B2B Customers with Zero Budget"
       description="Validate your B2B MVP and secure your first 10 paying customers without spending money on databases or advertising."
       slug="get-first-b2b-customers-zero-budget"
-      publishedDate="February 28, 2026"
-      updatedDate="February 28, 2026"
       bannerSrc="/get-first-b2b-customers-zero-budget.avif"
       bannerAlt="B2B customer acquisition and zero budget prospecting workflow diagram"
       tocItems={tocItems}

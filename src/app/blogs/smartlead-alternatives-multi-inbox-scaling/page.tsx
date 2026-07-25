@@ -40,8 +40,6 @@ export default function BlogPost() {
       title="Smartlead Alternatives: Multi-Inbox Scaling for Modern B2B Campaigns"
       description="A technical review of Smartlead alternatives for cold email scaling. Compare multi-inbox deliverability setups with unified multi-channel autonomous salesman."
       slug="smartlead-alternatives-multi-inbox-scaling"
-      publishedDate="May 27, 2026"
-      updatedDate="May 27, 2026"
       bannerSrc="/smartlead-alternatives-multi-inbox-scaling.avif"
       bannerAlt="Smartlead alternatives and multi-inbox cold outreach scaling graphic"
       tocItems={tocItems as any}

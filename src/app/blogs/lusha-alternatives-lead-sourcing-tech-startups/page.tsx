@@ -40,8 +40,6 @@ export default function BlogPost() {
       title="Lusha Alternatives: The Best Lead Sourcing Tools for Tech Startups"
       description="A complete breakdown of Lusha alternatives for early-stage tech teams. Compare legacy scrapers with autonomous, context-aware AI sourcing systems."
       slug="lusha-alternatives-lead-sourcing-tech-startups"
-      publishedDate="May 28, 2026"
-      updatedDate="May 28, 2026"
       bannerSrc="/lusha-alternatives-lead-sourcing-tech-startups.avif"
       bannerAlt="Lusha alternatives and dynamic B2B data sourcing software review cover art"
       tocItems={tocItems as any}

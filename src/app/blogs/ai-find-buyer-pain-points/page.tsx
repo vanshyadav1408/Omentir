@@ -55,8 +55,6 @@ export default function BlogPost() {
       title="Stop Guessing: Let AI Find the Pain Points of Your Target Buyers"
       description="Stop guessing what B2B buyers care about. Copy this framework to scrape user reviews, analyze forums, and map real customer pain points."
       slug="ai-find-buyer-pain-points"
-      publishedDate="March 9, 2026"
-      updatedDate="March 9, 2026"
       bannerSrc="/ai-find-buyer-pain-points.avif"
       bannerAlt="AI buyer pain point discovery and review crawling diagram"
       tocItems={tocItems}

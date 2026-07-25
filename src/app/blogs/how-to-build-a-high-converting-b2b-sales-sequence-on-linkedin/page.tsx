@@ -39,8 +39,6 @@ export default function BlogPost() {
       title="How to Build a High-Converting B2B Sales Sequence on LinkedIn"
       description="Step-by-step guide to designing, testing, and optimizing multi-step B2B outreach sequences on LinkedIn for maximum conversion."
       slug="how-to-build-a-high-converting-b2b-sales-sequence-on-linkedin"
-      publishedDate="June 19, 2026"
-      updatedDate="June 19, 2026"
       bannerSrc="/how-to-build-a-high-converting-b2b-sales-sequence-on-linkedin.avif"
       bannerAlt="How to Build a High-Converting B2B Sales Sequence on LinkedIn outreach concept art"
       faqItems={faqItems}

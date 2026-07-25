@@ -67,6 +67,14 @@ const nextConfig: NextConfig = {
           { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
         ],
       },
+      {
+        // Static fonts under public/ don't get Next's content-hashed filenames,
+        // so they'd otherwise be revalidated on every navigation. The icon font
+        // carries a ?v=<content hash> that scripts/build-icon-font.mjs bumps
+        // whenever the glyph set changes, which makes immutable safe here.
+        source: "/fonts/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
+      },
       ...privateIndexingRoutes.map((source) => ({
         source,
         headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
@@ -93,7 +101,7 @@ const nextConfig: NextConfig = {
         {
           // Document HTML carries streaming resume ids; stale cached HTML against
           // fresh chunks triggers client hydration failures.
-          source: "/((?!_next|api).*)",
+          source: "/((?!_next|api|fonts).*)",
           headers: [
             { key: "Cloudflare-CDN-Cache-Control", value: "no-store" },
             { key: "CDN-Cache-Control", value: "no-store" },

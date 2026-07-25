@@ -37,8 +37,6 @@ export default function BlogPost() {
       title="How to Pitch a B2B SaaS on LinkedIn Without Being Spammy"
       description="A comprehensive guide on B2B SaaS pitching on LinkedIn. Learn to lead with value, establish relevance, and avoid spam triggers."
       slug="how-to-pitch-a-b2b-saas-on-linkedin-without-being-spammy"
-      publishedDate="June 20, 2026"
-      updatedDate="June 20, 2026"
       bannerSrc="/how-to-pitch-a-b2b-saas-on-linkedin-without-being-spammy.avif"
       bannerAlt="How to Pitch a B2B SaaS on LinkedIn Without Being Spammy outreach concept art"
       faqItems={faqItems}

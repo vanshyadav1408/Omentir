@@ -40,8 +40,6 @@ export default function BlogPost() {
       title="Instantly.ai vs. Smartlead vs. Omentir: A Three-Way Outreach Comparison"
       description="An honest head-to-head comparison of traditional cold email sequencers with a next-generation multi-channel autonomous salesman."
       slug="instantly-vs-smartlead-vs-omentir-outreach-faceoff"
-      publishedDate="June 1, 2026"
-      updatedDate="June 1, 2026"
       bannerSrc="/instantly-vs-smartlead-vs-omentir-outreach-faceoff.avif"
       bannerAlt="Instantly vs. Smartlead vs. Omentir multi-channel outbound faceoff comparison art"
       tocItems={tocItems as any}

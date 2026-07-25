@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import type { CampaignEnrollmentPreview, Conversation, LeadPreview } from "@/lib/server/types";
+import type {
+  CampaignEnrollmentPreview,
+  Conversation,
+  LeadDashboardPreview,
+} from "@/lib/server/types";
 
 type ChartPoint = {
   dateKey: string;
@@ -12,7 +16,9 @@ type ChartPoint = {
 };
 
 type AnalysisChartProps = {
-  leads: LeadPreview[];
+  // Only the timeline fields are read, so the dashboard's slim projection is
+  // enough here; a full LeadPreview still satisfies it.
+  leads: LeadDashboardPreview[];
   conversations: Conversation[];
   enrollments: CampaignEnrollmentPreview[];
 };
@@ -41,7 +47,7 @@ const contactedEnrollmentStatuses = new Set<CampaignEnrollmentPreview["status"]>
   "replied",
 ]);
 
-const contactedLeadStatuses = new Set<LeadPreview["outreachStatus"]>([
+const contactedLeadStatuses = new Set<LeadDashboardPreview["outreachStatus"]>([
   "invited",
   "connected",
   "messaged",

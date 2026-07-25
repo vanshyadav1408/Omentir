@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ALL_BLOGS } from "./blogs/blog-data";
+import { ALL_BLOGS, isBlogLive, liveBlogs } from "./blogs/blog-data";
 
 export const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://omentir.com").replace(/\/$/, "");
 
@@ -64,8 +64,15 @@ type PageMetadataOptions = {
   };
 };
 
+// Dates in blog-data are calendar days ("July 22, 2026") with no timezone, so
+// they must be parsed as UTC. Letting the runtime read them as local time makes
+// `toISOString()` shift the day backwards anywhere west-positive of UTC — on an
+// Asia/Calcutta machine "July 22, 2026" is emitted as 2026-07-21, one day off
+// from the byline the same date renders. That disagreement is precisely what
+// makes a crawler distrust a site's dates, and it moves with the server's
+// timezone, so it cannot be caught by reading the output on one machine.
 function normalizeDate(value: string) {
-  const parsedDate = new Date(value);
+  const parsedDate = new Date(`${value} UTC`);
   if (!isNaN(parsedDate.getTime())) {
     return parsedDate.toISOString().split("T")[0];
   }
@@ -161,7 +168,10 @@ export function createPageMetadata({
       description,
       images: [metadataImage.url],
     },
-    robots: noIndex ? noIndexRobots : indexRobots,
+    // A post whose release date has not arrived yet is noindexed without each
+    // page needing to opt in, so a scheduled post cannot leak into the index
+    // just because its own file forgot to ask.
+    robots: noIndex || (blog && !isBlogLive(blog)) ? noIndexRobots : indexRobots,
   };
 }
 
@@ -344,6 +354,10 @@ export function createBlogJsonLd({
 }
 
 export function createBlogCollectionJsonLd() {
+  // Only released posts: the ItemList is a claim about what the library
+  // currently contains, so it has to match what /blogs actually shows.
+  const publishedBlogs = liveBlogs();
+
   return {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
@@ -361,8 +375,8 @@ export function createBlogCollectionJsonLd() {
     },
     mainEntity: {
       "@type": "ItemList",
-      numberOfItems: ALL_BLOGS.length,
-      itemListElement: ALL_BLOGS.map((blog, index) => ({
+      numberOfItems: publishedBlogs.length,
+      itemListElement: publishedBlogs.map((blog, index) => ({
         "@type": "ListItem",
         position: index + 1,
         url: `${siteUrl}/blogs/${blog.slug}`,

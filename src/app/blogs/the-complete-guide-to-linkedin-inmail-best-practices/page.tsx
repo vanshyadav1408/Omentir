@@ -39,8 +39,6 @@ export default function BlogPost() {
       title="The Complete Guide to LinkedIn InMail Best Practices"
       description="Max out your InMail response rates. Learn the ideal length, subject line structures, and copy strategies for high-value B2B prospects."
       slug="the-complete-guide-to-linkedin-inmail-best-practices"
-      publishedDate="June 27, 2026"
-      updatedDate="June 27, 2026"
       bannerSrc="/the-complete-guide-to-linkedin-inmail-best-practices.avif"
       bannerAlt="The Complete Guide to LinkedIn InMail Best Practices outreach concept art"
       faqItems={faqItems}

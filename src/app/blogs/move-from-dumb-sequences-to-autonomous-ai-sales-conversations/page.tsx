@@ -39,8 +39,6 @@ export default function BlogPost() {
       title="How to Move from Dumb Sequences to Autonomous AI Sales Conversations"
       description="Shift from rigid, linear drip campaigns to multi-path conversational trees driven by context-aware AI agents."
       slug="move-from-dumb-sequences-to-autonomous-ai-sales-conversations"
-      publishedDate="June 8, 2026"
-      updatedDate="June 8, 2026"
       bannerSrc="/move-from-dumb-sequences-to-autonomous-ai-sales-conversations.avif"
       bannerAlt="How to Move from Dumb Sequences to Autonomous AI Sales Conversations outreach concept art"
       tocItems={tocItems as any}

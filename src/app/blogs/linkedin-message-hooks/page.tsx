@@ -56,8 +56,6 @@ export default function BlogPost() {
       title="LinkedIn Message Hooks: How to Write B2B Openers That Get Replies"
       description="Master the first 15 words of your outreach. Learn 4 high-converting LinkedIn message hook formulas, contextual templates, and safe campaign pacing."
       slug="linkedin-message-hooks"
-      publishedDate="March 29, 2026"
-      updatedDate="March 29, 2026"
       bannerSrc="/linkedin-message-hooks.avif"
       bannerAlt="LinkedIn message hooks and B2B opening copywriting illustration"
       tocItems={tocItems}

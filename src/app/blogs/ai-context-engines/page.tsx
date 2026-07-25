@@ -58,8 +58,6 @@ export default function BlogPost() {
       title="AI Context Engines: Scaling Personalization Without Sounding Generic"
       description="Discover how to build an AI context engine that consolidates product specs and prospect data to write highly relevant B2B sales copy."
       slug="ai-context-engines"
-      publishedDate="March 1, 2026"
-      updatedDate="March 1, 2026"
       bannerSrc="/ai-context-engines.avif"
       bannerAlt="AI context engine data aggregation and prompt grounding diagram"
       tocItems={tocItems}

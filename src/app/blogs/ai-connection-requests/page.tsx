@@ -62,8 +62,6 @@ export default function BlogPost() {
       title="AI Connection Requests: Write LinkedIn Invites That Earn Trust"
       description="A practical guide to using AI for LinkedIn connection requests without pitching too early, over-personalizing, or risking account trust."
       slug="ai-connection-requests"
-      publishedDate="May 1, 2026"
-      updatedDate="May 1, 2026"
       bannerSrc="/ai-connection-requests.avif"
       bannerAlt="AI LinkedIn connection request workflow"
       faqItems={faqItems}

@@ -62,8 +62,6 @@ export default function BlogPost() {
       title="AI Lead Qualification: Score Better Prospects Before Outreach"
       description="A practical AI lead qualification framework for scoring B2B prospects, rejecting weak-fit accounts, and making every outreach decision auditable."
       slug="ai-lead-qualification"
-      publishedDate="May 8, 2026"
-      updatedDate="May 8, 2026"
       bannerSrc="/ai-lead-qualification.avif"
       bannerAlt="AI lead qualification scoring workflow"
       faqItems={faqItems}

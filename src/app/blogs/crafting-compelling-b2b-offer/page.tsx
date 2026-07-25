@@ -55,8 +55,6 @@ export default function BlogPost() {
       title="Crafting a B2B Offer That Prospects Can't Say No To"
       description="Stop pitching features and start pitching outcomes. Learn how to structure risk reversals, performance guarantees, and value-based pricing to close deals."
       slug="crafting-compelling-b2b-offer"
-      publishedDate="February 20, 2026"
-      updatedDate="February 20, 2026"
       bannerSrc="/crafting-compelling-b2b-offer.avif"
       bannerAlt="B2B offer design and sales risk reversal framework diagram"
       tocItems={tocItems}

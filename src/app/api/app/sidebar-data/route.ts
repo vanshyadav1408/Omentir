@@ -11,6 +11,7 @@ import {
   listConversations,
   listGroups,
   listLeadAgentRefs,
+  listLeadDashboardPreviews,
   listLeadPreviews,
   listLinkedInAccounts,
 } from "@/lib/server/data";
@@ -26,6 +27,9 @@ async function loadFirestoreResource(resource: string, workspaceId: string) {
   if (resource === "agentApiKeys") return { agentApiKeys: await listAgentApiKeys(workspaceId) };
   if (resource === "groups") return { groups: await listGroups(workspaceId) };
   if (resource === "leadPreviews") return { leads: await listLeadPreviews(workspaceId) };
+  if (resource === "leadDashboardPreviews") {
+    return { leads: await listLeadDashboardPreviews(workspaceId) };
+  }
   if (resource === "leadAgentRefs") return { leads: await listLeadAgentRefs(workspaceId) };
   if (resource === "enrollmentPreviews") {
     return { enrollments: await listCampaignEnrollmentPreviews(workspaceId) };

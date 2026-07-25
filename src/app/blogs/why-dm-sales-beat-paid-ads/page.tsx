@@ -55,8 +55,6 @@ export default function BlogPost() {
       title="Why Direct Message Sales Beat Paid Ads for Early Startups"
       description="Stop spending thousands on unvalidated ad campaigns. Learn why direct message outreach provides higher feedback density, lower CAC, and faster validation."
       slug="why-dm-sales-beat-paid-ads"
-      publishedDate="February 17, 2026"
-      updatedDate="February 17, 2026"
       bannerSrc="/why-dm-sales-beat-paid-ads.avif"
       bannerAlt="Outbound direct message sales versus paid advertising customer acquisition costs chart"
       tocItems={tocItems}

@@ -55,8 +55,6 @@ export default function BlogPost() {
       title="LinkedIn Buyer Signals: How to Find and Track Active B2B Intent"
       description="Stop reaching out to cold lists. Master 6 high-converting LinkedIn buyer intent signals, search triggers, and safe campaign pacing."
       slug="linkedin-buyer-signals"
-      publishedDate="March 31, 2026"
-      updatedDate="March 31, 2026"
       bannerSrc="/linkedin-buyer-signals.avif"
       bannerAlt="LinkedIn buyer signals and active B2B intent tracking dashboard illustration"
       tocItems={tocItems}

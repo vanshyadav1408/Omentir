@@ -55,8 +55,6 @@ export default function BlogPost() {
       title="LinkedIn Weekly Connection Limits: How to Navigate Them Safely"
       description="Understand how LinkedIn weekly invite limits affect B2B sales. Discover how multi-profile rotation, high-acceptance copy, and safety limits keep accounts safe."
       slug="linkedin-weekly-connection-limits"
-      publishedDate="February 11, 2026"
-      updatedDate="February 11, 2026"
       bannerSrc="/linkedin-weekly-connection-limits.avif"
       bannerAlt="LinkedIn weekly connection invitation limits and safety margins graph"
       tocItems={tocItems}

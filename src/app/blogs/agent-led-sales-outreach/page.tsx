@@ -54,8 +54,6 @@ export default function BlogPost() {
       title="Agent-Led Sales Outreach: How to Build Autonomous Outbound Pipelines"
       description="Learn how to build and integrate autonomous sales agents with your outreach stack. Master REST APIs, task delegation, and safe LinkedIn automation."
       slug="agent-led-sales-outreach"
-      publishedDate="April 10, 2026"
-      updatedDate="April 10, 2026"
       bannerSrc="/agent-led-sales-outreach.avif"
       bannerAlt="Agent-led sales outreach and autonomous B2B sales development pipeline graphic"
       tocItems={tocItems}

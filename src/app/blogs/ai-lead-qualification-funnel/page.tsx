@@ -55,8 +55,6 @@ export default function BlogPost() {
       title="AI-Driven Lead Qualification: Filtering Out the Noise in B2B Lists"
       description="Discover how to build a multi-stage lead qualification pipeline that filters out unqualified accounts and protects your sending domain reputation."
       slug="ai-lead-qualification-funnel"
-      publishedDate="March 6, 2026"
-      updatedDate="March 6, 2026"
       bannerSrc="/ai-lead-qualification-funnel.avif"
       bannerAlt="AI lead qualification pipeline stages diagram"
       tocItems={tocItems}

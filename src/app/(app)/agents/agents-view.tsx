@@ -10,6 +10,8 @@ import { ContentReveal, OutreachListSkeleton } from "@/app/app-skeletons";
 import NewAgentButton from "./new-agent-button";
 import { useBodyScrollLock } from "@/app/use-body-scroll-lock";
 import { useToast, userFacingError } from "@/app/toast";
+import { useWorkspaceTimeZone } from "@/app/workspace-time-zone";
+import { formatZonedDate } from "@/lib/time-zone";
 
 type AgentsViewProps = {
   agents: Agent[];
@@ -59,12 +61,6 @@ function statusPill(status: Agent["status"]) {
   );
 }
 
-function formatCreatedAt(iso?: string) {
-  if (!iso) return "";
-  const date = new Date(iso);
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-}
-
 function modeLabel(agent: Agent) {
   if (agent.mode === "outreach") return "Outreach Only";
   if (agent.mode === "signals") return "Signals";
@@ -105,6 +101,7 @@ export default function AgentsView({
   atAgentLimit,
 }: AgentsViewProps) {
   const router = useRouter();
+  const timeZone = useWorkspaceTimeZone();
   const agentsResource = useSidebarResource(
     "agents,groups,leadAgentRefs,enrollmentPreviews",
     { agents, groups, leads, enrollments },
@@ -492,7 +489,7 @@ export default function AgentsView({
                       {agent.createdAt ? (
                         <>
                           <span className="mx-1.5 text-zinc-500">·</span>
-                          Created {formatCreatedAt(agent.createdAt)}
+                          Created {formatZonedDate(agent.createdAt, timeZone)}
                         </>
                       ) : null}
                     </p>

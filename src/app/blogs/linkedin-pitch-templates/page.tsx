@@ -62,8 +62,6 @@ export default function BlogPost() {
       title="LinkedIn Pitch Templates: 7 Signals-Based B2B Message Patterns"
       description="Use these LinkedIn pitch templates to turn real buyer signals into concise, relevant B2B messages without sounding automated or pushy."
       slug="linkedin-pitch-templates"
-      publishedDate="May 3, 2026"
-      updatedDate="May 3, 2026"
       bannerSrc="/linkedin-pitch-templates.avif"
       bannerAlt="LinkedIn pitch templates workflow"
       faqItems={faqItems}

@@ -62,8 +62,6 @@ export default function BlogPost() {
       title="MCP LinkedIn Outreach: A Safe Agent Workflow for B2B Sales"
       description="Learn how MCP agents can configure Omentir lead finders, search scored prospects, inspect exact leads, and work with existing replies."
       slug="mcp-linkedin-outreach"
-      publishedDate="May 14, 2026"
-      updatedDate="May 14, 2026"
       bannerSrc="/mcp-linkedin-outreach.avif"
       bannerAlt="MCP workflow for safe LinkedIn outreach"
       faqItems={faqItems}

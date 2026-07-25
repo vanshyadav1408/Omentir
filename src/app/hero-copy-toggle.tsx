@@ -1,11 +1,53 @@
 import type { ReactNode } from "react";
 import AgentTypewriter from "./agent-typewriter";
+import LinkedInWordmark from "./linkedin-wordmark";
+
+/** The lockup replaces the word "LinkedIn" in the headline, so the word itself
+    stays in the markup for crawlers and screen readers via an sr-only span and
+    the logo renders aria-hidden alongside it. */
+function LinkedInLogo() {
+  return (
+    <>
+      <span className="sr-only">LinkedIn</span>
+      <LinkedInWordmark aria-hidden="true" className="hero-linkedin-wordmark" />
+    </>
+  );
+}
 
 export default function HeroCopyToggle({ children }: { children: ReactNode }) {
   return (
     <>
       <style>
         {`
+          /* Sized and aligned against the headline face rather than by eye: the
+             lockup's cap height is 0.7126 of its box and the face's is 0.716em,
+             so 1em tall matches "Convert" exactly. Its letter baseline sits
+             84.87% down the box, so the plate overhangs the baseline by the
+             remaining 0.151em — vertical-align drops it by that much to put the
+             logo's letters on the text baseline instead of the plate's bottom.
+
+             Colour is set here rather than with colour utilities because the
+             dark theme remaps blue text utilities globally. */
+          .hero-linkedin-wordmark {
+            color: #0a66c2;
+            display: inline-block;
+            height: 1em;
+            margin: 0 0.1em;
+            vertical-align: -0.151em;
+            width: auto;
+          }
+
+          /* Dark: keep the brand blue, but paint the "in" counters white so the
+             bug stays blue-plate-on-white rather than knocking through to the
+             page. */
+          html.dark .hero-linkedin-wordmark {
+            color: #2f80e8;
+          }
+
+          html.dark .hero-linkedin-wordmark .li-in {
+            fill: #ffffff;
+          }
+
           .hero-outreach-agentic-copy {
             display: none;
           }
@@ -80,18 +122,20 @@ export default function HeroCopyToggle({ children }: { children: ReactNode }) {
           className="hero-enter w-full max-w-5xl text-[clamp(1.5rem,7vw,1.75rem)] leading-[1.15] font-bold tracking-tight text-[var(--md-sys-color-on-surface)] md:text-5xl md:leading-tight lg:text-6xl lg:leading-tight"
         >
           <span className="block whitespace-nowrap">
-            Find your next{" "}
-            <span className="text-gradient-brand">10 customers</span>
+            Convert <LinkedInLogo /> users
           </span>
-          <span className="block whitespace-nowrap">while you sleep.</span>
+          <span className="block whitespace-nowrap">
+            into your{" "}
+            <span className="text-gradient-brand">customers</span>
+          </span>
         </h1>
         <p
           style={{ fontFamily: "var(--font-roboto)" }}
           className="hero-enter hero-enter-delay-1 mt-4 max-w-2xl text-[0.9375rem] leading-6 text-[var(--md-sys-color-on-surface-variant)] md:mt-6 md:text-base md:leading-8 lg:text-lg"
         >
-          Omentir finds you high-intent leads on LinkedIn, contacts them on{" "}
-          <span className="text-gradient-brand">automation</span>, and books
-          you revenue.
+          Omentir continuously scans LinkedIn for users showing intent signals,
+          flags the profiles which match your ideal customer profile, and
+          reaches out them to sell your product.
         </p>
       </div>
       <div className="hero-outreach-agentic-copy">
@@ -106,7 +150,9 @@ export default function HeroCopyToggle({ children }: { children: ReactNode }) {
           style={{ fontFamily: "var(--font-google-sans)" }}
           className="hero-enter w-full max-w-5xl text-[clamp(1.5rem,7vw,1.75rem)] leading-[1.15] font-bold tracking-tight text-[var(--md-sys-color-on-surface)] md:text-5xl md:leading-tight lg:text-6xl lg:leading-tight"
         >
-          <span className="block whitespace-nowrap">Find your next customers</span>
+          <span className="block whitespace-nowrap">
+            Run <LinkedInLogo /> outreach
+          </span>
           <span className="block whitespace-nowrap">
             with{" "}
             <AgentTypewriter
@@ -119,7 +165,8 @@ export default function HeroCopyToggle({ children }: { children: ReactNode }) {
           className="hero-enter hero-enter-delay-1 mt-4 max-w-2xl text-[0.9375rem] leading-6 text-[var(--md-sys-color-on-surface-variant)] md:mt-6 md:text-base md:leading-8 lg:text-lg"
         >
           Ask your Claude, ChatGPT, OpenClaw, Hermes, Cursor, or any agent to
-          contact high-intent leads for your product.
+          scan LinkedIn, find buyers with intent signals, and contact them on
+          your behalf.
         </p>
       </div>
       {children}

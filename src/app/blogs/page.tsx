@@ -1,7 +1,7 @@
 import JsonLd from "../json-ld";
 import { MarketingHeader, MarketingFooter } from "../marketing-shell";
 import BlogsList from "./blogs-list";
-import { ALL_BLOGS, CATEGORIES } from "./blog-data";
+import { CATEGORIES, liveBlogs } from "./blog-data";
 import { createBlogCollectionJsonLd, createPageMetadata } from "../seo";
 
 export const metadata = createPageMetadata({
@@ -57,7 +57,7 @@ export default function BlogsIndexPage() {
 
       {/* Main Content Area */}
       <section className="mx-auto max-w-6xl px-4 pb-10 pt-16 sm:px-8 sm:pb-14">
-        <BlogsList blogs={ALL_BLOGS} categories={CATEGORIES} />
+        <BlogsList blogs={liveBlogs()} categories={CATEGORIES} />
       </section>
 
       {/* Global Omentir Footer */}

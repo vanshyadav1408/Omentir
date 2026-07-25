@@ -40,8 +40,6 @@ export default function BlogPost() {
       title="Lusha vs. Omentir: Moving Beyond Static Databases to Active Outreach"
       description="Contrast the legacy, mobile-number-heavy database lookups of Lusha with the active, multi-channel automated B2B customer discovery of Omentir."
       slug="lusha-vs-omentir-database-vs-active-outreach"
-      publishedDate="May 24, 2026"
-      updatedDate="May 24, 2026"
       bannerSrc="/lusha-vs-omentir-database-vs-active-outreach.avif"
       bannerAlt="Lusha versus Omentir comparison concept art depicting legacy database lookup versus autonomous multi-channel outreach"
       tocItems={tocItems as any}

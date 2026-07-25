@@ -1069,6 +1069,17 @@ export async function searchLinkedInProfiles(input: {
     searchableLocationNames(input.criteria.locations),
   );
 
+  // When no requested location resolves to a LinkedIn id the search silently
+  // goes global, and network-biased results then waste enrichment budget on
+  // out-of-region people that all get rejected downstream.
+  if (input.criteria.locations.length && !locationIds.length) {
+    console.error(
+      `[unipile] no location ids resolved for ${JSON.stringify(
+        input.criteria.locations,
+      )} - people search for agent ${input.agent.id} is running unscoped.`,
+    );
+  }
+
   const profiles = new Map<string, ReturnType<typeof normalizeUnipileProfile>>();
   const perQueryLimit = Math.max(Math.ceil(input.limit / queries.length), 10);
   const excluded = input.excludeKeys;

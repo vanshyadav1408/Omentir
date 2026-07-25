@@ -55,8 +55,6 @@ export default function BlogPost() {
       title="Omentir is now open source"
       description="Until today, Omentir's code was private. Now the full source code is public on GitHub under the MIT license. Here is why we did it and what it means for you."
       slug="omentir-is-now-open-source"
-      publishedDate="July 23, 2026"
-      updatedDate="July 23, 2026"
       bannerSrc="/omentir-open-source-banner-dark.png"
       bannerAlt="Omentir open source announcement banner"
       tocItems={tocItems}

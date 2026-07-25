@@ -38,8 +38,6 @@ export default function BlogPost() {
       title="Crafting a LinkedIn Profile That Doubles Your Outbound Acceptances"
       description="Optimize your LinkedIn profile as a B2B sales landing page. Learn exactly how to structure your headline, about section, and featured links."
       slug="crafting-a-linkedin-profile-that-doubles-your-outbound-acceptances"
-      publishedDate="July 5, 2026"
-      updatedDate="July 5, 2026"
       bannerSrc="/crafting-a-linkedin-profile-that-doubles-your-outbound-acceptances.avif"
       bannerAlt="Crafting a LinkedIn Profile That Doubles Your Outbound Acceptances outreach concept art"
       faqItems={faqItems}

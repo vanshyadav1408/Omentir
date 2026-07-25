@@ -52,8 +52,6 @@ export default function BlogPost() {
       title="Cognism vs. Apollo.io: Finding Compliant B2B Data for European Sales"
       description="Compare Cognism and Apollo.io head-to-head. Analyze GDPR compliance rules, mobile phone number accuracy, EMEA database coverage, and pricing models."
       slug="cognism-vs-apollo"
-      publishedDate="March 20, 2026"
-      updatedDate="March 20, 2026"
       bannerSrc="/cognism-vs-apollo.avif"
       bannerAlt="Cognism versus Apollo.io database and compliance comparison illustration"
       tocItems={tocItems}

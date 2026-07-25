@@ -39,8 +39,6 @@ export default function BlogPost() {
       title="Apollo.io alternatives: Find the best alternatives to Apollo.io"
       description="Compare legacy database scraping with modern programmatic enrichment cascades and AI active sourcing. Compare database tools, enrichment platforms, and autonomous SDR workflows."
       slug="apollo-alternatives-programmatic-lead-sourcing"
-      publishedDate="May 20, 2026"
-      updatedDate="May 20, 2026"
       bannerSrc="/apollo-alternatives-programmatic-lead-sourcing.avif"
       bannerAlt="Modern programmatic lead sourcing and AI active sourcing architecture concept art"
       tocItems={tocItems as any}

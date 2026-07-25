@@ -11,6 +11,11 @@ import { hasActiveSubscription } from "@/lib/server/subscription";
 import DashboardView from "./dashboard-view";
 import { createPageMetadata } from "@/app/seo";
 import { isLocalMode } from "@/lib/runtime-mode";
+import {
+  buildEarlyFetchScript,
+  DASHBOARD_RESOURCE,
+  LINKEDIN_INBOX_RESOURCE,
+} from "@/app/sidebar-early-fetch";
 
 export const metadata = createPageMetadata({
   title: "Dashboard - Omentir",
@@ -34,16 +39,25 @@ async function DashboardContent({
   averageTicketSize?: number;
 }) {
   return (
-    <DashboardView
-      agents={[]}
-      leads={[]}
-      enrollments={[]}
-      conversations={[]}
-      linkedInThreads={[]}
-      workspace={workspace}
-      userName={userName}
-      averageTicketSize={averageTicketSize}
-    />
+    <>
+      {/* Starts both dashboard requests as the HTML is parsed, so they are
+          already in flight (often finished) by the time the view hydrates. */}
+      <script
+        dangerouslySetInnerHTML={{
+          __html: buildEarlyFetchScript([DASHBOARD_RESOURCE, LINKEDIN_INBOX_RESOURCE]),
+        }}
+      />
+      <DashboardView
+        agents={[]}
+        leads={[]}
+        enrollments={[]}
+        conversations={[]}
+        linkedInThreads={[]}
+        workspace={workspace}
+        userName={userName}
+        averageTicketSize={averageTicketSize}
+      />
+    </>
   );
 }
 

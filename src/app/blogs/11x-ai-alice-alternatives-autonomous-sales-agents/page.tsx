@@ -40,8 +40,6 @@ export default function BlogPost() {
       title="11x.ai (Alice) Alternatives: Evaluating Autonomous Sales Agents in 2026"
       description="An analytical review of autonomous sales agents. Discover the limits of legacy single-channel sequencers and the rise of multi-channel AI salesman."
       slug="11x-ai-alice-alternatives-autonomous-sales-agents"
-      publishedDate="May 21, 2026"
-      updatedDate="May 21, 2026"
       bannerSrc="/11x-ai-alice-alternatives-autonomous-sales-agents.avif"
       bannerAlt="Autonomous sales agents and AI SDR evaluation guide cover graphics"
       tocItems={tocItems as any}

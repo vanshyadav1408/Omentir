@@ -55,8 +55,6 @@ export default function BlogPost() {
       title="How to Set Up an Autonomous Prospecting Agent in Under 10 Minutes"
       description="Follow this simple guide to configure your first autonomous sales agent, set prompt structures, and launch a campaign safely."
       slug="setup-autonomous-prospecting-agent"
-      publishedDate="March 7, 2026"
-      updatedDate="March 7, 2026"
       bannerSrc="/setup-autonomous-prospecting-agent.avif"
       bannerAlt="Autonomous prospecting agent setup steps illustration"
       tocItems={tocItems}

@@ -40,8 +40,6 @@ export default function BlogPost() {
       title="Autonomous Lead Generation: The Shift from CRM to AI Sales Agents"
       description="Understand the transition from static CRMs and sequences to autonomous AI sales agents that discover, nurture, and qualify B2B leads independently."
       slug="autonomous-lead-generation-shift-crm-to-ai-sales-agents"
-      publishedDate="June 2, 2026"
-      updatedDate="June 2, 2026"
       bannerSrc="/autonomous-lead-generation-shift-crm-to-ai-sales-agents.avif"
       bannerAlt="Autonomous lead generation and CRMs to AI sales agents paradigm shift graphic"
       tocItems={tocItems as any}

@@ -23,6 +23,20 @@ export const metadata = createPageMetadata({
 
 export const dynamic = "force-dynamic";
 
+/** How long after connecting LinkedIn the "you're all set" hand-off stays valid. */
+const LINKEDIN_CONFIRMATION_WINDOW_MS = 10 * 60 * 1000;
+
+/**
+ * True only while the post-connect confirmation is still a fresh hand-off from
+ * /connect/success. Kept out of the component body so the clock read stays out
+ * of render (react-hooks/purity). Missing or unparseable timestamps fail closed.
+ */
+function isConnectionConfirmationFresh(createdAt: string | undefined) {
+  const connectedAt = createdAt ? Date.parse(createdAt) : NaN;
+  if (!Number.isFinite(connectedAt)) return false;
+  return Date.now() - connectedAt < LINKEDIN_CONFIRMATION_WINDOW_MS;
+}
+
 export default async function OnboardingPage({
   searchParams,
 }: {
@@ -87,7 +101,14 @@ export default async function OnboardingPage({
   // /subscription-creation-successful and /connect/success. They render inside
   // the onboarding chrome instead of as standalone pages.
   const showSubscriptionConfirmed = status === "subscription-confirmed" && !subActive;
-  const showLinkedInConnected = status === "linkedin-connected";
+  // ?status=linkedin-connected is the one thing that can hold a fully onboarded
+  // user on this page, so it is bounded to a short window after the account was
+  // actually connected. Without that, anyone who kept or shared the URL could
+  // re-enter onboarding indefinitely. An absent or unparseable createdAt fails
+  // closed to the dashboard redirect below.
+  const showLinkedInConnected =
+    status === "linkedin-connected" &&
+    isConnectionConfirmationFresh(linkedInAccount?.createdAt);
 
   // Fully onboarded and not showing the final connected confirmation -> dashboard.
   if (step === 6 && !showLinkedInConnected) {

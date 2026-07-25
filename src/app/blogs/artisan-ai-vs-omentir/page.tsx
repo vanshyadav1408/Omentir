@@ -53,8 +53,6 @@ export default function BlogPost() {
       title="Artisan AI (Ava) vs. Omentir: A Deep Dive into Autonomous SDRs"
       description="Compare Artisan AI (Ava) and Omentir head-to-head. Analyze their approach to B2B customer discovery, lead scoring, message personalization, and delivery safety."
       slug="artisan-ai-vs-omentir"
-      publishedDate="March 22, 2026"
-      updatedDate="March 22, 2026"
       bannerSrc="/artisan-ai-vs-omentir.avif"
       bannerAlt="Artisan AI Ava versus Omentir comparison dashboard illustration"
       tocItems={tocItems}

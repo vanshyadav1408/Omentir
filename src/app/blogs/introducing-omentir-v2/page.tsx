@@ -68,8 +68,6 @@ export default function BlogPost() {
       title="Introducing Omentir v2"
       description="Omentir v2 introduces simpler pricing, Agent API, and connectors for AI agents to make outreach dead simple."
       slug="introducing-omentir-v2"
-      publishedDate="July 6, 2026"
-      updatedDate="July 6, 2026"
       bannerSrc="/find-your-next-10-customers-banner.avif"
       bannerAlt="Omentir v2 launch banner showing pricing, API, and connector updates"
       tocItems={tocItems}

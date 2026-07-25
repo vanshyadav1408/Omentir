@@ -38,8 +38,6 @@ export default function BlogPost() {
       title="7 Common LinkedIn Outreach Mistakes (And How to Fix Them)"
       description="Identify and resolve the 7 most common LinkedIn prospecting errors that hurt reply rates and damage your domain or account health."
       slug="7-common-linkedin-outreach-mistakes-and-how-to-fix-them"
-      publishedDate="June 28, 2026"
-      updatedDate="June 28, 2026"
       bannerSrc="/7-common-linkedin-outreach-mistakes-and-how-to-fix-them.avif"
       bannerAlt="7 Common LinkedIn Outreach Mistakes (And How to Fix Them) outreach concept art"
       faqItems={faqItems}

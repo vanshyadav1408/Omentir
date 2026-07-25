@@ -41,8 +41,6 @@ export default function BlogPost() {
       title="Clay vs. Apollo.io: Which Data Sourcing Engine Scales Best?"
       description="Compare Clay's programmatic waterfall enrichment cascade with Apollo.io's direct database sourcing. Discover how Omentir bridges the gap as an autonomous lead sourcing and active outreach SDR under one hood."
       slug="clay-vs-apollo-data-sourcing-comparison"
-      publishedDate="May 22, 2026"
-      updatedDate="May 22, 2026"
       bannerSrc="/clay-vs-apollo-data-sourcing-comparison.avif"
       bannerAlt="Clay vs. Apollo.io B2B data sourcing and enrichment comparison cover art"
       tocItems={tocItems as any}

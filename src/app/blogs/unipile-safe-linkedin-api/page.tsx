@@ -57,8 +57,6 @@ export default function BlogPost() {
       title="How Unipile Ensures Safe and Encrypted LinkedIn API Access"
       description="Understand the technical architecture behind secure social selling. Learn how Unipile manages cookie encryption, proxy routing, and server-side API integration."
       slug="unipile-safe-linkedin-api"
-      publishedDate="February 6, 2026"
-      updatedDate="February 6, 2026"
       bannerSrc="/unipile-safe-linkedin-api.avif"
       bannerAlt="Unipile encrypted API routing and session proxy architecture diagram"
       tocItems={tocItems}

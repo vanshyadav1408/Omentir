@@ -55,8 +55,6 @@ export default function BlogPost() {
       title="LinkedIn Outreach Funnel: How to Optimize Every Stage of Outbound Sales"
       description="Stop guessing where your sales pipeline is leaking. Master the LinkedIn outreach funnel with concrete benchmarks, conversion metrics, and tactical optimization tips."
       slug="linkedin-outreach-funnel"
-      publishedDate="April 22, 2026"
-      updatedDate="April 22, 2026"
       bannerSrc="/linkedin-outreach-funnel.avif"
       bannerAlt="LinkedIn outreach sales funnel architecture"
       tocItems={tocItems}

@@ -56,8 +56,6 @@ export default function BlogPost() {
       title="Outreach for SaaS Founders: Validate Ideas and Secure Design Partners"
       description="A founder-led guide to running LinkedIn outreach for product validation, securing design partners, and landing your first 50 B2B SaaS users safely."
       slug="outreach-for-saas-founders"
-      publishedDate="April 12, 2026"
-      updatedDate="April 12, 2026"
       bannerSrc="/outreach-for-saas-founders.avif"
       bannerAlt="Outreach for B2B SaaS founders and product validation workflow illustration"
       tocItems={tocItems}

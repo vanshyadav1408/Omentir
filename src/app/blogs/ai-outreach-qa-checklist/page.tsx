@@ -54,8 +54,6 @@ export default function BlogPost() {
       title="AI Outreach QA Checklist: The Pre-Launch Audit Rubric for B2B Teams"
       description="Verify your AI campaigns before launching. Learn the essential QA steps for variables, prompts, links, and safe LinkedIn pacing."
       slug="ai-outreach-qa-checklist"
-      publishedDate="April 4, 2026"
-      updatedDate="April 4, 2026"
       bannerSrc="/ai-outreach-qa-checklist.avif"
       bannerAlt="AI outreach quality assurance (QA) checklist and campaign review panel illustration"
       tocItems={tocItems}

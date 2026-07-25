@@ -57,8 +57,6 @@ export default function BlogPost() {
       title="The Complete Compliance Checklist for LinkedIn Outreach in 2026"
       description="Stay compliant with legal regulations and platform guidelines. Audit your 2026 outbound campaigns for GDPR, CAN-SPAM, and API routing safety."
       slug="linkedin-outreach-compliance-2026"
-      publishedDate="February 1, 2026"
-      updatedDate="February 1, 2026"
       bannerSrc="/linkedin-outreach-compliance-2026.avif"
       bannerAlt="B2B outreach legal compliance checklist and platform safety rules illustration"
       tocItems={tocItems}

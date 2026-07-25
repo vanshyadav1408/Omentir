@@ -53,8 +53,6 @@ export default function BlogPost() {
       title="How to Use AI to Personalize B2B Outreach at Scale"
       description="Discover how to build a personalization pipeline that writes high-converting B2B outreach copy grounded in prospect context."
       slug="ai-personalization-at-scale"
-      publishedDate="March 15, 2026"
-      updatedDate="March 15, 2026"
       bannerSrc="/ai-personalization-at-scale.avif"
       bannerAlt="AI personalization at scale workflow architecture illustration"
       tocItems={tocItems}

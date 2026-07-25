@@ -39,8 +39,6 @@ export default function BlogPost() {
       title="Hooking the Prospect: LinkedIn Intro Lines That Drive 40%+ Reply Rates"
       description="Learn how to write highly personalized LinkedIn hook lines that grab attention, establish immediate trust, and double your reply rates."
       slug="hooking-the-prospect-linkedin-intro-lines-that-drive-40-percent-reply-rates"
-      publishedDate="June 18, 2026"
-      updatedDate="June 18, 2026"
       bannerSrc="/hooking-the-prospect-linkedin-intro-lines-that-drive-40-percent-reply-rates.avif"
       bannerAlt="Hooking the Prospect: LinkedIn Intro Lines That Drive 40%+ Reply Rates outreach concept art"
       faqItems={faqItems}

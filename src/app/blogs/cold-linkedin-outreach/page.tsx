@@ -62,8 +62,6 @@ export default function BlogPost() {
       title="Cold LinkedIn Outreach: A Practical B2B Workflow That Still Feels Human"
       description="A practical guide to cold LinkedIn outreach for B2B founders and lean sales teams, from targeting and connection requests to first messages and follow-up."
       slug="cold-linkedin-outreach"
-      publishedDate="April 29, 2026"
-      updatedDate="April 29, 2026"
       bannerSrc="/cold-linkedin-outreach.avif"
       bannerAlt="Cold LinkedIn outreach workflow"
       faqItems={faqItems}

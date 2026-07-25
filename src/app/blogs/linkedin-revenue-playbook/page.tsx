@@ -54,8 +54,6 @@ export default function BlogPost() {
       title="LinkedIn Revenue Playbook: How to Scale B2B Pipelines Safely"
       description="Stop tracking vanity metrics. Learn the operational playbook to align LinkedIn outreach with pipeline velocity, operator leverage, and LTV."
       slug="linkedin-revenue-playbook"
-      publishedDate="March 23, 2026"
-      updatedDate="March 23, 2026"
       bannerSrc="/linkedin-revenue-playbook.avif"
       bannerAlt="LinkedIn revenue playbook and B2B pipeline scalability dashboard illustration"
       tocItems={tocItems}

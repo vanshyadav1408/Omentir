@@ -26,10 +26,12 @@ import {
   resumeAgent,
   revokeAgentApiKey,
   setAverageTicketSize,
+  setSendWindowForGroup,
   updateAgent,
   updateWorkspaceOnboarding,
   updateWorkspaceNotificationEmail,
   updateWorkspaceSettings,
+  updateWorkspaceTimezone,
   upsertProductProfile,
   upsertLead,
 } from "@/lib/server/data";
@@ -461,8 +463,29 @@ export async function saveSettingsAction(formData: FormData) {
     aiFollowUpEnabled: formData.get("aiFollowUpEnabled") === "on",
   });
 
-  await updateWorkspaceSettings(workspace.id, parsed);
+  const timezone = String(formData.get("timezone") || "").trim();
+
+  await Promise.all([
+    updateWorkspaceSettings(workspace.id, parsed),
+    // Blank means the form was submitted without the picker (or with an
+    // unchanged value) - leave whatever is stored alone.
+    timezone && timezone !== workspace.timezone
+      ? updateWorkspaceTimezone(workspace.id, timezone)
+      : Promise.resolve(),
+  ]);
   revalidatePath("/settings");
+  // Times on every other page are rendered in this zone too.
+  revalidatePath("/actions");
+}
+
+// Called once by the app shell for workspaces that have never had a zone
+// stored, so the schedule the server computes matches the clock the user reads.
+// An explicit choice in Settings always wins: this only fills a blank.
+export async function saveWorkspaceTimeZoneAction(timezone: string) {
+  const workspace = await requireWorkspace();
+  if (workspace.timezone) return;
+  await updateWorkspaceTimezone(workspace.id, String(timezone || "").trim());
+  revalidatePath("/actions");
 }
 
 export async function runScheduledActionNowAction(formData: FormData) {
@@ -621,6 +644,7 @@ async function updateAgentFromForm(
     },
     linkedInAccountId: account.id,
     targetGroupName: groupName,
+    runAtHour: parseRunAtHour(formData.get("runAtHour")),
   });
 }
 
@@ -637,7 +661,15 @@ export async function updateAgentForSetupAction(formData: FormData) {
 export async function updateAgentAction(formData: FormData) {
   const workspace = await requireWorkspace();
   requireActiveSubscription(workspace);
-  await updateAgentFromForm(workspace, formData);
+  const agent = await updateAgentFromForm(workspace, formData);
+  // Editing an agent does not go through createCampaignAction, so the send
+  // window picker on the same form has to be applied to the agent's existing
+  // campaigns here or it silently does nothing after launch.
+  await setSendWindowForGroup(
+    workspace.id,
+    agent.targetGroupId,
+    parseSendWindow(formData.get("sendWindow")),
+  );
 
   revalidateWorkspaceDataPages();
   revalidatePath("/leads");

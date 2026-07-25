@@ -38,8 +38,6 @@ export default function BlogPost() {
       title='How to Nurture LinkedIn Leads Who Say "Not Right Now"'
       description="Learn how to turn soft-rejections into long-term pipeline by building value-first nurturing routines on LinkedIn."
       slug="how-to-nurture-linkedin-leads-who-say-not-right-now"
-      publishedDate="July 1, 2026"
-      updatedDate="July 1, 2026"
       bannerSrc="/how-to-nurture-linkedin-leads-who-say-not-right-now.avif"
       bannerAlt='How to Nurture LinkedIn Leads Who Say "Not Right Now" outreach concept art'
       faqItems={faqItems}

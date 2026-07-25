@@ -38,8 +38,6 @@ export default function BlogPost() {
       title="The Founder's Playbook: Booking Early Demos on LinkedIn"
       description="A comprehensive manual for early-stage founders to book their first 20 B2B sales meetings and validate customer interest on LinkedIn."
       slug="the-founders-playbook-booking-early-demos-on-linkedin"
-      publishedDate="June 30, 2026"
-      updatedDate="June 30, 2026"
       bannerSrc="/the-founders-playbook-booking-early-demos-on-linkedin.avif"
       bannerAlt="The Founder's Playbook: Booking Early Demos on LinkedIn outreach concept art"
       faqItems={faqItems}

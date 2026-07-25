@@ -62,8 +62,6 @@ export default function BlogPost() {
       title="Founder LinkedIn Demos: Turn Sales Calls Into Product Learning"
       description="A founder-led guide to running LinkedIn-sourced demos that reveal real buyer pain, create trust, and move qualified prospects toward the next step."
       slug="founder-linkedin-demos"
-      publishedDate="May 9, 2026"
-      updatedDate="May 9, 2026"
       bannerSrc="/founder-linkedin-demos.avif"
       bannerAlt="Founder-led LinkedIn demo workflow"
       faqItems={faqItems}

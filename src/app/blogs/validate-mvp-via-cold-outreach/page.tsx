@@ -55,8 +55,6 @@ export default function BlogPost() {
       title="Cold Outreach is the Best Way to Validate Your MVP"
       description="Stop building features without feedback. Learn how to design a targeted outreach campaign to test demand, identify target features, and secure early clients."
       slug="validate-mvp-via-cold-outreach"
-      publishedDate="February 25, 2026"
-      updatedDate="February 25, 2026"
       bannerSrc="/validate-mvp-via-cold-outreach.avif"
       bannerAlt="B2B MVP validation funnel and outbound campaign metrics diagram"
       tocItems={tocItems}

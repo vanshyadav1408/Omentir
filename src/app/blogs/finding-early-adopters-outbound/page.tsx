@@ -58,8 +58,6 @@ export default function BlogPost() {
       title="Finding Your Early Adopters: A Practical Outbound Framework"
       description="Stop wasting campaign volume on slow enterprise buyers. Master this outreach framework to source, pitch, and convert early adopters into design partners."
       slug="finding-early-adopters-outbound"
-      publishedDate="February 12, 2026"
-      updatedDate="February 12, 2026"
       bannerSrc="/finding-early-adopters-outbound.avif"
       bannerAlt="B2B early adopter customer acquisition funnel and campaign filters diagram"
       tocItems={tocItems}

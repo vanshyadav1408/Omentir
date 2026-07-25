@@ -55,8 +55,6 @@ export default function BlogPost() {
       title="3 Simple Sales Funnels Every Early B2B SaaS Needs"
       description="Stop relying on single-channel growth. Learn how to configure sales-led outbound, self-serve product trials, and inbound content funnels to scale your MRR."
       slug="3-simple-sales-funnels"
-      publishedDate="February 19, 2026"
-      updatedDate="February 19, 2026"
       bannerSrc="/3-simple-sales-funnels.avif"
       bannerAlt="Three B2B SaaS sales funnels structure and metrics diagram"
       tocItems={tocItems}

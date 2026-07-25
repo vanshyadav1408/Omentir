@@ -4,6 +4,7 @@ import { createHash, randomBytes } from "crypto";
 import { FieldValue } from "firebase-admin/firestore";
 import { hashAgentApiToken } from "@/lib/agent-api-token";
 import { planLimits } from "@/lib/plan-limits";
+import { isValidTimeZone } from "@/lib/time-zone";
 import { getDb, nowIso, cleanId, normalizeLinkedInProfileUrl } from "./firebase";
 import { hasIntervalElapsed, isAgentDueForRun, nextDailyAgentRunAt } from "./scheduling";
 import {
@@ -29,10 +30,12 @@ import type {
   Group,
   Lead,
   LeadAgentRef,
+  LeadDashboardPreview,
   LeadPreview,
   LeadSignal,
   LinkedInAccount,
   ProductProfile,
+  SendWindow,
   Workspace,
   WorkspaceBilling,
   WorkspaceOnboarding,
@@ -344,6 +347,22 @@ export async function updateWorkspaceSettings(
     updatedAt: nowIso(),
   });
   return next;
+}
+
+// The workspace timezone is what send windows, daily quota resets and every
+// date shown in the app are expressed in, so an unparseable value is rejected
+// rather than stored - a bad zone would silently reinterpret every schedule.
+export async function updateWorkspaceTimezone(workspaceId: string, timezone: string) {
+  if (!isValidTimeZone(timezone)) throw new Error("Unknown time zone.");
+  await ensureWorkspace(workspaceId);
+  await collection<Workspace>("workspaces").doc(workspaceId).set(
+    {
+      timezone,
+      updatedAt: nowIso(),
+    },
+    { merge: true },
+  );
+  return timezone;
 }
 
 export async function updateWorkspaceNotificationEmail(workspaceId: string, email: string) {
@@ -696,9 +715,17 @@ export async function updateAgent(
   // now on every save, so tweaking job titles at 11pm permanently moved
   // discovery to 11pm. It is only recomputed when the user actually changes the
   // hour, and only ever from that hour.
-  const workspace = await getWorkspace(workspaceId);
   const previousHour = normalizeRunAtHour(agent.runAtHour);
   const runAtHour = normalizeRunAtHour(input.runAtHour ?? agent.runAtHour);
+  // Read the workspace only when the hour actually moved, and never let that
+  // read fail the save: the timezone is needed for the new nextRunAt alone, so
+  // a Firestore hiccup should cost the reschedule, not the user's edit.
+  const rescheduledRunAt =
+    runAtHour === previousHour
+      ? undefined
+      : await getWorkspace(workspaceId)
+          .then((workspace) => nextLocalAgentRunAt(runAtHour, workspace.timezone))
+          .catch(() => undefined);
 
   const patch: Partial<Agent> = {
     name: input.name || input.targetGroupName || agent.name,
@@ -714,9 +741,7 @@ export async function updateAgent(
     targetGroupName: group.name,
     status: agent.status === "paused" ? "paused" : "active",
     runStartedAt: FieldValue.delete() as unknown as string,
-    ...(runAtHour === previousHour
-      ? {}
-      : { nextRunAt: nextLocalAgentRunAt(runAtHour, workspace.timezone) }),
+    ...(rescheduledRunAt ? { nextRunAt: rescheduledRunAt } : {}),
     updatedAt: nowIso(),
   };
 
@@ -1049,6 +1074,34 @@ export async function listLeadPreviews(
   return snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as LeadPreview);
 }
 
+// Dashboard projection. The dashboard is the slowest page to first paint and
+// leads are its heaviest read, so it selects only the fields its stat cards,
+// hot-lead list, activity chart and reply matching actually render. On a
+// 367-lead workspace this cuts the response from ~630 KB to ~230 KB and the
+// query from ~2.9s to ~1.5s.
+export async function listLeadDashboardPreviews(
+  workspaceId: string,
+  limit = 500,
+): Promise<LeadDashboardPreview[]> {
+  const snap = await collection<Lead>("leads")
+    .where("workspaceId", "==", workspaceId)
+    .select(
+      "linkedInUrl",
+      "avatarUrl",
+      "name",
+      "title",
+      "company",
+      "fitScore",
+      "sourceAgentId",
+      "outreachStatus",
+      "createdAt",
+      "updatedAt",
+    )
+    .limit(limit)
+    .get();
+  return snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as LeadDashboardPreview);
+}
+
 // Resolve specific leads by id in batches. The list views above cap at 500
 // leads, so in a larger workspace an enrollment/conversation can reference a
 // lead that falls outside that page - which drops the person's name/details
@@ -1330,7 +1383,9 @@ export async function createCampaign(
 export async function updateCampaign(
   workspaceId: string,
   campaignId: string,
-  patch: Partial<Pick<Campaign, "name" | "status" | "steps" | "linkedInAccountId" | "replyHandling">>,
+  patch: Partial<
+    Pick<Campaign, "name" | "status" | "steps" | "linkedInAccountId" | "replyHandling" | "sendWindow">
+  >,
 ) {
   const ref = collection<Campaign>("campaigns").doc(campaignId);
   const snap = await ref.get();
@@ -1347,6 +1402,27 @@ export async function updateCampaign(
 
   await ref.update(next);
   return { ...campaign, ...next } as Campaign;
+}
+
+// The agent editor owns the send window, but the window lives on the campaign
+// (each campaign's actions are checked against its own window). An agent drives
+// every campaign built on its lead group, so a window change on the edit form
+// applies to all of them - otherwise the picker silently does nothing once the
+// agent exists, which is exactly what it did before this.
+export async function setSendWindowForGroup(
+  workspaceId: string,
+  groupId: string,
+  sendWindow: SendWindow,
+) {
+  if (!groupId) return 0;
+  const campaigns = (await listCampaigns(workspaceId)).filter(
+    (campaign) => campaign.groupId === groupId && (campaign.sendWindow || "always") !== sendWindow,
+  );
+
+  await Promise.all(
+    campaigns.map((campaign) => updateCampaign(workspaceId, campaign.id, { sendWindow })),
+  );
+  return campaigns.length;
 }
 
 // After a campaign's steps are edited, realign every in-flight enrollment's
@@ -1507,23 +1583,27 @@ export async function enrollNewLeadsInCampaign(workspaceId: string, campaign: Ca
     })),
   });
 
-  const batch = getDb().batch();
-  for (const { ref, lead } of pending) {
-    const enrollment: CampaignEnrollment = {
-      id: ref.id,
-      workspaceId,
-      campaignId: campaign.id,
-      leadId: lead.id,
-      status: "queued",
-      currentStepIndex: 0,
-      nextActionAt: new Date(plan.get(ref.id) ?? Date.parse(timestamp)).toISOString(),
-      createdAt: timestamp,
-      updatedAt: timestamp,
-    };
-    batch.set(ref, enrollment);
+  // Chunked at 450: Firestore rejects a batch of more than 500 writes, and a
+  // group large enough to exceed that is exactly the case this path exists for.
+  for (let index = 0; index < pending.length; index += 450) {
+    const batch = getDb().batch();
+    for (const { ref, lead } of pending.slice(index, index + 450)) {
+      const enrollment: CampaignEnrollment = {
+        id: ref.id,
+        workspaceId,
+        campaignId: campaign.id,
+        leadId: lead.id,
+        status: "queued",
+        currentStepIndex: 0,
+        nextActionAt: new Date(plan.get(ref.id) ?? Date.parse(timestamp)).toISOString(),
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      };
+      batch.set(ref, enrollment);
+    }
+    await batch.commit();
   }
 
-  await batch.commit();
   return pending.length;
 }
 
@@ -1531,6 +1611,11 @@ export async function enrollNewLeadsInCampaign(workspaceId: string, campaign: Ca
 // never lands on top of outreach that is already scheduled. Scoped to the
 // account rather than the campaign because the spacing rule is per-account:
 // two campaigns sharing one LinkedIn account share one drip.
+//
+// Read earliest-first, so a queue deeper than this loses only its far tail -
+// the slots a new action would never be planned into anyway.
+const RESERVED_SLOT_SCAN_LIMIT = 1000;
+
 async function listReservedActionSlots(workspaceId: string, linkedInAccountId?: string) {
   const campaigns = await listCampaigns(workspaceId);
   const sharingAccount = new Set(
@@ -1541,21 +1626,35 @@ async function listReservedActionSlots(workspaceId: string, linkedInAccountId?: 
   if (sharingAccount.size === 0) return [];
 
   try {
-    // Requires composite index (workspaceId ASC, nextActionAt ASC).
-    const snap = await collection<CampaignEnrollment>("campaignEnrollments")
-      .where("workspaceId", "==", workspaceId)
-      .where("nextActionAt", ">=", nowIso())
-      .select("campaignId", "nextActionAt", "status")
-      .limit(1000)
-      .get();
+    // The campaign filter runs IN the query, not after it. Filtering a
+    // workspace-wide `limit(1000)` in memory meant a workspace with more than
+    // 1000 future enrollments spread across campaigns silently lost this
+    // account's reservations - the planner then happily double-booked slots it
+    // simply could not see. Chunked because Firestore caps `in` at 30 values.
+    // Requires composite index (workspaceId ASC, campaignId ASC, nextActionAt ASC).
+    const campaignIds = [...sharingAccount];
+    const chunks: string[][] = [];
+    for (let index = 0; index < campaignIds.length; index += 30) {
+      chunks.push(campaignIds.slice(index, index + 30));
+    }
 
-    return snap.docs
-      .map((doc) => doc.data())
-      .filter(
-        (enrollment) =>
-          sharingAccount.has(enrollment.campaignId) &&
-          !["stopped", "replied"].includes(enrollment.status),
-      )
+    const since = nowIso();
+    const results = await Promise.all(
+      chunks.map((chunk) =>
+        collection<CampaignEnrollment>("campaignEnrollments")
+          .where("workspaceId", "==", workspaceId)
+          .where("campaignId", "in", chunk)
+          .where("nextActionAt", ">=", since)
+          .orderBy("nextActionAt", "asc")
+          .select("campaignId", "nextActionAt", "status")
+          .limit(RESERVED_SLOT_SCAN_LIMIT)
+          .get(),
+      ),
+    );
+
+    return results
+      .flatMap((snap) => snap.docs.map((doc) => doc.data()))
+      .filter((enrollment) => !["stopped", "replied"].includes(enrollment.status))
       .map((enrollment) => Date.parse(enrollment.nextActionAt))
       .filter((ms) => Number.isFinite(ms));
   } catch (error) {
@@ -2177,9 +2276,15 @@ export async function listAutomationRuns(workspaceId: string, limit = 100) {
 // quota-blocked enrollments retry hourly, the whole day's volume resumed the
 // moment the UTC boundary passed - a ~100-minute burst at 00:00 UTC (20:00
 // local in New York, 05:30 in Kolkata) rather than a drip through the day.
-// The doc id changes shape on rollout, so a workspace may get one extra
-// partial day's allowance once; under-sending is the only alternative and a
-// single day's overlap is the cheaper side of that trade.
+// The doc id keeps its `${workspaceId}-YYYY-MM-DD` shape; only the date it
+// resolves to moves, so a workspace may get one extra partial day's allowance
+// on rollout. Under-sending is the only alternative and a single day's overlap
+// is the cheaper side of that trade.
+//
+// `timezone` is required on every caller rather than defaulting to UTC: a
+// caller that forgets it would silently count against a DIFFERENT usageDays
+// document than the automation tick, so the same day's limit could be spent
+// twice. Pass `undefined` explicitly only where no workspace is in scope.
 function quotaDayKey(timezone: string | undefined) {
   return zonedParts(timezone, Date.now()).dayKey;
 }
@@ -2188,7 +2293,7 @@ export async function hasDailyQuotaRemaining(
   workspaceId: string,
   kind: "invites" | "messages",
   limit: number,
-  timezone?: string,
+  timezone: string | undefined,
 ) {
   const today = quotaDayKey(timezone);
   const snap = await getDb().collection("usageDays").doc(`${workspaceId}-${today}`).get();
@@ -2199,7 +2304,7 @@ export async function hasDailyQuotaRemaining(
 // How much of each local day's allowance is already spent, for the planner's
 // usedByDay input. Only today is read: future days are always empty, and the
 // planner treats a missing key as zero.
-export async function getDailyQuotaUsage(workspaceId: string, timezone?: string) {
+export async function getDailyQuotaUsage(workspaceId: string, timezone: string | undefined) {
   const today = quotaDayKey(timezone);
   const snap = await getDb().collection("usageDays").doc(`${workspaceId}-${today}`).get();
   const data = snap.data() || {};
@@ -2218,7 +2323,7 @@ export async function consumeDailyQuota(
   workspaceId: string,
   kind: "invites" | "messages",
   limit: number,
-  timezone?: string,
+  timezone: string | undefined,
 ) {
   const today = quotaDayKey(timezone);
   const ref = getDb().collection("usageDays").doc(`${workspaceId}-${today}`);

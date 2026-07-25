@@ -40,8 +40,6 @@ export default function BlogPost() {
       title="Cognism Alternatives: High-Quality Contact Data Providers for Global Sales"
       description="Review the top Cognism alternatives for global lead generation. Contrast static databases with active, real-time context-aware AI outbound sales systems."
       slug="cognism-alternatives-contact-data-providers"
-      publishedDate="May 30, 2026"
-      updatedDate="May 30, 2026"
       bannerSrc="/cognism-alternatives-contact-data-providers.avif"
       bannerAlt="Cognism alternatives and global compliant B2B contact data providers cover art"
       tocItems={tocItems as any}
