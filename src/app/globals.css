@@ -1362,6 +1362,19 @@ html.dark .m3-ai-loading-scrim--transparent {
   color: var(--md-sys-color-on-surface-variant);
 }
 
+/* Same indicator inline beside a label, for a background refresh that must not
+   take the screen over - e.g. the lead preview upgrading its draft results. */
+.m3-ai-loading-indicator--inline {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+}
+
+.m3-ai-loading-indicator--inline .m3-ai-loading-indicator__track,
+.m3-ai-loading-indicator--inline .m3-ai-loading-indicator__active {
+  stroke-width: 6;
+}
+
 @keyframes m3-ai-progress-rotate {
   to {
     transform: rotate(360deg);

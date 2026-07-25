@@ -52,6 +52,7 @@ const localServicePrefixes = [
   "/api/agent/v1/",
   "/api/connect/callback",
   "/api/jobs/automation-tick",
+  "/api/jobs/gemini-diagnostics",
   "/api/webhooks/unipile",
   "/api/webhooks/clerk",
   "/api/webhooks/whop",

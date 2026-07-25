@@ -29,11 +29,13 @@ export type LeadPreviewInput = {
 };
 
 type State =
-  // Starts idle: the search costs up to ~90s of the user's time, so it runs
+  // Starts idle: the search costs up to a minute of the user's time, so it runs
   // only when they ask for it rather than the moment step 2 renders.
   | { status: "idle" }
   | { status: "loading" }
-  | { status: "ready"; leads: PreviewLead[] }
+  // `upgrading` means the fast draft is on screen while the grounded search is
+  // still running; its results replace these when they land.
+  | { status: "ready"; leads: PreviewLead[]; upgrading: boolean }
   | { status: "error"; message: string };
 
 function initials(name: string) {
@@ -128,6 +130,20 @@ function AdvanceAction({
   );
 }
 
+/** The overlay's indicator at label size, for the background upgrade pass. */
+function InlineSpinner() {
+  return (
+    <svg
+      className="m3-ai-loading-indicator m3-ai-loading-indicator--inline"
+      viewBox="0 0 48 48"
+      aria-hidden="true"
+    >
+      <circle className="m3-ai-loading-indicator__track" cx="24" cy="24" r="20" pathLength={100} />
+      <circle className="m3-ai-loading-indicator__active" cx="24" cy="24" r="20" pathLength={100} />
+    </svg>
+  );
+}
+
 function FitScore({ score }: { score: number }) {
   return (
     <span
@@ -160,39 +176,78 @@ export default function StepLeadPreview({
   useEffect(() => {
     if (!runToken) return;
     let cancelled = false;
+
+    // One request per pass. `fast` is a plain model call that lands in ~10s;
+    // `search` is grounded in live web results, so it is slower but returns
+    // people who currently hold the job. Anything that can only fail on the
+    // server (quota, timeout) answers with a message worth showing.
+    const fetchLeads = async (mode: "fast" | "search", timeoutMs: number) => {
+      const response = await fetch("/api/onboarding/lead-preview", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ ...JSON.parse(inputJson), mode }),
+        // Without a deadline a hung proxy keeps the loading overlay up forever
+        // with no way forward; failing surfaces the retry UI.
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+      // A proxy timeout or crash answers with an HTML body, so parsing must not
+      // be what reports the failure - otherwise the user is shown a raw
+      // "Unexpected token '<'" instead of something actionable.
+      const payload = (await response
+        .json()
+        .catch(() => ({}))) as { leads?: PreviewLead[]; error?: string };
+      if (!response.ok) throw new Error(payload.error || "Could not find potential customers.");
+      if (!payload.leads?.length) throw new Error("Could not find potential customers.");
+      return payload.leads;
+    };
+
     const findLeads = async () => {
       setState({ status: "loading" });
-      try {
-        const response = await fetch("/api/onboarding/lead-preview", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: inputJson,
-          // Without a deadline a hung proxy keeps the loading overlay up
-          // forever with no way forward; failing surfaces the retry UI.
-          signal: AbortSignal.timeout(90_000),
-        });
-        // A proxy timeout or crash answers with an HTML body, so parsing must
-        // not be what reports the failure - otherwise the user is shown a raw
-        // "Unexpected token '<'" instead of something actionable.
-        const payload = (await response
-          .json()
-          .catch(() => ({}))) as { leads?: PreviewLead[]; error?: string };
-        if (!response.ok) throw new Error(payload.error || "Could not find potential customers.");
-        if (!payload.leads?.length) throw new Error("Could not find potential customers.");
-        if (!cancelled) setState({ status: "ready", leads: payload.leads });
-      } catch (error) {
-        if (!cancelled) {
-          setState({
-            status: "error",
-            message:
-              error instanceof DOMException && error.name === "TimeoutError"
-                ? "This is taking longer than expected. Please try again."
-                : error instanceof Error
-                  ? error.message
-                  : "Could not find potential customers.",
-          });
-        }
-      }
+      // Both passes start together, and each renders the moment it lands, so
+      // neither one waits on the other. The grounded pass always wins: it is
+      // the one with real, current people in it.
+      let groundedLanded = false;
+
+      const searchTask = fetchLeads("search", 75_000).then(
+        (leads) => {
+          groundedLanded = true;
+          if (!cancelled) setState({ status: "ready", leads, upgrading: false });
+          return null;
+        },
+        // Kept rather than rethrown: whether this failure is worth showing
+        // depends on what the fast pass managed to produce.
+        (error: Error) => error,
+      );
+
+      const fastTask = fetchLeads("fast", 40_000).then(
+        (leads) => {
+          if (!cancelled && !groundedLanded) {
+            setState({ status: "ready", leads, upgrading: true });
+          }
+        },
+        () => {
+          // A failed draft is not worth reporting on its own - the grounded pass
+          // is the one whose result the user actually sees.
+        },
+      );
+
+      await fastTask;
+      const searchError = await searchTask;
+      if (cancelled || !searchError) return;
+
+      // Keep whatever the fast pass produced rather than replacing real leads
+      // with an error screen; only a total miss shows the retry UI.
+      setState((current) =>
+        current.status === "ready"
+          ? { ...current, upgrading: false }
+          : {
+              status: "error",
+              message:
+                searchError instanceof DOMException && searchError.name === "TimeoutError"
+                  ? "This is taking longer than expected. Please try again."
+                  : searchError.message || "Could not find potential customers.",
+            },
+      );
     };
 
     void findLeads();
@@ -219,7 +274,7 @@ export default function StepLeadPreview({
       <AiLoadingOverlay
         open={state.status === "loading"}
         title="Finding potential customers"
-        note="Usually takes about a minute"
+        note="Usually takes about 10 seconds"
         transparent={false}
       />
 
@@ -261,9 +316,16 @@ export default function StepLeadPreview({
               <h2 className="text-sm font-semibold text-[var(--md-sys-color-on-surface)]">
                 Best matches
               </h2>
-              <p className="mt-1 text-xs text-[var(--md-sys-color-on-surface-variant)]">
-                Example profiles selected for you
-              </p>
+              {state.status === "ready" && state.upgrading ? (
+                <p className="mt-1 flex items-center gap-2 text-xs text-[var(--md-sys-color-on-surface-variant)]">
+                  <InlineSpinner />
+                  Checking the web for people who hold these jobs right now
+                </p>
+              ) : (
+                <p className="mt-1 text-xs text-[var(--md-sys-color-on-surface-variant)]">
+                  Example profiles selected for you
+                </p>
+              )}
             </div>
             <span className="shrink-0 rounded-full bg-[var(--md-sys-color-primary-container)] px-3 py-1 text-xs font-semibold text-[var(--md-sys-color-on-primary-container)]">
               {visibleLeads.length} leads

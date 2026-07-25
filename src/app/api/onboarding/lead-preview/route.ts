@@ -27,10 +27,12 @@ export async function POST(request: NextRequest) {
   }
 
   if (
+    // Step 2 spends two requests per attempt (fast, then the grounded upgrade),
+    // so the per-user allowance covers ten attempts rather than five.
     !(await rateLimitRequestShared(request, "lead-preview", {
       sourceKey: userId,
-      perSource: 10,
-      global: 100,
+      perSource: 20,
+      global: 200,
       windowMs: 60 * 60 * 1000,
     }))
   ) {
@@ -54,17 +56,28 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Fetch a website before finding leads." }, { status: 400 });
   }
 
+  // "fast" is the no-search draft the step renders first; "search" is the
+  // grounded upgrade it fetches in parallel. Anything else (including a direct
+  // caller that sends no mode) gets "auto": grounded with its own draft net, so
+  // this endpoint never depends on the client running both phases.
+  const mode = body.mode === "fast" ? "fast" : body.mode === "search" ? "search" : "auto";
+
   try {
-    const leads = await findPreviewLeadsWithGemini({
-      websiteUrl,
-      productOverview,
-      targetBuyers: strings(body.targetBuyers, 8),
-      buyerTitles: strings(body.buyerTitles, 15),
-      industries: strings(body.industries, 10),
-      companySizes: strings(body.companySizes, 8),
-      painPoints: strings(body.painPoints, 10),
-      keywords: strings(body.keywords, 14),
-    });
+    const { leads, source } = await findPreviewLeadsWithGemini(
+      {
+        websiteUrl,
+        productOverview,
+        targetBuyers: strings(body.targetBuyers, 8),
+        buyerTitles: strings(body.buyerTitles, 15),
+        industries: strings(body.industries, 10),
+        companySizes: strings(body.companySizes, 8),
+        painPoints: strings(body.painPoints, 10),
+        keywords: strings(body.keywords, 14),
+      },
+      // The fast pass must beat the proxy window with room to spare; the
+      // grounded pass gets the rest of it.
+      mode === "fast" ? { mode, budgetMs: 28_000 } : { mode, budgetMs: 45_000 },
+    );
 
     if (!leads.length) {
       return NextResponse.json(
@@ -73,11 +86,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ leads });
+    return NextResponse.json({ leads, source });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Lead discovery failed." },
-      { status: 422 },
-    );
+    // The message already names the real cause (quota, deadline, credentials);
+    // logging it here is what makes it findable in the server log too, since
+    // the client only ever shows one line of it.
+    const message = error instanceof Error ? error.message : "Lead discovery failed.";
+    console.error(`[lead-preview] mode=${mode} request failed: ${message}`);
+    return NextResponse.json({ error: message }, { status: 422 });
   }
 }
