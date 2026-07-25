@@ -215,7 +215,7 @@ export async function getAgentWorkspaceContext(context: AgentApiContext) {
       // Invites, follow-ups and replies share one line per LinkedIn account.
       spacingMinutes: SPACING_MINUTES,
       guidance:
-        "Caps reset at local midnight in timeZone. Each lead finder's send window (always, business, extended) decides the hours its outreach may go out. Use omentir_list_scheduled_actions for the exact planned send times.",
+        "Caps reset at local midnight in timeZone. Each lead finder's send window (always, business, extended) decides the hours its outreach may go out, measured in each lead's own time zone (resolved from their profile location; timeZone is the fallback when it cannot be). Use omentir_list_scheduled_actions for the exact planned send times.",
     },
     setup: {
       hasProductProfile: Boolean(profile?.description?.trim()),

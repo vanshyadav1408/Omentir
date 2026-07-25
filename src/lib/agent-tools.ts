@@ -169,7 +169,7 @@ export const agentToolInputSchemas = {
       timeZone: {
         type: "string",
         description:
-          'IANA time zone name (for example "America/New_York") the workspace schedules in: daily limits reset at its local midnight and every send window is measured in it.',
+          'IANA time zone name (for example "America/New_York") the workspace schedules in: daily limits reset at its local midnight, and it is the fallback send-window zone for leads whose location cannot be placed (send windows are otherwise measured in each lead\'s own zone).',
       },
     },
     additionalProperties: false,
@@ -305,7 +305,7 @@ const agentMcpToolDefinitions = [
   {
     name: "omentir_update_settings",
     description:
-      "Update workspace outreach settings: daily connection-request and message limits, first-message delay, AI follow-up behaviour, and the workspace time zone that send windows and daily limit resets are measured in. Only provided fields change.",
+      "Update workspace outreach settings: daily connection-request and message limits, first-message delay, AI follow-up behaviour, and the workspace time zone that daily limit resets are measured in. Only provided fields change.",
     inputSchema: agentToolInputSchemas.omentir_update_settings,
   },
   {

@@ -23,6 +23,7 @@ import {
   updateLead,
 } from "./data";
 import { findNextScheduledStepIndex } from "./campaign-sequence";
+import { sendWindowTimeZoneForLead } from "./lead-time-zone";
 import { classifyReplyIntent, draftCampaignMessage } from "./gemini";
 import { renderTemplate } from "./outreach-rules";
 import {
@@ -102,6 +103,9 @@ async function planFirstAvailableSlot(input: {
   enrollmentId: string;
   kind: "message" | "reply";
   earliestAt: number;
+  // Where the lead is: an acceptance or reply arriving at any hour is planned
+  // into the next opening of THEIR window, not the workspace's.
+  leadLocation: string | undefined;
 }) {
   const fallback = new Date(input.earliestAt).toISOString();
   if (!input.campaign) return fallback;
@@ -112,7 +116,12 @@ async function planFirstAvailableSlot(input: {
       workspace,
       campaign: input.campaign,
       actions: [
-        { id: input.enrollmentId, kind: input.kind, earliestAt: input.earliestAt },
+        {
+          id: input.enrollmentId,
+          kind: input.kind,
+          earliestAt: input.earliestAt,
+          timezone: sendWindowTimeZoneForLead(input.leadLocation, workspace.timezone),
+        },
       ],
     });
     const slot = plan.get(input.enrollmentId);
@@ -152,6 +161,7 @@ export async function applyConnectionAccepted(input: {
     enrollmentId: enrollment.id,
     kind: "message",
     earliestAt,
+    leadLocation: lead.location,
   });
 
   await updateEnrollment(workspaceId, enrollment.id, {
@@ -306,6 +316,7 @@ export async function processInboundMessage(input: {
           enrollmentId: enrollment.id,
           kind: "reply",
           earliestAt: Date.now(),
+          leadLocation: lead.location,
         }),
       })),
     );

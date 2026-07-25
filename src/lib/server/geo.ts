@@ -15,8 +15,9 @@ import type { Agent, ProductProfile } from "./types";
 // location that is present AND matches no target is dropped.
 
 // Fold accents, lowercase, and collapse every non-alphanumeric run to a single
-// space so "Montréal, Québec" and "montreal quebec" compare equal.
-function canonical(value: string): string {
+// space so "Montréal, Québec" and "montreal quebec" compare equal. Exported for
+// lead-time-zone.ts, which reads the same LinkedIn location strings.
+export function canonical(value: string): string {
   return value
     .normalize("NFKD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -29,7 +30,7 @@ function canonical(value: string): string {
 // Whole-phrase match so short aliases like "us"/"uk" can't match inside
 // "Houston"/"Ukraine". Padding with spaces turns "contains word" into a plain
 // substring test on canonical, space-delimited strings.
-function containsPhrase(haystack: string, phrase: string): boolean {
+export function containsPhrase(haystack: string, phrase: string): boolean {
   const needle = canonical(phrase);
   if (!needle) return false;
   return ` ${haystack} `.includes(` ${needle} `);
@@ -40,7 +41,7 @@ function containsPhrase(haystack: string, phrase: string): boolean {
 // countries not listed still match on their own name via the fallback below.
 // Ambiguous single tokens (e.g. "Victoria", "Georgia") are intentionally left
 // out - a false keep is cheaper than dropping a legitimate lead.
-const COUNTRY_ALIASES: Record<string, string[]> = {
+export const COUNTRY_ALIASES: Record<string, string[]> = {
   "united states": [
     "united states", "united states of america", "usa", "u s a", "us", "u s",
     "america", "silicon valley",

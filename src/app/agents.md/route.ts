@@ -55,7 +55,7 @@ A new lead finder discovers and scores leads only. Outreach sequences (connectio
 ## Time, Send Windows, and Daily Limits
 
 - Every timestamp in this API is a UTC ISO instant. The workspace reads and counts all of them in its own IANA time zone, returned as \`workspace.timeZone\` by \`omentir_get_context\`. Convert before quoting a time to the customer, and set the zone with \`omentir_update_settings\` \`timeZone\` if it is wrong.
-- Outreach only sends inside the lead finder's send window, in that zone: \`always\` (24/7), \`business\` (Mon-Fri 09:00-18:00), or \`extended\` (daily 07:00-22:00). Change it with \`omentir_update_agent\` \`sendWindow\`, which applies to every sequence built on the agent's lead group.
+- Outreach only sends inside the lead finder's send window: \`always\` (24/7), \`business\` (Mon-Fri 09:00-18:00), or \`extended\` (daily 07:00-22:00). These hours are measured in **each lead's own time zone**, resolved from their profile location, so a queue spanning several regions lands in each recipient's local morning; leads whose location cannot be placed use the workspace zone. Change the window with \`omentir_update_agent\` \`sendWindow\`, which applies to every sequence built on the agent's lead group.
 - \`dailyInviteLimit\` and \`dailyMessageLimit\` are counted per local day and reset at local midnight. \`omentir_get_context\` returns how much of today's allowance is already spent.
 - Invites, follow-ups and replies share one send slot per LinkedIn account every 10 minutes, so a large queue spreads over days. \`omentir_list_scheduled_actions\` returns the planner's committed times - report those instead of estimating from delays and limits.
 

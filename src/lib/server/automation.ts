@@ -60,6 +60,7 @@ import {
   processInboundMessage,
 } from "./inbound";
 import { agentTargetLocations, matchesTargetLocation } from "./geo";
+import { sendWindowTimeZoneForLead } from "./lead-time-zone";
 import {
   agentHasSignalSources,
   enrichLinkedInLead,
@@ -241,6 +242,9 @@ async function reserveSendSlot(input: {
   enrollmentId: string;
   kind: SendActionKind;
   earliestAt?: number;
+  // The recipient's zone, so the slot lands inside THEIR window. Undefined
+  // falls back to the workspace's zone inside the planner.
+  timezone?: string;
 }) {
   const { budget, workspace, campaign } = input;
   try {
@@ -255,6 +259,7 @@ async function reserveSendSlot(input: {
           id: input.enrollmentId,
           kind: input.kind,
           earliestAt: input.earliestAt ?? Date.now(),
+          timezone: input.timezone,
         },
       ],
     });
@@ -585,6 +590,11 @@ async function runEnrollment(
     return "left-group";
   }
 
+  // The clock the send window is read on. A 9-6 window means 9-6 where the
+  // LEAD is - the workspace's zone only stands in for leads whose profile
+  // location names nowhere we recognise.
+  const leadTimeZone = sendWindowTimeZoneForLead(lead.location, workspace.timezone);
+
   // Pausing an agent freezes every automated touch to the leads it sourced -
   // invites, follow-ups, acceptance polling, and AI replies - not just lead
   // discovery. Park like a paused campaign (marked with pausedDeferredAt) so
@@ -687,13 +697,14 @@ async function runEnrollment(
 
     // Gate before drafting, not after: a Gemini call per deferred attempt was
     // pure waste, and the draft would be stale by the time the slot opened.
-    if (!options.ignoreSendWindow && !isWithinSendWindow(sendWindow, workspace.timezone, Date.now())) {
+    if (!options.ignoreSendWindow && !isWithinSendWindow(sendWindow, leadTimeZone, Date.now())) {
       await updateCurrentEnrollment({
         nextActionAt: await reserveSendSlot({
           budget,
           workspace,
           campaign,
           enrollmentId: enrollment.id,
+          timezone: leadTimeZone,
           kind: "reply",
         }),
       });
@@ -708,6 +719,7 @@ async function runEnrollment(
           workspace,
           campaign,
           enrollmentId: enrollment.id,
+          timezone: leadTimeZone,
           kind: "reply",
           earliestAt: Date.parse(replySlotAt),
         }),
@@ -836,6 +848,7 @@ async function runEnrollment(
         workspace,
         campaign,
         enrollmentId: enrollment.id,
+        timezone: leadTimeZone,
         kind: "message",
         earliestAt: Date.now() + step.delayMinutes * 60 * 1000,
       }),
@@ -867,13 +880,14 @@ async function runEnrollment(
     // rather than sending at 3am. Manual "Run now" bypasses this - the user
     // explicitly chose the moment - which is why the check lives here and not
     // in the shared claim.
-    if (!options.ignoreSendWindow && !isWithinSendWindow(sendWindow, workspace.timezone, Date.now())) {
+    if (!options.ignoreSendWindow && !isWithinSendWindow(sendWindow, leadTimeZone, Date.now())) {
       await updateCurrentEnrollment({
         nextActionAt: await reserveSendSlot({
           budget,
           workspace,
           campaign,
           enrollmentId: enrollment.id,
+          timezone: leadTimeZone,
           kind: "invite",
         }),
       });
@@ -892,6 +906,7 @@ async function runEnrollment(
           workspace,
           campaign,
           enrollmentId: enrollment.id,
+          timezone: leadTimeZone,
           kind: "invite",
         }),
       });
@@ -917,6 +932,7 @@ async function runEnrollment(
           workspace,
           campaign,
           enrollmentId: enrollment.id,
+          timezone: leadTimeZone,
           kind: "invite",
         }),
       });
@@ -937,6 +953,7 @@ async function runEnrollment(
           workspace,
           campaign,
           enrollmentId: enrollment.id,
+          timezone: leadTimeZone,
           kind: "invite",
           earliestAt: Date.parse(nextSlotAllowedAt),
         }),
@@ -1059,13 +1076,14 @@ async function runEnrollment(
   const messageKind: SendActionKind =
     enrollment.status === "reply_received" ? "reply" : "message";
 
-  if (!options.ignoreSendWindow && !isWithinSendWindow(sendWindow, workspace.timezone, Date.now())) {
+  if (!options.ignoreSendWindow && !isWithinSendWindow(sendWindow, leadTimeZone, Date.now())) {
     await updateCurrentEnrollment({
       nextActionAt: await reserveSendSlot({
         budget,
         workspace,
         campaign,
         enrollmentId: enrollment.id,
+        timezone: leadTimeZone,
         kind: messageKind,
       }),
     });
@@ -1080,6 +1098,7 @@ async function runEnrollment(
         workspace,
         campaign,
         enrollmentId: enrollment.id,
+        timezone: leadTimeZone,
         kind: messageKind,
       }),
     });
@@ -1100,6 +1119,7 @@ async function runEnrollment(
         workspace,
         campaign,
         enrollmentId: enrollment.id,
+        timezone: leadTimeZone,
         kind: messageKind,
       }),
     });
@@ -1118,6 +1138,7 @@ async function runEnrollment(
         workspace,
         campaign,
         enrollmentId: enrollment.id,
+        timezone: leadTimeZone,
         kind: messageKind,
         earliestAt: Date.parse(nextMessageSlotAt),
       }),

@@ -16,6 +16,7 @@ import {
   type SendActionKind,
 } from "./send-schedule";
 import { remapStepIndex } from "./enrollment-remap";
+import { sendWindowTimeZoneForLead } from "./lead-time-zone";
 import { addInviteLimitSignal } from "./outreach-rules";
 import type {
   Agent,
@@ -1580,10 +1581,13 @@ export async function enrollNewLeadsInCampaign(workspaceId: string, campaign: Ca
   const plan = await planActionSlots({
     workspace,
     campaign,
-    actions: pending.map(({ ref }) => ({
+    actions: pending.map(({ ref, lead }) => ({
       id: ref.id,
       kind: startsWithConnect ? "invite" : "message",
       earliestAt: Date.parse(timestamp),
+      // Each lead's own window: a queue spanning several timezones spreads
+      // across each recipient's morning, not all into the workspace's.
+      timezone: sendWindowTimeZoneForLead(lead.location, workspace.timezone),
     })),
   });
 
@@ -1700,7 +1704,14 @@ export async function loadSchedulingContext(
 export async function planActionSlots(input: {
   workspace: Workspace;
   campaign: Campaign;
-  actions: { id: string; kind: SendActionKind; earliestAt: number }[];
+  // `timezone` is the recipient's, for the send window. Callers derive it with
+  // sendWindowTimeZoneForLead; omitting it means "use the workspace's zone".
+  actions: {
+    id: string;
+    kind: SendActionKind;
+    earliestAt: number;
+    timezone?: string;
+  }[];
   // Extra slots claimed earlier in the same tick that are not yet persisted.
   additionalReserved?: number[];
   // Pre-fetched context, to avoid re-reading it per enrollment.

@@ -511,8 +511,9 @@ export default function SettingsView({
                       placeholder="Search timezone, city, or region..."
                     />
                     <p className="mt-1.5 text-[11px] font-medium text-zinc-600">
-                      Every date and time in Omentir is shown in this zone, and your
-                      outreach send windows and daily limits follow it too.
+                      Every date and time in Omentir is shown in this zone, and your daily
+                      sending limits reset at its midnight. Send windows follow each lead&apos;s
+                      own zone, falling back to this one when their location is unknown.
                     </p>
                   </div>
                   <SelectField

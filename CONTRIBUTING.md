@@ -15,7 +15,6 @@ Use Node.js 22, then run:
 
 ```bash
 npm ci
-npm test
 npx tsc --noEmit --pretty false
 npm run lint:baseline
 npm run build

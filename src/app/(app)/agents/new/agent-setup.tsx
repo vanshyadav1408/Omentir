@@ -72,25 +72,18 @@ type AgentSetupProps = {
   timezone?: string;
 };
 
-const SEND_WINDOW_OPTIONS = [
-  {
-    id: "business" as const,
-    label: "Business hours",
-    hours: "Mon-Fri, 9am - 6pm",
-    detail: "Most natural. Nothing sends evenings or weekends.",
-  },
-  {
-    id: "extended" as const,
-    label: "Extended hours",
-    hours: "Every day, 7am - 10pm",
-    detail: "More volume, still never overnight.",
-  },
-  {
-    id: "always" as const,
-    label: "Around the clock",
-    hours: "24/7",
-    detail: "Highest volume. Can send at 3am local time.",
-  },
+// Name plus the hours it means, nothing else: three cards each carrying a third
+// line of explanation dominated the step, and the hours already say what the
+// explanation said. The paragraph above the picker covers the rest.
+//
+// Both parts live in `label` rather than label + `description`, because the
+// closed field is pinned to 56px with 24px of vertical padding - two stacked
+// lines are 42px of content in a 32px box, so they would spill into the notched
+// outline. One line at 16px fits, and the open menu matches it.
+const SEND_WINDOW_OPTIONS: SelectOption[] = [
+  { value: "business", label: "Business hours · Mon-Fri, 9am - 6pm" },
+  { value: "extended", label: "Extended hours · Every day, 7am - 10pm" },
+  { value: "always", label: "Around the clock · 24/7" },
 ];
 
 const RUN_HOUR_OPTIONS = Array.from({ length: 24 }, (_, hour) => {
@@ -1166,6 +1159,16 @@ export default function AgentSetup({
               {csvFileName ? <span className="text-[12px] font-medium text-emerald-700">Ready to import: {csvFileName}</span> : null}
             </label>
           ) : null}
+          {/* Lives on this step for every agent type: it schedules discovery,
+              not outreach. On the Outreach step it was both out of place and
+              invisible to leads-only agents, which end at this step. */}
+          <SelectField
+            label="Find new leads at"
+            options={RUN_HOUR_OPTIONS}
+            value={String(runAtHour)}
+            onChange={(value) => setRunAtHour(Number(value))}
+            placeholder="Pick an hour"
+          />
           {discoveryError ? (
             <p className="text-[13px] font-light text-red-600">{discoveryError}</p>
           ) : null}
@@ -1387,33 +1390,23 @@ export default function AgentSetup({
             When should outreach go out?
           </div>
           <p className="mt-1 text-[13px] font-medium text-zinc-700">
-            Interpreted in your workspace timezone{sendWindowTimeZone ? ` (${sendWindowTimeZone})` : ""}. Messages that
+            Interpreted in each lead&apos;s own timezone, read from their profile location, so nobody
+            is messaged at 3am local. Leads whose location we can&apos;t place fall back to your
+            workspace timezone{sendWindowTimeZone ? ` (${sendWindowTimeZone})` : ""}. Messages that
             come due outside these hours wait for the next opening instead of sending overnight.
           </p>
-          <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
-            {SEND_WINDOW_OPTIONS.map((option) => (
-              <button
-                key={option.id}
-                type="button"
-                onClick={() => setSendWindow(option.id)}
-                className={
-                  "rounded-md border p-4 text-left transition " +
-                  (sendWindow === option.id
-                    ? "border-[#e85e6b] bg-[#fff5f6]"
-                    : "border-zinc-200 bg-white hover:bg-zinc-50")
-                }
-              >
-                <div
-                  style={{ fontFamily: "var(--font-varta)" }}
-                  className="text-[15px] font-semibold text-zinc-950"
-                >
-                  {option.label}
-                </div>
-                <div className="mt-1 text-[13px] font-medium text-zinc-700">{option.hours}</div>
-                <div className="mt-1 text-[12px] font-medium text-zinc-500">{option.detail}</div>
-              </button>
-            ))}
-          </div>
+          {/* A dropdown, not three cards: one field at the same height as every
+              other control on this step, and the choice stays legible when
+              closed because the hours travel with the name. */}
+          <SelectField
+            label="Send window"
+            className="mt-3"
+            options={SEND_WINDOW_OPTIONS}
+            value={sendWindow}
+            // A send window is always set, so there is no empty row to offer.
+            clearable={false}
+            onChange={(value) => setSendWindow(value as SendWindow)}
+          />
         </div>
 
         <SelectField
@@ -1422,14 +1415,6 @@ export default function AgentSetup({
           value={linkedInAccountId}
           onChange={setLinkedInAccountId}
           placeholder="Select LinkedIn account"
-        />
-
-        <SelectField
-          label="Find new leads at"
-          options={RUN_HOUR_OPTIONS}
-          value={String(runAtHour)}
-          onChange={(value) => setRunAtHour(Number(value))}
-          placeholder="Pick an hour"
         />
 
         {/* AI / Manual selector */}

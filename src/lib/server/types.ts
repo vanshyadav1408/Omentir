@@ -268,8 +268,12 @@ export type CampaignStep =
       messageTemplate: string;
     };
 
-// When this campaign is allowed to send, interpreted in the workspace's
-// timezone. "always" is the historical behaviour (24/7, including 3am Sunday);
+// When this campaign is allowed to send, interpreted in each LEAD's local
+// timezone (resolved from their profile location; the workspace's zone is the
+// fallback for leads we can't place). The window protects the recipient's
+// evening, so it is read on the recipient's clock - daily caps and per-account
+// spacing stay on the workspace's, since those protect the sending account.
+// "always" is the historical behaviour (24/7, including 3am Sunday);
 // "business" is Mon-Fri 09:00-18:00; "extended" is every day 07:00-22:00.
 // Campaigns sharing a LinkedIn account may disagree - each action is checked
 // against its own campaign's window, so no arbitration is needed.

@@ -59,6 +59,7 @@ export function SelectField({
   placeholder,
   className,
   menuPlacement = "bottom",
+  clearable = true,
 }: {
   label?: string;
   name?: string;
@@ -68,6 +69,9 @@ export function SelectField({
   placeholder?: string;
   className?: string;
   menuPlacement?: "top" | "bottom";
+  // Fields that always hold a value pass false: the reset row is dead weight in
+  // a menu whose empty state the form would reject anyway.
+  clearable?: boolean;
 }) {
   const normalizedOptions = options.map((o) =>
     typeof o === "string" ? { value: o, label: o } : o,
@@ -187,15 +191,17 @@ export function SelectField({
           }`}
           role="listbox"
         >
-          <button
-            type="button"
-            className="m3-menu-item"
-            onClick={() => select("")}
-          >
-            <span className="m3-menu-item__label truncate text-[var(--md-sys-color-on-surface-variant)]">
-              {placeholder_}
-            </span>
-          </button>
+          {clearable ? (
+            <button
+              type="button"
+              className="m3-menu-item"
+              onClick={() => select("")}
+            >
+              <span className="m3-menu-item__label truncate text-[var(--md-sys-color-on-surface-variant)]">
+                {placeholder_}
+              </span>
+            </button>
+          ) : null}
           {normalizedOptions.map((option) => {
             const isSelected = selected === option.value;
             return (

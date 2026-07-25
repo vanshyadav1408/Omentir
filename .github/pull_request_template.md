@@ -4,7 +4,6 @@
 
 ## Verification
 
-- [ ] `npm test`
 - [ ] `npx tsc --noEmit`
 - [ ] `npm run build`
 - [ ] No real outreach was sent

@@ -251,7 +251,6 @@ If you run more than one Node process or replica against the same Firestore proj
 
 ```bash
 npm ci
-npm test
 npx tsc --noEmit
 npm run build
 ```
@@ -262,7 +261,6 @@ Useful operator scripts:
 
 | Script | Purpose |
 |---|---|
-| `npm test` | Unit / contract tests (including security hardening checks) |
 | `npm run secrets:scan` | Local secret scan helper |
 
 ---

@@ -4,10 +4,15 @@
 //
 // Three constraints stack, in this order of bindingness:
 //   1. The campaign's send window (business hours, extended, or 24/7) in the
-//      workspace's timezone.
+//      RECIPIENT's timezone - the window protects the lead's evening, so it is
+//      read on their clock, not the sender's (see lead-time-zone.ts). Leads we
+//      cannot place fall back to the workspace's zone.
 //   2. The per-LinkedIn-account drip: at most one action per SPACING_MINUTES,
 //      shared by invites, follow-ups and replies alike.
 //   3. The workspace's daily invite / message caps, counted over LOCAL days.
+//      These stay on the WORKSPACE clock: they protect the sending LinkedIn
+//      account, so "10 invites a day" has to mean one sender's day, not a
+//      different day boundary per recipient.
 //
 // With a 9-6 window there are 54 slots a day against caps of 10 + 20, so the
 // caps bind long before the spacing does - which is why a queue of 75 leads
@@ -251,10 +256,17 @@ export type PlannedAction = {
   // Not schedulable before this: a wait step's target, an invite's ladder
   // position, or simply "now" for a reply.
   earliestAt: number;
+  // The recipient's zone, which the send window is measured in. Omitted when
+  // the lead's location doesn't resolve to one, in which case the window falls
+  // back to the workspace zone below - the behaviour every action had before
+  // send windows became recipient-local.
+  timezone?: string;
 };
 
 export type SchedulePlanInput = {
   nowMs: number;
+  // The workspace's zone: daily caps are counted on its calendar days, and it
+  // is the fallback window zone for actions with no recipient zone of their own.
   timezone: string | undefined;
   window: SendWindow;
   dailyInviteLimit: number;
@@ -333,6 +345,8 @@ export function planSendSchedule(input: SchedulePlanInput): Map<string, number> 
     // count as messages, matching how consumeDailyQuota already tallies them.
     const quotaKind = action.kind === "invite" ? "invites" : "messages";
     const limit = quotaKind === "invites" ? input.dailyInviteLimit : input.dailyMessageLimit;
+    // The window is the recipient's; the quota day below stays the workspace's.
+    const windowZone = action.timezone || input.timezone;
 
     let candidate = Math.max(action.earliestAt, input.nowMs);
 
@@ -343,7 +357,7 @@ export function planSendSchedule(input: SchedulePlanInput): Map<string, number> 
     // reached by a config that cannot be satisfied at all.
     let settled = false;
     for (let pass = 0; pass < MAX_PLAN_PASSES; pass += 1) {
-      const inWindow = nextSendWindowOpen(input.window, input.timezone, candidate);
+      const inWindow = nextSendWindowOpen(input.window, windowZone, candidate);
       if (inWindow !== candidate) {
         candidate = inWindow;
         continue;
