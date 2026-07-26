@@ -110,15 +110,18 @@ type SeqAction = {
   includeNote?: boolean;
 };
 
+// Mixed on purpose: an all-executive default quietly teaches every new agent to
+// hunt only for CEOs and VPs, when the person who feels the problem daily is
+// usually a manager or an individual contributor.
 const initialTitles = [
-  "CEO",
+  "Marketing Manager",
+  "Account Executive",
+  "Content Creator",
+  "Social Media Manager",
+  "Operations Manager",
+  "Sales Development Representative",
   "Founder",
-  "Head of Sales",
-  "VP Sales",
-  "Sales Director",
   "Head of Growth",
-  "VP Growth",
-  "Revenue Leader",
 ];
 const initialIndustries = ["SaaS", "Software Development", "Marketing Services", "AI / ML", "IT Services"];
 const initialLocations = ["United States", "Canada", "United Kingdom", "Australia"];

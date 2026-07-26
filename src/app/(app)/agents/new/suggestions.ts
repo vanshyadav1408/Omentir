@@ -1,4 +1,10 @@
-export const TITLE_SUGGESTIONS = [
+// Ordered hands-on first. With an empty query the picker shows the first ten
+// entries, so leading with C-level titles nudged every new agent toward
+// executives before the user had typed anything.
+const TITLE_SUGGESTION_ORDER = [
+  "Marketing Manager", "Account Executive", "Content Creator", "Social Media Manager",
+  "Operations Manager", "Customer Success Manager", "Product Manager", "Recruiter",
+  "Sales Development Representative", "Freelancer",
   "CEO", "Co-Founder", "Founder", "Founding Engineer", "Founding Designer",
   "CTO", "CFO", "COO", "CMO", "CRO", "CPO", "CIO", "CISO", "CHRO", "CDO",
   "President", "Vice President", "Executive Vice President", "Senior Vice President",
@@ -61,6 +67,10 @@ export const TITLE_SUGGESTIONS = [
   "Teacher", "Professor", "Researcher", "Scientist", "Engineer",
   "Architect", "Civil Engineer", "Mechanical Engineer", "Electrical Engineer",
 ];
+
+// The hands-on titles promoted above also appear in their original sections;
+// first occurrence wins so the picker never lists the same title twice.
+export const TITLE_SUGGESTIONS = Array.from(new Set(TITLE_SUGGESTION_ORDER));
 
 export const INDUSTRY_SUGGESTIONS = [
   "Software Development", "SaaS", "Information Technology & Services",

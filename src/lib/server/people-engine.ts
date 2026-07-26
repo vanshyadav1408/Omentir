@@ -12,6 +12,7 @@ import { cleanId, normalizeLinkedInProfileUrl, nowIso } from "./firebase";
 import { agentTargetLocations, matchesTargetLocation } from "./geo";
 import { isAnonymousLinkedInProfile } from "./outreach-rules";
 import {
+  balanceTitleSeniority,
   expandedTargetTitles,
   matchesTargetTitle,
   planPeopleSearch,
@@ -65,6 +66,8 @@ type SearchCriteria = {
   keywords: string[];
   postKeywords: string[];
   reasonsToMatch: string[];
+  useCases: string[];
+  roleVocabulary: string[];
 };
 
 type ObservedSignal = {
@@ -128,6 +131,9 @@ function getSourceKeywords(
     ...agent.filters.keywords,
     ...criteria.keywords,
     ...criteria.postKeywords,
+    // The work itself, in the words the people who do it use. Titles find the
+    // ones who named their role conventionally; this finds the rest.
+    ...criteria.roleVocabulary.slice(0, 8),
     ...(profile?.painPoints || []).slice(0, 6),
     ...(profile?.keywords || []).slice(0, 8),
     // A few title+industry pairs as optional high-precision queries only.
@@ -138,11 +144,12 @@ function getSourceKeywords(
 }
 
 function getSearchTitles(agent: Agent, profile: ProductProfile | null, criteria: SearchCriteria) {
-  return unique([
-    ...criteria.titles,
-    ...expandedTargetTitles(agent, profile),
-    ...agent.filters.titles,
-  ]).slice(0, 15);
+  // Balanced before the slice, not after: only the first 6-12 titles are ever
+  // searched, so an exec-heavy head of the list means every run comes back with
+  // nothing but founders and VPs even when the tail held the practitioners.
+  return balanceTitleSeniority(
+    unique([...criteria.titles, ...expandedTargetTitles(agent, profile), ...agent.filters.titles]),
+  ).slice(0, 15);
 }
 
 function parseLinkedInSource(value: string): ParsedLinkedInSource | null {
@@ -517,13 +524,16 @@ function candidatePriority(
   candidate: Candidate,
   targetTitles: string[],
   targetLocations: string[],
+  roleVocabulary: string[],
 ) {
   const signalWeight = candidate.signals.reduce((total, signal) => {
     if (signal.signalType === "post_comment") return total + 3;
     if (signal.signalType === "post_reaction") return total + 1;
     return total + 2;
   }, 0);
-  const titleWeight = matchesTargetTitle(candidate.lead.title || "", targetTitles) ? 5 : 0;
+  const titleWeight = matchesTargetTitle(candidate.lead.title || "", targetTitles, roleVocabulary)
+    ? 5
+    : 0;
   // A location we can already see in-region outranks an unknown one: post
   // engagers from global posts mostly enrich into out-of-region rejects, and
   // every such enrichment wastes a profile view from the daily budget.
@@ -593,6 +603,8 @@ export async function runPeopleEngineForAgent(input: {
     reasonsToMatch: input.profile?.painPoints?.length
       ? input.profile.painPoints
       : ["Matches the product ICP and prospect definition."],
+    useCases: input.profile?.useCases || [],
+    roleVocabulary: input.profile?.roleVocabulary || [],
   }));
 
   const sourceKeywords = getSourceKeywords(input.agent, input.profile, criteria);
@@ -600,6 +612,13 @@ export async function runPeopleEngineForAgent(input: {
   const matchTitles = unique([
     ...searchTitles,
     ...expandedTargetTitles(input.agent, input.profile),
+  ]);
+  // The domain's own title words, so a lead whose title shares no wording with
+  // the target list ("Dispatcher" against "Logistics Coordinator") is still
+  // recognized as someone who performs the work.
+  const roleVocabulary = unique([
+    ...criteria.roleVocabulary,
+    ...(input.profile?.roleVocabulary || []),
   ]);
   // Title searches first so "jobs that need the product" are always attempted
   // even when signal keywords are sparse or competitor URLs are empty.
@@ -689,12 +708,12 @@ export async function runPeopleEngineForAgent(input: {
         // the narrow titles the user typed on day one.
         !candidate.lead.title ||
         !matchTitles.length ||
-        matchesTargetTitle(candidate.lead.title, matchTitles),
+        matchesTargetTitle(candidate.lead.title, matchTitles, roleVocabulary),
     )
     .sort(
       (left, right) =>
-        candidatePriority(right, matchTitles, targetLocations) -
-        candidatePriority(left, matchTitles, targetLocations),
+        candidatePriority(right, matchTitles, targetLocations, roleVocabulary) -
+        candidatePriority(left, matchTitles, targetLocations, roleVocabulary),
     );
 
   for (const candidate of rankedCandidates) {
