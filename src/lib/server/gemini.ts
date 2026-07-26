@@ -1680,45 +1680,6 @@ ${input.templateHint}` : ""}`;
   return polished || draft;
 }
 
-// When an AI-run sequence exhausts its messages without a reply, the user is
-// emailed to take over personally. This drafts the "why this person is worth
-// your time" paragraph from the lead's real data - the email still sends with
-// a plain fallback if drafting fails, so the handover never silently drops.
-export async function draftLeadHandoverSummary(input: {
-  lead: Lead;
-  productProfile: ProductProfile | null;
-  conversation: ConversationMessage[];
-}) {
-  const firstName = input.lead.name.split(" ")[0] || "This lead";
-  try {
-    const result = await generateJson<{ summary: string }>(
-      `You are briefing a busy founder about a LinkedIn prospect their automated outreach could not convert. The sequence has ended; it is now worth the founder's personal attention.
-
-Return only JSON with one field: summary.
-
-Write 2-3 plain sentences, from the founder's side, covering:
-- Why this person is still worth a personal message (the most concrete, specific reasons in the data: what they do, their company, any buying signal or activity).
-- What angle to try that the automated messages did not land (look at the conversation for what was already said).
-Be honest: if they accepted the connection but never replied, say what that suggests and what might cut through. No hype, no filler, no invented facts - only what is in the data below.
-
-Prospect facts:
-${leadContextForDrafting(input.lead)}
-
-Sender facts:
-${senderContextForDrafting(input.productProfile)}
-
-Conversation so far:
-${transcriptForDrafting(input.conversation, firstName) || "(no messages exchanged)"}`,
-      { summary: "" },
-      0.5,
-    );
-    return String(result.summary || "").trim().slice(0, 700);
-  } catch (error) {
-    console.error("[gemini] draftLeadHandoverSummary failed:", error);
-    return "";
-  }
-}
-
 export type ReplyIntentClassification = {
   intent: ReplyIntent;
   confidence: number;

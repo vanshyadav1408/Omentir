@@ -1,5 +1,7 @@
 import "server-only";
 
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { Resend } from "resend";
 import {
   hostedContactFormFrom,
@@ -40,68 +42,152 @@ function escapeHtml(value: string) {
     .replace(/'/g, "&#39;");
 }
 
-// The Omentir spoke mark from src/app/logo-mark.tsx, inlined as SVG markup.
-// Note: Gmail strips inline <svg>, so clients that do so show only the wordmark.
-const LOGO_SVG = `<svg viewBox="0 0 200 200" width="32" height="32" fill="#111111" aria-hidden="true" style="display:block;"><g transform="translate(100 100) rotate(22.5)"><rect x="-7" y="-90" width="14" height="180" rx="2"/><rect x="-7" y="-90" width="14" height="180" rx="2" transform="rotate(45)"/><rect x="-7" y="-90" width="14" height="180" rx="2" transform="rotate(90)"/><rect x="-7" y="-90" width="14" height="180" rx="2" transform="rotate(135)"/></g></svg>`;
+/**
+ * The Omentir spoke mark from src/app/logo-mark.tsx, rasterized to
+ * public/omentir-mark-email.png (near-white, because the email carries the
+ * product's dark canvas).
+ *
+ * It rides along as an inline CID attachment rather than a hosted <img src>,
+ * for two reasons that both have to hold or the mark is invisible: clients
+ * strip inline <svg> outright, and Gmail hides remote images behind "display
+ * images below" until the sender is trusted. A CID part renders on open, with
+ * no round trip to omentir.com.
+ */
+const LOGO_CID = "omentir-mark";
+const LOGO_FILE = "omentir-mark-email.png";
+
+function logoAttachment() {
+  try {
+    const content = readFileSync(join(process.cwd(), "public", LOGO_FILE)).toString("base64");
+    return { filename: LOGO_FILE, content, contentId: LOGO_CID };
+  } catch {
+    // Bundled without the public dir (or read-only FS): fall back to the
+    // hosted copy so the header degrades to a remote image, not a hole.
+    return null;
+  }
+}
+
+function logoImg(inline: boolean) {
+  const src = inline ? `cid:${LOGO_CID}` : escapeHtml(appUrl(`/${LOGO_FILE}`));
+  return `<img src="${src}" width="30" height="30" alt="Omentir" style="display:block;width:30px;height:30px;border:0;outline:none;text-decoration:none;">`;
+}
+
+/**
+ * Welcome-email palette. Mirrors the product tokens in globals.css — dark is
+ * the only theme there, so the email that introduces the product should not
+ * open as a white page. Hex only: color-mix()/rgba() do not survive email
+ * clients, so these are the flattened values of the CSS custom properties.
+ */
+const MAIL = {
+  canvas: "#08080a", // --google-bg
+  border: "#2a2c2e", // --google-border
+  text: "#ebedef", // --google-text-primary, flattened onto the canvas
+  textMuted: "#b4b7ba", // --google-text-secondary, flattened
+  textFaint: "#7c7f83",
+} as const;
+
+// Google Sans ships to browsers, not mail clients — Roboto then the system
+// grotesques is the closest stack that actually resolves in an inbox.
+const MAIL_FONT = "Roboto,'Helvetica Neue',Helvetica,Arial,sans-serif";
+
+/**
+ * One setup step: plain marker in the gutter, line beside it. A table rather
+ * than <ol> so the marker stays put and wrapped lines hang correctly in
+ * Outlook, which renders list indentation unpredictably.
+ */
+function stepRowHtml(step: { n: string; text: string; sub?: string }, isLast: boolean) {
+  const pad = isLast ? "0" : "12px";
+  const subHtml = step.sub
+    ? `<div style="font-size:15px;line-height:1.6;color:${MAIL.textMuted};padding:2px 0 0;">${step.sub}</div>`
+    : "";
+  return `<tr>
+                  <td width="26" valign="top" style="width:26px;padding:0 0 ${pad};font-family:${MAIL_FONT};font-size:15px;line-height:1.6;color:${MAIL.textMuted};">${step.n})</td>
+                  <td valign="top" style="padding:0 0 ${pad};font-family:${MAIL_FONT};">
+                    <div style="font-size:15px;line-height:1.6;color:${MAIL.text};">${step.text}</div>
+                    ${subHtml}
+                  </td>
+                </tr>`;
+}
 
 function buildSignupWelcomeEmail(input: { greeting: string; unsubscribeUrl?: string }) {
+  const attachment = logoAttachment();
   const dashboardUrl = appUrl("/dashboard");
   const escapedGreeting = escapeHtml(input.greeting);
   const escapedDashboardUrl = escapeHtml(dashboardUrl);
   const unsubscribeHtml = input.unsubscribeUrl
-    ? `<p style="margin:18px 0 0;font-size:12px;line-height:1.5;color:#888888;">Don't want emails from us? <a href="${escapeHtml(input.unsubscribeUrl)}" style="color:#888888;">Unsubscribe</a>.</p>`
+    ? ` &nbsp;·&nbsp; <a href="${escapeHtml(input.unsubscribeUrl)}" style="color:${MAIL.textFaint};text-decoration:underline;">Unsubscribe</a>`
     : "";
+
+  const steps = [
+    { n: "i", text: "Connect your LinkedIn account." },
+    { n: "ii", text: "Define your ideal customer." },
+    {
+      n: "iii",
+      text: "Setup outreach.",
+      sub: "Pick AI or manually setup workflow messages.",
+    },
+  ];
 
   const html = `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <meta name="supported-color-schemes" content="dark">
     <title>Welcome to Omentir</title>
   </head>
-  <body style="margin:0;background:#f5f6f7;color:#0f0f10;font-family:Arial,Helvetica,sans-serif;">
+  <body style="margin:0;padding:0;background:${MAIL.canvas};color:${MAIL.text};font-family:${MAIL_FONT};-webkit-font-smoothing:antialiased;">
     <div style="display:none;max-height:0;overflow:hidden;color:transparent;opacity:0;">
-      Welcome to Omentir. Here is how to get from signup to your first LinkedIn campaign.
+      Connect your LinkedIn account, define your ideal customer, setup outreach. That's it.
     </div>
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f5f6f7;padding:0;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="${MAIL.canvas}" style="background-color:${MAIL.canvas};">
       <tr>
-        <td align="center">
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;background:#ffffff;border:1px solid #d8d8d8;">
+        <td align="center" style="padding:40px 24px 44px;">
+          <table role="presentation" width="520" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:520px;">
+
             <tr>
-              <td style="padding:34px 30px 22px;">
-                <table role="presentation" cellspacing="0" cellpadding="0">
+              <td style="padding:0 0 28px;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0">
                   <tr>
-                    <td style="vertical-align:middle;padding:0 10px 0 0;">
-                      ${LOGO_SVG}
-                    </td>
-                    <td style="vertical-align:middle;font-family:Varta,Arial,Helvetica,sans-serif;font-size:30px;line-height:1;font-weight:600;letter-spacing:0;color:#111111;">Omentir</td>
+                    <td valign="middle" style="padding:0 9px 0 0;">${logoImg(Boolean(attachment))}</td>
+                    <td valign="middle" style="font-family:${MAIL_FONT};font-size:20px;line-height:1;font-weight:600;letter-spacing:-0.01em;color:${MAIL.text};">Omentir</td>
                   </tr>
                 </table>
               </td>
             </tr>
+
             <tr>
-              <td style="padding:0 30px 34px;">
-                <p style="margin:0 0 18px;font-size:14px;line-height:1.55;color:#111111;">${escapedGreeting}</p>
-                <p style="margin:0 0 18px;font-size:14px;line-height:1.55;color:#111111;">Welcome to Omentir. We help you find relevant buyers, start personalized LinkedIn outreach, and keep every reply organized in one place.</p>
-                <p style="margin:0 0 26px;font-size:14px;line-height:1.55;color:#111111;">Your workspace is ready. Here is the fastest way to get started.</p>
+              <td>
 
-                <p style="margin:0 0 18px;font-size:14px;line-height:1.55;color:#111111;"><strong>1. Add your website</strong><br>Omentir reads your product and builds your buyer profile.</p>
-                <p style="margin:0 0 18px;font-size:14px;line-height:1.55;color:#111111;"><strong>2. Connect LinkedIn</strong><br>Use your own account for lead discovery and outreach.</p>
-                <p style="margin:0 0 18px;font-size:14px;line-height:1.55;color:#111111;"><strong>3. Configure your agent</strong><br>Tell Omentir who to find by role, industry, location, and signals.</p>
-                <p style="margin:0 0 28px;font-size:14px;line-height:1.55;color:#111111;"><strong>4. Launch your campaign</strong><br>Send personalized connection requests and messages, then reply from Inbox.</p>
+                <p style="margin:0 0 14px;font-family:${MAIL_FONT};font-size:15px;line-height:1.6;color:${MAIL.textMuted};">${escapedGreeting}</p>
+                <p style="margin:0 0 26px;font-family:${MAIL_FONT};font-size:16px;line-height:1.6;color:${MAIL.text};">We welcome you at Omentir. We convert LinkedIn users to your customers.</p>
+                <p style="margin:0 0 16px;font-family:${MAIL_FONT};font-size:15px;line-height:1.6;color:${MAIL.text};">It's very simple to use:</p>
 
-                <p style="margin:0 0 26px;font-size:14px;line-height:1.55;color:#111111;"><!--[if mso]>
-                  <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${escapedDashboardUrl}" style="height:42px;v-text-anchor:middle;width:140px;" arcsize="14%" stroked="f" fillcolor="#000000">
-                    <w:anchorlock/>
-                    <center style="color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:600;">Open Dashboard</center>
-                  </v:roundrect>
-                <![endif]--><!--[if !mso]><!-- --><a href="${escapedDashboardUrl}" bgcolor="#000000" style="display:inline-block;border:0;border-radius:6px;background-color:#000000;box-shadow:none;color:#ffffff;font-family:Varta,Arial,Helvetica,sans-serif;font-size:14px;font-weight:600;line-height:1;text-decoration:none;padding:13px 20px;mso-hide:all;">Open Dashboard</a><!--<![endif]--></p>
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 22px;">
+                ${steps.map((step, i) => stepRowHtml(step, i === steps.length - 1)).join("\n                ")}
+                </table>
 
-                <p style="margin:0 0 22px;font-size:14px;line-height:1.55;color:#111111;">If you feel stuck, reply to this email.</p>
-                <p style="margin:0;font-size:14px;line-height:1.55;color:#111111;">Vansh<br>Founder, Omentir</p>
-                ${unsubscribeHtml}
+                <p style="margin:0 0 28px;font-family:${MAIL_FONT};font-size:15px;line-height:1.6;color:${MAIL.text};">That's it.</p>
+
+                <p style="margin:0;font-family:${MAIL_FONT};font-size:15px;line-height:1.6;"><a href="${escapedDashboardUrl}" style="color:${MAIL.text};font-weight:600;text-decoration:underline;text-decoration-color:${MAIL.text};">Open Omentir</a></p>
+
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:32px 0 0;">
+                  <tr><td height="1" bgcolor="${MAIL.border}" style="height:1px;line-height:1px;font-size:0;background-color:${MAIL.border};">&nbsp;</td></tr>
+                </table>
+
+                <p style="margin:26px 0 0;font-family:${MAIL_FONT};font-size:15px;line-height:1.6;color:${MAIL.textMuted};">If you have any query, just reply to this email.</p>
+                <p style="margin:18px 0 0;font-family:${MAIL_FONT};font-size:15px;line-height:1.7;color:${MAIL.text};">Regards,<br>Vansh<br><span style="color:${MAIL.textFaint};">Omentir</span></p>
+
               </td>
             </tr>
+
+            <tr>
+              <td style="padding:34px 0 0;font-family:${MAIL_FONT};font-size:12px;line-height:1.6;color:${MAIL.textFaint};">
+                <a href="${escapeHtml(appUrl("/"))}" style="color:${MAIL.textFaint};text-decoration:underline;">omentir.com</a>${unsubscribeHtml}
+              </td>
+            </tr>
+
           </table>
         </td>
       </tr>
@@ -112,25 +198,25 @@ function buildSignupWelcomeEmail(input: { greeting: string; unsubscribeUrl?: str
   const text = [
     input.greeting,
     "",
-    "Welcome to Omentir. We help you find relevant buyers, start personalized LinkedIn outreach, and keep every reply organized in one place.",
+    "We welcome you at Omentir. We convert LinkedIn users to your customers.",
     "",
-    "Your workspace is ready. Here is the fastest way to get started.",
+    "It's very simple to use:",
     "",
-    "1. Add your website so Omentir can build your buyer profile.",
-    "2. Connect LinkedIn so Omentir can use your own account for lead discovery and outreach.",
-    "3. Configure your agent by role, industry, location, and signals.",
-    "4. Launch your campaign, then reply from Inbox.",
+    ...steps.map((step) => `${step.n}) ${step.text}${step.sub ? ` ${step.sub}` : ""}`),
     "",
-    `Dashboard: ${dashboardUrl}`,
+    "That's it.",
     "",
-    "If you feel stuck, reply to this email.",
+    `Open Omentir: ${dashboardUrl}`,
     "",
+    "If you have any query, just reply to this email.",
+    "",
+    "Regards,",
     "Vansh",
-    "Founder, Omentir",
+    "Omentir",
     ...(input.unsubscribeUrl ? ["", `Unsubscribe: ${input.unsubscribeUrl}`] : []),
   ].join("\n");
 
-  return { html, text };
+  return { html, text, attachments: attachment ? [attachment] : undefined };
 }
 
 const dashboardUrl = () => appUrl("/dashboard");
@@ -464,150 +550,6 @@ export async function sendInterestedLeadNotification(input: InterestedLeadEmailI
   );
 }
 
-// -----------------------------------------------------------------------------
-// Sequence handover — the AI sequence ended without a reply; the user should
-// take this lead over personally. Exhaustive by design: everything Omentir
-// knows about the person, plus the full conversation, so the user never has
-// to dig before reaching out.
-// -----------------------------------------------------------------------------
-
-export type SequenceHandoverEmailInput = {
-  to: string;
-  lead: {
-    name: string;
-    title?: string;
-    company?: string;
-    location?: string;
-    linkedInUrl?: string;
-    summary?: string;
-    fitScore?: number;
-    scoreReasons?: string[];
-    leadReason?: string;
-    signalText?: string;
-    signalSource?: string;
-    signalUrl?: string;
-    signalObservedAt?: string;
-  };
-  campaignName?: string;
-  linkedInAccountName?: string;
-  // AI-drafted "why this person is worth your time" paragraph; optional -
-  // the email falls back to a plain line so a drafting failure never blocks it.
-  aiBriefing?: string;
-  // Everything exchanged, oldest first, as "speaker: text" lines.
-  transcript: string[];
-  messagesSent: number;
-  idempotencyKey?: string;
-};
-
-function buildSequenceHandoverEmail(input: SequenceHandoverEmailInput) {
-  const { lead } = input;
-  const leadName = lead.name || "This lead";
-  const briefing =
-    input.aiBriefing?.trim() ||
-    `${leadName} accepted your connection request but hasn't replied after ${input.messagesSent} messages. They matched your buyer profile, so a personal note from you may land where automation didn't.`;
-
-  const rows: Array<[string, string]> = [
-    ["Name", leadName],
-    ["Position", lead.title || "—"],
-    ["Company", lead.company || "—"],
-    ["Location", lead.location || "—"],
-    ["LinkedIn", lead.linkedInUrl || "—"],
-    ["About them", lead.summary || "—"],
-    ...(lead.leadReason ? ([["Why they were surfaced", lead.leadReason]] as Array<[string, string]>) : []),
-    ...(lead.signalText
-      ? ([[
-          `Buying signal${lead.signalSource ? ` (via ${lead.signalSource})` : ""}`,
-          `${lead.signalText}${lead.signalObservedAt ? ` (seen ${lead.signalObservedAt.slice(0, 10)})` : ""}`,
-        ]] as Array<[string, string]>)
-      : []),
-    ...(lead.signalUrl ? ([["Signal link", lead.signalUrl]] as Array<[string, string]>) : []),
-    ...(typeof lead.fitScore === "number" ? ([["Fit score", `${lead.fitScore}/100`]] as Array<[string, string]>) : []),
-    ...(lead.scoreReasons?.length
-      ? ([["Fit notes", lead.scoreReasons.join("; ")]] as Array<[string, string]>)
-      : []),
-    ...(input.campaignName ? ([["Campaign", input.campaignName]] as Array<[string, string]>) : []),
-    ...(input.linkedInAccountName
-      ? ([["LinkedIn account", input.linkedInAccountName]] as Array<[string, string]>)
-      : []),
-    ["Messages sent", String(input.messagesSent)],
-  ];
-
-  const transcriptHtml = input.transcript.length
-    ? `
-            <tr>
-              <td style="padding:16px 28px 8px;">
-                <h2 style="margin:0 0 8px;color:#111111;font-size:15px;font-weight:700;">Everything sent so far</h2>
-                ${input.transcript
-                  .map(
-                    (line) =>
-                      `<p style="margin:0 0 10px;font-size:13px;line-height:1.55;color:#333333;border-left:3px solid #eeeeee;padding-left:10px;">${escapeHtml(line)}</p>`,
-                  )
-                  .join("")}
-              </td>
-            </tr>`
-    : "";
-
-  const html = emailShell(
-    `Time to take over: ${leadName}`,
-    `
-            <tr>
-              <td style="padding:28px 28px 8px;">
-                <p style="margin:0 0 6px;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#ba3871;">Sequence finished — your turn</p>
-                <h1 style="margin:0;color:#111111;font-size:22px;line-height:1.25;font-weight:700;">Talk to ${escapeHtml(leadName)} yourself</h1>
-                <p style="margin:12px 0 0;font-size:14px;line-height:1.6;color:#333333;">${escapeHtml(briefing)}</p>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:16px 28px 8px;">
-                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-top:1px solid #eeeeee;">
-                  ${detailRowsHtml(rows)}
-                </table>
-              </td>
-            </tr>
-            ${transcriptHtml}
-            <tr>
-              <td style="padding:20px 28px 28px;">
-                <a href="${messagesUrl()}" style="display:inline-block;border-radius:6px;background:#000000;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;padding:12px 18px;">Open Messages</a>
-                ${autoFooterHtml()}
-              </td>
-            </tr>`,
-  );
-
-  const text = withAutoFooterText(
-    [
-      `Talk to ${leadName} yourself - the automated sequence has finished.`,
-      "",
-      briefing,
-      "",
-      ...rows.map(([label, value]) => `${label}: ${value || "—"}`),
-      ...(input.transcript.length ? ["", "Everything sent so far:", ...input.transcript] : []),
-      "",
-      `Open Messages: ${messagesUrl()}`,
-    ].join("\n"),
-  );
-
-  return { html, text, subject: `Your turn with ${leadName}${lead.company ? ` (${lead.company})` : ""}` };
-}
-
-export async function sendSequenceHandoverEmail(input: SequenceHandoverEmailInput) {
-  const resend = getResend();
-  if (!resend) return { skipped: true };
-
-  const email = buildSequenceHandoverEmail(input);
-
-  return resend.emails.send(
-    {
-      from: transactionalFrom(),
-      to: input.to,
-      subject: email.subject,
-      html: email.html,
-      text: email.text,
-      tags: [{ name: "kind", value: "sequence_handover" }],
-    },
-    input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : undefined,
-  );
-}
-
 type NewSignupNotificationInput = {
   userId: string;
   name: string;
@@ -737,10 +679,11 @@ export async function scheduleSignupWelcomeEmail(input: {
     {
       from: hostedWelcomeFrom(),
       to: input.to,
-      subject: "Find customers that want your product with AI.",
+      subject: "Welcome to Omentir",
       scheduledAt,
       html: email.html,
       text: email.text,
+      ...(email.attachments ? { attachments: email.attachments } : {}),
       ...(input.unsubscribeUrl
         ? {
             headers: {
