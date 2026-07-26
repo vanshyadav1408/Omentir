@@ -4,7 +4,7 @@
 
 ## Verification
 
-- [ ] `npx tsc --noEmit`
-- [ ] `npm run build`
+- [ ] `bunx tsc --noEmit`
+- [ ] `bun run build`
 - [ ] No real outreach was sent
 - [ ] Commits include `Signed-off-by`

@@ -20,7 +20,7 @@ Self-hosting removes the Omentir subscription, but Firebase/Google AI and Unipil
 
 ### Quick start on localhost
 
-Install Git and either Docker with Docker Compose, or Node.js 22 with npm. Then clone and configure the project:
+Install Git and either Docker with Docker Compose, or Bun 1.3. Then clone and configure the project:
 
 ```bash
 git clone https://github.com/vanshyadav1408/Omentir.git
@@ -65,21 +65,21 @@ To expose the app on a real host (LAN/VPS):
 3. Set `APP_BASE_URL` to the exact public HTTPS origin (no trailing slash).
 4. Keep a strong `LOCAL_APP_PASSWORD` (do not enable open access on a public URL).
 
-#### Run with Node.js
+#### Run with Bun
 
 For local development:
 
 ```bash
-npm ci
-npm run dev
+bun install
+bun run dev
 ```
 
 For a production-style local server:
 
 ```bash
-npm ci
-npm run build
-npm start
+bun install
+bun run build
+bun start
 ```
 
 Open `http://localhost:3000`. Sign in with `LOCAL_APP_PASSWORD` unless you opted into open access (see below).
@@ -250,9 +250,9 @@ If you run more than one Node process or replica against the same Firestore proj
 ## Development
 
 ```bash
-npm ci
-npx tsc --noEmit
-npm run build
+bun install
+bunx tsc --noEmit
+bun run build
 ```
 
 Runtime configuration is validated when the server starts, so builds and contributor CI do not need secrets.

@@ -11,13 +11,13 @@ Thank you for contributing. Keep changes focused, explain why they matter, and p
 
 ## Development
 
-Use Node.js 22, then run:
+Use Bun 1.3, then run:
 
 ```bash
-npm ci
-npx tsc --noEmit --pretty false
-npm run lint
-npm run build
+bun install
+bunx tsc --noEmit --pretty false
+bun run lint
+bun run build
 ```
 
 Report every skipped or unavailable check in the pull request.

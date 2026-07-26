@@ -25,13 +25,12 @@ jobs:
           # with "unknown revision", gitleaks reports "scanned ~0 bytes" and
           # exits 1, and the secret scan silently never runs.
           fetch-depth: 0
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npx tsc --noEmit --pretty false
-      - run: npm run build
+          bun-version: 1.3.14
+      - run: bun install --frozen-lockfile
+      - run: bunx tsc --noEmit --pretty false
+      - run: bun run build
       - run: docker build -t omentir-ci .
       - uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
 

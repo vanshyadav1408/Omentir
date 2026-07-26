@@ -5,11 +5,11 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "dev": "NODE_OPTIONS=--disable-warning=DEP0205 next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint",
-    "test": "node --test tests/*.test.mjs",
+    "dev": "bun --bun next dev",
+    "build": "bun --bun next build",
+    "start": "bun --bun next start",
+    "lint": "bun --bun eslint",
+    "test": "bun test tests/",
     "postinstall": "rm -rf .next"
   },
   "dependencies": {
