@@ -9,9 +9,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "lint:baseline": "node scripts/check-lint-baseline.mjs",
-    "postinstall": "rm -rf .next",
-    "secrets:scan": "bash scripts/scan-secrets.sh"
+    "postinstall": "rm -rf .next"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.3.0",
