@@ -66,10 +66,6 @@ const agentSignalSourcesSchema = z.object({
   keywords: z.array(z.string().trim().min(1)).default([]),
 });
 
-// Hour of the workspace's local day discovery runs at, same 0-23 range as the
-// picker on the agent form. Omitted means Omentir's default hour.
-const runAtHourSchema = z.number().int().min(0).max(23);
-
 const sendWindowSchema = z.enum(["always", "business", "extended"]);
 
 export const createAgentPayloadSchema = z.object({
@@ -84,7 +80,6 @@ export const createAgentPayloadSchema = z.object({
     founderUrls: [],
     keywords: [],
   }),
-  runAtHour: runAtHourSchema.optional(),
 });
 
 // Partial edit: omitted fields keep the agent's current values, exactly like
@@ -98,7 +93,6 @@ export const updateAgentPayloadSchema = z.object({
   prompt: z.string().trim().min(1).max(4000).optional(),
   filters: agentFiltersSchema.optional(),
   signalSources: agentSignalSourcesSchema.optional(),
-  runAtHour: runAtHourSchema.optional(),
   // The window lives on the campaigns built on this agent's lead group, so a
   // change here applies to all of them - exactly what the agent edit form does.
   sendWindow: sendWindowSchema.optional(),
@@ -117,8 +111,10 @@ export const updateProductProfilePayloadSchema = z.object({
   keyFeatures: stringList,
   socialProof: stringList,
   linkedInCompanyPage: z.string().trim().max(500).optional(),
+  useCases: stringList,
   targetBuyers: stringList,
   buyerTitles: stringList,
+  roleVocabulary: stringList,
   industries: stringList,
   companySizes: stringList,
   painPoints: stringList,
@@ -369,8 +365,10 @@ export async function updateProductProfileResource(context: AgentApiContext, pay
     keyFeatures: current?.keyFeatures || [],
     socialProof: current?.socialProof || [],
     linkedInCompanyPage: current?.linkedInCompanyPage || "",
+    useCases: current?.useCases || [],
     targetBuyers: current?.targetBuyers || [],
     buyerTitles: current?.buyerTitles || [],
+    roleVocabulary: current?.roleVocabulary || [],
     industries: current?.industries || [],
     companySizes: current?.companySizes || [],
     painPoints: current?.painPoints || [],
@@ -418,7 +416,6 @@ export async function createAgentResource(context: AgentApiContext, payload: unk
     signalSources: input.signalSources,
     linkedInAccountId: account.id,
     targetGroupName: input.groupName,
-    runAtHour: input.runAtHour,
   });
 
   return {
@@ -426,9 +423,10 @@ export async function createAgentResource(context: AgentApiContext, payload: unk
     leadGroup: { id: agent.targetGroupId, name: agent.targetGroupName },
     discovery: {
       status: "scheduled",
-      // UTC instant; the hour it lands on is runAtHour in the workspace zone.
+      // The first run is due immediately - discovery is not scheduled for some
+      // later hour - and repeats daily at this instant's local wall-clock time.
       nextRunAt: agent.nextRunAt,
-      runAtHour: agent.runAtHour ?? null,
+      repeats: "daily at the time the agent was created",
       timeZone: resolveTimeZone(context.workspace.timezone),
       guidance: "Use omentir_list_leads with this lead group id to inspect results.",
     },
@@ -475,7 +473,6 @@ export async function updateAgentResource(context: AgentApiContext, payload: unk
     input.signalSources,
     input.linkedInAccountId,
     input.groupName,
-    input.runAtHour,
   ].some((value) => value !== undefined);
   let updated = agent;
   if (changesAgentConfiguration) {
@@ -487,9 +484,6 @@ export async function updateAgentResource(context: AgentApiContext, payload: unk
       signalSources: input.signalSources ?? agent.signalSources,
       ...(linkedInAccountId ? { linkedInAccountId } : {}),
       targetGroupName: input.groupName ?? agent.targetGroupName,
-      // Omitted keeps the agent's current hour: editing targeting must never
-      // move discovery to whenever the edit happened to be made.
-      runAtHour: input.runAtHour,
     });
   }
   if (input.status === "paused") {

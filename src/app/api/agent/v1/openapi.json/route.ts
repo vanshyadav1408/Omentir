@@ -23,14 +23,6 @@ const signalSources = {
   },
 } as const;
 
-const runAtHour = {
-  type: "integer",
-  minimum: 0,
-  maximum: 23,
-  description:
-    "Hour of the workspace's local day to run discovery, in the workspace time zone. Omitted keeps the current hour (default: an hour before business hours open).",
-} as const;
-
 const sendWindow = {
   enum: ["always", "business", "extended"],
   description:
@@ -65,7 +57,6 @@ export async function GET() {
             prompt: { type: "string", maxLength: 4000 },
             filters: agentFilters,
             signalSources,
-            runAtHour,
           },
         },
         AgentUpdate: {
@@ -80,7 +71,6 @@ export async function GET() {
             prompt: { type: "string", maxLength: 4000 },
             filters: agentFilters,
             signalSources,
-            runAtHour,
             sendWindow,
             status: { enum: ["active", "paused"] },
           },
@@ -187,12 +177,12 @@ export async function GET() {
         get: {
           operationId: "listLeadFinders",
           summary:
-            "List lead-finding agents in the workspace with each one's discovery hour, send window, and whether an outreach sequence is set up for it.",
+            "List lead-finding agents in the workspace with each one's next discovery run, send window, and whether an outreach sequence is set up for it.",
           responses: { "200": { description: "Agent list" } },
         },
         post: {
           operationId: "createLeadFinder",
-          summary: "Create a lead finder and schedule its first discovery run.",
+          summary: "Create a lead finder. Its first discovery run starts immediately and repeats daily at that time.",
           requestBody: {
             required: true,
             content: { "application/json": { schema: { $ref: "#/components/schemas/AgentCreate" } } },
@@ -202,7 +192,7 @@ export async function GET() {
         patch: {
           operationId: "updateLeadFinder",
           summary:
-            "Update, pause, or resume a lead finder, including its discovery hour and the send window its outreach uses. Only supplied fields change.",
+            "Update, pause, or resume a lead finder, including the send window its outreach uses. Its daily discovery time is fixed at creation. Only supplied fields change.",
           requestBody: {
             required: true,
             content: { "application/json": { schema: { $ref: "#/components/schemas/AgentUpdate" } } },

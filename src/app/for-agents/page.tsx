@@ -137,12 +137,12 @@ const toolGroups = [
       {
         name: "omentir_update_agent",
         description:
-          "Edit an agent's name, prompt, filters, signal sources, LinkedIn account, lead group, discovery hour, or send window.",
+          "Edit an agent's name, prompt, filters, signal sources, LinkedIn account, lead group, or send window.",
       },
       {
         name: "omentir_list_agents",
         description:
-          "List the discovery agents running in the workspace, with each one's discovery hour and send window.",
+          "List the discovery agents running in the workspace, with each one's next discovery run and send window.",
       },
       {
         name: "omentir_list_leads",
@@ -264,9 +264,9 @@ const restEndpoints: { method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"; path
   { method: "GET", path: "/context", description: "Workspace readiness, settings, time zone, today's remaining send allowance, resource links, and counts." },
   { method: "GET", path: "/product-profile", description: "Read the product profile used for ICP matching and message personalization." },
   { method: "PUT", path: "/product-profile", description: "Update the product and ICP profile used to qualify leads." },
-  { method: "GET", path: "/agents", description: "List the discovery agents running in the workspace, with discovery hour and send window." },
+  { method: "GET", path: "/agents", description: "List the discovery agents running in the workspace, with next discovery run and send window." },
   { method: "POST", path: "/agents", description: "Create an ICP discovery agent from a prompt, signal sources, or filters." },
-  { method: "PATCH", path: "/agents", description: "Update a lead finder's targeting, discovery hour, send window, or paused state." },
+  { method: "PATCH", path: "/agents", description: "Update a lead finder's targeting, send window, or paused state." },
   { method: "DELETE", path: "/agents", description: "Delete a lead finder while retaining its leads and group." },
   { method: "GET", path: "/groups", description: "List lead groups created by discovery agents." },
   { method: "GET", path: "/leads", description: "Search, filter, sort, and list discovered leads." },

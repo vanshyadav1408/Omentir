@@ -46,9 +46,8 @@ Tokens are never accepted in URLs. Use a client that supports MCP authorization 
 - \`filters.titles\`, \`filters.industries\`, \`filters.locations\`, and \`filters.keywords\`: each must contain at least one value.
 - Optional \`linkedInAccountId\`: choose from \`omentir_list_linkedin_accounts\`; otherwise Omentir uses the workspace's first connected account.
 - Optional \`signalSources\`: competitor URLs, founder URLs, and buying-signal keywords.
-- Optional \`runAtHour\` (0-23): the hour of the workspace's local day discovery runs at. Omitted uses Omentir's default hour.
 
-The response includes the saved agent, its lead group, and discovery scheduling information. Lead discovery runs asynchronously.
+The response includes the saved agent, its lead group, and discovery scheduling information. Lead discovery runs asynchronously: a new lead finder starts its first run right away and then looks for new leads once a day at the time it was created. There is no setting for that time.
 
 A new lead finder discovers and scores leads only. Outreach sequences (connection request, waits, messages) are built in the Omentir app, not over this API, so tell the customer to set the sequence up there before promising that messages will go out. \`omentir_list_agents\` reports \`outreach.configured\` for each finder.
 
@@ -75,9 +74,9 @@ Available tools:
 - \`omentir_get_product_profile\`
 - \`omentir_update_product_profile\`
 - \`omentir_list_linkedin_accounts\`
-- \`omentir_list_agents\` (includes each finder's discovery hour, send window, and outreach status)
+- \`omentir_list_agents\` (includes each finder's next discovery run, send window, and outreach status)
 - \`omentir_create_agent\`
-- \`omentir_update_agent\` (configuration, discovery hour, send window, and active/paused status)
+- \`omentir_update_agent\` (configuration, send window, and active/paused status)
 - \`omentir_pause_agent\`
 - \`omentir_resume_agent\`
 - \`omentir_delete_agent\`

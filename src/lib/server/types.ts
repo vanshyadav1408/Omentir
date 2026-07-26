@@ -127,11 +127,15 @@ export type Agent = {
   };
   signalSources?: AgentSignalSources;
   peopleEngineCursor?: PeopleEngineCursor;
-  // Hour of the local day (0-23, workspace timezone) this agent runs lead
-  // discovery. Unset means DEFAULT_AGENT_RUN_HOUR. Editing an agent must not
-  // change it - the run time is the user's choice, not a side effect of when
-  // they last saved.
+  // Legacy: hour of the local day (0-23, workspace timezone) this agent runs
+  // lead discovery, from back when setup asked for one. Agents created since
+  // then carry runAnchorAt instead and never set this. Kept so existing agents
+  // keep discovering at the hour their owner chose - nothing writes it anymore.
   runAtHour?: number;
+  // The instant the agent was created. Discovery runs immediately at setup and
+  // then daily at this wall-clock time in the workspace's zone. Unset on agents
+  // predating this, which fall back to runAtHour.
+  runAnchorAt?: string;
   targetGroupId: string;
   targetGroupName: string;
   status: "active" | "paused" | "running" | "error";
