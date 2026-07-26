@@ -257,12 +257,6 @@ npm run build
 
 Runtime configuration is validated when the server starts, so builds and contributor CI do not need secrets.
 
-Useful operator scripts:
-
-| Script | Purpose |
-|---|---|
-| `npm run secrets:scan` | Local secret scan helper |
-
 ---
 
 ## Support

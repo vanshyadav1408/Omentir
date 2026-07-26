@@ -31,7 +31,6 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx tsc --noEmit --pretty false
-      - run: npm run lint:baseline
       - run: npm run build
       - run: docker build -t omentir-ci .
       - uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0

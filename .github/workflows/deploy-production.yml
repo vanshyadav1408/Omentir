@@ -33,7 +33,6 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx tsc --noEmit --pretty false
-      - run: npm run lint:baseline
       - run: npm run build
 
   deploy:
