@@ -8,7 +8,6 @@ import {
   listCampaigns,
   getLeadsByIds,
   listGroups,
-  listLeads,
 } from "./data";
 
 export type ScheduledAction = {
@@ -23,6 +22,12 @@ export type ScheduledAction = {
   group?: string;
   canRunNow: boolean;
   blockedReason?: string;
+  timeline: {
+    id: string;
+    title: string;
+    status: "completed" | "scheduled" | "upcoming";
+    at?: string;
+  }[];
   lead?: {
     id: string;
     name: string;
@@ -37,22 +42,21 @@ export async function listScheduledActions(
   workspaceId: string,
   filters: { campaignId?: string; agentId?: string } = {},
 ) {
-  const [campaigns, enrollments, leads, agents, groups] = await Promise.all([
+  const [campaigns, enrollments, agents, groups] = await Promise.all([
     listCampaigns(workspaceId),
     listCampaignEnrollments(workspaceId),
-    listLeads(workspaceId),
     listAgents(workspaceId),
     listGroups(workspaceId),
   ]);
-  const knownLeadIds = new Set(leads.map((lead) => lead.id));
-  const missingLeadIds = Array.from(new Set(
-    enrollments.map((enrollment) => enrollment.leadId).filter((id) => !knownLeadIds.has(id)),
-  ));
-  const extraLeads = missingLeadIds.length
-    ? await getLeadsByIds(workspaceId, missingLeadIds)
-    : [];
+  // Only enrolled leads can produce an action, and there are at most as many of
+  // them as there are enrollments. Scanning the whole leads collection here used
+  // to pull 500 full documents and push this call past Firestore's 60s deadline.
+  const leads = await getLeadsByIds(
+    workspaceId,
+    enrollments.map((enrollment) => enrollment.leadId),
+  );
   const campaignsById = new Map(campaigns.map((campaign) => [campaign.id, campaign]));
-  const leadsById = new Map([...leads, ...extraLeads].map((lead) => [lead.id, lead]));
+  const leadsById = new Map(leads.map((lead) => [lead.id, lead]));
   const agentsById = new Map(agents.map((agent) => [agent.id, agent]));
   const groupsById = new Map(groups.map((group) => [group.id, group]));
   const terminalStatuses = new Set(["stopped", "replied"]);
@@ -109,6 +113,19 @@ export async function listScheduledActions(
             : enrollment.lastError
               ? `The last attempt failed and will retry at the scheduled time: ${enrollment.lastError}`
               : undefined,
+      timeline: campaign.steps.flatMap((campaignStep, campaignStepIndex) => {
+        if (campaignStep.type === "wait") return [];
+        return [{
+          id: campaignStep.id,
+          title: campaignStep.type === "connect" ? "Send connection request" : "Send LinkedIn message",
+          status: campaignStepIndex < stepIndex
+            ? "completed" as const
+            : campaignStepIndex === stepIndex
+              ? "scheduled" as const
+              : "upcoming" as const,
+          at: campaignStepIndex === stepIndex ? enrollment.nextActionAt : undefined,
+        }];
+      }),
       campaign: campaign.name,
       agent: agent?.name,
       group: group?.name,

@@ -57,6 +57,7 @@ import {
   applyConnectionAccepted,
   draftUpcomingMessagePreview,
   processInboundMessage,
+  refreshLeadProfileForDrafting,
 } from "./inbound";
 import { agentTargetLocations, matchesTargetLocation } from "./geo";
 import { sendWindowTimeZoneForLead } from "./lead-time-zone";
@@ -1131,10 +1132,14 @@ async function runEnrollment(
       draft && draft.stepIndex === enrollment.currentStepIndex && draft.body.trim()
         ? draft.body
         : undefined;
+    const leadForDrafting =
+      !storedDraft && sequencePosition === 1
+        ? await refreshLeadProfileForDrafting(lead, account)
+        : lead;
     body =
       storedDraft ??
       (await draftCampaignMessage({
-        lead,
+        lead: leadForDrafting,
         productProfile: profile,
         campaignName: campaign.name,
         templateHint: step.messageTemplate,

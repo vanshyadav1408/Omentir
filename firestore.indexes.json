@@ -21,8 +21,8 @@
       "collectionGroup": "campaignEnrollments",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "workspaceId", "order": "ASCENDING" },
         { "fieldPath": "campaignId", "order": "ASCENDING" },
+        { "fieldPath": "workspaceId", "order": "ASCENDING" },
         { "fieldPath": "nextActionAt", "order": "ASCENDING" }
       ]
     }

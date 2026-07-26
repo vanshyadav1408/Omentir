@@ -1,6 +1,12 @@
 import "server-only";
 
-import type { Agent, Lead, LinkedInInboxMessage, LinkedInInboxThread } from "./types";
+import type {
+  Agent,
+  Lead,
+  LinkedInInboxMessage,
+  LinkedInInboxThread,
+  LinkedInProfileContext,
+} from "./types";
 import { consumeProfileViewBudget } from "./data";
 import { searchableLocationNames } from "./geo";
 
@@ -106,6 +112,15 @@ export type UnipileProfile = {
   city?: string;
   country?: string;
   summary?: string;
+  work_experience?: unknown[];
+  experience?: unknown[];
+  education?: unknown[];
+  skills?: unknown[];
+  certifications?: unknown[];
+  projects?: unknown[];
+  volunteering_experience?: unknown[];
+  volunteer_experience?: unknown[];
+  languages?: unknown[];
   image?: unknown;
   picture?: unknown;
   avatar?: unknown;
@@ -390,6 +405,10 @@ function cleanString(value: unknown) {
   return undefined;
 }
 
+function uniqueStrings(values: string[]) {
+  return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)));
+}
+
 function pickString(record: RecordLike | null | undefined, keys: string[]) {
   if (!record) return undefined;
 
@@ -487,6 +506,98 @@ function profileLocation(profile: UnipileProfile) {
   );
 }
 
+function profileSection(
+  profile: UnipileProfile,
+  sectionKeys: string[],
+  fieldKeys: string[],
+  limit: number,
+) {
+  const record = asRecord(profile);
+  const section = sectionKeys
+    .map((key) => record?.[key])
+    .find((value) => Array.isArray(value));
+  if (!Array.isArray(section)) return [];
+
+  return uniqueStrings(
+    section
+      .slice(0, limit)
+      .map((entry) => {
+        const entryRecord = asRecord(entry);
+        if (!entryRecord) return cleanString(entry) || "";
+
+        const parts = fieldKeys.flatMap((key) => {
+          const value = entryRecord[key];
+          if (Array.isArray(value)) {
+            return value
+              .slice(0, 8)
+              .map((item) => {
+                const itemRecord = asRecord(item);
+                return (
+                  cleanString(item) ||
+                  pickString(itemRecord, ["name", "title", "skill", "language"]) ||
+                  ""
+                );
+              })
+              .filter(Boolean);
+          }
+          return cleanString(value) || "";
+        });
+
+        return uniqueStrings(parts).join(" | ").slice(0, 500);
+      })
+      .filter(Boolean),
+  );
+}
+
+export function normalizeLinkedInProfileContext(
+  profile: UnipileProfile,
+): LinkedInProfileContext | undefined {
+  const context: LinkedInProfileContext = {
+    about: String(profile.summary || "").trim().slice(0, 1200),
+    experience: profileSection(
+      profile,
+      ["work_experience", "experience"],
+      ["position", "title", "company", "location", "start", "end", "description", "skills"],
+      8,
+    ),
+    education: profileSection(
+      profile,
+      ["education"],
+      ["degree", "field_of_study", "school", "start", "end", "description"],
+      6,
+    ),
+    skills: profileSection(profile, ["skills"], ["name", "skill"], 25),
+    certifications: profileSection(
+      profile,
+      ["certifications"],
+      ["name", "authority", "issuer", "start", "end"],
+      8,
+    ),
+    projects: profileSection(
+      profile,
+      ["projects"],
+      ["name", "title", "description", "start", "end", "url"],
+      6,
+    ),
+    volunteering: profileSection(
+      profile,
+      ["volunteering_experience", "volunteer_experience"],
+      ["role", "organization", "cause", "description", "start", "end"],
+      6,
+    ),
+    languages: profileSection(profile, ["languages"], ["name", "language", "proficiency"], 12),
+    recentPosts: [],
+    capturedAt: new Date().toISOString(),
+  };
+
+  return Object.entries(context).some(
+    ([key, value]) =>
+      key !== "capturedAt" && (typeof value === "string" ? Boolean(value) : value.length > 0),
+  )
+    ? context
+    : undefined;
+}
+
 function normalizeUnipileProfile(profile: UnipileProfile) {
   const name =
     profile.name ||
@@ -505,6 +616,7 @@ function normalizeUnipileProfile(profile: UnipileProfile) {
     company: profile.company || "",
     location: profileLocation(profile) || "",
     summary: profile.summary || "",
+    profileContext: normalizeLinkedInProfileContext(profile),
   } satisfies Partial<Lead>;
 }
 
@@ -1152,8 +1264,9 @@ export async function listLinkedInPostsForProfile(input: {
 }) {
   if (!isUnipileConfigured()) return [];
 
+  const identifier = linkedInIdentifier(input.identifier);
   const result = await request<UnipileListResponse<UnipilePost>>(
-    withQuery(`/api/v1/users/${encodeURIComponent(input.identifier)}/posts`, {
+    withQuery(`/api/v1/users/${encodeURIComponent(identifier)}/posts`, {
       account_id: input.accountId,
       is_company: input.isCompany,
       limit: input.limit,
@@ -1262,8 +1375,9 @@ export async function retrieveLinkedInProfile(input: {
   if (!(await takeProfileViewBudget(input.accountId))) return null;
   await waitForProfileViewSlot();
 
+  const identifier = linkedInIdentifier(input.identifier);
   const profile = await request<UnipileProfile>(
-    withQuery(`/api/v1/users/${encodeURIComponent(input.identifier)}`, {
+    withQuery(`/api/v1/users/${encodeURIComponent(identifier)}`, {
       account_id: input.accountId,
       linkedin_sections: "*",
     }),

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { runScheduledActionNowAction } from "@/app/actions";
 import MobileHeaderPortal from "@/app/mobile-header-portal";
@@ -10,22 +10,6 @@ import { useWorkspaceTimeZone } from "@/app/workspace-time-zone";
 type Lead = NonNullable<ScheduledAction["lead"]>;
 type LeadActions = { lead: Lead; actions: ScheduledAction[] };
 
-const TIMEZONES = [
-  "America/Sao_Paulo",
-  "America/Chicago",
-  "Europe/Berlin",
-  "America/New_York",
-  "Pacific/Honolulu",
-  "Asia/Kolkata",
-  "Asia/Tokyo",
-  "America/Denver",
-  "Pacific/Auckland",
-  "America/Los_Angeles",
-  "Asia/Singapore",
-  "Australia/Sydney",
-  "Europe/London",
-  "UTC",
-];
 const TIMEZONE_LABELS: Record<string, string> = {
   UTC: "Universal",
   "America/Sao_Paulo": "Brazil",
@@ -43,6 +27,10 @@ const TIMEZONE_LABELS: Record<string, string> = {
   "Europe/London": "United Kingdom",
 };
 const PER_PAGE_OPTIONS = [10, 50, 100];
+const VIEW_MODES = [
+  { id: "time" as const, label: "By time" },
+  { id: "lead" as const, label: "By leads" },
+];
 
 function timeZoneLabel(timeZone: string) {
   return TIMEZONE_LABELS[timeZone] || timeZone.split("/").at(-1)?.replaceAll("_", " ") || "Universal";
@@ -82,7 +70,7 @@ function resultMessage(result: string, kind: ScheduledAction["kind"]) {
   return { ok: false, text: `${kind === "connection" ? "Connection request" : "Message"} was not sent yet (${result.replaceAll("-", " ")}).` };
 }
 
-function ActionDetails({ action, timeZone, pending, confirming, feedback, onConfirm, onCancel, onRun, onClose, bare }: {
+function ActionDetails({ action, timeZone, pending, confirming, feedback, onConfirm, onCancel, onRun, onClose, bare, showTimeline }: {
   action: ScheduledAction;
   timeZone: string;
   pending: boolean;
@@ -93,6 +81,7 @@ function ActionDetails({ action, timeZone, pending, confirming, feedback, onConf
   onRun: () => void;
   onClose?: () => void;
   bare?: boolean;
+  showTimeline?: boolean;
 }) {
   if (!action.lead) return null;
   return (
@@ -117,6 +106,36 @@ function ActionDetails({ action, timeZone, pending, confirming, feedback, onConf
             </button>
           ) : null}
         </div>
+
+        {showTimeline ? (
+          <div className="mt-5 border-b border-zinc-100 pb-5">
+            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-zinc-400">Timeline</p>
+            <div className="relative mt-3 space-y-1 before:absolute before:bottom-3 before:left-[5px] before:top-3 before:w-px before:bg-zinc-200">
+              {action.timeline.map((timelineItem) => {
+                const active = timelineItem.status === "scheduled";
+                return (
+                  <div key={timelineItem.id} className="relative flex w-full gap-3 rounded-lg py-2 pl-0">
+                    <span className={`relative z-10 mt-1.5 grid h-[11px] w-[11px] shrink-0 place-items-center rounded-full border-2 ${
+                      active
+                        ? "border-[#ba3871] bg-[#ba3871]"
+                        : timelineItem.status === "completed"
+                          ? "border-emerald-500 bg-emerald-500"
+                          : "border-zinc-300 bg-white"
+                    }`} />
+                    <span className="min-w-0">
+                      <span className={`block truncate text-xs font-semibold ${active ? "text-[#ba3871]" : "text-zinc-800"}`}>{timelineItem.title}</span>
+                      <span className="mt-0.5 block text-[11px] capitalize text-zinc-400">
+                        {timelineItem.at
+                          ? `${dateLabel(timelineItem.at, timeZone, true)} · ${timeLabel(timelineItem.at, timeZone)}`
+                          : timelineItem.status}
+                      </span>
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
 
         <div className="mt-5 flex items-start gap-3">
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[#f8e8ef] text-[#ba3871]"><span className="material-symbols-outlined text-[18px]">{action.kind === "connection" ? "person_add" : "chat_bubble"}</span></span>
@@ -150,37 +169,35 @@ function ActionDetails({ action, timeZone, pending, confirming, feedback, onConf
   );
 }
 
-// mobileCaption (mobile-only): hides the page title + inline timezone picker,
-// docks the picker into the fixed app bar, and shows the caption above the list.
+// mobileCaption (mobile-only): hides the page title and shows the caption above the list.
 export default function ActionsDashboard({ items, title, serverNow, timezone, headerActions, intro, mobileCaption }: { items: ScheduledAction[]; title: string; serverNow: number; timezone?: string; headerActions?: ReactNode; intro?: ReactNode; loadLiveItems?: boolean; mobileCaption?: string }) {
   const router = useRouter();
-  // The picker can move this view to another zone (useful when a prospect is
-  // elsewhere), but it always opens on the workspace's own zone.
+  const [isRefreshing, startRefresh] = useTransition();
   const workspaceTimeZone = useWorkspaceTimeZone();
-  const defaultTimeZone = timezone || workspaceTimeZone;
-  const [pickedTimeZone, setPickedTimeZone] = useState("");
-  const timeZone = pickedTimeZone || defaultTimeZone;
-  const setTimeZone = setPickedTimeZone;
+  const timeZone = timezone || workspaceTimeZone;
   const [selectedLeadId, setSelectedLeadId] = useState(items.find((item) => item.lead)?.lead?.id || "");
   const [selectedId, setSelectedId] = useState(items.find((item) => item.lead)?.id || "");
   const [mobileDetailsOpen, setMobileDetailsOpen] = useState(false);
   const [confirmingId, setConfirmingId] = useState("");
   const [pendingId, setPendingId] = useState("");
   const [feedback, setFeedback] = useState<Record<string, { ok: boolean; text: string }>>({});
+  const [viewMode, setViewMode] = useState<"time" | "lead">("time");
   const [perPage, setPerPage] = useState(10);
   const [page, setPage] = useState(1);
 
   useEffect(() => {
     const refresh = () => {
-      if (document.visibilityState === "visible") router.refresh();
+      if (document.visibilityState === "visible" && !isRefreshing) {
+        startRefresh(() => router.refresh());
+      }
     };
-    const interval = window.setInterval(refresh, 15_000);
+    const interval = window.setInterval(refresh, 60_000);
     document.addEventListener("visibilitychange", refresh);
     return () => {
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", refresh);
     };
-  }, [router]);
+  }, [isRefreshing, router]);
 
   const leads = useMemo(() => {
     const groups = new Map<string, LeadActions>();
@@ -195,19 +212,26 @@ export default function ActionsDashboard({ items, title, serverNow, timezone, he
 
   const selectedLead = leads.find((group) => group.lead.id === selectedLeadId) || leads[0];
   const selected = selectedLead?.actions.find((action) => action.id === selectedId) || selectedLead?.actions[0];
+  const visibleLeads = viewMode === "lead"
+    ? [...leads].sort((a, b) => a.lead.name.localeCompare(b.lead.name))
+    : leads;
   const total = leads.length;
   const totalPages = Math.max(1, Math.ceil(total / perPage));
   const currentPage = Math.min(page, totalPages);
   const start = (currentPage - 1) * perPage;
   const end = Math.min(start + perPage, total);
-  const pageRows = leads.slice(start, end);
-  const timeZoneOptions = Array.from(new Set([timeZone, ...TIMEZONES])).sort((a, b) => timeZoneLabel(a).localeCompare(timeZoneLabel(b)));
-
+  const pageRows = visibleLeads.slice(start, end);
   function selectAction(action: ScheduledAction) {
     setSelectedLeadId(action.lead?.id || "");
     setSelectedId(action.id);
     setConfirmingId("");
     setMobileDetailsOpen(true);
+  }
+
+  function changeViewMode(mode: "time" | "lead") {
+    setViewMode(mode);
+    setPage(1);
+    setConfirmingId("");
   }
 
   async function runNow(action: ScheduledAction) {
@@ -227,19 +251,21 @@ export default function ActionsDashboard({ items, title, serverNow, timezone, he
     }
   }
 
-  const desktopTimeZonePicker = (
+  const desktopViewPicker = (
     <label className={`flex h-8 items-center gap-2 rounded-md border border-zinc-200 bg-white px-2.5 text-xs font-semibold text-zinc-700 ${mobileCaption ? "md:h-[34px] md:pr-4" : ""}`}>
-      <span className="material-symbols-outlined text-[15px]">language</span>
+      <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M4 5h16l-6 7v5l-4 2v-7L4 5Z" />
+      </svg>
       <span className="relative">
         <select
-          aria-label="Display actions in timezone"
-          value={timeZone}
-          onChange={(event) => setTimeZone(event.target.value)}
+          aria-label="Group actions"
+          value={viewMode}
+          onChange={(event) => changeViewMode(event.target.value as "time" | "lead")}
           className={`cursor-pointer appearance-none border-0 bg-transparent pr-6 shadow-none outline-none ${mobileCaption ? "md:pl-2" : ""}`}
         >
-          {timeZoneOptions.map((zone) => (
-            <option key={zone} value={zone}>
-              {timeZoneLabel(zone)}
+          {VIEW_MODES.map((mode) => (
+            <option key={mode.id} value={mode.id}>
+              {mode.label}
             </option>
           ))}
         </select>
@@ -250,18 +276,21 @@ export default function ActionsDashboard({ items, title, serverNow, timezone, he
     </label>
   );
 
-  const mobileTimeZonePicker = (
+  const mobileViewPicker = (
     <div className="m3-mobile-header-action fixed right-2 z-[92] md:hidden">
       <div className="relative">
+        <svg className="pointer-events-none absolute left-2.5 top-1/2 z-10 h-3.5 w-3.5 -translate-y-1/2 text-[var(--md-sys-color-on-surface-variant)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M4 5h16l-6 7v5l-4 2v-7L4 5Z" />
+        </svg>
         <select
-          aria-label="Display actions in timezone"
-          value={timeZone}
-          onChange={(event) => setTimeZone(event.target.value)}
-          className="h-8 w-32 cursor-pointer appearance-none rounded-lg border border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface-container)] pl-3 pr-8 text-[11px] font-medium text-[var(--md-sys-color-on-surface)] outline-none"
+          aria-label="Group actions"
+          value={viewMode}
+          onChange={(event) => changeViewMode(event.target.value as "time" | "lead")}
+          className="h-8 w-32 cursor-pointer appearance-none rounded-lg border border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface-container)] pl-8 pr-8 text-[11px] font-medium text-[var(--md-sys-color-on-surface)] outline-none"
         >
-          {timeZoneOptions.map((zone) => (
-            <option key={zone} value={zone}>
-              {timeZoneLabel(zone)}
+          {VIEW_MODES.map((mode) => (
+            <option key={mode.id} value={mode.id}>
+              {mode.label}
             </option>
           ))}
         </select>
@@ -283,7 +312,7 @@ export default function ActionsDashboard({ items, title, serverNow, timezone, he
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col gap-4 overflow-hidden md:ml-4 md:mr-0.5 md:pb-3">
-      {mobileCaption ? <MobileHeaderPortal>{mobileTimeZonePicker}</MobileHeaderPortal> : null}
+      {mobileCaption ? <MobileHeaderPortal>{mobileViewPicker}</MobileHeaderPortal> : null}
       <header className={`app-x flex shrink-0 flex-col gap-4 md:flex-row md:justify-between md:pt-6 ${mobileCaption ? "pt-0 md:items-center" : "pt-5 md:items-end"}`}>
         <h1
           style={{ fontFamily: "var(--font-varta)" }}
@@ -293,7 +322,7 @@ export default function ActionsDashboard({ items, title, serverNow, timezone, he
         </h1>
         <div className="flex flex-wrap items-center gap-2">
           {headerActions}
-          <div className={mobileCaption ? "hidden md:block" : ""}>{desktopTimeZonePicker}</div>
+          <div className={mobileCaption ? "hidden md:block" : ""}>{desktopViewPicker}</div>
         </div>
       </header>
 
@@ -308,7 +337,9 @@ export default function ActionsDashboard({ items, title, serverNow, timezone, he
         ) : (
           <>
           {mobileCaption ? (
-            <p className="shrink-0 pb-3 text-sm font-medium text-zinc-600 md:hidden">{mobileCaption}</p>
+            <div className="shrink-0 pb-3 md:hidden">
+              <p className="text-sm font-medium text-zinc-600">{mobileCaption}</p>
+            </div>
           ) : null}
           <div className="grid min-h-0 flex-1 grid-rows-1 gap-4 overflow-hidden md:grid-rows-2 lg:grid-cols-[minmax(0,1fr)_340px] lg:grid-rows-1">
             <div className="m3-card m3-card-elevated m3-card-lg flex min-h-0 flex-col overflow-hidden">
@@ -413,6 +444,7 @@ export default function ActionsDashboard({ items, title, serverNow, timezone, he
                   onConfirm={() => setConfirmingId(selected.id)}
                   onCancel={() => setConfirmingId("")}
                   onRun={() => runNow(selected)}
+                  showTimeline={viewMode === "lead"}
                 />
               ) : (
                 <div className="m3-card m3-card-outlined m3-card-lg grid h-full min-h-0 place-items-center p-6 text-center">
@@ -449,6 +481,7 @@ export default function ActionsDashboard({ items, title, serverNow, timezone, he
                 onCancel={() => setConfirmingId("")}
                 onRun={() => runNow(selected)}
                 onClose={() => setMobileDetailsOpen(false)}
+                showTimeline={viewMode === "lead"}
               />
             </section>
           </div>

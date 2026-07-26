@@ -1252,6 +1252,7 @@ export async function upsertLead(workspaceId: string, groupId: string, lead: Par
       company: lead.company || "",
       location: lead.location || "",
       summary: lead.summary || "",
+      profileContext: lead.profileContext,
       fitScore: lead.fitScore || 0,
       scoreReasons: lead.scoreReasons || [],
       signalType: lead.signalType,
@@ -1632,7 +1633,8 @@ async function listReservedActionSlots(workspaceId: string, linkedInAccountId?: 
     // 1000 future enrollments spread across campaigns silently lost this
     // account's reservations - the planner then happily double-booked slots it
     // simply could not see. Chunked because Firestore caps `in` at 30 values.
-    // Requires composite index (workspaceId ASC, campaignId ASC, nextActionAt ASC).
+    // The `in` field must lead the composite index:
+    // (campaignId ASC, workspaceId ASC, nextActionAt ASC).
     const campaignIds = [...sharingAccount];
     const chunks: string[][] = [];
     for (let index = 0; index < campaignIds.length; index += 30) {
@@ -1659,15 +1661,31 @@ async function listReservedActionSlots(workspaceId: string, linkedInAccountId?: 
       .map((enrollment) => Date.parse(enrollment.nextActionAt))
       .filter((ms) => Number.isFinite(ms));
   } catch (error) {
-    // Index still building after a deploy. Reserved slots are an optimisation
-    // for the *plan*; the transactional claimActionSlot is what actually
-    // prevents two sends sharing a slot, so degrading to "nothing reserved"
-    // costs plan accuracy for a few minutes, never correctness.
+    // Keep the schedule accurate while the composite index is still building.
+    // This equality-only query uses Firestore's automatic single-field index;
+    // filtering in memory costs extra reads briefly, but returning no
+    // reservations would let every scheduler tick book another action at
+    // "now" and make the Actions timeline contradict the 10-minute send gate.
     console.warn(
-      "[data] reserved slot lookup failed; planning without reservations:",
+      "[data] reserved slot lookup failed; using index-free fallback:",
       error instanceof Error ? error.message : error,
     );
-    return [];
+    const fallback = await collection<CampaignEnrollment>("campaignEnrollments")
+      .where("workspaceId", "==", workspaceId)
+      .select("campaignId", "nextActionAt", "status")
+      .get();
+    const now = Date.now();
+    return fallback.docs
+      .map((doc) => doc.data())
+      .filter(
+        (enrollment) =>
+          sharingAccount.has(enrollment.campaignId) &&
+          !["stopped", "replied"].includes(enrollment.status),
+      )
+      .map((enrollment) => Date.parse(enrollment.nextActionAt))
+      .filter((ms) => Number.isFinite(ms) && ms >= now)
+      .sort((a, b) => a - b)
+      .slice(0, RESERVED_SLOT_SCAN_LIMIT);
   }
 }
 

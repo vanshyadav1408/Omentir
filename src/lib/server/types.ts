@@ -160,6 +160,19 @@ export type Group = {
 // to its source agent, so pages can avoid pulling full lead documents.
 export type LeadAgentRef = { id: string; sourceAgentId?: string };
 
+export type LinkedInProfileContext = {
+  about: string;
+  experience: string[];
+  education: string[];
+  skills: string[];
+  certifications: string[];
+  projects: string[];
+  volunteering: string[];
+  languages: string[];
+  recentPosts: string[];
+  capturedAt: string;
+};
+
 export type Lead = {
   id: string;
   workspaceId: string;
@@ -172,6 +185,7 @@ export type Lead = {
   company: string;
   location: string;
   summary: string;
+  profileContext?: LinkedInProfileContext;
   fitScore: number;
   scoreReasons: string[];
   signalType?: LeadSignalType;

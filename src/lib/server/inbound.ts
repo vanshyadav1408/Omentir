@@ -36,12 +36,95 @@ import {
   sendInterestedLeadNotification,
   sendReplyNotification,
 } from "./email";
+import {
+  getLinkedInPostCreatedAt,
+  getLinkedInPostText,
+  listLinkedInPostsForProfile,
+  retrieveLinkedInProfile,
+} from "./unipile";
 import type {
   Campaign,
   CampaignEnrollment,
   Lead,
   LinkedInAccount,
 } from "./types";
+
+export async function refreshLeadProfileForDrafting(
+  lead: Lead,
+  account: LinkedInAccount,
+) {
+  const identifier = lead.providerProfileId || lead.linkedInUrl;
+  if (!identifier) return lead;
+
+  try {
+    const [profile, posts] = await Promise.all([
+      retrieveLinkedInProfile({
+        accountId: account.accountId,
+        identifier,
+      }),
+      listLinkedInPostsForProfile({
+        accountId: account.accountId,
+        identifier,
+        limit: 3,
+      }).catch(() => []),
+    ]);
+    if (!profile) {
+      if (lead.profileContext) return lead;
+      throw new Error("Full LinkedIn profile context is not available yet.");
+    }
+
+    const recentPosts = posts
+      .map((post) => {
+        const text = getLinkedInPostText(post).replace(/\s+/g, " ").trim().slice(0, 600);
+        if (!text) return "";
+        const createdAt = getLinkedInPostCreatedAt(post);
+        return `${createdAt.slice(0, 10)} | ${text}`;
+      })
+      .filter(Boolean);
+    const existingContext = profile.profileContext || lead.profileContext;
+    const profileContext =
+      existingContext || recentPosts.length
+        ? {
+            about: existingContext?.about || "",
+            experience: existingContext?.experience || [],
+            education: existingContext?.education || [],
+            skills: existingContext?.skills || [],
+            certifications: existingContext?.certifications || [],
+            projects: existingContext?.projects || [],
+            volunteering: existingContext?.volunteering || [],
+            languages: existingContext?.languages || [],
+            recentPosts,
+            capturedAt: new Date().toISOString(),
+          }
+        : undefined;
+    const enrichedLead: Lead = {
+      ...lead,
+      ...Object.fromEntries(
+        Object.entries(profile).filter(
+          ([, value]) => value !== undefined && value !== "",
+        ),
+      ),
+      ...(profileContext ? { profileContext } : {}),
+    };
+
+    await updateLead(lead.workspaceId, lead.id, {
+      providerProfileId: enrichedLead.providerProfileId,
+      linkedInUrl: enrichedLead.linkedInUrl,
+      avatarUrl: enrichedLead.avatarUrl,
+      name: enrichedLead.name,
+      title: enrichedLead.title,
+      company: enrichedLead.company,
+      location: enrichedLead.location,
+      summary: enrichedLead.summary,
+      profileContext: enrichedLead.profileContext,
+    });
+    return enrichedLead;
+  } catch (error) {
+    console.error(`[automation] failed to refresh profile context for lead ${lead.id}:`, error);
+    if (lead.profileContext) return lead;
+    throw error;
+  }
+}
 
 // Pre-drafts the upcoming AI message when a wait step starts, so the Actions
 // page shows the exact text that will go out instead of "will be generated at
@@ -63,15 +146,19 @@ export async function draftUpcomingMessagePreview(input: {
   if (rendered.natural && rendered.text) return undefined;
 
   try {
+    const sequencePosition = campaign.steps
+      .slice(0, messageStepIndex + 1)
+      .filter((candidate) => candidate.type === "message").length;
+    const leadForDrafting =
+      sequencePosition === 1
+        ? await refreshLeadProfileForDrafting(lead, account)
+        : lead;
     const [profile, conversation] = await Promise.all([
       getProductProfile(campaign.workspaceId),
       getConversation(campaign.workspaceId, lead.id),
     ]);
-    const sequencePosition = campaign.steps
-      .slice(0, messageStepIndex + 1)
-      .filter((candidate) => candidate.type === "message").length;
     const body = await draftCampaignMessage({
-      lead,
+      lead: leadForDrafting,
       productProfile: profile,
       campaignName: campaign.name,
       templateHint: messageStep.messageTemplate,
@@ -325,6 +412,9 @@ export async function processInboundMessage(input: {
         updateEnrollment(workspaceId, enrollment.id, {
           status: "reply_received",
           nextActionAt,
+          // Any message drafted before this inbound reply is now stale. The
+          // reply path must generate from the complete conversation instead.
+          nextMessageDraft: undefined,
         }),
       ),
       // A lead can sit in both an AI campaign and a hand-off campaign; the
