@@ -67,6 +67,7 @@ export async function POST(request: NextRequest) {
       {
         websiteUrl,
         productOverview,
+        useCases: strings(body.useCases, 8),
         targetBuyers: strings(body.targetBuyers, 8),
         buyerTitles: strings(body.buyerTitles, 15),
         industries: strings(body.industries, 10),

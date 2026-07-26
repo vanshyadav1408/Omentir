@@ -71,6 +71,14 @@ export type ProductProfile = {
   linkedInCompanyPage: string;
   targetBuyers: string[];
   buyerTitles: string[];
+  // The concrete jobs people hire this product to do. Buyer titles are derived
+  // from these rather than guessed from the industry, so discovery works the
+  // same way for a warehouse tool as for a sales tool.
+  useCases?: string[];
+  // Words that show up inside the job titles of people who perform those use
+  // cases ("dispatcher", "paralegal", "colorist"). Feeds the title matcher so it
+  // recognizes a domain nobody hardcoded a synonym list for.
+  roleVocabulary?: string[];
   industries: string[];
   companySizes: string[];
   painPoints: string[];
