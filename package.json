@@ -5,7 +5,7 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "dev": "bun --bun next dev",
+    "dev": "NODE_OPTIONS=--disable-warning=DEP0205 next dev",
     "build": "bun --bun next build",
     "start": "bun --bun next start",
     "lint": "bun --bun eslint",

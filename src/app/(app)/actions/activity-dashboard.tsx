@@ -77,10 +77,12 @@ function TimelineRow({ item, timeZone }: { item: ScheduledAction["timeline"][num
     item.status === "completed"
       ? { className: "bg-emerald-500 text-white", icon: "check" }
       : item.status === "scheduled"
-        ? { className: "bg-[#ba3871] text-white", icon: "schedule" }
+        ? { className: "bg-[#ba3871] text-white", icon: "event_upcoming" }
         : item.status === "waiting"
-          ? { className: "bg-amber-100 text-amber-700", icon: "lock" }
-          : { className: "border border-zinc-300 bg-white text-zinc-400", icon: "more_horiz" };
+          ? { className: "bg-amber-100 text-amber-700", icon: "lock_clock" }
+          // Future steps get a plain ring: the usual timeline convention, and
+          // it avoids a glyph the subset font would have to carry.
+          : { className: "border border-zinc-300 bg-white", icon: null };
   const stamp = item.at ? `${dateLabel(item.at, timeZone, true)} · ${timeLabel(item.at, timeZone)}` : "";
   const detail =
     item.status === "completed"
@@ -95,12 +97,18 @@ function TimelineRow({ item, timeZone }: { item: ScheduledAction["timeline"][num
 
   return (
     <div className="relative flex w-full gap-3 py-2">
-      <span className={`relative z-10 grid h-4 w-4 shrink-0 place-items-center rounded-full ${marker.className}`}>
-        <span className="material-symbols-outlined text-[11px] leading-none" aria-hidden="true">{marker.icon}</span>
+      {/* overflow-hidden so a glyph missing from the subset font degrades to a
+          clipped dot instead of spilling its ligature name across the row. */}
+      <span className={`relative z-10 grid h-4 w-4 shrink-0 place-items-center overflow-hidden rounded-full ${marker.className}`}>
+        {marker.icon ? (
+          <span className="material-symbols-outlined text-[12px] leading-none" aria-hidden="true">{marker.icon}</span>
+        ) : null}
       </span>
       <span className="min-w-0 flex-1">
         <span className="flex items-center gap-2">
-          <span className={`truncate text-xs font-semibold ${item.status === "scheduled" ? "text-[#ba3871]" : item.status === "completed" ? "text-zinc-800" : "text-zinc-500"}`}>{item.title}</span>
+          {/* leading-4 pins the first line box to 16px so it matches the
+              marker's h-4 and the title sits level with its dot. */}
+          <span className={`truncate text-xs font-semibold leading-4 ${item.status === "scheduled" ? "text-[#ba3871]" : item.status === "completed" ? "text-zinc-800" : "text-zinc-500"}`}>{item.title}</span>
           {item.status === "scheduled" ? (
             <span className="shrink-0 rounded-full bg-[#f8e8ef] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[#ba3871]">Next</span>
           ) : null}
@@ -359,7 +367,15 @@ export default function ActionsDashboard({ items, title, serverNow, timezone, he
 
   const groupPicker = leadGroups.length > 1 ? (
     <label className="flex h-8 items-center gap-2 rounded-md border border-zinc-200 bg-white px-2.5 text-xs font-semibold text-zinc-700">
-      <span className="material-symbols-outlined text-[15px] text-zinc-500" aria-hidden="true">group</span>
+      {/* Inline SVG, like the view picker beside it: "group" is not in the
+          self-hosted icon subset, and font-display: block would paint the raw
+          ligature text instead of a glyph. */}
+      <svg className="h-3.5 w-3.5 shrink-0 text-zinc-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      </svg>
       <span className="relative">
         <select
           aria-label="Filter by lead group"

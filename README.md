@@ -84,6 +84,8 @@ bun start
 
 Open `http://localhost:3000`. Sign in with `LOCAL_APP_PASSWORD` unless you opted into open access (see below).
 
+Bun is the package manager and script runner, but `bun run dev` deliberately starts Next on Node rather than under `bun --bun`. In dev, Turbopack loads every package in `serverExternalPackages` (firebase-admin among them) through a hashed specifier such as `firebase-admin-<hash>/firestore`, which only resolves via a loader hook Next installs in Node. Bun's resolver does not run that hook, so `bun --bun next dev` fails on the first Firestore import with `ResolveMessage: Cannot find module`. Production is unaffected: built output emits plain requires, so `build` and `start` still run under Bun.
+
 ### Access control (local login)
 
 Self-host mode uses a **single workspace** and a signed, HTTP-only session cookie (`omentir_local_session`), not Clerk.
