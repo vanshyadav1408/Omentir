@@ -6,6 +6,7 @@ import HeaderAuth from "./header-auth";
 import LogoMark from "./logo-mark";
 import MarketingHeaderFrame from "./marketing-header-frame";
 import { MarketingMobileMenuButton } from "./marketing-mobile-nav";
+import { brandTagline } from "./seo";
 
 export function MarketingHeader({ transparentAtTop = false }: { transparentAtTop?: boolean }) {
   return (
@@ -143,9 +144,11 @@ export function MarketingFooter() {
             <LogoMark className="h-9 w-9 text-white md:h-10 md:w-10" />
             Omentir
           </div>
+          {/* The headline itself, not a paraphrase of it: the footer is the
+              last thing on every marketing page, so it repeats the one line the
+              tab title and social cards carry. */}
           <p className="mt-4 max-w-sm text-sm leading-6 text-zinc-400">
-            Find your next customers with Omentir. Open source and MIT
-            licensed.
+            {brandTagline}.
           </p>
           <div className="mt-5 flex items-center gap-6">
             {footerSocialLinks.map((item) => (

@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { Geist_Mono, Google_Sans, Roboto } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ICON_FONT_URL } from "./icon-font-url";
-import { defaultDescription, defaultKeywords, defaultOgImage, siteUrl } from "./seo";
+import { defaultDescription, defaultKeywords, defaultOgImage, defaultTitle, siteUrl } from "./seo";
 import NavigationFeedback from "./navigation-feedback";
 import { PostHogProvider } from "./posthog-provider";
 import { buildEarlyFetchScript } from "./sidebar-early-fetch";
@@ -36,7 +36,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   applicationName: "Omentir",
-  title: "Omentir - Find customers with AI",
+  title: defaultTitle,
   description: defaultDescription,
   keywords: defaultKeywords,
   authors: [{ name: "Omentir" }],
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   openGraph: {
-    title: "Omentir - Find customers with AI",
+    title: defaultTitle,
     description: defaultDescription,
     url: "/",
     siteName: "Omentir",
@@ -55,7 +55,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Omentir - Find customers with AI",
+    title: defaultTitle,
     description: defaultDescription,
     images: [defaultOgImage.url],
   },

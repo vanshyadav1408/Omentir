@@ -21,6 +21,7 @@ import Reveal from "./scroll-reveal";
 import {
   createFAQJsonLd,
   createPageMetadata,
+  defaultTitle,
   organizationJsonLd,
   softwareApplicationJsonLd,
   websiteJsonLd,
@@ -28,10 +29,15 @@ import {
 
 
 export const metadata = createPageMetadata({
-  title: "Omentir - Find customers with AI",
+  title: defaultTitle,
   description:
-    "Omentir finds potential customers, contacts them with personalized LinkedIn outreach, and helps turn interested replies into booked demos.",
-  keywords: ["AI LinkedIn outreach tool", "AI customer discovery", "book more demos"],
+    "Omentir converts LinkedIn users into your customers: it finds potential customers, contacts them with personalized LinkedIn outreach, and helps turn interested replies into booked demos.",
+  keywords: [
+    "convert LinkedIn users into customers",
+    "AI LinkedIn outreach tool",
+    "AI customer discovery",
+    "book more demos",
+  ],
 });
 
 const steps = [

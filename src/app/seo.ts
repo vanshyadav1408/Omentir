@@ -3,14 +3,22 @@ import { ALL_BLOGS, isBlogLive, liveBlogs } from "./blogs/blog-data";
 
 export const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://omentir.com").replace(/\/$/, "");
 
+// The headline, verbatim from the hero on the homepage. Every brand surface -
+// tab titles, social cards, structured data, the footer - reads it from here so
+// the site says one thing, and changing the headline changes all of them at
+// once instead of leaving old wording behind in metadata nobody looks at.
+export const brandTagline = "Convert LinkedIn users into your customers";
+
+export const defaultTitle = `Omentir - ${brandTagline}`;
+
 export const defaultDescription =
-  "Omentir helps founders and sales teams find potential customers, personalize LinkedIn outreach, and turn interested replies into booked demos.";
+  "Omentir converts LinkedIn users into your customers: it finds potential customers, personalizes LinkedIn outreach, and turns interested replies into booked demos.";
 
 export const defaultOgImage = {
   url: "/omentir-og.png",
   width: 1200,
   height: 630,
-  alt: "Find your next 10 customers while you sleep",
+  alt: brandTagline,
   type: "image/png",
 };
 
@@ -193,6 +201,7 @@ export const organizationJsonLd = {
   "@type": "Organization",
   "@id": `${siteUrl}/#organization`,
   name: "Omentir",
+  slogan: brandTagline,
   description: defaultDescription,
   url: siteUrl,
   logo: `${siteUrl}/omentir-logo.png`,
@@ -226,6 +235,9 @@ export const websiteJsonLd = {
   name: "Omentir",
   alternateName: "Omentir AI",
   url: siteUrl,
+  // No `slogan` here or on the SoftwareApplication below: schema.org defines it
+  // only for Brand, Organization, Place, Product and Service. Both entities
+  // carry the headline through `description`, which starts with it.
   description: defaultDescription,
   inLanguage: "en-US",
   publisher: {
