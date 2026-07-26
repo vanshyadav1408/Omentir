@@ -101,7 +101,7 @@ function TimelineRow({ item, timeZone }: { item: ScheduledAction["timeline"][num
           clipped dot instead of spilling its ligature name across the row. */}
       <span className={`relative z-10 grid h-4 w-4 shrink-0 place-items-center overflow-hidden rounded-full ${marker.className}`}>
         {marker.icon ? (
-          <span className="material-symbols-outlined text-[12px] leading-none" aria-hidden="true">{marker.icon}</span>
+          <span className="material-symbols-outlined ms-size-16" aria-hidden="true">{marker.icon}</span>
         ) : null}
       </span>
       <span className="min-w-0 flex-1">

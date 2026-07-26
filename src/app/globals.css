@@ -394,6 +394,23 @@ body {
   font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 20;
 }
 
+/* Icons that sit inside a 16px marker dot (Actions schedule). A size class is
+   required rather than a Tailwind text-[..] utility: the base rule above is
+   unlayered, and unlayered CSS outranks Tailwind's @layer utilities whatever
+   the specificity, so a utility font-size is silently ignored. Material
+   Symbols insets its artwork within the em box, so 16px renders ~13px of
+   glyph and still clears the dot's edge. opsz 20 is the font's smallest. */
+.material-symbols-outlined.ms-size-16 {
+  font-size: 16px;
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 20;
+}
+.material-symbols-outlined.ms-size-16.ms-filled,
+[aria-current="page"] .material-symbols-outlined.ms-size-16,
+[aria-selected="true"] .material-symbols-outlined.ms-size-16,
+[aria-checked="true"] .material-symbols-outlined.ms-size-16 {
+  font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 20;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .material-symbols-outlined {
     transition: none;
