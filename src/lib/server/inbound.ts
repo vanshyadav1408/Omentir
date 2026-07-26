@@ -343,6 +343,17 @@ export async function processInboundMessage(input: {
     hasActiveSubscription(workspace)
       ? input.notifyEmailOverride || workspace.notificationEmail
       : undefined;
+  // Who gets told about an ordinary (not-yet-hot) reply, decided by the reply
+  // mode picked when the agent was created:
+  // - "hand the conversation off to me": yes. Automation just stopped and the
+  //   user owns this conversation from the first reply, so they must hear about
+  //   it the moment it lands, whatever the lead said.
+  // - "AI handles the entire deal": no. The AI is working the thread; the user
+  //   asked to be pulled in only when the lead is actually interested, which is
+  //   the hot-interest email above.
+  // A lead with no live enrollment has no automation behind them at all, so
+  // nothing else would ever surface the reply - notify.
+  const notifyOnPlainReply = handoffEnrollments.length > 0 || leadEnrollments.length === 0;
   if (email && isHotInterest) {
     if (await claimInterestNotification(workspaceId, lead.id)) {
       try {
@@ -378,7 +389,7 @@ export async function processInboundMessage(input: {
         console.error("[inbound] failed to send interested-lead notification:", error);
       }
     }
-  } else if (email && (await claimReplyNotification(workspaceId, lead.id))) {
+  } else if (email && notifyOnPlainReply && (await claimReplyNotification(workspaceId, lead.id))) {
     // Non-hot replies: lightweight "someone replied" email. Hot leads get the
     // rich interest email instead so the user is not double-notified.
     await sendReplyNotification({

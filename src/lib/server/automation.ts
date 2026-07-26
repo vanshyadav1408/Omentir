@@ -49,7 +49,6 @@ import { findNextScheduledStepIndex } from "./campaign-sequence";
 import {
   draftCampaignMessage,
   draftCampaignReplyMessage,
-  draftLeadHandoverSummary,
   MAX_AI_SEQUENCE_MESSAGES,
   normalizeAgentSearch,
   scoreLeadForProduct,
@@ -86,11 +85,7 @@ import { localDayAndHour } from "./scheduling";
 import { isWithinSendWindow, type SendActionKind } from "./send-schedule";
 import { hasActiveSubscription } from "./subscription";
 import { getAppBaseUrl } from "./runtime-config";
-import {
-  sendDailyDigestEmail,
-  sendInvitePauseNotification,
-  sendSequenceHandoverEmail,
-} from "./email";
+import { sendDailyDigestEmail, sendInvitePauseNotification } from "./email";
 import {
   ensureUnipileWebhooks,
   hasPendingSentInvitation,
@@ -109,7 +104,6 @@ import type {
   CampaignStep,
   Lead,
   LinkedInAccount,
-  ProductProfile,
   Workspace,
 } from "./types";
 
@@ -191,10 +185,20 @@ const PACING_FALLBACK_MINUTES = 10;
 const RESEND_BLOCKED_DEFER_MINUTES = 21 * 24 * 60;
 const INVITE_RECHECK_MINUTES = 6 * 60;
 
-// Daily digest email: first tick at/after this hour in the workspace's local
-// timezone sends a summary of the trailing window.
+// Daily digest email: 9am in the workspace's local timezone, every day. Ticks
+// run every couple of minutes, so the 9am hour is what normally sends; the
+// catch-up hours only exist so an outage across 9am still gets the digest out
+// that morning instead of at whatever hour the tick recovered. Past that it is
+// skipped - a "your last 24 hours" mail at 11pm is worse than none.
 const DIGEST_LOCAL_HOUR = 9;
+const DIGEST_LAST_CATCH_UP_HOUR = 11;
+// Trailing period the digest reports on.
 const DIGEST_WINDOW_MS = 24 * 60 * 60 * 1000;
+// Guard against a second digest inside one local day, without pinning the send
+// to yesterday's clock time: a catch-up send at 11:59 is still >= 20h before
+// the next 9am, so tomorrow's digest lands back on 9am instead of drifting
+// later every day (which a strict 24h interval did).
+const DIGEST_MIN_INTERVAL_MS = 20 * 60 * 60 * 1000;
 
 type TickBudget = {
   connects: number;
@@ -469,81 +473,22 @@ async function runAgents(mode: AutomationSafetyMode) {
 }
 
 // The AI sequence is done with this lead (final message sent, or the cap was
-// hit) - put them in the user's hands: an email with an AI briefing of why the
-// person is still worth a personal message, plus everything Omentir knows
-// about them and the full transcript. Email failures are logged, never thrown:
-// the enrollment must still stop cleanly.
-async function handOverLeadToUser(input: {
+// hit) and they never replied. Silence is not a signal worth an email: the user
+// only hears from Omentir when a lead does something (replies, shows interest),
+// so this just records the end of the sequence in the activity log. The lead is
+// still on the Leads and Messages pages for anyone who wants to follow up.
+async function recordSequenceExhausted(input: {
   workspace: Workspace;
   campaign: Campaign;
   lead: Lead;
-  account: LinkedInAccount;
-  profile: ProductProfile | null;
 }) {
-  const { workspace, campaign, lead, account, profile } = input;
-  try {
-    const email = workspace.notificationEmail;
-    if (!email) {
-      await safeLogAutomationRun({
-        workspaceId: workspace.id,
-        kind: "campaign",
-        status: "error",
-        message: `Sequence finished for ${lead.name} but no notification email is set - handover email skipped.`,
-      });
-      return;
-    }
-    // Refetch so the transcript includes the message that was just sent.
-    const conversation = await getConversation(workspace.id, lead.id);
-    const messages = conversation?.messages || [];
-    const leadFirstName = lead.name.split(" ")[0] || lead.name;
-    const aiBriefing = await draftLeadHandoverSummary({
-      lead,
-      productProfile: profile,
-      conversation: messages,
-    });
-    await sendSequenceHandoverEmail({
-      to: email,
-      lead: {
-        name: lead.name,
-        title: lead.title,
-        company: lead.company,
-        location: lead.location,
-        linkedInUrl: lead.linkedInUrl,
-        summary: lead.summary,
-        fitScore: lead.fitScore,
-        scoreReasons: lead.scoreReasons,
-        leadReason: lead.leadReason,
-        signalText: lead.signalText,
-        signalSource: lead.signalSource,
-        signalUrl: lead.signalUrl,
-        signalObservedAt: lead.signalObservedAt,
-      },
-      campaignName: campaign.name,
-      linkedInAccountName: account.displayName,
-      aiBriefing,
-      transcript: messages.map(
-        (message) =>
-          `${message.direction === "outbound" ? account.displayName || "You" : leadFirstName}: ${message.body}`,
-      ),
-      messagesSent: messages.filter((message) => message.direction === "outbound").length,
-      idempotencyKey: `sequence-handover-${workspace.id}-${lead.id}-${campaign.id}`,
-    });
-    await safeLogAutomationRun({
-      workspaceId: workspace.id,
-      kind: "campaign",
-      status: "completed",
-      message: `Sequence finished for ${lead.name}; handover email sent to ${email}.`,
-    });
-  } catch (error) {
-    await safeLogAutomationRun({
-      workspaceId: workspace.id,
-      kind: "campaign",
-      status: "error",
-      message: `Handover email for ${lead.name} failed: ${
-        error instanceof Error ? error.message : "unknown error"
-      }`,
-    });
-  }
+  const { workspace, campaign, lead } = input;
+  await safeLogAutomationRun({
+    workspaceId: workspace.id,
+    kind: "campaign",
+    status: "completed",
+    message: `Sequence finished for ${lead.name} in ${campaign.name} with no reply; outreach stopped for this lead.`,
+  });
 }
 
 async function runEnrollment(
@@ -1170,13 +1115,13 @@ async function runEnrollment(
     const outboundSent = messages.filter((message) => message.direction === "outbound").length;
     aiStage = Math.max(sequencePosition, outboundSent + 1);
     if (campaign.replyHandling !== "handoff" && aiStage > MAX_AI_SEQUENCE_MESSAGES) {
-      await handOverLeadToUser({ workspace, campaign, lead, account, profile });
+      await recordSequenceExhausted({ workspace, campaign, lead });
       await updateCurrentEnrollment({
         status: "stopped",
         pendingAction: undefined,
-        lastError: `AI sequence finished after ${MAX_AI_SEQUENCE_MESSAGES} messages with no reply; the lead was handed over to you by email.`,
+        lastError: `AI sequence finished after ${MAX_AI_SEQUENCE_MESSAGES} messages with no reply; outreach stopped for this lead.`,
       });
-      return "sequence-handover";
+      return "sequence-exhausted";
     }
     // Reuse the pre-drafted preview the user saw on the Actions page, so what
     // was shown is exactly what goes out. Only when no draft matches this step
@@ -1236,17 +1181,17 @@ async function runEnrollment(
     workspace.timezone,
   );
   await updateLead(enrollment.workspaceId, lead.id, { outreachStatus: "messaged" });
-  // Final AI message of the ladder just went out: don't let the sequence idle
-  // out silently - stop here and put the lead in the user's hands with
-  // everything Omentir knows about them.
+  // Final AI message of the ladder just went out: stop here instead of letting
+  // the enrollment idle on. No email - the lead never engaged, and an unanswered
+  // sequence is not news the user asked to be interrupted for.
   if (aiStage >= MAX_AI_SEQUENCE_MESSAGES && campaign.replyHandling !== "handoff") {
-    await handOverLeadToUser({ workspace, campaign, lead, account, profile });
+    await recordSequenceExhausted({ workspace, campaign, lead });
     await updateCurrentEnrollment({
       status: "stopped",
       pendingAction: undefined,
-      lastError: `AI sequence finished after ${MAX_AI_SEQUENCE_MESSAGES} messages; the lead was handed over to you by email.`,
+      lastError: `AI sequence finished after ${MAX_AI_SEQUENCE_MESSAGES} messages; outreach stopped for this lead.`,
     });
-    return "sequence-handover";
+    return "sequence-exhausted";
   }
   // The sequence's own wait step defines the gap to the next message, so hand
   // control back to it on the next tick. A fixed 24h defer here silently
@@ -2052,8 +1997,8 @@ async function collectDigestStats(workspaceId: string) {
   };
 }
 
-// Sends each workspace one summary email on the first tick at/after 9am in
-// its local timezone, covering the trailing 24 hours.
+// Sends each workspace one summary email at 9am in its local timezone,
+// covering the trailing 24 hours.
 async function sendDailyDigests(mode: AutomationSafetyMode) {
   let sent = 0;
   const workspaces = await listWorkspaces();
@@ -2064,7 +2009,7 @@ async function sendDailyDigests(mode: AutomationSafetyMode) {
       if (!email || !hasActiveSubscription(workspace)) continue;
 
       const { day, hour } = localDayAndHour(workspace.timezone);
-      if (hour < DIGEST_LOCAL_HOUR) continue;
+      if (hour < DIGEST_LOCAL_HOUR || hour > DIGEST_LAST_CATCH_UP_HOUR) continue;
       // Dry-run must not consume the day claim, or the real tick stays silent.
       if (mode.dryRun) continue;
       if (
@@ -2072,7 +2017,7 @@ async function sendDailyDigests(mode: AutomationSafetyMode) {
           workspace.id,
           "digest",
           day,
-          DIGEST_WINDOW_MS,
+          DIGEST_MIN_INTERVAL_MS,
         ))
       ) continue;
 

@@ -1542,12 +1542,12 @@ export default function AgentSetup({
                 {
                   id: "ai",
                   title: "AI handles the entire deal",
-                  desc: "AI keeps the conversation going and emails you only when the lead is ready to close.",
+                  desc: "AI keeps the conversation going and emails you when the lead is ready to close - never for a reply it can handle itself.",
                 },
                 {
                   id: "handoff",
                   title: "Hand the conversation off to me",
-                  desc: "AI stops after the lead's first reply and emails you to continue it yourself.",
+                  desc: "AI stops at the lead's first reply and emails it to you right away, so you continue the conversation yourself.",
                 },
               ] as const
             ).map((option) => {
