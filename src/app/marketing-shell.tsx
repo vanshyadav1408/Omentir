@@ -149,6 +149,7 @@ export function MarketingFooter() {
               tab title and social cards carry. */}
           <p className="mt-4 max-w-sm text-sm leading-6 text-zinc-400">
             {brandTagline}.
+            <span className="block">Open Source. MIT licensed.</span>
           </p>
           <div className="mt-5 flex items-center gap-6">
             {footerSocialLinks.map((item) => (

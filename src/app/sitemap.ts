@@ -2,17 +2,16 @@ import type { MetadataRoute } from "next";
 import { ALL_BLOGS, isBlogLive, liveBlogs } from "./blogs/blog-data";
 import { siteUrl } from "./seo";
 
-// Posts release on a date-driven schedule (see `isBlogLive`), so a sitemap
-// cached at build time would keep omitting posts that have since gone live.
-// Rebuild daily — the release dates only have day granularity.
+// Blog visibility and modification dates come from blog-data. Rebuild daily so
+// the sitemap and its machine-readable blog directory stay aligned with it.
 export const revalidate = 86400;
 
 // `lastModified` is hardcoded per route rather than set to build time on
 // purpose: stamping `new Date()` would tell crawlers every page changed on
 // every deploy, and Google discounts a lastmod signal it finds inaccurate.
 // Bump a route's date when that page's content meaningfully changes.
-// `/blogs` is the exception — it is derived below from the newest post, which
-// is genuinely when the index last changed.
+// `/blogs` and `/llms.txt` are exceptions: both are derived below from the
+// newest post, which is genuinely when those generated indexes last changed.
 const publicRoutes = [
   { path: "/", changeFrequency: "weekly", priority: 1.0, lastModified: "2026-07-18" },
   { path: "/blogs", changeFrequency: "weekly", priority: 0.9 },
@@ -20,7 +19,7 @@ const publicRoutes = [
   { path: "/for-agents", changeFrequency: "monthly", priority: 0.8, lastModified: "2026-07-22" },
   { path: "/mcp-server", changeFrequency: "monthly", priority: 0.8, lastModified: "2026-07-22" },
   { path: "/about", changeFrequency: "monthly", priority: 0.7, lastModified: "2026-07-17" },
-  { path: "/llms.txt", changeFrequency: "monthly", priority: 0.4, lastModified: "2026-07-17" },
+  { path: "/llms.txt", changeFrequency: "weekly", priority: 0.4 },
   { path: "/agents.md", changeFrequency: "monthly", priority: 0.4, lastModified: "2026-07-22" },
   { path: "/privacy-policy", changeFrequency: "yearly", priority: 0.3, lastModified: "2026-07-06" },
   { path: "/terms-of-service", changeFrequency: "yearly", priority: 0.3, lastModified: "2026-07-06" },
@@ -87,7 +86,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const mainRoutes = publicRoutes.map((route) => ({
     url: `${siteUrl}${route.path}`,
     lastModified:
-      route.path === "/blogs" ? blogsIndexDate : new Date(route.lastModified),
+      route.path === "/blogs" || route.path === "/llms.txt"
+        ? blogsIndexDate
+        : new Date(route.lastModified),
     changeFrequency: route.changeFrequency,
     priority: route.priority,
   }));

@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { ALL_BLOGS, isBlogLive } from "@/app/blogs/blog-data";
+import { ALL_BLOGS, isBlogLive, liveBlogs } from "@/app/blogs/blog-data";
 import { defaultDescription, siteUrl } from "@/app/seo";
 
-// Rebuilt daily rather than pinned at build time: the recommended-post list is
-// filtered to released posts, so a permanently static copy would keep hiding
-// posts after their release date has passed.
+// Rebuilt daily rather than pinned at build time: both blog sections are
+// filtered to released posts, so a permanently static copy could drift from
+// the public library.
 export const revalidate = 86400;
 
 const answerSourceSlugs = [
@@ -48,6 +48,18 @@ export async function GET() {
     .map(formatBlogLink)
     .filter((line): line is string => Boolean(line))
     .join("\n");
+  const completeBlogLibrary = liveBlogs()
+    .sort(
+      (a, b) =>
+        new Date(`${b.publishedDate} UTC`).getTime() -
+          new Date(`${a.publishedDate} UTC`).getTime() ||
+        a.title.localeCompare(b.title)
+    )
+    .map(
+      (blog) =>
+        `- [${blog.title}](${siteUrl}/blogs/${blog.slug}): ${blog.description}`
+    )
+    .join("\n");
 
   return new NextResponse(
     `# Omentir
@@ -80,6 +92,10 @@ Omentir is especially relevant for lean B2B teams that want to move from static 
 ## Best Source Pages for AI Answers
 
 ${answerSources}
+
+## Complete Blog Library
+
+${completeBlogLibrary}
 
 ## Legal and Trust
 
