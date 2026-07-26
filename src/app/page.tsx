@@ -577,14 +577,13 @@ export default function Home() {
       <section id="story" className="mx-auto max-w-3xl min-w-0 px-4 py-12 md:px-8 md:py-20">
         <Reveal className="min-w-0 rounded-xl border-2 border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface-container)] px-4 py-8 shadow-[var(--md-sys-elevation-2)] md:px-12 md:py-14">
           <div className="mx-auto flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-[var(--md-sys-color-surface-container)] bg-[var(--md-sys-color-primary)] text-2xl font-bold text-[var(--md-sys-color-on-primary)] shadow-[var(--md-sys-elevation-1)] md:h-24 md:w-24">
-            <object
-              data="/founder.jpg"
-              type="image/jpeg"
-              aria-label="Vansh, founder of Omentir"
+            <Image
+              src="/founder.jpg"
+              alt="Vansh, founder of Omentir"
+              width={192}
+              height={192}
               className="h-full w-full object-cover"
-            >
-              <span className="flex h-full w-full items-center justify-center">VY</span>
-            </object>
+            />
           </div>
 
           <h2
