@@ -2251,6 +2251,37 @@ export async function getConversation(workspaceId: string, leadId: string) {
   return snap.exists ? snap.data() || null : null;
 }
 
+// When a message actually went out, per lead. The Actions page marks completed
+// steps with their real send time, and the conversation is the only record of
+// it (enrollments keep just connectionSentAt). Batched by doc id so it reads
+// exactly the enrolled leads instead of scanning the collection.
+export async function getOutboundMessageTimesByLeadIds(
+  workspaceId: string,
+  leadIds: string[],
+): Promise<Map<string, string[]>> {
+  const unique = [...new Set(leadIds.filter(Boolean))];
+  const out = new Map<string, string[]>();
+  if (!unique.length) return out;
+
+  const conversations = collection<Conversation>("conversations");
+  for (let i = 0; i < unique.length; i += 300) {
+    const refs = unique.slice(i, i + 300).map((leadId) => conversations.doc(`${workspaceId}-${leadId}`));
+    const snaps = await getDb().getAll(...refs);
+    for (const snap of snaps) {
+      const data = snap.data() as Conversation | undefined;
+      if (!data || data.workspaceId !== workspaceId) continue;
+      out.set(
+        data.leadId,
+        (data.messages || [])
+          .filter((message) => message.direction === "outbound")
+          .map((message) => message.createdAt)
+          .sort((a, b) => a.localeCompare(b)),
+      );
+    }
+  }
+  return out;
+}
+
 export async function logAutomationRun(run: Omit<AutomationRun, "id" | "createdAt">) {
   const ref = collection<AutomationRun>("automationRuns").doc();
   // Callers pass workspaceId: undefined for global events (e.g. webhook events

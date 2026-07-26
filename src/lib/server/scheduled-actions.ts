@@ -1,5 +1,6 @@
 import "server-only";
 
+import { buildActionTimeline, type ActionTimelineItem } from "./action-timeline";
 import { findNextScheduledStepIndex } from "./campaign-sequence";
 import { canSendCampaignMessage, renderTemplate } from "./outreach-rules";
 import {
@@ -7,6 +8,7 @@ import {
   listCampaignEnrollments,
   listCampaigns,
   getLeadsByIds,
+  getOutboundMessageTimesByLeadIds,
   listGroups,
 } from "./data";
 
@@ -20,14 +22,14 @@ export type ScheduledAction = {
   campaign?: string;
   agent?: string;
   group?: string;
+  groupId?: string;
   canRunNow: boolean;
   blockedReason?: string;
-  timeline: {
-    id: string;
-    title: string;
-    status: "completed" | "scheduled" | "upcoming";
-    at?: string;
-  }[];
+  // True when the step is a message the connection has not been accepted for.
+  // `at` is meaningless then: the automation parks the enrollment on the
+  // give-up date and the acceptance webhook is what actually wakes it.
+  awaitingConnection: boolean;
+  timeline: ActionTimelineItem[];
   lead?: {
     id: string;
     name: string;
@@ -35,6 +37,7 @@ export type ScheduledAction = {
     company: string;
     location: string;
     avatarUrl?: string;
+    fitScore: number;
   };
 };
 
@@ -61,6 +64,18 @@ export async function listScheduledActions(
   const groupsById = new Map(groups.map((group) => [group.id, group]));
   const terminalStatuses = new Set(["stopped", "replied"]);
 
+  // Only enrollments that already sent a message have a send time to look up,
+  // and this page auto-refreshes every minute - reading a conversation for
+  // every enrolled lead would double the page's Firestore reads for nothing.
+  const messagedLeadIds = enrollments.flatMap((enrollment) => {
+    const campaign = campaignsById.get(enrollment.campaignId);
+    if (!campaign) return [];
+    const stepIndex = findNextScheduledStepIndex(campaign.steps, enrollment.currentStepIndex);
+    const doneSteps = stepIndex === -1 ? campaign.steps : campaign.steps.slice(0, stepIndex);
+    return doneSteps.some((step) => step.type === "message") ? [enrollment.leadId] : [];
+  });
+  const outboundMessageTimes = await getOutboundMessageTimesByLeadIds(workspaceId, messagedLeadIds);
+
   const outreach = enrollments.flatMap((enrollment): ScheduledAction[] => {
     if (terminalStatuses.has(enrollment.status)) return [];
     if (filters.campaignId && enrollment.campaignId !== filters.campaignId) return [];
@@ -74,9 +89,9 @@ export async function listScheduledActions(
     const agent = lead.sourceAgentId ? agentsById.get(lead.sourceAgentId) : undefined;
     const group = groupsById.get(campaign.groupId);
     const isConnection = step.type === "connect";
-    const canRunNow = !enrollment.pendingAction && (
-      isConnection || canSendCampaignMessage(enrollment, lead)
-    );
+    const connectionAccepted = canSendCampaignMessage(enrollment, lead);
+    const awaitingConnection = !isConnection && !connectionAccepted;
+    const canRunNow = !enrollment.pendingAction && (isConnection || connectionAccepted);
     const template = isConnection ? step.noteTemplate : step.messageTemplate;
     const rendered = template.trim() ? renderTemplate(template, lead) : null;
     // AI messages are pre-drafted the moment the connection is accepted (see
@@ -104,31 +119,28 @@ export async function listScheduledActions(
       message,
       method: isConnection ? "LinkedIn connection request" : "LinkedIn message",
       canRunNow,
+      awaitingConnection,
       blockedReason: enrollment.pendingAction
         ? "This action is already being processed."
-        : !isConnection && !canRunNow
+        : awaitingConnection
           ? "The connection must be accepted before this message can be sent."
           : enrollment.lastError?.includes("cannot_resend_yet")
             ? "LinkedIn rejected the last invite to this person — they were likely invited before (pending or withdrawn), or the account is at its invite limit. It will retry at the scheduled time; withdrawing old pending invites on LinkedIn lifts the limit sooner."
             : enrollment.lastError
               ? `The last attempt failed and will retry at the scheduled time: ${enrollment.lastError}`
               : undefined,
-      timeline: campaign.steps.flatMap((campaignStep, campaignStepIndex) => {
-        if (campaignStep.type === "wait") return [];
-        return [{
-          id: campaignStep.id,
-          title: campaignStep.type === "connect" ? "Send connection request" : "Send LinkedIn message",
-          status: campaignStepIndex < stepIndex
-            ? "completed" as const
-            : campaignStepIndex === stepIndex
-              ? "scheduled" as const
-              : "upcoming" as const,
-          at: campaignStepIndex === stepIndex ? enrollment.nextActionAt : undefined,
-        }];
+      timeline: buildActionTimeline({
+        steps: campaign.steps,
+        stepIndex,
+        scheduledAt: enrollment.nextActionAt,
+        connectionSentAt: enrollment.connectionSentAt,
+        sentMessageAts: outboundMessageTimes.get(lead.id),
+        connectionAccepted,
       }),
       campaign: campaign.name,
       agent: agent?.name,
       group: group?.name,
+      groupId: campaign.groupId,
       lead: {
         id: lead.id,
         name: lead.name,
@@ -136,6 +148,7 @@ export async function listScheduledActions(
         company: lead.company,
         location: lead.location,
         avatarUrl: lead.avatarUrl,
+        fitScore: lead.fitScore || 0,
       },
     }];
   });

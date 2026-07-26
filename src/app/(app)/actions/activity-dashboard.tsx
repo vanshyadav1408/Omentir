@@ -31,6 +31,7 @@ const VIEW_MODES = [
   { id: "time" as const, label: "By time" },
   { id: "lead" as const, label: "By leads" },
 ];
+const ALL_GROUPS = "all";
 
 function timeZoneLabel(timeZone: string) {
   return TIMEZONE_LABELS[timeZone] || timeZone.split("/").at(-1)?.replaceAll("_", " ") || "Universal";
@@ -70,8 +71,51 @@ function resultMessage(result: string, kind: ScheduledAction["kind"]) {
   return { ok: false, text: `${kind === "connection" ? "Connection request" : "Message"} was not sent yet (${result.replaceAll("-", " ")}).` };
 }
 
-function ActionDetails({ action, timeZone, pending, confirming, feedback, onConfirm, onCancel, onRun, onClose, bare, showTimeline }: {
+// One step of a lead's campaign: what happens, and when it happened or will.
+function TimelineRow({ item, timeZone }: { item: ScheduledAction["timeline"][number]; timeZone: string }) {
+  const marker =
+    item.status === "completed"
+      ? { className: "bg-emerald-500 text-white", icon: "check" }
+      : item.status === "scheduled"
+        ? { className: "bg-[#ba3871] text-white", icon: "schedule" }
+        : item.status === "waiting"
+          ? { className: "bg-amber-100 text-amber-700", icon: "lock" }
+          : { className: "border border-zinc-300 bg-white text-zinc-400", icon: "more_horiz" };
+  const stamp = item.at ? `${dateLabel(item.at, timeZone, true)} · ${timeLabel(item.at, timeZone)}` : "";
+  const detail =
+    item.status === "completed"
+      ? stamp
+        ? `Done · ${stamp}`
+        : "Done"
+      : item.status === "scheduled"
+        ? stamp
+        : item.at
+          ? `Estimated ${stamp}`
+          : item.note || "";
+
+  return (
+    <div className="relative flex w-full gap-3 py-2">
+      <span className={`relative z-10 grid h-4 w-4 shrink-0 place-items-center rounded-full ${marker.className}`}>
+        <span className="material-symbols-outlined text-[11px] leading-none" aria-hidden="true">{marker.icon}</span>
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="flex items-center gap-2">
+          <span className={`truncate text-xs font-semibold ${item.status === "scheduled" ? "text-[#ba3871]" : item.status === "completed" ? "text-zinc-800" : "text-zinc-500"}`}>{item.title}</span>
+          {item.status === "scheduled" ? (
+            <span className="shrink-0 rounded-full bg-[#f8e8ef] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[#ba3871]">Next</span>
+          ) : null}
+        </span>
+        {detail ? <span className="mt-0.5 block text-[11px] leading-4 text-zinc-400">{detail}</span> : null}
+      </span>
+    </div>
+  );
+}
+
+function ActionDetails({ action, siblings, onSelectSibling, timeZone, pending, confirming, feedback, onConfirm, onCancel, onRun, onClose, bare, showTimeline }: {
   action: ScheduledAction;
+  // Every action this lead has, one per campaign they are enrolled in.
+  siblings: ScheduledAction[];
+  onSelectSibling: (action: ScheduledAction) => void;
   timeZone: string;
   pending: boolean;
   confirming: boolean;
@@ -90,7 +134,12 @@ function ActionDetails({ action, timeZone, pending, confirming, feedback, onConf
         <div className="flex items-center gap-3 border-b border-zinc-100 pb-4">
           <Avatar lead={action.lead} size="lg" />
           <div className="min-w-0">
-            <h2 className="truncate text-base font-semibold text-zinc-950">{action.lead.name}</h2>
+            <h2 className="flex items-center gap-2 text-base font-semibold text-zinc-950">
+              <span className="truncate">{action.lead.name}</span>
+              <span className="shrink-0 rounded-full bg-zinc-100 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-zinc-600" aria-label={`Fit score ${action.lead.fitScore || 0}`}>
+                {action.lead.fitScore || 0}
+              </span>
+            </h2>
             <p className="truncate text-xs text-zinc-500">{[action.lead.title, action.lead.company].filter(Boolean).join(" · ")}</p>
           </div>
           {onClose ? (
@@ -107,39 +156,47 @@ function ActionDetails({ action, timeZone, pending, confirming, feedback, onConf
           ) : null}
         </div>
 
+        {/* A lead can sit in more than one campaign; without this the panel
+            would silently show only the earliest one's schedule. */}
+        {siblings.length > 1 ? (
+          <div className="mt-4 flex flex-wrap gap-1.5">
+            {siblings.map((sibling) => (
+              <button
+                key={sibling.id}
+                type="button"
+                onClick={() => onSelectSibling(sibling)}
+                className={`cursor-pointer rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
+                  sibling.id === action.id
+                    ? "bg-[#f8e8ef] text-[#ba3871]"
+                    : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+                }`}
+              >
+                {sibling.campaign || "Campaign"}
+              </button>
+            ))}
+          </div>
+        ) : null}
+
         {showTimeline ? (
           <div className="mt-5 border-b border-zinc-100 pb-5">
-            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-zinc-400">Timeline</p>
-            <div className="relative mt-3 space-y-1 before:absolute before:bottom-3 before:left-[5px] before:top-3 before:w-px before:bg-zinc-200">
-              {action.timeline.map((timelineItem) => {
-                const active = timelineItem.status === "scheduled";
-                return (
-                  <div key={timelineItem.id} className="relative flex w-full gap-3 rounded-lg py-2 pl-0">
-                    <span className={`relative z-10 mt-1.5 grid h-[11px] w-[11px] shrink-0 place-items-center rounded-full border-2 ${
-                      active
-                        ? "border-[#ba3871] bg-[#ba3871]"
-                        : timelineItem.status === "completed"
-                          ? "border-emerald-500 bg-emerald-500"
-                          : "border-zinc-300 bg-white"
-                    }`} />
-                    <span className="min-w-0">
-                      <span className={`block truncate text-xs font-semibold ${active ? "text-[#ba3871]" : "text-zinc-800"}`}>{timelineItem.title}</span>
-                      <span className="mt-0.5 block text-[11px] capitalize text-zinc-400">
-                        {timelineItem.at
-                          ? `${dateLabel(timelineItem.at, timeZone, true)} · ${timeLabel(timelineItem.at, timeZone)}`
-                          : timelineItem.status}
-                      </span>
-                    </span>
-                  </div>
-                );
-              })}
+            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-zinc-400">Schedule</p>
+            <div className="relative mt-3 before:absolute before:bottom-4 before:left-2 before:top-4 before:w-px before:bg-zinc-200">
+              {action.timeline.map((timelineItem) => (
+                <TimelineRow key={timelineItem.id} item={timelineItem} timeZone={timeZone} />
+              ))}
             </div>
+            {action.awaitingConnection ? (
+              <p className="mt-1 flex gap-2 rounded-lg bg-amber-50 px-3 py-2.5 text-[11px] leading-4 text-amber-800">
+                <span className="material-symbols-outlined mt-px text-[14px]">lock_clock</span>
+                LinkedIn only allows messages between connections. The connection request is still pending, so the messages below get their send times the moment {action.lead.name.split(" ")[0] || "this lead"} accepts.
+              </p>
+            ) : null}
           </div>
         ) : null}
 
         <div className="mt-5 flex items-start gap-3">
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[#f8e8ef] text-[#ba3871]"><span className="material-symbols-outlined text-[18px]">{action.kind === "connection" ? "person_add" : "chat_bubble"}</span></span>
-          <div><p className="text-[11px] font-bold uppercase tracking-[0.12em] text-zinc-400">Next action</p><p className="mt-1 text-sm font-semibold text-zinc-950">{action.title}</p><p className="mt-1 text-xs text-zinc-500">{dateLabel(action.at, timeZone, true)} · {timeLabel(action.at, timeZone)}</p></div>
+          <div><p className="text-[11px] font-bold uppercase tracking-[0.12em] text-zinc-400">Next action</p><p className="mt-1 text-sm font-semibold text-zinc-950">{action.title}</p><p className="mt-1 text-xs text-zinc-500">{action.awaitingConnection ? "Waiting on the connection request" : `${dateLabel(action.at, timeZone, true)} · ${timeLabel(action.at, timeZone)}`}</p></div>
         </div>
 
         <div className="m3-card m3-card-filled mt-5 p-4">
@@ -182,6 +239,7 @@ export default function ActionsDashboard({ items, title, serverNow, timezone, he
   const [pendingId, setPendingId] = useState("");
   const [feedback, setFeedback] = useState<Record<string, { ok: boolean; text: string }>>({});
   const [viewMode, setViewMode] = useState<"time" | "lead">("time");
+  const [groupId, setGroupId] = useState(ALL_GROUPS);
   const [perPage, setPerPage] = useState(10);
   const [page, setPage] = useState(1);
 
@@ -199,21 +257,38 @@ export default function ActionsDashboard({ items, title, serverNow, timezone, he
     };
   }, [isRefreshing, router]);
 
+  // Lead groups the scheduled actions actually belong to, so the filter never
+  // offers a group with nothing in it.
+  const leadGroups = useMemo(() => {
+    const named = new Map<string, string>();
+    for (const action of items) {
+      if (action.groupId && action.group) named.set(action.groupId, action.group);
+    }
+    return Array.from(named, ([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name));
+  }, [items]);
+
   const leads = useMemo(() => {
     const groups = new Map<string, LeadActions>();
     for (const action of items) {
       if (!action.lead) continue;
+      if (groupId !== ALL_GROUPS && action.groupId !== groupId) continue;
       const group = groups.get(action.lead.id) || { lead: action.lead, actions: [] };
       group.actions.push(action);
       groups.set(action.lead.id, group);
     }
     return Array.from(groups.values()).map((group) => ({ ...group, actions: group.actions.sort((a, b) => a.at.localeCompare(b.at)) })).sort((a, b) => a.actions[0].at.localeCompare(b.actions[0].at));
-  }, [items]);
+  }, [items, groupId]);
 
   const selectedLead = leads.find((group) => group.lead.id === selectedLeadId) || leads[0];
   const selected = selectedLead?.actions.find((action) => action.id === selectedId) || selectedLead?.actions[0];
+  // By leads: the best-fit people first, so the highest-value leads are the
+  // ones you inspect. By time: whatever fires soonest, as built above.
   const visibleLeads = viewMode === "lead"
-    ? [...leads].sort((a, b) => a.lead.name.localeCompare(b.lead.name))
+    ? [...leads].sort((a, b) =>
+        (b.lead.fitScore || 0) - (a.lead.fitScore || 0) ||
+        a.actions[0].at.localeCompare(b.actions[0].at) ||
+        a.lead.name.localeCompare(b.lead.name),
+      )
     : leads;
   const total = leads.length;
   const totalPages = Math.max(1, Math.ceil(total / perPage));
@@ -230,6 +305,12 @@ export default function ActionsDashboard({ items, title, serverNow, timezone, he
 
   function changeViewMode(mode: "time" | "lead") {
     setViewMode(mode);
+    setPage(1);
+    setConfirmingId("");
+  }
+
+  function changeGroup(nextGroupId: string) {
+    setGroupId(nextGroupId);
     setPage(1);
     setConfirmingId("");
   }
@@ -275,6 +356,30 @@ export default function ActionsDashboard({ items, title, serverNow, timezone, he
       </span>
     </label>
   );
+
+  const groupPicker = leadGroups.length > 1 ? (
+    <label className="flex h-8 items-center gap-2 rounded-md border border-zinc-200 bg-white px-2.5 text-xs font-semibold text-zinc-700">
+      <span className="material-symbols-outlined text-[15px] text-zinc-500" aria-hidden="true">group</span>
+      <span className="relative">
+        <select
+          aria-label="Filter by lead group"
+          value={groupId}
+          onChange={(event) => changeGroup(event.target.value)}
+          className="max-w-[9.5rem] cursor-pointer appearance-none truncate border-0 bg-transparent pr-6 shadow-none outline-none"
+        >
+          <option value={ALL_GROUPS}>All lead groups</option>
+          {leadGroups.map((group) => (
+            <option key={group.id} value={group.id}>
+              {group.name}
+            </option>
+          ))}
+        </select>
+        <span className="material-symbols-outlined pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-[16px] text-zinc-500" aria-hidden="true">
+          arrow_drop_down
+        </span>
+      </span>
+    </label>
+  ) : null;
 
   const mobileViewPicker = (
     <div className="m3-mobile-header-action fixed right-2 z-[92] md:hidden">
@@ -322,6 +427,7 @@ export default function ActionsDashboard({ items, title, serverNow, timezone, he
         </h1>
         <div className="flex flex-wrap items-center gap-2">
           {headerActions}
+          {groupPicker}
           <div className={mobileCaption ? "hidden md:block" : ""}>{desktopViewPicker}</div>
         </div>
       </header>
@@ -332,7 +438,11 @@ export default function ActionsDashboard({ items, title, serverNow, timezone, he
           <div className="m3-card m3-card-outlined m3-card-lg border-dashed py-16 text-center">
             <span className="material-symbols-outlined text-3xl text-zinc-400">event_available</span>
             <h2 className="mt-3 text-sm font-semibold text-zinc-900">Nothing scheduled</h2>
-            <p className="mt-1 text-xs text-zinc-500">Leads from active campaigns will appear here.</p>
+            <p className="mt-1 text-xs text-zinc-500">
+              {groupId === ALL_GROUPS
+                ? "Leads from active campaigns will appear here."
+                : "No scheduled actions in this lead group yet."}
+            </p>
           </div>
         ) : (
           <>
@@ -358,7 +468,12 @@ export default function ActionsDashboard({ items, title, serverNow, timezone, he
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <p className="truncate text-sm font-semibold text-zinc-950">{group.lead.name}</p>
-                          {new Date(action.at).getTime() <= serverNow ? (
+                          {viewMode === "lead" ? (
+                            <span className="shrink-0 text-[11px] font-bold tabular-nums text-zinc-500" aria-label={`Fit score ${group.lead.fitScore || 0}`}>
+                              {group.lead.fitScore || 0}
+                            </span>
+                          ) : null}
+                          {!action.awaitingConnection && new Date(action.at).getTime() <= serverNow ? (
                             <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">Due now</span>
                           ) : null}
                         </div>
@@ -370,8 +485,17 @@ export default function ActionsDashboard({ items, title, serverNow, timezone, he
                         </p>
                       </div>
                       <div className="shrink-0 text-right">
-                        <p className="text-xs font-semibold text-zinc-800">{dateLabel(action.at, timeZone)}</p>
-                        <p className="mt-1 text-[11px] text-zinc-400">{timeLabel(action.at, timeZone)}</p>
+                        {action.awaitingConnection ? (
+                          <>
+                            <p className="text-xs font-semibold text-amber-700">Awaiting</p>
+                            <p className="mt-1 text-[11px] text-zinc-400">connection</p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-xs font-semibold text-zinc-800">{dateLabel(action.at, timeZone)}</p>
+                            <p className="mt-1 text-[11px] text-zinc-400">{timeLabel(action.at, timeZone)}</p>
+                          </>
+                        )}
                       </div>
                       <span className="material-symbols-outlined text-[18px] text-zinc-300">chevron_right</span>
                     </button>
@@ -437,6 +561,8 @@ export default function ActionsDashboard({ items, title, serverNow, timezone, he
               {selected ? (
                 <ActionDetails
                   action={selected}
+                  siblings={selectedLead?.actions || []}
+                  onSelectSibling={selectAction}
                   timeZone={timeZone}
                   pending={pendingId === selected.id}
                   confirming={confirmingId === selected.id}
@@ -473,6 +599,8 @@ export default function ActionsDashboard({ items, title, serverNow, timezone, he
               <ActionDetails
                 bare
                 action={selected}
+                siblings={selectedLead?.actions || []}
+                onSelectSibling={selectAction}
                 timeZone={timeZone}
                 pending={pendingId === selected.id}
                 confirming={confirmingId === selected.id}
