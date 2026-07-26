@@ -572,16 +572,7 @@ async function createAgentFromForm(
     },
     linkedInAccountId: account.id,
     targetGroupName: groupName,
-    runAtHour: parseRunAtHour(formData.get("runAtHour")),
   });
-}
-
-// Hour of the workspace's local day for lead discovery. Anything unparseable
-// falls through to the default (an hour before business hours open) rather
-// than to "whenever this form was submitted".
-function parseRunAtHour(value: FormDataEntryValue | null) {
-  const hour = Number(String(value || "").trim());
-  return Number.isFinite(hour) && hour >= 0 && hour <= 23 ? Math.trunc(hour) : undefined;
 }
 
 export async function createAgentForSetupAction(formData: FormData) {
@@ -654,7 +645,6 @@ async function updateAgentFromForm(
     },
     linkedInAccountId: account.id,
     targetGroupName: groupName,
-    runAtHour: parseRunAtHour(formData.get("runAtHour")),
   });
 }
 

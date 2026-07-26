@@ -10,6 +10,7 @@ import { hasIntervalElapsed, isAgentDueForRun, nextDailyAgentRunAt } from "./sch
 import {
   DEFAULT_AGENT_RUN_HOUR,
   SPACING_MINUTES,
+  nextAnchoredAgentRunAt,
   nextLocalAgentRunAt,
   planSendSchedule,
   zonedParts,
@@ -97,7 +98,6 @@ type LegacyProductProfile = ProductProfile & {
 type CreateAgentInput = Pick<Agent, "name" | "mode" | "prompt" | "filters" | "targetGroupName"> & {
   linkedInAccountId?: string;
   signalSources?: AgentSignalSources;
-  runAtHour?: number;
 };
 
 type UpsertLeadSignalInput = Omit<
@@ -483,8 +483,10 @@ export async function setAverageTicketSize(workspaceId: string, value: number) {
     keyFeatures: [],
     socialProof: [],
     linkedInCompanyPage: "",
+    useCases: [],
     targetBuyers: [],
     buyerTitles: [],
+    roleVocabulary: [],
     industries: [],
     companySizes: [],
     painPoints: [],
@@ -671,7 +673,6 @@ export async function createAgent(
 
   const group = await createOrGetGroup(workspaceId, input.targetGroupName, "Created by AI Agent");
   const timestamp = nowIso();
-  const runAtHour = normalizeRunAtHour(input.runAtHour);
   const ref = collection<Agent>("agents").doc();
   const agent: Agent = {
     id: ref.id,
@@ -683,13 +684,15 @@ export async function createAgent(
     prompt: input.prompt,
     filters: input.filters,
     signalSources: withDefaultSignalSources(input.signalSources),
-    runAtHour,
+    // Setup no longer asks when to look for leads: the agent starts working the
+    // moment it is created and repeats at that time every day. nextRunAt is now
+    // so the next automation tick picks it up instead of leaving the user in
+    // front of an empty lead group until some scheduled hour.
+    runAnchorAt: timestamp,
     targetGroupId: group.id,
     targetGroupName: group.name,
     status: "active",
-    // Anchored to the chosen local hour rather than this instant, so the agent
-    // does not run discovery at whatever minute the user happened to click.
-    nextRunAt: nextLocalAgentRunAt(runAtHour, workspace.timezone),
+    nextRunAt: timestamp,
     createdAt: timestamp,
     updatedAt: timestamp,
   };
@@ -716,22 +719,10 @@ export async function updateAgent(
       ? await renameGroup(workspaceId, agent.targetGroupId, input.targetGroupName)
       : { id: agent.targetGroupId, name: agent.targetGroupName };
 
-  // Editing an agent must not move its daily run: nextRunAt used to be reset to
+  // Editing an agent never moves its daily run. nextRunAt used to be reset to
   // now on every save, so tweaking job titles at 11pm permanently moved
-  // discovery to 11pm. It is only recomputed when the user actually changes the
-  // hour, and only ever from that hour.
-  const previousHour = normalizeRunAtHour(agent.runAtHour);
-  const runAtHour = normalizeRunAtHour(input.runAtHour ?? agent.runAtHour);
-  // Read the workspace only when the hour actually moved, and never let that
-  // read fail the save: the timezone is needed for the new nextRunAt alone, so
-  // a Firestore hiccup should cost the reschedule, not the user's edit.
-  const rescheduledRunAt =
-    runAtHour === previousHour
-      ? undefined
-      : await getWorkspace(workspaceId)
-          .then((workspace) => nextLocalAgentRunAt(runAtHour, workspace.timezone))
-          .catch(() => undefined);
-
+  // discovery to 11pm; the schedule now comes from creation time alone (or,
+  // for older agents, the hour their owner picked back when setup asked).
   const patch: Partial<Agent> = {
     name: input.name || input.targetGroupName || agent.name,
     // Spread conditionally: Firestore rejects undefined values, and an update
@@ -741,12 +732,10 @@ export async function updateAgent(
     prompt: input.prompt,
     filters: input.filters,
     signalSources: withDefaultSignalSources(input.signalSources),
-    runAtHour,
     targetGroupId: group.id,
     targetGroupName: group.name,
     status: agent.status === "paused" ? "paused" : "active",
     runStartedAt: FieldValue.delete() as unknown as string,
-    ...(rescheduledRunAt ? { nextRunAt: rescheduledRunAt } : {}),
     updatedAt: nowIso(),
   };
 
@@ -754,14 +743,18 @@ export async function updateAgent(
   return { ...agent, ...patch } as Agent;
 }
 
-// Tomorrow's occurrence of the agent's chosen local hour. Falls back to the
-// old "+24h from the last slot" arithmetic if the workspace can't be read, so
-// a transient Firestore error can never leave nextRunAt in the past (which
-// would keep the agent due on every tick).
+// Tomorrow's occurrence of the agent's daily discovery time: the wall-clock
+// time it was created at, or - for agents from when setup asked for one - the
+// hour their owner picked. Falls back to the old "+24h from the last slot"
+// arithmetic if the workspace can't be read, so a transient Firestore error can
+// never leave nextRunAt in the past (which would keep the agent due on every
+// tick).
 async function nextAgentSlot(agent: Agent) {
   try {
     const workspace = await getWorkspace(agent.workspaceId);
-    return nextLocalAgentRunAt(normalizeRunAtHour(agent.runAtHour), workspace.timezone);
+    return agent.runAnchorAt
+      ? nextAnchoredAgentRunAt(agent.runAnchorAt, workspace.timezone)
+      : nextLocalAgentRunAt(normalizeRunAtHour(agent.runAtHour), workspace.timezone);
   } catch {
     return nextDailyAgentRunAt(agent.nextRunAt);
   }

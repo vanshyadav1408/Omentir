@@ -220,9 +220,42 @@ function nextLocalDayStart(timezone: string | undefined, ms: number) {
 }
 
 // Discovery runs an hour before a business-hours window opens, so freshly
-// found leads are queued and ready when sending starts. Used when the user has
-// not picked an hour themselves.
+// found leads are queued and ready when sending starts. Only agents created
+// before discovery was anchored to their creation time still use this: they
+// kept the hour their owner picked, and nothing may move it.
 export const DEFAULT_AGENT_RUN_HOUR = 8;
+
+// Tomorrow's occurrence of the wall-clock time an agent was created at, in the
+// workspace's timezone. Agents no longer ask for an hour: an agent created at
+// 4:16pm discovers immediately and then every day at 4:16pm local, which
+// survives DST because the minute-of-day is re-resolved against the zone each
+// time rather than by adding 24h to the last run.
+export function nextAnchoredAgentRunAt(
+  anchorAt: string,
+  timezone: string | undefined,
+  nowMs = Date.now(),
+) {
+  const anchorMs = Date.parse(anchorAt);
+  if (!Number.isFinite(anchorMs)) {
+    return new Date(nowMs + 24 * 60 * 60 * 1000).toISOString();
+  }
+
+  const anchor = zonedParts(timezone, anchorMs);
+  const local = zonedParts(timezone, nowMs);
+
+  for (let ahead = 0; ahead <= 2; ahead += 1) {
+    const candidate = zonedTimeToUtc(timezone, {
+      year: local.year,
+      month: local.month,
+      day: local.day + ahead,
+      hour: anchor.hour,
+      minute: anchor.minute,
+    });
+    if (candidate > nowMs) return new Date(candidate).toISOString();
+  }
+
+  return new Date(nowMs + 24 * 60 * 60 * 1000).toISOString();
+}
 
 // The next occurrence of `hour` in the workspace's local timezone. Anchoring on
 // a local wall-clock hour (rather than adding 24h to whenever the agent was

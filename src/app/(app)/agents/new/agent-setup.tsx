@@ -86,12 +86,6 @@ const SEND_WINDOW_OPTIONS: SelectOption[] = [
   { value: "always", label: "Around the clock · 24/7" },
 ];
 
-const RUN_HOUR_OPTIONS = Array.from({ length: 24 }, (_, hour) => {
-  const suffix = hour < 12 ? "am" : "pm";
-  const display = hour % 12 === 0 ? 12 : hour % 12;
-  return { value: String(hour), label: `${display}:00 ${suffix}` };
-});
-
 type StepKey = "icp" | "signals" | "leads" | "campaign" | "review";
 type SeqKind = "connect" | "message" | "follow";
 
@@ -735,9 +729,6 @@ export default function AgentSetup({
   const [sendWindow, setSendWindow] = useState<SendWindow>(
     initialSendWindow ?? (initialAgent ? "always" : "business"),
   );
-  // Discovery runs an hour before business hours open, so leads found today are
-  // queued and ready the moment sending starts.
-  const [runAtHour, setRunAtHour] = useState<number>(initialAgent?.runAtHour ?? 8);
   const [replyHandling, setReplyHandling] = useState<"ai" | "handoff">("ai");
   const [campaignGoal, setCampaignGoal] = useState<"warm" | "demo">("warm");
   const [messageTone, setMessageTone] = useState<"professional" | "conversational" | "direct">(
@@ -1162,16 +1153,16 @@ export default function AgentSetup({
               {csvFileName ? <span className="text-[12px] font-medium text-emerald-700">Ready to import: {csvFileName}</span> : null}
             </label>
           ) : null}
-          {/* Lives on this step for every agent type: it schedules discovery,
-              not outreach. On the Outreach step it was both out of place and
-              invisible to leads-only agents, which end at this step. */}
-          <SelectField
-            label="Find new leads at"
-            options={RUN_HOUR_OPTIONS}
-            value={String(runAtHour)}
-            onChange={(value) => setRunAtHour(Number(value))}
-            placeholder="Pick an hour"
-          />
+          {/* Setup no longer asks for a discovery hour: the agent starts the
+              moment it is created and keeps that time daily. Existing agents
+              stay on the hour they were given, so this promise is only true
+              for new ones. */}
+          {!outreachOnly && !isEditing ? (
+            <p className="text-[13px] leading-5 text-zinc-600">
+              This agent starts finding leads as soon as you create it, then looks for new
+              ones every day at that same time.
+            </p>
+          ) : null}
           {discoveryError ? (
             <p className="text-[13px] font-light text-red-600">{discoveryError}</p>
           ) : null}
@@ -2142,7 +2133,6 @@ export default function AgentSetup({
         <input type="hidden" name="manualDefaultOutreach" value="on" />
       )}
       <input type="hidden" name="sendWindow" value={sendWindow} />
-      <input type="hidden" name="runAtHour" value={String(runAtHour)} />
       <input type="hidden" name="mode" value={outreachOnly ? "outreach" : "signals"} />
 
       {!setupMode ? (

@@ -31,8 +31,10 @@ export const agentToolInputSchemas = {
       keyFeatures: { type: "array", items: { type: "string" } },
       socialProof: { type: "array", items: { type: "string" } },
       linkedInCompanyPage: { type: "string" },
+      useCases: { type: "array", items: { type: "string" } },
       targetBuyers: { type: "array", items: { type: "string" } },
       buyerTitles: { type: "array", items: { type: "string" } },
+      roleVocabulary: { type: "array", items: { type: "string" } },
       industries: { type: "array", items: { type: "string" } },
       companySizes: { type: "array", items: { type: "string" } },
       painPoints: { type: "array", items: { type: "string" } },
@@ -77,13 +79,6 @@ export const agentToolInputSchemas = {
           keywords: { type: "array", items: { type: "string" } },
         },
       },
-      runAtHour: {
-        type: "integer",
-        minimum: 0,
-        maximum: 23,
-        description:
-          "Hour of the workspace's local day to run discovery, in the workspace time zone. Defaults to an hour before business hours open.",
-      },
     },
   },
   omentir_update_agent: {
@@ -124,13 +119,6 @@ export const agentToolInputSchemas = {
           founderUrls: { type: "array", items: { type: "string" } },
           keywords: { type: "array", items: { type: "string" } },
         },
-      },
-      runAtHour: {
-        type: "integer",
-        minimum: 0,
-        maximum: 23,
-        description:
-          "Hour of the workspace's local day to run discovery. Omitted keeps the agent's current hour.",
       },
       sendWindow: {
         enum: ["always", "business", "extended"],
@@ -287,7 +275,7 @@ const agentMcpToolDefinitions = [
   {
     name: "omentir_list_agents",
     description:
-      "List Omentir discovery agents in the token workspace, including each one's discovery hour, send window, and whether an outreach sequence is set up for it.",
+      "List Omentir discovery agents in the token workspace, including each one's next discovery run, send window, and whether an outreach sequence is set up for it.",
     inputSchema: agentToolInputSchemas.omentir_list_agents,
   },
   {
@@ -299,7 +287,7 @@ const agentMcpToolDefinitions = [
   {
     name: "omentir_update_agent",
     description:
-      "Update an existing discovery agent: rename it, change its prompt, mode, filters, signal sources, or daily discovery hour, switch its LinkedIn account, rename its lead group, or change the send window its outreach uses. Only provided fields change.",
+      "Update an existing discovery agent: rename it, change its prompt, mode, filters, or signal sources, switch its LinkedIn account, rename its lead group, or change the send window its outreach uses. Its daily discovery time is fixed at creation and cannot be changed. Only provided fields change.",
     inputSchema: agentToolInputSchemas.omentir_update_agent,
   },
   {

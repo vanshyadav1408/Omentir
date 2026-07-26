@@ -95,8 +95,8 @@ const toolGroups = [
     group: "Lead discovery",
     tools: [
       { name: "omentir_create_agent", description: "Create an ICP discovery agent and its target lead group." },
-      { name: "omentir_update_agent", description: "Edit an agent's name, prompt, filters, signal sources, LinkedIn account, lead group, discovery hour, or send window." },
-      { name: "omentir_list_agents", description: "List the discovery agents running in the workspace, with each one's discovery hour and send window." },
+      { name: "omentir_update_agent", description: "Edit an agent's name, prompt, filters, signal sources, LinkedIn account, lead group, or send window." },
+      { name: "omentir_list_agents", description: "List the discovery agents running in the workspace, with each one's next discovery run and send window." },
       { name: "omentir_list_leads", description: "Search, filter, sort, and list discovered leads." },
       { name: "omentir_get_lead", description: "Read one exact lead and its complete qualification record." },
       { name: "omentir_list_groups", description: "List the lead groups in the workspace." },
