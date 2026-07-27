@@ -72,56 +72,13 @@ jobs:
           fi
           chmod 600 ~/.ssh/known_hosts
 
-          restore_previous_build() {
-            ssh -i ~/.ssh/omentir_vps -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
-              "$VPS_USER@$VPS_HOST" \
-              'set -euo pipefail
-              app_dir="$HOME/omentir"
-              backup_dir="$HOME/omentir-deploy-backup"
-              if [ "$app_dir" != "$HOME/omentir" ] || [ "$backup_dir" != "$HOME/omentir-deploy-backup" ]; then
-                echo "Refusing to restore unexpected deployment paths." >&2
-                exit 1
-              fi
-              if [ ! -d "$backup_dir/.next" ]; then
-                echo "No previous Next.js build is available to restore." >&2
-                pm2 restart omentir --update-env
-                exit 1
-              fi
-              rm -rf "$app_dir/.next"
-              cp -a "$backup_dir/.next" "$app_dir/.next"
-              pm2 restart omentir --update-env
-              pm2 save'
-          }
-
           ssh -i ~/.ssh/omentir_vps -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
             "$VPS_USER@$VPS_HOST" \
-            'set -euo pipefail
-            app_dir="$HOME/omentir"
-            backup_dir="$HOME/omentir-deploy-backup"
-            if [ "$app_dir" != "$HOME/omentir" ] || [ "$backup_dir" != "$HOME/omentir-deploy-backup" ]; then
-              echo "Refusing to prepare unexpected deployment paths." >&2
-              exit 1
-            fi
-            rm -rf "$backup_dir"
-            mkdir -p "$backup_dir"
-            if [ -d "$app_dir/.next" ]; then
-              cp -a "$app_dir/.next" "$backup_dir/.next"
-            fi
-            pm2 stop omentir'
-
-          if ! ssh -i ~/.ssh/omentir_vps -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
-            "$VPS_USER@$VPS_HOST" \
             "APP_COMMIT_SHA=$APP_COMMIT_SHA APP_REPOSITORY=$APP_REPOSITORY bash ~/scripts/deploy-omentir.sh"
-          then
-            echo "Deployment failed. Restoring the previous Next.js build." >&2
-            restore_previous_build
-            exit 1
-          fi
 
           if ! homepage="$(curl --fail --silent --show-error --retry 5 --retry-delay 2 https://omentir.com/)"
           then
-            echo "Production homepage did not become healthy. Restoring the previous build." >&2
-            restore_previous_build
+            echo "Production homepage did not become healthy after deployment." >&2
             exit 1
           fi
           mapfile -t chunks < <(
@@ -133,7 +90,6 @@ jobs:
 
           if [ "${#chunks[@]}" -eq 0 ]; then
             echo "No JavaScript chunks found in the production homepage." >&2
-            restore_previous_build
             exit 1
           fi
 
@@ -145,22 +101,10 @@ jobs:
             )"
             then
               echo "Production chunk failed to load: $chunk" >&2
-              restore_previous_build
               exit 1
             fi
             if [[ "$content_type" != application/javascript* ]]; then
               echo "Unexpected content type for $chunk: $content_type" >&2
-              restore_previous_build
               exit 1
             fi
           done
-
-          ssh -i ~/.ssh/omentir_vps -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
-            "$VPS_USER@$VPS_HOST" \
-            'set -euo pipefail
-            backup_dir="$HOME/omentir-deploy-backup"
-            if [ "$backup_dir" != "$HOME/omentir-deploy-backup" ]; then
-              echo "Refusing to remove an unexpected backup path." >&2
-              exit 1
-            fi
-            rm -rf "$backup_dir"'

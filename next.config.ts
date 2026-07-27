@@ -28,6 +28,10 @@ const privateIndexingRoutes = [
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // CI runs `tsc --noEmit` before every production deploy. Repeating the same
+  // check inside `next build` exhausted the VPS during the TypeScript phase and
+  // left a partial `.next` directory serving HTML with missing client chunks.
+  typescript: { ignoreBuildErrors: true },
   // Next dev blocks HMR / dev-resource requests from any origin not listed here
   // (a blocked /_next/webpack-hmr socket stalls the Turbopack client and stops
   // the app from hydrating). Always allow loopback; add extra origins — e.g. a
