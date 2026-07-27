@@ -74,4 +74,83 @@ jobs:
 
           ssh -i ~/.ssh/omentir_vps -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
             "$VPS_USER@$VPS_HOST" \
-            "APP_COMMIT_SHA=$APP_COMMIT_SHA APP_REPOSITORY=$APP_REPOSITORY bash ~/scripts/deploy-omentir.sh"
+            "APP_COMMIT_SHA=$APP_COMMIT_SHA APP_REPOSITORY=$APP_REPOSITORY bash -s" <<'REMOTE'
+          set -euo pipefail
+
+          app_dir="$HOME/omentir"
+          backup_dir="$(mktemp -d "$HOME/omentir-deploy-backup.XXXXXX")"
+          had_build=0
+
+          if [ -d "$app_dir/.next" ]; then
+            cp -a "$app_dir/.next" "$backup_dir/.next"
+            had_build=1
+          fi
+
+          restore_build() {
+            if [ "$app_dir" != "$HOME/omentir" ]; then
+              echo "Refusing to restore an unexpected application directory: $app_dir" >&2
+              return 1
+            fi
+            rm -rf "$app_dir/.next"
+            cp -a "$backup_dir/.next" "$app_dir/.next"
+          }
+
+          cleanup() {
+            status=$?
+            trap - EXIT
+
+            if [ "$status" -ne 0 ] && [ "$had_build" -eq 1 ]; then
+              echo "Deployment failed. Restoring the last complete Next.js build." >&2
+              restore_build
+              pm2 restart omentir --update-env
+              pm2 save
+            fi
+
+            rm -rf "$backup_dir"
+            exit "$status"
+          }
+          trap cleanup EXIT
+
+          set +e
+          bash "$HOME/scripts/deploy-omentir.sh"
+          deploy_status=$?
+          set -e
+
+          if [ "$deploy_status" -ne 0 ] && [ "$had_build" -eq 1 ]; then
+            echo "Deployment build failed. Retrying once with the application stopped." >&2
+            restore_build
+            pm2 stop omentir
+
+            set +e
+            bash "$HOME/scripts/deploy-omentir.sh"
+            deploy_status=$?
+            set -e
+          fi
+
+          exit "$deploy_status"
+          REMOTE
+
+          homepage="$(curl --fail --silent --show-error --retry 5 --retry-delay 2 https://omentir.com/)"
+          mapfile -t chunks < <(
+            printf '%s' "$homepage" |
+              grep -oE 'src="/_next/static/chunks/[^"]+\.js"' |
+              sed -E 's/^src="(.*)"$/\1/' |
+              sort -u
+          )
+
+          if [ "${#chunks[@]}" -eq 0 ]; then
+            echo "No JavaScript chunks found in the production homepage." >&2
+            exit 1
+          fi
+
+          for chunk in "${chunks[@]}"; do
+            content_type="$(
+              curl --fail --silent --show-error --retry 5 --retry-delay 2 \
+                --output /dev/null --write-out '%{content_type}' \
+                "https://omentir.com$chunk"
+            )"
+            if [[ "$content_type" != application/javascript* ]]; then
+              echo "Unexpected content type for $chunk: $content_type" >&2
+              exit 1
+            fi
+          done
