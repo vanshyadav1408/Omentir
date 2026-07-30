@@ -15,7 +15,15 @@ const PAGE_TIMEOUT_MS = 8000;
 
 function normalizeUrl(url: string) {
   const withProtocol = /^https?:\/\//i.test(url) ? url : `https://${url}`;
-  const parsed = new URL(withProtocol);
+  let parsed: URL;
+  try {
+    parsed = new URL(withProtocol);
+  } catch {
+    // new URL throws a bare "Invalid URL" TypeError, which reaches the
+    // onboarding panel verbatim and reads like a crash. The user typed
+    // something that is not an address; say that instead.
+    throw new Error("That doesn't look like a website address. Try something like https://yourcompany.com.");
+  }
   validatePublicWebsiteUrl(parsed);
   return parsed;
 }
@@ -58,7 +66,18 @@ async function requestPublicWebsite(url: URL, timeoutMs: number): Promise<Public
         // Connect to the address that was actually checked. Keeping the URL
         // hostname preserves Host and TLS certificate verification while
         // closing the DNS-rebinding gap between validation and connection.
-        lookup: (_hostname, _options, callback) => {
+        // Node calls this with { all: true } and then expects an array of
+        // entries; answering with the bare (address, family) pair makes every
+        // connection fail with "Invalid IP address: undefined", so both call
+        // shapes are honoured here.
+        lookup: (_hostname, options, callback) => {
+          if (options.all) {
+            (callback as unknown as (
+              error: null,
+              addresses: Array<{ address: string; family: number }>,
+            ) => void)(null, [{ address: selected.address, family: selected.family }]);
+            return;
+          }
           callback(null, selected.address, selected.family);
         },
       },
