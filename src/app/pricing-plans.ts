@@ -60,10 +60,11 @@ export const pricingPlans: PricingPlan[] = [
     href: "/checkout?plan=startup",
     featured: false,
     includes: "Includes everything in Basic plan and",
-    // API is Startup+ only (planHasApiAccess). Basic never lists it.
+    // LinkedIn account first (same order as Basic / Enterprise). Upgrade rows
+    // follow; API is Startup+ only (planHasApiAccess). Basic never lists it.
     features: [
-      ...startupLimitUpgrades,
       linkedInAccountFeatureLine("startup"),
+      ...startupLimitUpgrades,
       "API access",
     ],
   },
