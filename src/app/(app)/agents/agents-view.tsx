@@ -64,6 +64,9 @@ function statusPill(status: Agent["status"]) {
 
 function modeLabel(agent: Agent) {
   if (agent.mode === "outreach") return "Outreach Only";
+  // Leads-only agents are stored as "signals" like full agents, so without this
+  // there is no way to see which ones are barred from outreach.
+  if (agent.leadsOnly) return "Leads Only";
   if (agent.mode === "signals") return "Signals";
   if (agent.mode === "filters") return "Filters";
   return "Prompt";

@@ -17,6 +17,7 @@ import {
   getWorkspace,
   listAgents,
   listCampaigns,
+  listGroups,
   listLinkedInAccounts,
 } from "@/lib/server/data";
 import { hasActiveSubscription } from "@/lib/server/subscription";
@@ -184,10 +185,26 @@ export default async function NewAgentPage({
     const agentLimit = planLimits(workspace.billing?.plan).agents;
     if (isAtPlanLimit(existingAgents.length, agentLimit)) {
       if (params.mode !== "leads" && params.mode !== "outreach") {
-        const campaigns = await listCampaigns(workspace.id);
+        const [campaigns, groups] = await Promise.all([
+          listCampaigns(workspace.id),
+          listGroups(workspace.id),
+        ]);
         const campaignGroupIds = new Set(campaigns.map((campaign) => campaign.groupId));
+        const leadCountByGroup = new Map(groups.map((group) => [group.id, group.leadCount]));
+        // "No campaign on its group" means a half-finished full setup, which
+        // this flow is meant to rescue. A leads-only agent looks identical but
+        // is finished by design, and resuming one attaches a campaign that
+        // messages every lead the user only ever asked to be found.
+        //
+        // The empty-group test is what protects agents predating `leadsOnly`:
+        // an abandoned setup never got far enough to collect leads, while a
+        // working leads-only agent has a group full of them. Without it the
+        // flag only defends agents created from here on.
         const resumableAgent = existingAgents.find(
-          (existingAgent) => !campaignGroupIds.has(existingAgent.targetGroupId),
+          (existingAgent) =>
+            !existingAgent.leadsOnly &&
+            !campaignGroupIds.has(existingAgent.targetGroupId) &&
+            !(leadCountByGroup.get(existingAgent.targetGroupId) ?? 0),
         );
         if (resumableAgent) {
           agent = resumableAgent;

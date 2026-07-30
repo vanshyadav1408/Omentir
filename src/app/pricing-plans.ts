@@ -7,6 +7,7 @@
 import {
   limitFeatureLines,
   limitUpgradeFeatureLines,
+  linkedInAccountFeatureLine,
 } from "@/lib/plan-limits";
 
 export type PricingPlan = {
@@ -24,7 +25,10 @@ export type PricingPlan = {
 
 // Basic: full list for the entry tier (from commercialPlanLimits("solo")).
 const basicLimitFeatures = limitFeatureLines("solo");
-// Startup: only limit upgrades over Basic (not "1 LinkedIn account" again).
+// Startup: limit upgrades over Basic, plus the LinkedIn-account row restated.
+// The upgrade helper drops that row because Startup and Basic both allow one,
+// but the card lists it deliberately so the included account reads as a benefit
+// rather than being invisible on the tier.
 const startupLimitUpgrades = limitUpgradeFeatureLines("startup", "solo");
 // Enterprise: only limit upgrades over Startup (multi-account, etc.).
 const enterpriseLimitUpgrades = limitUpgradeFeatureLines("enterprise", "startup");
@@ -57,7 +61,11 @@ export const pricingPlans: PricingPlan[] = [
     featured: false,
     includes: "Includes everything in Basic plan and",
     // API is Startup+ only (planHasApiAccess). Basic never lists it.
-    features: [...startupLimitUpgrades, "API access"],
+    features: [
+      ...startupLimitUpgrades,
+      linkedInAccountFeatureLine("startup"),
+      "API access",
+    ],
   },
   {
     name: "For Enterprises",

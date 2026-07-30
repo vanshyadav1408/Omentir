@@ -98,6 +98,7 @@ type LegacyProductProfile = ProductProfile & {
 type CreateAgentInput = Pick<Agent, "name" | "mode" | "prompt" | "filters" | "targetGroupName"> & {
   linkedInAccountId?: string;
   signalSources?: AgentSignalSources;
+  leadsOnly?: boolean;
 };
 
 type UpsertLeadSignalInput = Omit<
@@ -695,6 +696,7 @@ export async function createAgent(
     // Spread conditionally: Firestore rejects undefined values outright.
     ...(input.linkedInAccountId ? { linkedInAccountId: input.linkedInAccountId } : {}),
     mode: input.mode,
+    ...(input.leadsOnly ? { leadsOnly: true } : {}),
     prompt: input.prompt,
     filters: input.filters,
     signalSources: withDefaultSignalSources(input.signalSources),
@@ -754,6 +756,9 @@ export async function updateAgent(
     // without a selection should keep the agent's current account.
     ...(input.linkedInAccountId ? { linkedInAccountId: input.linkedInAccountId } : {}),
     mode: input.mode,
+    // Only ever set, never cleared: re-preparing a leads-only agent must not
+    // drop the flag, and a full agent never sends it in the first place.
+    ...(input.leadsOnly ? { leadsOnly: true } : {}),
     prompt: input.prompt,
     filters: input.filters,
     signalSources: withDefaultSignalSources(input.signalSources),
@@ -1379,10 +1384,32 @@ export async function getActiveCampaigns(limit = 1000) {
   return snap.docs.map((doc) => doc.data());
 }
 
+// Reuses listAgents rather than a targetGroupId query: agents are plan-limited
+// to a handful per workspace, so the filter is cheap and needs no index.
+async function assertGroupAllowsOutreach(workspaceId: string, groupId: string) {
+  if (!groupId) return;
+  const agents = await listAgents(workspaceId);
+  const owner = agents.find(
+    (agent) => agent.leadsOnly && agent.targetGroupId === groupId,
+  );
+  if (!owner) return;
+  throw new Error(
+    `The lead group "${owner.targetGroupName}" belongs to "${owner.name}", a leads-only agent set up to find leads without messaging them. Use a different lead group name for outreach, or delete that agent first.`,
+  );
+}
+
 export async function createCampaign(
   workspaceId: string,
   input: Omit<Campaign, "id" | "workspaceId" | "createdAt" | "updatedAt">,
 ) {
+  // A leads-only agent's group must never gain a campaign: enrollNewLeadsInCampaign
+  // sweeps in every lead in the group, so one campaign here silently messages
+  // people the user asked only to have found. Two routes reach this - the
+  // plan-limit resume flow in agents/new, and createOrGetGroup handing a new
+  // agent the same group because the name matched - so the check lives at the
+  // single choke point rather than on each caller.
+  await assertGroupAllowsOutreach(workspaceId, input.groupId);
+
   const workspace = await getWorkspace(workspaceId);
   const campaignLimit = planLimits(workspace.billing?.plan).campaigns;
   await assertBelowPlanLimit(workspaceId, "campaign", campaignLimit);

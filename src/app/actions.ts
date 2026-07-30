@@ -729,6 +729,11 @@ export async function createAgentAndDiscoverLeadsAction(formData: FormData) {
     },
     linkedInAccountId: account.id,
     targetGroupName: groupName,
+    // This action is only reached from the leads-only branch of the setup form
+    // (agent-setup.tsx gates it behind `leadsOnly`). Recording the intent is
+    // what stops the resume path in agents/new from later attaching a campaign
+    // to a group the user only ever wanted filled with leads.
+    leadsOnly: true,
   } as const;
   const agent = preparedAgentId
     ? await updateAgent(workspace.id, preparedAgentId, agentInput)

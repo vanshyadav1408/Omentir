@@ -136,6 +136,12 @@ export type Agent = {
   // then daily at this wall-clock time in the workspace's zone. Unset on agents
   // predating this, which fall back to runAtHour.
   runAnchorAt?: string;
+  // The user chose the leads-only flow: this agent finds leads and stops. It
+  // has no campaign by design, which is otherwise indistinguishable from a
+  // half-finished full setup, so nothing may attach outreach to its group
+  // without the user asking. Unset on agents created before this existed and
+  // on full find-plus-outreach agents.
+  leadsOnly?: boolean;
   targetGroupId: string;
   targetGroupName: string;
   status: "active" | "paused" | "running" | "error";

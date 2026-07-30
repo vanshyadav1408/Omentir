@@ -98,6 +98,17 @@ export function limitFeatureLines(plan: PlanId): string[] {
 }
 
 /**
+ * The LinkedIn-account row on its own. Upgrade cards drop it when the count
+ * matches the previous tier, but a card may still want to state it outright as
+ * a listed benefit. Derived from commercialPlanLimits like every other line so
+ * it cannot drift from enforcement.
+ */
+export function linkedInAccountFeatureLine(plan: PlanId): string {
+  const limits = commercialPlanLimits(plan);
+  return countLabel(limits.linkedInAccounts, "LinkedIn account", "LinkedIn accounts");
+}
+
+/**
  * Upgrade-card lines: only the limit rows that improve over the previous tier,
  * so "Includes everything in X and" stays accurate.
  */
