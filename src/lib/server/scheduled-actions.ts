@@ -4,6 +4,7 @@ import { buildActionTimeline, type ActionTimelineItem } from "./action-timeline"
 import { findNextScheduledStepIndex } from "./campaign-sequence";
 import { canSendCampaignMessage, renderTemplate } from "./outreach-rules";
 import {
+  isLeadsOnlySourcedOnOwnGroup,
   listAgents,
   listCampaignEnrollments,
   listCampaigns,
@@ -83,6 +84,9 @@ export async function listScheduledActions(
     const lead = leadsById.get(enrollment.leadId);
     if (!campaign || campaign.status !== "active" || !lead) return [];
     if (filters.agentId && lead.sourceAgentId !== filters.agentId) return [];
+    // Leads-only agents must not surface connect/message rows: automation will
+    // stop those enrollments, and the Actions UI should match that contract.
+    if (isLeadsOnlySourcedOnOwnGroup(lead, campaign, agents)) return [];
     const stepIndex = findNextScheduledStepIndex(campaign.steps, enrollment.currentStepIndex);
     const step = stepIndex === -1 ? undefined : campaign.steps[stepIndex];
     if (!step || step.type === "wait") return [];

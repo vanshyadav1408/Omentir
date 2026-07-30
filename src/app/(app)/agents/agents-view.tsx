@@ -217,6 +217,23 @@ export default function AgentsView({
         const agentLeads = leadsByAgent.get(agent.id) ?? [];
         const agentLeadIds = new Set(agentLeads.map((lead) => lead.id));
 
+        // Leads-only agents never send: outreach stats must stay zero even if a
+        // shared-group bug left enrollments pointing at their sourced leads.
+        if (agent.leadsOnly) {
+          return [
+            agent.id,
+            {
+              target: groupLeadCount || agentLeads.length || 0,
+              contacted: 0,
+              invited: 0,
+              accepted: 0,
+              replied: 0,
+              acceptRate: null as number | null,
+              replyRate: null as number | null,
+            },
+          ];
+        }
+
         const agentEnrollments = loadedEnrollments.filter((enrollment) =>
           agentLeadIds.has(enrollment.leadId),
         );

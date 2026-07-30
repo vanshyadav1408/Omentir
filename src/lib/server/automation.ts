@@ -288,6 +288,8 @@ type SourceAgentPausedLookup = (workspaceId: string, agentId: string) => Promise
 // Many due enrollments share the same source agent; its pause status only
 // needs one read per tick. A deleted agent (doc gone) reads as not paused so
 // its already-discovered leads keep flowing, matching pre-existing behavior.
+// Leads-only agents never own outreach, so pausing one only stops discovery
+// and must not park enrollments on people they happened to source.
 function newSourceAgentPausedLookup(): SourceAgentPausedLookup {
   const cache = new Map<string, boolean>();
   return async (workspaceId, agentId) => {
@@ -295,7 +297,7 @@ function newSourceAgentPausedLookup(): SourceAgentPausedLookup {
     const cached = cache.get(key);
     if (cached !== undefined) return cached;
     const agent = await getAgent(workspaceId, agentId);
-    const paused = agent?.status === "paused";
+    const paused = Boolean(agent && agent.status === "paused" && !agent.leadsOnly);
     cache.set(key, paused);
     return paused;
   };
@@ -536,6 +538,21 @@ async function runEnrollment(
     return "left-group";
   }
 
+  // Leads-only agents discover and score only. If this lead was sourced by one
+  // onto its own group, never connect or message - stop any enrollment that
+  // slipped through a shared group or an older campaign attach path.
+  if (lead.sourceAgentId) {
+    const sourceAgent = await getAgent(enrollment.workspaceId, lead.sourceAgentId);
+    if (sourceAgent?.leadsOnly && sourceAgent.targetGroupId === campaign.groupId) {
+      await updateCurrentEnrollment({
+        status: "stopped",
+        lastError:
+          "This lead was found by a leads-only agent and must not be messaged automatically.",
+      });
+      return "leads-only-agent";
+    }
+  }
+
   // The clock the send window is read on. A 9-6 window means 9-6 where the
   // LEAD is - the workspace's zone only stands in for leads whose profile
   // location names nowhere we recognise.
@@ -545,7 +562,8 @@ async function runEnrollment(
   // invites, follow-ups, acceptance polling, and AI replies - not just lead
   // discovery. Park like a paused campaign (marked with pausedDeferredAt) so
   // resumeAgent can wake exactly these enrollments instead of them idling for
-  // up to a day.
+  // up to a day. Leads-only agents have no outreach by design, so their pause
+  // state must not freeze sequences on leads they only discovered.
   if (lead.sourceAgentId && (await sourceAgentPaused(enrollment.workspaceId, lead.sourceAgentId))) {
     await updateCurrentEnrollment({
       nextActionAt: addMinutes(PAUSED_CAMPAIGN_DEFER_MINUTES),
@@ -1260,7 +1278,13 @@ export async function executeScheduledActionNow(workspaceId: string, enrollmentI
     }
     if (lead.sourceAgentId) {
       const sourceAgent = await getAgent(workspaceId, lead.sourceAgentId);
-      if (sourceAgent?.status === "paused") {
+      if (sourceAgent?.leadsOnly && sourceAgent.targetGroupId === campaign.groupId) {
+        throw new Error(
+          "This lead was found by a leads-only agent and cannot be messaged automatically.",
+        );
+      }
+      // Leads-only agents do not own outreach; only full agents' pause freezes sends.
+      if (sourceAgent?.status === "paused" && !sourceAgent.leadsOnly) {
         throw new Error("The agent that found this lead is paused. Resume it to run outreach.");
       }
     }
@@ -1366,6 +1390,12 @@ async function previewEnrollment(
     return "stopped";
   }
   if (!lead.groupIds?.includes(campaign.groupId)) return "left-group";
+  if (lead.sourceAgentId) {
+    const sourceAgent = await getAgent(enrollment.workspaceId, lead.sourceAgentId);
+    if (sourceAgent?.leadsOnly && sourceAgent.targetGroupId === campaign.groupId) {
+      return "leads-only-agent";
+    }
+  }
   if (lead.sourceAgentId && (await sourceAgentPaused(enrollment.workspaceId, lead.sourceAgentId))) {
     return "agent-paused";
   }

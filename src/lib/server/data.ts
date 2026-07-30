@@ -687,6 +687,12 @@ export async function createAgent(
   await assertBelowPlanLimit(workspaceId, "agent", agentLimit);
 
   const group = await createOrGetGroup(workspaceId, input.targetGroupName, "Created by AI Agent");
+  // Group ids are name-derived, so two agents with the same group name share a
+  // bucket. A leads-only agent must never land on a group that already has
+  // (or will get) outreach, and a full agent must never reuse a leads-only
+  // group's bucket - enrollNewLeadsInCampaign would otherwise message people
+  // the user only asked to have found.
+  await assertAgentMayUseGroup(workspaceId, group, Boolean(input.leadsOnly));
   const timestamp = nowIso();
   const ref = collection<Agent>("agents").doc();
   const agent: Agent = {
@@ -864,7 +870,12 @@ export async function resumeAgent(workspaceId: string, agentId: string) {
     nextRunAt: nowIso(),
     updatedAt: nowIso(),
   });
-  await wakeAgentPausedEnrollments(workspaceId, agent);
+  // Leads-only agents never run outreach. Waking enrollments attributed to
+  // them (from a shared-group bug or source reassignment) would re-queue
+  // connects/messages the user never asked this agent to send.
+  if (!agent.leadsOnly) {
+    await wakeAgentPausedEnrollments(workspaceId, agent);
+  }
 }
 
 // The tick parks enrollments of a paused agent's leads a day out (marked with
@@ -1248,6 +1259,12 @@ export async function upsertLead(workspaceId: string, groupId: string, lead: Par
       // mid-sequence. Status transitions go through updateLead, not upsertLead.
       const leadFields = { ...lead };
       delete leadFields.outreachStatus;
+      // First finder keeps ownership. A later leads-only re-discovery used to
+      // steal sourceAgentId, so Actions / agent metrics attributed connect and
+      // message work to an agent that is only allowed to find leads.
+      if (existingLead.sourceAgentId) {
+        delete leadFields.sourceAgentId;
+      }
 
       transaction.update(ref, omitUndefined({
         ...leadFields,
@@ -1395,6 +1412,52 @@ async function assertGroupAllowsOutreach(workspaceId: string, groupId: string) {
   if (!owner) return;
   throw new Error(
     `The lead group "${owner.targetGroupName}" belongs to "${owner.name}", a leads-only agent set up to find leads without messaging them. Use a different lead group name for outreach, or delete that agent first.`,
+  );
+}
+
+// createOrGetGroup reuses groups by normalized name. A leads-only agent sharing
+// a group with a campaign (or a full agent that will create one) silently feeds
+// people into outreach. Block that mix at agent creation.
+async function assertAgentMayUseGroup(
+  workspaceId: string,
+  group: Pick<Group, "id" | "name">,
+  leadsOnly: boolean,
+) {
+  if (!group.id) return;
+  if (leadsOnly) {
+    const [campaigns, agents] = await Promise.all([
+      listCampaigns(workspaceId),
+      listAgents(workspaceId),
+    ]);
+    if (campaigns.some((campaign) => campaign.groupId === group.id)) {
+      throw new Error(
+        `The lead group "${group.name}" already has outreach. Pick a different group name for a leads-only agent so those people are not messaged automatically.`,
+      );
+    }
+    const fullOwner = agents.find(
+      (agent) => agent.targetGroupId === group.id && !agent.leadsOnly,
+    );
+    if (fullOwner) {
+      throw new Error(
+        `The lead group "${group.name}" belongs to "${fullOwner.name}", which can run outreach. Pick a different group name for a leads-only agent.`,
+      );
+    }
+    return;
+  }
+  await assertGroupAllowsOutreach(workspaceId, group.id);
+}
+
+// True when this campaign's group is owned by a leads-only agent that sourced
+// the lead: those people must never enter connect/message sequences.
+export function isLeadsOnlySourcedOnOwnGroup(
+  lead: Pick<Lead, "sourceAgentId">,
+  campaign: Pick<Campaign, "groupId">,
+  agents: Array<Pick<Agent, "id" | "leadsOnly" | "targetGroupId">>,
+) {
+  if (!lead.sourceAgentId) return false;
+  const source = agents.find((agent) => agent.id === lead.sourceAgentId);
+  return Boolean(
+    source?.leadsOnly && source.targetGroupId === campaign.groupId,
   );
 }
 
@@ -1610,6 +1673,12 @@ export async function enrollNewLeadsInCampaign(workspaceId: string, campaign: Ca
   const leads = await listLeads(workspaceId, campaign.groupId);
   if (leads.length === 0) return 0;
 
+  // Leads-only agents can share a group name with a campaign when older data
+  // predates the create-time guard. Never pull their people into connect /
+  // message sequences - createCampaign already refuses new campaigns on those
+  // groups; this is the runtime backstop for existing ones.
+  const agents = await listAgents(workspaceId);
+
   const refs = leads.map((lead) =>
     collection<CampaignEnrollment>("campaignEnrollments").doc(`${campaign.id}-${lead.id}`),
   );
@@ -1620,7 +1689,13 @@ export async function enrollNewLeadsInCampaign(workspaceId: string, campaign: Ca
     .map((snap, index) => ({ snap, ref: refs[index], lead: leads[index] }))
     // Skip if already enrolled in this campaign, or already being contacted by
     // any campaign (prevents the same person getting hit by two campaigns).
-    .filter(({ snap, lead }) => !snap.exists && lead.outreachStatus === "new");
+    // Also skip leads sourced by a leads-only agent onto its own group.
+    .filter(
+      ({ snap, lead }) =>
+        !snap.exists &&
+        lead.outreachStatus === "new" &&
+        !isLeadsOnlySourcedOnOwnGroup(lead, campaign, agents),
+    );
 
   if (pending.length === 0) return 0;
 
