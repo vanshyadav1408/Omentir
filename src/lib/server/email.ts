@@ -278,20 +278,59 @@ export async function sendReplyNotification(input: {
   const resend = getResend();
   if (!resend) return { skipped: true };
 
+  const inCampaign = input.campaignName ? ` in ${input.campaignName}` : "";
+  const closing = input.handoff
+    ? "Your outreach hands off on reply, so automation has stopped for this lead - the next message is yours to write."
+    : "Open Omentir to respond.";
+
+  const html = emailShell(
+    `${input.leadName} replied on LinkedIn`,
+    `
+            <tr>
+              <td style="padding:28px 28px 8px;">
+                <p style="margin:0 0 6px;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#ba3871;">New reply</p>
+                <h1 style="margin:0;color:#111111;font-size:22px;line-height:1.25;font-weight:700;">${escapeHtml(input.leadName)} replied on LinkedIn</h1>
+                <p style="margin:10px 0 0;font-size:14px;line-height:1.55;color:#444444;">Here is what they sent${escapeHtml(inCampaign)}.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:16px 28px 4px;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-left:3px solid #ba3871;background:#f9f9fa;">
+                  <tr>
+                    <td style="padding:16px 18px;color:#111111;font-size:15px;line-height:1.6;font-style:italic;">&ldquo;${escapeHtml(input.body)}&rdquo;</td>
+                  </tr>
+                </table>
+                <p style="margin:12px 0 0;font-size:13px;line-height:1.55;color:#555555;">${escapeHtml(closing)}</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:20px 28px 28px;">
+                <a href="${messagesUrl()}" style="display:inline-block;border-radius:6px;background:#000000;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;padding:12px 18px;">View conversation</a>
+                ${autoFooterHtml()}
+              </td>
+            </tr>`,
+  );
+
+  const text = withAutoFooterText(
+    [
+      `${input.leadName} replied${inCampaign}:`,
+      "",
+      `"${input.body}"`,
+      "",
+      closing,
+      "",
+      `View conversation: ${messagesUrl()}`,
+    ].join("\n"),
+  );
+
   return resend.emails.send(
     {
       from: transactionalFrom(),
       to: input.to,
       subject: `${input.leadName} replied on LinkedIn`,
-      text: [
-        `${input.leadName} replied${input.campaignName ? ` in ${input.campaignName}` : ""}:`,
-        "",
-        input.body,
-        "",
-        input.handoff
-          ? "Your outreach hands off on reply, so automation has stopped for this lead - open Omentir to continue the conversation yourself."
-          : "Open Omentir to respond.",
-      ].join("\n"),
+      html,
+      text,
+      tags: [{ name: "kind", value: "lead_reply" }],
     },
     input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : undefined,
   );

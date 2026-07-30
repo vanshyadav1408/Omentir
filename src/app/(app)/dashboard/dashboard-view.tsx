@@ -20,6 +20,12 @@ import type {
   LinkedInInboxThread,
 } from "@/lib/server/types";
 import { sumAgentLeadTotals } from "@/lib/agent-lead-totals";
+import {
+  STAGE_CONTACTED,
+  STAGE_MESSAGED,
+  enrollmentStage,
+  leadStage,
+} from "@/lib/outreach-stage";
 import { TextField } from "@/app/ui/text-field";
 
 type DashboardViewProps = {
@@ -165,14 +171,22 @@ export default function DashboardView({
     };
 
     const hotOpportunities = sumAgentLeadTotals(loadedAgents, loadedGroups, loadedLeads);
+
+    // These count sends, so the unit stays the enrollment. Its status is not a
+    // record of what was sent though - it collapses to "stopped"/"error" when
+    // the sequence ends, expires or is cut short, which used to drop those
+    // invites and messages out of the totals. Where the stage was lost, the
+    // lead's own status still remembers how far it got.
+    const leadStageById = new Map(
+      loadedLeads.map((lead) => [lead.id, leadStage(lead.outreachStatus)]),
+    );
+    const stageOf = (enrollment: CampaignEnrollmentPreview) =>
+      enrollmentStage(enrollment.status) || leadStageById.get(enrollment.leadId) || 0;
     const invitationsSent = loadedEnrollments.filter(
-      (enrollment) =>
-        ["connection_sent", "connected", "message_sent", "reply_received", "replied"].includes(enrollment.status) &&
-        inRange(enrollment),
+      (enrollment) => stageOf(enrollment) >= STAGE_CONTACTED && inRange(enrollment),
     ).length;
     const messagesSent = loadedEnrollments.filter(
-      (enrollment) =>
-        ["message_sent", "reply_received", "replied"].includes(enrollment.status) && inRange(enrollment),
+      (enrollment) => stageOf(enrollment) >= STAGE_MESSAGED && inRange(enrollment),
     ).length;
 
     return { hotOpportunities, invitationsSent, messagesSent };

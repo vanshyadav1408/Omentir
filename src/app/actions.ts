@@ -837,6 +837,7 @@ export async function createCampaignAction(formData: FormData) {
     status,
     steps,
     replyHandling: formData.get("replyHandling") === "handoff" ? "handoff" : "ai",
+    notifyOnReply: formData.get("notifyOnReply") !== "off",
     sendWindow: parseSendWindow(formData.get("sendWindow")),
     // Firestore rejects undefined properties - only set intent when provided.
     ...(formData.get("campaignGoal")

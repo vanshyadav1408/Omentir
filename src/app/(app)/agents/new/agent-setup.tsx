@@ -730,6 +730,10 @@ export default function AgentSetup({
     initialSendWindow ?? (initialAgent ? "always" : "business"),
   );
   const [replyHandling, setReplyHandling] = useState<"ai" | "handoff">("ai");
+  // Manual outreach always hands the conversation over on the first reply (the
+  // user writes every message, so the AI must not answer for them). This only
+  // decides whether that hand-off arrives as an email.
+  const [notifyOnReply, setNotifyOnReply] = useState(true);
   const [campaignGoal, setCampaignGoal] = useState<"warm" | "demo">("warm");
   const [messageTone, setMessageTone] = useState<"professional" | "conversational" | "direct">(
     "professional",
@@ -1465,7 +1469,6 @@ export default function AgentSetup({
 
         <input type="hidden" name="campaignGoal" value={campaignGoal} />
         <input type="hidden" name="messageTone" value={messageTone} />
-        <input type="hidden" name="replyHandling" value={replyHandling} />
 
         {/* Campaign Goal */}
         <div className="rounded-md border border-zinc-200 bg-white p-5">
@@ -1932,6 +1935,47 @@ export default function AgentSetup({
           </div>
         </div>
 
+        {/* Manual outreach always stops at the first reply, so the only thing
+            left to choose is whether the hand-off reaches the user by email. */}
+        <button
+          type="button"
+          onClick={() => setNotifyOnReply((value) => !value)}
+          className="flex w-full items-start gap-3 rounded-md border border-zinc-200 bg-white p-4 text-left transition hover:bg-zinc-50"
+        >
+          <span
+            className={
+              "mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-md transition " +
+              (notifyOnReply ? "bg-[#ffe8ea] text-[#e85e6b]" : "border border-zinc-300 bg-white")
+            }
+          >
+            {notifyOnReply ? (
+              <svg
+                className="h-3 w-3"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            ) : null}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span
+              style={{ fontFamily: "var(--font-varta)" }}
+              className="block text-[14px] font-semibold text-zinc-950"
+            >
+              Email me when a lead replies
+            </span>
+            <span className="mt-0.5 block text-[13px] font-medium text-zinc-700">
+              Your sequence stops at the first reply either way, so you write every message
+              yourself. Turn this off if you would rather catch replies in LinkedIn.
+            </span>
+          </span>
+        </button>
+
         {/* -- Edit Campaign Step modal -- */}
         {editStepId && editingAction ? (
           <div
@@ -2132,6 +2176,19 @@ export default function AgentSetup({
       ) : (
         <input type="hidden" name="manualDefaultOutreach" value="on" />
       )}
+      {/* Both modes must submit this: without it a manual campaign fell through
+          to "ai" and the AI answered replies for a user who wrote every word of
+          the sequence himself. */}
+      <input
+        type="hidden"
+        name="replyHandling"
+        value={outreachMode === "manual" ? "handoff" : replyHandling}
+      />
+      <input
+        type="hidden"
+        name="notifyOnReply"
+        value={outreachMode === "manual" && !notifyOnReply ? "off" : "on"}
+      />
       <input type="hidden" name="sendWindow" value={sendWindow} />
       <input type="hidden" name="mode" value={outreachOnly ? "outreach" : "signals"} />
 

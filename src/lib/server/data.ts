@@ -1120,7 +1120,12 @@ export async function listLeadPreviews(
 // query from ~2.9s to ~1.5s.
 export async function listLeadDashboardPreviews(
   workspaceId: string,
-  limit = 500,
+  // Truncating here is not just a shorter hot-lead list: the dashboard reads
+  // outreachStatus off these rows to recover the stage of enrollments whose
+  // own status has collapsed to "stopped", so a lead outside the page silently
+  // subtracts from the invitations/messages totals. The projection above is
+  // what keeps the payload affordable at this cap.
+  limit = 5000,
 ): Promise<LeadDashboardPreview[]> {
   const snap = await collection<Lead>("leads")
     .where("workspaceId", "==", workspaceId)
@@ -1169,16 +1174,21 @@ export async function getLeadsByIds(workspaceId: string, ids: string[]): Promise
 // documents (which dominates the agents page load; see agents/page.tsx).
 export async function listLeadAgentRefs(
   workspaceId: string,
-  limit = 500,
+  // Every lead has to come back: the Agents page attributes outreach by
+  // sourceAgentId, so a truncated page silently drops those leads from each
+  // agent's Contacted/Accepted/Messaged/Replied counts (at 500 a 1.1k-lead
+  // workspace lost ~60% of them). Three projected fields per doc.
+  limit = 5000,
 ): Promise<LeadAgentRef[]> {
   const snap = await collection<Lead>("leads")
     .where("workspaceId", "==", workspaceId)
-    .select("sourceAgentId")
+    .select("sourceAgentId", "outreachStatus")
     .limit(limit)
     .get();
   return snap.docs.map((doc) => ({
     id: doc.id,
     sourceAgentId: (doc.data() as Partial<Lead>).sourceAgentId,
+    outreachStatus: (doc.data() as Partial<Lead>).outreachStatus,
   }));
 }
 
@@ -1948,7 +1958,9 @@ export async function listCampaignEnrollmentPreviews(
       "createdAt",
       "updatedAt",
     )
-    .limit(500)
+    // Every enrollment counts toward the Agents and Dashboard stats, so a
+    // truncated page is a silent undercount rather than a shorter list.
+    .limit(5000)
     .get();
   return snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as CampaignEnrollmentPreview);
 }

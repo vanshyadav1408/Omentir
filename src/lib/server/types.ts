@@ -164,7 +164,11 @@ export type Group = {
 
 // Minimal lead shape for agent metrics: only the fields needed to map a lead
 // to its source agent, so pages can avoid pulling full lead documents.
-export type LeadAgentRef = { id: string; sourceAgentId?: string };
+export type LeadAgentRef = {
+  id: string;
+  sourceAgentId?: string;
+  outreachStatus?: Lead["outreachStatus"];
+};
 
 export type LinkedInProfileContext = {
   about: string;
@@ -327,6 +331,11 @@ export type Campaign = {
   // handles the conversation until hot or terminal intent. "handoff": all
   // automation stops at the first reply and the user is emailed to take over.
   replyHandling?: "ai" | "handoff";
+  // Only consulted on "handoff" campaigns, where the user owns the conversation
+  // from the first reply. Unset means "email me" so campaigns created before
+  // this field keep notifying; false is the manual user who watches LinkedIn
+  // themselves and does not want an email for every reply.
+  notifyOnReply?: boolean;
   // The user's intent captured at campaign creation - what the sequence should
   // achieve and how it should sound. Fed into every AI message prompt.
   campaignGoal?: "warm" | "demo";

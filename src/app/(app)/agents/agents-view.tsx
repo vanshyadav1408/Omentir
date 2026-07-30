@@ -12,6 +12,14 @@ import { useBodyScrollLock } from "@/app/use-body-scroll-lock";
 import { useToast, userFacingError } from "@/app/toast";
 import { useWorkspaceTimeZone } from "@/app/workspace-time-zone";
 import { formatZonedDate } from "@/lib/time-zone";
+import {
+  STAGE_ACCEPTED,
+  STAGE_CONTACTED,
+  STAGE_MESSAGED,
+  STAGE_REPLIED,
+  enrollmentStage,
+  leadStage,
+} from "@/lib/outreach-stage";
 
 type AgentsViewProps = {
   agents: Agent[];
@@ -83,6 +91,16 @@ function linkedGroupName(agent: Agent, groups: Group[]) {
 function agentTitle(agent: Agent) {
   return agent.name?.trim() || modeLabel(agent);
 }
+
+const NO_METRICS = {
+  target: 0,
+  contacted: 0,
+  accepted: 0,
+  messaged: 0,
+  replied: 0,
+  acceptRate: null as number | null,
+  replyRate: null as number | null,
+};
 
 export default function AgentsView({
   agents,
@@ -189,7 +207,6 @@ export default function AgentsView({
   }
 
   const agentMetrics = useMemo(() => {
-    const groupById = new Map(loadedGroups.map((group) => [group.id, group]));
     const leadsByAgent = new Map<string, LeadAgentRef[]>();
     for (const lead of loadedLeads) {
       const agentId = lead.sourceAgentId;
@@ -199,56 +216,48 @@ export default function AgentsView({
       leadsByAgent.set(agentId, list);
     }
 
+    // A lead can be enrolled more than once (re-run, second campaign); the
+    // furthest of those enrollments is the one that describes the lead.
+    const enrollmentStageByLead = new Map<string, number>();
+    for (const enrollment of loadedEnrollments) {
+      enrollmentStageByLead.set(
+        enrollment.leadId,
+        Math.max(enrollmentStageByLead.get(enrollment.leadId) ?? 0, enrollmentStage(enrollment.status)),
+      );
+    }
+
     return new Map(
       loadedAgents.map((agent) => {
-        const group = groupById.get(agent.targetGroupId);
-        const groupLeadCount = Math.max(0, Number(group?.leadCount) || 0);
+        // The agent's own leads, not its group's: groups are shared, so the
+        // group count mixed in leads this agent never sourced and made the
+        // "x% contacted" denominator bigger than the population it counts.
         const agentLeads = leadsByAgent.get(agent.id) ?? [];
-        const agentLeadIds = new Set(agentLeads.map((lead) => lead.id));
+        const target = agentLeads.length;
 
         // Leads-only agents never send: outreach stats must stay zero even if a
         // shared-group bug left enrollments pointing at their sourced leads.
         if (agent.leadsOnly) {
-          return [
-            agent.id,
-            {
-              target: groupLeadCount || agentLeads.length || 0,
-              contacted: 0,
-              accepted: 0,
-              messaged: 0,
-              replied: 0,
-              acceptRate: null as number | null,
-              replyRate: null as number | null,
-            },
-          ];
+          return [agent.id, { ...NO_METRICS, target }];
         }
 
-        const agentEnrollments = loadedEnrollments.filter((enrollment) =>
-          agentLeadIds.has(enrollment.leadId),
+        const stages = agentLeads.map((lead) =>
+          Math.max(leadStage(lead.outreachStatus), enrollmentStageByLead.get(lead.id) ?? 0),
         );
-        const invited = agentEnrollments.filter((enrollment) =>
-          ["connection_sent", "connected", "message_sent", "reply_received", "replied"].includes(enrollment.status),
-        ).length;
-        const accepted = agentEnrollments.filter((enrollment) =>
-          ["connected", "message_sent", "reply_received", "replied"].includes(enrollment.status),
-        ).length;
-        const messaged = agentEnrollments.filter((enrollment) =>
-          ["message_sent", "reply_received", "replied"].includes(enrollment.status),
-        ).length;
-        const replied = agentEnrollments.filter((enrollment) =>
-          ["reply_received", "replied"].includes(enrollment.status),
-        )
-          .length;
+        const countAtLeast = (stage: number) => stages.filter((value) => value >= stage).length;
+        const contacted = countAtLeast(STAGE_CONTACTED);
+        const accepted = countAtLeast(STAGE_ACCEPTED);
+        const messaged = countAtLeast(STAGE_MESSAGED);
+        const replied = countAtLeast(STAGE_REPLIED);
 
-        const acceptRate = invited > 0 ? Math.round((accepted / invited) * 100) : null;
+        const acceptRate = contacted > 0 ? Math.round((accepted / contacted) * 100) : null;
         // Only messaged leads can reply, so they are the reply-rate denominator.
         const replyRate = messaged > 0 ? Math.round((replied / messaged) * 100) : null;
 
         return [
           agent.id,
           {
-            target: groupLeadCount || agentLeads.length || 0,
-            contacted: invited,
+            target,
+            contacted,
             accepted,
             messaged,
             replied,
@@ -258,7 +267,7 @@ export default function AgentsView({
         ];
       }),
     );
-  }, [loadedAgents, loadedGroups, loadedLeads, loadedEnrollments]);
+  }, [loadedAgents, loadedLeads, loadedEnrollments]);
 
   const createAgentIcon = (
     <svg
@@ -370,15 +379,7 @@ export default function AgentsView({
         ) : (
           <ul className="flex flex-col gap-3">
             {visibleAgents.map((agent) => {
-              const metrics = agentMetrics.get(agent.id) ?? {
-                target: 0,
-                contacted: 0,
-                accepted: 0,
-                messaged: 0,
-                replied: 0,
-                acceptRate: null as number | null,
-                replyRate: null as number | null,
-              };
+              const metrics = agentMetrics.get(agent.id) ?? NO_METRICS;
               const displayStatus = optimisticStatuses[agent.id] ?? agent.status;
               const isActive = displayStatus === "active" || displayStatus === "running";
               const togglePending = pendingToggleIds.has(agent.id);

@@ -443,7 +443,13 @@ export async function processInboundMessage(input: {
   //   the hot-interest email above.
   // A lead with no live enrollment has no automation behind them at all, so
   // nothing else would ever surface the reply - notify.
-  const notifyOnPlainReply = handoffEnrollments.length > 0 || leadEnrollments.length === 0;
+  // A hand-off campaign can still opt out of the email (notifyOnReply false):
+  // the user writes every message themselves and reads replies in LinkedIn.
+  const notifyOnPlainReply =
+    handoffEnrollments.some(
+      (enrollment) =>
+        campaigns.find((item) => item.id === enrollment.campaignId)?.notifyOnReply !== false,
+    ) || leadEnrollments.length === 0;
   if (email && isHotInterest) {
     if (await claimInterestNotification(workspaceId, lead.id)) {
       try {
