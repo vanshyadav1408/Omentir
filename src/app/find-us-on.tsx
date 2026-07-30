@@ -31,6 +31,13 @@ const BADGES = [
     height: 54,
     src: "https://wired.business/badge0-dark.svg",
   },
+  {
+    href: "https://twelve.tools",
+    alt: "Featured on Twelve Tools",
+    width: 200,
+    height: 54,
+    src: "https://twelve.tools/badge0-dark.svg",
+  },
 ] as const;
 
 export default function FindUsOn() {
