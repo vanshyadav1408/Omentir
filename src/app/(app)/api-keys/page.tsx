@@ -25,13 +25,14 @@ export default async function ApiKeysPage() {
   if (!hasActiveSubscription(workspace)) {
     redirect("/upgrade");
   }
-  if (!planHasApiAccess(workspace.billing?.plan)) {
-    redirect("/upgrade");
-  }
 
+  // Plans without API access see the page rather than a redirect: the keys
+  // section renders locked behind an upgrade prompt so the feature is visible
+  // instead of silently missing. createAgentApiKey still refuses on the server.
   return (
     <ApiKeysView
       agentApiKeys={[]}
+      locked={!planHasApiAccess(workspace.billing?.plan)}
       createAgentApiKeyAction={createAgentApiKeyAction}
       revokeAgentApiKeyAction={revokeAgentApiKeyAction}
     />

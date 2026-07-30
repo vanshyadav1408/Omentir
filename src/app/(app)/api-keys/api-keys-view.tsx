@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { siteUrl } from "@/app/seo";
 import type { AgentApiKey } from "@/lib/server/types";
@@ -12,6 +13,8 @@ import { formatZonedDate } from "@/lib/time-zone";
 
 type ApiKeysViewProps = {
   agentApiKeys: AgentApiKey[];
+  /** Plan has no API access: the keys section renders blurred behind an upgrade prompt. */
+  locked?: boolean;
   createAgentApiKeyAction: (formData: FormData) => Promise<string>;
   revokeAgentApiKeyAction: (formData: FormData) => void | Promise<void>;
 };
@@ -181,6 +184,42 @@ function SectionHeader({ title, description }: { title: string; description?: st
   );
 }
 
+/**
+ * Upgrade prompt over the blurred keys section. The blurred content underneath
+ * is marked `inert`, so this card is the only thing focus or a click can reach.
+ */
+function KeysLockOverlay() {
+  return (
+    <div className="absolute inset-0 z-10 grid place-items-center px-4">
+      <div className="w-full max-w-sm rounded-md border border-zinc-200 bg-white/95 p-5 text-center shadow-[0_10px_40px_rgba(15,23,42,0.12)] backdrop-blur-sm">
+        <span
+          className="material-symbols-outlined text-[26px] leading-none text-[#ba3871]"
+          aria-hidden="true"
+        >
+          lock
+        </span>
+        <h3
+          style={{ fontFamily: "var(--font-varta)" }}
+          className="mt-2 text-[15px] font-semibold text-zinc-950"
+        >
+          API keys are on the Startup plan
+        </h3>
+        <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-600">
+          Upgrade to create keys and connect Omentir to Claude, Cursor, or your
+          own scripts.
+        </p>
+        <Link
+          href="/upgrade"
+          style={{ fontFamily: "var(--font-varta)", background: "#ba3871" }}
+          className="mt-4 inline-flex h-10 cursor-pointer items-center justify-center rounded-md px-5 text-[14px] font-semibold text-white shadow-[0_8px_24px_rgba(186,56,113,0.3)] transition hover:brightness-[0.98]"
+        >
+          <span className="translate-y-px">Upgrade plan</span>
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 function CopyButton({ value }: { value: string }) {
   const [copied, setCopied] = useState(false);
 
@@ -232,6 +271,7 @@ function CodeBlock({ code }: { code: string }) {
 
 export default function ApiKeysView({
   agentApiKeys,
+  locked = false,
   createAgentApiKeyAction,
   revokeAgentApiKeyAction,
 }: ApiKeysViewProps) {
@@ -290,76 +330,84 @@ export default function ApiKeysView({
               description="Connect Omentir to your favorite AI app."
             />
 
-            <div className="grid grid-cols-[1fr_auto] items-end gap-3">
-              <TextField
-                label="Key label"
-                value={keyLabel}
-                onChange={(event) => setKeyLabel(event.target.value)}
-                placeholder="Claude, Hermes, my-script..."
-              />
-              <button
-                type="button"
-                onClick={handleCreateKey}
-                disabled={pending}
-                style={{ fontFamily: "var(--font-varta)", background: "#ba3871" }}
-                className="flex h-14 cursor-pointer items-center justify-center rounded-md px-4 text-[14px] font-semibold text-white shadow-[0_8px_24px_rgba(186,56,113,0.3)] transition hover:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-60 md:hidden"
+            <div className="relative">
+              <div
+                inert={locked || undefined}
+                className={locked ? "select-none blur-[5px]" : undefined}
               >
-                <span className="translate-y-px">Create</span>
-              </button>
-              <button
-                type="button"
-                onClick={handleCreateKey}
-                disabled={pending}
-                style={{ fontFamily: "var(--font-varta)", background: "#ba3871" }}
-                className="hidden h-14 cursor-pointer items-center justify-center gap-2 rounded-md px-3.5 text-[14px] font-semibold text-white shadow-[0_8px_24px_rgba(186,56,113,0.3)] transition hover:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-60 md:flex"
-              >
-                <span className="translate-y-px">Create key</span>
-              </button>
-            </div>
-
-            <div className="mt-4 rounded-md border border-zinc-200 bg-white">
-              {agentApiKeysResource.loading ? (
-                <ApiKeyRowsSkeleton />
-              ) : loadedAgentApiKeys.length ? (
-                <ContentReveal className="divide-y divide-zinc-100">
-                {loadedAgentApiKeys.map((key) => (
-                  <div
-                    key={key.id}
-                    className="flex flex-col items-start justify-between gap-3 px-4 py-3.5 sm:flex-row sm:items-center"
+                <div className="grid grid-cols-[1fr_auto] items-end gap-3">
+                  <TextField
+                    label="Key label"
+                    value={keyLabel}
+                    onChange={(event) => setKeyLabel(event.target.value)}
+                    placeholder="Claude, Hermes, my-script..."
+                  />
+                  <button
+                    type="button"
+                    onClick={handleCreateKey}
+                    disabled={pending}
+                    style={{ fontFamily: "var(--font-varta)", background: "#ba3871" }}
+                    className="flex h-14 cursor-pointer items-center justify-center rounded-md px-4 text-[14px] font-semibold text-white shadow-[0_8px_24px_rgba(186,56,113,0.3)] transition hover:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-60 md:hidden"
                   >
-                    <div className="min-w-0">
+                    <span className="translate-y-px">Create</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCreateKey}
+                    disabled={pending}
+                    style={{ fontFamily: "var(--font-varta)", background: "#ba3871" }}
+                    className="hidden h-14 cursor-pointer items-center justify-center gap-2 rounded-md px-3.5 text-[14px] font-semibold text-white shadow-[0_8px_24px_rgba(186,56,113,0.3)] transition hover:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-60 md:flex"
+                  >
+                    <span className="translate-y-px">Create key</span>
+                  </button>
+                </div>
+
+                <div className="mt-4 rounded-md border border-zinc-200 bg-white">
+                  {agentApiKeysResource.loading ? (
+                    <ApiKeyRowsSkeleton />
+                  ) : loadedAgentApiKeys.length ? (
+                    <ContentReveal className="divide-y divide-zinc-100">
+                    {loadedAgentApiKeys.map((key) => (
                       <div
-                        style={{ fontFamily: "var(--font-varta)" }}
-                        className="text-[14px] font-semibold text-zinc-950"
+                        key={key.id}
+                        className="flex flex-col items-start justify-between gap-3 px-4 py-3.5 sm:flex-row sm:items-center"
                       >
-                        {key.label}
+                        <div className="min-w-0">
+                          <div
+                            style={{ fontFamily: "var(--font-varta)" }}
+                            className="text-[14px] font-semibold text-zinc-950"
+                          >
+                            {key.label}
+                          </div>
+                          <div className="mt-0.5 text-[13px] font-medium text-zinc-700">
+                            <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-[11px]">{key.tokenPrefix}...</code>
+                            {" "}· Created {formatZonedDate(key.createdAt, timeZone)}
+                            {key.lastUsedAt
+                              ? ` · Last used ${formatZonedDate(key.lastUsedAt, timeZone)}`
+                              : " · Never used"}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRevokeKey(key.id)}
+                          disabled={pending}
+                          className="flex h-9 cursor-pointer items-center justify-center rounded-md border border-red-200 bg-white px-3 text-[13px] font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          <span className="translate-y-px">Revoke</span>
+                        </button>
                       </div>
-                      <div className="mt-0.5 text-[13px] font-medium text-zinc-700">
-                        <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-[11px]">{key.tokenPrefix}...</code>
-                        {" "}· Created {formatZonedDate(key.createdAt, timeZone)}
-                        {key.lastUsedAt
-                          ? ` · Last used ${formatZonedDate(key.lastUsedAt, timeZone)}`
-                          : " · Never used"}
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleRevokeKey(key.id)}
-                      disabled={pending}
-                      className="flex h-9 cursor-pointer items-center justify-center rounded-md border border-red-200 bg-white px-3 text-[13px] font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      <span className="translate-y-px">Revoke</span>
-                    </button>
-                  </div>
-                ))}
-                </ContentReveal>
-              ) : (
-                <ContentReveal className="grid place-items-center px-4 py-8 text-center">
-                  <span className="material-symbols-outlined text-3xl text-zinc-400">key</span>
-                  <h2 className="mt-3 text-sm font-semibold text-zinc-900">No API keys yet</h2>
-                  <p className="mt-1 text-xs text-zinc-500">Create one to use your regular chatbots for outreach.</p>
-                </ContentReveal>
-              )}
+                    ))}
+                    </ContentReveal>
+                  ) : (
+                    <ContentReveal className="grid place-items-center px-4 py-8 text-center">
+                      <span className="material-symbols-outlined text-3xl text-zinc-400">key</span>
+                      <h2 className="mt-3 text-sm font-semibold text-zinc-900">No API keys yet</h2>
+                      <p className="mt-1 text-xs text-zinc-500">Create one to use your regular chatbots for outreach.</p>
+                    </ContentReveal>
+                  )}
+                </div>
+              </div>
+              {locked ? <KeysLockOverlay /> : null}
             </div>
 
             <div className="my-8 h-px bg-zinc-200" />
