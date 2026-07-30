@@ -24,6 +24,13 @@ const BADGES = [
     height: 40,
     src: "https://backlinkdirs.com/badges/badge-listed-light.svg",
   },
+  {
+    href: "https://wired.business",
+    alt: "Featured on Wired Business",
+    width: 200,
+    height: 54,
+    src: "https://wired.business/badge0-dark.svg",
+  },
 ] as const;
 
 export default function FindUsOn() {

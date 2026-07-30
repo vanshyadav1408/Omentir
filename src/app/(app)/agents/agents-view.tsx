@@ -36,27 +36,27 @@ const selectAgentsData = (data: Record<string, unknown>) => ({
 function statusPill(status: Agent["status"]) {
   if (status === "active" || status === "running") {
     return (
-      <span className="inline-flex h-5 -translate-y-[2px] items-center gap-1 rounded-md bg-emerald-50 px-2.5 text-[11px] font-medium leading-none text-emerald-700">
+      <span className="inline-flex h-5 items-center gap-1 rounded-md bg-emerald-50 px-2.5 text-[11px] font-medium leading-none text-emerald-700">
         <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Active
       </span>
     );
   }
   if (status === "paused") {
     return (
-      <span className="inline-flex h-5 -translate-y-[2px] items-center rounded-md bg-zinc-100 px-2.5 text-[11px] font-semibold leading-none text-zinc-700">
+      <span className="inline-flex h-5 items-center rounded-md bg-zinc-100 px-2.5 text-[11px] font-semibold leading-none text-zinc-700">
         Paused
       </span>
     );
   }
   if (status === "error") {
     return (
-      <span className="inline-flex h-5 -translate-y-[2px] items-center gap-1 rounded-md bg-red-50 px-2.5 text-[11px] font-medium leading-none text-red-700">
+      <span className="inline-flex h-5 items-center gap-1 rounded-md bg-red-50 px-2.5 text-[11px] font-medium leading-none text-red-700">
         <span className="h-1.5 w-1.5 rounded-full bg-red-500" /> Error
       </span>
     );
   }
   return (
-    <span className="inline-flex h-5 -translate-y-[2px] items-center rounded-md bg-zinc-100 px-2.5 text-[11px] font-medium leading-none text-zinc-600">
+    <span className="inline-flex h-5 items-center rounded-md bg-zinc-100 px-2.5 text-[11px] font-medium leading-none text-zinc-600">
       Draft
     </span>
   );
@@ -80,19 +80,8 @@ function linkedGroupName(agent: Agent, groups: Group[]) {
   );
 }
 
-function targetSummary(agent: Agent) {
-  const filters = agent.filters || { titles: [], industries: [], locations: [], keywords: [] };
-  const parts = [
-    filters.titles?.[0],
-    filters.locations?.[0],
-    filters.industries?.[0],
-  ]
-    .map((part) => (part || "").trim())
-    .filter(Boolean);
-
-  if (parts.length) return parts.join(" · ");
-  if (agent.targetGroupName) return agent.targetGroupName;
-  return modeLabel(agent);
+function agentTitle(agent: Agent) {
+  return agent.name?.trim() || modeLabel(agent);
 }
 
 export default function AgentsView({
@@ -225,8 +214,8 @@ export default function AgentsView({
             {
               target: groupLeadCount || agentLeads.length || 0,
               contacted: 0,
-              invited: 0,
               accepted: 0,
+              messaged: 0,
               replied: 0,
               acceptRate: null as number | null,
               replyRate: null as number | null,
@@ -243,21 +232,25 @@ export default function AgentsView({
         const accepted = agentEnrollments.filter((enrollment) =>
           ["connected", "message_sent", "reply_received", "replied"].includes(enrollment.status),
         ).length;
+        const messaged = agentEnrollments.filter((enrollment) =>
+          ["message_sent", "reply_received", "replied"].includes(enrollment.status),
+        ).length;
         const replied = agentEnrollments.filter((enrollment) =>
           ["reply_received", "replied"].includes(enrollment.status),
         )
           .length;
 
         const acceptRate = invited > 0 ? Math.round((accepted / invited) * 100) : null;
-        const replyRate = accepted > 0 ? Math.round((replied / accepted) * 100) : null;
+        // Only messaged leads can reply, so they are the reply-rate denominator.
+        const replyRate = messaged > 0 ? Math.round((replied / messaged) * 100) : null;
 
         return [
           agent.id,
           {
             target: groupLeadCount || agentLeads.length || 0,
             contacted: invited,
-            invited,
             accepted,
+            messaged,
             replied,
             acceptRate,
             replyRate,
@@ -380,8 +373,8 @@ export default function AgentsView({
               const metrics = agentMetrics.get(agent.id) ?? {
                 target: 0,
                 contacted: 0,
-                invited: 0,
                 accepted: 0,
+                messaged: 0,
                 replied: 0,
                 acceptRate: null as number | null,
                 replyRate: null as number | null,
@@ -406,7 +399,7 @@ export default function AgentsView({
                         style={{ fontFamily: "var(--font-varta)" }}
                         className="min-w-0 break-words text-base font-semibold leading-tight text-zinc-950"
                       >
-                        {targetSummary(agent)}
+                        {agentTitle(agent)}
                       </h2>
                       {statusPill(displayStatus)}
                     </div>
@@ -446,7 +439,7 @@ export default function AgentsView({
                           </Link>
                           <button
                             type="button"
-                            onClick={() => setDeleteAgent({ id: agent.id, name: targetSummary(agent) })}
+                            onClick={() => setDeleteAgent({ id: agent.id, name: agentTitle(agent) })}
                             className="m3-menu-item m3-menu-item--danger"
                           >
                             Delete
@@ -460,27 +453,23 @@ export default function AgentsView({
                   <div className="mt-5 grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-4">
                     <div>
                       <p className="text-[11px] font-bold uppercase tracking-wide text-zinc-600">
-                        Contacted
+                        {agent.leadsOnly ? "Number of leads" : "Contacted"}
                       </p>
                       <p className="mt-1 text-3xl font-semibold leading-none text-zinc-950">
-                        {metrics.contacted}
-                        <span className="ml-1 align-baseline text-sm font-medium text-zinc-600">
-                          / {metrics.target}
-                        </span>
+                        {agent.leadsOnly ? (
+                          metrics.target
+                        ) : (
+                          <>
+                            {metrics.contacted}
+                            <span className="ml-1 align-baseline text-sm font-medium text-zinc-600">
+                              / {metrics.target}
+                            </span>
+                          </>
+                        )}
                       </p>
                       <p className="mt-1.5 text-[11px] font-medium text-zinc-700">
-                        {contactedPercent}% contacted
+                        {agent.leadsOnly ? "leads found" : `${contactedPercent}% contacted`}
                       </p>
-                    </div>
-
-                    <div>
-                      <p className="text-[11px] font-bold uppercase tracking-wide text-zinc-600">
-                        Invited
-                      </p>
-                      <p className="mt-1 text-3xl font-semibold leading-none text-zinc-950">
-                        {metrics.invited}
-                      </p>
-                      <p className="mt-1.5 text-[11px] font-medium text-zinc-700">total sent</p>
                     </div>
 
                     <div>
@@ -488,10 +477,26 @@ export default function AgentsView({
                         Accepted
                       </p>
                       <p className="mt-1 text-3xl font-semibold leading-none text-zinc-950">
-                        {metrics.acceptRate === null ? "-" : `${metrics.accepted}`}
+                        {agent.leadsOnly ? "N/A" : metrics.accepted}
                       </p>
                       <p className="mt-1.5 text-[11px] font-medium text-zinc-700">
-                        {metrics.acceptRate === null ? "accept rate" : `${metrics.acceptRate}% accept rate`}
+                        {agent.leadsOnly
+                          ? "no outreach"
+                          : metrics.acceptRate === null
+                            ? "- accept rate"
+                            : `${metrics.acceptRate}% accept rate`}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-[11px] font-bold uppercase tracking-wide text-zinc-600">
+                        Messaged
+                      </p>
+                      <p className="mt-1 text-3xl font-semibold leading-none text-zinc-950">
+                        {agent.leadsOnly ? "N/A" : metrics.messaged}
+                      </p>
+                      <p className="mt-1.5 text-[11px] font-medium text-zinc-700">
+                        {agent.leadsOnly ? "no outreach" : "total messaged"}
                       </p>
                     </div>
 
@@ -500,10 +505,14 @@ export default function AgentsView({
                         Replied
                       </p>
                       <p className="mt-1 text-3xl font-semibold leading-none text-zinc-950">
-                        {metrics.replied}
+                        {agent.leadsOnly ? "N/A" : metrics.replied}
                       </p>
                       <p className="mt-1.5 text-[11px] font-medium text-zinc-700">
-                        {metrics.replyRate === null ? "- reply rate" : `${metrics.replyRate}% reply rate`}
+                        {agent.leadsOnly
+                          ? "no outreach"
+                          : metrics.replyRate === null
+                            ? "- reply rate"
+                            : `${metrics.replyRate}% reply rate`}
                       </p>
                     </div>
                   </div>
