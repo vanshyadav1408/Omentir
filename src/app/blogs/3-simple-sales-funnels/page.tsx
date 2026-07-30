@@ -147,7 +147,7 @@ export default function BlogPost() {
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
         <li><strong>Basic ($29/month):</strong> Includes 1 LinkedIn account and 50 daily lead discoveries. Perfect for founders validating MVPs.</li>
-        <li><strong>Startup ($59/month):</strong> Includes up to 3 accounts and unlimited lead discoveries, optimized for growing teams.</li>
+        <li><strong>Startup ($59/month):</strong> Includes unlimited agents, campaigns, and lead discoveries on one account, optimized for growing teams.</li>
         <li><strong>Enterprise (Custom Tiers):</strong> Built for agencies requiring multi-account support and custom API integration routes.</li>
       </ul>
       <p>

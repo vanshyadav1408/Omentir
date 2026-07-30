@@ -4,6 +4,7 @@ import ApiKeysView from "./api-keys-view";
 import { createAgentApiKeyAction, revokeAgentApiKeyAction } from "@/app/actions";
 import { getWorkspace } from "@/lib/server/data";
 import { hasActiveSubscription } from "@/lib/server/subscription";
+import { planHasApiAccess } from "@/lib/plan-limits";
 import { createPageMetadata } from "@/app/seo";
 
 export const metadata = createPageMetadata({
@@ -22,6 +23,9 @@ export default async function ApiKeysPage() {
 
   const workspace = await getWorkspace(userId);
   if (!hasActiveSubscription(workspace)) {
+    redirect("/upgrade");
+  }
+  if (!planHasApiAccess(workspace.billing?.plan)) {
     redirect("/upgrade");
   }
 

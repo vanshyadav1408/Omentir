@@ -1,6 +1,14 @@
 // Single source of truth for plan cards. Rendered on the public pricing page
 // (pricing-cards.tsx) and the onboarding paywall (onboarding/step-upgrade.tsx),
 // so prices, limits, and checkout links can never drift between the two.
+//
+// Limit rows (accounts, agents, leads, campaigns) are derived from
+// commercialPlanLimits in plan-limits.ts so marketing and enforcement stay aligned.
+import {
+  limitFeatureLines,
+  limitUpgradeFeatureLines,
+} from "@/lib/plan-limits";
+
 export type PricingPlan = {
   name: string;
   price: string;
@@ -14,6 +22,13 @@ export type PricingPlan = {
   features: string[];
 };
 
+// Basic: full list for the entry tier (from commercialPlanLimits("solo")).
+const basicLimitFeatures = limitFeatureLines("solo");
+// Startup: only limit upgrades over Basic (not "1 LinkedIn account" again).
+const startupLimitUpgrades = limitUpgradeFeatureLines("startup", "solo");
+// Enterprise: only limit upgrades over Startup (multi-account, etc.).
+const enterpriseLimitUpgrades = limitUpgradeFeatureLines("enterprise", "startup");
+
 export const pricingPlans: PricingPlan[] = [
   {
     name: "Basic",
@@ -26,11 +41,7 @@ export const pricingPlans: PricingPlan[] = [
     featured: true,
     includes: "What's included",
     features: [
-      "1 LinkedIn account",
-      "1 AI agent",
-      "50 leads per day",
-      "1 campaign",
-      "API access",
+      ...basicLimitFeatures,
       "AI automated campaigns",
       "Email customer support",
     ],
@@ -40,35 +51,28 @@ export const pricingPlans: PricingPlan[] = [
     price: "$59/month",
     cadence: "",
     description:
-      "For founders, solo operators, and small teams that want LinkedIn outbound running quickly.",
+      "For founders and operators who want unlimited agents, leads, and campaigns on one LinkedIn account.",
     cta: "Start Now",
     href: "/checkout?plan=startup",
     featured: false,
     includes: "Includes everything in Basic plan and",
-    features: [
-      "Up to 3 LinkedIn accounts",
-      "3 AI agents",
-      "Unlimited leads",
-      "Unlimited campaigns",
-      "Slack customer support",
-    ],
+    // API is Startup+ only (planHasApiAccess). Basic never lists it.
+    features: [...startupLimitUpgrades, "API access"],
   },
   {
     name: "For Enterprises",
     price: "Custom",
     cadence: "",
     description:
-      "For teams that need onboarding, custom workflows, higher support, and multiple sender accounts.",
+      "For teams that need onboarding, custom workflows, higher limits, and multiple sender accounts.",
     cta: "Book a Demo",
     href: "https://calendly.com/vanshyadav-1408/30min",
     featured: false,
     includes: "Includes everything in Startups plan and",
     features: [
-      "Unlimited LinkedIn accounts",
-      "Unlimited AI agents",
+      ...enterpriseLimitUpgrades,
       "Managed campaigns",
       "SSO auth",
-      "Dedicated customer support",
     ],
   },
 ];

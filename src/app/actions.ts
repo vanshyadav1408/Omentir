@@ -513,6 +513,8 @@ export async function runScheduledActionNowAction(formData: FormData) {
 export async function createAgentApiKeyAction(formData: FormData) {
   const workspace = await requireWorkspace();
   requireActiveSubscription(workspace);
+  // createAgentApiKey also enforces planHasApiAccess; this keeps the action
+  // surface honest if that gate ever moves.
   const label = String(formData.get("label") || "AI agent").trim();
   const { token } = await createAgentApiKey(workspace.id, label);
   revalidatePath("/api-keys");

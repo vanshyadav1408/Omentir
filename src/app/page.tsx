@@ -460,7 +460,7 @@ const faqItems = [
   {
     question: "How much does Omentir cost?",
     answer:
-      "Basic is $29/month and includes 1 LinkedIn account, 1 AI agent, 1 campaign, and 50 leads per day. The Startup plan is $59/month and supports up to 3 LinkedIn accounts and 3 AI agents. Teams that need managed campaigns, SSO, or custom support can book a demo for Enterprise.",
+      "Basic is $29/month and includes 1 LinkedIn account, 1 AI agent, 1 campaign, and 50 leads per day. The Startup plan is $59/month and includes unlimited AI agents, unlimited leads, and unlimited campaigns on one LinkedIn account, plus API access. Teams that need multiple LinkedIn accounts, managed campaigns, or SSO can book a demo for Enterprise.",
   },
   {
     question: "How long does it take to get started?",

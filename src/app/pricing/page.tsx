@@ -23,22 +23,22 @@ const faqItems = [
   {
     question: "Which Omentir plan should I start with?",
     answer:
-      "Start with Basic if you are a solo founder running one LinkedIn account and one campaign. Choose Startup when you need more accounts, more agents, unlimited leads, and unlimited campaigns.",
+      "Start with Basic if you are a solo founder running one LinkedIn account, one agent, and one campaign. Choose Startup when you want unlimited agents, unlimited leads, and unlimited campaigns on one LinkedIn account.",
   },
   {
     question: "What is included in the Basic plan?",
     answer:
-      "Basic includes one LinkedIn account, one AI agent, up to 50 leads per day, one campaign, API access, AI automated campaigns, and fast customer support.",
+      "Basic includes one LinkedIn account, one AI agent, up to 50 leads per day, one campaign, AI automated campaigns, and email customer support.",
   },
   {
     question: "When should I upgrade to the Startup plan?",
     answer:
-      "Upgrade when you want to run multiple LinkedIn accounts, create more AI agents, launch more campaigns, or remove lead and campaign limits from your outbound workflow.",
+      "Upgrade when you want unlimited AI agents, unlimited leads, unlimited campaigns, or API access on a single LinkedIn account.",
   },
   {
     question: "What does Enterprise pricing include?",
     answer:
-      "Enterprise is custom and built for teams that need unlimited LinkedIn accounts, unlimited AI agents, managed campaigns, SSO, onboarding, and a dedicated support manager.",
+      "Enterprise is custom and built for teams that need unlimited LinkedIn accounts, unlimited AI agents, managed campaigns, SSO, and onboarding.",
   },
   {
     question: "Can I self-host Omentir instead of paying?",
@@ -68,7 +68,7 @@ export default function PricingPage() {
       <MarketingPage
         eyebrow="Pricing"
         title="Simple pricing for every size of business."
-        description="Start at $29/month as a solo founder. Upgrade when your team needs more LinkedIn accounts, custom workflows, onboarding, or higher support."
+        description="Start at $29/month as a solo founder. Upgrade to Startup for unlimited agents, leads, and campaigns on one account, or book Enterprise for multi-account teams."
         centeredHeader
         heroFullHeight
         contentClassName="max-w-7xl"

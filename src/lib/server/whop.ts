@@ -175,13 +175,16 @@ export async function findActiveWhopMembershipByEmail(email: string) {
     (item) => item.user?.id === member.user?.id || item.member?.id === member.id,
   );
   if (!membership) return null;
+  // Never default to a higher tier: an unmatched membership must not grant
+  // Startup limits (unlimited agents) to a Basic buyer.
   const matchedPlan = planIds.find((item) => item?.id && payloadContainsString(membership, item.id));
+  if (!matchedPlan) return null;
 
   return {
     memberId: member.id,
     membershipId: membership.id,
     manageUrl: membership.manage_url || undefined,
-    plan: matchedPlan?.plan || "startup",
+    plan: matchedPlan.plan,
     payerEmail: membership.user?.email?.trim().toLowerCase() || normalizedEmail,
     currentPeriodEnd: unixToIso(membership.renewal_period_end),
   } satisfies WhopActiveMembership;

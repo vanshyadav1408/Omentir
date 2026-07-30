@@ -167,7 +167,7 @@ export default function BlogPost() {
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
         <li><strong>Basic ($29/month):</strong> Includes 1 LinkedIn account, 1 AI agent, 50 leads per day, and 1 campaign.</li>
-        <li><strong>For Startups ($59/month):</strong> Includes up to 3 LinkedIn accounts, 3 AI agents, and expanded campaign capacity for small teams.</li>
+        <li><strong>For Startups ($59/month):</strong> Includes unlimited AI agents, leads, and campaigns on one LinkedIn account, for small teams.</li>
         <li><strong>For Enterprises (Custom):</strong> Supports larger teams that need onboarding, custom workflows, SSO, and dedicated support.</li>
       </ul>
       <p>

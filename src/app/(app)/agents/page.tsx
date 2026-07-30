@@ -1,12 +1,13 @@
 import { auth } from "@/lib/server/auth";
 import { redirect } from "next/navigation";
 import {
+  listAgents,
   listLinkedInAccounts,
   getWorkspace,
 } from "@/lib/server/data";
 import { hasActiveSubscription } from "@/lib/server/subscription";
-import { planLimits } from "@/lib/plan-limits";
-import type { WorkspaceBilling } from "@/lib/server/types";
+import { isAtPlanLimit } from "@/lib/agent-limit";
+import { planLimits, serializablePlanLimit } from "@/lib/plan-limits";
 import AgentsView from "./agents-view";
 import { createPageMetadata } from "@/app/seo";
 
@@ -20,26 +21,6 @@ export const metadata = createPageMetadata({
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-async function AgentsContent({
-  plan,
-}: {
-  plan: WorkspaceBilling["plan"] | undefined;
-}) {
-  const agentLimit = planLimits(plan).agents;
-
-  return (
-    <AgentsView
-      agents={[]}
-      groups={[]}
-      leads={[]}
-      enrollments={[]}
-      linkedInConnected={true}
-      agentLimit={agentLimit}
-      atAgentLimit={false}
-    />
-  );
-}
-
 export default async function AgentsPage() {
   const { userId } = await auth();
   if (!userId) {
@@ -48,9 +29,10 @@ export default async function AgentsPage() {
   }
 
   // Workspace docs are keyed by owner userId, so both reads run in parallel.
-  const [workspace, linkedInAccounts] = await Promise.all([
+  const [workspace, linkedInAccounts, agents] = await Promise.all([
     getWorkspace(userId),
     listLinkedInAccounts(userId),
+    listAgents(userId),
   ]);
   if (!hasActiveSubscription(workspace)) {
     redirect("/upgrade");
@@ -59,5 +41,17 @@ export default async function AgentsPage() {
     redirect("/connect");
   }
 
-  return <AgentsContent plan={workspace.billing?.plan} />;
+  const agentLimit = planLimits(workspace.billing?.plan).agents;
+
+  return (
+    <AgentsView
+      agents={[]}
+      groups={[]}
+      leads={[]}
+      enrollments={[]}
+      linkedInConnected={true}
+      agentLimit={serializablePlanLimit(agentLimit)}
+      atAgentLimit={isAtPlanLimit(agents.length, agentLimit)}
+    />
+  );
 }

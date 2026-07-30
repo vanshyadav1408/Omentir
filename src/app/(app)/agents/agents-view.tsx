@@ -19,7 +19,8 @@ type AgentsViewProps = {
   leads: LeadAgentRef[];
   enrollments: CampaignEnrollmentPreview[];
   linkedInConnected: boolean;
-  agentLimit: number;
+  /** Finite plan cap, or null when the plan has unlimited agents. */
+  agentLimit: number | null;
   atAgentLimit: boolean;
 };
 
@@ -129,7 +130,12 @@ export default function AgentsView({
     () => loadedAgents.filter((agent) => !deletedIds.has(agent.id)),
     [loadedAgents, deletedIds],
   );
-  const effectiveAtAgentLimit = atAgentLimit || visibleAgents.length >= agentLimit;
+  // null agentLimit means unlimited. While sidebar agents are still loading,
+  // trust the server-computed flag so a Basic user already at capacity cannot
+  // open create. After load (or local delete), use the live visible count.
+  const effectiveAtAgentLimit =
+    agentLimit != null &&
+    (isInitialLoading ? atAgentLimit : visibleAgents.length >= agentLimit);
 
   function setTogglePending(agentId: string, pending: boolean) {
     setPendingToggleIds((current) => {

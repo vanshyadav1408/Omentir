@@ -10,6 +10,7 @@ import { SelectField } from "@/app/ui/select";
 import { M3NotchedOutline, TextField } from "@/app/ui/text-field";
 import { useWorkspaceTimeZone } from "@/app/workspace-time-zone";
 import { formatZonedDate } from "@/lib/time-zone";
+import { commercialPlanLimits, formatPlanLimit } from "@/lib/plan-limits";
 
 type SettingsViewProps = {
   workspace: Workspace;
@@ -385,7 +386,14 @@ export default function SettingsView({
   const planName =
     plan === "startup" ? "Startup" : plan === "enterprise" ? "Enterprise" : "Basic";
   const planPrice = plan === "startup" ? "$59/month" : plan === "enterprise" ? "Custom" : "$29/month";
-  const linkedInLimit = localMode || plan === "enterprise" ? "Unlimited" : plan === "startup" ? "3" : "1";
+  // Same ceilings as plan-limits enforcement. Local/self-hosted is unlimited.
+  const linkedInAccountCap = localMode
+    ? Number.POSITIVE_INFINITY
+    : commercialPlanLimits(plan).linkedInAccounts;
+  const linkedInLimit = formatPlanLimit(linkedInAccountCap);
+  const linkedInLimitLabel =
+    linkedInLimit === "unlimited" ? "unlimited" : linkedInLimit;
+  const linkedInIsUnlimited = !Number.isFinite(linkedInAccountCap);
   const [notifFlags, setNotifFlags] = useState({ campaign: true, weekly: true, product: false });
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -626,7 +634,7 @@ export default function SettingsView({
               <>
                 <SectionHeader
                   title="Connected accounts"
-                  description={`You can connect ${linkedInLimit === "Unlimited" ? "unlimited" : linkedInLimit} LinkedIn account${linkedInLimit === "1" ? "" : "s"}.`}
+                  description={`You can connect ${linkedInLimitLabel} LinkedIn account${linkedInIsUnlimited || linkedInAccountCap !== 1 ? "s" : ""}.`}
                 />
 
                 {linkedInAccountsLoading ? (
@@ -708,8 +716,8 @@ export default function SettingsView({
                 </ContentReveal>
                 )}
 
-                {linkedInAccountsLoading ? null : linkedInLimit === "Unlimited" ||
-                  loadedLinkedInAccounts.length < Number(linkedInLimit) ? (
+                {linkedInAccountsLoading ? null : linkedInIsUnlimited ||
+                  loadedLinkedInAccounts.length < linkedInAccountCap ? (
                   <a
                     href="/reconnect"
                     style={{ fontFamily: "var(--font-varta)" }}
@@ -719,7 +727,8 @@ export default function SettingsView({
                   </a>
                 ) : (
                   <p className="mt-3 text-[13px] font-medium text-zinc-700">
-                    Your plan supports up to {linkedInLimit} connected account{linkedInLimit === "1" ? "" : "s"}.{" "}
+                    Your plan supports up to {linkedInLimit} connected account
+                    {linkedInAccountCap === 1 ? "" : "s"}.{" "}
                     <Link
                       href="/upgrade"
                       className="font-semibold text-zinc-950 underline underline-offset-2"

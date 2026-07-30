@@ -91,7 +91,14 @@ function getPageTitle(pathname: string) {
   return "Omentir";
 }
 
-export default function Sidebar({ localMode = false }: { localMode?: boolean }) {
+export default function Sidebar({
+  localMode = false,
+  showApi = false,
+}: {
+  localMode?: boolean;
+  /** Startup+ only. Hidden for Basic so the nav matches plan benefits. */
+  showApi?: boolean;
+}) {
   const pathname = usePathname() ?? "";
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -156,7 +163,7 @@ export default function Sidebar({ localMode = false }: { localMode?: boolean }) 
 
   const bottomLinks = (onClick?: () => void) => (
     <>
-      {!localMode ? (
+      {!localMode && showApi ? (
         <Link
           href="/api-keys"
           onClick={onClick}
@@ -328,7 +335,7 @@ export default function Sidebar({ localMode = false }: { localMode?: boolean }) 
           className={`shrink-0 pb-4 pt-2 transition-[padding] duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${isCollapsed ? "px-2" : "px-3 pl-6"
             }`}
         >
-          {!localMode ? (
+          {!localMode && showApi ? (
             <Link
               href="/api-keys"
               title={isCollapsed ? "API" : undefined}

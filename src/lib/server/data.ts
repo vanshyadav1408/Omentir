@@ -3,7 +3,7 @@ import "server-only";
 import { createHash, randomBytes } from "crypto";
 import { FieldValue } from "firebase-admin/firestore";
 import { hashAgentApiToken } from "@/lib/agent-api-token";
-import { planLimits } from "@/lib/plan-limits";
+import { planHasApiAccess, planLimits } from "@/lib/plan-limits";
 import { isValidTimeZone } from "@/lib/time-zone";
 import { getDb, nowIso, cleanId, normalizeLinkedInProfileUrl } from "./firebase";
 import { hasIntervalElapsed, isAgentDueForRun, nextDailyAgentRunAt } from "./scheduling";
@@ -146,6 +146,18 @@ function limitMessage(resource: string, limit: number) {
   return `Your current plan supports up to ${limit} ${resource}${limit === 1 ? "" : "s"}.`;
 }
 
+async function countPlanResource(
+  workspaceId: string,
+  resource: "agent" | "campaign",
+  fetchLimit: number,
+) {
+  const snap = await collection(resource === "agent" ? "agents" : "campaigns")
+    .where("workspaceId", "==", workspaceId)
+    .limit(fetchLimit)
+    .get();
+  return snap.size;
+}
+
 async function assertBelowPlanLimit(
   workspaceId: string,
   resource: "agent" | "campaign",
@@ -153,12 +165,10 @@ async function assertBelowPlanLimit(
 ) {
   if (!Number.isFinite(limit)) return;
 
-  const snap = await collection(resource === "agent" ? "agents" : "campaigns")
-    .where("workspaceId", "==", workspaceId)
-    .limit(limit + 1)
-    .get();
-
-  if (snap.size >= limit) {
+  // Fetch limit + 1 so we can tell "at capacity" from "under capacity" without
+  // loading every document for large workspaces.
+  const size = await countPlanResource(workspaceId, resource, limit + 1);
+  if (size >= limit) {
     throw new Error(limitMessage(resource, limit));
   }
 }
@@ -281,7 +291,10 @@ export async function listAgentApiKeys(workspaceId: string) {
 }
 
 export async function createAgentApiKey(workspaceId: string, label: string) {
-  await ensureWorkspace(workspaceId);
+  const workspace = await ensureWorkspace(workspaceId);
+  if (!planHasApiAccess(workspace.billing?.plan)) {
+    throw new Error("API access is available on the Startup plan and above.");
+  }
   const token = newAgentApiToken();
   const timestamp = nowIso();
   const ref = collection<AgentApiKey>("agentApiKeys").doc();
@@ -669,7 +682,8 @@ export async function createAgent(
 ) {
   assertAgentSetupComplete(input);
   const workspace = await getWorkspace(workspaceId);
-  await assertBelowPlanLimit(workspaceId, "agent", planLimits(workspace.billing?.plan).agents);
+  const agentLimit = planLimits(workspace.billing?.plan).agents;
+  await assertBelowPlanLimit(workspaceId, "agent", agentLimit);
 
   const group = await createOrGetGroup(workspaceId, input.targetGroupName, "Created by AI Agent");
   const timestamp = nowIso();
@@ -697,6 +711,17 @@ export async function createAgent(
     updatedAt: timestamp,
   };
   await ref.set(agent);
+
+  // Concurrent creates can both pass the pre-check. Re-count after write and
+  // roll back the excess so plan limits stay hard even under parallel submits.
+  if (Number.isFinite(agentLimit)) {
+    const size = await countPlanResource(workspaceId, "agent", agentLimit + 1);
+    if (size > agentLimit) {
+      await ref.delete();
+      throw new Error(limitMessage("agent", agentLimit));
+    }
+  }
+
   return agent;
 }
 
@@ -1359,11 +1384,8 @@ export async function createCampaign(
   input: Omit<Campaign, "id" | "workspaceId" | "createdAt" | "updatedAt">,
 ) {
   const workspace = await getWorkspace(workspaceId);
-  await assertBelowPlanLimit(
-    workspaceId,
-    "campaign",
-    planLimits(workspace.billing?.plan).campaigns,
-  );
+  const campaignLimit = planLimits(workspace.billing?.plan).campaigns;
+  await assertBelowPlanLimit(workspaceId, "campaign", campaignLimit);
 
   const timestamp = nowIso();
   const generatedId = Math.floor(1000000000 + Math.random() * 9000000000).toString();
@@ -1376,6 +1398,17 @@ export async function createCampaign(
     updatedAt: timestamp,
   };
   await ref.set(campaign);
+
+  // Same post-write reconcile as createAgent: concurrent submits can both clear
+  // the pre-check, so re-count and roll back the excess to keep the cap hard.
+  if (Number.isFinite(campaignLimit)) {
+    const size = await countPlanResource(workspaceId, "campaign", campaignLimit + 1);
+    if (size > campaignLimit) {
+      await ref.delete();
+      throw new Error(limitMessage("campaign", campaignLimit));
+    }
+  }
+
   return campaign;
 }
 

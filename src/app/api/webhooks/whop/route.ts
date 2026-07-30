@@ -1,7 +1,7 @@
 import { clerkClient } from "@clerk/nextjs/server";
 import { isLocalMode } from "@/lib/runtime-mode";
 import { NextResponse, type NextRequest } from "next/server";
-import { logAutomationRun, updateWorkspaceBilling } from "@/lib/server/data";
+import { getWorkspace, logAutomationRun, updateWorkspaceBilling } from "@/lib/server/data";
 import { syncMailingListPlan } from "@/lib/server/mailing-list";
 import { readTextBody, RequestBodyTooLargeError } from "@/lib/server/request-body";
 import {
@@ -113,9 +113,18 @@ async function activateWorkspaceFromEmail(
 async function deactivateWorkspace(workspaceId: string, sourceId: string) {
   // Keep the provider/plan on record but drop access. The cron and server
   // actions gate on status === "active", so this stops all paid background work.
+  //
+  // The plan must be carried over, never defaulted: hard-coding "startup" here
+  // silently promoted a cancelled Basic buyer to Startup limits (unlimited
+  // agents/leads), which a later manual bypass or reactivation would honour.
+  // Fail closed to "solo" when nothing is on record.
+  const existingPlan = await getWorkspace(workspaceId)
+    .then((workspace) => workspace.billing?.plan)
+    .catch(() => undefined);
+
   await updateWorkspaceBilling(workspaceId, {
     provider: "whop",
-    plan: "startup",
+    plan: existingPlan ?? "solo",
     status: "cancelled",
   });
 

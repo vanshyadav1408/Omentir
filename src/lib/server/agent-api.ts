@@ -6,6 +6,7 @@ import { hasActiveSubscription } from "./subscription";
 import type { Workspace } from "./types";
 import { isLocalMode } from "@/lib/runtime-mode";
 import { LOCAL_USER_ID } from "@/lib/local-session";
+import { planHasApiAccess } from "@/lib/plan-limits";
 import {
   rateLimit,
   rateLimitRequestShared,
@@ -61,6 +62,13 @@ export async function requireAgentApiContext(request: NextRequest): Promise<
 
   if (!hasActiveSubscription(authenticated.workspace)) {
     return { ok: false, response: agentApiError("Active subscription required.", 402) };
+  }
+
+  if (!planHasApiAccess(authenticated.workspace.billing?.plan)) {
+    return {
+      ok: false,
+      response: agentApiError("API access is available on the Startup plan and above.", 403),
+    };
   }
 
   return {

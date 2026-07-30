@@ -118,7 +118,7 @@ export default function BlogPost() {
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
         <li><strong>Basic ($29/month):</strong> Includes 1 LinkedIn account, perfect for early validation loops.</li>
-        <li><strong>Startup ($59/month):</strong> Up to 3 accounts and unlimited discoveries, optimized for scaling teams.</li>
+        <li><strong>Startup ($59/month):</strong> Unlimited agents, campaigns, and discoveries on one account, optimized for scaling teams.</li>
         <li><strong>Enterprise (Custom Pricing):</strong> Supports unlimited profiles, custom Vector database connections, and agency controls.</li>
       </ul>
       <p>
