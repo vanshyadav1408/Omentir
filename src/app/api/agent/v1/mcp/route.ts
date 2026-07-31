@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAppBaseUrl } from "@/lib/server/runtime-config";
+import { preflightResponse, withCors } from "@/lib/server/cors";
 import { readAgentApiJsonBody, requireAgentApiContext } from "@/lib/server/agent-api";
 import {
   AgentApiOperationError,
@@ -60,25 +61,28 @@ function requestedProtocolVersion(params: unknown) {
   return typeof version === "string" ? version : null;
 }
 
-function allowedOrigins() {
+/**
+ * Any origin may call this endpoint unless MCP_ALLOWED_ORIGINS narrows it.
+ *
+ * The origin check in the MCP spec exists to stop a web page from reaching a
+ * server bound to localhost, where merely being on the machine is treated as
+ * proof of identity. Nothing here works that way: every call needs a bearer
+ * token and no route reads cookies, so a hostile page has nothing to replay. A
+ * fixed allowlist only broke real clients - Grok was rejected outright for not
+ * being on it, and every new AI app would be too.
+ */
+function originIsAllowed(request: NextRequest) {
+  const origin = request.headers.get("origin");
+  if (!origin) return true;
+
   const configured = (process.env.MCP_ALLOWED_ORIGINS || "")
     .split(",")
     .map((value) => value.trim())
     .filter(Boolean);
-  return new Set([
-    new URL(getAppBaseUrl()).origin,
-    "https://chatgpt.com",
-    "https://chat.openai.com",
-    "https://claude.ai",
-    ...configured,
-  ]);
-}
+  if (configured.length === 0) return true;
 
-function originIsAllowed(request: NextRequest) {
-  const origin = request.headers.get("origin");
-  if (!origin) return true;
   try {
-    return allowedOrigins().has(new URL(origin).origin);
+    return new Set([new URL(getAppBaseUrl()).origin, ...configured]).has(new URL(origin).origin);
   } catch {
     return false;
   }
@@ -102,7 +106,7 @@ function toolExecutionError(id: JsonRpcId | undefined, error: AgentApiOperationE
   });
 }
 
-export async function GET(request: NextRequest) {
+async function handleGet(request: NextRequest) {
   if (request.headers.get("accept")?.includes("text/event-stream")) {
     return new NextResponse(null, { status: 405, headers: { Allow: "POST" } });
   }
@@ -128,7 +132,7 @@ export async function GET(request: NextRequest) {
   });
 }
 
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
   if (!originIsAllowed(request)) {
     return rpcError(undefined, -32000, "Origin is not allowed.", undefined, 403);
   }
@@ -212,4 +216,19 @@ export async function POST(request: NextRequest) {
   }
 
   return rpcError(rpc.id, -32601, `Unknown method: ${rpc.method}`);
+}
+
+// Hosted AI apps call this endpoint from the browser. Without a preflight
+// answer and matching response headers the request never leaves the page, which
+// looks identical to a server that is down.
+export async function OPTIONS(request: NextRequest) {
+  return preflightResponse(request.headers.get("origin"));
+}
+
+export async function GET(request: NextRequest) {
+  return withCors(await handleGet(request), request.headers.get("origin"));
+}
+
+export async function POST(request: NextRequest) {
+  return withCors(await handlePost(request), request.headers.get("origin"));
 }

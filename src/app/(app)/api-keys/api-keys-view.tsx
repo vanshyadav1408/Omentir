@@ -20,10 +20,10 @@ type ApiKeysViewProps = {
 };
 
 const ENDPOINTS = [
-  { label: "MCP server", value: `${siteUrl}/api/agent/v1/mcp` },
+  { label: "Connector URL (MCP server)", value: `${siteUrl}/api/agent/v1/mcp` },
   { label: "REST base URL", value: `${siteUrl}/api/agent/v1` },
   { label: "OpenAPI schema", value: `${siteUrl}/api/agent/v1/openapi.json` },
-  { label: "Authentication", value: "Authorization: Bearer <your-api-key>" },
+  { label: "Authentication", value: "Sign in when prompted, or Authorization: Bearer <your-api-key>" },
 ];
 
 type ConnectStep = { text: string; code?: string };
@@ -37,6 +37,38 @@ type ConnectMethod = {
 };
 
 const CONNECT_METHODS: ConnectMethod[] = [
+  {
+    icon: "bolt",
+    title: "Claude, ChatGPT, Grok & other chat apps",
+    blurb:
+      "Paste one URL and sign in. These apps have no place to put an API key, so Omentir issues one for them after you approve the connection.",
+    details: [
+      "No key to create, copy, or paste - approving the prompt is the whole setup.",
+      "Approving creates a key named after the app on this page; revoking it disconnects the app at once.",
+      "Requires the Startup plan or above, the same as every other API connection.",
+    ],
+    steps: [
+      {
+        text: "In Claude: Settings → Connectors → Add custom connector. In ChatGPT: Settings → Connectors → Add. In Grok: Settings → Connectors. Paste this URL:",
+        code: `${siteUrl}/api/agent/v1/mcp`,
+      },
+      {
+        text: "The app sends you to Omentir. Sign in if you are not already, then choose Connect workspace.",
+      },
+      {
+        text: "You land back in the app with Omentir connected. Ask it \"what's my Omentir context?\" to confirm.",
+      },
+      {
+        text: "Turn the connector on in that specific chat - most apps keep account-level connection and per-chat use separate.",
+      },
+    ],
+    troubleshooting: [
+      "No tools after connecting: switch the connector on in the chat's tools menu, then send a new message.",
+      "Sent back with an error: your plan may not include API access. Check the plan, then add the connector again.",
+      "Stuck on the Omentir sign-in page: open omentir.com, sign in there first, then retry adding the connector.",
+      "To disconnect, revoke the key named after the app on this page.",
+    ],
+  },
   {
     icon: "terminal",
     title: "Claude Code, Cursor & other MCP clients",
@@ -71,7 +103,7 @@ const CONNECT_METHODS: ConnectMethod[] = [
     troubleshooting: [
       "If no Omentir tools appear, reload the MCP client or restart the editor/terminal session.",
       "If tools appear but calls fail, confirm the Authorization header is exactly Bearer <your-key>.",
-      "If your client does not support authorization headers, it cannot securely connect until it adds that support.",
+      "If your client has no place for headers, use the connector URL on its own - it will walk you through signing in instead.",
     ],
   },
   {

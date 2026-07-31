@@ -50,6 +50,12 @@ const hostedMiddleware = clerkMiddleware(async (auth, req) => {
 const localPublicPaths = new Set(["/login", "/api/health", "/api/local-auth/login"]);
 const localServicePrefixes = [
   "/api/agent/v1/",
+  // OAuth discovery and the token/registration exchange are called by the AI
+  // app itself, with no Omentir session to present.
+  "/.well-known/",
+  "/api/oauth/metadata/",
+  "/api/oauth/register",
+  "/api/oauth/token",
   "/api/connect/callback",
   "/api/jobs/automation-tick",
   "/api/jobs/gemini-diagnostics",
@@ -70,7 +76,10 @@ async function localMiddleware(request: NextRequest) {
 
   const localConnectRoute = path === "/connect" || path.startsWith("/connect/") ||
     path === "/reconnect" || path.startsWith("/reconnect/");
-  const appRequest = isProtectedRoute(request) || localConnectRoute || path.startsWith("/api/");
+  // The consent screen and its decision handler need a signed-in user, so they
+  // fall through to the session check below rather than being served publicly.
+  const appRequest =
+    isProtectedRoute(request) || localConnectRoute || path.startsWith("/api/") || path.startsWith("/oauth/");
   if (!appRequest) return new NextResponse(null, { status: 404 });
 
   const signedIn = await verifyLocalSession(

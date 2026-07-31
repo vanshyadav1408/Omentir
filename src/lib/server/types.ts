@@ -57,6 +57,32 @@ export type AgentApiKey = {
   updatedAt: string;
 };
 
+/**
+ * A client registered through OAuth dynamic client registration (RFC 7591).
+ * Hosted AI apps (Claude, ChatGPT, Grok) register themselves on first connect,
+ * so there is nothing for a user to configure by hand.
+ */
+export type OAuthClient = {
+  id: string;
+  clientName: string;
+  redirectUris: string[];
+  createdAt: string;
+};
+
+/**
+ * A pending authorization code. The document id is the SHA-256 of the code, so
+ * a database leak never yields a usable code. Single-use and short-lived.
+ */
+export type OAuthAuthorizationCode = {
+  id: string;
+  clientId: string;
+  workspaceId: string;
+  redirectUri: string;
+  codeChallenge: string;
+  expiresAt: string;
+  createdAt: string;
+};
+
 export type ProductProfile = {
   id: string;
   workspaceId: string;

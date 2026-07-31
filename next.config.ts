@@ -47,6 +47,18 @@ const nextConfig: NextConfig = {
     // body limit rejects them.
     serverActions: { bodySizeLimit: "20mb" },
   },
+  // Next's app router does not serve a `.well-known` directory, but OAuth
+  // discovery is defined at fixed well-known paths and clients will not look
+  // anywhere else. RFC 9728 also allows the resource path to be appended to the
+  // metadata URL, so both the bare and suffixed forms must resolve.
+  async rewrites() {
+    return [
+      { source: "/.well-known/oauth-protected-resource", destination: "/api/oauth/metadata/protected-resource" },
+      { source: "/.well-known/oauth-protected-resource/:path*", destination: "/api/oauth/metadata/protected-resource" },
+      { source: "/.well-known/oauth-authorization-server", destination: "/api/oauth/metadata/authorization-server" },
+      { source: "/.well-known/oauth-authorization-server/:path*", destination: "/api/oauth/metadata/authorization-server" },
+    ];
+  },
   async headers() {
     const responseHeaders = [
       {
@@ -56,7 +68,11 @@ const nextConfig: NextConfig = {
         // ERR_INVALID_HTTP_RESPONSE — that breaks the dev client bootstrap and
         // stops the whole app from hydrating. Framing/CSP headers only matter
         // for document responses, not Next's static assets or dev sockets.
-        source: "/((?!_next/).*)",
+        // /oauth/* is excluded and handled below: the consent form's whole job is
+        // to hand the browser back to the AI app that started the flow, and
+        // `form-action 'self'` is enforced against redirect targets in some
+        // browsers, which would strand the user on a blocked page mid-connect.
+        source: "/((?!_next/|oauth/).*)",
         headers: [
           { key: "X-Frame-Options", value: "DENY" },
           {
@@ -69,6 +85,22 @@ const nextConfig: NextConfig = {
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
           { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
+        ],
+      },
+      {
+        // Same protections as every other page, minus the form-action limit.
+        source: "/oauth/:path*",
+        headers: [
+          { key: "X-Frame-Options", value: "DENY" },
+          {
+            key: "Content-Security-Policy",
+            value: "frame-ancestors 'none'; object-src 'none'; base-uri 'self'",
+          },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+          { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
+          { key: "X-Robots-Tag", value: "noindex, nofollow" },
         ],
       },
       {

@@ -36,6 +36,8 @@ import type {
   LeadPreview,
   LeadSignal,
   LinkedInAccount,
+  OAuthAuthorizationCode,
+  OAuthClient,
   ProductProfile,
   SendWindow,
   Workspace,
@@ -349,6 +351,68 @@ export async function authenticateAgentApiToken(token: string) {
     await doc.ref.update({ lastUsedAt: nowIso(), updatedAt: nowIso() });
   }
   return { key, workspace: await getWorkspace(key.workspaceId) };
+}
+
+export async function registerOAuthClient(clientName: string, redirectUris: string[]) {
+  const ref = collection<OAuthClient>("oauthClients").doc();
+  const client: OAuthClient = {
+    id: ref.id,
+    clientName: clientName.trim().slice(0, 120) || "AI app",
+    redirectUris,
+    createdAt: nowIso(),
+  };
+  await ref.set(client);
+  return client;
+}
+
+export async function getOAuthClient(clientId: string) {
+  // Not cleanId: these are Firestore auto-ids, which are case-sensitive, and
+  // lower-casing them makes every lookup miss.
+  const id = clientId.trim();
+  if (!id || id.length > 128 || id.includes("/")) return null;
+  return (await collection<OAuthClient>("oauthClients").doc(id).get()).data() || null;
+}
+
+export async function createOAuthAuthorizationCode(input: {
+  code: string;
+  clientId: string;
+  workspaceId: string;
+  redirectUri: string;
+  codeChallenge: string;
+  ttlSeconds: number;
+}) {
+  const id = hashAgentApiToken(input.code);
+  const record: OAuthAuthorizationCode = {
+    id,
+    clientId: input.clientId,
+    workspaceId: input.workspaceId,
+    redirectUri: input.redirectUri,
+    codeChallenge: input.codeChallenge,
+    expiresAt: new Date(Date.now() + input.ttlSeconds * 1000).toISOString(),
+    createdAt: nowIso(),
+  };
+  await collection<OAuthAuthorizationCode>("oauthCodes").doc(id).set(record);
+  return record;
+}
+
+/**
+ * Reads and deletes an authorization code in one transaction. Codes are
+ * single-use by spec: a replayed code must fail even if two token requests
+ * arrive at the same instant, which a read-then-delete would not guarantee.
+ */
+export async function consumeOAuthAuthorizationCode(code: string) {
+  const ref = collection<OAuthAuthorizationCode>("oauthCodes").doc(hashAgentApiToken(code));
+  const record = await getDb().runTransaction(async (transaction) => {
+    const snap = await transaction.get(ref);
+    const value = snap.data();
+    if (!value) return null;
+    transaction.delete(ref);
+    return value;
+  });
+
+  if (!record) return null;
+  if (Date.parse(record.expiresAt) <= Date.now()) return null;
+  return record;
 }
 
 export async function updateWorkspaceSettings(

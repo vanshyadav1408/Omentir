@@ -17,13 +17,17 @@ ${siteUrl}
 
 ## Authentication
 
-Create a token in Omentir under Settings > AI Agents and send it on every REST request:
+There are two ways in, and a client only needs one.
+
+If you are an MCP client that can run the OAuth flow, point at \`${siteUrl}/api/agent/v1/mcp\` with no credential. The 401 carries a \`WWW-Authenticate\` challenge naming the protected-resource metadata; from there, register with the endpoint in \`/.well-known/oauth-authorization-server\` and complete an authorization code exchange with PKCE (S256 required). The user signs in and approves, and the access token you receive is a normal workspace token.
+
+Otherwise the user creates a token on the Omentir API page and you send it on every request:
 
 \`\`\`text
 Authorization: Bearer <omentir_agent_token>
 \`\`\`
 
-Tokens are never accepted in URLs. Use a client that supports MCP authorization headers and keep the token in its secret store.
+Tokens are never accepted in URLs. Keep the token in the client's secret store, never in a prompt or a message you send onward.
 
 ## Recommended Workflow
 

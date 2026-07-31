@@ -54,20 +54,20 @@ const setupSteps: SetupStep[] = [
   },
   {
     number: "2.",
-    title: "Get your API key",
+    title: "Add the connector",
     description:
-      "Open your Omentir API keys page, create an agent key, and copy it. This is the credential your agent uses.",
-    image: "/get-your-api-key.avif",
-    alt: "Getting an Omentir API key for an agent connector",
+      "In Claude, ChatGPT, or Grok, open Settings, then Connectors, and add a custom connector with the URL below. There is no API key to create.",
+    copyUrl: mcpEndpoint,
+    image: "/connect-to-your-agent.avif",
+    alt: "Adding the Omentir MCP connector URL to an AI chat app",
   },
   {
     number: "3.",
-    title: "Connect to your agent",
+    title: "Approve access",
     description:
-      "Use the endpoint below in an MCP client that supports headers, then configure Authorization: Bearer <key> in the client's secret or header settings.",
-    copyUrl: mcpEndpoint,
-    image: "/connect-to-your-agent.avif",
-    alt: "Connecting an AI agent to Omentir with an API key",
+      "The app sends you to Omentir. Sign in, choose Connect workspace, and you land back in the app connected. Clients that support headers can use an API key instead.",
+    image: "/get-your-api-key.avif",
+    alt: "Approving an AI app's access to an Omentir workspace",
   },
   {
     number: "4.",
@@ -138,12 +138,17 @@ const faqItems = [
   {
     question: "How do I authenticate?",
     answer:
-      "Create a token in Omentir under Settings → AI Agents, then send it as `Authorization: Bearer <token>` on every request. Tokens are never accepted in URLs. Each token is scoped to exactly one workspace and can be revoked anytime.",
+      "Two ways, and you only need one. Chat apps such as Claude, ChatGPT and Grok take just the connector URL: they register themselves, send you to Omentir to sign in and approve, and receive a token automatically. Clients that let you set headers - Claude Code, Cursor, scripts - can instead use a key from the API page as `Authorization: Bearer <token>`. Tokens are never accepted in URLs, are scoped to exactly one workspace, and can be revoked anytime from the API page, which disconnects that app immediately.",
+  },
+  {
+    question: "Why does my chat app show no Omentir tools?",
+    answer:
+      "Connecting an app and enabling it in a conversation are separate steps in most chat apps: after approving access, switch Omentir on in that chat's tools menu and send a new message. If the connector never asked you to sign in, the app may have cached a failed attempt - remove it and add the URL again. App connections also require the Startup plan or above.",
   },
   {
     question: "Which MCP methods are supported?",
     answer:
-      "The Streamable HTTP server speaks JSON-RPC 2.0 and supports initialize, ping, tools/list, and tools/call, plus the initialized notification. It negotiates the stable MCP protocol version. A plain GET returns an unauthenticated discovery document for quick client setup checks.",
+      "The Streamable HTTP server speaks JSON-RPC 2.0 and supports initialize, ping, tools/list, and tools/call, plus the initialized notification. It negotiates the stable MCP protocol version, implements the MCP authorization spec with OAuth 2.1 discovery, dynamic client registration and PKCE, and answers cross-origin preflight so browser-based clients can reach it. A plain GET returns an unauthenticated discovery document for quick client setup checks.",
   },
   {
     question: "Can the server find LinkedIn leads from chat?",

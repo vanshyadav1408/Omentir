@@ -13,6 +13,7 @@ import {
   requestSource,
 } from "@/lib/request-rate-limit";
 import { readJsonBody, RequestBodyTooLargeError } from "./request-body";
+import { bearerChallenge } from "./oauth";
 
 export type AgentApiContext = {
   workspace: Workspace;
@@ -22,7 +23,11 @@ export type AgentApiContext = {
 const AGENT_API_JSON_MAX_BYTES = 256 * 1024;
 
 export function agentApiError(message: string, status: number) {
-  return NextResponse.json({ error: message }, { status });
+  // A bare 401 tells an AI app nothing about how to authenticate, so hosted
+  // connectors (Claude, ChatGPT, Grok) give up silently and show no tools. The
+  // challenge points them at the OAuth metadata that starts the sign-in flow.
+  const headers = status === 401 ? { "WWW-Authenticate": bearerChallenge() } : undefined;
+  return NextResponse.json({ error: message }, { status, headers });
 }
 
 export async function requireAgentApiContext(request: NextRequest): Promise<

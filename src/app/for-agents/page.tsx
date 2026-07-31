@@ -422,7 +422,8 @@ export default function ForAgentsPage() {
                 </h3>
                 <p className="mt-1.5 text-[13px] leading-6 text-[var(--md-sys-color-on-surface-variant)]">
                   Not an MCP client? Every tool is also a plain HTTP endpoint. Send your
-                  agent token as <code className="rounded bg-[var(--md-sys-color-surface-container-high)] px-1.5 py-0.5 text-[12px] text-[var(--md-sys-color-on-surface)]">Authorization: Bearer &lt;token&gt;</code> on each request.
+                  agent token as <code className="rounded bg-[var(--md-sys-color-surface-container-high)] px-1.5 py-0.5 text-[12px] text-[var(--md-sys-color-on-surface)]">Authorization: Bearer &lt;token&gt;</code> on each request. Chat apps that only accept a
+                  connector URL can skip the key entirely and sign in instead.
                 </p>
                 <div className="mt-3 flex flex-col gap-1.5 text-[12px] sm:flex-row sm:items-center sm:gap-4">
                   <span className="text-[var(--md-sys-color-on-surface-variant)]">
