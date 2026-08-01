@@ -38,7 +38,7 @@ const faqItems = [
   },
   {
     question: "How do I authenticate requests to Omentir's REST endpoints?",
-    answer: "Generate an API key in Settings → AI Agents, and pass it in the Authorization Bearer header of every HTTP request."
+    answer: "Generate an API key on the API page, and pass it in the Authorization Bearer header of every HTTP request."
   },
   {
     question: "Can I push leads from my scraper directly to Omentir's campaign queue?",
@@ -110,7 +110,7 @@ export default function BlogPost() {
         Security is critical when building custom integrations. Omentir protects your workspace by enforcing token authorization boundaries on all REST endpoints.
       </p>
       <p>
-        To authorize your client, generate a secure token in Settings → AI Agents. Pass this token in the Authorization header of every request:
+        To authorize your client, generate a secure token on the API page. Pass this token in the Authorization header of every request:
       </p>
       <pre className="overflow-x-auto rounded-lg bg-zinc-900 p-5 text-[13px] leading-6 text-zinc-200 my-4">
 <code>{`GET /api/agent/v1/context

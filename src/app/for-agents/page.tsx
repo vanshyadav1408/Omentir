@@ -230,7 +230,7 @@ const faqItems = [
   {
     question: "What can an agent token access?",
     answer:
-      "Exactly one Omentir workspace - its product profile, lead-finding agents, lead groups, discovered leads, activity, outreach send schedule, safety settings, and existing reply conversations. It cannot touch billing, other workspaces, or your LinkedIn credentials, and you can revoke it anytime in Settings → AI Agents.",
+      "Exactly one Omentir workspace - its product profile, lead-finding agents, lead groups, discovered leads, activity, outreach send schedule, safety settings, and existing reply conversations. It cannot touch billing, other workspaces, or your LinkedIn credentials, and you can revoke it anytime on the API page.",
   },
   {
     question: "Can my agent tell me when my outreach actually sends?",

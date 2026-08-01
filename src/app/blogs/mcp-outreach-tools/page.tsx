@@ -38,11 +38,11 @@ const faqItems = [
   },
   {
     question: "How do I authorize my MCP client to access my workspace?",
-    answer: "Generate a secure agent token in Settings → AI Agents. Pass this token only as an Authorization Bearer header in your client setup."
+    answer: "Two ways. Chat apps such as Claude, ChatGPT and Grok take only the connector URL: they register themselves, send you to Omentir to sign in and approve, and receive a token automatically. Clients that let you set headers can instead use a key from the API page as an Authorization Bearer header."
   },
   {
     question: "Can I connect my agent if my client does not support headers?",
-    answer: "No. Tokens in URLs leak into logs and copied links, so Omentir requires a client that supports Authorization headers."
+    answer: "Yes. Give it the connector URL on its own and it will run the OAuth sign-in flow instead, so no token is ever pasted or placed in a URL."
   },
   {
     question: "What happens if my agent triggers a tool error during a campaign?",
@@ -197,7 +197,7 @@ export default function BlogPost() {
         Security is critical when delegating tasks to AI agents. Omentir protects your workspace by enforcing strict authorization boundaries on all agent tokens.
       </p>
       <p>
-        Each token is scoped to a single workspace. It cannot edit billing details, view other accounts, or access your raw LinkedIn credentials. You can revoke tokens anytime in Settings → AI Agents, disabling access immediately.
+        Each token is scoped to a single workspace. It cannot edit billing details, view other accounts, or access your raw LinkedIn credentials. You can revoke tokens anytime on the API page, disabling access immediately.
       </p>
       <p>
         You should still treat agent access as production access. Use one token per client, rotate tokens when a teammate leaves, and keep the token out of prompts that might be saved in transcripts. If you are testing a new agent, begin with read-heavy tasks such as context checks, lead searches, exact-lead retrieval, and activity review before allowing it to change discovery agents or settings.
@@ -236,7 +236,7 @@ export default function BlogPost() {
         Follow this simple SOP to configure and audit your client setups:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Mint Token:</strong> Go to Settings → AI Agents to generate a workspace token.</li>
+        <li><strong>Mint Token:</strong> Go to the API page to generate a workspace token.</li>
         <li><strong>Select Client Type:</strong> Choose SSE (Server-Sent Events) for editor integrations (Cursor, VS Code) or JSON block for local configs (Claude Code).</li>
         <li><strong>Check Connection:</strong> Run a basic context tool call (e.g., <code>omentir_get_context</code>) to verify authentication.</li>
         <li><strong>Review Limits:</strong> Set campaign discovery agent quotas within daily safety boundaries.</li>

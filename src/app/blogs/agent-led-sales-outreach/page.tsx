@@ -36,7 +36,7 @@ const faqItems = [
   },
   {
     question: "How do I connect my custom sales agent to the Omentir workspace?",
-    answer: "You can generate a secure token in Settings → AI Agents, and use it to connect your agent via the hosted Model Context Protocol (MCP) server or the REST endpoints under /api/agent/v1."
+    answer: "Chat apps such as Claude, ChatGPT and Grok need only the connector URL - they send you to Omentir to sign in and approve, then receive a token automatically. For a custom agent, generate a token on the API page and use it against the hosted Model Context Protocol (MCP) server or the REST endpoints under /api/agent/v1."
   },
   {
     question: "Can my sales agent trigger LinkedIn connection requests autonomously?",
@@ -106,7 +106,7 @@ export default function BlogPost() {
             Integration Guideline: Protect API Tokens
           </h4>
           <p className="text-sm text-zinc-650 leading-relaxed">
-            Mint workspace-scoped tokens under Settings → AI Agents. These tokens restrict agent access to single accounts and prevent them from altering billing or credentials.
+            Mint workspace-scoped tokens on the API page. These tokens restrict agent access to single accounts and prevent them from altering billing or credentials.
           </p>
         </div>
       </div>
