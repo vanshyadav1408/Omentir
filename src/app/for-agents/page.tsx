@@ -80,26 +80,26 @@ const connectSteps: ConnectStep[] = [
   },
   {
     number: "2.",
-    title: "Get your API key",
+    title: "Choose how to connect",
     description:
-      "Open your Omentir API keys page, create an agent key, and copy it. This is the credential your agent uses.",
+      "For a chat app that accepts only a connector URL, add Omentir from the MCP Server page and sign in through OAuth. For a header-capable client, create and copy an agent key on the API page.",
     image: "/get-your-api-key.avif",
     alt: "Getting an Omentir API key for an agent connector",
   },
   {
     number: "3.",
-    title: "Paste the operator prompt",
+    title: "Set up a manual client",
     description:
-      "Copy the prompt below and paste it into your agent as its first message. It tells the agent how to run Omentir and to ask you for your API key before doing anything.",
+      "For a header-capable client, copy the prompt below and paste it into your agent as its first message. It tells the agent how to run Omentir and to ask for the API key before doing anything.",
     copyPrompt: operatorPrompt,
     image: "/agent-paste-prompt.avif",
     alt: "Pasting the Omentir lead-discovery operator prompt into an AI agent",
   },
   {
     number: "4.",
-    title: "Ask your AI to take action",
+    title: "Start with a safe task",
     description:
-      "Paste your API key when it asks, then talk naturally. Ask it to check readiness, find a buyer segment, or summarize newly discovered leads.",
+      "After OAuth connects your chat app or you paste an API key into a manual client, ask it to check readiness, find a buyer segment, or summarize newly discovered leads.",
     image: "/agent-take-action.avif",
     alt: "An AI agent configuring Omentir and reporting discovered leads",
   },
@@ -107,7 +107,7 @@ const connectSteps: ConnectStep[] = [
 
 // Mirrors the live MCP tool list in src/lib/agent-tools.ts; the completeness of
 // this catalog and the tool count below are asserted by
-// tests/agent-api-surface.test.mjs.
+// tests/agent-api-surface.test.ts.
 const toolGroups = [
   {
     group: "Context & product profile",

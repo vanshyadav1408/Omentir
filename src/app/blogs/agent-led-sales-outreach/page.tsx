@@ -40,7 +40,7 @@ const faqItems = [
   },
   {
     question: "Can my sales agent trigger LinkedIn connection requests autonomously?",
-    answer: "An agent can create campaigns and, when configured to do so, activate them. The safer workflow is to create drafts first, review the targeting and copy, then let Omentir send through daily quotas and human-paced queues."
+    answer: "An agent can configure lead discovery, inspect planned outreach, and continue existing conversations. Campaign creation and activation stay in the Omentir app, where a human reviews targeting and copy before Omentir sends through daily quotas and human-paced queues."
   },
   {
     question: "What safety guardrails exist to prevent the agent from making false claims?",
@@ -118,7 +118,7 @@ export default function BlogPost() {
         If your agent does not speak MCP, you can integrate it using standard REST endpoints under <code>/api/agent/v1</code>. The API is documented by an OpenAPI schema, allowing you to feed the endpoints directly into frameworks like LangChain or AutoGPT.
       </p>
       <p>
-        This setup lets you build custom scripts that run in the background. For example, your script can query new leads, run a custom enrichment waterfall, and push the scored results back into Omentir's campaign builder.
+        This setup lets you build custom scripts that run in the background. For example, your script can query new leads, run a custom enrichment waterfall, and use the scored results to inform a human review in Omentir.
       </p>
       <p>
         REST is best when your team wants deterministic control over the workflow. You can decide exactly which endpoint is called, when it is called, and how errors are handled. MCP is better when you want an agent client to discover tools and decide the next safe action from context. Both approaches can be useful; the choice depends on whether you are building a fixed automation or giving an assistant controlled room to reason.
@@ -131,7 +131,7 @@ export default function BlogPost() {
         Designing Focused Toolsets for Outbound Sales Tasks
       </h3>
       <p>
-        To perform lead-discovery tasks, your agent needs access to specific tools. Omentir provides 18 focused tools, including:
+        To perform lead-discovery tasks, your agent needs access to specific tools. Omentir provides 19 focused tools, including:
       </p>
       <p className="rounded bg-zinc-200/50 p-3 font-mono text-sm text-zinc-800">
         - omentir_get_context: Read workspace setup and limits<br />
@@ -140,17 +140,17 @@ export default function BlogPost() {
         - omentir_list_conversations: Track incoming replies and messages
       </p>
       <p>
-        Giving your agent these tools allows it to execute campaigns end-to-end without manual intervention. For detailed setups, read our guide to{" "}
+        Giving your agent these tools lets it configure lead discovery, inspect results, and review existing conversations. Campaign setup remains in Omentir. For detailed setups, read our guide to{" "}
         <Link href="/blogs/mcp-linkedin-outreach" className="text-blue-600 hover:underline">
           MCP LinkedIn outreach workflows
         </Link>
         .
       </p>
       <p>
-        Do not expose every possible action on day one. Start with read tools: context, product profile, agents, campaigns, leads, and conversations. Once the agent reliably summarizes the workspace and spots obvious issues, add draft creation. After that, add state-changing tools like pause, resume, delete, or reply only when you know the human review process can catch mistakes.
+        Do not expose every possible action on day one. Start with read tools: context, product profile, agents, leads, scheduled actions, and conversations. Once the agent reliably summarizes the workspace and spots obvious issues, allow it to configure discovery. Add state-changing tools like pause, resume, delete, or reply only when you know the human review process can catch mistakes.
       </p>
       <p>
-        Good tool design is mostly about verbs. "List," "inspect," "preview," and "draft" are low-risk verbs. "Launch," "resume," "delete," and "reply" are high-risk verbs. Put the low-risk verbs near the beginning of the workflow and require an explicit checkpoint before the high-risk ones.
+        Good tool design is mostly about verbs. "List," "inspect," and "preview" are low-risk verbs. "Create," "resume," "delete," and "reply" are higher-risk verbs. Put the low-risk verbs near the beginning of the workflow and require an explicit checkpoint before the higher-risk ones.
       </p>
 
       <h3 id="human-in-the-loop-checks" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
@@ -160,7 +160,7 @@ export default function BlogPost() {
         Even with advanced LLMs, fully autonomous campaigns carry risks. A slight misinterpretation of a prospect's bio can lead to an awkward pitch that ruins the relationship.
       </p>
       <p>
-        To prevent this, enforce human-in-the-loop validation. Configure your agent to build campaigns as drafts instead of launching them live. This stages the connection notes and follow-ups in your review queue, allowing a human operator to verify the copy before sending. For playbook details, check our guide to{" "}
+        To prevent this, enforce human-in-the-loop validation. Use your agent to identify and explain qualified leads, then set up the campaign in Omentir where a human operator can verify the copy before sending. For playbook details, check our guide to{" "}
         <Link href="/blogs/ai-sdr-linkedin-playbook" className="text-blue-600 hover:underline">
           AI SDR operational workflows
         </Link>
@@ -170,7 +170,7 @@ export default function BlogPost() {
         The review should not be vague. Check the lead fit, the source signal, the first sentence, the offer, and the follow-up path. If the agent says a prospect is a good fit, ask what evidence supports that. If it uses a company event as the hook, make sure the event is visible and current. If it drafts a claim about your product, compare it against the product profile.
       </p>
       <p>
-        A simple approval checklist prevents most bad outbound. "Would I send this from my own LinkedIn account?" is still the best test. If the answer is no, the campaign stays in draft.
+        A simple approval checklist prevents most bad outbound. "Would I send this from my own LinkedIn account?" is still the best test. If the answer is no, do not activate the campaign in Omentir.
       </p>
 
       <h2 id="daily-quotas-pacing" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
@@ -201,12 +201,12 @@ export default function BlogPost() {
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
         <li><strong>Ground Product Profile:</strong> Ensure the product profile contains verified facts, feature lists, and pricing parameters.</li>
         <li><strong>Limit Campaigns:</strong> Set discovery agents to collect leads within your plan boundaries (e.g., 50 leads per day on the Basic tier).</li>
-        <li><strong>Enable Draft Mode:</strong> Force the agent to save campaigns as drafts to ensure human review before sending.</li>
+        <li><strong>Review in Omentir:</strong> Set up and review campaigns in Omentir before activating them.</li>
         <li><strong>Configure Daily Quotas:</strong> Align outbound pacing with LinkedIn safety guidelines.</li>
         <li><strong>Verify Tokens:</strong> Confirm your API token is workspace-scoped and stored securely.</li>
       </ul>
       <p>
-        Add one operating rule: every agent-created campaign needs a written intent. The intent should name the target account type, the buyer role, the signal being used, and the action you want the prospect to take. Without that sentence, nobody can tell whether the agent made a good decision.
+        Add one operating rule: every campaign set up from agent research needs a written intent. The intent should name the target account type, the buyer role, the signal being used, and the action you want the prospect to take. Without that sentence, nobody can tell whether the agent made a good decision.
       </p>
       <p>
         Example: "Target bootstrapped B2B SaaS founders who are hiring sales reps and likely need a cleaner LinkedIn prospecting motion; ask whether they want help turning ICP notes into daily qualified conversations." That intent is specific enough for a human to review and for an agent to use when drafting copy.

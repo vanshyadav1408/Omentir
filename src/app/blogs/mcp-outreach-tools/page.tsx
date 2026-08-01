@@ -113,10 +113,10 @@ export default function BlogPost() {
         Step-by-Step Client Setup for Cursor, Claude, and ChatGPT
       </h2>
       <p>
-        Setting up your client takes only a few minutes. The exact screen names can change as agent products evolve, but every setup needs the same three pieces: the Omentir MCP endpoint, your workspace token, and a supported transport method.
+        Setting up your client takes only a few minutes. The exact screen names can change as agent products evolve, but every setup needs the Omentir MCP endpoint and a Streamable HTTP client. Chat apps complete OAuth after you add the URL; header-capable clients can use a workspace token instead.
       </p>
       <p>
-        Start by creating a fresh token for this use case rather than reusing an old one. Name it after the client, such as "Claude desktop prospecting" or "Cursor campaign QA." That makes later cleanup simple. If you stop using a client, revoke that token without affecting other agent workflows.
+        If your client supports OAuth, add the connector URL and complete the Omentir sign-in and approval flow. Otherwise create a fresh token for this use case rather than reusing an old one. Name it after the client, such as "Claude desktop prospecting" or "Cursor lead research." That makes later cleanup simple. If you stop using a client, revoke that token without affecting other agent workflows.
       </p>
 
       <h3 id="cursor-setup" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
@@ -127,12 +127,12 @@ export default function BlogPost() {
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
         <li><strong>Name:</strong> omentir</li>
-        <li><strong>Type:</strong> SSE</li>
+        <li><strong>Type:</strong> Streamable HTTP</li>
         <li><strong>URL:</strong> https://omentir.com/api/agent/v1/mcp</li>
         <li><strong>Header:</strong> Authorization: Bearer [your_omentir_agent_token]</li>
       </ul>
       <p>
-        Once added, Cursor will discover Omentir's tools automatically, allowing you to ask the IDE agent to build campaigns or check responses directly from your editor.
+        Once added, Cursor will discover Omentir's tools automatically, allowing you to configure lead finders, inspect discovery, and review existing conversations directly from your editor.
       </p>
       <p>
         A good first prompt is deliberately boring: "Call <code>omentir_get_context</code> and summarize whether the workspace is ready for automation." If the agent can read workspace context, authentication is working. If it cannot, fix the token or client transport before asking it to create anything.
@@ -160,32 +160,32 @@ export default function BlogPost() {
         Save the file and restart your CLI session to verify the connection.
       </p>
       <p>
-        Clients that do not support custom authorization headers cannot securely connect to Omentir. Never place an agent token in the endpoint URL, shared docs, screenshots, or public issue trackers.
+        Clients that do not support custom authorization headers can use the OAuth flow instead. Never place an agent token in the endpoint URL, shared docs, screenshots, or public issue trackers.
       </p>
 
       <h2 id="mcp-tool-catalog" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
         Deconstructing the Omentir MCP Tool Catalog
       </h2>
       <p>
-        The Omentir MCP server provides 25 tools that cover the entire outbound workflow. These tools are grouped into five functional categories:
+        The Omentir MCP server provides 19 tools for lead discovery, workspace control, and existing conversations. These tools are grouped into five functional categories:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
         <li><strong>Context & Profile:</strong> Tools like <code>omentir_get_context</code> and <code>omentir_get_product_profile</code> that read your target buyer parameters and feature details.</li>
         <li><strong>Lead Discovery:</strong> Tools like <code>omentir_create_agent</code> and <code>omentir_list_leads</code> that search LinkedIn daily and score fit profiles.</li>
         <li><strong>Lead inspection:</strong> <code>omentir_get_lead</code> retrieves one exact workspace-owned lead with qualification context.</li>
-        <li><strong>Lifecycle Management:</strong> Tools to edit, pause, resume, or remove discovery agents and campaigns, and to tune outreach settings like daily sending limits.</li>
-        <li><strong>Replies:</strong> Tools like <code>omentir_list_conversations</code> and <code>omentir_reply_to_lead</code> that monitor your inbox and draft responses.</li>
+        <li><strong>Lifecycle Management:</strong> Tools to edit, pause, resume, or remove discovery agents, and to tune outreach settings like daily sending limits.</li>
+        <li><strong>Replies:</strong> Tools like <code>omentir_list_conversations</code> and <code>omentir_reply_to_lead</code> that inspect existing conversations and send an approved reply.</li>
       </ul>
       <p>
-        Think of these categories as a workflow, not a menu. A sensible agent run begins with context, checks the product profile, inspects existing agents or campaigns, then decides whether to create something new. Jumping straight to campaign creation is usually a bad prompt because the agent has not yet learned the workspace constraints.
+        Think of these categories as a workflow, not a menu. A sensible agent run begins with context, checks the product profile and existing lead finders, then decides whether to create a finder. The public MCP surface does not create or manage campaigns.
       </p>
       <p>
         A strong operator prompt might be: "Read the workspace context and product profile. List active lead groups. If there is no group for early-stage SaaS founders selling to sales teams, propose a draft discovery agent and explain the targeting assumptions before creating it." That prompt keeps the agent anchored to evidence and asks for assumptions before action.
       </p>
       <p>
-        For detailed campaign configuration steps, read our guide to{" "}
+        For a lead-discovery workflow from brief through outreach handoff, read our guide to{" "}
         <Link href="/blogs/mcp-linkedin-outreach" className="text-blue-600 hover:underline">
-          MCP B2B campaign design
+          MCP LinkedIn lead discovery
         </Link>
         .
       </p>
@@ -223,7 +223,7 @@ export default function BlogPost() {
         To protect your account, configure campaigns around conservative daily quotas, natural sending windows, and reviewable drafts. Omentir manages these safety protocols automatically, coordinating outgoing messages through secure, human-paced queues.
       </p>
       <p>
-        MCP does not change that philosophy. An agent can help build and inspect the outbound system, but it should not turn LinkedIn into a bulk sender. The best use of agent tooling is to improve lead fit, message relevance, and response handling while keeping the actual delivery pace human.
+        MCP does not change that philosophy. An agent can configure and inspect lead discovery, but it should not turn LinkedIn into a bulk sender. The best use of agent tooling is to improve lead fit, inspect planned sends, and handle existing conversations while keeping delivery paced by Omentir.
       </p>
       <p>
         Before trusting a shortlist, confirm the workspace has a connected LinkedIn account, the discovery agent is active, its targeting is intentional, and recent activity shows a completed run. If the first lead list is empty, inspect activity rather than claiming discovery is complete.
@@ -236,10 +236,10 @@ export default function BlogPost() {
         Follow this simple SOP to configure and audit your client setups:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Mint Token:</strong> Go to the API page to generate a workspace token.</li>
-        <li><strong>Select Client Type:</strong> Choose SSE (Server-Sent Events) for editor integrations (Cursor, VS Code) or JSON block for local configs (Claude Code).</li>
+        <li><strong>Choose authentication:</strong> Use the connector URL and OAuth in chat apps, or mint a workspace token on the API page for a header-capable client.</li>
+        <li><strong>Select transport:</strong> Use Streamable HTTP for the MCP endpoint.</li>
         <li><strong>Check Connection:</strong> Run a basic context tool call (e.g., <code>omentir_get_context</code>) to verify authentication.</li>
-        <li><strong>Review Limits:</strong> Set campaign discovery agent quotas within daily safety boundaries.</li>
+        <li><strong>Review Limits:</strong> Check daily safety boundaries before changing discovery or outreach settings.</li>
         <li><strong>Monitor Logs:</strong> Check Omentir logs to confirm that outgoing messages are sent using natural pacing.</li>
       </ul>
       <p>

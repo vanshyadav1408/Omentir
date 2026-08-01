@@ -81,7 +81,7 @@ const setupSteps: SetupStep[] = [
 
 // Mirrors the live MCP tool list in src/lib/agent-tools.ts; the completeness of
 // this catalog and the tool count below are asserted by
-// tests/agent-api-surface.test.mjs.
+// tests/agent-api-surface.test.ts.
 const toolGroups = [
   {
     group: "Context & product profile",
@@ -350,8 +350,8 @@ export default function McpServerPage() {
               Plug your agent into Omentir
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-base leading-7 text-white/90">
-              Create a workspace, mint an agent token, and your MCP client is
-              finding buyers and tracking their outreach in minutes.
+              Create a workspace, add a connector or mint an agent token, and your
+              MCP client is finding buyers and tracking their outreach in minutes.
             </p>
             <Link
               href="/signup"

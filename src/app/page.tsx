@@ -433,6 +433,11 @@ const faqItems = [
       "Omentir is an AI sales agent for LinkedIn. It finds buyers that match your ideal customer profile, sends personalized connection requests and messages from your own LinkedIn account, follows up automatically, and collects every reply in one unified inbox sorted by intent.",
   },
   {
+    question: "What exactly do I get?",
+    answer:
+      "Everything you need to run LinkedIn outbound from one place: AI agents that find and score leads against your ideal customer profile, campaigns that send personalized connection requests, messages, and follow-ups from your account, message drafts you can edit or approve, a unified inbox for every reply, and daily sending limits that help protect your account.",
+  },
+  {
     question: "Is it safe for my LinkedIn account?",
     answer:
       "Yes. Omentir enforces daily invite and message limits automatically and sends everything from your own profile at a human pace, so your account stays within LinkedIn's safety boundaries without you having to manage quotas yourself.",
@@ -461,6 +466,11 @@ const faqItems = [
     question: "How much does Omentir cost?",
     answer:
       "Basic is $29/month and includes 1 LinkedIn account, 1 AI agent, 1 campaign, and 50 leads per day. The Startup plan is $59/month and includes unlimited AI agents, unlimited leads, and unlimited campaigns on one LinkedIn account, plus API access. Teams that need multiple LinkedIn accounts, managed campaigns, or SSO can book a demo for Enterprise.",
+  },
+  {
+    question: "Is Omentir worth paying for?",
+    answer:
+      "Do the math. Basic starts at $29/month. If one customer is worth more than that to your business, a single conversion can cover the cost. Omentir is for founders who want a consistent LinkedIn outbound pipeline without paying separately for lead databases, sequencing tools, and an SDR team.",
   },
   {
     question: "How long does it take to get started?",

@@ -152,7 +152,7 @@ export async function GET() {
         },
         post: {
           operationId: "callMcpServer",
-          summary: "Use JSON-RPC methods initialize, tools/list, and tools/call.",
+          summary: "Use JSON-RPC methods initialize, notifications/initialized, ping, tools/list, and tools/call.",
           requestBody: {
             required: true,
             content: {
@@ -163,7 +163,15 @@ export async function GET() {
                   properties: {
                     jsonrpc: { const: "2.0" },
                     id: { oneOf: [{ type: "string" }, { type: "number" }, { type: "null" }] },
-                    method: { enum: ["initialize", "tools/list", "tools/call"] },
+                    method: {
+                      enum: [
+                        "initialize",
+                        "notifications/initialized",
+                        "ping",
+                        "tools/list",
+                        "tools/call",
+                      ],
+                    },
                     params: { type: "object" },
                   },
                 },

@@ -64,7 +64,7 @@ export default function BlogPost() {
         Linear outreach is easy to configure and easy to break. A rep imports a list, writes a few messages, sets delays, and hopes each prospect follows the expected path. But real buyers do not move through neat sequence steps. They change jobs, ask questions, refer you to someone else, object on timing, or reply with one sentence that does not fit the template.
       </p>
       <p>
-        Agentic outreach flows are useful because they treat outbound as a loop, not a script. The agent reads current context, decides the next action, drafts or updates campaign steps, checks safety rules, and waits for new state before continuing. That loop can produce better work than a static sequence, but only when the boundaries are explicit.
+        Agentic outreach flows are useful because they treat outbound as a loop, not a script. The agent reads current context, configures lead discovery, inspects scheduled outreach, checks safety rules, and waits for new state before continuing. That loop can produce better work than a static sequence, but only when the boundaries are explicit.
       </p>
       <p>
         <a href="https://github.com/openclaw/openclaw" target="_blank" rel="noopener" className="text-blue-600 hover:underline">OpenClaw</a> is one way to think about this operator layer: a system that can call tools, reason over state, and move through nodes. The important design question is not "can the agent act?" It is "what is the agent allowed to decide, and what must stay behind a review gate?"
@@ -83,9 +83,9 @@ export default function BlogPost() {
         <li><strong>Context Node:</strong> The agent reads your product profile and workspace criteria to establish a baseline of verified product facts.</li>
         <li><strong>Discovery Node:</strong> The agent runs daily searches on <a href="https://www.linkedin.com" target="_blank" rel="noopener" className="text-blue-600 hover:underline">LinkedIn</a> to find prospects matching your criteria.</li>
         <li><strong>Scoring Node:</strong> The agent evaluates company website content and profile details, assigning a fit score with documented evidence.</li>
-        <li><strong>Drafting Node:</strong> The agent generates customized connection notes and follow-up templates matching the prospect's active intent signals.</li>
-        <li><strong>Approval Checkpoint:</strong> The loop pauses and stages the drafted campaign inside your review queue, waiting for a human operator's validation.</li>
-        <li><strong>Execution Node:</strong> Approved campaign actions are routed through the outreach system's pacing and quota controls.</li>
+        <li><strong>Review Node:</strong> The agent explains fit evidence and the planned schedule for qualified leads.</li>
+        <li><strong>Approval Checkpoint:</strong> A human sets up and reviews the campaign in Omentir before activation.</li>
+        <li><strong>Execution Node:</strong> Omentir routes approved campaign actions through pacing and quota controls.</li>
         <li><strong>Reply Node:</strong> New replies are classified and routed to the right next step instead of continuing the old sequence.</li>
       </ul>
       <p>
@@ -102,7 +102,7 @@ export default function BlogPost() {
             OpenClaw Flow Rule
           </h4>
           <p className="text-sm text-zinc-650 leading-relaxed">
-            Never configure the drafting node to activate campaigns live without an approval checkpoint. Forcing the agent to save campaigns as drafts prevents hallucinations and keeps your brand messaging clean.
+            Never let a connector activate campaigns live. Keep campaign setup and approval in Omentir, while the agent focuses on discovery evidence, scheduled-action visibility, and existing conversations.
           </p>
         </div>
       </div>
@@ -114,7 +114,7 @@ export default function BlogPost() {
         To build a campaign flow, define target parameters and inputs for each node. The agent should not receive a vague instruction like "find good leads and message them." It should receive structured context: ICP, exclusions, product facts, allowed claims, campaign goal, sending account, review preference, and safety constraints.
       </p>
       <p>
-        For example, the discovery node should know which titles qualify, which company types are excluded, which geography matters, and which buying signals increase priority. The campaign node should know whether to create a draft or an active campaign. The reply node should know which replies are safe to draft and which require a human.
+        For example, the discovery node should know which titles qualify, which company types are excluded, which geography matters, and which buying signals increase priority. The campaign setup stays in Omentir. The reply node should know which replies require a human before it sends an approved response to an existing conversation.
       </p>
       <p>
         Use JSON schemas or tightly structured tool inputs to pass data between nodes. This is less glamorous than a free-form prompt, but it reduces ambiguity. A node that outputs `signal_source`, `signal_confidence`, and `safe_message_angle` gives the drafting node much better material than a node that outputs "good lead."
@@ -143,13 +143,13 @@ export default function BlogPost() {
         Establishing the Campaign Draft Review Checkpoint
       </h3>
       <p>
-        Once the agent drafts the connection note and follow-up sequence, the loop needs a review checkpoint. Some teams may allow active campaigns for low-risk, well-tested workflows. New workflows, new ICPs, and high-value accounts should start in draft mode.
+        Once the agent identifies qualified leads, the workflow needs a review checkpoint. A human sets up the connection note and follow-up sequence in Omentir, where new ICPs and high-value accounts can be reviewed before activation.
       </p>
       <p>
         The reviewer should see the source evidence, prospect context, product claim, and draft message together. If the evidence does not support the message, reject the draft and fix the upstream rule. If the lead is poor-fit, reject the lead rather than rewriting the copy.
       </p>
       <p>
-        Omentir supports draft and active campaign workflows through its campaign tools, giving agents a controlled way to stage or launch outreach. For details on comparing agent tools, check out our guide on{" "}
+        Omentir's public API and MCP tools do not create or launch campaigns. They give agents controlled discovery, schedule visibility, and existing-conversation access. For details on comparing agent tools, check out our guide on{" "}
         <Link href="/blogs/openclaw-vs-chatgpt-sales" className="text-blue-600 hover:underline">
           OpenClaw and ChatGPT sales workflows
         </Link>
@@ -196,13 +196,13 @@ export default function BlogPost() {
         <li><strong>Verify Context Node:</strong> Ensure the product profile matches your latest pricing and features.</li>
         <li><strong>Map Variables:</strong> Confirm that dynamic placeholders point to sourceable, current company updates.</li>
         <li><strong>Set Rejection Paths:</strong> Define what happens when evidence is weak, product context is missing, or the lead is poor-fit.</li>
-        <li><strong>Enable Drafts:</strong> Start new workflows in drafts for human approval before allowing active campaigns.</li>
+        <li><strong>Review in Omentir:</strong> Set up and approve campaigns in Omentir before activation.</li>
         <li><strong>Audit Pacing:</strong> Confirm quotas, campaign overlap, and reply stop conditions.</li>
         <li><strong>Test Reply Branches:</strong> Simulate interested, objection, referral, not-now, and negative replies.</li>
         <li><strong>Test Links:</strong> Check that calendar and video links resolve correctly.</li>
       </ul>
       <p>
-        Run a dry preview before letting the loop touch real prospects. Inspect which leads it would select, what evidence it would cite, what campaign it would create, and which replies it would escalate. If the preview is messy, the live flow will be worse.
+        Run a discovery review before letting the loop touch real prospects. Inspect which leads it selected, what evidence it cited, what Omentir has scheduled, and which replies it would escalate. If the review is messy, tighten the finder before setting up outreach.
       </p>
       <p>
         Keep the preview output as an audit trail so future mistakes can be traced back to a specific node, rule, and evidence source.
@@ -218,7 +218,7 @@ export default function BlogPost() {
         The mistake is giving the agent too much freedom too early. Start with narrow ICP rules, draft checkpoints, dry runs, and conservative pacing. Then expand only after the loop proves it can reject bad leads, write grounded messages, and route replies correctly.
       </p>
       <p>
-        Omentir gives agents the execution rails: discovery context, campaign tools, paced delivery, and reply conversations. Use those rails so your agent loop behaves like a careful sales operator, not a fast sequencer with a larger prompt.
+        Omentir gives agents the execution rails: discovery context, planned-send visibility, paced delivery, and existing reply conversations. Use those rails so your agent loop behaves like a careful sales operator, not a fast sequencer with a larger prompt.
       </p>
 
       <h2

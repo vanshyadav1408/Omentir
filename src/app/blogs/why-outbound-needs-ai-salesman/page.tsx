@@ -43,7 +43,7 @@ const faqItems = [
   },
   {
     question: "What is the hosted MCP server and how do AI developers use it?",
-    answer: "Omentir ships a Model Context Protocol server that lets engineering teams connect custom agents (like Claude or ChatGPT) directly to their LinkedIn workspaces to manage outreach campaigns programmatically."
+    answer: "Omentir ships a Model Context Protocol server that lets engineering teams connect custom agents such as Claude or ChatGPT to their workspaces for lead discovery, lead inspection, scheduled-outreach visibility, and existing reply conversations."
   }
 ] as const;
 

@@ -42,7 +42,7 @@ const faqItems = [
   {
     question: "Can MCP make LinkedIn outreach fully autonomous?",
     answer:
-      "Technically it can expose actions, but the safer workflow keeps campaign creation draft-first and requires human activation before messages send from a real LinkedIn account.",
+      "It can configure lead discovery, inspect scheduled outreach, and continue existing conversations. Campaign creation and activation stay in the Omentir app, and every reply should be explicitly approved before it is sent.",
   },
   {
     question: "Which agent should I use for MCP LinkedIn outreach?",
@@ -52,7 +52,7 @@ const faqItems = [
   {
     question: "How do I know if an MCP outreach setup is safe?",
     answer:
-      "It should separate read actions from write actions, default to drafts, expose dry-run checks, respect daily quotas, and make every lead recommendation auditable before outreach begins.",
+      "It should separate read actions from writes, respect daily quotas, make every lead recommendation auditable, and keep campaign setup in the Omentir app before outreach begins.",
   },
 ] as const;
 
@@ -94,7 +94,7 @@ export default function BlogPost() {
         MCP gives the agent a tool menu. A well-designed server tells the agent what it can do, what inputs each action needs, and what result to expect. That turns vague instructions into repeatable operations.
       </p>
       <p>
-        For LinkedIn outreach, the important shift is from "write me a message" to "run the next approved step of this outbound workflow." That workflow includes discovery, qualification, draft creation, safety checks, activation, follow-up, and reply review.
+        For LinkedIn outreach, the important shift is from "write me a message" to "use the next approved discovery step." The public MCP workflow covers discovery, qualification, inspection of planned outreach, and review of existing replies. Campaign setup remains in the Omentir app.
       </p>
       <p>
         Agents like{" "}
@@ -120,35 +120,35 @@ export default function BlogPost() {
         The Safe Tool Contract
       </h2>
       <p>
-        A sales MCP server should expose tools in layers. The first layer reads context. The second prepares work. The third changes live state. The safest default is to let agents read and draft freely, then require explicit approval for anything that starts sending.
+        A sales MCP server should expose tools in layers. The first layer reads context. The second configures discovery. The third changes limited live state. The safest default is to let agents inspect freely, then require explicit approval before they send a reply.
       </p>
       <p>
-        This layered design makes mistakes recoverable. If an agent misreads your ICP, it might produce a poor shortlist, but it has not messaged anyone yet. If it writes a bad draft, you can edit or reject the draft before it touches your LinkedIn account.
+        This layered design makes mistakes recoverable. If an agent misreads your ICP, it might produce a poor shortlist, but it has not messaged anyone yet. Outreach sequences are configured in the Omentir app, where the human reviews them before activation.
       </p>
       <p>
         Tool outputs matter as much as tool names. A lead-listing tool should not return only names and profile URLs. It should return fit reasons, source group, confidence, missing data, and the next recommended action so the agent can explain its work.
       </p>
       <p>
-        The same applies to campaign tools. A draft campaign result should summarize which leads were included, which message steps were created, whether any lead lacked enough context, and what must be reviewed before activation.
+        The same applies to the scheduled-action view. It should show the queued lead, the exact planned time, the message or note, and any blocking reason so the user can review what Omentir will do.
       </p>
       <p>
         When a tool returns structured evidence, the agent becomes easier to supervise. You can ask "why did you recommend these ten leads?" and get an answer grounded in returned fields rather than vague model memory.
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
         <li>
-          <strong>Context tools:</strong> read product profile, workspace readiness, connected LinkedIn status, existing campaigns, and lead groups.
+          <strong>Context tools:</strong> read product profile, workspace readiness, connected LinkedIn status, lead groups, and planned outreach.
         </li>
         <li>
           <strong>Discovery tools:</strong> create an ICP discovery agent, list leads, list groups, and inspect why each lead matched.
         </li>
         <li>
-          <strong>Drafting tools:</strong> create draft campaigns, update campaign steps, and prepare outreach copy for review.
+          <strong>Configuration tools:</strong> update product context, discovery agents, and workspace safety settings.
         </li>
         <li>
-          <strong>Safety tools:</strong> run dry checks, show quotas, identify missing setup, and explain what would happen before activation.
+          <strong>Safety tools:</strong> show quotas, identify missing setup, and inspect committed send times before activation.
         </li>
         <li>
-          <strong>Conversation tools:</strong> list reply conversations and prepare suggested replies without forcing a live response.
+          <strong>Conversation tools:</strong> list reply conversations and send an explicitly approved reply to an existing thread.
         </li>
       </ul>
 
@@ -156,10 +156,10 @@ export default function BlogPost() {
         <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
         <div className="pl-4">
           <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-            Default to Drafts
+            Keep campaign setup in Omentir
           </h4>
           <p className="text-sm text-zinc-650 leading-relaxed">
-            A good MCP outreach workflow makes the agent prove quality before it earns sending authority. Draft-first is not slower; it prevents one bad instruction from becoming a visible campaign.
+            A good MCP workflow makes the agent prove lead quality before it earns a state-changing action. Omentir keeps campaign setup in its app, which prevents one chat instruction from becoming a visible campaign.
           </p>
         </div>
       </div>
@@ -178,7 +178,7 @@ export default function BlogPost() {
         Once the brief is clear, the agent creates or updates a discovery process. It should not just return names; it should return people grouped by fit, signal, and risk. The output should be easy for a founder to approve in minutes.
       </p>
       <p>
-        After approval, the agent can create a draft campaign. The draft should include connection notes, first messages, follow-ups, and the logic for when each step happens. The human reviews the list and copy, then activates only if the campaign is ready.
+        After approval, set up the outreach sequence in the Omentir app. The human reviews the list and copy there, then activates it only if the campaign is ready. MCP can then inspect its planned sends rather than guessing when outreach will happen.
       </p>
       <p>
         Replies complete the loop. The agent should monitor conversations, identify interested buyers, surface objections, and tell you which messages produced the best signals. That feedback becomes the next ICP adjustment.
@@ -186,10 +186,10 @@ export default function BlogPost() {
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
         <li><strong>Brief:</strong> define buyer, pain, disqualifiers, and success criteria.</li>
         <li><strong>Discover:</strong> find candidates and score them against the brief.</li>
-        <li><strong>Approve:</strong> review the shortlist before drafting outreach.</li>
-        <li><strong>Draft:</strong> create messages grounded in lead context and product profile.</li>
-        <li><strong>Dry-run:</strong> check readiness, quotas, and campaign state.</li>
-        <li><strong>Activate:</strong> send only after human approval.</li>
+        <li><strong>Approve:</strong> review the shortlist before setting up outreach.</li>
+        <li><strong>Set up:</strong> create and review the outreach sequence in Omentir.</li>
+        <li><strong>Inspect:</strong> use scheduled actions to check committed send times and blockers.</li>
+        <li><strong>Activate:</strong> send only after human approval in Omentir.</li>
         <li><strong>Review:</strong> use replies to improve the next batch.</li>
       </ul>
 
@@ -205,19 +205,19 @@ export default function BlogPost() {
       </p>
       <div className="my-6 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
         <p className="font-mono text-sm leading-7 text-zinc-800">
-          Read my Omentir workspace context and product profile. Create a discovery plan for [buyer type] at [company type]. Find or prepare 25 candidate leads, score them against the ICP, and return the top 10 with fit reason, signal, risk, and recommended next action. Do not create a campaign until I approve the list.
+          Read my Omentir workspace context and product profile. Create a discovery plan for [buyer type] at [company type]. Find or prepare 25 candidate leads, score them against the ICP, and return the top 10 with fit reason, signal, risk, and recommended next action. Do not change any discovery settings until I approve the plan.
         </p>
       </div>
       <p>
-        Once you approve the list, use a second prompt. That keeps lead quality and copy quality separate.
+        Once you approve the list and set up outreach in Omentir, use a second prompt to inspect what is scheduled.
       </p>
       <div className="my-6 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
         <p className="font-mono text-sm leading-7 text-zinc-800">
-          Create a draft LinkedIn campaign for the approved leads only. Use the product profile and each lead's strongest signal. Keep connection notes brief, first messages conversational, and follow-ups human-paced. Run a dry check and summarize anything that would block activation.
+          List the scheduled actions for the approved lead group. Summarize each planned time, the lead, and any blocking reason. Do not send a reply or change settings without showing me the exact action first.
         </p>
       </div>
       <p>
-        The language is plain, but it forces the right order: read context, find leads, score evidence, wait for approval, draft, dry-run, then summarize blockers.
+        The language is plain, but it forces the right order: read context, find leads, score evidence, wait for approval, set up outreach in Omentir, then inspect the committed schedule.
       </p>
 
       <h3 id="bad-prompts-to-avoid" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
