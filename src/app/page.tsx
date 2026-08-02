@@ -465,12 +465,12 @@ const faqItems = [
   {
     question: "How much does Omentir cost?",
     answer:
-      "Basic is $29/month and includes 1 LinkedIn account, 1 AI agent, 1 campaign, and 50 leads per day. The Startup plan is $59/month and includes unlimited AI agents, unlimited leads, and unlimited campaigns on one LinkedIn account, plus API access. Teams that need multiple LinkedIn accounts, managed campaigns, or SSO can book a demo for Enterprise.",
+      "There are two plans and they include exactly the same thing: unlimited AI agents, unlimited leads, unlimited campaigns, and API access on one LinkedIn account. Monthly is $29/month, cancel any time. Lifetime is a single $99 payment with no renewals, ever.",
   },
   {
     question: "Is Omentir worth paying for?",
     answer:
-      "Do the math. Basic starts at $29/month. If one customer is worth more than that to your business, a single conversion can cover the cost. Omentir is for founders who want a consistent LinkedIn outbound pipeline without paying separately for lead databases, sequencing tools, and an SDR team.",
+      "Do the math. Omentir starts at $29/month, or $99 once for lifetime access. If one customer is worth more than that to your business, a single conversion can cover the cost. Omentir is for founders who want a consistent LinkedIn outbound pipeline without paying separately for lead databases, sequencing tools, and an SDR team.",
   },
   {
     question: "How long does it take to get started?",
@@ -696,13 +696,13 @@ export default function Home() {
             <span className="text-gradient-brand">Simple pricing</span> for everyone
           </h2>
           <p className="mt-3 text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)] md:mt-5 md:text-base md:leading-8">
-            One monthly startup plan to get moving, with custom enterprise
-            support when your team needs more scale.
+            One plan with everything in it. Pay monthly, or pay once and keep it
+            for life.
           </p>
         </Reveal>
 
         <Reveal delay={120}>
-          <PlanAwarePricingCards className="mx-auto mt-8 max-w-7xl md:mt-12" />
+          <PlanAwarePricingCards className="mx-auto mt-8 max-w-4xl md:mt-12" />
         </Reveal>
       </section>
 

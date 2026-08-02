@@ -23,6 +23,8 @@ export async function GET() {
     return NextResponse.json({ plan: null });
   }
 
+  // Only plans with a card on the pricing page can be marked. Legacy Startup
+  // and Enterprise workspaces report null and see the default CTAs.
   const plan = workspace.billing?.plan;
-  return NextResponse.json({ plan: plan === "solo" || plan === "startup" ? plan : null });
+  return NextResponse.json({ plan: plan === "solo" || plan === "lifetime" ? plan : null });
 }

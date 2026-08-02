@@ -25,11 +25,12 @@ function BillingMessage({ status }: { status?: string }) {
   if (message === "default") {
     return (
       <>
-        You need an active subscription to use Omentir.
+        You need an active plan to use Omentir.
         <br />
-        Start with{" "}
-        <span className="font-medium text-orange-500">Basic at $29/month</span>
-        .
+        Start at{" "}
+        <span className="font-medium text-orange-500">$29/month</span>, or pay{" "}
+        <span className="font-medium text-orange-500">$99 once</span> for
+        lifetime access.
       </>
     );
   }
@@ -53,7 +54,7 @@ export default function StepUpgrade({ status }: { status?: string }) {
       </div>
 
       <div className="w-full text-left">
-        <PricingCards className="mx-auto mt-10 w-full max-w-7xl pb-12 sm:pb-[3.75rem]" />
+        <PricingCards className="mx-auto mt-10 w-full max-w-4xl pb-12 sm:pb-[3.75rem]" />
       </div>
     </>
   );

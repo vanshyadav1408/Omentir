@@ -15,7 +15,7 @@ function CheckIcon() {
 // viewer's current plan without duplicating plan data.
 function planKeyFromHref(href: string) {
   if (href.includes("plan=solo")) return "solo";
-  if (href.includes("plan=startup")) return "startup";
+  if (href.includes("plan=lifetime")) return "lifetime";
   return null;
 }
 
@@ -24,19 +24,17 @@ export default function PricingCards({
   currentPlan,
 }: {
   className?: string;
-  currentPlan?: "solo" | "startup";
+  currentPlan?: "solo" | "lifetime";
 }) {
   return (
-    <div className={`grid w-full grid-cols-1 items-stretch gap-4 md:gap-6 lg:grid-cols-3 xl:gap-8 ${className}`.trim()}>
+    <div className={`grid w-full grid-cols-1 items-stretch gap-4 md:gap-6 lg:grid-cols-2 xl:gap-8 ${className}`.trim()}>
       {plans.map((plan) => {
         const planKey = planKeyFromHref(plan.href);
         const isCurrent = Boolean(currentPlan) && planKey === currentPlan;
-        const cta =
-          currentPlan === "solo" && planKey === "startup"
-            ? "Upgrade"
-            : currentPlan === "startup" && planKey === "solo"
-              ? "Downgrade to Basic Plan"
-              : plan.cta;
+        // A lifetime owner already has the monthly feature set outright, so the
+        // monthly card must never offer them a second, redundant subscription.
+        const isCoveredByLifetime = currentPlan === "lifetime" && planKey === "solo";
+        const cta = currentPlan === "solo" && planKey === "lifetime" ? "Switch to Lifetime" : plan.cta;
         const ctaClass = `m3-btn w-full h-11 cursor-pointer text-sm ${
           plan.featured
             ? "m3-btn-filled-secondary"
@@ -95,9 +93,9 @@ export default function PricingCards({
               </ul>
 
               <div className="mt-auto pt-8">
-                {isCurrent ? (
+                {isCurrent || isCoveredByLifetime ? (
                   <span className="m3-btn m3-btn-outlined h-11 w-full cursor-default border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface-container-high)] text-sm text-[var(--md-sys-color-on-surface-variant)]">
-                    Your current plan
+                    {isCurrent ? "Your current plan" : "Included in Lifetime"}
                   </span>
                 ) : plan.href.startsWith("http") ? (
                   <a href={plan.href} target="_blank" rel="noopener noreferrer" className={ctaClass}>

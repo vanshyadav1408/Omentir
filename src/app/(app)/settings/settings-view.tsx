@@ -384,8 +384,21 @@ export default function SettingsView({
   const [notifEmail, setNotifEmail] = useState(workspace.notificationEmail || user.email);
   const plan = workspace.billing?.plan || "solo";
   const planName =
-    plan === "startup" ? "Startup" : plan === "enterprise" ? "Enterprise" : "Basic";
-  const planPrice = plan === "startup" ? "$59/month" : plan === "enterprise" ? "Custom" : "$29/month";
+    plan === "lifetime"
+      ? "Lifetime"
+      : plan === "startup"
+        ? "Startup"
+        : plan === "enterprise"
+          ? "Enterprise"
+          : "Monthly";
+  const planPrice =
+    plan === "lifetime"
+      ? "$99"
+      : plan === "startup"
+        ? "$59/month"
+        : plan === "enterprise"
+          ? "Custom"
+          : "$29/month";
   // Same ceilings as plan-limits enforcement. Local/self-hosted is unlimited.
   const linkedInAccountCap = localMode
     ? Number.POSITIVE_INFINITY
@@ -763,12 +776,20 @@ export default function SettingsView({
                         </span>
                       </div>
                       <p className="mt-1 text-[13px] font-medium text-zinc-700">
-                        Renews on{" "}
-                        {formatZonedDate(
-                          workspace.billing?.currentPeriodEnd,
-                          timeZone,
-                          { month: "long", day: "numeric", year: "numeric" },
-                          "Jun 2, 2025",
+                        {plan === "lifetime" ? (
+                          // A one-time purchase carries no renewal date, so the
+                          // date formatter would fall back to a placeholder.
+                          "Lifetime access. No renewal."
+                        ) : (
+                          <>
+                            Renews on{" "}
+                            {formatZonedDate(
+                              workspace.billing?.currentPeriodEnd,
+                              timeZone,
+                              { month: "long", day: "numeric", year: "numeric" },
+                              "Jun 2, 2025",
+                            )}
+                          </>
                         )}
                       </p>
                     </div>

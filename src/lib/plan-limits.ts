@@ -22,6 +22,8 @@ const unlimitedLimits: PlanLimits = {
  * Does not apply self-hosted/local overrides. Call planLimits() at runtime.
  */
 export function commercialPlanLimits(plan: PlanId | undefined): PlanLimits {
+  // Enterprise is hidden from the pricing page but still honoured for any
+  // workspace already on it.
   if (plan === "enterprise") {
     return {
       linkedInAccounts: Number.POSITIVE_INFINITY,
@@ -31,22 +33,28 @@ export function commercialPlanLimits(plan: PlanId | undefined): PlanLimits {
     };
   }
 
-  // Startup ($59): one LinkedIn account, unlimited agents / campaigns / leads.
-  if (plan === "startup") {
-    return {
-      linkedInAccounts: 1,
-      agents: Number.POSITIVE_INFINITY,
-      campaigns: Number.POSITIVE_INFINITY,
-      dailyDiscoveredLeads: Number.POSITIVE_INFINITY,
-    };
-  }
-
-  // Basic / solo ($29) and any unknown plan fail closed to the tightest tier.
+  // Every purchasable plan now shares one ceiling: a single LinkedIn account
+  // with everything else uncapped. Monthly ($29), Lifetime ($99 once), and the
+  // legacy Startup ($59) subscribers all land here, so this is both the top of
+  // the self-serve range and the fail-closed default for an unknown plan.
+  //
+  // The old Basic ceiling below is retired, not grandfathered: the $59 feature
+  // set moved down to $29 for existing subscribers as well as new ones. Kept
+  // commented for a future re-tiering rather than deleted.
+  //
+  // if (plan === "solo") {
+  //   return {
+  //     linkedInAccounts: 1,
+  //     agents: 1,
+  //     campaigns: 1,
+  //     dailyDiscoveredLeads: 50,
+  //   };
+  // }
   return {
     linkedInAccounts: 1,
-    agents: 1,
-    campaigns: 1,
-    dailyDiscoveredLeads: 50,
+    agents: Number.POSITIVE_INFINITY,
+    campaigns: Number.POSITIVE_INFINITY,
+    dailyDiscoveredLeads: Number.POSITIVE_INFINITY,
   };
 }
 
@@ -56,10 +64,16 @@ export function planLimits(plan: PlanId | undefined): PlanLimits {
   return commercialPlanLimits(plan);
 }
 
-/** API keys, MCP, and REST agent API are Startup+ only. */
+/**
+ * API keys, MCP, and REST agent API. Included on every paid plan since the
+ * Startup feature set moved down to the $29 tier; an unsubscribed workspace
+ * (undefined plan) still gets nothing.
+ */
 export function planHasApiAccess(plan: PlanId | undefined) {
   if (isLocalMode()) return true;
-  return plan === "startup" || plan === "enterprise";
+  return (
+    plan === "solo" || plan === "lifetime" || plan === "startup" || plan === "enterprise"
+  );
 }
 
 export function formatPlanLimit(limit: number) {

@@ -14,7 +14,7 @@ import {
 export const metadata = createPageMetadata({
   title: "Pricing - Omentir",
   description:
-    "See Omentir pricing for founders, solo operators, small teams, and enterprise sales teams running LinkedIn outbound with AI.",
+    "Omentir pricing for founders and solo operators running LinkedIn outbound with AI: $29 per month, or $99 once for lifetime access.",
   path: "/pricing",
   keywords: ["Omentir pricing", "LinkedIn outreach pricing", "AI sales software pricing"],
 });
@@ -23,22 +23,17 @@ const faqItems = [
   {
     question: "Which Omentir plan should I start with?",
     answer:
-      "Start with Basic if you are a solo founder running one LinkedIn account, one agent, and one campaign. Choose Startup when you want unlimited agents, unlimited leads, and unlimited campaigns on one LinkedIn account.",
+      "Both plans include exactly the same features, so it is only a billing choice. Pick Monthly at $29/month if you want to stay flexible and cancel any time. Pick Lifetime if you already know Omentir is part of your stack: one $99 payment covers you forever, and it costs less than four months of the monthly plan.",
   },
   {
-    question: "What is included in the Basic plan?",
+    question: "What is included in each plan?",
     answer:
-      "Basic includes one LinkedIn account, one AI agent, up to 50 leads per day, one campaign, AI automated campaigns, and email customer support.",
+      "One LinkedIn account, unlimited AI agents, unlimited leads per day, unlimited campaigns, AI automated campaigns, API access, and email customer support. Monthly and Lifetime are identical on features.",
   },
   {
-    question: "When should I upgrade to the Startup plan?",
+    question: "What does the Lifetime plan actually mean?",
     answer:
-      "Upgrade when you want unlimited AI agents, unlimited leads, unlimited campaigns, or API access on a single LinkedIn account.",
-  },
-  {
-    question: "What does Enterprise pricing include?",
-    answer:
-      "Enterprise is custom and built for teams that need unlimited LinkedIn accounts, unlimited AI agents, managed campaigns, SSO, and onboarding.",
+      "You pay $99 once and keep your Omentir account with no further charges and no renewal date. There is no subscription to cancel and no price increase later.",
   },
   {
     question: "Can I self-host Omentir instead of paying?",
@@ -48,7 +43,7 @@ const faqItems = [
   {
     question: "Is Omentir worth paying for?",
     answer:
-      "Do the math. Basic starts at $29/month. If one customer is worth more than that to your business, a single conversion can cover the cost. Omentir is for founders who want a consistent LinkedIn outbound pipeline without paying separately for lead databases, sequencing tools, and an SDR team.",
+      "Do the math. Omentir starts at $29/month, or $99 once for lifetime access. If one customer is worth more than that to your business, a single conversion can cover the cost. Omentir is for founders who want a consistent LinkedIn outbound pipeline without paying separately for lead databases, sequencing tools, and an SDR team.",
   },
   {
     question: "Can I control sending limits?",
@@ -73,7 +68,7 @@ export default function PricingPage() {
       <MarketingPage
         eyebrow="Pricing"
         title="Simple pricing for every size of business."
-        description="Start at $29/month as a solo founder. Upgrade to Startup for unlimited agents, leads, and campaigns on one account, or book Enterprise for multi-account teams."
+        description="One plan with everything in it: unlimited agents, leads, and campaigns on one LinkedIn account. Pay $29/month, or $99 once and keep it for life."
         centeredHeader
         heroFullHeight
         contentClassName="max-w-7xl"
@@ -94,7 +89,7 @@ export default function PricingPage() {
           </div>
         }
       >
-        <PlanAwarePricingCards />
+        <PlanAwarePricingCards className="mx-auto max-w-4xl" />
 
         <p className="mx-auto mt-12 max-w-2xl text-center text-sm font-normal leading-6 text-zinc-500">
           LinkedIn provider, billing, and infrastructure limits may apply. Users

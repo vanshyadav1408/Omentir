@@ -6,7 +6,7 @@ import { getAppBaseUrl } from "./runtime-config";
 import { hasActiveSubscription } from "./subscription";
 import type { Workspace } from "./types";
 
-export type MailingListPlan = "none" | "solo" | "startup" | "enterprise";
+export type MailingListPlan = "none" | "solo" | "lifetime" | "startup" | "enterprise";
 
 export type MailingListEntry = {
   /** Clerk user id; also the Firestore doc id. */

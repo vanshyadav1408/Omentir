@@ -8,7 +8,9 @@ export type WorkspaceSettings = {
 
 export type WorkspaceBilling = {
   provider: "manual" | "whop";
-  plan: "solo" | "startup" | "enterprise";
+  // "startup" ($59/mo) and "enterprise" are retired from sale but still held by
+  // existing workspaces. "lifetime" is the $99 one-time plan.
+  plan: "solo" | "lifetime" | "startup" | "enterprise";
   status:
     | "pending"
     | "active"

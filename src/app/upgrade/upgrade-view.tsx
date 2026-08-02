@@ -4,7 +4,7 @@ import PricingCards from "../pricing-cards";
 
 // Plan page for already-subscribed users. Unsubscribed users never see this:
 // /upgrade sends them to the onboarding paywall step instead.
-export default function UpgradeView({ currentPlan }: { currentPlan?: "solo" | "startup" }) {
+export default function UpgradeView({ currentPlan }: { currentPlan?: "solo" | "lifetime" }) {
   return (
     <main className="flex min-h-screen flex-col overflow-x-hidden bg-[var(--md-sys-color-surface)] px-4 pb-10 pt-14 text-[var(--md-sys-color-on-surface)] sm:px-5">
       <OnboardingHeader />
@@ -26,7 +26,7 @@ export default function UpgradeView({ currentPlan }: { currentPlan?: "solo" | "s
         <div className="w-full text-left">
           <PricingCards
             currentPlan={currentPlan}
-            className="mx-auto mt-10 w-full max-w-7xl pb-12 sm:pb-[3.75rem]"
+            className="mx-auto mt-10 w-full max-w-4xl pb-12 sm:pb-[3.75rem]"
           />
         </div>
 

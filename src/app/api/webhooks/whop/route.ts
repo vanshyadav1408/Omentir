@@ -7,6 +7,7 @@ import { readTextBody, RequestBodyTooLargeError } from "@/lib/server/request-bod
 import {
   getConfiguredWhopPlanIds,
   getWhopClient,
+  isLifetimePlan,
   planFromWhopPayload,
   type BillingPlan,
 } from "@/lib/server/whop";
@@ -27,7 +28,7 @@ function metadataString(metadata: { [key: string]: unknown } | null | undefined,
 
 function requestedPlanFromMetadata(metadata: { [key: string]: unknown } | null | undefined) {
   const plan = metadataString(metadata, "plan");
-  return plan === "solo" || plan === "startup" ? plan : null;
+  return plan === "solo" || plan === "lifetime" || plan === "startup" ? plan : null;
 }
 
 async function expectedWhopPlan(
@@ -36,7 +37,9 @@ async function expectedWhopPlan(
   metadata?: { [key: string]: unknown } | null,
 ): Promise<BillingPlan | null> {
   const configuredPlans = getConfiguredWhopPlanIds();
-  const hasConfiguredPlan = Boolean(configuredPlans.solo || configuredPlans.startup);
+  const hasConfiguredPlan = Boolean(
+    configuredPlans.solo || configuredPlans.lifetime || configuredPlans.startup,
+  );
 
   // Never default to a plan when ids are missing — misconfigured deploys must
   // fail closed rather than activating every payment as "startup".
@@ -121,6 +124,21 @@ async function deactivateWorkspace(workspaceId: string, sourceId: string) {
   const existingPlan = await getWorkspace(workspaceId)
     .then((workspace) => workspace.billing?.plan)
     .catch(() => undefined);
+
+  // A lifetime buyer paid once and can never be re-charged, so a deactivation
+  // here is unrecoverable without manual work. Whop can emit this event for a
+  // one-time purchase whose payment schedule simply finished, which must not
+  // revoke access. Keep the workspace active and log loudly instead - a real
+  // refund or chargeback still surfaces in the run log for manual revocation.
+  if (isLifetimePlan(existingPlan)) {
+    await logAutomationRun({
+      workspaceId,
+      kind: "webhook",
+      status: "completed",
+      message: `Ignored Whop deactivation ${sourceId}: workspace is on the lifetime plan. Revoke manually if this was a refund or chargeback.`,
+    });
+    return { ok: true, ignored: "lifetime_plan" };
+  }
 
   await updateWorkspaceBilling(workspaceId, {
     provider: "whop",

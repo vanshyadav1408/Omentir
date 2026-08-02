@@ -279,7 +279,7 @@ export const softwareApplicationJsonLd = {
   offers: [
     {
       "@type": "Offer",
-      name: "Basic plan",
+      name: "Monthly plan",
       price: "29",
       priceCurrency: "USD",
       availability: "https://schema.org/InStock",
@@ -287,8 +287,8 @@ export const softwareApplicationJsonLd = {
     },
     {
       "@type": "Offer",
-      name: "Startup plan",
-      price: "59",
+      name: "Lifetime plan",
+      price: "99",
       priceCurrency: "USD",
       availability: "https://schema.org/InStock",
       url: `${siteUrl}/pricing`,

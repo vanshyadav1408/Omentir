@@ -5,7 +5,9 @@ import { chooseCheckoutPlan } from "@/lib/whop-plan-selection";
 
 let client: Whop | null = null;
 const checkoutPlanIds = new Map<string, string>();
-export type BillingPlan = "solo" | "startup";
+// "startup" is the retired $59/month product. It stays here so existing
+// subscribers keep resolving and renewing; it is no longer purchasable.
+export type BillingPlan = "solo" | "lifetime" | "startup";
 
 // Lazily constructs the Whop client so a missing env var surfaces as a handled
 // error inside a request rather than a module-load crash. Reads WHOP_API_KEY
@@ -44,6 +46,7 @@ function unixToIso(value?: string | null) {
 export function getConfiguredWhopPlanIds() {
   return {
     solo: process.env.WHOP_SOLO_PLAN_ID?.trim(),
+    lifetime: process.env.WHOP_LIFETIME_PLAN_ID?.trim(),
     startup: process.env.WHOP_STARTUP_PLAN_ID?.trim() || process.env.WHOP_PLAN_ID?.trim(),
   } satisfies Record<BillingPlan, string | undefined>;
 }
@@ -51,8 +54,14 @@ export function getConfiguredWhopPlanIds() {
 export function planFromWhopPayload(payload: unknown): BillingPlan | null {
   const configured = getConfiguredWhopPlanIds();
   if (configured.solo && payloadContainsString(payload, configured.solo)) return "solo";
+  if (configured.lifetime && payloadContainsString(payload, configured.lifetime)) return "lifetime";
   if (configured.startup && payloadContainsString(payload, configured.startup)) return "startup";
   return null;
+}
+
+/** One-time purchase rather than a renewing subscription. */
+export function isLifetimePlan(plan: BillingPlan | string | undefined) {
+  return plan === "lifetime";
 }
 
 function payloadContainsString(value: unknown, expected: string): boolean {
@@ -70,6 +79,16 @@ export async function getWhopCheckoutPlanId(billingPlan: BillingPlan = "solo") {
   if (configuredPlanId?.startsWith("plan_")) {
     checkoutPlanIds.set(billingPlan, configuredPlanId);
     return configuredPlanId;
+  }
+
+  // Lifetime is a one-time purchase, and every discovery path below resolves
+  // through chooseCheckoutPlan, which only accepts plan_type "renewal". A
+  // prod_ id would therefore find nothing here; demand the exact plan_ id so a
+  // misconfigured deploy fails at checkout instead of billing the wrong price.
+  if (billingPlan === "lifetime") {
+    throw new Error(
+      "WHOP_LIFETIME_PLAN_ID must be the one-time plan's plan_... id; cannot start a lifetime checkout.",
+    );
   }
 
   // Company-wide auto-discovery below cannot tell plans apart, so it only
@@ -167,7 +186,10 @@ export async function findActiveWhopMembershipByEmail(email: string) {
     plan_ids: planIds.some(Boolean)
       ? planIds.map((item) => item?.id).filter((id): id is string => Boolean(id))
       : undefined,
-    statuses: ["active", "trialing"],
+    // "completed" covers the lifetime plan: a one-time purchase finishes its
+    // payment schedule immediately and still carries access, so recovery would
+    // miss those buyers if we only looked at renewing memberships.
+    statuses: ["active", "trialing", "completed"],
     first: 10,
   });
 

@@ -4,11 +4,7 @@
 //
 // Limit rows (accounts, agents, leads, campaigns) are derived from
 // commercialPlanLimits in plan-limits.ts so marketing and enforcement stay aligned.
-import {
-  limitFeatureLines,
-  limitUpgradeFeatureLines,
-  linkedInAccountFeatureLine,
-} from "@/lib/plan-limits";
+import { limitFeatureLines } from "@/lib/plan-limits";
 
 export type PricingPlan = {
   name: string;
@@ -23,65 +19,80 @@ export type PricingPlan = {
   features: string[];
 };
 
-// Basic: full list for the entry tier (from commercialPlanLimits("solo")).
-const basicLimitFeatures = limitFeatureLines("solo");
-// Startup: limit upgrades over Basic, plus the LinkedIn-account row restated.
-// The upgrade helper drops that row because Startup and Basic both allow one,
-// but the card lists it deliberately so the included account reads as a benefit
-// rather than being invisible on the tier.
-const startupLimitUpgrades = limitUpgradeFeatureLines("startup", "solo");
-// Enterprise: only limit upgrades over Startup (multi-account, etc.).
-const enterpriseLimitUpgrades = limitUpgradeFeatureLines("enterprise", "startup");
+// Monthly and Lifetime are the same product on different billing terms, so both
+// cards render the identical limit set from commercialPlanLimits("solo").
+const planFeatures = [
+  ...limitFeatureLines("solo"),
+  "AI automated campaigns",
+  "API access",
+  "Email customer support",
+];
 
 export const pricingPlans: PricingPlan[] = [
   {
-    name: "Basic",
+    name: "Monthly",
     price: "$29/month",
     cadence: "",
     description:
-      "For solo founders validating outbound with one agent, one campaign, and a focused daily lead flow.",
+      "Everything Omentir does, billed month to month. Cancel whenever you want.",
     cta: "Start Now",
     href: "/checkout?plan=solo",
     featured: true,
     includes: "What's included",
-    features: [
-      ...basicLimitFeatures,
-      "AI automated campaigns",
-      "Email customer support",
-    ],
+    features: planFeatures,
   },
   {
-    name: "For Startups",
-    price: "$59/month",
-    cadence: "",
+    name: "Lifetime",
+    price: "$99",
+    cadence: "one-time",
     description:
-      "For founders and operators who want unlimited agents, leads, and campaigns on one LinkedIn account.",
-    cta: "Start Now",
-    href: "/checkout?plan=startup",
+      "The same plan, paid once and kept forever. Pays for itself in under four months.",
+    cta: "Get Lifetime Access",
+    href: "/checkout?plan=lifetime",
     featured: false,
-    includes: "Includes everything in Basic plan and",
-    // LinkedIn account first (same order as Basic / Enterprise). Upgrade rows
-    // follow; API is Startup+ only (planHasApiAccess). Basic never lists it.
-    features: [
-      linkedInAccountFeatureLine("startup"),
-      ...startupLimitUpgrades,
-      "API access",
-    ],
-  },
-  {
-    name: "For Enterprises",
-    price: "Custom",
-    cadence: "",
-    description:
-      "For teams that need onboarding, custom workflows, higher limits, and multiple sender accounts.",
-    cta: "Book a Demo",
-    href: "https://calendly.com/vanshyadav-1408/30min",
-    featured: false,
-    includes: "Includes everything in Startups plan and",
-    features: [
-      ...enterpriseLimitUpgrades,
-      "Managed campaigns",
-      "SSO auth",
-    ],
+    guarantee: "One payment. No renewals, ever.",
+    includes: "Everything in Monthly, forever",
+    features: planFeatures,
   },
 ];
+
+// Retired cards, kept for a future re-tiering rather than deleted.
+//
+// The $59 Startup tier: its feature set moved down to the $29 Monthly plan, so
+// there is nothing left to sell above it. Existing subscribers keep the plan.
+//
+// {
+//   name: "For Startups",
+//   price: "$59/month",
+//   cadence: "",
+//   description:
+//     "For founders and operators who want unlimited agents, leads, and campaigns on one LinkedIn account.",
+//   cta: "Start Now",
+//   href: "/checkout?plan=startup",
+//   featured: false,
+//   includes: "Includes everything in Basic plan and",
+//   features: [
+//     linkedInAccountFeatureLine("startup"),
+//     ...limitUpgradeFeatureLines("startup", "solo"),
+//     "API access",
+//   ],
+// },
+//
+// The Enterprise card, hidden until there is a team offer to sell again:
+//
+// {
+//   name: "For Enterprises",
+//   price: "Custom",
+//   cadence: "",
+//   description:
+//     "For teams that need onboarding, custom workflows, higher limits, and multiple sender accounts.",
+//   cta: "Book a Demo",
+//   href: "https://calendly.com/vanshyadav-1408/30min",
+//   featured: false,
+//   includes: "Includes everything in Startups plan and",
+//   features: [
+//     ...limitUpgradeFeatureLines("enterprise", "startup"),
+//     "Managed campaigns",
+//     "SSO auth",
+//   ],
+// },

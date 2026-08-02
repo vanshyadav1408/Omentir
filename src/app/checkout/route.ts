@@ -19,7 +19,14 @@ export async function GET(request: NextRequest) {
 
   try {
     const requestedPlan = request.nextUrl.searchParams.get("plan");
-    const plan: BillingPlan = requestedPlan === "startup" ? "startup" : "solo";
+    // "startup" is retired and no longer linked from any card, but the value is
+    // still honoured so existing links keep resolving. Anything else is solo.
+    const plan: BillingPlan =
+      requestedPlan === "lifetime"
+        ? "lifetime"
+        : requestedPlan === "startup"
+          ? "startup"
+          : "solo";
     const planId = await getWhopCheckoutPlanId(plan);
     const user = await currentUser();
     const email = user?.primaryEmailAddress?.emailAddress;
