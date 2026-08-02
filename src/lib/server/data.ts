@@ -934,12 +934,12 @@ export async function resumeAgent(workspaceId: string, agentId: string) {
     nextRunAt: nowIso(),
     updatedAt: nowIso(),
   });
-  // Leads-only agents never run outreach. Waking enrollments attributed to
-  // them (from a shared-group bug or source reassignment) would re-queue
-  // connects/messages the user never asked this agent to send.
-  if (!agent.leadsOnly) {
-    await wakeAgentPausedEnrollments(workspaceId, agent);
-  }
+  // Mirrors the tick: pause parks the enrollments of every lead this agent
+  // sourced, leads-only included, so resume has to wake them or they idle for
+  // the full 24-hour pause defer. Enrollments a leads-only agent must never
+  // drive (its own group) are stopped outright by the tick, not parked, so
+  // waking cannot re-queue those.
+  await wakeAgentPausedEnrollments(workspaceId, agent);
 }
 
 // The tick parks enrollments of a paused agent's leads a day out (marked with

@@ -288,8 +288,14 @@ type SourceAgentPausedLookup = (workspaceId: string, agentId: string) => Promise
 // Many due enrollments share the same source agent; its pause status only
 // needs one read per tick. A deleted agent (doc gone) reads as not paused so
 // its already-discovered leads keep flowing, matching pre-existing behavior.
-// Leads-only agents never own outreach, so pausing one only stops discovery
-// and must not park enrollments on people they happened to source.
+//
+// Pause applies to leads-only agents too. It used to exempt them, reasoning
+// that a leads-only agent owns no outreach so its pause should only stop
+// discovery - but the leads it finds do get enrolled by campaigns on OTHER
+// groups, and the leads-only send block only covers the agent's own group.
+// Between them a paused leads-only agent kept sending invites with no way for
+// the user to stop it. Pausing any agent now freezes automated touches to the
+// leads it sourced.
 function newSourceAgentPausedLookup(): SourceAgentPausedLookup {
   const cache = new Map<string, boolean>();
   return async (workspaceId, agentId) => {
@@ -297,7 +303,7 @@ function newSourceAgentPausedLookup(): SourceAgentPausedLookup {
     const cached = cache.get(key);
     if (cached !== undefined) return cached;
     const agent = await getAgent(workspaceId, agentId);
-    const paused = Boolean(agent && agent.status === "paused" && !agent.leadsOnly);
+    const paused = Boolean(agent && agent.status === "paused");
     cache.set(key, paused);
     return paused;
   };
@@ -562,8 +568,7 @@ async function runEnrollment(
   // invites, follow-ups, acceptance polling, and AI replies - not just lead
   // discovery. Park like a paused campaign (marked with pausedDeferredAt) so
   // resumeAgent can wake exactly these enrollments instead of them idling for
-  // up to a day. Leads-only agents have no outreach by design, so their pause
-  // state must not freeze sequences on leads they only discovered.
+  // up to a day.
   if (lead.sourceAgentId && (await sourceAgentPaused(enrollment.workspaceId, lead.sourceAgentId))) {
     await updateCurrentEnrollment({
       nextActionAt: addMinutes(PAUSED_CAMPAIGN_DEFER_MINUTES),
@@ -1283,8 +1288,7 @@ export async function executeScheduledActionNow(workspaceId: string, enrollmentI
           "This lead was found by a leads-only agent and cannot be messaged automatically.",
         );
       }
-      // Leads-only agents do not own outreach; only full agents' pause freezes sends.
-      if (sourceAgent?.status === "paused" && !sourceAgent.leadsOnly) {
+      if (sourceAgent?.status === "paused") {
         throw new Error("The agent that found this lead is paused. Resume it to run outreach.");
       }
     }
