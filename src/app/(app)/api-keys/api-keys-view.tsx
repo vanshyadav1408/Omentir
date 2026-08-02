@@ -45,7 +45,7 @@ const CONNECT_METHODS: ConnectMethod[] = [
     details: [
       "No key to create, copy, or paste - approving the prompt is the whole setup.",
       "Approving creates a key named after the app on this page; revoking it disconnects the app at once.",
-      "Requires the Startup plan or above, the same as every other API connection.",
+      "Included with every paid Omentir plan, the same as every other API connection.",
     ],
     steps: [
       {
@@ -234,7 +234,7 @@ function KeysLockOverlay() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="mt-2 text-[15px] font-semibold text-zinc-950"
         >
-          API keys are on the Startup plan
+          API keys need an active paid plan
         </h3>
         <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-600">
           Upgrade to create keys and connect Omentir to Claude, Cursor, or your

@@ -5,8 +5,8 @@ import { chooseCheckoutPlan } from "@/lib/whop-plan-selection";
 
 let client: Whop | null = null;
 const checkoutPlanIds = new Map<string, string>();
-// "startup" is the retired $59/month product. It stays here so existing
-// subscribers keep resolving and renewing; it is no longer purchasable.
+// "startup" is a retired product. It stays here so existing subscribers keep
+// resolving and renewing; it is no longer purchasable.
 export type BillingPlan = "solo" | "lifetime" | "startup";
 
 // Lazily constructs the Whop client so a missing env var surfaces as a handled

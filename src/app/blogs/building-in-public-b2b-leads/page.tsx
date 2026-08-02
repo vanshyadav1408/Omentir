@@ -140,7 +140,7 @@ export default function BlogPost() {
         Revenue validation is highly compelling. When you share verified revenue growth charts, you prove that companies pay for your solution.
       </p>
       <p>
-        Log your MRR updates and pricing tier selections. For example, explain how structuring Omentir's Basic ($29) and Startup ($59) tiers helped you onboard early users quickly.
+        Log your MRR updates and pricing choices. For example, explain how giving buyers a choice between Omentir Monthly at $29/month and Lifetime at $99 once helped you onboard early users quickly.
       </p>
       <p>
         Share revenue carefully. Revenue numbers can build trust, but only when they are presented with context. A chart without context can attract vanity engagement while teaching buyers nothing. Explain what caused the movement. Was it a new segment, a better onboarding flow, a pricing change, a founder-led outbound sprint, or one larger customer?

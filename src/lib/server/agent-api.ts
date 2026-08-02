@@ -72,7 +72,7 @@ export async function requireAgentApiContext(request: NextRequest): Promise<
   if (!planHasApiAccess(authenticated.workspace.billing?.plan)) {
     return {
       ok: false,
-      response: agentApiError("API access is available on the Startup plan and above.", 403),
+      response: agentApiError("API access is available on every paid Omentir plan.", 403),
     };
   }
 

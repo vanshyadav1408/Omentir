@@ -205,7 +205,7 @@ Not approved:
         Outbound safety depends on pacing. Senders must manage daily limits to protect profile health.
       </p>
       <p>
-        Omentir enforces daily connection limits (Startup plans restrict connections under 20 requests per profile) and spaces out requests automatically. For pacing guidelines, see our guide on{" "}
+        Omentir enforces workspace daily connection limits and spaces out requests automatically. For pacing guidelines, see our guide on{" "}
         <Link href="/blogs/human-paced-outreach" className="text-blue-600 hover:underline">
           pacing LinkedIn outreach campaigns
         </Link>

@@ -136,12 +136,11 @@ export default function BlogPost() {
         Pricing model design is critical for conversion. High upfront costs create buying hesitation, slowing down your sales cycle.
       </p>
       <p>
-        Omentir is priced to align incentives, offering flexible plans:
+        Omentir is priced to align incentives, with two flexible ways to buy:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Basic ($29/month):</strong> Up to 1 LinkedIn account and 50 daily lead discoveries. Optimized for solo founders validating early offers.</li>
-        <li><strong>Startup ($59/month):</strong> Unlimited agents, campaigns, and daily lead discoveries on one account, optimized for growing outbound teams.</li>
-        <li><strong>Enterprise (Custom Tiers):</strong> Designed for sales agencies requiring multi-account support and custom API integration routes.</li>
+        <li><strong>Monthly ($29/month):</strong> Includes one LinkedIn account, unlimited AI agents, leads, campaigns, AI automated campaigns, API access, and email customer support.</li>
+        <li><strong>Lifetime ($99 once):</strong> Includes the same complete product with one payment and no renewals.</li>
       </ul>
       <p>
         This self-serve model reduces purchasing friction, allowing buyers to start at a comfortable scale.

@@ -296,7 +296,7 @@ export async function listAgentApiKeys(workspaceId: string) {
 export async function createAgentApiKey(workspaceId: string, label: string) {
   const workspace = await ensureWorkspace(workspaceId);
   if (!planHasApiAccess(workspace.billing?.plan)) {
-    throw new Error("API access is available on the Startup plan and above.");
+    throw new Error("API access is available on every paid Omentir plan.");
   }
   const token = newAgentApiToken();
   const timestamp = nowIso();

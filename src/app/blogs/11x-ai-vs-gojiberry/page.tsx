@@ -192,7 +192,7 @@ export default function BlogPost() {
         <strong>Gojiberry Pricing:</strong> Gojiberry's public site emphasizes launching an agent quickly, but pricing details are less visible in the materials reviewed here. Treat it as a demo question: ask what is included, how many senders or channels are supported, and where costs increase as volume grows.
       </p>
       <p>
-        <strong>Omentir Pricing:</strong> Provides builder-friendly plans starting at $29/month for solo founders, and $59/month for startups, letting you validate campaigns without long-term contracts.
+        <strong>Omentir Pricing:</strong> Monthly is $29/month and Lifetime is $99 once. Both include the same complete product, so you can choose flexibility or one payment with no renewals.
       </p>
       <p>
         ROI depends on motion maturity. Enterprise digital workers make sense when the company already understands its ICP, has strong proof, and can assign someone to manage the system. A smaller AI prospecting tool makes sense when you are still testing buyer signals and messaging. A low-cost LinkedIn-first tool like Omentir makes sense when the constraint is daily qualified conversations, not a fully outsourced SDR department.

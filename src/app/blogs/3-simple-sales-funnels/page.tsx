@@ -143,12 +143,11 @@ export default function BlogPost() {
         The Product-Led Growth (PLG) funnel uses a free trial or low-tier plan to reduce signup friction.
       </p>
       <p>
-        Omentir implements this self-serve model by structuring affordable plan tiers:
+        Omentir implements this self-serve model with two straightforward billing options:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Basic ($29/month):</strong> Includes 1 LinkedIn account and 50 daily lead discoveries. Perfect for founders validating MVPs.</li>
-        <li><strong>Startup ($59/month):</strong> Includes unlimited agents, campaigns, and lead discoveries on one account, optimized for growing teams.</li>
-        <li><strong>Enterprise (Custom Tiers):</strong> Built for agencies requiring multi-account support and custom API integration routes.</li>
+        <li><strong>Monthly ($29/month):</strong> Includes one LinkedIn account, unlimited AI agents, leads, campaigns, AI automated campaigns, API access, and email customer support.</li>
+        <li><strong>Lifetime ($99 once):</strong> Includes the same complete product with one payment and no renewals.</li>
       </ul>
       <p>
         Offering these tiers allows prospects to sign up and start campaigns with minimal administrative friction.
@@ -290,7 +289,7 @@ or do you already have a scoring step before outreach starts?`}</code>
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
         <li><strong>Step 1:</strong> Define target ICP parameters in your campaign settings.</li>
-        <li><strong>Step 2:</strong> Set up a self-serve trial tier (like Omentir's Basic plan).</li>
+        <li><strong>Step 2:</strong> Set up a self-serve trial or billing option that makes the first commitment easy.</li>
         <li><strong>Step 3:</strong> Crawl prospect websites to build personalized copywriting prompts.</li>
         <li><strong>Step 4:</strong> Route message drafts to Omentir's paced queue to protect profile safety.</li>
       </ul>

@@ -38,7 +38,7 @@ const faqItems = [
   {
     question: "What changed in Omentir pricing?",
     answer:
-      "Omentir now has a Basic plan at $29/month, a Startup plan at $59/month, and custom Enterprise pricing for larger teams that need more accounts, workflows, support, and controls. The idea is to let teams start small and scale only when outbound is working.",
+      "Omentir has two ways to buy the same complete product: Monthly at $29/month or Lifetime at $99 once. Both include one LinkedIn account, unlimited AI agents, leads, and campaigns, AI automated campaigns, API access, and email customer support.",
   },
   {
     question: "What can Agent API do?",
@@ -102,42 +102,22 @@ export default function BlogPost() {
         channel, and scale once the pipeline is working.
       </p>
       <p>
-        The headline change is a brand new tier. We are introducing Basic at
-        $29/month, and at the same time we are upgrading the existing Startup
-        plan so it gives you a lot more for the same price.
+        Omentir has two straightforward ways to buy the same complete product:
+        Monthly at $29/month or Lifetime at $99 once.
       </p>
-      <p>
-        Here is what changed. Earlier there was no $29 option. The only paid
-        plan was Startup at $59/month, and it included a single LinkedIn
-        account. Now that same $59 Startup plan includes three LinkedIn
-        accounts, and we have added a much cheaper entry point: the new $29
-        Basic plan for a single LinkedIn account. So you can start outbound for
-        less, and the plan you already knew now does three times the work.
-      </p>
-      <div className="my-8 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-        <Image
-          src="/omentir-v2-pricing-plans.avif"
-          alt="Omentir v2 pricing plans for Basic, Startup, and Enterprise"
-          width={3600}
-          height={2400}
-          className="h-auto w-full"
-          sizes="(min-width: 1024px) 720px, calc(100vw - 32px)"
-        />
+      <div className="my-8 rounded-xl border border-zinc-200 bg-white p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
+        <p className="font-semibold text-zinc-950">Everything is included with either option:</p>
+        <ul className="mt-3 list-disc space-y-2 pl-6 text-zinc-800">
+          <li>One LinkedIn account</li>
+          <li>Unlimited AI agents, leads, and campaigns</li>
+          <li>AI automated campaigns and API access</li>
+          <li>Email customer support</li>
+        </ul>
       </div>
       <p>
-        The Basic plan is built for solo founders who want one focused outbound
-        motion: one LinkedIn account, one AI agent, one campaign, and up to 50
-        leads per day.
-      </p>
-      <p>
-        The Startup plan is for small teams that want more room to run: up to
-        three LinkedIn accounts, three AI agents, unlimited leads, unlimited
-        campaigns, and AI automated campaigns.
-      </p>
-      <p>
-        For larger teams, Enterprise remains custom. That includes unlimited
-        LinkedIn accounts, unlimited AI agents, managed campaigns, SSO, and
-        dedicated support.
+        Choose Monthly when you want the flexibility to cancel at any time.
+        Choose Lifetime when you want the same access with one payment and no
+        renewals.
       </p>
       <p>
         You can see the current plan details on the{" "}

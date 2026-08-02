@@ -43,7 +43,7 @@ const faqItems = [
   },
   {
     question: "How do I handle pricing objections on a demo call?",
-    answer: "Reference the ROI of your solution: compare the monthly platform cost (like Omentir's $59/month Startup plan) to the cost of manual lead sourcing, showing how much time is saved."
+    answer: "Reference the ROI of your solution: compare the monthly platform cost (like Omentir's $29/month Monthly plan) to the cost of manual lead sourcing, showing how much time is saved."
   },
   {
     question: "What is the best next-step agreement at the end of a call?",
@@ -189,7 +189,7 @@ export default function BlogPost() {
         Objections are natural parts of B2B sales. Senders should treat them as opportunities to clarify product value.
       </p>
       <p>
-        When buyers object to pricing, reference the ROI: compare the cost of your software (such as Omentir's $59/month Startup plan) to the cost of manual lead sourcing and verification databases, demonstrating how much budget is saved.
+        When buyers object to pricing, reference the ROI: compare the cost of your software (such as Omentir's $29/month Monthly plan) to the cost of manual lead sourcing and verification databases, demonstrating how much budget is saved.
       </p>
       <p>
         Timing objections usually mean one of two things: the buyer has a real constraint, or you have not made the pain feel urgent enough. Ask which one it is. "Is this not a priority until next quarter, or is there a specific blocker we would need to solve first?" The answer tells you whether to nurture, close, or disqualify.

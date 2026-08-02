@@ -200,7 +200,7 @@ export default function BlogPost() {
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
         <li><strong>Ground Product Profile:</strong> Ensure the product profile contains verified facts, feature lists, and pricing parameters.</li>
-        <li><strong>Limit Campaigns:</strong> Set discovery agents to collect leads within your plan boundaries (e.g., 50 leads per day on the Basic tier).</li>
+        <li><strong>Limit Campaigns:</strong> Set discovery agents to collect leads within your workspace pacing and review boundaries.</li>
         <li><strong>Review in Omentir:</strong> Set up and review campaigns in Omentir before activating them.</li>
         <li><strong>Configure Daily Quotas:</strong> Align outbound pacing with LinkedIn safety guidelines.</li>
         <li><strong>Verify Tokens:</strong> Confirm your API token is workspace-scoped and stored securely.</li>

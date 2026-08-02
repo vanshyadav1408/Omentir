@@ -90,8 +90,8 @@ export default async function OAuthAuthorizePage({
   if (!planHasApiAccess(workspace.billing?.plan)) {
     return (
       <Problem
-        title="App connections need the Startup plan"
-        message={`Connecting ${client.clientName} to Omentir requires the Startup plan or above. Upgrade, then add the connector again.`}
+        title="App connections need a paid plan"
+        message={`Connecting ${client.clientName} to Omentir requires an active paid plan. Upgrade, then add the connector again.`}
       />
     );
   }

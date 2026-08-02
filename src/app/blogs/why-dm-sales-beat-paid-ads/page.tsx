@@ -141,7 +141,7 @@ export default function BlogPost() {
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
         <li>"We use a competitor tool because we need HubSpot integrations."</li>
         <li>"Our team is currently focused on list cleansing issues."</li>
-        <li>"We do not have the budget for a startup plan right now."</li>
+        <li>"We do not have the budget for another paid tool right now."</li>
       </ul>
       <p>
         These responses clarify feature requirements and copy misalignments.
@@ -173,7 +173,7 @@ export default function BlogPost() {
         <strong>Paid Advertising:</strong> Senders often need a meaningful monthly test budget to gather enough data. If your conversions are low, your Customer Acquisition Cost (CAC) can exceed your product pricing before you learn whether the segment is right.
       </p>
       <p>
-        <strong>DM Outreach:</strong> Software fees are low. Omentir pricing begins at $29/month for Basic and $59/month for Startup tiers.
+        <strong>DM Outreach:</strong> Software fees are low. Omentir offers Monthly at $29/month or Lifetime at $99 once, with the same complete product in either option.
       </p>
       <p>
         This self-serve pricing lets bootstrapped teams validate campaigns without risking their runway.

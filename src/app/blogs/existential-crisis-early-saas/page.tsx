@@ -233,8 +233,8 @@ Next action:`}</code>
         Omentir is priced to help teams validate campaigns affordably:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Basic ($29/month):</strong> Includes 1 LinkedIn account, supporting initial MVP validation.</li>
-        <li><strong>Startup ($59/month):</strong> Unlimited agents, campaigns, and lead discoveries on one account, optimized for growing teams.</li>
+        <li><strong>Monthly ($29/month):</strong> Includes one LinkedIn account, unlimited AI agents, leads, campaigns, AI automated campaigns, API access, and email customer support.</li>
+        <li><strong>Lifetime ($99 once):</strong> Includes the same complete product with one payment and no renewals.</li>
       </ul>
       <p>
         Focus on securing your first 10 paying customers before worrying about scaling your operations.

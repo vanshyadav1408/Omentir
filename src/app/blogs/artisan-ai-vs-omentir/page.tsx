@@ -43,7 +43,7 @@ const faqItems = [
   },
   {
     question: "How does the pricing compare between Artisan and Omentir?",
-    answer: "Artisan now offers a public credit-based pricing page with a free trial and paid tiers. Omentir offers self-serve monthly pricing starting at $29 for solo builders, $59 for startups, and custom quotes for enterprises."
+    answer: "Artisan now offers a public credit-based pricing page with a free trial and paid tiers. Omentir offers the same complete product as either Monthly at $29/month or Lifetime at $99 once."
   }
 ] as const;
 
@@ -195,12 +195,11 @@ export default function BlogPost() {
         Artisan publishes a credit-based pricing page with a free trial, a free plan, and paid tiers. Its public site currently describes a 10,000-credit trial for new accounts and a Free plan after the trial if no card is added. Because credits are consumed by actions, buyers should model expected usage rather than comparing only the plan name.
       </p>
       <p>
-        Omentir is built to support teams at every stage of growth, offering three pricing plans:
+        Omentir is built for straightforward self-serve buying with two pricing options:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Basic ($29/month):</strong> Includes 1 LinkedIn account, 1 AI agent, 1 campaign, and 50 leads per day. Perfect for solo builders validating a new B2B product.</li>
-        <li><strong>For Startups ($59/month):</strong> Includes unlimited AI agents, unlimited leads, unlimited campaigns, and API access on one LinkedIn account. Ideal for active growth teams.</li>
-        <li><strong>For Enterprises (Custom Pricing):</strong> Includes unlimited accounts, custom prompt setups, SSO authorization, and a dedicated support manager.</li>
+        <li><strong>Monthly ($29/month):</strong> Includes one LinkedIn account, unlimited AI agents, leads, campaigns, AI automated campaigns, API access, and email customer support.</li>
+        <li><strong>Lifetime ($99 once):</strong> Includes the same complete product with one payment and no renewals.</li>
       </ul>
       <p>
         This self-serve model lets you start with a low monthly budget and scale your outbound spending as you book more demos.

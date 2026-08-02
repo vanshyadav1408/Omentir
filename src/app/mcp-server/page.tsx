@@ -143,7 +143,7 @@ const faqItems = [
   {
     question: "Why does my chat app show no Omentir tools?",
     answer:
-      "Connecting an app and enabling it in a conversation are separate steps in most chat apps: after approving access, switch Omentir on in that chat's tools menu and send a new message. If the connector never asked you to sign in, the app may have cached a failed attempt - remove it and add the URL again. App connections also require the Startup plan or above.",
+      "Connecting an app and enabling it in a conversation are separate steps in most chat apps: after approving access, switch Omentir on in that chat's tools menu and send a new message. If the connector never asked you to sign in, the app may have cached a failed attempt - remove it and add the URL again. App connections are included with every paid Omentir plan.",
   },
   {
     question: "Which MCP methods are supported?",

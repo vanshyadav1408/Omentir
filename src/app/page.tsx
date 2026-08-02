@@ -475,7 +475,7 @@ const faqItems = [
   {
     question: "How long does it take to get started?",
     answer:
-      "Minutes. You connect your LinkedIn account, drop in your website or describe your ideal customer, and launch your first campaign. There's no onboarding call or sales process required for the Startup plan.",
+      "Minutes. You connect your LinkedIn account, drop in your website or describe your ideal customer, and launch your first campaign. There is no onboarding call or sales process required for either paid plan.",
   },
   {
     question: "Who is Omentir built for?",

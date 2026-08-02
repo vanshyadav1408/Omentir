@@ -383,22 +383,9 @@ export default function SettingsView({
   const [aiFollowUp, setAiFollowUp] = useState(workspace.settings.aiFollowUpEnabled);
   const [notifEmail, setNotifEmail] = useState(workspace.notificationEmail || user.email);
   const plan = workspace.billing?.plan || "solo";
-  const planName =
-    plan === "lifetime"
-      ? "Lifetime"
-      : plan === "startup"
-        ? "Startup"
-        : plan === "enterprise"
-          ? "Enterprise"
-          : "Monthly";
-  const planPrice =
-    plan === "lifetime"
-      ? "$99"
-      : plan === "startup"
-        ? "$59/month"
-        : plan === "enterprise"
-          ? "Custom"
-          : "$29/month";
+  const isLegacyPlan = plan === "startup" || plan === "enterprise";
+  const planName = isLegacyPlan ? "Current subscription" : plan === "lifetime" ? "Lifetime" : "Monthly";
+  const planPrice = isLegacyPlan ? "Active" : plan === "lifetime" ? "$99" : "$29/month";
   // Same ceilings as plan-limits enforcement. Local/self-hosted is unlimited.
   const linkedInAccountCap = localMode
     ? Number.POSITIVE_INFINITY

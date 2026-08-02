@@ -45,7 +45,7 @@ const faqItems = [
   },
   {
     question: "How does Omentir manage the account warmup process?",
-    answer: "Omentir helps manage pacing by enforcing daily limits (Startup plans restrict connections under 20 invites daily) and spacing out sends with random human-like delays."
+    answer: "Omentir helps manage pacing by enforcing workspace daily limits and spacing out sends with random human-like delays."
   },
   {
     question: "What happens if I automate outreach without warming up my profile?",
@@ -225,7 +225,7 @@ export default function BlogPost() {
         Enforcing Pacing Limits to Protect Profile Health
       </h2>
       <p>
-        Outbound safety depends on pacing tools. Omentir enforces safe sending limits (Startup plans restrict connections under 20 requests per profile) and spaces out invitations automatically.
+        Outbound safety depends on pacing tools. Omentir enforces workspace sending limits and spaces out invitations automatically.
       </p>
       <p>
         Pacing limits should respond to evidence. If connection acceptance is strong and replies are neutral or positive, the account can gradually move toward normal campaign volume. If acceptance is weak, slow down and improve targeting instead of increasing sends.

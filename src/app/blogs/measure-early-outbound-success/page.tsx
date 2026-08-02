@@ -45,7 +45,7 @@ const faqItems = [
   },
   {
     question: "How do I calculate Cost Per Opportunity (CPO) for automated outreach?",
-    answer: "Divide your monthly software costs (like Omentir's $59/month Startup plan) and list verification fees by the number of qualified demos booked during that period."
+    answer: "Divide your monthly software costs (like Omentir's $29/month Monthly plan) and list verification fees by the number of qualified demos booked during that period."
   }
 ] as const;
 
@@ -168,7 +168,7 @@ export default function BlogPost() {
         Cost Per Opportunity measures campaign financial health. Outbound is highly cost-effective, but costs can rise if you purchase expensive databases.
       </p>
       <p>
-        Add your monthly software retainers (including Omentir's startup plans and list verification tools) and divide by total booked opportunities:
+        Add your monthly software retainers (including Omentir's Monthly plan and list verification tools) and divide by total booked opportunities:
       </p>
       <pre className="overflow-x-auto rounded-lg bg-zinc-900 p-5 text-[13px] leading-6 text-zinc-200 my-4">
 <code>{`CPO = Total Monthly Outbound Costs / Total Booked Demos`}</code>

@@ -166,9 +166,8 @@ export default function BlogPost() {
         Omentir's public pricing is an example of simple self-serve packaging:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Basic ($29/month):</strong> Includes 1 LinkedIn account, 1 AI agent, 50 leads per day, and 1 campaign.</li>
-        <li><strong>For Startups ($59/month):</strong> Includes unlimited AI agents, leads, and campaigns on one LinkedIn account, for small teams.</li>
-        <li><strong>For Enterprises (Custom):</strong> Supports larger teams that need onboarding, custom workflows, SSO, and dedicated support.</li>
+        <li><strong>Monthly ($29/month):</strong> Includes one LinkedIn account, unlimited AI agents, leads, campaigns, AI automated campaigns, API access, and email customer support.</li>
+        <li><strong>Lifetime ($99 once):</strong> Includes the same complete product with one payment and no renewals.</li>
       </ul>
       <p>
         Your own product may need a different model. Paid pilots work when implementation is hands-on. Simple monthly tiers work when the product is easy to activate. Usage-based pricing works when usage clearly maps to value. Custom pricing works when workflow complexity varies widely by customer.

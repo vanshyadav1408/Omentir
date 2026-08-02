@@ -34,13 +34,9 @@ export function commercialPlanLimits(plan: PlanId | undefined): PlanLimits {
   }
 
   // Every purchasable plan now shares one ceiling: a single LinkedIn account
-  // with everything else uncapped. Monthly ($29), Lifetime ($99 once), and the
-  // legacy Startup ($59) subscribers all land here, so this is both the top of
-  // the self-serve range and the fail-closed default for an unknown plan.
-  //
-  // The old Basic ceiling below is retired, not grandfathered: the $59 feature
-  // set moved down to $29 for existing subscribers as well as new ones. Kept
-  // commented for a future re-tiering rather than deleted.
+  // with everything else uncapped. Both purchasable options, and retired plan
+  // ids held by existing subscribers, land here. This is also the fail-closed
+  // default for an unknown plan.
   //
   // if (plan === "solo") {
   //   return {
