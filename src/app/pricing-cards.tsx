@@ -55,25 +55,19 @@ function PricingCard({
         <h2 className="text-left text-xl font-bold tracking-tight text-[var(--md-sys-color-on-surface)] md:text-2xl">
           {plan.name}
         </h2>
-        <p className="mt-2 min-h-0 text-left text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)] md:min-h-[6rem]">
-          {plan.description}
-        </p>
 
-        <div className="mt-1 flex items-baseline gap-1">
+        <div className="mt-1 flex items-baseline gap-1 lg:mt-3">
           <span className="text-[1.75rem] font-bold tracking-tight text-[var(--md-sys-color-on-surface)] md:text-3xl">
             {plan.price}
           </span>
           {plan.cadence ? (
-            <span className="text-sm font-normal text-[var(--md-sys-color-on-surface-variant)]">
+            <span className="text-sm font-bold text-orange-500">
               {plan.cadence}
             </span>
           ) : null}
         </div>
-        {plan.guarantee ? (
-          <p className="mt-2 text-sm font-medium text-orange-500">{plan.guarantee}</p>
-        ) : null}
 
-        <div className="my-6 h-px w-full bg-[var(--md-sys-color-outline-variant)]" />
+        <div className="mb-6 mt-4 h-px w-full bg-[var(--md-sys-color-outline-variant)]" />
 
         {plan.includes ? (
           <p className="mb-4 text-sm font-medium text-[var(--md-sys-color-on-surface)]">
@@ -126,32 +120,41 @@ export default function PricingCards({
   return (
     <div className={className}>
       <div className="lg:hidden">
-        <label htmlFor="mobile-pricing-plan" className="sr-only">
-          Choose a billing option
-        </label>
-        <div className="relative mb-4">
-          <select
-            id="mobile-pricing-plan"
-            value={selectedPlan}
-            onChange={(event) => setSelectedPlan(event.target.value as PurchasablePlan)}
-            className="h-11 w-full cursor-pointer appearance-none rounded-md border border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface-container)] pl-3 pr-10 text-sm font-semibold text-[var(--md-sys-color-on-surface)] outline-none transition-colors focus:border-[var(--md-sys-color-primary)]"
-          >
-            {plans.map((plan) => {
-              const planKey = planKeyFromHref(plan.href);
-              if (!planKey) return null;
-
-              return (
-                <option key={planKey} value={planKey}>
-                  {plan.name} · {plan.price}{plan.cadence ? ` ${plan.cadence}` : ""}
-                </option>
-              );
-            })}
-          </select>
+        <div className="mb-4 flex items-center justify-center gap-3 text-sm font-semibold">
           <span
-            className="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[20px] leading-none text-[var(--md-sys-color-on-surface-variant)]"
-            aria-hidden="true"
+            className={
+              selectedPlan === "solo"
+                ? "text-[var(--md-sys-color-on-surface)]"
+                : "text-[var(--md-sys-color-on-surface-variant)]"
+            }
           >
-            expand_more
+            Monthly
+          </span>
+          <button
+            type="button"
+            aria-label="Lifetime billing"
+            aria-pressed={selectedPlan === "lifetime"}
+            onClick={() => setSelectedPlan(selectedPlan === "solo" ? "lifetime" : "solo")}
+            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ${
+              selectedPlan === "lifetime"
+                ? "bg-[var(--md-sys-color-primary)]"
+                : "bg-[var(--md-sys-color-outline-variant)]"
+            }`}
+          >
+            <span
+              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow ring-1 ring-black/5 transition-transform duration-200 ${
+                selectedPlan === "lifetime" ? "translate-x-[22px]" : "translate-x-0.5"
+              }`}
+            />
+          </button>
+          <span
+            className={
+              selectedPlan === "lifetime"
+                ? "text-[var(--md-sys-color-on-surface)]"
+                : "text-[var(--md-sys-color-on-surface-variant)]"
+            }
+          >
+            Lifetime
           </span>
         </div>
         <PricingCard plan={mobilePlan} currentPlan={currentPlan} />

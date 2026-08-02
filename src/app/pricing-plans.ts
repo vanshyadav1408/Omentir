@@ -10,11 +10,9 @@ export type PricingPlan = {
   name: string;
   price: string;
   cadence: string;
-  description: string;
   cta: string;
   href: string;
   featured: boolean;
-  guarantee?: string;
   includes?: string;
   features: string[];
 };
@@ -33,8 +31,6 @@ export const pricingPlans: PricingPlan[] = [
     name: "Monthly",
     price: "$29/month",
     cadence: "",
-    description:
-      "Everything Omentir does, billed month to month. Cancel whenever you want.",
     cta: "Start Now",
     href: "/checkout?plan=solo",
     featured: true,
@@ -45,12 +41,9 @@ export const pricingPlans: PricingPlan[] = [
     name: "Lifetime",
     price: "$99",
     cadence: "one-time",
-    description:
-      "The same plan, paid once and kept forever. Pays for itself in under four months.",
     cta: "Get Lifetime Access",
     href: "/checkout?plan=lifetime",
     featured: false,
-    guarantee: "One payment. No renewals, ever.",
     includes: "Everything in Monthly, forever",
     features: planFeatures,
   },

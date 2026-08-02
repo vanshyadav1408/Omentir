@@ -443,26 +443,6 @@ const faqItems = [
       "Yes. Omentir enforces daily invite and message limits automatically and sends everything from your own profile at a human pace, so your account stays within LinkedIn's safety boundaries without you having to manage quotas yourself.",
   },
   {
-    question: "Do I need Sales Navigator or a lead database?",
-    answer:
-      "No. Omentir's AI agents search LinkedIn daily and score every lead against your ideal customer profile, so there are no static databases to buy, no credits to unlock, and no CSV exports to manage.",
-  },
-  {
-    question: "How is Omentir different from tools like Apollo, Lusha, or Instantly?",
-    answer:
-      "Those tools hand you a piece of the workflow - a contact database or an email sequencer. Omentir runs the whole motion in one place: it finds the buyers, writes and sends the LinkedIn outreach, handles follow-ups, and manages replies until you take over.",
-  },
-  {
-    question: "Can I control the messages the AI sends?",
-    answer:
-      "Completely. The AI writes context-aware drafts using each prospect's profile and your product, and you can edit them, approve them, or write every message yourself. AI also handles replies for you until you decide to step in.",
-  },
-  {
-    question: "Is Omentir open source?",
-    answer:
-      "Yes. Omentir started out closed source, but in July 2026 we made the full source code public on GitHub under the MIT license - the same code that runs the hosted product. You can read exactly how outreach and account safety work, or even self-host it with Docker.",
-  },
-  {
     question: "How much does Omentir cost?",
     answer:
       "There are two plans and they include exactly the same thing: unlimited AI agents, unlimited leads, unlimited campaigns, and API access on one LinkedIn account. Monthly is $29/month, cancel any time. Lifetime is a single $99 payment with no renewals, ever.",
