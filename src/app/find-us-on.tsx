@@ -38,6 +38,13 @@ const BADGES = [
     height: 54,
     src: "https://twelve.tools/badge0-dark.svg",
   },
+  {
+    href: "https://startupfa.me/s/omentir.com-279?utm_source=omentir.com",
+    alt: "omentir.com - Featured on Startup Fame",
+    width: 171,
+    height: 54,
+    src: "https://startupfa.me/badges/featured/dark.webp",
+  },
 ] as const;
 
 export default function FindUsOn() {
