@@ -7,5 +7,5 @@
      ("person_search") instead of the glyph. The subset is small and preloaded,
      so the block period is effectively invisible. */
   font-display: block;
-  src: url("/fonts/material-symbols-outlined.woff2?v=1feb39dd") format("woff2");
+  src: url("/fonts/material-symbols-outlined.woff2?v=52f829ca") format("woff2");
 }
