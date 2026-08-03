@@ -283,11 +283,11 @@ async function reserveSendSlot(input: {
   }
 }
 
-type SourceAgentPausedLookup = (workspaceId: string, agentId: string) => Promise<boolean>;
+type SourceAgentBlock = "paused" | "deleted" | null;
+type SourceAgentBlockLookup = (workspaceId: string, agentId: string) => Promise<SourceAgentBlock>;
 
-// Many due enrollments share the same source agent; its pause status only
-// needs one read per tick. A deleted agent (doc gone) reads as not paused so
-// its already-discovered leads keep flowing, matching pre-existing behavior.
+// Many due enrollments share the same source agent; its state only needs one
+// read per tick.
 //
 // Pause applies to leads-only agents too. It used to exempt them, reasoning
 // that a leads-only agent owns no outreach so its pause should only stop
@@ -296,16 +296,23 @@ type SourceAgentPausedLookup = (workspaceId: string, agentId: string) => Promise
 // Between them a paused leads-only agent kept sending invites with no way for
 // the user to stop it. Pausing any agent now freezes automated touches to the
 // leads it sourced.
-function newSourceAgentPausedLookup(): SourceAgentPausedLookup {
-  const cache = new Map<string, boolean>();
+//
+// A deleted agent (doc gone) used to read as not paused, so its leads kept
+// flowing: deleteAgent stops the enrollments that exist at that moment, but a
+// lead of the deleted agent sitting in a second group was simply re-enrolled by
+// that group's campaign on a later tick and messaged again. Deleted now blocks
+// like paused, permanently rather than parked - there is no agent left to
+// resume.
+function newSourceAgentBlockLookup(): SourceAgentBlockLookup {
+  const cache = new Map<string, SourceAgentBlock>();
   return async (workspaceId, agentId) => {
     const key = `${workspaceId}:${agentId}`;
     const cached = cache.get(key);
     if (cached !== undefined) return cached;
     const agent = await getAgent(workspaceId, agentId);
-    const paused = Boolean(agent && agent.status === "paused");
-    cache.set(key, paused);
-    return paused;
+    const block: SourceAgentBlock = !agent ? "deleted" : agent.status === "paused" ? "paused" : null;
+    cache.set(key, block);
+    return block;
   };
 }
 
@@ -504,7 +511,7 @@ async function runEnrollment(
   enrollment: CampaignEnrollment,
   campaign: Campaign,
   budgetForAccount: (linkedInAccountId: string) => TickBudget,
-  sourceAgentPaused: SourceAgentPausedLookup,
+  sourceAgentBlock: SourceAgentBlockLookup,
   // A manual "Run now" is the user explicitly choosing this moment, so it may
   // send outside the campaign's window. The per-account spacing still applies:
   // that one protects the LinkedIn account, not the recipient's evening.
@@ -544,12 +551,12 @@ async function runEnrollment(
     return "left-group";
   }
 
-  // Leads-only agents discover and score only. If this lead was sourced by one
-  // onto its own group, never connect or message - stop any enrollment that
-  // slipped through a shared group or an older campaign attach path.
+  // Leads-only agents discover and score only. If one sourced this lead, never
+  // connect or message - stop any enrollment that slipped through a shared
+  // group, a second group the lead also belongs to, or an older attach path.
   if (lead.sourceAgentId) {
     const sourceAgent = await getAgent(enrollment.workspaceId, lead.sourceAgentId);
-    if (sourceAgent?.leadsOnly && sourceAgent.targetGroupId === campaign.groupId) {
+    if (sourceAgent?.leadsOnly) {
       await updateCurrentEnrollment({
         status: "stopped",
         lastError:
@@ -568,8 +575,19 @@ async function runEnrollment(
   // invites, follow-ups, acceptance polling, and AI replies - not just lead
   // discovery. Park like a paused campaign (marked with pausedDeferredAt) so
   // resumeAgent can wake exactly these enrollments instead of them idling for
-  // up to a day.
-  if (lead.sourceAgentId && (await sourceAgentPaused(enrollment.workspaceId, lead.sourceAgentId))) {
+  // up to a day. Deletion is not resumable, so it stops outright instead.
+  const block = lead.sourceAgentId
+    ? await sourceAgentBlock(enrollment.workspaceId, lead.sourceAgentId)
+    : null;
+  if (block === "deleted") {
+    await updateCurrentEnrollment({
+      status: "stopped",
+      lastError: "The agent that sourced this lead was deleted; outreach stopped.",
+      pendingAction: undefined,
+    });
+    return "agent-deleted";
+  }
+  if (block === "paused") {
     await updateCurrentEnrollment({
       nextActionAt: addMinutes(PAUSED_CAMPAIGN_DEFER_MINUTES),
       pausedDeferredAt: new Date().toISOString(),
@@ -1283,12 +1301,15 @@ export async function executeScheduledActionNow(workspaceId: string, enrollmentI
     }
     if (lead.sourceAgentId) {
       const sourceAgent = await getAgent(workspaceId, lead.sourceAgentId);
-      if (sourceAgent?.leadsOnly && sourceAgent.targetGroupId === campaign.groupId) {
+      if (!sourceAgent) {
+        throw new Error("The agent that found this lead was deleted, so its outreach is stopped.");
+      }
+      if (sourceAgent.leadsOnly) {
         throw new Error(
           "This lead was found by a leads-only agent and cannot be messaged automatically.",
         );
       }
-      if (sourceAgent?.status === "paused") {
+      if (sourceAgent.status === "paused") {
         throw new Error("The agent that found this lead is paused. Resume it to run outreach.");
       }
     }
@@ -1307,7 +1328,7 @@ export async function executeScheduledActionNow(workspaceId: string, enrollmentI
         prepared,
         campaign,
         () => manualBudget,
-        newSourceAgentPausedLookup(),
+        newSourceAgentBlockLookup(),
         // The user pressed "Run now"; honouring the campaign's send window here
         // would silently do nothing outside business hours.
         { ignoreSendWindow: true },
@@ -1377,7 +1398,7 @@ async function syncNewEnrollments(mode: AutomationSafetyMode) {
 async function previewEnrollment(
   enrollment: CampaignEnrollment,
   campaign: Campaign,
-  sourceAgentPaused: SourceAgentPausedLookup,
+  sourceAgentBlock: SourceAgentBlockLookup,
 ) {
   const account = await getLinkedInAccountForWorkspace(
     enrollment.workspaceId,
@@ -1396,13 +1417,14 @@ async function previewEnrollment(
   if (!lead.groupIds?.includes(campaign.groupId)) return "left-group";
   if (lead.sourceAgentId) {
     const sourceAgent = await getAgent(enrollment.workspaceId, lead.sourceAgentId);
-    if (sourceAgent?.leadsOnly && sourceAgent.targetGroupId === campaign.groupId) {
+    if (sourceAgent?.leadsOnly) {
       return "leads-only-agent";
     }
   }
-  if (lead.sourceAgentId && (await sourceAgentPaused(enrollment.workspaceId, lead.sourceAgentId))) {
-    return "agent-paused";
-  }
+  const block = lead.sourceAgentId
+    ? await sourceAgentBlock(enrollment.workspaceId, lead.sourceAgentId)
+    : null;
+  if (block) return block === "deleted" ? "agent-deleted" : "agent-paused";
   if (enrollment.status === "reply_received") {
     return campaign.replyHandling === "handoff" ? "would-stop-for-handoff" : "would-send-ai-reply";
   }
@@ -1444,7 +1466,7 @@ async function runCampaigns(mode: AutomationSafetyMode) {
   );
   const campaignCache = new Map<string, Campaign>();
   const workspaceActiveCache = new Map<string, boolean>();
-  const sourceAgentPaused = newSourceAgentPausedLookup();
+  const sourceAgentBlock = newSourceAgentBlockLookup();
   // Per-LinkedIn-account send budget for this tick, so one connected account
   // doesn't consume another's pacing allowance in the same workspace.
   const budgets = new Map<string, TickBudget>();
@@ -1558,8 +1580,8 @@ async function runCampaigns(mode: AutomationSafetyMode) {
     campaignCache.set(campaign.id, campaign);
     try {
       const result = mode.dryRun
-        ? await previewEnrollment(enrollment, campaign, sourceAgentPaused)
-        : await runEnrollment(enrollment, campaign, budgetForAccount, sourceAgentPaused);
+        ? await previewEnrollment(enrollment, campaign, sourceAgentBlock)
+        : await runEnrollment(enrollment, campaign, budgetForAccount, sourceAgentBlock);
       if (result !== "stopped") actions += 1;
       await safeLogAutomationRun({
         workspaceId: enrollment.workspaceId,

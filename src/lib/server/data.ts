@@ -1521,18 +1521,18 @@ async function assertAgentMayUseGroup(
   await assertGroupAllowsOutreach(workspaceId, group.id);
 }
 
-// True when this campaign's group is owned by a leads-only agent that sourced
-// the lead: those people must never enter connect/message sequences.
-export function isLeadsOnlySourcedOnOwnGroup(
+// True when a leads-only agent sourced this lead: those people must never enter
+// connect/message sequences. Deliberately group-independent - the check used to
+// also require the campaign to sit on the agent's own group, which let a lead
+// that belongs to a second group be invited and messaged by that group's
+// campaign, exactly the outreach the user opted out of when picking "Only Lead".
+export function isSourcedByLeadsOnlyAgent(
   lead: Pick<Lead, "sourceAgentId">,
-  campaign: Pick<Campaign, "groupId">,
-  agents: Array<Pick<Agent, "id" | "leadsOnly" | "targetGroupId">>,
+  agents: Array<Pick<Agent, "id" | "leadsOnly">>,
 ) {
   if (!lead.sourceAgentId) return false;
   const source = agents.find((agent) => agent.id === lead.sourceAgentId);
-  return Boolean(
-    source?.leadsOnly && source.targetGroupId === campaign.groupId,
-  );
+  return Boolean(source?.leadsOnly);
 }
 
 export async function createCampaign(
@@ -1752,6 +1752,17 @@ export async function enrollNewLeadsInCampaign(workspaceId: string, campaign: Ca
   // message sequences - createCampaign already refuses new campaigns on those
   // groups; this is the runtime backstop for existing ones.
   const agents = await listAgents(workspaceId);
+  const agentsById = new Map(agents.map((agent) => [agent.id, agent]));
+
+  // A lead whose agent is paused or deleted must not START outreach here.
+  // The tick's own guard only defers or stops enrollments once they exist, so
+  // without this a deleted agent's lead sitting in a second group was enrolled
+  // fresh - and messaged - after the delete had already stopped its outreach.
+  const sourceAgentStopsOutreach = (lead: Lead) => {
+    if (!lead.sourceAgentId) return false;
+    const source = agentsById.get(lead.sourceAgentId);
+    return !source || source.status === "paused";
+  };
 
   const refs = leads.map((lead) =>
     collection<CampaignEnrollment>("campaignEnrollments").doc(`${campaign.id}-${lead.id}`),
@@ -1763,12 +1774,14 @@ export async function enrollNewLeadsInCampaign(workspaceId: string, campaign: Ca
     .map((snap, index) => ({ snap, ref: refs[index], lead: leads[index] }))
     // Skip if already enrolled in this campaign, or already being contacted by
     // any campaign (prevents the same person getting hit by two campaigns).
-    // Also skip leads sourced by a leads-only agent onto its own group.
+    // Also skip every lead a leads-only agent sourced, including ones that
+    // reached this group by also belonging to it.
     .filter(
       ({ snap, lead }) =>
         !snap.exists &&
         lead.outreachStatus === "new" &&
-        !isLeadsOnlySourcedOnOwnGroup(lead, campaign, agents),
+        !isSourcedByLeadsOnlyAgent(lead, agents) &&
+        !sourceAgentStopsOutreach(lead),
     );
 
   if (pending.length === 0) return 0;
