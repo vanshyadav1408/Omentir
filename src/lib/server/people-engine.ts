@@ -622,15 +622,20 @@ async function persistCandidateSignals(agent: Agent, candidate: Candidate) {
 }
 
 function primarySignal(candidate: Candidate) {
-  const strength: Record<LeadSignalType, number> = {
+  const typeStrength: Record<LeadSignalType, number> = {
     keyword_search: 4,
     profile_search: 3,
     post_comment: 2,
     post_reaction: 1,
   };
   return candidate.signals.reduce<ObservedSignal | undefined>(
-    (best, signal) =>
-      !best || strength[signal.signalType] > strength[best.signalType] ? signal : best,
+    (best, signal) => {
+      const strength = (value: ObservedSignal) =>
+        value.signalSource === "Grounded exact-agent web search"
+          ? 10
+          : typeStrength[value.signalType];
+      return !best || strength(signal) > strength(best) ? signal : best;
+    },
     undefined,
   );
 }
@@ -653,6 +658,7 @@ function candidatePriority(
   roleVocabulary: string[],
 ) {
   const signalWeight = candidate.signals.reduce((total, signal) => {
+    if (signal.signalSource.startsWith("LinkedIn companies with ")) return total + 50;
     if (signal.signalSource === "Grounded exact-agent web search") return total + 25;
     if (signal.signalType === "keyword_search") return total + 10;
     if (signal.signalType === "profile_search") return total + 3;
@@ -819,14 +825,10 @@ export async function runPeopleEngineForAgent(input: {
     });
   }
 
-  const hasProviderPeopleResults = Array.from(candidates.values()).some((candidate) =>
-    candidate.signals.some(
-      (signal) =>
-        signal.signalType === "profile_search" ||
-        (signal.signalType === "keyword_search" && !signal.signalSource.endsWith("authored post")),
-    ),
-  );
-  if (!hasProviderPeopleResults && hasRunTime(deadline)) {
+  // Provider people results can be plentiful but noisy. Grounded search is an
+  // independent exact-match source, so broad LinkedIn results must not suppress
+  // it. Its evidence is still checked by the same deterministic and model gates.
+  if (hasRunTime(deadline)) {
     const groundedCandidates = await findGroundedAgentCandidates(input.agent);
     for (const lead of groundedCandidates) {
       addObservedSignal(candidates, {
@@ -941,11 +943,20 @@ export async function runPeopleEngineForAgent(input: {
       continue;
     }
 
+    const hasGroundedEvidence = candidate.signals.some(
+      (signal) => signal.signalSource === "Grounded exact-agent web search",
+    );
     // Signals above are already persisted; bound the costly part (live profile
     // views) so a high-candidate run can't rack up account-risking view counts.
-    if (enrichments >= enrichmentLimit) continue;
-    enrichments += 1;
-    let enrichedLead = await enrichLinkedInLead(input.account, candidate.lead);
+    // Grounded exact matches carry independent public evidence and remain
+    // scoreable when that live-view budget is already spent.
+    let enrichedLead = candidate.lead;
+    if (enrichments < enrichmentLimit) {
+      enrichments += 1;
+      enrichedLead = await enrichLinkedInLead(input.account, candidate.lead);
+    } else if (!hasGroundedEvidence) {
+      continue;
+    }
 
     // Enrichment can resolve a profile to the anonymized "LinkedIn Member"
     // placeholder; drop it here so an uncontactable lead is never saved.

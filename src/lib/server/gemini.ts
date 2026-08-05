@@ -1468,7 +1468,7 @@ Agent prospect definition: ${agent.prompt}
 Agent filters: ${JSON.stringify(agent.filters)}`,
     fallback,
     0.2,
-    30_000,
+    45_000,
   );
 
   const missingRequirements = normalizeStringList(result.missingRequirements).slice(0, 5);
