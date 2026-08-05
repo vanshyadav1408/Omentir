@@ -1295,11 +1295,12 @@ export async function findGroundedAgentCandidates(
   if (!config) return [];
 
   const fallback = { leads: [] as GroundedAgentCandidate[] };
-  try {
-    const client = getClient(config);
-    const response = await client.models.generateContent({
-      model: SEARCH_MODEL,
-      contents: `Use web search to find up to ${limit} real, currently employed people who satisfy this discovery agent's exact request.
+  const client = getClient(config);
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    try {
+      const response = await client.models.generateContent({
+        model: SEARCH_MODEL,
+        contents: `Use web search to find up to ${limit} real, currently employed people who satisfy this discovery agent's exact request.
 
 Every defining requirement is mandatory. Verify the current role, employer or industry, requested location, and every named technology, company, certification, or company-size requirement from public sources. Do not infer technology usage from a generic job title or industry. Return fewer people, including zero, when a requirement cannot be verified. Never broaden the request to people who would merely be good customers for another product.
 
@@ -1314,37 +1315,43 @@ Titles: ${JSON.stringify(agent.filters.titles.slice(0, 15))}
 Industries: ${JSON.stringify(agent.filters.industries.slice(0, 10))}
 Locations: ${JSON.stringify(agent.filters.locations.slice(0, 10))}
 Keywords and required context: ${JSON.stringify(agent.filters.keywords.slice(0, 15))}`,
-      config: {
-        temperature: 0.2,
-        tools: [{ googleSearch: {} }],
-        httpOptions: { timeout: 45_000 },
-      },
-    });
-    const parsed = parseJson<typeof fallback>(response.text || "", fallback);
-    const seen = new Set<string>();
-    return (Array.isArray(parsed.leads) ? parsed.leads : [])
-      .map((lead) => ({
-        name: String(lead?.name || "").trim(),
-        title: String(lead?.title || "").trim(),
-        company: String(lead?.company || "").trim(),
-        location: String(lead?.location || "").trim(),
-        linkedInUrl: String(lead?.linkedInUrl || "").trim(),
-        evidence: String(lead?.evidence || "").trim(),
-        evidenceUrl: String(lead?.evidenceUrl || "").trim(),
-      }))
-      .filter((lead) => {
-        if (!lead.name || !lead.title || !lead.evidence) return false;
-        if (!/^https:\/\/(?:[a-z]+\.)?linkedin\.com\/in\//i.test(lead.linkedInUrl)) return false;
-        const key = lead.linkedInUrl.toLowerCase().replace(/[?#].*$/, "").replace(/\/$/, "");
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      })
-      .slice(0, Math.max(1, Math.min(limit, 25)));
-  } catch (error) {
-    console.error("[people-engine] grounded candidate search failed:", error);
-    return [];
+        config: {
+          temperature: 0.2,
+          tools: [{ googleSearch: {} }],
+          httpOptions: { timeout: 90_000 },
+        },
+      });
+      const parsed = parseJson<typeof fallback>(response.text || "", fallback);
+      const seen = new Set<string>();
+      return (Array.isArray(parsed.leads) ? parsed.leads : [])
+        .map((lead) => ({
+          name: String(lead?.name || "").trim(),
+          title: String(lead?.title || "").trim(),
+          company: String(lead?.company || "").trim(),
+          location: String(lead?.location || "").trim(),
+          linkedInUrl: String(lead?.linkedInUrl || "").trim(),
+          evidence: String(lead?.evidence || "").trim(),
+          evidenceUrl: String(lead?.evidenceUrl || "").trim(),
+        }))
+        .filter((lead) => {
+          if (!lead.name || !lead.title || !lead.evidence) return false;
+          if (!/^https:\/\/(?:[a-z]+\.)?linkedin\.com\/in\//i.test(lead.linkedInUrl)) return false;
+          const key = lead.linkedInUrl.toLowerCase().replace(/[?#].*$/, "").replace(/\/$/, "");
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        })
+        .slice(0, Math.max(1, Math.min(limit, 25)));
+    } catch (error) {
+      if (attempt === 2) {
+        console.error("[people-engine] grounded candidate search failed after retry:", error);
+      } else {
+        console.warn("[people-engine] grounded candidate search retrying after failure:", error);
+      }
+    }
   }
+
+  return [];
 }
 
 export async function scoreLeadForProduct(
