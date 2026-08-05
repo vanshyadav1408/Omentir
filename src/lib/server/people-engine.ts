@@ -475,7 +475,11 @@ async function collectFromTitle(input: {
 }
 
 export async function enrichLinkedInLead(account: LinkedInAccount, lead: Partial<Lead>) {
-  const identifier = lead.providerProfileId || getPublicIdentifier(lead.linkedInUrl);
+  // Public identifiers are stable across connected accounts. Provider ids can
+  // come from a different workspace-owned account when people-search fallback
+  // is used, so prefer the public profile slug for enrichment on the agent's
+  // selected outreach account.
+  const identifier = getPublicIdentifier(lead.linkedInUrl) || lead.providerProfileId;
   if (!identifier) return lead;
 
   try {

@@ -7,7 +7,7 @@ import type {
   LinkedInInboxThread,
   LinkedInProfileContext,
 } from "./types";
-import { consumeProfileViewBudget } from "./data";
+import { consumeProfileViewBudget, listLinkedInAccounts } from "./data";
 import { searchableLocationNames } from "./geo";
 
 const UNIPILE_TIMEOUT_MS = 30_000;
@@ -1185,6 +1185,16 @@ export async function searchLinkedInProfiles(input: {
   // query every day and discovers nobody.
   excludeKeys?: Set<string>;
 }) {
+  // A connected LinkedIn account can remain healthy for messaging while its
+  // Classic people search returns HTTP 200 with an empty result set. Search
+  // through another connected account owned by the same workspace in that
+  // case. The agent's selected account is still used first and remains the
+  // account used for profile enrichment and outreach.
+  const workspaceAccounts = await listLinkedInAccounts(input.agent.workspaceId);
+  const searchAccountIds = Array.from(
+    new Set([input.accountId, ...workspaceAccounts.map((account) => account.accountId)]),
+  );
+
   // One search per title/keyword. Joining every criterion into a single
   // keyword string produces an AND query that matches almost nobody.
   const queries = [...input.criteria.titles, ...input.criteria.keywords]
@@ -1202,10 +1212,14 @@ export async function searchLinkedInProfiles(input: {
   // Constrain the search itself to the target locations. LinkedIn ignores
   // keywords like "Australia" and returns network-biased (local) results;
   // only the location parameter actually scopes results to the country.
-  const locationIds = await resolveLinkedInLocationIds(
-    input.accountId,
-    searchableLocationNames(input.criteria.locations),
-  );
+  let locationIds: string[] = [];
+  for (const accountId of searchAccountIds) {
+    locationIds = await resolveLinkedInLocationIds(
+      accountId,
+      searchableLocationNames(input.criteria.locations),
+    );
+    if (locationIds.length || !input.criteria.locations.length) break;
+  }
 
   // When no requested location resolves to a LinkedIn id the search silently
   // goes global, and network-biased results then waste enrichment budget on
@@ -1231,16 +1245,20 @@ export async function searchLinkedInProfiles(input: {
     if (profiles.size >= input.limit) break;
     if (!keywords) continue;
 
-    const items = await searchLinkedIn<UnipileProfile>({
-      accountId: input.accountId,
-      category: "people",
-      keywords,
-      limit: perQueryLimit,
-      locationIds,
-      take: takeFresh,
-      // Up to 250 scanned results per query when known profiles clog the top.
-      maxPages: takeFresh ? 5 : undefined,
-    });
+    let items: UnipileProfile[] = [];
+    for (const accountId of searchAccountIds) {
+      items = await searchLinkedIn<UnipileProfile>({
+        accountId,
+        category: "people",
+        keywords,
+        limit: perQueryLimit,
+        locationIds,
+        take: takeFresh,
+        // Up to 250 scanned results per query when known profiles clog the top.
+        maxPages: takeFresh ? 5 : undefined,
+      });
+      if (items.length) break;
+    }
 
     for (const item of items) {
       const profile = normalizeUnipileProfile(item);
