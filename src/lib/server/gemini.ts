@@ -1403,6 +1403,30 @@ export async function scoreLeadForProduct(
     };
   }
 
+  const requestedSize = [agent.prompt, ...agent.filters.keywords]
+    .join(" ")
+    .match(
+      /(\d{1,6})\s*(?:-|\u2013|\u2014|to)\s*(\d{1,6})\s*(?:employees?|staff|people|personnel)\b/i,
+    );
+  if (requestedSize) {
+    const min = Number(requestedSize[1]);
+    const max = Number(requestedSize[2]);
+    const evidence = [lead.summary, JSON.stringify(lead.profileContext || {})].join(" ");
+    const sizeEvidence = new RegExp(
+      `\\b${min}\\s*(?:-|\\u2013|\\u2014|to)\\s*${max}\\s*(?:employees?|staff|people|personnel)\\b`,
+      "i",
+    );
+    if (!sizeEvidence.test(evidence)) {
+      return {
+        fitScore: 40,
+        scoreReasons: [
+          `The profile evidence does not verify the requested ${min}-${max} employee company size.`,
+        ],
+        summary: lead.summary || "",
+      };
+    }
+  }
+
   const fallback = {
     agentCriteriaMatched: false,
     fitScore: 40,
@@ -1422,6 +1446,7 @@ Set agentCriteriaMatched to true only when the available profile and search evid
 - The current employer or work history must support at least one requested industry when industry is part of the request.
 - A named company, product, platform, certification, or technology must have concrete evidence in the visible profile title, experience, skills, summary, a grounded public source, or a first-person authored post that explicitly states the person or employer uses, implements, supports, or evaluates it. A keyword query returning the person is a sourcing hint, not proof. A reaction or generic comment on a related post is interest evidence only and does not prove usage.
 - When the request asks for customers, users, or partner firms of a named technology, a person employed by that technology vendor is not a match unless the agent explicitly includes the vendor's own employees.
+- A requested company-size band must be directly supported by current LinkedIn company evidence or a grounded public source.
 - Location must match when requested. The application also enforces this deterministically.
 - Missing evidence is not a match. Do not infer technology use from a generic healthcare, IT, sales, or operations title.
 

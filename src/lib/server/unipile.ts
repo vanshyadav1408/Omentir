@@ -300,7 +300,7 @@ type UnipileChat = {
   last_message?: UnipileMessage | string;
 };
 
-type LinkedInSearchCategory = "people" | "posts";
+type LinkedInSearchCategory = "people" | "posts" | "companies";
 type RecordLike = Record<string, unknown>;
 
 function getConfig() {
@@ -927,6 +927,8 @@ async function searchLinkedIn<T>(input: {
   url?: string;
   limit: number;
   locationIds?: string[];
+  companyIds?: string[];
+  headcount?: { min: number; max: number };
   // Items rejected by `take` are fetched but neither returned nor counted, so
   // the search pages past them toward `limit` accepted items. This is how a
   // repeat of yesterday's query digs below the first page instead of returning
@@ -961,6 +963,8 @@ async function searchLinkedIn<T>(input: {
           keywords: input.keywords,
           url: input.url,
           ...(input.locationIds?.length ? { location: input.locationIds } : {}),
+          ...(input.companyIds?.length ? { company: input.companyIds } : {}),
+          ...(input.headcount ? { headcount: [input.headcount] } : {}),
           cursor,
         }),
       },
@@ -1280,6 +1284,96 @@ export async function searchLinkedInProfiles(input: {
   }
 
   return Array.from(profiles.values());
+}
+
+export async function searchLinkedInProfilesAtCompanies(input: {
+  accountId: string;
+  titles: string[];
+  industries: string[];
+  locations: string[];
+  companySize: { min: number; max: number };
+  limit: number;
+  agent: Agent;
+  excludeKeys?: Set<string>;
+}) {
+  const workspaceAccounts = await listLinkedInAccounts(input.agent.workspaceId);
+  const searchAccountIds = Array.from(
+    new Set([input.accountId, ...workspaceAccounts.map((account) => account.accountId)]),
+  );
+  let locationIds: string[] = [];
+  for (const accountId of searchAccountIds) {
+    locationIds = await resolveLinkedInLocationIds(
+      accountId,
+      searchableLocationNames(input.locations),
+    );
+    if (locationIds.length || !input.locations.length) break;
+  }
+
+  const companies = new Map<string, UnipileCompany>();
+  for (const industry of input.industries.slice(0, 5)) {
+    for (const accountId of searchAccountIds) {
+      const items = await searchLinkedIn<UnipileCompany>({
+        accountId,
+        category: "companies",
+        keywords: industry,
+        limit: 20,
+        locationIds,
+        headcount: input.companySize,
+        maxPages: 2,
+      });
+      if (!items.length) continue;
+      for (const company of items) {
+        if (company.id) companies.set(company.id, company);
+      }
+      break;
+    }
+    if (companies.size >= 40) break;
+  }
+
+  const companyIds = Array.from(companies.keys()).slice(0, 40);
+  if (!companyIds.length) return [];
+
+  const profiles = new Map<string, ReturnType<typeof normalizeUnipileProfile>>();
+  const excluded = input.excludeKeys;
+  const takeFresh =
+    excluded?.size
+      ? (item: UnipileProfile) =>
+          !profileSearchKeys(normalizeUnipileProfile(item)).some((key) => excluded.has(key))
+      : undefined;
+  const companyBatches = Array.from(
+    { length: Math.ceil(companyIds.length / 10) },
+    (_, index) => companyIds.slice(index * 10, index * 10 + 10),
+  );
+
+  for (const title of input.titles.slice(0, 6)) {
+    for (const companyBatch of companyBatches) {
+      if (profiles.size >= input.limit) break;
+      let items: UnipileProfile[] = [];
+      for (const accountId of searchAccountIds) {
+        items = await searchLinkedIn<UnipileProfile>({
+          accountId,
+          category: "people",
+          keywords: title,
+          limit: Math.min(20, input.limit - profiles.size),
+          locationIds,
+          companyIds: companyBatch,
+          take: takeFresh,
+          maxPages: takeFresh ? 3 : undefined,
+        });
+        if (items.length) break;
+      }
+
+      for (const item of items) {
+        const profile = normalizeUnipileProfile(item);
+        const key = profile.providerProfileId || profile.linkedInUrl || profile.name;
+        if (!key || profiles.has(key)) continue;
+        profiles.set(key, profile);
+      }
+    }
+    if (profiles.size >= input.limit) break;
+  }
+
+  return Array.from(profiles.values()).slice(0, input.limit);
 }
 
 export async function searchLinkedInProfilesByUrl(input: {

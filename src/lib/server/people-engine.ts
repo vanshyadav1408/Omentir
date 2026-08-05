@@ -34,6 +34,7 @@ import {
   retrieveLinkedInCompanyEvidence,
   searchLinkedInPosts,
   searchLinkedInProfiles,
+  searchLinkedInProfilesAtCompanies,
 } from "./unipile";
 import type {
   Agent,
@@ -61,6 +62,7 @@ const POST_ENGAGER_LIMIT = 25;
 const KEYWORD_PROFILE_LIMIT = 40;
 const KEYWORD_POST_LIMIT = 4;
 const TITLE_PROFILE_LIMIT = 25;
+const COMPANY_FILTERED_PROFILE_LIMIT = 40;
 
 type SearchCriteria = {
   titles: string[];
@@ -118,6 +120,20 @@ function unique(values: string[]) {
 
 function hasRunTime(deadline: number) {
   return Date.now() < deadline - STOP_BUFFER_MS;
+}
+
+function requestedCompanySize(agent: Agent) {
+  const target = [agent.prompt, ...agent.filters.keywords].join(" ");
+  const match = target.match(
+    /(\d{1,6})\s*(?:-|\u2013|\u2014|to)\s*(\d{1,6})\s*(?:employees?|staff|people|personnel)\b/i,
+  );
+  if (!match) return null;
+
+  const min = Number(match[1]);
+  const max = Number(match[2]);
+  return Number.isFinite(min) && Number.isFinite(max) && min > 0 && max >= min
+    ? { min, max }
+    : null;
 }
 
 function getSourceKeywords(
@@ -484,6 +500,46 @@ async function collectFromTitle(input: {
   }
 }
 
+async function collectFromCompanyFilteredSearch(input: {
+  agent: Agent;
+  account: LinkedInAccount;
+  candidates: Map<string, Candidate>;
+  titles: string[];
+  industries: string[];
+  targetLocations: string[];
+  companySize: { min: number; max: number };
+  excludeKeys?: Set<string>;
+}) {
+  const sourceLabel =
+    `LinkedIn companies with ${input.companySize.min}-${input.companySize.max} employees`;
+  try {
+    const profiles = await searchLinkedInProfilesAtCompanies({
+      accountId: input.account.accountId,
+      titles: input.titles,
+      industries: input.industries,
+      locations: input.targetLocations,
+      companySize: input.companySize,
+      limit: COMPANY_FILTERED_PROFILE_LIMIT,
+      agent: input.agent,
+      excludeKeys: input.excludeKeys,
+    });
+
+    for (const lead of profiles) {
+      addObservedSignal(input.candidates, {
+        lead,
+        signalType: "profile_search",
+        signalSource: sourceLabel,
+        signalText: sourceLabel,
+        signalUrl: lead.linkedInUrl || "",
+        signalObservedAt: nowIso(),
+        leadReason: `Current employer matched LinkedIn's ${input.companySize.min}-${input.companySize.max} employee company filter`,
+      });
+    }
+  } catch (error) {
+    await logSourceError(input.agent, sourceLabel, error);
+  }
+}
+
 export async function enrichLinkedInLead(account: LinkedInAccount, lead: Partial<Lead>) {
   // Public identifiers are stable across connected accounts. Provider ids can
   // come from a different workspace-owned account when people-search fallback
@@ -666,6 +722,7 @@ export async function runPeopleEngineForAgent(input: {
 
   const sourceKeywords = getSourceKeywords(input.agent, criteria);
   const searchTitles = getSearchTitles(input.agent, input.profile, criteria);
+  const companySize = requestedCompanySize(input.agent);
   const matchTitles = unique([
     ...searchTitles,
     ...expandedTargetTitles(input.agent, input.profile),
@@ -701,6 +758,22 @@ export async function runPeopleEngineForAgent(input: {
     })),
   ];
   const orderedSources = rotateSources(sourceQueue, input.agent.peopleEngineCursor?.sourceKey);
+
+  // When company size is binding, source inside companies that LinkedIn has
+  // already filtered to that exact headcount band. These candidates are added
+  // first so the limited profile-view budget is spent on the strongest pool.
+  if (companySize && hasRunTime(deadline)) {
+    await collectFromCompanyFilteredSearch({
+      agent: input.agent,
+      account: input.account,
+      candidates,
+      titles: searchTitles,
+      industries: criteria.industries,
+      targetLocations,
+      companySize,
+      excludeKeys: groupLeadKeys,
+    });
+  }
 
   for (let index = 0; index < orderedSources.length; index += 1) {
     if (!hasRunTime(deadline)) break;
