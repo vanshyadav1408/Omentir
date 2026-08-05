@@ -21,6 +21,7 @@ import {
   getLinkedInAccountByAccountId,
   getLinkedInAccountForWorkspace,
   getProductProfile,
+  listCampaigns,
   listLeads,
   pauseAgent,
   resumeAgent,
@@ -28,6 +29,7 @@ import {
   setAverageTicketSize,
   setSendWindowForGroup,
   updateAgent,
+  updateCampaign,
   updateWorkspaceOnboarding,
   updateWorkspaceNotificationEmail,
   updateWorkspaceSettings,
@@ -37,12 +39,13 @@ import {
 } from "@/lib/server/data";
 import { parseLinkedInLeadCsv } from "@/lib/linkedin-csv";
 import { normalizeLinkedInProfileUrl } from "@/lib/server/firebase";
+import { normalizeSchedulingLink } from "@/lib/scheduling-link";
 import { sendContactFormEmail, sendNewSignupNotification } from "@/lib/server/email";
 import { executeScheduledActionNow } from "@/lib/server/automation";
 import { analyzeWebsiteOrSearch, draftAgentSetupWithGemini } from "@/lib/server/gemini";
 import { requireActiveSubscription } from "@/lib/server/subscription";
 import { deleteLinkedInAccount, sendLinkedInChatMessage } from "@/lib/server/unipile";
-import type { CampaignStep, SendWindow } from "@/lib/server/types";
+import type { CampaignReplyHandling, CampaignStep, SendWindow } from "@/lib/server/types";
 import { isLocalMode } from "@/lib/runtime-mode";
 
 async function requireWorkspace() {
@@ -308,6 +311,7 @@ export async function analyzeWebsiteAction(formData: FormData) {
       industry: analysis.industry,
       companySize: analysis.companySize,
       painPointsText: analysis.painPointsText,
+      pricingDetails: analysis.pricingDetails,
       keyFeatures: analysis.keyFeatures,
       socialProof: analysis.socialProof,
       linkedInCompanyPage: existing?.linkedInCompanyPage || "",
@@ -396,6 +400,15 @@ export async function completeSelfHostedOnboardingAction() {
 export async function saveProductProfileAction(formData: FormData) {
   const workspace = await requireWorkspace();
   const currentProfile = await getProductProfile(workspace.id);
+  const rawSchedulingLink = stringFromForm(
+    formData,
+    "schedulingLink",
+    currentProfile?.schedulingLink,
+  );
+  const schedulingLink = normalizeSchedulingLink(rawSchedulingLink);
+  if (schedulingLink === null) {
+    throw new Error("Use a valid https://cal.com or https://calendly.com scheduling link.");
+  }
 
   await upsertProductProfile(workspace.id, {
     websiteUrl: stringFromForm(formData, "websiteUrl", currentProfile?.websiteUrl),
@@ -408,6 +421,12 @@ export async function saveProductProfileAction(formData: FormData) {
       "painPointsText",
       currentProfile?.painPointsText,
     ),
+    pricingDetails: stringFromForm(
+      formData,
+      "pricingDetails",
+      currentProfile?.pricingDetails,
+    ),
+    schedulingLink,
     keyFeatures: listFromForm(formData, "keyFeatures", currentProfile?.keyFeatures),
     socialProof: listFromForm(formData, "socialProof", currentProfile?.socialProof),
     linkedInCompanyPage: stringFromForm(
@@ -664,6 +683,11 @@ export async function updateAgentAction(formData: FormData) {
   const workspace = await requireWorkspace();
   requireActiveSubscription(workspace);
   const agent = await updateAgentFromForm(workspace, formData);
+  const replyHandling =
+    formData.get("manualDefaultOutreach") === "on"
+      ? "handoff"
+      : parseReplyHandling(formData.get("replyHandling"));
+  const bookingLink = bookingLinkFromForm(formData, replyHandling);
   // Editing an agent does not go through createCampaignAction, so the send
   // window picker on the same form has to be applied to the agent's existing
   // campaigns here or it silently does nothing after launch.
@@ -671,6 +695,17 @@ export async function updateAgentAction(formData: FormData) {
     workspace.id,
     agent.targetGroupId,
     parseSendWindow(formData.get("sendWindow")),
+  );
+  const campaigns = (await listCampaigns(workspace.id)).filter(
+    (campaign) => campaign.groupId === agent.targetGroupId,
+  );
+  await Promise.all(
+    campaigns.map((campaign) =>
+      updateCampaign(workspace.id, campaign.id, {
+        replyHandling,
+        bookingLink: bookingLink || "",
+      }),
+    ),
   );
 
   revalidateWorkspaceDataPages();
@@ -697,6 +732,8 @@ export async function getSetupProductProfileAction() {
         companySize: profile.companySize || "",
         painPointsText: profile.painPointsText || "",
         websiteUrl: profile.websiteUrl || "",
+        pricingDetails: profile.pricingDetails || "",
+        schedulingLink: profile.schedulingLink || "",
       }
     : null;
 }
@@ -805,6 +842,21 @@ function parseSendWindow(value: FormDataEntryValue | null): SendWindow {
   return raw === "business" || raw === "extended" ? raw : "always";
 }
 
+function parseReplyHandling(value: FormDataEntryValue | null): CampaignReplyHandling {
+  const raw = String(value || "").trim();
+  if (raw === "handoff" || raw === "ai_until_booked") return raw;
+  return "ai_until_interest";
+}
+
+function bookingLinkFromForm(formData: FormData, replyHandling: CampaignReplyHandling) {
+  if (replyHandling !== "ai_until_booked") return undefined;
+  const link = normalizeSchedulingLink(String(formData.get("bookingLink") || ""));
+  if (!link) {
+    throw new Error("Add a valid https://cal.com or https://calendly.com link for booking mode.");
+  }
+  return link;
+}
+
 export async function createCampaignAction(formData: FormData) {
   const workspace = await requireWorkspace();
   requireActiveSubscription(workspace);
@@ -821,6 +873,11 @@ export async function createCampaignAction(formData: FormData) {
       : rawGroupId;
   const status = formData.get("status") === "draft" ? "draft" : "active";
   const account = await requireSelectedLinkedInAccount(workspace.id, formData);
+  const replyHandling =
+    formData.get("manualDefaultOutreach") === "on"
+      ? "handoff"
+      : parseReplyHandling(formData.get("replyHandling"));
+  const bookingLink = bookingLinkFromForm(formData, replyHandling);
 
   if (status === "active") {
     await assertCampaignCanRun(workspace.id, groupId, steps, {
@@ -836,7 +893,8 @@ export async function createCampaignAction(formData: FormData) {
     linkedInAccountId: account.id,
     status,
     steps,
-    replyHandling: formData.get("replyHandling") === "handoff" ? "handoff" : "ai",
+    replyHandling,
+    ...(bookingLink ? { bookingLink } : {}),
     notifyOnReply: formData.get("notifyOnReply") !== "off",
     sendWindow: parseSendWindow(formData.get("sendWindow")),
     // Firestore rejects undefined properties - only set intent when provided.

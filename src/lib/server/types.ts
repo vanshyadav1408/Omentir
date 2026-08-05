@@ -94,6 +94,13 @@ export type ProductProfile = {
   industry: string;
   companySize: string;
   painPointsText: string;
+  // Plain-language pricing facts the AI may quote when a lead asks. Free text
+  // supports monthly, annual, usage-based, and custom pricing without forcing
+  // every product into one numeric field.
+  pricingDetails?: string;
+  // Workspace default for campaigns that let AI carry a conversation through
+  // booking. Each campaign snapshots the link it launches with.
+  schedulingLink?: string;
   keyFeatures: string[];
   socialProof: string[];
   linkedInCompanyPage: string;
@@ -343,6 +350,12 @@ export type CampaignStep =
 // against its own campaign's window, so no arbitration is needed.
 export type SendWindow = "always" | "business" | "extended";
 
+export type CampaignReplyHandling =
+  | "ai"
+  | "handoff"
+  | "ai_until_interest"
+  | "ai_until_booked";
+
 export type Campaign = {
   id: string;
   workspaceId: string;
@@ -354,11 +367,13 @@ export type Campaign = {
   // Unset means "always", so campaigns created before this field keep their
   // existing round-the-clock behaviour until the user picks a window.
   sendWindow?: SendWindow;
-  // Who owns the conversation once a lead replies. "ai" (default, also for
-  // campaigns created before this field existed): the sequence stops and AI
-  // handles the conversation until hot or terminal intent. "handoff": all
-  // automation stops at the first reply and the user is emailed to take over.
-  replyHandling?: "ai" | "handoff";
+  // Who owns the conversation once a lead replies. Legacy "ai" behaves like
+  // ai_until_interest. Handoff stops after the first reply; ai_until_interest
+  // stops at qualified interest; ai_until_booked continues until confirmation.
+  replyHandling?: CampaignReplyHandling;
+  // Only used by ai_until_booked. Kept on the campaign so a later My Product
+  // edit does not silently change the link used by an active conversation.
+  bookingLink?: string;
   // Only consulted on "handoff" campaigns, where the user owns the conversation
   // from the first reply. Unset means "email me" so campaigns created before
   // this field keep notifying; false is the manual user who watches LinkedIn
@@ -437,6 +452,7 @@ export type ConversationMessage = {
 // interested-lead email. Classified once when the reply is stored.
 export type ReplyIntent =
   | "hot"
+  | "meeting_booked"
   | "warm"
   | "question"
   | "neutral"

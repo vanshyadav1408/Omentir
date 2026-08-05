@@ -8,7 +8,7 @@
 // Faster than the historical 10-minute external cron so replies and follow-ups
 // move promptly. Invite volume is NOT tied to this cadence: connection requests
 // are spaced by the persistent per-account gate in automation.ts
-// (INVITE_SPACING_MINUTES), so a quicker tick never sends invites faster.
+// (SPACING_MINUTES), so a quicker tick never sends invites faster.
 // Must stay above TICK_SCHEDULE_MIN_INTERVAL_MS in automation.ts (1.75 min),
 // which gates scheduled starts across processes.
 const TICK_INTERVAL_MS = 2 * 60 * 1000;

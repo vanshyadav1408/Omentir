@@ -186,6 +186,8 @@ export default function ProductView({ profile, saveAction, analyzeAction }: Prod
   const [companySize, setCompanySize] = useState(profile?.companySize ?? "");
   const [description, setDescription] = useState(profile?.description ?? "");
   const [painPointsText, setPainPointsText] = useState(profile?.painPointsText ?? "");
+  const [pricingDetails, setPricingDetails] = useState(profile?.pricingDetails ?? "");
+  const [schedulingLink, setSchedulingLink] = useState(profile?.schedulingLink ?? "");
   const [keyFeatures, setKeyFeatures] = useState<string[]>(profile?.keyFeatures ?? []);
   const [socialProof, setSocialProof] = useState<string[]>(profile?.socialProof ?? []);
   const [linkedInCompanyPage, setLinkedInCompanyPage] = useState(profile?.linkedInCompanyPage ?? "");
@@ -201,6 +203,8 @@ export default function ProductView({ profile, saveAction, analyzeAction }: Prod
       setCompanySize(profile.companySize ?? "");
       setDescription(profile.description ?? "");
       setPainPointsText(profile.painPointsText ?? "");
+      setPricingDetails(profile.pricingDetails ?? "");
+      setSchedulingLink(profile.schedulingLink ?? "");
       setKeyFeatures(profile.keyFeatures ?? []);
       setSocialProof(profile.socialProof ?? []);
       setLinkedInCompanyPage(profile.linkedInCompanyPage ?? "");
@@ -380,6 +384,34 @@ export default function ProductView({ profile, saveAction, analyzeAction }: Prod
                 placeholder="What problems does your product solve for customers?"
                 rows={3}
               />
+            </div>
+
+            <div className="mt-8">
+              <Textarea
+                name="pricingDetails"
+                value={pricingDetails}
+                onChange={setPricingDetails}
+                label="Pricing"
+                placeholder="Example: $49 per month, including 3 seats. Annual plans are $490."
+                rows={3}
+              />
+              <p className="mt-1.5 text-[12px] font-medium text-zinc-600">
+                AI uses only these pricing facts when a lead asks about cost.
+              </p>
+            </div>
+
+            <div className="mt-8">
+              <TextInput
+                name="schedulingLink"
+                type="url"
+                value={schedulingLink}
+                onChange={setSchedulingLink}
+                label="Calendly or Cal.com link"
+                placeholder="https://cal.com/your-name/intro"
+              />
+              <p className="mt-1.5 text-[12px] font-medium text-zinc-600">
+                AI may share this after a lead shows interest in campaigns that run until booking.
+              </p>
             </div>
 
             {/* Key Features */}

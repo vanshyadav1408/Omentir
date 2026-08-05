@@ -195,7 +195,15 @@ export async function fetchWebsitePages(websiteUrl: string) {
     new URL("/llms.txt", base.origin),
     AI_CONTENT_TIMEOUT_MS,
   );
-  if (aiContent) return [aiContent];
+  if (aiContent) {
+    // llms.txt is the best product summary, but it often omits commercial
+    // terms. Read the first-party pricing page too so analysis can capture
+    // explicit prices without relying on third-party search results.
+    const pricingPage = await fetchWebsitePage(new URL("/pricing", base.origin));
+    return pricingPage && pricingPage.url !== aiContent.url
+      ? [aiContent, pricingPage]
+      : [aiContent];
+  }
 
   const candidates = await Promise.all(
     CANDIDATE_PATHS.map((path) => fetchWebsitePage(new URL(path, base.origin))),

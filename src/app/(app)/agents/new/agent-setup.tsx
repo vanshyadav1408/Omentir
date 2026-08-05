@@ -9,7 +9,8 @@ import AiLoadingOverlay from "@/app/ai-loading-overlay";
 import { SelectField, type SelectOption } from "@/app/ui/select";
 import { useWorkspaceTimeZone } from "@/app/workspace-time-zone";
 import { TextAreaField, TextField } from "@/app/ui/text-field";
-import type { Agent, SendWindow } from "@/lib/server/types";
+import { normalizeSchedulingLink } from "@/lib/scheduling-link";
+import type { Agent, CampaignReplyHandling, SendWindow } from "@/lib/server/types";
 import {
   INDUSTRY_SUGGESTIONS,
   KEYWORD_SUGGESTIONS,
@@ -25,6 +26,8 @@ type CompanyProfile = {
   companySize: string;
   painPointsText: string;
   websiteUrl?: string;
+  pricingDetails?: string;
+  schedulingLink?: string;
 };
 
 type AgentSetupDraft = {
@@ -60,6 +63,8 @@ type AgentSetupProps = {
   // The window the agent's existing campaign is already sending in. Lives on
   // the campaign, not the agent, so it has to be passed in separately.
   initialSendWindow?: SendWindow;
+  initialReplyHandling?: CampaignReplyHandling;
+  initialBookingLink?: string;
   linkedInAccounts?: { id: string; displayName: string; accountId: string; avatarUrl?: string }[];
   setupMode?: boolean;
   // Leads-only agents stop after the Leads step: the agent discovers and
@@ -687,6 +692,8 @@ export default function AgentSetup({
   profile,
   initialAgent,
   initialSendWindow,
+  initialReplyHandling,
+  initialBookingLink,
   linkedInAccounts = [],
   setupMode = false,
   leadsOnly = false,
@@ -729,7 +736,18 @@ export default function AgentSetup({
   const [sendWindow, setSendWindow] = useState<SendWindow>(
     initialSendWindow ?? (initialAgent ? "always" : "business"),
   );
-  const [replyHandling, setReplyHandling] = useState<"ai" | "handoff">("ai");
+  const [replyHandling, setReplyHandling] = useState<
+    "handoff" | "ai_until_interest" | "ai_until_booked"
+  >(
+    initialReplyHandling === "handoff"
+      ? "handoff"
+      : initialReplyHandling === "ai_until_booked"
+        ? "ai_until_booked"
+        : "ai_until_interest",
+  );
+  const [bookingLink, setBookingLink] = useState(
+    initialBookingLink || profile?.schedulingLink || "",
+  );
   // Manual outreach always hands the conversation over on the first reply (the
   // user writes every message, so the AI must not answer for them). This only
   // decides whether that hand-off arrives as an email.
@@ -773,8 +791,9 @@ export default function AgentSetup({
       setCompanySize(profile.companySize ?? "");
       setCompanyPainPoints(profile.painPointsText ?? "");
       setCompanyWebsiteUrl(profile.websiteUrl ?? "");
+      if (!initialBookingLink) setBookingLink(profile.schedulingLink ?? "");
     }
-  }, [profile]);
+  }, [initialBookingLink, profile]);
 
   function handleCompanyAnalyze() {
     const normalized = companyWebsiteUrl.trim();
@@ -931,6 +950,15 @@ export default function AgentSetup({
         setStep("leads");
         return;
       }
+      if (
+        step === "campaign" &&
+        outreachMode === "automatic" &&
+        replyHandling === "ai_until_booked" &&
+        !normalizeSchedulingLink(bookingLink)
+      ) {
+        setSetupStepError("Add a valid Calendly or Cal.com link for meeting-booking mode.");
+        return;
+      }
       setStep(nextStep(step));
       return;
     }
@@ -951,6 +979,15 @@ export default function AgentSetup({
       setSubmitError(
         "Add at least one message to your outreach sequence before launching the agent.",
       );
+      return;
+    }
+    if (
+      outreachMode === "automatic" &&
+      replyHandling === "ai_until_booked" &&
+      !normalizeSchedulingLink(bookingLink)
+    ) {
+      setSubmitError("Add a valid Calendly or Cal.com link for meeting-booking mode.");
+      setStep("campaign");
       return;
     }
     setSubmitError("");
@@ -1329,14 +1366,14 @@ export default function AgentSetup({
               <span className="font-semibold text-zinc-900">First-degree connections: </span>
               {excludeFirstDegree ? "Excluded" : "Included"}
             </p>
-            {outreachMode === "automatic" ? (
-              <p>
-                <span className="font-semibold text-zinc-900">When a lead replies: </span>
-                {replyHandling === "handoff"
-                  ? "Hand off to you after the first reply"
-                  : "AI handles the entire deal"}
-              </p>
-            ) : null}
+            <p>
+              <span className="font-semibold text-zinc-900">When a lead replies: </span>
+              {outreachMode === "manual" || replyHandling === "handoff"
+                ? "Stop and hand the conversation to you"
+                : replyHandling === "ai_until_booked"
+                  ? "AI continues until the meeting is booked"
+                  : "AI continues until qualified interest"}
+            </p>
           </div>
         </div>
 
@@ -1543,14 +1580,19 @@ export default function AgentSetup({
             {(
               [
                 {
-                  id: "ai",
-                  title: "AI handles the entire deal",
-                  desc: "AI keeps the conversation going and emails you when the lead is ready to close - never for a reply it can handle itself.",
+                  id: "handoff",
+                  title: "Stop after the first reply",
+                  desc: "Omentir stops the sequence and hands the conversation to you as soon as the lead replies.",
                 },
                 {
-                  id: "handoff",
-                  title: "Hand the conversation off to me",
-                  desc: "AI stops at the lead's first reply and emails it to you right away, so you continue the conversation yourself.",
+                  id: "ai_until_interest",
+                  title: "Continue until interest",
+                  desc: "Omentir answers ordinary replies and hands the conversation to you when qualified interest is detected.",
+                },
+                {
+                  id: "ai_until_booked",
+                  title: "Continue until booked",
+                  desc: "Omentir answers questions, shares your scheduling link once qualified interest is detected, and stops after the lead confirms a meeting.",
                 },
               ] as const
             ).map((option) => {
@@ -1591,6 +1633,20 @@ export default function AgentSetup({
             })}
           </div>
         </div>
+
+        {replyHandling === "ai_until_booked" ? (
+          <div className="rounded-md border border-zinc-200 bg-white p-5">
+            <TextField
+              type="url"
+              label="Calendly or Cal.com link"
+              value={bookingLink}
+              onChange={(event) => setBookingLink(event.target.value)}
+              placeholder="https://cal.com/your-name/intro"
+              supportingText="Omentir shares this once qualified interest is detected, with a short invitation to book."
+              required
+            />
+          </div>
+        ) : null}
 
         {/* Message Tone */}
         <div className="rounded-md border border-zinc-200 bg-white p-5">
@@ -1935,6 +1991,18 @@ export default function AgentSetup({
           </div>
         </div>
 
+        <div className="rounded-md border border-zinc-200 bg-white p-4">
+          <div className="text-[12px] font-bold uppercase tracking-wider text-zinc-900">
+            When a lead replies
+          </div>
+          <p className="mt-2 text-[14px] font-semibold text-zinc-950">
+            Stop after the first reply
+          </p>
+          <p className="mt-1 text-[13px] font-medium text-zinc-700">
+            Omentir blocks every remaining sequence message so you can take over the conversation.
+          </p>
+        </div>
+
         {/* Manual outreach always stops at the first reply, so the only thing
             left to choose is whether the hand-off reaches the user by email. */}
         <button
@@ -2183,6 +2251,11 @@ export default function AgentSetup({
         type="hidden"
         name="replyHandling"
         value={outreachMode === "manual" ? "handoff" : replyHandling}
+      />
+      <input
+        type="hidden"
+        name="bookingLink"
+        value={outreachMode === "automatic" && replyHandling === "ai_until_booked" ? bookingLink : ""}
       />
       <input
         type="hidden"

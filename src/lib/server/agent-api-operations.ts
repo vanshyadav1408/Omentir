@@ -35,6 +35,7 @@ import {
 import { sumAgentLeadTotals } from "@/lib/agent-lead-totals";
 import { listScheduledActions } from "./scheduled-actions";
 import { SPACING_MINUTES } from "./send-schedule";
+import { normalizeSchedulingLink } from "@/lib/scheduling-link";
 import { sendLinkedInMessage } from "./unipile";
 import { isValidTimeZone, resolveTimeZone } from "@/lib/time-zone";
 import type { AgentApiContext } from "./agent-api";
@@ -108,6 +109,11 @@ export const updateProductProfilePayloadSchema = z.object({
   industry: z.string().trim().max(200).optional(),
   companySize: z.string().trim().max(120).optional(),
   painPointsText: z.string().trim().max(8000).optional(),
+  pricingDetails: z.string().trim().max(4000).optional(),
+  schedulingLink: z.string().trim().max(500).refine(
+    (value) => normalizeSchedulingLink(value) !== null,
+    "Use a valid https://cal.com or https://calendly.com scheduling link.",
+  ).optional(),
   keyFeatures: stringList,
   socialProof: stringList,
   linkedInCompanyPage: z.string().trim().max(500).optional(),
@@ -362,6 +368,8 @@ export async function updateProductProfileResource(context: AgentApiContext, pay
     industry: current?.industry || "",
     companySize: current?.companySize || "",
     painPointsText: current?.painPointsText || "",
+    pricingDetails: current?.pricingDetails || "",
+    schedulingLink: current?.schedulingLink || "",
     keyFeatures: current?.keyFeatures || [],
     socialProof: current?.socialProof || [],
     linkedInCompanyPage: current?.linkedInCompanyPage || "",

@@ -11,6 +11,7 @@ import { TextAreaField, TextField } from "./ui/text-field";
 type WebsiteAnalysis = {
   websiteUrl: string;
   productOverview: string;
+  pricingDetails: string;
   targetBuyers: string[];
   buyerTitles: string[];
   industries: string[];
@@ -131,6 +132,7 @@ export default function WebsiteFetchPanel({
         data: {
           websiteUrl: normalized,
           productOverview: String(payload.productOverview || ""),
+          pricingDetails: String(payload.pricingDetails || ""),
           targetBuyers: Array.isArray(payload.targetBuyers) ? payload.targetBuyers : [],
           buyerTitles: Array.isArray(payload.buyerTitles) ? payload.buyerTitles : [],
           industries: Array.isArray(payload.industries) ? payload.industries : [],
@@ -241,6 +243,9 @@ export default function WebsiteFetchPanel({
             className="mt-3 flex flex-col gap-3"
           >
             <input type="hidden" name="websiteUrl" value={formWebsiteUrl} />
+            {readyData ? (
+              <input type="hidden" name="pricingDetails" value={readyData.pricingDetails} />
+            ) : null}
 
             <TextAreaField
               ref={overviewRef}

@@ -28,6 +28,8 @@ export const agentToolInputSchemas = {
       industry: { type: "string" },
       companySize: { type: "string" },
       painPointsText: { type: "string" },
+      pricingDetails: { type: "string" },
+      schedulingLink: { type: "string" },
       keyFeatures: { type: "array", items: { type: "string" } },
       socialProof: { type: "array", items: { type: "string" } },
       linkedInCompanyPage: { type: "string" },

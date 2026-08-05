@@ -10,6 +10,8 @@ type CompanyProfile = {
   companySize: string;
   painPointsText: string;
   websiteUrl?: string;
+  pricingDetails?: string;
+  schedulingLink?: string;
 };
 
 type AgentSetupDraft = {

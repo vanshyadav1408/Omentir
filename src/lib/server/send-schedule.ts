@@ -14,17 +14,17 @@
 //      account, so "10 invites a day" has to mean one sender's day, not a
 //      different day boundary per recipient.
 //
-// With a 9-6 window there are 54 slots a day against caps of 10 + 20, so the
+// With a 9-6 window there are 108 slots a day against caps of 10 + 20, so the
 // caps bind long before the spacing does - which is why a queue of 75 leads
 // resolves to "day four, 09:20" rather than "6.5 hours from now".
 
 import type { SendWindow } from "./types";
 
-// One action per account per 10 minutes, invites and messages alike. Was
+// One action per account per 5 minutes, invites and messages alike. Was
 // invite-only (data.ts claimInviteSendSlot); replies and follow-ups now share
 // the same line, which is what makes collisions possible and this planner
 // necessary.
-export const SPACING_MINUTES = 10;
+export const SPACING_MINUTES = 5;
 
 // Reply > follow-up > invite. A reply has a human waiting and is rare, so it
 // takes the next free slot and pushes a cold invite aside; an invite has no

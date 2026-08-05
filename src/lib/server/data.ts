@@ -558,6 +558,8 @@ export async function setAverageTicketSize(workspaceId: string, value: number) {
     industry: "",
     companySize: "",
     painPointsText: "",
+    pricingDetails: "",
+    schedulingLink: "",
     keyFeatures: [],
     socialProof: [],
     linkedInCompanyPage: "",
@@ -1580,7 +1582,7 @@ export async function updateCampaign(
   workspaceId: string,
   campaignId: string,
   patch: Partial<
-    Pick<Campaign, "name" | "status" | "steps" | "linkedInAccountId" | "replyHandling" | "sendWindow">
+    Pick<Campaign, "name" | "status" | "steps" | "linkedInAccountId" | "replyHandling" | "bookingLink" | "sendWindow">
   >,
 ) {
   const ref = collection<Campaign>("campaigns").doc(campaignId);
@@ -1887,7 +1889,7 @@ async function listReservedActionSlots(workspaceId: string, linkedInAccountId?: 
     // This equality-only query uses Firestore's automatic single-field index;
     // filtering in memory costs extra reads briefly, but returning no
     // reservations would let every scheduler tick book another action at
-    // "now" and make the Actions timeline contradict the 10-minute send gate.
+    // "now" and make the Actions timeline contradict the five-minute send gate.
     console.warn(
       "[data] reserved slot lookup failed; using index-free fallback:",
       error instanceof Error ? error.message : error,
@@ -2260,7 +2262,7 @@ export async function stopLeadEnrollments(workspaceId: string, leadId: string) {
 }
 
 // One-shot claim per (workspace, kind, day) so notifications triggered from
-// the 10-minute tick - the daily digest, the invite-limit alert - send exactly
+// the automation tick, such as the daily digest and invite-limit alert, send exactly
 // once per day even across overlapping or restarted ticks.
 export async function claimDailyNotification(workspaceId: string, kind: string, day: string) {
   const ref = getDb()

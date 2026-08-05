@@ -81,7 +81,7 @@ import {
   isAnonymousLinkedInProfile,
   renderTemplate,
 } from "./outreach-rules";
-import { isHotReply, isTerminalReplyIntent } from "./reply-automation-policy";
+import { shouldStopForReply } from "./reply-automation-policy";
 import { localDayAndHour } from "./scheduling";
 import { isWithinSendWindow, type SendActionKind } from "./send-schedule";
 import { hasActiveSubscription } from "./subscription";
@@ -119,7 +119,7 @@ const TICK_LOCK_ID = "automation-tick";
 // double up. A single signal-agent discovery run alone may take 15 minutes
 // (PEOPLE_ENGINE_RUN_MS), so 8 minutes overlapped routinely. A crashed tick
 // (lock released in finally; only a process kill leaks it) now delays
-// automation by at most 20 minutes, which a 10-minute drip system absorbs.
+// automation by at most 20 minutes, which the account drip safely absorbs.
 const TICK_LOCK_TTL_MS = 20 * 60 * 1000;
 // A distributed cadence gate is separate from the overlap TTL. Production may
 // have several PM2 processes (and an external cron), all with their own timer.
@@ -678,9 +678,15 @@ async function runEnrollment(
 
     const conversation = await getConversation(enrollment.workspaceId, lead.id);
     const intent = conversation?.replyIntent;
-    // The webhook already stops terminal and hot replies, but defend here if
-    // a race left the enrollment armed while the latest inbound was stored.
-    if (isTerminalReplyIntent(intent) || isHotReply(intent, conversation?.replyIntentConfidence)) {
+    // The webhook applies the campaign's selected stopping point. Defend here
+    // if a race left the enrollment armed while the latest inbound was stored.
+    if (
+      shouldStopForReply({
+        replyHandling: campaign.replyHandling,
+        intent,
+        confidence: conversation?.replyIntentConfidence,
+      })
+    ) {
       await updateCurrentEnrollment({
         status: "stopped",
         pendingAction: undefined,
@@ -728,10 +734,13 @@ async function runEnrollment(
       campaignName: campaign.name,
       conversation: conversation?.messages || [],
       replyIntent: intent,
+      replyIntentConfidence: conversation?.replyIntentConfidence,
       nextStepHint: conversation?.replyIntentNextStepHint,
       senderName: account.displayName,
       campaignGoal: campaign.campaignGoal,
       messageTone: campaign.messageTone,
+      replyHandling: campaign.replyHandling,
+      bookingLink: campaign.bookingLink,
     });
 
     const claimed = await claimEnrollmentAction({
@@ -1153,7 +1162,7 @@ async function runEnrollment(
   } else {
     // Dedicated Gemini call per message per lead, with everything it needs:
     // which message of the sequence this is (each stage has its own intent),
-    // the campaign's goal and tone, and the full transcript already exchanged
+    // the campaign's goal and tone, and the recent transcript already exchanged
     // with this person, so follow-ups build on the first message instead of
     // re-introducing the company.
     const sequencePosition = campaign.steps

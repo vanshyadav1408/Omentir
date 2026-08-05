@@ -18,18 +18,19 @@ import {
   listCampaigns,
   logAutomationRun,
   planActionSlots,
-  stopLeadEnrollments,
   updateEnrollment,
   updateLead,
 } from "./data";
 import { findNextScheduledStepIndex } from "./campaign-sequence";
 import { sendWindowTimeZoneForLead } from "./lead-time-zone";
+import { SPACING_MINUTES } from "./send-schedule";
 import { classifyReplyIntent, draftCampaignMessage } from "./gemini";
 import { renderTemplate } from "./outreach-rules";
 import {
   isHotReply,
-  isTerminalReplyIntent,
+  isMeetingBooked,
   shouldArmAiReply,
+  shouldStopForReply,
 } from "./reply-automation-policy";
 import { hasActiveSubscription } from "./subscription";
 import {
@@ -352,7 +353,7 @@ export async function processInboundMessage(input: {
   const handoffEnrollments = leadEnrollments.filter(
     (enrollment) => campaignHandsOffOnReply(enrollment.campaignId, campaigns),
   );
-  const aiReplyEnrollments = leadEnrollments.filter(
+  const aiReplyCandidates = leadEnrollments.filter(
     (enrollment) => {
       const enrollmentCampaign = campaigns.find((item) => item.id === enrollment.campaignId);
       return shouldArmAiReply({
@@ -362,6 +363,17 @@ export async function processInboundMessage(input: {
         previousIntentConfidence: existingConversation?.replyIntentConfidence,
       });
     },
+  );
+  const aiReplyEnrollments = aiReplyCandidates.filter((enrollment) => {
+    const enrollmentCampaign = campaigns.find((item) => item.id === enrollment.campaignId);
+    return !shouldStopForReply({
+      replyHandling: enrollmentCampaign?.replyHandling,
+      intent: classification.intent,
+      confidence: classification.confidence,
+    });
+  });
+  const stoppedEnrollments = leadEnrollments.filter(
+    (enrollment) => !aiReplyEnrollments.some((active) => active.id === enrollment.id),
   );
 
   const campaignId =
@@ -388,9 +400,8 @@ export async function processInboundMessage(input: {
   await updateLead(workspaceId, lead.id, { outreachStatus: "replied" });
 
   const isHotInterest = isHotReply(classification.intent, classification.confidence);
-  if (isTerminalReplyIntent(classification.intent) || isHotInterest) {
-    await stopLeadEnrollments(workspaceId, lead.id);
-  } else if (aiReplyEnrollments.length) {
+  const meetingBooked = isMeetingBooked(classification.intent);
+  if (aiReplyEnrollments.length) {
     // Replies are planned as kind "reply", so they outrank queued cold invites
     // for the next free slot - but they still land inside the send window
     // rather than firing back at 3am just because that is when it arrived.
@@ -402,7 +413,10 @@ export async function processInboundMessage(input: {
           campaign: campaigns.find((item) => item.id === enrollment.campaignId),
           enrollmentId: enrollment.id,
           kind: "reply",
-          earliestAt: Date.now(),
+          // Keep automated replies human-paced even when the account has been
+          // idle. The shared account drip alone would otherwise allow a reply
+          // on the next tick, only seconds after the lead wrote.
+          earliestAt: Date.now() + SPACING_MINUTES * 60 * 1000,
           leadLocation: lead.location,
         }),
       })),
@@ -417,14 +431,18 @@ export async function processInboundMessage(input: {
           nextMessageDraft: undefined,
         }),
       ),
-      // A lead can sit in both an AI campaign and a hand-off campaign; the
-      // hand-off ones still stop here while the AI ones keep the conversation.
-      ...handoffEnrollments.map((enrollment) =>
+      // A lead can sit in campaigns with different reply modes. Stop only the
+      // enrollments whose selected outcome has been reached.
+      ...stoppedEnrollments.map((enrollment) =>
         updateEnrollment(workspaceId, enrollment.id, { status: "replied" }),
       ),
     ]);
   } else {
-    await stopLeadEnrollments(workspaceId, lead.id);
+    await Promise.all(
+      leadEnrollments.map((enrollment) =>
+        updateEnrollment(workspaceId, enrollment.id, { status: "replied" }),
+      ),
+    );
   }
 
   const workspace = await getWorkspace(workspaceId);
@@ -438,9 +456,10 @@ export async function processInboundMessage(input: {
   // - "hand the conversation off to me": yes. Automation just stopped and the
   //   user owns this conversation from the first reply, so they must hear about
   //   it the moment it lands, whatever the lead said.
-  // - "AI handles the entire deal": no. The AI is working the thread; the user
-  //   asked to be pulled in only when the lead is actually interested, which is
-  //   the hot-interest email above.
+  // - "continue until interest": no. AI handles ordinary replies and emails
+  //   when qualified interest is detected.
+  // - "continue until booked": no. AI keeps working until the lead confirms a
+  //   booking, then sends the outcome email.
   // A lead with no live enrollment has no automation behind them at all, so
   // nothing else would ever surface the reply - notify.
   // A hand-off campaign can still opt out of the email (notifyOnReply false):
@@ -450,7 +469,14 @@ export async function processInboundMessage(input: {
       (enrollment) =>
         campaigns.find((item) => item.id === enrollment.campaignId)?.notifyOnReply !== false,
     ) || leadEnrollments.length === 0;
-  if (email && isHotInterest) {
+  const stoppedAtInterest =
+    isHotInterest &&
+    (leadEnrollments.length === 0 ||
+      stoppedEnrollments.some((enrollment) => {
+        const mode = campaigns.find((item) => item.id === enrollment.campaignId)?.replyHandling;
+        return mode !== "handoff" && mode !== "ai_until_booked";
+      }));
+  if (email && (meetingBooked || stoppedAtInterest)) {
     if (await claimInterestNotification(workspaceId, lead.id)) {
       try {
         await sendInterestedLeadNotification({
@@ -470,7 +496,9 @@ export async function processInboundMessage(input: {
           linkedInAccountName: input.account?.displayName,
           interestSignal: input.body,
           interestReason:
-            classification.nextStepHint || classification.reason || "Showed buying interest",
+            classification.nextStepHint ||
+            classification.reason ||
+            (meetingBooked ? "Confirmed a booked meeting" : "Showed buying interest"),
           idempotencyKey: input.providerMessageId
             ? `interest-${workspaceId}-${lead.id}-${input.providerMessageId}`
             : `interest-${workspaceId}-${lead.id}`,
@@ -479,7 +507,7 @@ export async function processInboundMessage(input: {
           workspaceId,
           kind: "webhook",
           status: "completed",
-          message: `Interest detected: ${lead.name} (hot, ${classification.confidence.toFixed(2)}) — ${classification.reason}`,
+          message: `${meetingBooked ? "Meeting booked" : "Interest detected"}: ${lead.name} (${classification.intent}, ${classification.confidence.toFixed(2)}), ${classification.reason}`,
         });
       } catch (error) {
         console.error("[inbound] failed to send interested-lead notification:", error);

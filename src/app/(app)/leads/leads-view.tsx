@@ -169,6 +169,11 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [sortByScore, setSortByScore] = useState<"none" | "asc" | "desc">("desc");
   const [mobileGroupMenu, setMobileGroupMenu] = useState<Group | null>(null);
+  const [desktopGroupMenu, setDesktopGroupMenu] = useState<{
+    groupId: string;
+    left: number;
+    top: number;
+  } | null>(null);
   const [deleteGroup, setDeleteGroup] = useState<Group | null>(null);
   const [exportGroup, setExportGroup] = useState<Group | null>(null);
   const [deletedGroupIds, setDeletedGroupIds] = useState<Set<string>>(new Set());
@@ -276,6 +281,17 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
     }
   }
 
+  function openDesktopGroupMenu(button: HTMLButtonElement, group: Group) {
+    if (!window.matchMedia("(min-width: 768px)").matches) return;
+    const rect = button.getBoundingClientRect();
+    const menuWidth = 144;
+    setDesktopGroupMenu({
+      groupId: group.id,
+      left: Math.max(8, Math.min(rect.right - menuWidth, window.innerWidth - menuWidth - 8)),
+      top: rect.bottom,
+    });
+  }
+
   return (
     <div className="app-x flex h-full min-h-0 min-w-0 flex-col gap-3 md:ml-4 md:mr-0.5 md:pb-3">
       {/* Header */}
@@ -344,7 +360,10 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
           The row overlaps the card's top border by 1px (-mb-px) and the active
           tab's white fill erases the border segment beneath it. */}
       <div className="flex min-h-0 flex-1 flex-col">
-        <div className="relative z-10 -mb-px flex shrink-0 items-end gap-1 overflow-x-auto px-2 md:overflow-visible">
+        <div
+          className="relative z-10 -mb-px flex min-w-0 shrink-0 touch-pan-x items-end gap-1 overflow-x-auto px-2 thin-scroll-overlay"
+          onScroll={() => setDesktopGroupMenu(null)}
+        >
           {[{ id: ALL_CONTACTS_TAB, name: "All contacts" }, ...loadedGroups]
             .filter((item) => !deletedGroupIds.has(item.id))
             .map((item) => {
@@ -376,10 +395,14 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
                       type="button"
                       aria-haspopup="menu"
                       aria-label={`Actions for ${item.name}`}
+                      onMouseEnter={(event) => openDesktopGroupMenu(event.currentTarget, item as Group)}
+                      onFocus={(event) => openDesktopGroupMenu(event.currentTarget, item as Group)}
                       onClick={(event) => {
                         event.stopPropagation();
                         if (window.matchMedia("(max-width: 767.98px)").matches) {
                           setMobileGroupMenu(item as Group);
+                        } else {
+                          openDesktopGroupMenu(event.currentTarget, item as Group);
                         }
                       }}
                       className="grid h-6 w-6 cursor-pointer place-items-center rounded text-zinc-500 hover:bg-zinc-200/60 hover:text-zinc-800"
@@ -390,25 +413,36 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
                         <circle cx="19" cy="12" r="1.7" />
                       </svg>
                     </button>
-                    {/* pt-1 (not mt-1) keeps the gap hoverable on the way to the menu */}
-                    <div className="absolute right-0 top-full z-20 hidden pt-1 group-focus-within/dots:block group-hover/dots:block">
-                      <div className="m3-menu m3-menu-enter m3-menu--origin-top-right m3-menu--compact w-36">
-                        <button
-                          type="button"
-                          onClick={() => setExportGroup(item as Group)}
-                          className="m3-menu-item"
-                        >
-                          Export CSV
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setDeleteGroup(item as Group)}
-                          className="m3-menu-item m3-menu-item--danger"
-                        >
-                          Delete group
-                        </button>
+                    {/* Keep the menu outside the tab strip's overflow clip while retaining its hover bridge. */}
+                    {desktopGroupMenu?.groupId === item.id ? (
+                      <div
+                        className="fixed z-50 hidden pt-1 group-focus-within/dots:block group-hover/dots:block"
+                        style={{ left: desktopGroupMenu.left, top: desktopGroupMenu.top }}
+                      >
+                        <div className="m3-menu m3-menu-enter m3-menu--origin-top-right m3-menu--compact w-36">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setDesktopGroupMenu(null);
+                              setExportGroup(item as Group);
+                            }}
+                            className="m3-menu-item"
+                          >
+                            Export CSV
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setDesktopGroupMenu(null);
+                              setDeleteGroup(item as Group);
+                            }}
+                            className="m3-menu-item m3-menu-item--danger"
+                          >
+                            Delete group
+                          </button>
+                        </div>
                       </div>
-                    </div>
+                    ) : null}
                   </div>
                 ) : null}
               </div>
