@@ -7,7 +7,7 @@ export async function GET() {
   return new NextResponse(
     `# Omentir Agent Guide
 
-Omentir gives AI assistants a workspace-scoped lead-discovery interface. Use it to understand a customer's product and ICP, configure lead finders, inspect qualified LinkedIn leads, monitor discovery activity and the planned outreach schedule, and work with conversations that already exist in Omentir.
+Omentir gives AI assistants a workspace-scoped lead-discovery and outreach interface. Use it to understand a customer's product and ICP, configure lead finders, attach outreach sequences, choose reply-handling modes and booking links, inspect qualified LinkedIn leads, monitor discovery activity and the planned outreach schedule, and work with conversations that already exist in Omentir.
 
 Omentir is open source under the MIT license. The full application code, including this Agent API and the MCP server, is public at https://github.com/vanshyadav1408/Omentir. If tool behavior is ever unclear, the implementation can be read directly.
 
@@ -15,31 +15,77 @@ Omentir is open source under the MIT license. The full application code, includi
 
 ${siteUrl}
 
-## Authentication
+## How people connect Omentir from other AI apps
 
-There are two ways in, and a client only needs one.
+Users connect once in Omentir (LinkedIn + plan), then attach their chat app or coding agent. There are **two ways in**; a client only needs one.
 
-If you are an MCP client that can run the OAuth flow, point at \`${siteUrl}/api/agent/v1/mcp\` with no credential. The 401 carries a \`WWW-Authenticate\` challenge naming the protected-resource metadata; from there, register with the endpoint in \`/.well-known/oauth-authorization-server\` and complete an authorization code exchange with PKCE (S256 required). The user signs in and approves, and the access token you receive is a normal workspace token.
+### Path A: Chat apps with a connector URL (OAuth, no API key)
 
-Otherwise the user creates a token on the Omentir API page and you send it on every request:
+Works with **Claude**, **ChatGPT**, **Grok**, and other clients that support custom MCP connectors.
+
+1. User connects LinkedIn in Omentir and fills **My Product**.
+2. In the chat app: Settings → Connectors (or equivalent) → add custom connector.
+3. Connector URL: \`${siteUrl}/api/agent/v1/mcp\`
+4. The app sends the user to Omentir to sign in and approve **Connect workspace**.
+5. User enables Omentir tools **in that conversation** (many apps require a separate toggle).
+6. User asks the assistant to list agents, update the product profile, create a classic lead finder, or create a **Steal Customers** agent.
+
+No API key is pasted into the chat app. The 401 challenge advertises protected-resource metadata; the client registers via dynamic client registration and completes authorization-code + PKCE (S256). Human setup: \`${siteUrl}/mcp-server\`.
+
+### Path B: API key for header-capable clients
+
+Works with **Claude Code**, **Cursor**, **Codex**, scripts, and any HTTP client.
+
+1. User opens \`${siteUrl}/api-keys\` (or **API** in the app) and creates a token.
+2. Client sends on every request:
 
 \`\`\`text
 Authorization: Bearer <omentir_agent_token>
 \`\`\`
 
-Tokens are never accepted in URLs. Keep the token in the client's secret store, never in a prompt or a message you send onward.
+3. MCP endpoint (same tools): \`POST ${siteUrl}/api/agent/v1/mcp\`
+4. REST fallback: \`${siteUrl}/api/agent/v1/*\` (OpenAPI: \`${siteUrl}/api/agent/v1/openapi.json\`)
+
+Tokens are never accepted in URLs. Store them in the client's secret store, never in a prompt or outbound message. Revoking a token on the API page disconnects that integration immediately.
+
+### Path C: Operator prompt (manual agents)
+
+For agents that can call HTTP tools with a Bearer token but need instructions first, users paste the prompt on \`${siteUrl}/for-agents\` as the first message. That prompt tells the agent to read this guide, ask for the token, then run \`get_context\` / \`get_stats\`.
+
+### What connected AI apps can do
+
+- Configure **My Product** and read workspace readiness
+- Create, list, update, pause, resume, and delete agents (classic lead finders **and** Steal Customers)
+- List scored leads (Steal Customers leads include \`engagementContext\`: post text, post URL, comment)
+- Inspect discovery activity and the planned outreach send schedule
+- List existing reply conversations and send replies only in existing threads (with user approval)
+
+They cannot access billing, other workspaces, or the user's LinkedIn password. All LinkedIn actions run through the account the user already connected in Omentir, under daily safety limits.
+
+## Authentication (technical)
+
+**OAuth MCP clients:** point at \`${siteUrl}/api/agent/v1/mcp\` with no credential. Follow \`WWW-Authenticate\` → protected-resource metadata → authorization server (\`/.well-known/oauth-authorization-server\`) → authorization code + PKCE S256.
+
+**Bearer tokens:** user-created on the API page:
+
+\`\`\`text
+Authorization: Bearer <omentir_agent_token>
+\`\`\`
 
 ## Recommended Workflow
 
 1. Call \`omentir_get_context\` to read setup status, counts, settings, the workspace time zone, today's remaining send allowance, and resource URLs.
-2. Call \`omentir_get_product_profile\` and confirm the product and ICP before configuring discovery.
+2. Call \`omentir_get_product_profile\` and confirm the product is complete (required for Steal Customers buyer fit; also used for classic discovery personalization).
 3. If LinkedIn is not connected, stop and ask the customer to connect it in Omentir.
-4. Call \`omentir_list_agents\` before creating anything so retries do not create duplicate lead finders.
-5. Call \`omentir_create_agent\` only with a complete prospect definition and at least one title, industry, location, and keyword.
-6. Use the returned \`leadGroup.id\` with \`omentir_list_leads\`. Discovery is scheduled, so an empty first response can mean the first run is still pending.
+4. Call \`omentir_list_agents\` before creating anything so retries do not create duplicate agents (includes classic lead finders and Steal Customers / \`steal_customers\`).
+5. Call \`omentir_create_agent\`:
+   - **Classic lead finder:** complete \`prompt\` plus at least one title, industry, location, and keyword. Pass \`setupOutreach: true\` and \`replyHandling\` to start messaging immediately.
+   - **Steal Customers:** \`mode: "steal_customers"\` plus \`signalSources.competitorUrls\` and/or \`founderUrls\` (company pages, founders, or employees who post). No ICP. My Product must already be set. AI outreach is attached automatically.
+6. Use the returned \`leadGroup.id\` with \`omentir_list_leads\` (and \`omentir_get_lead\` for full post + comment context on Steal Customers leads). Discovery is scheduled, so an empty first response can mean the first run is still pending.
 7. Use \`omentir_list_activity\` and the agent's \`status\`, \`lastRunAt\`, and \`nextRunAt\` to explain progress without inventing results.
 8. Use \`omentir_list_scheduled_actions\` to report what outreach is queued and exactly when it sends.
 9. Use \`omentir_list_conversations\` for existing threads. \`omentir_reply_to_lead\` can continue an existing conversation only; show the user the draft and get approval before sending.
+10. Change reply mode or calendar link later with \`omentir_update_agent\` (\`replyHandling\`, \`bookingLink\`) or the workspace booking link with \`omentir_update_product_profile\` (\`schedulingLink\`). Pause, resume, or delete any agent with \`omentir_pause_agent\`, \`omentir_resume_agent\`, or \`omentir_delete_agent\`.
 
 ## Creating a Lead Finder
 
@@ -48,12 +94,67 @@ Tokens are never accepted in URLs. Keep the token in the client's secret store, 
 - \`groupName\`: the name of the lead list.
 - \`prompt\`: a precise description of the people to find.
 - \`filters.titles\`, \`filters.industries\`, \`filters.locations\`, and \`filters.keywords\`: each must contain at least one value.
+- Optional \`mode\`: \`signals\` (default), \`filters\`, \`prompt\`, or \`steal_customers\` (see below).
 - Optional \`linkedInAccountId\`: choose from \`omentir_list_linkedin_accounts\`; otherwise Omentir uses the workspace's first connected account.
-- Optional \`signalSources\`: competitor URLs, founder URLs, and buying-signal keywords.
 
-The response includes the saved agent, its lead group, and discovery scheduling information. Lead discovery runs asynchronously: a new lead finder starts its first run right away and then looks for new leads once a day at the time it was created. There is no setting for that time.
+The response includes the saved agent, its lead group, and discovery scheduling information. Lead discovery runs asynchronously: a new agent starts its first run right away and then looks for new leads once a day at the time it was created. There is no setting for that time.
 
-A new lead finder discovers and scores leads only. Outreach sequences (connection request, waits, messages) are built in the Omentir app, not over this API, so tell the customer to set the sequence up there before promising that messages will go out. \`omentir_list_agents\` reports \`outreach.configured\` for each finder.
+By default a classic lead finder discovers and scores leads only. To also start outreach from this API (same default AI sequence as the app: bare connection request, then three AI messages), pass \`setupOutreach: true\` and/or \`replyHandling\`:
+
+- \`handoff\`: stop after the first reply and email the user (same as "Stop after the first reply" / manual handoff in the app). Optional \`notifyOnReply\` (default true).
+- \`ai_until_interest\`: AI answers ordinary replies; email the user when qualified interest is detected.
+- \`ai_until_booked\`: AI continues the conversation, shares the scheduling link after interest, and emails the user when the lead confirms a meeting. Requires a Calendly or Cal.com link via \`bookingLink\` or the product profile \`schedulingLink\`.
+
+\`omentir_update_agent\` can change \`mode\`, \`prompt\`, \`filters\`, \`signalSources\`, \`replyHandling\`, \`bookingLink\`, \`notifyOnReply\`, and \`sendWindow\` on existing agents, or create the default sequence if the agent has none yet. \`omentir_list_agents\` reports each agent's \`mode\`, \`outreach.configured\`, \`replyHandling\`, and \`bookingLink\`. Pause, resume, and delete work for every mode including \`steal_customers\`.
+
+Workspace-wide calendar link: set \`schedulingLink\` with \`omentir_update_product_profile\` (https://cal.com/... or https://calendly.com/...). Per-agent overrides use \`bookingLink\` on create/update agent.
+
+## Creating a Steal Customers Agent
+
+Use this when the user wants to reach people who are already talking about a similar product under competitor LinkedIn posts (high intent: same problem, actively shopping).
+
+There is **no ICP form** for this mode. The pool is people who comment under competitor posts. Who is "likely to buy" is judged from the workspace **product profile (My Product)** (description, use cases, pain points, keywords, target buyers), which must be set up first.
+
+\`omentir_create_agent\` with:
+
+- \`mode\`: \`"steal_customers"\`
+- \`groupName\`: name of the lead list
+- \`signalSources.competitorUrls\`: one or more LinkedIn company (or profile) URLs of competitors
+- Optional \`signalSources.founderUrls\`: LinkedIn profile URLs of competitor **founders or employees** who post about the product
+- \`prompt\` and \`filters\` are **optional** and ignored for targeting; the server fills them from My Product
+- Outreach: AI outreach is attached automatically (manual templates cannot carry post + comment context). You may still pass \`replyHandling\`, \`bookingLink\`, and \`sendWindow\`
+
+What discovery does for Steal Customers (\`steal_customers\`):
+
+1. Pulls recent posts from each competitor **company page**.
+2. For each company, **finds employees** at that company and pulls **their personal posts** (employees are content sources only, not leads).
+3. Also uses any optional founder/employee profile URLs you pass, and product-relevant discussion post search.
+4. Ranks posts using product language from My Product (keywords, use cases, pains); prefers recent posts (~14 days when dates exist).
+5. Scans **comments only** under those posts. Keeps substantive, intent-bearing comments; drops cheer/emoji noise.
+6. Keeps only **fresh** comments: hard max **7 days**.
+7. Scores commenters as likely **customers** of the My Product profile (not the competitor's employees as buyers by default).
+8. Stores full engagement context: **post text**, **post URL**, **comment text**, **comment URL**, plus profile, for AI outreach.
+9. \`omentir_list_leads\` / \`omentir_get_lead\` return \`engagementContext\`, \`signalText\`, and \`leadReason\`.
+
+Example create payload (MCP tool or \`POST /api/agent/v1/agents\`):
+
+\`\`\`json
+{
+  "mode": "steal_customers",
+  "groupName": "Competitor commenters",
+  "name": "Steal Customers",
+  "signalSources": {
+    "competitorUrls": ["https://www.linkedin.com/company/example-competitor"],
+    "founderUrls": ["https://www.linkedin.com/in/example-founder-or-employee"]
+  },
+  "replyHandling": "ai_until_interest",
+  "sendWindow": "business"
+}
+\`\`\`
+
+When helping a user configure Steal Customers, first ensure My Product is complete (what the product does, use cases, pain points, keywords, buyers). Then collect competitor company URLs and optional founder/employee profile URLs only. Do not invent an ICP form or assume a vertical.
+
+Edit with \`omentir_update_agent\` (same \`agentId\`): change \`signalSources\`, \`replyHandling\`, \`bookingLink\`, \`sendWindow\`, or \`status\`. On save, prompt/filters are refilled from My Product. Pause, resume, and delete use the same tools as other agents.
 
 ## Time, Send Windows, and Daily Limits
 
@@ -78,15 +179,15 @@ Available tools:
 - \`omentir_get_product_profile\`
 - \`omentir_update_product_profile\`
 - \`omentir_list_linkedin_accounts\`
-- \`omentir_list_agents\` (includes each finder's next discovery run, send window, and outreach status)
-- \`omentir_create_agent\`
-- \`omentir_update_agent\` (configuration, send window, and active/paused status)
+- \`omentir_list_agents\` (classic finders and Steal Customers / steal_customers; next run, send window, outreach status)
+- \`omentir_create_agent\` (classic lead finders and Steal Customers)
+- \`omentir_update_agent\` (configuration, signalSources, send window, outreach, active/paused status)
 - \`omentir_pause_agent\`
 - \`omentir_resume_agent\`
 - \`omentir_delete_agent\`
 - \`omentir_list_groups\`
-- \`omentir_list_leads\`
-- \`omentir_get_lead\`
+- \`omentir_list_leads\` (includes engagementContext on Steal Customers leads)
+- \`omentir_get_lead\` (full lead + post/comment context when present)
 - \`omentir_list_activity\`
 - \`omentir_list_scheduled_actions\` (planned send times for queued outreach)
 - \`omentir_update_settings\` (daily limits, delays, AI follow-ups, and time zone)

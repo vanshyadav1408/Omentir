@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
-import type { FormEvent, ReactNode } from "react";
+import type { FormEvent } from "react";
 import LogoMark from "@/app/logo-mark";
 import AiLoadingOverlay from "@/app/ai-loading-overlay";
 import { SelectField, type SelectOption } from "@/app/ui/select";
@@ -15,7 +15,6 @@ import {
   INDUSTRY_SUGGESTIONS,
   KEYWORD_SUGGESTIONS,
   LOCATION_SUGGESTIONS,
-  SIGNAL_KEYWORD_SUGGESTIONS,
   TITLE_SUGGESTIONS,
 } from "./suggestions";
 
@@ -72,6 +71,9 @@ type AgentSetupProps = {
   // contacts leads manually from the Leads section.
   leadsOnly?: boolean;
   outreachOnly?: boolean;
+  // Steal customers: scan competitor post comments and AI-outreach those people
+  // with post+comment context. No manual message templates.
+  stealCustomers?: boolean;
   // Workspace IANA timezone, shown next to the send-window picker so the user
   // knows whose 9am they are choosing.
   timezone?: string;
@@ -91,7 +93,7 @@ const SEND_WINDOW_OPTIONS: SelectOption[] = [
   { value: "always", label: "Around the clock · 24/7" },
 ];
 
-type StepKey = "icp" | "signals" | "leads" | "campaign" | "review";
+type StepKey = "icp" | "competitors" | "leads" | "campaign" | "review";
 type SeqKind = "connect" | "message" | "follow";
 
 type SeqAction = {
@@ -126,17 +128,6 @@ const initialIndustries = ["SaaS", "Software Development", "Marketing Services",
 const initialLocations = ["United States", "Canada", "United Kingdom", "Australia"];
 const initialKeywords = ["B2B", "Growth", "Sales", "Revenue", "Outbound", "Pipeline", "Go to market"];
 const initialSignalKeywords = ["hiring sales", "hiring growth", "outbound", "pipeline", "looking for a tool"];
-
-function FieldLabel({ children }: { children: ReactNode }) {
-  return (
-    <span
-      style={{ fontFamily: "var(--font-varta)" }}
-      className="relative z-30 inline-flex items-center gap-1 text-[14px] font-semibold leading-5 text-zinc-900"
-    >
-      {children}
-    </span>
-  );
-}
 
 function ProgressCheckIcon() {
   return (
@@ -195,7 +186,11 @@ function TextInput({
   );
 }
 
-function TagRow({
+/**
+ * Multi-value field: one standard TextField + plain list below (no nested tag box).
+ * Optional suggestions dropdown for ICP fields.
+ */
+function MultiValueField({
   label,
   name,
   values,
@@ -216,7 +211,10 @@ function TagRow({
 
   function addValue(raw?: string) {
     const next = (raw ?? draft).trim();
-    if (!next || values.some((v) => v.toLowerCase() === next.toLowerCase())) return;
+    if (!next || values.some((value) => value.toLowerCase() === next.toLowerCase())) {
+      if (!raw) setDraft("");
+      return;
+    }
     setValues([...values, next]);
     setDraft("");
     setHighlight(0);
@@ -224,83 +222,63 @@ function TagRow({
 
   const filtered = (() => {
     if (!suggestions || !focused) return [] as string[];
-    const lowerSelected = new Set(values.map((v) => v.toLowerCase()));
-    const q = draft.trim().toLowerCase();
-    const pool = suggestions.filter((s) => !lowerSelected.has(s.toLowerCase()));
-    const matched = q ? pool.filter((s) => s.toLowerCase().includes(q)) : pool;
+    const lowerSelected = new Set(values.map((value) => value.toLowerCase()));
+    const query = draft.trim().toLowerCase();
+    const pool = suggestions.filter((item) => !lowerSelected.has(item.toLowerCase()));
+    const matched = query
+      ? pool.filter((item) => item.toLowerCase().includes(query))
+      : pool;
     return matched.slice(0, 10);
   })();
 
   return (
-    <div className="grid gap-1.5">
-      <FieldLabel>{label}</FieldLabel>
+    <div className="grid gap-2">
       {values.map((value) => (
         <input key={value} type="hidden" name={name} value={value} />
       ))}
+      {/* Suggestions anchor to the input only, not below selected value pills. */}
       <div className="relative">
-        <div
-          className={`flex min-h-[56px] flex-wrap items-center gap-1.5 rounded-md border bg-[var(--md-sys-color-surface-container)] px-3 py-2 transition-[border-color,box-shadow] duration-150 ease-[cubic-bezier(0.2,0,0,1)] ${
-            focused
-              ? "border-2 border-[var(--md-sys-color-primary)]"
-              : "border border-[var(--md-sys-color-field-outline)] hover:border-[var(--md-sys-color-field-outline-hover)]"
-          }`}
-        >
-          {values.map((value) => (
-            <span
-              key={value}
-              className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-zinc-50 py-1 pl-3 pr-2 text-[12px] font-medium leading-4 text-zinc-700"
-            >
-              {value}
-              <button
-                type="button"
-                onClick={() => setValues(values.filter((item) => item !== value))}
-                className="cursor-pointer text-zinc-500 hover:text-zinc-900"
-                aria-label={`Remove ${value}`}
-              >
-                x
-              </button>
-            </span>
-          ))}
-          <input
-            value={draft}
-            onChange={(event) => {
-              setDraft(event.target.value);
-              setHighlight(0);
-            }}
-            onFocus={() => setFocused(true)}
-            onBlur={() => {
-              // Text that is visibly present in the field must count even when
-              // the user clicks Continue without pressing Enter first.
+        <TextField
+          label={label}
+          name={`${name}Draft`}
+          value={draft}
+          onChange={(event) => {
+            setDraft(event.target.value);
+            setHighlight(0);
+          }}
+          onFocus={() => setFocused(true)}
+          onBlur={() => {
+            // Commit typed text when leaving; delay so suggestion mousedown can run first.
+            setTimeout(() => {
               addValue();
-              setTimeout(() => setFocused(false), 120);
-            }}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                event.preventDefault();
-                if (filtered.length > 0) {
-                  addValue(filtered[Math.min(highlight, filtered.length - 1)]);
-                } else {
-                  addValue();
-                }
-              } else if (event.key === "ArrowDown") {
-                if (filtered.length === 0) return;
-                event.preventDefault();
-                setHighlight((h) => (h + 1) % filtered.length);
-              } else if (event.key === "ArrowUp") {
-                if (filtered.length === 0) return;
-                event.preventDefault();
-                setHighlight((h) => (h - 1 + filtered.length) % filtered.length);
-              } else if (event.key === "Escape") {
-                setFocused(false);
+              setFocused(false);
+            }, 120);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              if (filtered.length > 0) {
+                addValue(filtered[Math.min(highlight, filtered.length - 1)]);
+              } else {
+                addValue();
               }
-            }}
-            placeholder={values.length ? "" : placeholder}
-            className="h-8 min-w-[100px] flex-1 border-0 bg-transparent py-0 pl-2 pr-1 text-[16px] leading-8 text-[var(--md-sys-color-field-text)] shadow-none outline-none placeholder:text-[var(--md-sys-color-field-label)]"
-          />
-        </div>
+            } else if (event.key === "ArrowDown") {
+              if (filtered.length === 0) return;
+              event.preventDefault();
+              setHighlight((current) => (current + 1) % filtered.length);
+            } else if (event.key === "ArrowUp") {
+              if (filtered.length === 0) return;
+              event.preventDefault();
+              setHighlight((current) => (current - 1 + filtered.length) % filtered.length);
+            } else if (event.key === "Escape") {
+              setFocused(false);
+            }
+          }}
+          placeholder={placeholder}
+        />
         {filtered.length > 0 ? (
           <ul
-            className="m3-menu m3-menu-enter m3-menu--origin-top m3-menu--compact absolute left-0 right-0 top-[calc(100%+4px)] z-50"
+            className="m3-menu m3-menu-enter m3-menu--origin-top m3-menu--compact absolute left-0 right-0 top-full z-50 mt-1"
             role="listbox"
           >
             {filtered.map((option, idx) => (
@@ -323,6 +301,29 @@ function TagRow({
           </ul>
         ) : null}
       </div>
+      {values.length > 0 ? (
+        <div className="flex flex-wrap gap-2" role="list" aria-label={`${label} selected`}>
+          {values.map((value) => (
+            <span
+              key={value}
+              role="listitem"
+              className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-zinc-100 py-1 pl-3 pr-1.5 text-[12px] font-medium leading-4 text-zinc-800"
+            >
+              <span className="min-w-0 truncate">{value}</span>
+              <button
+                type="button"
+                onClick={() => setValues(values.filter((item) => item !== value))}
+                className="grid h-5 w-5 shrink-0 place-items-center rounded-full text-zinc-500 transition-colors hover:bg-zinc-200 hover:text-zinc-900"
+                aria-label={`Remove ${value}`}
+              >
+                <span className="text-[14px] leading-none" aria-hidden="true">
+                  ×
+                </span>
+              </button>
+            </span>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -698,15 +699,20 @@ export default function AgentSetup({
   setupMode = false,
   leadsOnly = false,
   outreachOnly = false,
+  stealCustomers: stealCustomersProp = false,
   timezone = "",
 }: AgentSetupProps) {
   const isEditing = Boolean(initialAgent);
+  const stealCustomers =
+    stealCustomersProp || initialAgent?.mode === "steal_customers";
   const router = useRouter();
   // Workspaces that have never saved a zone still get a real name here, from
   // the same detection the rest of the app formats its times with.
   const workspaceTimeZone = useWorkspaceTimeZone();
   const sendWindowTimeZone = timezone || workspaceTimeZone;
-  const [step, setStep] = useState<StepKey>(outreachOnly ? "leads" : "icp");
+  const [step, setStep] = useState<StepKey>(
+    outreachOnly ? "leads" : stealCustomers ? "competitors" : "icp",
+  );
   const [pending, startTransition] = useTransition();
   const [drafting, setDrafting] = useState(false);
   const [draftError, setDraftError] = useState("");
@@ -717,7 +723,9 @@ export default function AgentSetup({
   const [preparedAgentId, setPreparedAgentId] = useState("");
   const [csvContents, setCsvContents] = useState("");
   const [csvFileName, setCsvFileName] = useState("");
-  const [name, setName] = useState(initialAgent?.name || "New Agent");
+  const [name, setName] = useState(
+    initialAgent?.name || (stealCustomers ? "Steal Customers" : "New Agent"),
+  );
   const [groupName, setGroupName] = useState(initialAgent?.targetGroupName || "");
   const [linkedInAccountId, setLinkedInAccountId] = useState(
     initialAgent?.linkedInAccountId || linkedInAccounts[0]?.id || "",
@@ -726,7 +734,11 @@ export default function AgentSetup({
     () => linkedInAccountOptions(linkedInAccounts),
     [linkedInAccounts],
   );
-  const [outreachMode, setOutreachMode] = useState<"automatic" | "manual">("automatic");
+  // Steal customers always uses AI outreach: messages need post+comment context
+  // the user cannot paste into a static template.
+  const [outreachMode, setOutreachMode] = useState<"automatic" | "manual">(
+    stealCustomers ? "automatic" : "automatic",
+  );
   // Business hours is the default for NEW agents: sending at 3am is the single
   // most unnatural thing automated outreach can do. An existing agent opens on
   // the window its campaign is actually sending in - and campaigns created
@@ -835,20 +847,34 @@ export default function AgentSetup({
   const [setupStepError, setSetupStepError] = useState("");
 
   const steps = useMemo(() => {
-    const all = [
+    if (outreachOnly) {
+      return [
+        ["leads", "1", "CSV", "Upload LinkedIn profiles"],
+        ["campaign", "2", "Outreach", "Message & sequence"],
+        ["review", "3", "Review", "Launch your agent"],
+      ] as const;
+    }
+    if (stealCustomers) {
+      return [
+        ["competitors", "1", "Competitors", "Whose posts to watch"],
+        ["leads", "2", "Leads", "Lead group and account"],
+        ["campaign", "3", "Outreach", "AI sequence only"],
+        ["review", "4", "Review", "Launch your agent"],
+      ] as const;
+    }
+    if (leadsOnly) {
+      return [
+        ["icp", "1", "ICP", "Define your ideal customer profile"],
+        ["leads", "2", "Leads", "Set filters & scoring"],
+      ] as const;
+    }
+    return [
       ["icp", "1", "ICP", "Define your ideal customer profile"],
-      ["signals", "2", "Signals", "Choose intent signals"],
-      ["leads", "3", "Leads", "Set filters & scoring"],
-      ["campaign", "4", "Outreach", "Message & sequence"],
-      ["review", "5", "Review", "Launch your agent"],
+      ["leads", "2", "Leads", "Set filters & scoring"],
+      ["campaign", "3", "Outreach", "Message & sequence"],
+      ["review", "4", "Review", "Launch your agent"],
     ] as const;
-    if (outreachOnly) return [
-      ["leads", "1", "CSV", "Upload LinkedIn profiles"],
-      ["campaign", "2", "Outreach", "Message & sequence"],
-      ["review", "3", "Review", "Launch your agent"],
-    ] as const;
-    return leadsOnly ? all.slice(0, 3) : all;
-  }, [leadsOnly, outreachOnly]);
+  }, [leadsOnly, outreachOnly, stealCustomers]);
 
   // The step whose Continue button launches the agent instead of advancing.
   const finalStep: StepKey = leadsOnly ? "leads" : "review";
@@ -869,23 +895,35 @@ export default function AgentSetup({
     };
   }, [displayStepIndex, stepIndex]);
 
-  const setupIcpComplete = outreachOnly ||
-    titles.length > 0 &&
-    industries.length > 0 &&
-    locations.length > 0 &&
-    keywords.length > 0 &&
-    prompt.trim().length > 0;
+  // Steal customers forces AI outreach; never leave a stale manual mode on.
+  useEffect(() => {
+    if (stealCustomers) setOutreachMode("automatic");
+  }, [stealCustomers]);
+
+  const setupIcpComplete =
+    stealCustomers ||
+    outreachOnly ||
+    (titles.length > 0 &&
+      industries.length > 0 &&
+      locations.length > 0 &&
+      keywords.length > 0 &&
+      prompt.trim().length > 0);
+
+  const setupCompetitorsComplete =
+    competitorUrls.length > 0 || founderUrls.length > 0;
 
   function previousStep(value: StepKey): StepKey {
     if (outreachOnly && value === "campaign") return "leads";
     if (value === "review") return "campaign";
     if (value === "campaign") return "leads";
-    if (value === "leads") return "signals";
+    if (value === "leads") return stealCustomers ? "competitors" : "icp";
+    // Steal customers starts at competitors; there is no ICP step.
+    if (value === "competitors") return "competitors";
     return "icp";
   }
   function nextStep(value: StepKey): StepKey {
-    if (value === "icp") return "signals";
-    if (value === "signals") return "leads";
+    if (value === "icp") return "leads";
+    if (value === "competitors") return "leads";
     if (value === "leads") return "campaign";
     return "review";
   }
@@ -895,6 +933,10 @@ export default function AgentSetup({
     if (step !== "review") {
       if (step === "icp" && !setupIcpComplete) {
         setSetupStepError("Complete each field on this step to continue.");
+        return;
+      }
+      if (step === "competitors" && !setupCompetitorsComplete) {
+        setSetupStepError("Add at least one competitor LinkedIn URL to continue.");
         return;
       }
       setSetupStepError("");
@@ -907,13 +949,17 @@ export default function AgentSetup({
           setDiscoveryError("Choose a CSV file with LinkedIn profiles to continue.");
           return;
         }
-        // Step headers allow jumping, so re-check the ICP here: discovery
-        // must never run against a partially configured agent.
-        if (!outreachOnly && !setupIcpComplete) {
+        // Step headers allow jumping, so re-check required setup here.
+        if (!outreachOnly && !stealCustomers && !setupIcpComplete) {
           setDiscoveryError(
             "Fill every ICP field (job titles, industries, locations, keywords, and the lead description) before discovering leads.",
           );
           setStep("icp");
+          return;
+        }
+        if (stealCustomers && !setupCompetitorsComplete) {
+          setDiscoveryError("Add at least one competitor LinkedIn URL before continuing.");
+          setStep("competitors");
           return;
         }
         // Full outreach setup is only persisted from the final Launch action.
@@ -952,7 +998,7 @@ export default function AgentSetup({
       }
       if (
         step === "campaign" &&
-        outreachMode === "automatic" &&
+        (stealCustomers || outreachMode === "automatic") &&
         replyHandling === "ai_until_booked" &&
         !normalizeSchedulingLink(bookingLink) &&
         !normalizeSchedulingLink(profile?.schedulingLink || "")
@@ -966,14 +1012,26 @@ export default function AgentSetup({
       return;
     }
     const formData = new FormData(event.currentTarget);
-    if (!setupIcpComplete) {
+    // Always force mode on submit. A stale/missing hidden field previously
+    // sent mode=signals for Steal Customers, which then failed the classic ICP
+    // assert (job titles / industries / locations) with empty filters.
+    if (outreachOnly) formData.set("mode", "outreach");
+    else if (stealCustomers) formData.set("mode", "steal_customers");
+    else formData.set("mode", "signals");
+    if (!stealCustomers && !setupIcpComplete) {
       setSubmitError(
         "Fill every ICP field (job titles, industries, locations, keywords, and the lead description) before launching the agent.",
       );
       setStep("icp");
       return;
     }
+    if (stealCustomers && !setupCompetitorsComplete) {
+      setSubmitError("Add at least one competitor LinkedIn URL before launching.");
+      setStep("competitors");
+      return;
+    }
     if (
+      !stealCustomers &&
       outreachMode === "manual" &&
       !formData.get("firstMessage") &&
       !formData.get("secondMessage") &&
@@ -985,7 +1043,7 @@ export default function AgentSetup({
       return;
     }
     if (
-      outreachMode === "automatic" &&
+      (stealCustomers || outreachMode === "automatic") &&
       replyHandling === "ai_until_booked" &&
       !normalizeSchedulingLink(bookingLink) &&
       !normalizeSchedulingLink(profile?.schedulingLink || "")
@@ -1044,38 +1102,46 @@ export default function AgentSetup({
         setLocations(draft.locations.length ? draft.locations : initialLocations);
         setKeywords(draft.keywords.length ? draft.keywords : initialKeywords);
         setPrompt(draft.prompt);
-        setSignalKeywords(draft.signalKeywords.length ? draft.signalKeywords : initialSignalKeywords);
-        setCompetitorUrls(draft.competitorUrls);
-        setFounderUrls(draft.founderUrls);
+        if (stealCustomers) {
+          setCompetitorUrls(draft.competitorUrls);
+          setFounderUrls(draft.founderUrls);
+          setOutreachMode("automatic");
+        } else {
+          setSignalKeywords(
+            draft.signalKeywords.length ? draft.signalKeywords : initialSignalKeywords,
+          );
+          setCompetitorUrls([]);
+          setFounderUrls([]);
+          setOutreachMode("manual");
+          setActions((current) => {
+            const [connect, message, follow] = current.length >= 3
+              ? current
+              : [makeSeqAction("connect"), makeSeqAction("message"), makeSeqAction("follow")];
+            return [
+              {
+                ...connect,
+                enabled: true,
+                mode: "manual",
+                manualMessage: draft.connectionNote,
+                includeNote: true,
+              },
+              {
+                ...message,
+                enabled: true,
+                mode: "manual",
+                manualMessage: draft.firstMessage,
+              },
+              {
+                ...follow,
+                enabled: true,
+                mode: "manual",
+                manualMessage: draft.followUpMessage,
+              },
+            ];
+          });
+        }
         setCampaignGoal(draft.campaignGoal);
         setMessageTone(draft.messageTone);
-        setOutreachMode("manual");
-        setActions((current) => {
-          const [connect, message, follow] = current.length >= 3
-            ? current
-            : [makeSeqAction("connect"), makeSeqAction("message"), makeSeqAction("follow")];
-          return [
-            {
-              ...connect,
-              enabled: true,
-              mode: "manual",
-              manualMessage: draft.connectionNote,
-              includeNote: true,
-            },
-            {
-              ...message,
-              enabled: true,
-              mode: "manual",
-              manualMessage: draft.firstMessage,
-            },
-            {
-              ...follow,
-              enabled: true,
-              mode: "manual",
-              manualMessage: draft.followUpMessage,
-            },
-          ];
-        });
       } catch (error) {
         setDraftError(error instanceof Error ? error.message : "Gemini could not fill the setup.");
       } finally {
@@ -1116,10 +1182,10 @@ export default function AgentSetup({
               <span className="translate-y-px">{drafting ? "Filling..." : "Fill with AI"}</span>
             </button>
           </div>
-          <TagRow label="Target job titles" name="titles" values={titles} setValues={setTitles} placeholder="e.g. Sales Manager" suggestions={TITLE_SUGGESTIONS} />
-          <TagRow label="Target industries" name="industries" values={industries} setValues={setIndustries} placeholder="e.g. Marketing" suggestions={INDUSTRY_SUGGESTIONS} />
-          <TagRow label="Target locations" name="locations" values={locations} setValues={setLocations} placeholder="e.g. United States" suggestions={LOCATION_SUGGESTIONS} />
-          <TagRow label="Mandatory keywords" name="keywords" values={keywords} setValues={setKeywords} placeholder="e.g. B2B" suggestions={KEYWORD_SUGGESTIONS} />
+          <MultiValueField label="Target job titles" name="titles" values={titles} setValues={setTitles} placeholder="e.g. Sales Manager" suggestions={TITLE_SUGGESTIONS} />
+          <MultiValueField label="Target industries" name="industries" values={industries} setValues={setIndustries} placeholder="e.g. Marketing" suggestions={INDUSTRY_SUGGESTIONS} />
+          <MultiValueField label="Target locations" name="locations" values={locations} setValues={setLocations} placeholder="e.g. United States" suggestions={LOCATION_SUGGESTIONS} />
+          <MultiValueField label="Mandatory keywords" name="keywords" values={keywords} setValues={setKeywords} placeholder="e.g. B2B" suggestions={KEYWORD_SUGGESTIONS} />
           <TextAreaField
             name="prompt"
             label="Describe the leads you want"
@@ -1131,7 +1197,7 @@ export default function AgentSetup({
         </div>
       );
 
-    if (step === "signals")
+    if (step === "competitors")
       return (
         <div className="flex flex-col gap-6">
           <div>
@@ -1139,14 +1205,50 @@ export default function AgentSetup({
               style={{ fontFamily: "var(--font-varta)" }}
               className="text-[20px] font-semibold tracking-tight text-zinc-950"
             >
-              Choose intent signals
+              Competitors To Watch
             </h2>
             <p className="mt-1 text-[14px] font-medium text-zinc-700">
-              Tell Omentir where to look for buying intent and market activity.
+              Omentir scans posts from these LinkedIn pages, reads comments, and
+              AI-reaches out to people who are likely to buy your product.
             </p>
+            {setupStepError ? (
+              <p className="mt-2 text-[12px] font-light text-red-600">{setupStepError}</p>
+            ) : null}
           </div>
-          <TagRow label="Intent signal keywords" name="signalKeywords" values={signalKeywords} setValues={setSignalKeywords} placeholder="e.g. hiring SDRs" suggestions={SIGNAL_KEYWORD_SUGGESTIONS} />
-          <TagRow label="Competitor LinkedIn URLs" name="competitorUrls" values={competitorUrls} setValues={setCompetitorUrls} placeholder="https://linkedin.com/company/..." />
+          <p className="text-[13px] font-medium leading-5 text-zinc-600">
+            Buyer fit uses your product on{" "}
+            <a
+              href="/my-product"
+              className="font-semibold text-zinc-900 underline decoration-zinc-400 underline-offset-2 hover:text-zinc-950"
+            >
+              My Product
+            </a>
+            . Description, use cases, pain points, and keywords there decide who
+            among commenters is likely to buy. Keep My Product up to date so
+            similar-product posts and comments are ranked correctly. No separate
+            ICP is required for this agent.
+          </p>
+          <MultiValueField
+            label="Competitor LinkedIn URLs"
+            name="competitorUrls"
+            values={competitorUrls}
+            setValues={setCompetitorUrls}
+            placeholder="https://linkedin.com/company/competitor"
+          />
+          <MultiValueField
+            label="Competitor Founder / Employee Profiles (Optional)"
+            name="founderUrls"
+            values={founderUrls}
+            setValues={setFounderUrls}
+            placeholder="https://linkedin.com/in/employee-or-founder"
+          />
+          <p className="text-[12px] font-medium leading-5 text-zinc-600">
+            Add competitor company pages (and optionally specific founder or
+            employee profiles). Omentir finds employees at those companies, scans
+            their posts and company posts, then turns people who comment into
+            customer leads. Each lead keeps the post URL, what the post was about,
+            and what they commented.
+          </p>
         </div>
       );
 
@@ -1163,7 +1265,9 @@ export default function AgentSetup({
             <p className="mt-1 text-[14px] font-medium text-zinc-700">
               {outreachOnly
                 ? "Bring your own CSV of people you want to contact. Importing does not send messages."
-                : "Choose where qualified leads should go and how strict the agent should be."}
+                : stealCustomers
+                  ? "Name the lead group for people found in competitor comments."
+                  : "Choose where qualified leads should go and how strict the agent should be."}
             </p>
           </div>
           <TextInput
@@ -1175,7 +1279,9 @@ export default function AgentSetup({
               setDiscoveryError("");
             }}
             name="leadGroupNameVisible"
-            placeholder="e.g. High-intent SaaS leaders"
+            placeholder={
+              stealCustomers ? "e.g. Competitor commenters" : "e.g. High-intent SaaS leaders"
+            }
             required
           />
           {outreachOnly ? (
@@ -1275,67 +1381,72 @@ export default function AgentSetup({
           </p>
         </div>
 
-        {/* LEAD SOURCES */}
-        <div className="rounded-md border border-zinc-200 bg-white p-5">
-          <div
-            style={{ fontFamily: "var(--font-varta)" }}
-            className="text-[12px] font-bold uppercase tracking-wider text-zinc-900"
-          >
-            Lead Sources
-          </div>
-          <div className="mt-3 grid gap-2 text-[14px] leading-6 text-zinc-700">
-            {signalKeywords.length ? (
+        {stealCustomers ? (
+          <div className="rounded-md border border-zinc-200 bg-white p-5">
+            <div
+              style={{ fontFamily: "var(--font-varta)" }}
+              className="text-[12px] font-bold uppercase tracking-wider text-zinc-900"
+            >
+              Steal Customers
+            </div>
+            <div className="mt-3 grid gap-2 text-[14px] leading-6 text-zinc-700">
               <p>
-                <span className="font-semibold text-zinc-900">Keyword engagement: </span>
-                {signalKeywords.join(", ")}
+                Scans competitor post comments and AI-reaches out with post +
+                comment context. Likely buyers are judged from{" "}
+                <a href="/my-product" className="font-semibold text-[#ba3871] underline">
+                  My Product
+                </a>
+                , not a separate ICP form.
               </p>
-            ) : null}
-            {competitorUrls.length ? (
+              {competitorUrls.length ? (
+                <p>
+                  <span className="font-semibold text-zinc-900">Competitor Pages: </span>
+                  {competitorUrls.length} URL(s)
+                </p>
+              ) : null}
+              {founderUrls.length ? (
+                <p>
+                  <span className="font-semibold text-zinc-900">
+                    Founder / Employee Profiles:{" "}
+                  </span>
+                  {founderUrls.length} URL(s)
+                </p>
+              ) : null}
               <p>
-                <span className="font-semibold text-zinc-900">Competitor sources: </span>
-                {competitorUrls.length} URL(s)
+                <span className="font-semibold text-zinc-900">Product context: </span>
+                {companyName || profile?.companyName || "From My Product"}
               </p>
-            ) : null}
-            {founderUrls.length ? (
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-md border border-zinc-200 bg-white p-5">
+            <div
+              style={{ fontFamily: "var(--font-varta)" }}
+              className="text-[12px] font-bold uppercase tracking-wider text-zinc-900"
+            >
+              Targeting
+            </div>
+            <div className="mt-3 grid gap-2 text-[14px] leading-6 text-zinc-700">
               <p>
-                <span className="font-semibold text-zinc-900">Founder sources: </span>
-                {founderUrls.length} URL(s)
+                <span className="font-semibold text-zinc-900">Job roles: </span>
+                {titles.join(", ") || "-"}
               </p>
-            ) : null}
-            {!signalKeywords.length && !competitorUrls.length && !founderUrls.length ? (
-              <p className="font-medium text-zinc-700">No signal sources configured.</p>
-            ) : null}
+              <p>
+                <span className="font-semibold text-zinc-900">Industries: </span>
+                {industries.join(", ") || "-"}
+              </p>
+              <p>
+                <span className="font-semibold text-zinc-900">Location: </span>
+                {locations.join(", ") || "-"}
+              </p>
+              <p>
+                <span className="font-semibold text-zinc-900">Company size: </span>
+                {keywords.length ? keywords.join(", ") : "-"}
+              </p>
+              <p className="text-[13px] font-medium text-zinc-600">Match level: High precision</p>
+            </div>
           </div>
-        </div>
-
-        {/* TARGETING */}
-        <div className="rounded-md border border-zinc-200 bg-white p-5">
-          <div
-            style={{ fontFamily: "var(--font-varta)" }}
-            className="text-[12px] font-bold uppercase tracking-wider text-zinc-900"
-          >
-            Targeting
-          </div>
-          <div className="mt-3 grid gap-2 text-[14px] leading-6 text-zinc-700">
-            <p>
-              <span className="font-semibold text-zinc-900">Job roles: </span>
-              {titles.join(", ") || "-"}
-            </p>
-            <p>
-              <span className="font-semibold text-zinc-900">Industries: </span>
-              {industries.join(", ") || "-"}
-            </p>
-            <p>
-              <span className="font-semibold text-zinc-900">Location: </span>
-              {locations.join(", ") || "-"}
-            </p>
-            <p>
-              <span className="font-semibold text-zinc-900">Company size: </span>
-              {keywords.length ? keywords.join(", ") : "-"}
-            </p>
-            <p className="text-[13px] font-medium text-zinc-600">Match level: High precision</p>
-          </div>
-        </div>
+        )}
 
         {/* OUTREACH */}
         <div className="rounded-md border border-zinc-200 bg-white p-5">
@@ -1347,7 +1458,9 @@ export default function AgentSetup({
           </div>
           <div className="mt-3 grid gap-2 text-[14px] leading-6 text-zinc-700">
             <p>
-              {outreachMode === "automatic" ? "AI-generated sequence" : "Manual sequence"}
+              {stealCustomers || outreachMode === "automatic"
+                ? "AI-generated sequence"
+                : "Manual sequence"}
             </p>
             <p>
               <span className="font-semibold text-zinc-900">Goal: </span>
@@ -1395,7 +1508,11 @@ export default function AgentSetup({
             </span>
           </div>
           <ul className="mt-2 grid gap-1.5 text-[13px] font-light text-[#ba3871]">
-            <li>New leads will be added continuously from automatic sources.</li>
+            <li>
+              {stealCustomers
+                ? "New leads will come from people commenting under competitor posts."
+                : "New leads will be added continuously from automatic sources."}
+            </li>
             <li>You can pause your agent anytime, edit sources, targeting, and outreach.</li>
           </ul>
         </div>
@@ -1414,9 +1531,11 @@ export default function AgentSetup({
             Outreach settings
           </h2>
           <p className="mt-1 text-[14px] font-medium text-zinc-700">
-            {outreachMode === "automatic"
-              ? "Fine-tune how AI crafts and sends your messages."
-              : "Build the LinkedIn sequence your agent will run."}
+            {stealCustomers
+              ? "AI writes every message using the lead profile plus the competitor post and their comment. Manual templates are not available here."
+              : outreachMode === "automatic"
+                ? "Fine-tune how AI crafts and sends your messages."
+                : "Build the LinkedIn sequence your agent will run."}
           </p>
         </div>
 
@@ -1458,47 +1577,54 @@ export default function AgentSetup({
           placeholder="Select LinkedIn account"
         />
 
-        {/* AI / Manual selector */}
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <button
-            type="button"
-            onClick={() => setOutreachMode("automatic")}
-            className={
-              "relative rounded-md border p-5 text-left transition " +
-              (outreachMode === "automatic"
-                ? "border-[#e85e6b] bg-[#fff5f6]"
-                : "border-zinc-200 bg-white hover:bg-zinc-50")
-            }
-          >
-            <span
-              style={{ fontFamily: "var(--font-varta)" }}
-              className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-[#ba3871] px-2.5 py-0.5 text-[11px] font-semibold text-white"
+        {/* AI / Manual selector — steal customers is AI-only */}
+        {!stealCustomers ? (
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => setOutreachMode("automatic")}
+              className={
+                "relative rounded-md border p-5 text-left transition " +
+                (outreachMode === "automatic"
+                  ? "border-[#e85e6b] bg-[#fff5f6]"
+                  : "border-zinc-200 bg-white hover:bg-zinc-50")
+              }
             >
-              Recommended
-            </span>
-            <div style={{ fontFamily: "var(--font-varta)" }} className="text-[15px] font-semibold text-zinc-950">
-              AI writes outreach
-            </div>
-            <div className="mt-1 text-[13px] font-medium text-zinc-700">Generate messages from lead context.</div>
-          </button>
-          <button
-            type="button"
-            onClick={() => setOutreachMode("manual")}
-            className={
-              "rounded-md border p-5 text-left transition " +
-              (outreachMode === "manual"
-                ? "border-[#e85e6b] bg-[#fff5f6]"
-                : "border-zinc-200 bg-white hover:bg-zinc-50")
-            }
-          >
-            <div style={{ fontFamily: "var(--font-varta)" }} className="text-[15px] font-semibold text-zinc-950">
-              Manual messages
-            </div>
-            <div className="mt-1 text-[13px] font-medium text-zinc-700">Use exact messages you write.</div>
-          </button>
-        </div>
+              <span
+                style={{ fontFamily: "var(--font-varta)" }}
+                className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-[#ba3871] px-2.5 py-0.5 text-[11px] font-semibold text-white"
+              >
+                Recommended
+              </span>
+              <div style={{ fontFamily: "var(--font-varta)" }} className="text-[15px] font-semibold text-zinc-950">
+                AI writes outreach
+              </div>
+              <div className="mt-1 text-[13px] font-medium text-zinc-700">Generate messages from lead context.</div>
+            </button>
+            <button
+              type="button"
+              onClick={() => setOutreachMode("manual")}
+              className={
+                "rounded-md border p-5 text-left transition " +
+                (outreachMode === "manual"
+                  ? "border-[#e85e6b] bg-[#fff5f6]"
+                  : "border-zinc-200 bg-white hover:bg-zinc-50")
+              }
+            >
+              <div style={{ fontFamily: "var(--font-varta)" }} className="text-[15px] font-semibold text-zinc-950">
+                Manual messages
+              </div>
+              <div className="mt-1 text-[13px] font-medium text-zinc-700">Use exact messages you write.</div>
+            </button>
+          </div>
+        ) : (
+          <div className="rounded-md border border-[#f6c6d3] bg-[#fff5f6] px-4 py-3.5 text-[13px] font-medium text-[#ba3871]">
+            AI outreach only. Each message uses the commenter&apos;s profile plus the
+            competitor post and their comment. Manual sequences cannot carry that context.
+          </div>
+        )}
 
-        {outreachMode === "manual" ? (
+        {!stealCustomers && outreachMode === "manual" ? (
           renderOutreachSequence()
         ) : (
           <>
@@ -2231,9 +2357,21 @@ export default function AgentSetup({
       {industries.map((value) => <input key={`industry-${value}`} type="hidden" name="industries" value={value} />)}
       {locations.map((value) => <input key={`location-${value}`} type="hidden" name="locations" value={value} />)}
       {keywords.map((value) => <input key={`keyword-${value}`} type="hidden" name="keywords" value={value} />)}
-      {signalKeywords.map((value) => <input key={`signal-${value}`} type="hidden" name="signalKeywords" value={value} />)}
-      {competitorUrls.map((value) => <input key={`competitor-${value}`} type="hidden" name="competitorUrls" value={value} />)}
-      {founderUrls.map((value) => <input key={`founder-${value}`} type="hidden" name="founderUrls" value={value} />)}
+      {!stealCustomers
+        ? signalKeywords.map((value) => (
+            <input key={`signal-${value}`} type="hidden" name="signalKeywords" value={value} />
+          ))
+        : null}
+      {stealCustomers
+        ? competitorUrls.map((value) => (
+            <input key={`competitor-${value}`} type="hidden" name="competitorUrls" value={value} />
+          ))
+        : null}
+      {stealCustomers
+        ? founderUrls.map((value) => (
+            <input key={`founder-${value}`} type="hidden" name="founderUrls" value={value} />
+          ))
+        : null}
       <input
         type="hidden"
         name="connectionNote"
@@ -2249,7 +2387,7 @@ export default function AgentSetup({
       <input type="hidden" name="secondMessage" value={secondMessageAction?.manualMessage || ""} />
       <input type="hidden" name="thirdWaitHours" value={waitAsHours(thirdMessageAction, 30)} />
       <input type="hidden" name="thirdMessage" value={thirdMessageAction?.manualMessage || ""} />
-      {outreachMode === "automatic" ? (
+      {stealCustomers || outreachMode === "automatic" ? (
         <input type="hidden" name="aiDefaultOutreach" value="on" />
       ) : (
         <input type="hidden" name="manualDefaultOutreach" value="on" />
@@ -2260,20 +2398,30 @@ export default function AgentSetup({
       <input
         type="hidden"
         name="replyHandling"
-        value={outreachMode === "manual" ? "handoff" : replyHandling}
+        value={!stealCustomers && outreachMode === "manual" ? "handoff" : replyHandling}
       />
       <input
         type="hidden"
         name="bookingLink"
-        value={outreachMode === "automatic" && replyHandling === "ai_until_booked" ? bookingLink : ""}
+        value={
+          (stealCustomers || outreachMode === "automatic") && replyHandling === "ai_until_booked"
+            ? bookingLink
+            : ""
+        }
       />
       <input
         type="hidden"
         name="notifyOnReply"
-        value={outreachMode === "manual" && !notifyOnReply ? "off" : "on"}
+        value={!stealCustomers && outreachMode === "manual" && !notifyOnReply ? "off" : "on"}
       />
       <input type="hidden" name="sendWindow" value={sendWindow} />
-      <input type="hidden" name="mode" value={outreachOnly ? "outreach" : "signals"} />
+      <input
+        type="hidden"
+        name="mode"
+        value={
+          outreachOnly ? "outreach" : stealCustomers ? "steal_customers" : "signals"
+        }
+      />
 
       {!setupMode ? (
         <>

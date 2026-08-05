@@ -451,24 +451,21 @@ export async function processInboundMessage(input: {
     hasActiveSubscription(workspace)
       ? input.notifyEmailOverride || workspace.notificationEmail
       : undefined;
-  // Who gets told about an ordinary (not-yet-hot) reply, decided by the reply
-  // mode picked when the agent was created:
-  // - "hand the conversation off to me": yes. Automation just stopped and the
-  //   user owns this conversation from the first reply, so they must hear about
-  //   it the moment it lands, whatever the lead said.
-  // - "continue until interest": no. AI handles ordinary replies and emails
-  //   when qualified interest is detected.
-  // - "continue until booked": no. AI keeps working until the lead confirms a
-  //   booking, then sends the outcome email.
-  // A lead with no live enrollment has no automation behind them at all, so
-  // nothing else would ever surface the reply - notify.
-  // A hand-off campaign can still opt out of the email (notifyOnReply false):
-  // the user writes every message themselves and reads replies in LinkedIn.
+  // Notification emails follow the reply mode chosen at campaign setup
+  // (GUI or MCP/API):
+  // - handoff / manual ("stop after first reply"): email on the first reply
+  //   when notifyOnReply is not false (default true).
+  // - ai_until_interest: email when qualified interest is detected.
+  // - ai_until_booked: email when the lead confirms a meeting was booked.
+  // A lead with no live enrollment has no automation behind them, so nothing
+  // else would surface the reply - notify.
   const notifyOnPlainReply =
     handoffEnrollments.some(
       (enrollment) =>
         campaigns.find((item) => item.id === enrollment.campaignId)?.notifyOnReply !== false,
     ) || leadEnrollments.length === 0;
+  // Interest email for continue-until-interest (and legacy "ai") when that
+  // mode just stopped. Booking mode waits for meeting_booked instead.
   const stoppedAtInterest =
     isHotInterest &&
     (leadEnrollments.length === 0 ||
@@ -476,6 +473,8 @@ export async function processInboundMessage(input: {
         const mode = campaigns.find((item) => item.id === enrollment.campaignId)?.replyHandling;
         return mode !== "handoff" && mode !== "ai_until_booked";
       }));
+  // meetingBooked always wins: the user should hear about a confirmed booking
+  // regardless of which reply mode was running.
   if (email && (meetingBooked || stoppedAtInterest)) {
     if (await claimInterestNotification(workspaceId, lead.id)) {
       try {

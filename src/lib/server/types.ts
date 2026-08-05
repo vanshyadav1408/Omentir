@@ -152,7 +152,9 @@ export type Agent = {
   workspaceId: string;
   name: string;
   linkedInAccountId?: string;
-  mode: "prompt" | "filters" | "signals" | "outreach";
+  // steal_customers: finds people who comment under competitor posts and runs
+  // AI outreach with that post+comment context. Not a cold title search agent.
+  mode: "prompt" | "filters" | "signals" | "outreach" | "steal_customers";
   prompt: string;
   filters: {
     titles: string[];
@@ -218,6 +220,18 @@ export type LinkedInProfileContext = {
   capturedAt: string;
 };
 
+// Post + comment (or reaction) that surfaced this lead from competitor/founder
+// content. Kept separate from signalText so outreach and the leads UI can show
+// both the prospect's words and the post they engaged with.
+export type LeadEngagementContext = {
+  postText: string;
+  postUrl: string;
+  commentText?: string;
+  commentUrl?: string;
+  sourceLabel: string;
+  kind: "comment" | "reaction";
+};
+
 export type Lead = {
   id: string;
   workspaceId: string;
@@ -239,6 +253,7 @@ export type Lead = {
   signalUrl?: string;
   signalObservedAt?: string;
   leadReason?: string;
+  engagementContext?: LeadEngagementContext;
   sourceAgentId?: string;
   outreachStatus:
     | "new"
@@ -267,6 +282,8 @@ export type LeadPreview = Pick<
   | "scoreReasons"
   | "signalText"
   | "signalUrl"
+  | "leadReason"
+  | "engagementContext"
   | "sourceAgentId"
   | "outreachStatus"
   | "createdAt"

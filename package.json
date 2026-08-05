@@ -5,7 +5,7 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "dev": "NODE_OPTIONS=--disable-warning=DEP0205 next dev",
+    "dev": "NODE_OPTIONS='--disable-warning=DEP0205 --dns-result-order=ipv4first' next dev",
     "build": "bun --bun next build",
     "start": "bun --bun next start",
     "lint": "bun --bun eslint",

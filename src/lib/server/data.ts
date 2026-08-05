@@ -729,6 +729,29 @@ function normalizeRunAtHour(hour: number | undefined) {
 
 function assertAgentSetupComplete(input: CreateAgentInput) {
   if (input.mode === "outreach") return;
+
+  const competitors = input.signalSources?.competitorUrls?.some((value) => value.trim());
+  const founders = input.signalSources?.founderUrls?.some((value) => value.trim());
+  // Steal Customers (or a create that forgot mode but still sent competitor
+  // sources): no ICP form. Commenters are the pool; My Product fills the prompt.
+  const isSteal =
+    input.mode === "steal_customers" ||
+    Boolean((competitors || founders) && !input.filters?.titles?.some((value) => value.trim()));
+
+  if (isSteal) {
+    const missing: string[] = [];
+    if (!input.prompt?.trim()) missing.push("product profile context (prompt)");
+    if (!competitors && !founders) {
+      missing.push("competitor or founder/employee LinkedIn URLs");
+    }
+    if (missing.length) {
+      throw new Error(
+        `Steal Customers setup is incomplete. Fill in: ${missing.join(", ")}.`,
+      );
+    }
+    return;
+  }
+
   const missing: string[] = [];
   if (!input.prompt?.trim()) missing.push("prospect definition (prompt)");
   if (!input.filters?.titles?.some((value) => value.trim())) missing.push("job titles");
@@ -743,11 +766,23 @@ function assertAgentSetupComplete(input: CreateAgentInput) {
   }
 }
 
+function coerceAgentMode(input: CreateAgentInput): Agent["mode"] {
+  if (input.mode === "outreach" || input.mode === "steal_customers") return input.mode;
+  const competitors = input.signalSources?.competitorUrls?.some((value) => value.trim());
+  const founders = input.signalSources?.founderUrls?.some((value) => value.trim());
+  // Competitor/founder sources with no title ICP always mean Steal Customers.
+  if ((competitors || founders) && !input.filters?.titles?.some((value) => value.trim())) {
+    return "steal_customers";
+  }
+  return input.mode;
+}
+
 export async function createAgent(
   workspaceId: string,
   input: CreateAgentInput,
 ) {
   assertAgentSetupComplete(input);
+  const mode = coerceAgentMode(input);
   const workspace = await getWorkspace(workspaceId);
   const agentLimit = planLimits(workspace.billing?.plan).agents;
   await assertBelowPlanLimit(workspaceId, "agent", agentLimit);
@@ -767,7 +802,7 @@ export async function createAgent(
     name: input.name || input.targetGroupName,
     // Spread conditionally: Firestore rejects undefined values outright.
     ...(input.linkedInAccountId ? { linkedInAccountId: input.linkedInAccountId } : {}),
-    mode: input.mode,
+    mode,
     ...(input.leadsOnly ? { leadsOnly: true } : {}),
     prompt: input.prompt,
     filters: input.filters,
@@ -805,6 +840,7 @@ export async function updateAgent(
   input: CreateAgentInput,
 ) {
   assertAgentSetupComplete(input);
+  const mode = coerceAgentMode(input);
   const ref = collection<Agent>("agents").doc(agentId);
   const snap = await ref.get();
   const agent = snap.data();
@@ -827,7 +863,7 @@ export async function updateAgent(
     // Spread conditionally: Firestore rejects undefined values, and an update
     // without a selection should keep the agent's current account.
     ...(input.linkedInAccountId ? { linkedInAccountId: input.linkedInAccountId } : {}),
-    mode: input.mode,
+    mode,
     // Only ever set, never cleared: re-preparing a leads-only agent must not
     // drop the flag, and a full agent never sends it in the first place.
     ...(input.leadsOnly ? { leadsOnly: true } : {}),
@@ -930,6 +966,8 @@ export async function resumeAgent(workspaceId: string, agentId: string) {
   // Resume and expects to see activity. Unlike the old updateAgent behaviour
   // this is not a permanent re-anchor: markAgentRun snaps the following run
   // back to the agent's chosen local hour.
+  // Clears error status the same way as paused: a failed discovery run must
+  // not trap the agent forever when the user hits resume.
   await ref.update({
     status: "active",
     runStartedAt: FieldValue.delete(),
@@ -941,7 +979,19 @@ export async function resumeAgent(workspaceId: string, agentId: string) {
   // the full 24-hour pause defer. Enrollments a leads-only agent must never
   // drive (its own group) are stopped outright by the tick, not parked, so
   // waking cannot re-queue those.
-  await wakeAgentPausedEnrollments(workspaceId, agent);
+  //
+  // Never fail the resume itself if enrollment wake fails: the agent is
+  // already active and due. A large campaignEnrollments scan can time out or
+  // hit transient Firestore errors; that must not surface as "resume failed"
+  // and flip the UI back to Error/Paused.
+  try {
+    await wakeAgentPausedEnrollments(workspaceId, agent);
+  } catch (error) {
+    console.error(
+      `[data] resumeAgent wake enrollments failed for ${agentId}:`,
+      error instanceof Error ? error.message : error,
+    );
+  }
 }
 
 // The tick parks enrollments of a paused agent's leads a day out (marked with
@@ -1169,6 +1219,8 @@ export async function listLeadPreviews(
       "scoreReasons",
       "signalText",
       "signalUrl",
+      "leadReason",
+      "engagementContext",
       "sourceAgentId",
       "outreachStatus",
       "createdAt",
@@ -1384,6 +1436,7 @@ export async function upsertLead(workspaceId: string, groupId: string, lead: Par
       signalUrl: lead.signalUrl,
       signalObservedAt: lead.signalObservedAt,
       leadReason: lead.leadReason,
+      engagementContext: lead.engagementContext,
       sourceAgentId: lead.sourceAgentId,
       outreachStatus: lead.outreachStatus || "new",
       createdAt: timestamp,
@@ -1582,7 +1635,17 @@ export async function updateCampaign(
   workspaceId: string,
   campaignId: string,
   patch: Partial<
-    Pick<Campaign, "name" | "status" | "steps" | "linkedInAccountId" | "replyHandling" | "bookingLink" | "sendWindow">
+    Pick<
+      Campaign,
+      | "name"
+      | "status"
+      | "steps"
+      | "linkedInAccountId"
+      | "replyHandling"
+      | "bookingLink"
+      | "sendWindow"
+      | "notifyOnReply"
+    >
   >,
 ) {
   const ref = collection<Campaign>("campaigns").doc(campaignId);
@@ -1619,6 +1682,26 @@ export async function setSendWindowForGroup(
 
   await Promise.all(
     campaigns.map((campaign) => updateCampaign(workspaceId, campaign.id, { sendWindow })),
+  );
+  return campaigns.length;
+}
+
+// Same ownership model as the send-window picker: reply handling, booking link,
+// and handoff email preference live on campaigns, but the agent editor applies
+// them to every sequence built on the agent's lead group.
+export async function setOutreachPolicyForGroup(
+  workspaceId: string,
+  groupId: string,
+  patch: Partial<Pick<Campaign, "replyHandling" | "bookingLink" | "notifyOnReply" | "sendWindow">>,
+) {
+  if (!groupId) return 0;
+  const campaigns = (await listCampaigns(workspaceId)).filter(
+    (campaign) => campaign.groupId === groupId,
+  );
+  if (!campaigns.length) return 0;
+
+  await Promise.all(
+    campaigns.map((campaign) => updateCampaign(workspaceId, campaign.id, patch)),
   );
   return campaigns.length;
 }

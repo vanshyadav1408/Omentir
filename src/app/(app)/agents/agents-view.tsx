@@ -71,11 +71,12 @@ function statusPill(status: Agent["status"]) {
 }
 
 function modeLabel(agent: Agent) {
+  if (agent.mode === "steal_customers") return "Steal Customers";
   if (agent.mode === "outreach") return "Outreach Only";
   // Leads-only agents are stored as "signals" like full agents, so without this
   // there is no way to see which ones are barred from outreach.
   if (agent.leadsOnly) return "Leads Only";
-  if (agent.mode === "signals") return "Signals";
+  if (agent.mode === "signals") return "Leads + outreach";
   if (agent.mode === "filters") return "Filters";
   return "Prompt";
 }
@@ -160,6 +161,7 @@ export default function AgentsView({
     if (pendingToggleIds.has(agent.id)) return;
 
     const currentStatus = optimisticStatuses[agent.id] ?? agent.status;
+    // Error is treated like paused: toggle resumes discovery instead of no-op.
     const isActive = currentStatus === "active" || currentStatus === "running";
     const nextStatus: Agent["status"] = isActive ? "paused" : "active";
     const formData = new FormData();
@@ -171,7 +173,15 @@ export default function AgentsView({
     try {
       if (isActive) await pauseAgentAction(formData);
       else await resumeAgentAction(formData);
+      // Drop optimistic override so the next server payload (active after
+      // resume, including recovery from status "error") is what we render.
+      setOptimisticStatuses((current) => {
+        const next = { ...current };
+        delete next[agent.id];
+        return next;
+      });
       router.refresh();
+      agentsResource.reload();
     } catch (error) {
       setOptimisticStatuses((current) => ({ ...current, [agent.id]: agent.status }));
       showError(userFacingError(error, "Agent status could not be updated."));
@@ -289,9 +299,11 @@ export default function AgentsView({
     "m3-mobile-header-action fixed !top-3 right-2 z-[92] inline-flex h-8 cursor-pointer items-center justify-center gap-1 rounded-full bg-[var(--md-sys-color-primary)] px-3 text-xs font-semibold text-[var(--md-sys-color-on-primary)] transition hover:brightness-[0.98]";
 
   return (
-    <div className="app-x flex h-full min-h-0 min-w-0 flex-col gap-3 md:ml-4 md:mr-0.5 md:pb-3">
+    // Scroll lives on a full-width pane so the scrollbar sits at the right
+    // edge of main (not inside app-x padding against the agent cards).
+    <div className="flex h-full min-h-0 min-w-0 flex-col gap-3 md:ml-4 md:pb-3">
       {/* Mobile app bar — trailing create action (matches Campaigns / Leads) */}
-      <div className="md:hidden">
+      <div className="app-x md:hidden">
         {effectiveAtAgentLimit ? (
           <Link
             href="/agents/new"
@@ -310,7 +322,7 @@ export default function AgentsView({
       </div>
 
       {/* Header — match Leads page metrics */}
-      <div className="hidden shrink-0 items-center justify-between gap-3 pt-6 md:flex">
+      <div className="app-x hidden shrink-0 items-center justify-between gap-3 pt-6 md:flex">
         <div className="min-w-0">
           <h1 className="text-2xl font-semibold leading-none tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-3xl">
             AI Agents
@@ -334,6 +346,7 @@ export default function AgentsView({
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto pb-6 pt-2 md:pb-3 md:pt-0">
+        <div className="app-x">
         {isInitialLoading ? (
           <OutreachListSkeleton label="Loading agents" />
         ) : (
@@ -391,7 +404,9 @@ export default function AgentsView({
               return (
                 <li
                   key={agent.id}
-                  className="m3-card m3-card-elevated m3-card-lg min-w-0 px-4 pb-5 pt-5 sm:px-6"
+                  className={`m3-card m3-card-elevated m3-card-lg min-w-0 px-4 pb-5 pt-5 sm:px-6${
+                    agent.mode === "steal_customers" ? " agent-card-steal-customers" : ""
+                  }`}
                 >
                   {/* Card header */}
                   <div className="flex items-start justify-between gap-3">
@@ -557,6 +572,7 @@ export default function AgentsView({
         )}
           </ContentReveal>
         )}
+        </div>
       </div>
 
       {deleteAgent ? (

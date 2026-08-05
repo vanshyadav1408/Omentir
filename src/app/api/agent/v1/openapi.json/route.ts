@@ -16,11 +16,33 @@ const agentFilters = {
 
 const signalSources = {
   type: "object",
+  description:
+    "For mode=steal_customers (Steal Customers): competitorUrls and/or founderUrls required. Company URLs trigger employee discovery + company/employee post scanning; commenters become leads. keywords ignored for steal_customers.",
   properties: {
-    competitorUrls: { type: "array", items: { type: "string" } },
-    founderUrls: { type: "array", items: { type: "string" } },
-    keywords: { type: "array", items: { type: "string" } },
+    competitorUrls: {
+      type: "array",
+      items: { type: "string" },
+      description:
+        "LinkedIn company URLs of competitors. Omentir finds employees, scans company and employee posts, and promotes commenters as customer leads.",
+    },
+    founderUrls: {
+      type: "array",
+      items: { type: "string" },
+      description:
+        "Optional LinkedIn profile URLs of competitor founders or employees whose posts are also scanned for commenters.",
+    },
+    keywords: {
+      type: "array",
+      items: { type: "string" },
+      description: "Buying-signal keywords for classic discovery modes only (ignored for steal_customers).",
+    },
   },
+} as const;
+
+const agentMode = {
+  enum: ["signals", "filters", "prompt", "steal_customers"],
+  description:
+    "signals/filters/prompt: classic ICP lead discovery (needs prompt + filters). steal_customers (Steal Customers): no ICP; My Product required; discovers competitor employees, scans their posts and company posts, finds commenters who can be customers, AI outreach with post+comment context.",
 } as const;
 
 const sendWindow = {
@@ -29,15 +51,41 @@ const sendWindow = {
     "When the agent's outreach may send: always (24/7), business (Mon-Fri 09:00-18:00), extended (daily 07:00-22:00). The hours are measured in each lead's own time zone, resolved from their profile location, falling back to the workspace zone when it cannot be placed. Applies to every sequence built on the agent's lead group.",
 } as const;
 
+const replyHandling = {
+  enum: ["handoff", "ai_until_interest", "ai_until_booked"],
+  description:
+    "When a lead replies: handoff = stop after first reply and email the user; ai_until_interest = AI answers until qualified interest then email; ai_until_booked = AI continues, shares the booking link after interest, emails when a meeting is confirmed.",
+} as const;
+
+const agentOutreachProperties = {
+  setupOutreach: {
+    type: "boolean",
+    description:
+      "Attach the default AI outreach sequence (connection request + three AI messages). Implied when replyHandling is set on create, or when replyHandling is set on an agent that has no campaign yet.",
+  },
+  replyHandling,
+  bookingLink: {
+    type: "string",
+    description:
+      "Optional per-agent Calendly or Cal.com link for ai_until_booked. Falls back to product profile schedulingLink.",
+  },
+  notifyOnReply: {
+    type: "boolean",
+    description:
+      "For handoff mode: email when the first reply arrives (default true). Other modes email on interest or meeting booked instead.",
+  },
+  sendWindow,
+} as const;
+
 export async function GET() {
   const siteUrl = getAppBaseUrl();
   return NextResponse.json({
     openapi: "3.1.0",
     info: {
       title: "Omentir Agent API",
-      version: "1.3.0",
+      version: "1.5.2",
       description:
-        "Workspace-scoped API for AI assistants that configure lead finders, inspect ICP-fit leads, monitor discovery and the outreach send schedule, and work with existing LinkedIn conversations. Every timestamp is a UTC ISO instant; the workspace reads and counts them in its own time zone, returned as `timeZone` by /context.",
+        "Workspace-scoped API for AI assistants that configure classic lead finders and Steal Customers (steal_customers) agents, set up AI outreach (reply handling and booking links), inspect leads (including post+comment engagementContext), monitor discovery and the outreach send schedule, and work with existing LinkedIn conversations. Every timestamp is a UTC ISO instant; the workspace reads and counts them in its own time zone, returned as `timeZone` by /context.",
     },
     servers: [{ url: siteUrl }],
     security: [{ bearerAuth: [] }],
@@ -48,15 +96,25 @@ export async function GET() {
       schemas: {
         AgentCreate: {
           type: "object",
-          required: ["groupName", "prompt", "filters"],
+          required: ["groupName"],
           properties: {
             name: { type: "string", maxLength: 120 },
             groupName: { type: "string", maxLength: 120 },
             linkedInAccountId: { type: "string" },
-            mode: { enum: ["signals", "filters", "prompt"], default: "signals" },
-            prompt: { type: "string", maxLength: 4000 },
-            filters: agentFilters,
+            mode: { ...agentMode, default: "signals" },
+            prompt: {
+              type: "string",
+              maxLength: 4000,
+              description:
+                "Required for classic lead finders. Optional for steal_customers (filled from My Product).",
+            },
+            filters: {
+              ...agentFilters,
+              description:
+                "Required for classic lead finders. Optional for steal_customers (ignored; My Product defines buyer fit).",
+            },
             signalSources,
+            ...agentOutreachProperties,
           },
         },
         AgentUpdate: {
@@ -67,12 +125,21 @@ export async function GET() {
             name: { type: "string", maxLength: 120 },
             groupName: { type: "string", maxLength: 120 },
             linkedInAccountId: { type: "string" },
-            mode: { enum: ["signals", "filters", "prompt"] },
-            prompt: { type: "string", maxLength: 4000 },
-            filters: agentFilters,
+            mode: agentMode,
+            prompt: {
+              type: "string",
+              maxLength: 4000,
+              description:
+                "Classic lead finders only. For steal_customers, refilled from My Product on save.",
+            },
+            filters: {
+              ...agentFilters,
+              description:
+                "Classic lead finders only. For steal_customers, refilled from My Product on save.",
+            },
             signalSources,
-            sendWindow,
             status: { enum: ["active", "paused"] },
+            ...agentOutreachProperties,
           },
         },
         AgentDelete: {
@@ -185,36 +252,41 @@ export async function GET() {
         get: {
           operationId: "listLeadFinders",
           summary:
-            "List lead-finding agents in the workspace with each one's next discovery run, send window, and whether an outreach sequence is set up for it.",
+            "List agents in the workspace (classic ICP lead finders and Steal Customers / steal_customers), with mode, next discovery run, send window, and outreach status.",
           responses: { "200": { description: "Agent list" } },
         },
         post: {
           operationId: "createLeadFinder",
-          summary: "Create a lead finder. Its first discovery run starts immediately and repeats daily at that time.",
+          summary:
+            "Create a classic lead finder or Steal Customers (steal_customers) agent. First discovery run starts immediately and repeats daily. Steal Customers: mode + signalSources.competitorUrls and/or founderUrls (company, founder, or employee); no ICP; My Product required for buyer fit; AI outreach attached automatically. Classic finders need prompt+filters and may take setupOutreach and replyHandling.",
           requestBody: {
             required: true,
             content: { "application/json": { schema: { $ref: "#/components/schemas/AgentCreate" } } },
           },
-          responses: { "201": { description: "Created lead finder and lead group" }, "400": { description: "Invalid targeting configuration" } },
+          responses: {
+            "201": { description: "Created agent and lead group" },
+            "400": { description: "Invalid targeting configuration" },
+            "409": { description: "LinkedIn not connected or My Product incomplete for Steal Customers" },
+          },
         },
         patch: {
           operationId: "updateLeadFinder",
           summary:
-            "Update, pause, or resume a lead finder, including the send window its outreach uses. Its daily discovery time is fixed at creation. Only supplied fields change.",
+            "Update, pause, or resume any agent including Steal Customers: signalSources (competitor + founder/employee URLs), send window, replyHandling, booking link, setupOutreach. For steal_customers, prompt/filters are refilled from My Product. Daily discovery time is fixed at creation. Only supplied fields change.",
           requestBody: {
             required: true,
             content: { "application/json": { schema: { $ref: "#/components/schemas/AgentUpdate" } } },
           },
-          responses: { "200": { description: "Updated lead finder" }, "404": { description: "Agent not found" } },
+          responses: { "200": { description: "Updated agent" }, "404": { description: "Agent not found" } },
         },
         delete: {
           operationId: "deleteLeadFinder",
-          summary: "Delete a lead finder while retaining its lead group and discovered leads.",
+          summary: "Delete any agent (including Steal Customers) while retaining its lead group and discovered leads.",
           requestBody: {
             required: true,
             content: { "application/json": { schema: { $ref: "#/components/schemas/AgentDelete" } } },
           },
-          responses: { "200": { description: "Deleted lead finder" }, "404": { description: "Agent not found" } },
+          responses: { "200": { description: "Deleted agent" }, "404": { description: "Agent not found" } },
         },
       },
       "/api/agent/v1/product-profile": {

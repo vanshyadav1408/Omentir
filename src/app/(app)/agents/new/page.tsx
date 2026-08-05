@@ -184,7 +184,11 @@ export default async function NewAgentPage({
     const existingAgents = await listAgents(workspace.id);
     const agentLimit = planLimits(workspace.billing?.plan).agents;
     if (isAtPlanLimit(existingAgents.length, agentLimit)) {
-      if (params.mode !== "leads" && params.mode !== "outreach") {
+      if (
+        params.mode !== "leads" &&
+        params.mode !== "outreach" &&
+        params.mode !== "steal"
+      ) {
         const [campaigns, groups] = await Promise.all([
           listCampaigns(workspace.id),
           listGroups(workspace.id),
@@ -241,6 +245,9 @@ export default async function NewAgentPage({
       prepareAgent={createAgentAndDiscoverLeadsAction}
       leadsOnly={!agent && params.mode === "leads"}
       outreachOnly={!agent && params.mode === "outreach"}
+      stealCustomers={
+        agent?.mode === "steal_customers" || (!agent && params.mode === "steal")
+      }
       draftSetup={draftAgentSetupAction}
       saveProductProfile={saveProductProfileAction}
       initialAgent={agent}

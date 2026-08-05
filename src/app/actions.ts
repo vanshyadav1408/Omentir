@@ -47,6 +47,10 @@ import { requireActiveSubscription } from "@/lib/server/subscription";
 import { deleteLinkedInAccount, sendLinkedInChatMessage } from "@/lib/server/unipile";
 import type { CampaignReplyHandling, CampaignStep, SendWindow } from "@/lib/server/types";
 import { isLocalMode } from "@/lib/runtime-mode";
+import {
+  productProfileIsReadyForSteal,
+  targetingFromProductProfile,
+} from "@/lib/steal-customers-targeting";
 
 async function requireWorkspace() {
   const { userId } = await auth();
@@ -584,19 +588,75 @@ export async function disconnectLinkedInAccountAction(formData?: FormData) {
   revalidatePath("/dashboard");
 }
 
+function parseAgentMode(rawMode: string): "prompt" | "filters" | "signals" | "outreach" | "steal_customers" {
+  if (
+    rawMode === "prompt" ||
+    rawMode === "filters" ||
+    rawMode === "outreach" ||
+    rawMode === "steal_customers" ||
+    rawMode === "signals"
+  ) {
+    return rawMode;
+  }
+  // Default discovery agents (Only Lead / Leads + outreach) use people-engine
+  // title search without the steal-customers competitor flow.
+  return "signals";
+}
+
+// Classic lead-finder forms never submit competitor/founder URLs. Steal always
+// does. Infer mode from that so a missing/stale mode field cannot run Steal
+// Customers through the classic ICP assert (job titles / industries / locations).
+function resolveAgentModeFromForm(formData: FormData) {
+  const competitorUrls = listFromForm(formData, "competitorUrls", []);
+  const founderUrls = listFromForm(formData, "founderUrls", []);
+  const parsed = parseAgentMode(String(formData.get("mode") || ""));
+  if (parsed === "outreach") return { mode: parsed, competitorUrls, founderUrls };
+  if (competitorUrls.length || founderUrls.length || parsed === "steal_customers") {
+    return { mode: "steal_customers" as const, competitorUrls, founderUrls };
+  }
+  return { mode: parsed, competitorUrls, founderUrls };
+}
+
 async function createAgentFromForm(
   workspace: Awaited<ReturnType<typeof requireWorkspace>>,
   formData: FormData,
 ) {
   const groupName = String(formData.get("groupName") || "").trim();
-  const rawMode = String(formData.get("mode") || "");
+  const { mode, competitorUrls, founderUrls } = resolveAgentModeFromForm(formData);
 
   if (!groupName) throw new Error("Group name is required.");
+  if (mode === "steal_customers" && !competitorUrls.length && !founderUrls.length) {
+    throw new Error("Add at least one competitor LinkedIn URL for Steal Customers.");
+  }
   const account = await requireSelectedLinkedInAccount(workspace.id, formData);
+
+  // Steal customers has no ICP step: My Product defines who is likely to buy.
+  if (mode === "steal_customers") {
+    const productProfile = await getProductProfile(workspace.id);
+    if (!productProfileIsReadyForSteal(productProfile)) {
+      throw new Error(
+        "Set up My Product (company name, description, or pain points) before creating a Steal Customers agent.",
+      );
+    }
+    const targeting = targetingFromProductProfile(productProfile);
+    return createAgent(workspace.id, {
+      name: String(formData.get("name") || groupName).trim(),
+      mode: "steal_customers",
+      prompt: targeting.prompt,
+      filters: targeting.filters,
+      signalSources: {
+        competitorUrls,
+        founderUrls,
+        keywords: [],
+      },
+      linkedInAccountId: account.id,
+      targetGroupName: groupName,
+    });
+  }
 
   return createAgent(workspace.id, {
     name: String(formData.get("name") || groupName).trim(),
-    mode: rawMode === "prompt" || rawMode === "filters" || rawMode === "outreach" ? rawMode : "signals",
+    mode,
     prompt: String(formData.get("prompt") || "").trim(),
     filters: {
       titles: listFromForm(formData, "titles", []),
@@ -605,8 +665,8 @@ async function createAgentFromForm(
       keywords: listFromForm(formData, "keywords", []),
     },
     signalSources: {
-      competitorUrls: listFromForm(formData, "competitorUrls", []),
-      founderUrls: listFromForm(formData, "founderUrls", []),
+      competitorUrls: [],
+      founderUrls: [],
       keywords: listFromForm(formData, "signalKeywords", []),
     },
     linkedInAccountId: account.id,
@@ -661,15 +721,41 @@ async function updateAgentFromForm(
 ) {
   const agentId = String(formData.get("agentId") || "").trim();
   const groupName = String(formData.get("groupName") || "").trim();
-  const rawMode = String(formData.get("mode") || "");
+  const { mode, competitorUrls, founderUrls } = resolveAgentModeFromForm(formData);
 
   if (!agentId) throw new Error("Agent id is required.");
   if (!groupName) throw new Error("Group name is required.");
+  if (mode === "steal_customers" && !competitorUrls.length && !founderUrls.length) {
+    throw new Error("Add at least one competitor LinkedIn URL for Steal Customers.");
+  }
   const account = await requireSelectedLinkedInAccount(workspace.id, formData);
+
+  if (mode === "steal_customers") {
+    const productProfile = await getProductProfile(workspace.id);
+    if (!productProfileIsReadyForSteal(productProfile)) {
+      throw new Error(
+        "Set up My Product (company name, description, or pain points) before saving a Steal Customers agent.",
+      );
+    }
+    const targeting = targetingFromProductProfile(productProfile);
+    return updateAgent(workspace.id, agentId, {
+      name: String(formData.get("name") || groupName).trim(),
+      mode: "steal_customers",
+      prompt: targeting.prompt,
+      filters: targeting.filters,
+      signalSources: {
+        competitorUrls,
+        founderUrls,
+        keywords: [],
+      },
+      linkedInAccountId: account.id,
+      targetGroupName: groupName,
+    });
+  }
 
   return updateAgent(workspace.id, agentId, {
     name: String(formData.get("name") || groupName).trim(),
-    mode: rawMode === "prompt" || rawMode === "filters" || rawMode === "outreach" ? rawMode : "signals",
+    mode,
     prompt: String(formData.get("prompt") || "").trim(),
     filters: {
       titles: listFromForm(formData, "titles", []),
@@ -678,8 +764,8 @@ async function updateAgentFromForm(
       keywords: listFromForm(formData, "keywords", []),
     },
     signalSources: {
-      competitorUrls: listFromForm(formData, "competitorUrls", []),
-      founderUrls: listFromForm(formData, "founderUrls", []),
+      competitorUrls: [],
+      founderUrls: [],
       keywords: listFromForm(formData, "signalKeywords", []),
     },
     linkedInAccountId: account.id,
@@ -761,15 +847,19 @@ export async function createAgentAndDiscoverLeadsAction(formData: FormData) {
   requireActiveSubscription(workspace);
   const groupName = String(formData.get("groupName") || "").trim();
   const preparedAgentId = String(formData.get("preparedAgentId") || "").trim();
-  const rawMode = String(formData.get("mode") || "");
+  const mode = parseAgentMode(String(formData.get("mode") || ""));
 
   if (!groupName) throw new Error("Group name is required.");
+  // Steal customers is always find + AI outreach; never the leads-only path.
+  if (mode === "steal_customers") {
+    throw new Error("Steal Customers agents always include AI outreach.");
+  }
 
   const account = await requireSelectedLinkedInAccount(workspace.id, formData);
 
   const agentInput = {
     name: String(formData.get("name") || groupName).trim(),
-    mode: rawMode === "prompt" || rawMode === "filters" ? rawMode : "signals",
+    mode: mode === "prompt" || mode === "filters" ? mode : "signals",
     prompt: String(formData.get("prompt") || "").trim(),
     filters: {
       titles: listFromForm(formData, "titles", []),
@@ -778,8 +868,8 @@ export async function createAgentAndDiscoverLeadsAction(formData: FormData) {
       keywords: listFromForm(formData, "keywords", []),
     },
     signalSources: {
-      competitorUrls: listFromForm(formData, "competitorUrls", []),
-      founderUrls: listFromForm(formData, "founderUrls", []),
+      competitorUrls: [] as string[],
+      founderUrls: [] as string[],
       keywords: listFromForm(formData, "signalKeywords", []),
     },
     linkedInAccountId: account.id,

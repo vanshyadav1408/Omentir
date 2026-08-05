@@ -22,6 +22,7 @@ import {
 } from "./gemini";
 import {
   getLinkedInPostCreatedAt,
+  getLinkedInPostCreatedAtRaw,
   getLinkedInPostId,
   getLinkedInPostText,
   getLinkedInPostUrl,
@@ -32,6 +33,7 @@ import {
   profileSearchKeys,
   retrieveLinkedInProfile,
   retrieveLinkedInCompanyEvidence,
+  searchLinkedInEmployeesAtCompany,
   searchLinkedInPosts,
   searchLinkedInProfiles,
   searchLinkedInProfilesAtCompanies,
@@ -39,29 +41,52 @@ import {
 import type {
   Agent,
   Lead,
+  LeadEngagementContext,
   LeadSignal,
   LeadSignalType,
   LinkedInAccount,
   ProductProfile,
 } from "./types";
+import {
+  buildEngagementContext,
+  buildPeopleEngineSourceQueue,
+  buildStealPostSearchQueries,
+  commentBuyingIntentScore,
+  discoverySignalPriority,
+  engagementLeadReason,
+  formatEngagementSignalText,
+  isLocationScopedPeopleSignal,
+  isNoiseEngagementComment,
+  isUnscopedKeywordPostEngagement,
+  selectStealPosts,
+  shouldKeepStealComment,
+  sortPostsByRelevance,
+} from "../competitor-engagement";
 
 // 65 matches scoreLeadForProduct's "clear functional buyer" band so people
 // whose job needs the product are not discarded for imperfect title wording.
 const QUALIFIED_SCORE_THRESHOLD = 65;
 const DEFAULT_DAILY_QUALIFIED_LEAD_CAP = 75;
-// Each enrichment is a live LinkedIn profile view through the user's account,
-// drawn from the same 75/day account-wide budget that outreach (first-degree
-// checks) and inbox loads use. Capping the engine below the full budget keeps
-// those flows from starving; unenriched candidates are still scored on their
-// search data, so this cap bounds enrichment quality, not lead discovery.
-const DEFAULT_MAX_ENRICHMENTS_PER_RUN = 50;
+// Each enrichment is a live LinkedIn profile view through the user's account.
+// Capped per run so one agent cannot burn unlimited views; kept well above
+// dailyLeadLimit because most enrichments fail region/score gates before a
+// lead is saved.
+const DEFAULT_MAX_ENRICHMENTS_PER_RUN = 500;
 const PEOPLE_ENGINE_RUN_MS = 15 * 60 * 1000;
 const STOP_BUFFER_MS = 15 * 1000;
-const SOURCE_POST_LIMIT = 5;
-const POST_ENGAGER_LIMIT = 25;
+// Competitor/founder pages: pull enough recent posts that product launches and
+// demo threads are still in the window, then rank by product keywords.
+const SOURCE_POST_LIMIT = 8;
+const STEAL_SOURCE_POST_LIMIT = 10;
+const STEAL_POST_FETCH_LIMIT = 20;
+// Per competitor company: employees whose posts we scan (not added as leads).
+const STEAL_EMPLOYEES_PER_COMPANY = 10;
+// Recent posts per employee whose comments we scan for buyers.
+const STEAL_EMPLOYEE_POST_LIMIT = 4;
+const POST_ENGAGER_LIMIT = 40;
+const STEAL_KEYWORD_POST_LIMIT = 4;
 const KEYWORD_PROFILE_LIMIT = 40;
-const KEYWORD_POST_LIMIT = 4;
-const TITLE_PROFILE_LIMIT = 25;
+const TITLE_PROFILE_LIMIT = 40;
 const COMPANY_FILTERED_PROFILE_LIMIT = 40;
 
 type SearchCriteria = {
@@ -84,6 +109,7 @@ type ObservedSignal = {
   signalUrl: string;
   signalObservedAt: string;
   leadReason: string;
+  engagementContext?: LeadEngagementContext;
 };
 
 type Candidate = {
@@ -104,10 +130,25 @@ type PeopleEngineSource =
   | { kind: "keyword"; value: string; key: string }
   | { kind: "title"; value: string; key: string };
 
+export function isStealCustomersAgent(
+  agent: Pick<Agent, "mode" | "signalSources" | "filters">,
+) {
+  if (agent.mode === "steal_customers") return true;
+  // Defense in depth: competitor/founder URLs with no title ICP is always steal.
+  const hasStealSources = Boolean(
+    agent.signalSources?.competitorUrls?.some((value) => value.trim()) ||
+      agent.signalSources?.founderUrls?.some((value) => value.trim()),
+  );
+  const hasTitles = Boolean(agent.filters?.titles?.some((value) => value.trim()));
+  return hasStealSources && !hasTitles;
+}
+
 export function agentHasSignalSources(agent: Agent) {
   const sources = agent.signalSources;
   return Boolean(
     agent.mode === "signals" ||
+      agent.mode === "steal_customers" ||
+      isStealCustomersAgent(agent) ||
       sources?.competitorUrls.length ||
       sources?.founderUrls.length ||
       sources?.keywords.length,
@@ -140,40 +181,141 @@ function getSourceKeywords(
   agent: Agent,
   criteria: SearchCriteria,
 ) {
-  const roleContextQueries = criteria.keywords.slice(0, 4).flatMap((keyword) =>
-    criteria.titles.slice(0, 4).map((title) => `${keyword} ${title}`),
+  // Agent-configured titles/keywords first. Signal phrases like "hiring SDR"
+  // are intent noise for people search unless paired with a real role title.
+  const agentTitles = unique([
+    ...agent.filters.titles,
+    ...criteria.titles,
+  ]).slice(0, 8);
+  const filterKeywords = unique([...agent.filters.keywords, ...criteria.keywords]).slice(0, 8);
+  const roleContextQueries = filterKeywords.slice(0, 4).flatMap((keyword) =>
+    agentTitles.slice(0, 4).map((title) => `${keyword} ${title}`),
+  );
+  const signalWithRole = (agent.signalSources?.keywords || []).slice(0, 6).flatMap((keyword) =>
+    agentTitles.slice(0, 2).map((title) => `${title} ${keyword}`),
+  );
+  const titleIndustry = agentTitles.slice(0, 4).flatMap((title) =>
+    (agent.filters.industries.length
+      ? agent.filters.industries
+      : criteria.industries
+    )
+      .slice(0, 2)
+      .map((industry) => `${title} ${industry}`),
   );
 
-  // Prefer short, high-recall queries. Do NOT only search "Title + Industry"
-  // AND-pairs - LinkedIn classic search is too strict and returns almost nobody.
-  // Title searches are queued separately as kind "title"; keywords here are
-  // problem/intent/context phrases that surface people whose jobs need the product.
   return unique([
-    ...(agent.signalSources?.keywords || []),
-    ...agent.filters.keywords,
-    // Named technology or required context plus a target role produces fewer
-    // anonymous and adjacent profiles than either term alone, while the short
-    // standalone queries below preserve recall.
+    ...filterKeywords,
     ...roleContextQueries,
-    ...criteria.keywords,
-    ...criteria.postKeywords,
-    // The work itself, in the words the people who do it use. Titles find the
-    // ones who named their role conventionally; this finds the rest.
-    ...criteria.roleVocabulary.slice(0, 8),
-    // A few title+industry pairs as optional high-precision queries only.
-    ...criteria.titles.slice(0, 4).flatMap((title) =>
-      criteria.industries.slice(0, 2).map((industry) => `${title} ${industry}`),
-    ),
+    ...titleIndustry,
+    ...signalWithRole,
+    ...criteria.roleVocabulary.slice(0, 6),
+    // Standalone signal phrases last (lowest priority for people search).
+    ...(agent.signalSources?.keywords || []).slice(0, 4),
   ]).slice(0, 20);
 }
 
 function getSearchTitles(agent: Agent, profile: ProductProfile | null, criteria: SearchCriteria) {
-  // Balanced before the slice, not after: only the first 6-12 titles are ever
-  // searched, so an exec-heavy head of the list means every run comes back with
-  // nothing but founders and VPs even when the tail held the practitioners.
+  // Steal customers: commenters are the pool; do not hard-filter by buyer titles.
+  // Fit is decided later against My Product via scoreLeadForProduct.
+  if (agent.mode === "steal_customers") return [];
+
+  // Agent-created titles are the contract with the user. Search those first so
+  // discovery matches the agent setup, not a diluted AI expansion of the product.
   return balanceTitleSeniority(
-    unique([...criteria.titles, ...expandedTargetTitles(agent, profile), ...agent.filters.titles]),
+    unique([
+      ...agent.filters.titles,
+      ...criteria.titles,
+      ...expandedTargetTitles(agent, profile),
+    ]),
   ).slice(0, 15);
+}
+
+/**
+ * People search with per-country location scoping, then safe fallbacks.
+ * Multi-country location-id searches often return empty on Classic API; one
+ * country at a time plus "Title Country" keyword fallback recovers recall
+ * while post-enrich location matching stays the hard geo gate.
+ */
+async function searchPeopleForAgentQuery(input: {
+  agent: Agent;
+  account: LinkedInAccount;
+  title?: string;
+  keyword?: string;
+  targetLocations: string[];
+  limit: number;
+  excludeKeys?: Set<string>;
+}): Promise<Partial<Lead>[]> {
+  const locationBatches =
+    input.targetLocations.length > 0
+      ? input.targetLocations.map((location) => [location])
+      : [[] as string[]];
+  const found = new Map<string, Partial<Lead>>();
+
+  const addProfiles = (profiles: Partial<Lead>[]) => {
+    for (const profile of profiles) {
+      const key = profile.providerProfileId || profile.linkedInUrl || profile.name;
+      if (!key || found.has(key)) continue;
+      found.set(key, profile);
+      if (found.size >= input.limit) break;
+    }
+  };
+
+  for (const locations of locationBatches) {
+    if (found.size >= input.limit) break;
+
+    let profiles = await searchLinkedInProfiles({
+      accountId: input.account.accountId,
+      criteria: {
+        titles: input.title ? [input.title] : [],
+        industries: [],
+        locations,
+        keywords: input.keyword ? [input.keyword] : [],
+      },
+      limit: input.limit - found.size,
+      agent: input.agent,
+      excludeKeys: input.excludeKeys,
+    });
+
+    // Location parameter empty: put country into the keyword query.
+    if (!profiles.length && locations.length) {
+      const query = [input.title, input.keyword, locations[0]].filter(Boolean).join(" ");
+      profiles = await searchLinkedInProfiles({
+        accountId: input.account.accountId,
+        criteria: {
+          titles: [],
+          industries: [],
+          locations: [],
+          keywords: [query],
+        },
+        limit: input.limit - found.size,
+        agent: input.agent,
+        excludeKeys: input.excludeKeys,
+      });
+    }
+
+    addProfiles(profiles);
+  }
+
+  // Last resort: unscoped title/keyword search. Location gate after enrich
+  // still drops wrong-country profiles; without this, India-network accounts
+  // often get zero Classic results for US/UK/AU location ids.
+  if (!found.size && input.targetLocations.length) {
+    const unscoped = await searchLinkedInProfiles({
+      accountId: input.account.accountId,
+      criteria: {
+        titles: input.title ? [input.title] : [],
+        industries: [],
+        locations: [],
+        keywords: input.keyword ? [input.keyword] : [],
+      },
+      limit: input.limit,
+      agent: input.agent,
+      excludeKeys: input.excludeKeys,
+    });
+    addProfiles(unscoped);
+  }
+
+  return Array.from(found.values()).slice(0, input.limit);
 }
 
 function parseLinkedInSource(value: string): ParsedLinkedInSource | null {
@@ -190,10 +332,8 @@ function parseLinkedInSource(value: string): ParsedLinkedInSource | null {
     return {
       identifier,
       isCompany: companyIndex >= 0,
-      label:
-        url.hostname === "linkedin.com" || url.hostname.endsWith(".linkedin.com")
-          ? value
-          : url.toString(),
+      // Human-readable slug for lead reasons and keyword post search.
+      label: decodeURIComponent(identifier).replace(/[-_]+/g, " "),
     };
   } catch {
     return null;
@@ -280,32 +420,78 @@ async function collectPostEngagers(input: {
   postUrl: string;
   sourceLabel: string;
   observedAt: string;
+  /** Steal-customers: comments only, fresh, intent-bearing. */
+  stealMode?: boolean;
+  /** Product/problem terms from this workspace (any industry). */
+  productKeywords?: string[];
 }) {
-  const [comments, reactions] = await Promise.all([
-    listLinkedInPostComments({
-      accountId: input.account.accountId,
-      postId: input.postId,
-      limit: POST_ENGAGER_LIMIT,
-    }),
-    listLinkedInPostReactions({
-      accountId: input.account.accountId,
-      postId: input.postId,
-      limit: POST_ENGAGER_LIMIT,
-    }),
-  ]);
+  const stealMode = Boolean(input.stealMode);
+  const productKeywords = input.productKeywords || [];
+  // Reactions are low-intent global noise on keyword posts. Only pull them for
+  // competitor/founder pages where the thread itself is the targeting signal.
+  const sourceLabel = input.sourceLabel;
+  const allowReactions =
+    !stealMode &&
+    (sourceLabel.startsWith("competitor ") ||
+      sourceLabel.startsWith("founder ") ||
+      sourceLabel.startsWith("employee/founder ") ||
+      sourceLabel.startsWith("employee "));
+  const comments = await listLinkedInPostComments({
+    accountId: input.account.accountId,
+    postId: input.postId,
+    limit: POST_ENGAGER_LIMIT,
+  });
+  const reactions = allowReactions
+    ? await listLinkedInPostReactions({
+        accountId: input.account.accountId,
+        postId: input.postId,
+        limit: POST_ENGAGER_LIMIT,
+      })
+    : [];
 
   for (const comment of comments) {
+    const commentText = (comment.text || "").trim();
+    if (stealMode) {
+      if (
+        !shouldKeepStealComment({
+          commentText,
+          commentCreatedAt: comment.createdAt || "",
+          postCreatedAt: input.observedAt,
+          productKeywords,
+        })
+      ) {
+        continue;
+      }
+    } else if (isNoiseEngagementComment(commentText)) {
+      // Keep substantive comments only. "Congrats!" and emoji do not convert.
+      continue;
+    }
+
     const lead = normalizeLinkedInActor(comment.profile);
     if (!lead) continue;
+
+    const engagementContext = buildEngagementContext({
+      kind: "comment",
+      postText: input.postText,
+      postUrl: input.postUrl,
+      sourceLabel: input.sourceLabel,
+      commentText,
+      commentUrl: comment.url || "",
+    });
 
     addObservedSignal(input.candidates, {
       lead,
       signalType: "post_comment",
       signalSource: input.sourceLabel,
-      signalText: comment.text || input.postText,
+      signalText: formatEngagementSignalText({
+        kind: "comment",
+        postText: input.postText,
+        commentText,
+      }),
       signalUrl: comment.url || input.postUrl,
       signalObservedAt: comment.createdAt || input.observedAt,
-      leadReason: `Commented on ${input.sourceLabel} post`,
+      leadReason: engagementLeadReason(input.sourceLabel, "comment"),
+      engagementContext,
     });
   }
 
@@ -313,14 +499,69 @@ async function collectPostEngagers(input: {
     const lead = normalizeLinkedInActor(reaction.profile);
     if (!lead) continue;
 
+    const engagementContext = buildEngagementContext({
+      kind: "reaction",
+      postText: input.postText,
+      postUrl: input.postUrl,
+      sourceLabel: input.sourceLabel,
+    });
+
     addObservedSignal(input.candidates, {
       lead,
       signalType: "post_reaction",
       signalSource: input.sourceLabel,
-      signalText: reaction.type || input.postText,
+      signalText: formatEngagementSignalText({
+        kind: "reaction",
+        postText: input.postText,
+        reactionType: reaction.type,
+      }),
       signalUrl: reaction.url || input.postUrl,
       signalObservedAt: reaction.createdAt || input.observedAt,
-      leadReason: `Reacted to ${input.sourceLabel} post`,
+      leadReason: engagementLeadReason(input.sourceLabel, "reaction"),
+      engagementContext,
+    });
+  }
+}
+
+async function collectEngagersFromPosts(input: {
+  agent: Agent;
+  account: LinkedInAccount;
+  candidates: Map<string, Candidate>;
+  posts: Awaited<ReturnType<typeof listLinkedInPostsForProfile>>;
+  sourceLabel: string;
+  fallbackUrl: string;
+  stealMode: boolean;
+  productKeywords: string[];
+  postLimit: number;
+}) {
+  const posts = input.stealMode
+    ? selectStealPosts(input.posts, {
+        getText: (post) => getLinkedInPostText(post),
+        getCreatedAt: (post) => getLinkedInPostCreatedAtRaw(post) || undefined,
+        keywords: input.productKeywords,
+        limit: input.postLimit,
+      })
+    : sortPostsByRelevance(
+        input.posts,
+        (post) => getLinkedInPostText(post),
+        input.productKeywords,
+      ).slice(0, input.postLimit);
+
+  for (const post of posts) {
+    const postId = getLinkedInPostId(post);
+    if (!postId) continue;
+
+    await collectPostEngagers({
+      agent: input.agent,
+      account: input.account,
+      candidates: input.candidates,
+      postId,
+      postText: getLinkedInPostText(post),
+      postUrl: getLinkedInPostUrl(post) || input.fallbackUrl,
+      sourceLabel: input.sourceLabel,
+      observedAt: getLinkedInPostCreatedAtRaw(post) || getLinkedInPostCreatedAt(post),
+      stealMode: input.stealMode,
+      productKeywords: input.productKeywords,
     });
   }
 }
@@ -331,6 +572,8 @@ async function collectFromLinkedInSource(input: {
   candidates: Map<string, Candidate>;
   sourceUrl: string;
   sourceKind: "competitor" | "founder";
+  relevanceKeywords?: string[];
+  stealMode?: boolean;
 }) {
   const parsed = parseLinkedInSource(input.sourceUrl);
   if (!parsed) {
@@ -341,30 +584,81 @@ async function collectFromLinkedInSource(input: {
   const sourceLabel =
     input.sourceKind === "competitor"
       ? `competitor ${parsed.label}`
-      : `founder ${parsed.label}`;
+      : `employee/founder ${parsed.label}`;
+  const stealMode = Boolean(input.stealMode);
+  const productKeywords = input.relevanceKeywords || [];
 
   try {
-    const posts = await listLinkedInPostsForProfile({
+    // 1) Posts on the company page or the named person profile itself.
+    const rawPosts = await listLinkedInPostsForProfile({
       accountId: input.account.accountId,
       identifier: parsed.identifier,
       isCompany: parsed.isCompany,
-      limit: SOURCE_POST_LIMIT,
+      limit: stealMode ? STEAL_POST_FETCH_LIMIT : Math.max(SOURCE_POST_LIMIT, 12),
+    });
+    await collectEngagersFromPosts({
+      agent: input.agent,
+      account: input.account,
+      candidates: input.candidates,
+      posts: rawPosts,
+      sourceLabel,
+      fallbackUrl: input.sourceUrl,
+      stealMode,
+      productKeywords,
+      postLimit: stealMode ? STEAL_SOURCE_POST_LIMIT : SOURCE_POST_LIMIT,
     });
 
-    for (const post of posts) {
-      const postId = getLinkedInPostId(post);
-      if (!postId) continue;
-
-      await collectPostEngagers({
+    // 2) Steal + company URL: also find employees at that company, pull their
+    // personal posts, and treat commenters on those posts as buyer candidates.
+    // Employees themselves are content sources only, not added as leads.
+    if (stealMode && parsed.isCompany) {
+      const employees = await searchLinkedInEmployeesAtCompany({
+        accountId: input.account.accountId,
+        companyLabel: parsed.label,
+        companyIdentifier: parsed.identifier,
+        limit: STEAL_EMPLOYEES_PER_COMPANY,
         agent: input.agent,
-        account: input.account,
-        candidates: input.candidates,
-        postId,
-        postText: getLinkedInPostText(post),
-        postUrl: getLinkedInPostUrl(post) || input.sourceUrl,
-        sourceLabel,
-        observedAt: getLinkedInPostCreatedAt(post),
       });
+
+      await logAutomationRun({
+        workspaceId: input.agent.workspaceId,
+        kind: "people_engine",
+        status: "completed",
+        message:
+          `Steal Customers source ${sourceLabel}: ${employees.length} employees found` +
+          ` for post scanning (commenters become lead candidates).`,
+      }).catch(() => {});
+
+      for (const employee of employees) {
+        const employeeId =
+          getPublicIdentifier(employee.linkedInUrl) || employee.providerProfileId;
+        if (!employeeId) continue;
+        if (isAnonymousLinkedInProfile(employee)) continue;
+
+        try {
+          const employeePosts = await listLinkedInPostsForProfile({
+            accountId: input.account.accountId,
+            identifier: employeeId,
+            isCompany: false,
+            limit: STEAL_EMPLOYEE_POST_LIMIT + 2,
+          });
+          const employeeLabel =
+            `employee ${employee.name || employeeId} @ ${parsed.label}`;
+          await collectEngagersFromPosts({
+            agent: input.agent,
+            account: input.account,
+            candidates: input.candidates,
+            posts: employeePosts,
+            sourceLabel: employeeLabel,
+            fallbackUrl: employee.linkedInUrl || input.sourceUrl,
+            stealMode: true,
+            productKeywords,
+            postLimit: STEAL_EMPLOYEE_POST_LIMIT,
+          });
+        } catch (error) {
+          await logSourceError(input.agent, `employee posts ${employeeId}`, error);
+        }
+      }
     }
   } catch (error) {
     await logSourceError(input.agent, sourceLabel, error);
@@ -378,23 +672,19 @@ async function collectFromKeyword(input: {
   keyword: string;
   targetLocations: string[];
   excludeKeys?: Set<string>;
-  includePosts?: boolean;
-}) {
+}): Promise<number> {
   const sourceLabel = `LinkedIn keyword "${input.keyword}"`;
+  let added = 0;
 
   try {
-    const profiles = await searchLinkedInProfiles({
-      accountId: input.account.accountId,
-      criteria: {
-        titles: [],
-        industries: [],
-        // Scope the search itself to the agent's target locations; without
-        // this LinkedIn returns results biased to the account's own network.
-        locations: input.targetLocations,
-        keywords: [input.keyword],
-      },
-      limit: KEYWORD_PROFILE_LIMIT,
+    // People search only. Keyword post mining (authors + reactors) is global,
+    // unscoped, and historically drowned location-targeted discovery.
+    const profiles = await searchPeopleForAgentQuery({
       agent: input.agent,
+      account: input.account,
+      keyword: input.keyword,
+      targetLocations: input.targetLocations,
+      limit: KEYWORD_PROFILE_LIMIT,
       excludeKeys: input.excludeKeys,
     });
 
@@ -408,53 +698,13 @@ async function collectFromKeyword(input: {
         signalObservedAt: nowIso(),
         leadReason: `Matched ${sourceLabel}`,
       });
+      added += 1;
     }
   } catch (error) {
     await logSourceError(input.agent, sourceLabel, error);
   }
 
-  if (input.includePosts === false) return;
-
-  try {
-    const posts = await searchLinkedInPosts({
-      accountId: input.account.accountId,
-      keywords: input.keyword,
-      limit: KEYWORD_POST_LIMIT,
-    });
-
-    for (const post of posts) {
-      const postId = getLinkedInPostId(post);
-      if (!postId) continue;
-
-      const author = normalizeLinkedInActor(post.author || post.user);
-      const postText = getLinkedInPostText(post);
-      const postUrl = getLinkedInPostUrl(post);
-      if (author && !author.linkedInUrl?.includes("/company/")) {
-        addObservedSignal(input.candidates, {
-          lead: author,
-          signalType: "keyword_search",
-          signalSource: `${sourceLabel} authored post`,
-          signalText: postText,
-          signalUrl: postUrl,
-          signalObservedAt: getLinkedInPostCreatedAt(post),
-          leadReason: `Authored a post matching ${sourceLabel}`,
-        });
-      }
-
-      await collectPostEngagers({
-        agent: input.agent,
-        account: input.account,
-        candidates: input.candidates,
-        postId,
-        postText,
-        postUrl,
-        sourceLabel,
-        observedAt: getLinkedInPostCreatedAt(post),
-      });
-    }
-  } catch (error) {
-    await logSourceError(input.agent, `${sourceLabel} posts`, error);
-  }
+  return added;
 }
 
 async function collectFromTitle(input: {
@@ -464,23 +714,19 @@ async function collectFromTitle(input: {
   title: string;
   targetLocations: string[];
   excludeKeys?: Set<string>;
-}) {
+}): Promise<number> {
   const sourceLabel = `LinkedIn title "${input.title}"`;
+  let added = 0;
 
   try {
-    // Search the job title as its own people query so discovery is not
-    // dependent on signal keywords alone. This is the primary path for
-    // "find jobs that need the user's product".
-    const profiles = await searchLinkedInProfiles({
-      accountId: input.account.accountId,
-      criteria: {
-        titles: [input.title],
-        industries: [],
-        locations: input.targetLocations,
-        keywords: [],
-      },
-      limit: TITLE_PROFILE_LIMIT,
+    // Primary path: agent job titles. Discovery is driven by the agent's
+    // configured roles, not post engagers or product-only expansion.
+    const profiles = await searchPeopleForAgentQuery({
       agent: input.agent,
+      account: input.account,
+      title: input.title,
+      targetLocations: input.targetLocations,
+      limit: TITLE_PROFILE_LIMIT,
       excludeKeys: input.excludeKeys,
     });
 
@@ -494,10 +740,13 @@ async function collectFromTitle(input: {
         signalObservedAt: nowIso(),
         leadReason: `Job title match: ${input.title}`,
       });
+      added += 1;
     }
   } catch (error) {
     await logSourceError(input.agent, sourceLabel, error);
   }
+
+  return added;
 }
 
 async function collectFromCompanyFilteredSearch(input: {
@@ -622,6 +871,8 @@ async function persistCandidateSignals(agent: Agent, candidate: Candidate) {
 }
 
 function primarySignal(candidate: Candidate) {
+  // Prefer competitor/founder comments over cold search hits so the lead stores
+  // post+comment context for outreach instead of only a keyword query string.
   const typeStrength: Record<LeadSignalType, number> = {
     keyword_search: 4,
     profile_search: 3,
@@ -630,10 +881,26 @@ function primarySignal(candidate: Candidate) {
   };
   return candidate.signals.reduce<ObservedSignal | undefined>(
     (best, signal) => {
-      const strength = (value: ObservedSignal) =>
-        value.signalSource === "Grounded exact-agent web search"
-          ? 10
-          : typeStrength[value.signalType];
+      const strength = (value: ObservedSignal) => {
+        if (value.signalSource === "Grounded exact-agent web search") return 10;
+        if (
+          value.signalType === "post_comment" &&
+          (value.signalSource.startsWith("competitor ") ||
+            value.signalSource.startsWith("founder ") ||
+            value.signalSource.startsWith("employee/founder "))
+        ) {
+          return 12;
+        }
+        if (
+          value.signalType === "post_reaction" &&
+          (value.signalSource.startsWith("competitor ") ||
+            value.signalSource.startsWith("founder ") ||
+            value.signalSource.startsWith("employee/founder "))
+        ) {
+          return 6;
+        }
+        return typeStrength[value.signalType];
+      };
       return !best || strength(signal) > strength(best) ? signal : best;
     },
     undefined,
@@ -656,29 +923,53 @@ function candidatePriority(
   targetTitles: string[],
   targetLocations: string[],
   roleVocabulary: string[],
+  productKeywords: string[] = [],
 ) {
+  // Location-scoped people search must outrank global keyword-post noise.
   const signalWeight = candidate.signals.reduce((total, signal) => {
-    if (signal.signalSource.startsWith("LinkedIn companies with ")) return total + 50;
-    if (signal.signalSource === "Grounded exact-agent web search") return total + 25;
-    if (signal.signalType === "keyword_search") return total + 10;
-    if (signal.signalType === "profile_search") return total + 3;
-    if (signal.signalType === "post_comment") return total + 2;
-    return total;
+    let weight = discoverySignalPriority(signal);
+    if (
+      weight > 0 &&
+      signal.signalType === "post_comment" &&
+      signal.engagementContext?.commentText
+    ) {
+      weight += commentBuyingIntentScore(
+        signal.engagementContext.commentText,
+        productKeywords,
+      );
+    }
+    return total + weight;
   }, 0);
+  // Stronger boost when title matches the agent's own configured titles.
   const titleWeight = matchesTargetTitle(candidate.lead.title || "", targetTitles, roleVocabulary)
-    ? 5
+    ? 8
     : 0;
-  // A location we can already see in-region outranks an unknown one: post
-  // engagers from global posts mostly enrich into out-of-region rejects, and
-  // every such enrichment wastes a profile view from the daily budget.
+  // Prefer candidates already known in-region so enrichment budget is not spent
+  // guessing on blank-location post engagers.
   const locationWeight =
     candidate.lead.location && matchesTargetLocation(candidate.lead.location, targetLocations)
       ? 4
       : 0;
-  const corroboratingSearches = candidate.signals.filter(
-    (signal) => signal.signalType === "keyword_search" || signal.signalType === "profile_search",
+  const peopleSearchHits = candidate.signals.filter((signal) =>
+    isLocationScopedPeopleSignal(signal),
   ).length;
-  return signalWeight + titleWeight + locationWeight + Math.max(0, corroboratingSearches - 1) * 2;
+  return signalWeight + titleWeight + locationWeight + Math.max(0, peopleSearchHits - 1) * 2;
+}
+
+/** Present wrong-country locations fail. Blank is kept only for people-search hits. */
+function failsLocationGate(
+  location: string | undefined,
+  targetLocations: string[],
+  signals: Array<{ signalType: string; signalSource: string }>,
+) {
+  if (!targetLocations.length) return false;
+  const trimmed = location?.trim() || "";
+  if (!trimmed) {
+    // Location-parameter / title search already scoped the pool. Blank profile
+    // locations are common and should not burn the whole run as "out of region".
+    return !signals.some((signal) => isLocationScopedPeopleSignal(signal));
+  }
+  return !matchesTargetLocation(trimmed, targetLocations);
 }
 
 function sourceKey(kind: PeopleEngineSource["kind"], value: string) {
@@ -703,8 +994,17 @@ export async function runPeopleEngineForAgent(input: {
     input.dailyLeadLimit ?? DEFAULT_DAILY_QUALIFIED_LEAD_CAP,
     DEFAULT_DAILY_QUALIFIED_LEAD_CAP,
   );
-  const enrichmentLimit = Math.min(dailyLeadLimit, DEFAULT_MAX_ENRICHMENTS_PER_RUN);
-  const targetLocations = agentTargetLocations(input.agent, input.profile);
+  const enrichmentLimit = DEFAULT_MAX_ENRICHMENTS_PER_RUN;
+  // Steal-customers agents only harvest commenters under competitor/founder
+  // posts. Other discovery agents use title/keyword search and never steal.
+  const stealOnly = isStealCustomersAgent(input.agent);
+  // Steal has no geo ICP form. Comment actors often ship blank location, and
+  // falling back to My Product preferredLocations would hard-drop the whole
+  // pool before product-fit scoring. Classic agents keep agent filters first,
+  // then product preferred locations.
+  const targetLocations = stealOnly
+    ? []
+    : agentTargetLocations(input.agent, input.profile);
   const candidates = new Map<string, Candidate>();
   const sources = input.agent.signalSources || {
     competitorUrls: [],
@@ -729,46 +1029,59 @@ export async function runPeopleEngineForAgent(input: {
   const sourceKeywords = getSourceKeywords(input.agent, criteria);
   const searchTitles = getSearchTitles(input.agent, input.profile, criteria);
   const companySize = requestedCompanySize(input.agent);
-  const matchTitles = unique([
-    ...searchTitles,
-    ...expandedTargetTitles(input.agent, input.profile),
-  ]);
+  // Steal has no title ICP: My Product buyerTitles must not hard-drop commenters
+  // before soft product-fit scoring runs.
+  const matchTitles = stealOnly
+    ? []
+    : unique([
+        ...searchTitles,
+        ...expandedTargetTitles(input.agent, input.profile),
+      ]);
   // The domain's own title words, so a lead whose title shares no wording with
   // the target list ("Dispatcher" against "Logistics Coordinator") is still
   // recognized as someone who performs the work.
   const roleVocabulary = criteria.roleVocabulary;
-  // Title searches first so "jobs that need the product" are always attempted
-  // even when signal keywords are sparse or competitor URLs are empty.
   const titleLimit = input.initialLeadTarget ? 6 : 12;
   const keywordLimit = input.initialLeadTarget ? 6 : 16;
-  const sourceQueue: PeopleEngineSource[] = [
-    ...searchTitles.slice(0, titleLimit).map((value) => ({
-      kind: "title" as const,
-      value,
-      key: sourceKey("title", value),
-    })),
-    ...unique(sources.competitorUrls).map((value) => ({
-      kind: "competitor" as const,
-      value,
-      key: sourceKey("competitor", value),
-    })),
-    ...unique(sources.founderUrls).map((value) => ({
-      kind: "founder" as const,
-      value,
-      key: sourceKey("founder", value),
-    })),
-    ...sourceKeywords.slice(0, keywordLimit).map((value) => ({
-      kind: "keyword" as const,
-      value,
-      key: sourceKey("keyword", value),
-    })),
-  ];
-  const orderedSources = rotateSources(sourceQueue, input.agent.peopleEngineCursor?.sourceKey);
+  const sourceQueue: PeopleEngineSource[] = stealOnly
+    ? buildPeopleEngineSourceQueue({
+        competitorUrls: sources.competitorUrls,
+        founderUrls: sources.founderUrls,
+        titles: [],
+        keywords: [],
+        titleLimit: 0,
+        keywordLimit: 0,
+        sourceKey,
+      })
+    : buildPeopleEngineSourceQueue({
+        // Competitor comment stealing is a dedicated agent type now.
+        competitorUrls: [],
+        founderUrls: [],
+        titles: searchTitles,
+        keywords: sourceKeywords,
+        titleLimit,
+        keywordLimit,
+        sourceKey,
+      });
+  const orderedSources = rotateSources(
+    sourceQueue,
+    input.agent.peopleEngineCursor?.sourceKey,
+  );
+  const relevanceKeywords = unique([
+    ...sourceKeywords,
+    ...criteria.keywords,
+    ...criteria.postKeywords,
+    ...criteria.useCases,
+    ...(input.profile?.keywords || []),
+    ...(input.profile?.painPoints || []),
+    input.profile?.companyName || "",
+  ]);
 
   // When company size is binding, source inside companies that LinkedIn has
   // already filtered to that exact headcount band. These candidates are added
   // first so the limited profile-view budget is spent on the strongest pool.
-  if (companySize && hasRunTime(deadline)) {
+  // Steal-customers agents skip this: their only pool is post engagers.
+  if (!stealOnly && companySize && hasRunTime(deadline)) {
     await collectFromCompanyFilteredSearch({
       agent: input.agent,
       account: input.account,
@@ -781,6 +1094,7 @@ export async function runPeopleEngineForAgent(input: {
     });
   }
 
+  let peopleSearchHits = 0;
   for (let index = 0; index < orderedSources.length; index += 1) {
     if (!hasRunTime(deadline)) break;
     const source = orderedSources[index];
@@ -793,7 +1107,7 @@ export async function runPeopleEngineForAgent(input: {
     }
 
     if (source.kind === "title") {
-      await collectFromTitle({
+      peopleSearchHits += await collectFromTitle({
         agent: input.agent,
         account: input.account,
         candidates,
@@ -805,7 +1119,7 @@ export async function runPeopleEngineForAgent(input: {
     }
 
     if (source.kind === "keyword") {
-      await collectFromKeyword({
+      peopleSearchHits += await collectFromKeyword({
         agent: input.agent,
         account: input.account,
         candidates,
@@ -822,13 +1136,83 @@ export async function runPeopleEngineForAgent(input: {
       candidates,
       sourceUrl: source.value,
       sourceKind: source.kind,
+      relevanceKeywords,
+      stealMode: stealOnly,
     });
+  }
+
+  // Fail loud when classic people search contributed nothing. That is the
+  // primary geo-targeted path; silent empty runs previously hid behind post noise.
+  if (!stealOnly && !peopleSearchHits) {
+    await logAutomationRun({
+      workspaceId: input.agent.workspaceId,
+      kind: "people_engine",
+      status: "error",
+      message:
+        `Agent ${input.agent.id}: people search returned 0 profiles across title/keyword sources` +
+        `${targetLocations.length ? ` (locations: ${targetLocations.join(", ")})` : ""}. ` +
+        `Enrichment will only use grounded/company sources if any.`,
+    }).catch((error) => {
+      console.error("[people-engine] failed to log empty people search:", error);
+    });
+  }
+
+  // Steal agents also search recent product/competitor discussion posts (not
+  // only the competitor company feed) so commenters on viral product threads
+  // still surface when the company page itself is quiet.
+  if (stealOnly && hasRunTime(deadline)) {
+    const competitorLabels = unique(
+      [...sources.competitorUrls, ...sources.founderUrls]
+        .map((url) => parseLinkedInSource(url)?.label || "")
+        .filter(Boolean),
+    );
+    const stealQueries = buildStealPostSearchQueries({
+      competitorLabels,
+      productKeywords: relevanceKeywords,
+      limit: 10,
+    });
+    for (const query of stealQueries) {
+      if (!hasRunTime(deadline)) break;
+      try {
+        const rawPosts = await searchLinkedInPosts({
+          accountId: input.account.accountId,
+          keywords: query,
+          limit: STEAL_KEYWORD_POST_LIMIT,
+        });
+        const posts = selectStealPosts(rawPosts, {
+          getText: (post) => getLinkedInPostText(post),
+          getCreatedAt: (post) => getLinkedInPostCreatedAtRaw(post) || undefined,
+          keywords: relevanceKeywords,
+          limit: STEAL_KEYWORD_POST_LIMIT,
+        });
+        for (const post of posts) {
+          if (!hasRunTime(deadline)) break;
+          const postId = getLinkedInPostId(post);
+          if (!postId) continue;
+          await collectPostEngagers({
+            agent: input.agent,
+            account: input.account,
+            candidates,
+            postId,
+            postText: getLinkedInPostText(post),
+            postUrl: getLinkedInPostUrl(post) || "",
+            sourceLabel: `competitor discussion "${query}"`,
+            observedAt: getLinkedInPostCreatedAtRaw(post) || getLinkedInPostCreatedAt(post),
+            stealMode: true,
+            productKeywords: relevanceKeywords,
+          });
+        }
+      } catch (error) {
+        await logSourceError(input.agent, `steal keyword "${query}"`, error);
+      }
+    }
   }
 
   // Provider people results can be plentiful but noisy. Grounded search is an
   // independent exact-match source, so broad LinkedIn results must not suppress
   // it. Its evidence is still checked by the same deterministic and model gates.
-  if (hasRunTime(deadline)) {
+  // Steal-customers agents stay on competitor post comments only.
+  if (!stealOnly && hasRunTime(deadline)) {
     const groundedCandidates = await findGroundedAgentCandidates(input.agent);
     for (const lead of groundedCandidates) {
       addObservedSignal(candidates, {
@@ -849,6 +1233,9 @@ export async function runPeopleEngineForAgent(input: {
   let existingRejected = 0;
   let lowScoreCandidates = 0;
   let outOfRegionCandidates = 0;
+  let skippedPostNoise = 0;
+  let anonymousDropped = 0;
+  let titleFiltered = 0;
   let enrichments = 0;
   let timeBudgetExpired = false;
 
@@ -860,25 +1247,35 @@ export async function runPeopleEngineForAgent(input: {
   ) => {
     const mergedLead = mergeLead(existingLead, candidate.lead);
     if (
-      targetLocations.length &&
-      (!mergedLead.location?.trim() ||
-        !matchesTargetLocation(mergedLead.location, targetLocations))
+      failsLocationGate(mergedLead.location, targetLocations, candidate.signals)
     ) {
       outOfRegionCandidates += 1;
       return false;
     }
-    const score = await scoreLeadForProduct(
-      {
-        ...mergedLead,
-        signalType: firstSignal.signalType,
-        signalSource: firstSignal.signalSource,
-        signalText: firstSignal.signalText,
-        signalUrl: firstSignal.signalUrl,
-        leadReason: firstSignal.leadReason,
-      },
-      input.profile,
-      input.agent,
-    );
+    let score: Awaited<ReturnType<typeof scoreLeadForProduct>>;
+    try {
+      score = await scoreLeadForProduct(
+        {
+          ...mergedLead,
+          signalType: firstSignal.signalType,
+          signalSource: firstSignal.signalSource,
+          signalText: firstSignal.signalText,
+          signalUrl: firstSignal.signalUrl,
+          leadReason: firstSignal.leadReason,
+          engagementContext: firstSignal.engagementContext,
+        },
+        input.profile,
+        input.agent,
+      );
+    } catch (error) {
+      // One Gemini blip must not mark the whole agent Error; skip this lead.
+      console.error(
+        `[people-engine] score failed for existing lead ${existingLead.id}:`,
+        error instanceof Error ? error.message : error,
+      );
+      existingRejected += 1;
+      return false;
+    }
 
     if (score.fitScore < QUALIFIED_SCORE_THRESHOLD) {
       existingRejected += 1;
@@ -888,6 +1285,15 @@ export async function runPeopleEngineForAgent(input: {
     const lead = await upsertLead(input.agent.workspaceId, input.agent.targetGroupId, {
       linkedInUrl: existingLead.linkedInUrl || candidate.lead.linkedInUrl,
       providerProfileId: existingLead.providerProfileId || candidate.lead.providerProfileId,
+      // Refresh warm-signal context when we re-qualify someone already known.
+      signalType: firstSignal.signalType,
+      signalSource: firstSignal.signalSource,
+      signalText: firstSignal.signalText,
+      signalUrl: firstSignal.signalUrl,
+      signalObservedAt: firstSignal.signalObservedAt,
+      leadReason: firstSignal.leadReason,
+      engagementContext: firstSignal.engagementContext,
+      fitScore: score.fitScore,
     });
 
     await Promise.all(
@@ -902,7 +1308,15 @@ export async function runPeopleEngineForAgent(input: {
     return true;
   };
 
-  const rankedCandidates = Array.from(candidates.values())
+  const allCandidates = Array.from(candidates.values());
+  titleFiltered = allCandidates.filter(
+    (candidate) =>
+      candidate.lead.title &&
+      matchTitles.length &&
+      !matchesTargetTitle(candidate.lead.title, matchTitles, roleVocabulary),
+  ).length;
+
+  const rankedCandidates = allCandidates
     .filter(
       (candidate) =>
         // Missing title: keep and let enrichment + scoring decide.
@@ -912,10 +1326,31 @@ export async function runPeopleEngineForAgent(input: {
         !matchTitles.length ||
         matchesTargetTitle(candidate.lead.title, matchTitles, roleVocabulary),
     )
+    .filter((candidate) => {
+      // Defense in depth: never enrich pure keyword-post reactors/authors.
+      // Steal-customers only use competitor/founder engagers, which pass this.
+      if (!stealOnly && isUnscopedKeywordPostEngagement(candidate.signals)) {
+        skippedPostNoise += 1;
+        return false;
+      }
+      return true;
+    })
     .sort(
       (left, right) =>
-        candidatePriority(right, matchTitles, targetLocations, roleVocabulary) -
-        candidatePriority(left, matchTitles, targetLocations, roleVocabulary),
+        candidatePriority(
+          right,
+          matchTitles,
+          targetLocations,
+          roleVocabulary,
+          relevanceKeywords,
+        ) -
+        candidatePriority(
+          left,
+          matchTitles,
+          targetLocations,
+          roleVocabulary,
+          relevanceKeywords,
+        ),
     );
 
   for (const candidate of rankedCandidates) {
@@ -933,7 +1368,7 @@ export async function runPeopleEngineForAgent(input: {
     // Apply location before both new-lead and existing-lead paths. Otherwise a
     // known lead could be adopted into a new group without passing the same
     // deterministic location requirement as a newly discovered person.
-    if (!matchesTargetLocation(candidate.lead.location, targetLocations)) {
+    if (failsLocationGate(candidate.lead.location, targetLocations, candidate.signals)) {
       outOfRegionCandidates += 1;
       continue;
     }
@@ -959,25 +1394,36 @@ export async function runPeopleEngineForAgent(input: {
     // views) so a high-candidate run can't rack up account-risking view counts.
     if (enrichments >= enrichmentLimit) continue;
     enrichments += 1;
-    let enrichedLead = await enrichLinkedInLead(input.account, candidate.lead);
+    let enrichedLead: Partial<Lead>;
+    try {
+      enrichedLead = await enrichLinkedInLead(input.account, candidate.lead);
+    } catch (error) {
+      // Provider blips on one profile must not fail the whole agent run.
+      console.error(
+        "[people-engine] enrich failed:",
+        error instanceof Error ? error.message : error,
+      );
+      continue;
+    }
 
     // Grounded web search can verify role and employer context, but a model can
     // still return a plausible-looking LinkedIn slug. Require Unipile to resolve
     // that profile to a provider identity before the lead becomes contactable.
-    if (hasGroundedEvidence && !enrichedLead.providerProfileId) continue;
+    if (hasGroundedEvidence && !enrichedLead.providerProfileId) {
+      anonymousDropped += 1;
+      continue;
+    }
 
     // Enrichment can resolve a profile to the anonymized "LinkedIn Member"
     // placeholder; drop it here so an uncontactable lead is never saved.
-    if (isAnonymousLinkedInProfile(enrichedLead)) continue;
+    if (isAnonymousLinkedInProfile(enrichedLead)) {
+      anonymousDropped += 1;
+      continue;
+    }
 
-    // Search results often omit location; enrichment fills the real profile
-    // location. Drop now if that location is outside the agent's targets so
-    // wrong-region leads never get scored or saved.
-    if (
-      targetLocations.length &&
-      (!enrichedLead.location?.trim() ||
-        !matchesTargetLocation(enrichedLead.location, targetLocations))
-    ) {
+    // Present location must match targets. Blank location is allowed only for
+    // people-search hits (LinkedIn often omits city on otherwise valid profiles).
+    if (failsLocationGate(enrichedLead.location, targetLocations, candidate.signals)) {
       outOfRegionCandidates += 1;
       continue;
     }
@@ -1005,22 +1451,33 @@ export async function runPeopleEngineForAgent(input: {
 
     if (leadsAdded >= dailyLeadLimit) break;
 
-    const score = await scoreLeadForProduct(
-      {
-        ...enrichedLead,
-        // A LinkedIn keyword query returning this person is only a sourcing
-        // hint. It is not their profile text and must never masquerade as
-        // direct evidence when profile enrichment is unavailable.
-        summary: enrichedLead.summary || directSignalEvidence(firstSignal),
-        signalType: firstSignal.signalType,
-        signalSource: firstSignal.signalSource,
-        signalText: firstSignal.signalText,
-        signalUrl: firstSignal.signalUrl,
-        leadReason: firstSignal.leadReason,
-      },
-      input.profile,
-      input.agent,
-    );
+    let score: Awaited<ReturnType<typeof scoreLeadForProduct>>;
+    try {
+      score = await scoreLeadForProduct(
+        {
+          ...enrichedLead,
+          // A LinkedIn keyword query returning this person is only a sourcing
+          // hint. It is not their profile text and must never masquerade as
+          // direct evidence when profile enrichment is unavailable.
+          summary: enrichedLead.summary || directSignalEvidence(firstSignal),
+          signalType: firstSignal.signalType,
+          signalSource: firstSignal.signalSource,
+          signalText: firstSignal.signalText,
+          signalUrl: firstSignal.signalUrl,
+          leadReason: firstSignal.leadReason,
+          engagementContext: firstSignal.engagementContext,
+        },
+        input.profile,
+        input.agent,
+      );
+    } catch (error) {
+      console.error(
+        "[people-engine] score failed for new candidate:",
+        error instanceof Error ? error.message : error,
+      );
+      lowScoreCandidates += 1;
+      continue;
+    }
 
     if (score.fitScore < QUALIFIED_SCORE_THRESHOLD) {
       lowScoreCandidates += 1;
@@ -1043,6 +1500,7 @@ export async function runPeopleEngineForAgent(input: {
       signalUrl: firstSignal.signalUrl,
       signalObservedAt: firstSignal.signalObservedAt,
       leadReason: firstSignal.leadReason,
+      engagementContext: firstSignal.engagementContext,
     });
 
     existingLeadIds.add(lead.id);
@@ -1075,6 +1533,10 @@ export async function runPeopleEngineForAgent(input: {
       `(${existingQualifiedLeads} existing leads requalified, ${existingRejected} existing leads rejected, ` +
       `${lowScoreCandidates} new leads rejected, ` +
       `${outOfRegionCandidates} out of region, ${enrichments} profile views spent` +
+      `, people search hits: ${peopleSearchHits}` +
+      `, skipped post noise: ${skippedPostNoise}` +
+      `, title filtered: ${titleFiltered}` +
+      `, anonymous/unresolved: ${anonymousDropped}` +
       `${timeBudgetExpired ? ", stopped at time budget" : ""}).`,
   }).catch((error) => {
     console.error("[people-engine] failed to log run summary:", error);

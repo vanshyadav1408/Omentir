@@ -143,6 +143,9 @@ export type UnipilePost = {
   commentary?: string;
   created_at?: string;
   posted_at?: string;
+  // Unipile often returns a relative string in `date` ("1w", "6h") that
+  // Date.parse cannot read. Prefer `parsed_datetime` (ISO) when present.
+  parsed_datetime?: string;
   date?: string;
   author?: UnipileProfile;
   user?: UnipileProfile;
@@ -156,7 +159,17 @@ type UnipileComment = {
   url?: string;
   created_at?: string;
   posted_at?: string;
-  author?: UnipileProfile;
+  parsed_datetime?: string;
+  date?: string;
+  // Unipile often returns author as a display-name string and the real profile
+  // under author_details (id + profile_url). Prefer author_details when present.
+  author?: UnipileProfile | string;
+  author_details?: UnipileProfile & {
+    id?: string;
+    profile_url?: string;
+    headline?: string;
+    is_company?: boolean;
+  };
   user?: UnipileProfile;
   from?: UnipileProfile;
   profile?: UnipileProfile;
@@ -168,7 +181,13 @@ type UnipileReaction = {
   reaction_type?: string;
   url?: string;
   created_at?: string;
-  author?: UnipileProfile;
+  author?: UnipileProfile | string;
+  author_details?: UnipileProfile & {
+    id?: string;
+    profile_url?: string;
+    headline?: string;
+    is_company?: boolean;
+  };
   user?: UnipileProfile;
   from?: UnipileProfile;
   profile?: UnipileProfile;
@@ -445,8 +464,28 @@ function pickNestedString(
   return undefined;
 }
 
-function actorFromEngagement(item: UnipileComment | UnipileReaction) {
-  return item.author || item.user || item.from || item.profile || null;
+function actorFromEngagement(item: UnipileComment | UnipileReaction): UnipileProfile | null {
+  // Prefer structured author_details: Unipile comment payloads set `author` to
+  // a bare display name string, which cannot be messaged or de-duplicated.
+  if (item.author_details && typeof item.author_details === "object") {
+    const details = item.author_details;
+    if (details.is_company) return null;
+    const displayName = typeof item.author === "string" ? item.author.trim() : "";
+    return {
+      ...details,
+      id: details.id || details.provider_id,
+      provider_id: details.provider_id || details.id,
+      name: details.name || displayName,
+      headline: details.headline || details.occupation,
+      profile_url: details.profile_url || details.linkedin_url,
+      linkedin_url: details.linkedin_url || details.profile_url,
+    };
+  }
+  if (item.author && typeof item.author === "object") return item.author;
+  if (item.user && typeof item.user === "object") return item.user;
+  if (item.from && typeof item.from === "object") return item.from;
+  if (item.profile && typeof item.profile === "object") return item.profile;
+  return null;
 }
 
 function profileAvatarUrl(profile: UnipileProfile) {
@@ -1376,6 +1415,116 @@ export async function searchLinkedInProfilesAtCompanies(input: {
   return Array.from(profiles.values()).slice(0, input.limit);
 }
 
+/**
+ * Find people currently associated with a named company (for Steal Customers:
+ * competitor employees whose posts we then scan for commenters).
+ */
+export async function searchLinkedInEmployeesAtCompany(input: {
+  accountId: string;
+  companyLabel: string;
+  /** Optional LinkedIn company vanity slug or numeric id from the source URL. */
+  companyIdentifier?: string;
+  limit: number;
+  agent: Agent;
+  excludeKeys?: Set<string>;
+}) {
+  const label = input.companyLabel.trim();
+  if (!isUnipileConfigured() || !label) return [];
+
+  const workspaceAccounts = await listLinkedInAccounts(input.agent.workspaceId);
+  const searchAccountIds = Array.from(
+    new Set([input.accountId, ...workspaceAccounts.map((account) => account.accountId)]),
+  );
+
+  // Prefer resolving the exact company page (vanity slug → provider id). Keyword
+  // company search on a slug like "origamiagents" often returns 0 or the wrong
+  // "Origami Studios" and left Steal Customers with no employee posts.
+  let companyId = "";
+  const sourceIdentifier = (input.companyIdentifier || label).trim();
+  if (sourceIdentifier) {
+    for (const accountId of searchAccountIds) {
+      companyId = await resolveLinkedInCompanyProviderId({
+        accountId,
+        identifier: sourceIdentifier,
+      });
+      if (companyId) break;
+    }
+  }
+  if (!companyId) {
+    for (const accountId of searchAccountIds) {
+      const companies = await searchLinkedIn<UnipileCompany>({
+        accountId,
+        category: "companies",
+        keywords: label,
+        limit: 10,
+        maxPages: 1,
+      });
+      if (!companies.length) continue;
+      const normalized = label.toLowerCase().replace(/[-_]+/g, " ");
+      const exact =
+        companies.find(
+          (company) => company.name?.trim().toLowerCase() === normalized,
+        ) ||
+        companies.find((company) =>
+          company.name?.trim().toLowerCase().includes(normalized),
+        ) ||
+        companies[0];
+      if (exact?.id) {
+        companyId = exact.id;
+        break;
+      }
+    }
+  }
+  if (!companyId) return [];
+
+  const profiles = new Map<string, ReturnType<typeof normalizeUnipileProfile>>();
+  const excluded = input.excludeKeys;
+  const takeFresh = (item: UnipileProfile) => {
+    const profile = normalizeUnipileProfile(item);
+    if (profile.name.trim().toLowerCase() === "linkedin member") return false;
+    return !excluded?.size || !profileSearchKeys(profile).some((key) => excluded.has(key));
+  };
+
+  // LinkedIn classic people search needs a keyword even with company filter.
+  // Keep role words generic so any industry can surface employees who post.
+  const queries = [
+    label,
+    "employee",
+    "founder",
+    "manager",
+    "director",
+    "lead",
+    "specialist",
+    "associate",
+  ];
+
+  for (const keywords of queries) {
+    if (profiles.size >= input.limit) break;
+    let items: UnipileProfile[] = [];
+    for (const accountId of searchAccountIds) {
+      items = await searchLinkedIn<UnipileProfile>({
+        accountId,
+        category: "people",
+        keywords,
+        limit: Math.min(25, input.limit - profiles.size + 5),
+        companyIds: [companyId],
+        take: takeFresh,
+        maxPages: 2,
+      });
+      if (items.length) break;
+    }
+    for (const item of items) {
+      const profile = normalizeUnipileProfile(item);
+      const key = profile.providerProfileId || profile.linkedInUrl || profile.name;
+      if (!key || profiles.has(key)) continue;
+      profiles.set(key, profile);
+      if (profiles.size >= input.limit) break;
+    }
+  }
+
+  return Array.from(profiles.values()).slice(0, input.limit);
+}
+
 export async function searchLinkedInProfilesByUrl(input: {
   accountId: string;
   url: string;
@@ -1465,6 +1614,44 @@ export async function searchLinkedInPosts(input: {
   });
 }
 
+// Unipile company posts require the provider internal numeric id (e.g. "99440945"),
+// not the vanity slug from /company/origamiagents. Public identifiers resolve via
+// GET /linkedin/company/{public_identifier}.
+const companyProviderIdCache = new Map<string, string>();
+
+async function resolveLinkedInCompanyProviderId(input: {
+  accountId: string;
+  identifier: string;
+}) {
+  const raw = linkedInIdentifier(input.identifier).trim();
+  if (!raw) return "";
+  // Already a LinkedIn company provider id (digits).
+  if (/^\d+$/.test(raw)) return raw;
+
+  const cacheKey = `${input.accountId}:${raw.toLowerCase()}`;
+  const cached = companyProviderIdCache.get(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const company = await request<UnipileCompany & { public_identifier?: string }>(
+      withQuery(`/api/v1/linkedin/company/${encodeURIComponent(raw)}`, {
+        account_id: input.accountId,
+      }),
+    );
+    const id = String(company.id || "").trim();
+    if (id) {
+      companyProviderIdCache.set(cacheKey, id);
+      return id;
+    }
+  } catch (error) {
+    console.error(
+      `[unipile] resolve company id for "${raw}":`,
+      error instanceof Error ? error.message : error,
+    );
+  }
+  return "";
+}
+
 export async function listLinkedInPostsForProfile(input: {
   accountId: string;
   identifier: string;
@@ -1473,7 +1660,17 @@ export async function listLinkedInPostsForProfile(input: {
 }) {
   if (!isUnipileConfigured()) return [];
 
-  const identifier = linkedInIdentifier(input.identifier);
+  let identifier = linkedInIdentifier(input.identifier);
+  if (input.isCompany) {
+    const companyId = await resolveLinkedInCompanyProviderId({
+      accountId: input.accountId,
+      identifier,
+    });
+    // Vanity slugs always 422 without the numeric id; skip rather than fail the run.
+    if (!companyId) return [];
+    identifier = companyId;
+  }
+
   const result = await request<UnipileListResponse<UnipilePost>>(
     withQuery(`/api/v1/users/${encodeURIComponent(identifier)}/posts`, {
       account_id: input.accountId,
@@ -1516,7 +1713,12 @@ export async function listLinkedInPostComments(input: {
     id: comment.id,
     text: comment.text || comment.message || comment.body || "",
     url: comment.url,
-    createdAt: comment.created_at || comment.posted_at,
+    createdAt: pickParseableTimestamp(
+      comment.parsed_datetime,
+      comment.created_at,
+      comment.posted_at,
+      comment.date,
+    ),
     profile: actorFromEngagement(comment),
   }));
 }
@@ -1939,8 +2141,35 @@ export function getLinkedInPostUrl(post: UnipilePost) {
   return post.url || post.share_url || "";
 }
 
+/** Prefer absolute ISO timestamps over relative labels like "1w" / "6h". */
+function pickParseableTimestamp(...values: Array<string | undefined>) {
+  for (const value of values) {
+    const text = String(value || "").trim();
+    if (!text) continue;
+    if (Number.isFinite(Date.parse(text))) return text;
+  }
+  return "";
+}
+
 export function getLinkedInPostCreatedAt(post: UnipilePost) {
-  return post.created_at || post.posted_at || post.date || new Date().toISOString();
+  return (
+    pickParseableTimestamp(
+      post.parsed_datetime,
+      post.created_at,
+      post.posted_at,
+      post.date,
+    ) || new Date().toISOString()
+  );
+}
+
+/** Provider-reported post time only. Empty when LinkedIn/Unipile omit the field. */
+export function getLinkedInPostCreatedAtRaw(post: UnipilePost) {
+  return pickParseableTimestamp(
+    post.parsed_datetime,
+    post.created_at,
+    post.posted_at,
+    post.date,
+  );
 }
 
 // LinkedIn member provider ids start with ACo (Classic), ACw (Sales Navigator),

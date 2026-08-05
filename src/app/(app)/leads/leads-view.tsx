@@ -528,22 +528,36 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
                       </div>
                     </div>
                     <div className="mt-3 rounded-md bg-zinc-50 px-3 py-2 text-[12px] font-medium text-zinc-800">
-                      Just engaged with a{" "}
-                      {lead.signalUrl ? (
-                        <a
-                          href={lead.signalUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-[#0a66c2] underline"
-                        >
-                          LinkedIn post
-                        </a>
-                      ) : (
-                        <span className="text-[#0a66c2] underline">LinkedIn post</span>
-                      )}
-                      {signalKeyword ? (
+                      <div>
+                        {lead.leadReason || "Engaged with a LinkedIn post"}
+                        {lead.signalUrl || lead.engagementContext?.postUrl ? (
+                          <>
+                            {" · "}
+                            <a
+                              href={lead.signalUrl || lead.engagementContext?.postUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[#0a66c2] underline"
+                            >
+                              View post
+                            </a>
+                          </>
+                        ) : null}
+                      </div>
+                      {lead.engagementContext?.postText ? (
+                        <div className="mt-1 line-clamp-2 text-[11px] font-medium text-zinc-700">
+                          <span className="font-bold text-zinc-800">Post:</span>{" "}
+                          {lead.engagementContext.postText}
+                        </div>
+                      ) : null}
+                      {lead.engagementContext?.commentText ? (
                         <div className="mt-1 text-[11px] font-medium text-zinc-700">
-                          <span className="font-bold text-zinc-800">Keyword:</span> {signalKeyword}
+                          <span className="font-bold text-zinc-800">Their comment:</span>{" "}
+                          {lead.engagementContext.commentText}
+                        </div>
+                      ) : !lead.engagementContext?.postText && signalKeyword ? (
+                        <div className="mt-1 whitespace-pre-wrap text-[11px] font-medium text-zinc-700">
+                          <span className="font-bold text-zinc-800">Signal:</span> {signalKeyword}
                         </div>
                       ) : null}
                     </div>
@@ -651,23 +665,35 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
                   {/* Signal */}
                   <div className="min-w-0 justify-self-start text-[12px] font-medium text-zinc-800">
                     <div>
-                      Just engaged with a{" "}
-                      {lead.signalUrl ? (
-                        <a
-                          href={lead.signalUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-[#0a66c2] underline"
-                        >
-                          LinkedIn post
-                        </a>
-                      ) : (
-                        <span className="text-[#0a66c2] underline">LinkedIn post</span>
-                      )}
+                      {lead.leadReason || "Engaged with a LinkedIn post"}
+                      {lead.signalUrl || lead.engagementContext?.postUrl ? (
+                        <>
+                          {" · "}
+                          <a
+                            href={lead.signalUrl || lead.engagementContext?.postUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[#0a66c2] underline"
+                          >
+                            View post
+                          </a>
+                        </>
+                      ) : null}
                     </div>
-                    {signalKeyword ? (
-                      <div className="text-[11px] font-medium text-zinc-700">
-                        <span className="font-bold text-zinc-800">Keyword:</span> {signalKeyword}
+                    {lead.engagementContext?.postText ? (
+                      <div className="line-clamp-2 text-[11px] font-medium text-zinc-700">
+                        <span className="font-bold text-zinc-800">Post:</span>{" "}
+                        {lead.engagementContext.postText}
+                      </div>
+                    ) : null}
+                    {lead.engagementContext?.commentText ? (
+                      <div className="line-clamp-2 text-[11px] font-medium text-zinc-700">
+                        <span className="font-bold text-zinc-800">Their comment:</span>{" "}
+                        {lead.engagementContext.commentText}
+                      </div>
+                    ) : !lead.engagementContext?.postText && signalKeyword ? (
+                      <div className="line-clamp-2 whitespace-pre-wrap text-[11px] font-medium text-zinc-700">
+                        <span className="font-bold text-zinc-800">Signal:</span> {signalKeyword}
                       </div>
                     ) : null}
                   </div>

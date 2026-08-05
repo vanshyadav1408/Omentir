@@ -6,6 +6,8 @@ import {
   consumeDailyQuota,
   hasDailyQuotaRemaining,
   createAgent,
+  createCampaign,
+  enrollGroupInCampaign,
   getAgent,
   createConversationMessage,
   deleteAgent,
@@ -25,6 +27,7 @@ import {
   listLeads,
   pauseAgent,
   resumeAgent,
+  setOutreachPolicyForGroup,
   setSendWindowForGroup,
   updateAgent,
   updateLead,
@@ -33,13 +36,18 @@ import {
   upsertProductProfile,
 } from "./data";
 import { sumAgentLeadTotals } from "@/lib/agent-lead-totals";
+import { buildDefaultAiOutreachSteps } from "./campaign-sequence";
 import { listScheduledActions } from "./scheduled-actions";
 import { SPACING_MINUTES } from "./send-schedule";
-import { normalizeSchedulingLink } from "@/lib/scheduling-link";
+import { normalizeSchedulingLink, resolveBookingLink } from "@/lib/scheduling-link";
 import { sendLinkedInMessage } from "./unipile";
 import { isValidTimeZone, resolveTimeZone } from "@/lib/time-zone";
 import type { AgentApiContext } from "./agent-api";
-import type { Agent, Campaign } from "./types";
+import type { Agent, Campaign, CampaignReplyHandling, SendWindow } from "./types";
+import {
+  productProfileIsReadyForSteal,
+  targetingFromProductProfile,
+} from "@/lib/steal-customers-targeting";
 
 export class AgentApiOperationError extends Error {
   status: number;
@@ -69,19 +77,80 @@ const agentSignalSourcesSchema = z.object({
 
 const sendWindowSchema = z.enum(["always", "business", "extended"]);
 
-export const createAgentPayloadSchema = z.object({
-  name: z.string().trim().min(1).max(120).optional(),
-  groupName: z.string().trim().min(1).max(120),
-  linkedInAccountId: z.string().trim().min(1).optional(),
-  mode: z.enum(["prompt", "filters", "signals"]).default("signals"),
-  prompt: z.string().trim().min(1, "prompt is required").max(4000),
-  filters: agentFiltersSchema,
-  signalSources: agentSignalSourcesSchema.default({
-    competitorUrls: [],
-    founderUrls: [],
-    keywords: [],
-  }),
-});
+// Matches the three "When a lead replies" choices on the agent setup form.
+const replyHandlingSchema = z.enum(["handoff", "ai_until_interest", "ai_until_booked"]);
+
+const bookingLinkSchema = z
+  .string()
+  .trim()
+  .max(500)
+  .refine(
+    (value) => !value || normalizeSchedulingLink(value) !== null,
+    "Use a valid https://cal.com or https://calendly.com demo booking link.",
+  );
+
+// Shared outreach fields: creating or updating a lead finder can set the same
+// reply mode, calendar link, and handoff-email preference the GUI controls.
+const agentOutreachFields = {
+  // When true (or when replyHandling is set on create), attach the default AI
+  // connection + 3-message sequence used by the app launch form.
+  setupOutreach: z.boolean().optional(),
+  replyHandling: replyHandlingSchema.optional(),
+  // Per-agent override for ai_until_booked. Empty falls back to My Product.
+  bookingLink: bookingLinkSchema.optional(),
+  // Only used when replyHandling is handoff (stop after first reply / manual).
+  // Default true so the user is emailed when the first reply lands.
+  notifyOnReply: z.boolean().optional(),
+  sendWindow: sendWindowSchema.optional(),
+} as const;
+
+export const createAgentPayloadSchema = z
+  .object({
+    name: z.string().trim().min(1).max(120).optional(),
+    groupName: z.string().trim().min(1).max(120),
+    linkedInAccountId: z.string().trim().min(1).optional(),
+    mode: z
+      .enum(["prompt", "filters", "signals", "steal_customers"])
+      .default("signals"),
+    // Optional for steal_customers: My Product fills prompt/filters server-side.
+    prompt: z.string().trim().max(4000).optional(),
+    filters: agentFiltersSchema.optional(),
+    signalSources: agentSignalSourcesSchema.default({
+      competitorUrls: [],
+      founderUrls: [],
+      keywords: [],
+    }),
+    ...agentOutreachFields,
+  })
+  .superRefine((value, ctx) => {
+    if (value.mode === "steal_customers") {
+      const competitorUrls = value.signalSources?.competitorUrls || [];
+      const founderUrls = value.signalSources?.founderUrls || [];
+      if (!competitorUrls.length && !founderUrls.length) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["signalSources"],
+          message:
+            "Steal Customers requires at least one competitorUrls or founderUrls LinkedIn URL (company, founder, or employee profile).",
+        });
+      }
+      return;
+    }
+    if (!value.prompt?.trim()) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["prompt"],
+        message: "prompt is required",
+      });
+    }
+    if (!value.filters) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["filters"],
+        message: "filters are required",
+      });
+    }
+  });
 
 // Partial edit: omitted fields keep the agent's current values, exactly like
 // the prefilled UI edit form.
@@ -90,14 +159,14 @@ export const updateAgentPayloadSchema = z.object({
   name: z.string().trim().min(1).max(120).optional(),
   groupName: z.string().trim().min(1).max(120).optional(),
   linkedInAccountId: z.string().trim().min(1).optional(),
-  mode: z.enum(["prompt", "filters", "signals"]).optional(),
+  mode: z.enum(["prompt", "filters", "signals", "steal_customers"]).optional(),
   prompt: z.string().trim().min(1).max(4000).optional(),
   filters: agentFiltersSchema.optional(),
   signalSources: agentSignalSourcesSchema.optional(),
   // The window lives on the campaigns built on this agent's lead group, so a
   // change here applies to all of them - exactly what the agent edit form does.
-  sendWindow: sendWindowSchema.optional(),
   status: z.enum(["active", "paused"]).optional(),
+  ...agentOutreachFields,
 });
 
 const stringList = z.array(z.string().trim().min(1)).optional();
@@ -237,6 +306,9 @@ export async function getAgentWorkspaceContext(context: AgentApiContext) {
           companyName: profile.companyName,
           websiteUrl: profile.websiteUrl,
           description: profile.description,
+          // Workspace-wide Calendly/Cal.com link used by until-booked agents
+          // when the campaign has no override.
+          schedulingLink: profile.schedulingLink || "",
           targetBuyers: profile.targetBuyers,
           buyerTitles: profile.buyerTitles,
           industries: profile.industries,
@@ -316,23 +388,81 @@ export async function getWorkspaceStatsResource(context: AgentApiContext) {
   };
 }
 
-// The send window is stored on the campaigns built on an agent's lead group, so
-// an agent's effective window has to be read back from them. An agent with no
-// campaign discovers leads but never sends: campaigns are created in the
-// Omentir app, not over this API, and that distinction is the difference
-// between "no leads contacted yet" and "outreach was never set up".
+// The send window and reply policy live on the campaigns built on an agent's
+// lead group, so they have to be read back from those campaigns. An agent with
+// no campaign discovers leads but never sends until setupOutreach / the app
+// attaches a sequence.
 function agentOutreachSummary(agent: Agent, campaigns: Campaign[]) {
   const own = campaigns.filter((campaign) => campaign.groupId === agent.targetGroupId);
   const active = own.filter((campaign) => campaign.status === "active");
+  const primary = active[0] || own[0];
   return {
     // Unset on a campaign means the historical round-the-clock behaviour.
-    sendWindow: (active[0] || own[0])?.sendWindow || (own.length ? "always" : null),
+    sendWindow: primary?.sendWindow || (own.length ? "always" : null),
     outreach: {
       configured: own.length > 0,
       activeSequences: active.length,
-      replyHandling: (active[0] || own[0])?.replyHandling || null,
+      replyHandling: primary?.replyHandling || null,
+      bookingLink: primary?.bookingLink || null,
+      notifyOnReply: primary?.notifyOnReply ?? null,
     },
   };
+}
+
+async function resolveBookingLinkForMode(
+  workspaceId: string,
+  replyHandling: CampaignReplyHandling,
+  bookingLink?: string,
+) {
+  if (replyHandling !== "ai_until_booked") return "";
+  const fromPayload = bookingLink !== undefined ? normalizeSchedulingLink(bookingLink) : null;
+  if (fromPayload === null && bookingLink) {
+    throw new AgentApiOperationError(
+      "Use a valid https://cal.com or https://calendly.com demo booking link.",
+      400,
+    );
+  }
+  if (fromPayload) return fromPayload;
+  const profile = await getProductProfile(workspaceId);
+  const fromProduct = resolveBookingLink(profile?.schedulingLink);
+  if (fromProduct) return fromProduct;
+  throw new AgentApiOperationError(
+    'Continue-until-booked requires a demo booking link. Pass bookingLink, or set schedulingLink on the product profile with omentir_update_product_profile.',
+    400,
+  );
+}
+
+async function ensureDefaultOutreachCampaign(input: {
+  workspaceId: string;
+  agent: Agent;
+  linkedInAccountId: string;
+  replyHandling: CampaignReplyHandling;
+  bookingLink: string;
+  notifyOnReply: boolean;
+  sendWindow: SendWindow;
+}) {
+  const profile = await getProductProfile(input.workspaceId);
+  // AI-written messages need product context, same gate as the app launch path.
+  if (!(profile?.description || profile?.painPointsText)) {
+    throw new AgentApiOperationError(
+      "Add a product profile (description or pain points) before setting up AI outreach.",
+      409,
+    );
+  }
+
+  const campaign = await createCampaign(input.workspaceId, {
+    name: `${input.agent.name} outreach`,
+    groupId: input.agent.targetGroupId,
+    linkedInAccountId: input.linkedInAccountId,
+    status: "active",
+    steps: buildDefaultAiOutreachSteps(),
+    replyHandling: input.replyHandling,
+    ...(input.bookingLink ? { bookingLink: input.bookingLink } : {}),
+    notifyOnReply: input.notifyOnReply,
+    sendWindow: input.sendWindow,
+  });
+  await enrollGroupInCampaign(input.workspaceId, campaign);
+  return campaign;
 }
 
 export async function listAgentResources(context: AgentApiContext) {
@@ -400,6 +530,16 @@ export async function createAgentResource(context: AgentApiContext, payload: unk
   }
 
   const input = parsed.data;
+  const isStealCustomers = input.mode === "steal_customers";
+  const competitorUrls = input.signalSources?.competitorUrls || [];
+  const founderUrls = input.signalSources?.founderUrls || [];
+  if (isStealCustomers && !competitorUrls.length && !founderUrls.length) {
+    throw new AgentApiOperationError(
+      "Steal Customers agents need at least one competitor or founder/employee LinkedIn URL in signalSources.",
+      400,
+    );
+  }
+
   // Same requirement as the UI: an agent needs a connected LinkedIn account
   // to run discovery. Falls back to the workspace's first account when the
   // payload doesn't pick one.
@@ -416,16 +556,102 @@ export async function createAgentResource(context: AgentApiContext, payload: unk
     );
   }
 
+  let prompt = input.prompt?.trim() || "";
+  let filters = input.filters;
+  if (isStealCustomers) {
+    const productProfile = await getProductProfile(context.workspace.id);
+    if (!productProfileIsReadyForSteal(productProfile)) {
+      throw new AgentApiOperationError(
+        "Set up the product profile (My Product) before creating a Steal Customers agent.",
+        409,
+      );
+    }
+    const targeting = targetingFromProductProfile(productProfile);
+    prompt = targeting.prompt;
+    filters = targeting.filters;
+  } else if (!filters) {
+    throw new AgentApiOperationError("filters are required.", 400);
+  }
+
   const agent = await createAgent(context.workspace.id, {
     name: input.name || input.groupName,
     mode: input.mode,
-    prompt: input.prompt,
-    filters: input.filters,
-    signalSources: input.signalSources,
+    prompt,
+    filters,
+    signalSources: isStealCustomers
+      ? {
+          competitorUrls,
+          founderUrls,
+          keywords: [],
+        }
+      : {
+          competitorUrls: [],
+          founderUrls: [],
+          keywords: input.signalSources?.keywords || [],
+        },
     linkedInAccountId: account.id,
     targetGroupName: input.groupName,
   });
 
+  // Same launch path as the app: when the caller asks for outreach (or picks a
+  // reply mode), attach the default AI sequence and reply policy immediately.
+  // Steal customers always needs AI outreach (comment/post context).
+  const wantsOutreach =
+    isStealCustomers ||
+    input.setupOutreach === true ||
+    input.replyHandling !== undefined ||
+    input.bookingLink !== undefined ||
+    input.notifyOnReply !== undefined;
+  let outreachConfigured = false;
+  let outreachSummary: {
+    replyHandling: CampaignReplyHandling;
+    bookingLink: string | null;
+    notifyOnReply: boolean;
+    sendWindow: SendWindow;
+  } | null = null;
+
+  if (wantsOutreach) {
+    const replyHandling = input.replyHandling ?? "ai_until_interest";
+    const bookingLink = await resolveBookingLinkForMode(
+      context.workspace.id,
+      replyHandling,
+      input.bookingLink,
+    );
+    const notifyOnReply = input.notifyOnReply ?? true;
+    const sendWindow = input.sendWindow ?? "business";
+    try {
+      await ensureDefaultOutreachCampaign({
+        workspaceId: context.workspace.id,
+        agent,
+        linkedInAccountId: account.id,
+        replyHandling,
+        bookingLink,
+        notifyOnReply,
+        sendWindow,
+      });
+      outreachConfigured = true;
+      outreachSummary = {
+        replyHandling,
+        bookingLink: bookingLink || null,
+        notifyOnReply,
+        sendWindow,
+      };
+    } catch (error) {
+      // Roll back the agent so a failed outreach attach does not leave a
+      // half-launched finder counting against the plan limit (mirrors the UI).
+      try {
+        await deleteAgent(context.workspace.id, agent.id);
+      } catch (cleanupError) {
+        console.error(
+          "[agent-api] failed to clean up agent after outreach setup error:",
+          cleanupError,
+        );
+      }
+      throw error;
+    }
+  }
+
+  const isSteal = agent.mode === "steal_customers";
   return {
     agent,
     leadGroup: { id: agent.targetGroupId, name: agent.targetGroupName },
@@ -436,16 +662,24 @@ export async function createAgentResource(context: AgentApiContext, payload: unk
       nextRunAt: agent.nextRunAt,
       repeats: "daily at the time the agent was created",
       timeZone: resolveTimeZone(context.workspace.timezone),
-      guidance: "Use omentir_list_leads with this lead group id to inspect results.",
+      mode: agent.mode,
+      guidance: isSteal
+        ? "Steal Customers: scans recent competitor and founder/employee posts, keeps fresh intent-bearing comments (max ~7 days), scores likely buyers from My Product, and stores post URL + post text + comment + profile. Use omentir_list_leads / omentir_get_lead on this lead group."
+        : "Use omentir_list_leads with this lead group id to inspect results.",
     },
-    // A new lead finder only discovers and scores people. Outreach sequences
-    // are built in the Omentir app, so say so rather than implying messages
-    // will start going out on their own.
-    outreach: {
-      configured: false,
-      guidance:
-        "This lead finder discovers and scores leads only. Set up its outreach sequence in Omentir under Agents; after that omentir_list_scheduled_actions shows the planned sends.",
-    },
+    outreach: outreachConfigured
+      ? {
+          configured: true,
+          ...outreachSummary,
+          guidance: isSteal
+            ? "AI outreach is required for Steal Customers (manual templates cannot carry post+comment context). replyHandling controls when you are emailed. omentir_list_scheduled_actions shows planned sends."
+            : "Default AI outreach is active. replyHandling controls when you are emailed: handoff = first reply, ai_until_interest = qualified interest, ai_until_booked = meeting confirmed. omentir_list_scheduled_actions shows planned sends.",
+        }
+      : {
+          configured: false,
+          guidance:
+            "This lead finder discovers and scores leads only. Call omentir_update_agent with setupOutreach true (and optional replyHandling / bookingLink), or set up outreach in the Omentir app.",
+        },
   };
 }
 
@@ -473,6 +707,19 @@ export async function updateAgentResource(context: AgentApiContext, payload: unk
     linkedInAccountId = account.id;
   }
 
+  const nextMode = input.mode ?? agent.mode;
+  const nextSignalSources = input.signalSources ?? agent.signalSources;
+  if (nextMode === "steal_customers") {
+    const competitorUrls = nextSignalSources?.competitorUrls || [];
+    const founderUrls = nextSignalSources?.founderUrls || [];
+    if (!competitorUrls.length && !founderUrls.length) {
+      throw new AgentApiOperationError(
+        "Steal Customers agents need at least one competitor or founder/employee LinkedIn URL in signalSources.",
+        400,
+      );
+    }
+  }
+
   const changesAgentConfiguration = [
     input.name,
     input.mode,
@@ -484,12 +731,42 @@ export async function updateAgentResource(context: AgentApiContext, payload: unk
   ].some((value) => value !== undefined);
   let updated = agent;
   if (changesAgentConfiguration) {
+    // Steal customers is the only mode that stores competitor/founder URLs.
+    // ICP always comes from My Product, not from client-supplied filters.
+    const cleanedSignalSources =
+      nextMode === "steal_customers"
+        ? {
+            competitorUrls: nextSignalSources?.competitorUrls || [],
+            founderUrls: nextSignalSources?.founderUrls || [],
+            keywords: [] as string[],
+          }
+        : {
+            competitorUrls: [] as string[],
+            founderUrls: [] as string[],
+            keywords: nextSignalSources?.keywords || [],
+          };
+
+    let prompt = input.prompt ?? agent.prompt;
+    let filters = input.filters ?? agent.filters;
+    if (nextMode === "steal_customers") {
+      const productProfile = await getProductProfile(context.workspace.id);
+      if (!productProfileIsReadyForSteal(productProfile)) {
+        throw new AgentApiOperationError(
+          "Set up the product profile (My Product) before saving a Steal Customers agent.",
+          409,
+        );
+      }
+      const targeting = targetingFromProductProfile(productProfile);
+      prompt = targeting.prompt;
+      filters = targeting.filters;
+    }
+
     updated = await updateAgent(context.workspace.id, agent.id, {
       name: input.name ?? agent.name,
-      mode: input.mode ?? agent.mode,
-      prompt: input.prompt ?? agent.prompt,
-      filters: input.filters ?? agent.filters,
-      signalSources: input.signalSources ?? agent.signalSources,
+      mode: nextMode,
+      prompt,
+      filters,
+      signalSources: cleanedSignalSources,
       ...(linkedInAccountId ? { linkedInAccountId } : {}),
       targetGroupName: input.groupName ?? agent.targetGroupName,
     });
@@ -509,11 +786,111 @@ export async function updateAgentResource(context: AgentApiContext, payload: unk
       ? 0
       : await setSendWindowForGroup(context.workspace.id, updated.targetGroupId, input.sendWindow);
 
+  // Reply mode, calendar link, and handoff email preference. If the agent has
+  // no sequence yet and the caller asks for outreach policy, create the default
+  // AI sequence first so MCP can finish a full launch without the GUI.
+  // Steal customers always needs AI outreach (post + comment context).
+  const wantsOutreachPolicy =
+    updated.mode === "steal_customers" ||
+    input.setupOutreach === true ||
+    input.replyHandling !== undefined ||
+    input.bookingLink !== undefined ||
+    input.notifyOnReply !== undefined;
+
+  let outreach: {
+    configured: boolean;
+    sequencesUpdated: number;
+    created: boolean;
+    replyHandling?: CampaignReplyHandling | null;
+    bookingLink?: string | null;
+    notifyOnReply?: boolean | null;
+  } | undefined;
+
+  if (wantsOutreachPolicy) {
+    const campaigns = (await listCampaigns(context.workspace.id)).filter(
+      (campaign) => campaign.groupId === updated.targetGroupId,
+    );
+    const existing = campaigns[0];
+    const replyHandling =
+      input.replyHandling ??
+      existing?.replyHandling ??
+      ("ai_until_interest" as CampaignReplyHandling);
+    // Only re-resolve the booking link when booking mode is active (or being
+    // switched on). Clearing replyHandling away from booked drops the override.
+    const bookingLink =
+      replyHandling === "ai_until_booked"
+        ? await resolveBookingLinkForMode(
+            context.workspace.id,
+            replyHandling,
+            input.bookingLink !== undefined
+              ? input.bookingLink
+              : existing?.bookingLink,
+          )
+        : "";
+    const notifyOnReply =
+      input.notifyOnReply ?? existing?.notifyOnReply ?? true;
+    const sendWindow =
+      input.sendWindow ?? existing?.sendWindow ?? ("business" as SendWindow);
+
+    let created = false;
+    let sequencesUpdated = 0;
+    if (!campaigns.length) {
+      if (updated.leadsOnly) {
+        throw new AgentApiOperationError(
+          "This agent is leads-only and cannot run outreach. Create a normal lead finder instead.",
+          409,
+        );
+      }
+      const accountId =
+        linkedInAccountId ||
+        updated.linkedInAccountId ||
+        (await getLinkedInAccountForWorkspace(context.workspace.id))?.id;
+      if (!accountId) {
+        throw new AgentApiOperationError(
+          "Connect LinkedIn in Omentir before setting up outreach.",
+          409,
+        );
+      }
+      await ensureDefaultOutreachCampaign({
+        workspaceId: context.workspace.id,
+        agent: updated,
+        linkedInAccountId: accountId,
+        replyHandling,
+        bookingLink,
+        notifyOnReply,
+        sendWindow,
+      });
+      created = true;
+      sequencesUpdated = 1;
+    } else {
+      sequencesUpdated = await setOutreachPolicyForGroup(
+        context.workspace.id,
+        updated.targetGroupId,
+        {
+          replyHandling,
+          bookingLink,
+          notifyOnReply,
+          ...(input.sendWindow !== undefined ? { sendWindow: input.sendWindow } : {}),
+        },
+      );
+    }
+
+    outreach = {
+      configured: true,
+      sequencesUpdated,
+      created,
+      replyHandling,
+      bookingLink: bookingLink || null,
+      notifyOnReply,
+    };
+  }
+
   return {
     agent: updated,
     ...(input.sendWindow === undefined
       ? {}
       : { sendWindow: input.sendWindow, sequencesRewindowed }),
+    ...(outreach ? { outreach } : {}),
   };
 }
 

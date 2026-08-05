@@ -135,6 +135,33 @@ export function parseBasicCampaignFlow(
   return steps;
 }
 
+// Default AI sequence used by the agent launch form and the Agent API/MCP when
+// outreach is configured without a custom step list: bare connect, then three
+// AI-written messages with the same waits the UI seeds.
+export function buildDefaultAiOutreachSteps(options?: {
+  afterApprovalMinutes?: number;
+  secondWaitMinutes?: number;
+  thirdWaitMinutes?: number;
+}): CampaignStep[] {
+  const afterApprovalMinutes = Math.max(1, options?.afterApprovalMinutes ?? 15);
+  const secondWaitMinutes = Math.max(1, options?.secondWaitMinutes ?? 18 * 60);
+  const thirdWaitMinutes = Math.max(1, options?.thirdWaitMinutes ?? 30 * 60);
+  return [
+    {
+      id: "connect",
+      type: "connect",
+      includeNote: false,
+      noteTemplate: "",
+    },
+    { id: "wait-after-approval", type: "wait", delayMinutes: afterApprovalMinutes },
+    { id: "first-message", type: "message", messageTemplate: "" },
+    { id: "wait-second-message", type: "wait", delayMinutes: secondWaitMinutes },
+    { id: "second-message", type: "message", messageTemplate: "" },
+    { id: "wait-third-message", type: "wait", delayMinutes: thirdWaitMinutes },
+    { id: "third-message", type: "message", messageTemplate: "" },
+  ];
+}
+
 export function buildCampaignSteps(formData: FormData, fallbackFirstMessageDelayMinutes: number) {
   const connectionNote = String(formData.get("connectionNote") || "").trim();
   const includeNote = connectionNote.length > 0;
@@ -161,21 +188,11 @@ export function buildCampaignSteps(formData: FormData, fallbackFirstMessageDelay
   const steps: CampaignStep[] =
     sequenceSteps ||
     (useAiDefaultOutreach
-      ? [
-          {
-            // AI outreach sends a bare connection request - no invitation note.
-            id: "connect",
-            type: "connect",
-            includeNote: false,
-            noteTemplate: "",
-          },
-          { id: "wait-after-approval", type: "wait", delayMinutes: afterApprovalMinutes },
-          { id: "first-message", type: "message", messageTemplate: "" },
-          { id: "wait-second-message", type: "wait", delayMinutes: secondWaitMinutes },
-          { id: "second-message", type: "message", messageTemplate: "" },
-          { id: "wait-third-message", type: "wait", delayMinutes: thirdWaitMinutes },
-          { id: "third-message", type: "message", messageTemplate: "" },
-        ]
+      ? buildDefaultAiOutreachSteps({
+          afterApprovalMinutes,
+          secondWaitMinutes,
+          thirdWaitMinutes,
+        })
       : useManualDefaultOutreach
         ? [
             {

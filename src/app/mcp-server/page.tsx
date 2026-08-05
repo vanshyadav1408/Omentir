@@ -46,34 +46,34 @@ type SetupStep = {
 const setupSteps: SetupStep[] = [
   {
     number: "1.",
-    title: "Connect LinkedIn",
+    title: "Set up Omentir",
     description:
-      "Connect your LinkedIn account in Omentir first. Your agent will use the same safe workspace and sending limits as the dashboard.",
+      "Create an account, connect LinkedIn, and fill My Product. Chat apps use the same workspace and daily safety limits as the dashboard.",
     image: "/connect-linkedin.avif",
     alt: "Connect LinkedIn screen in Omentir",
   },
   {
     number: "2.",
-    title: "Add the connector",
+    title: "Add the MCP connector (chat apps)",
     description:
-      "In Claude, ChatGPT, or Grok, open Settings, then Connectors, and add a custom connector with the URL below. There is no API key to create.",
+      "In Claude, ChatGPT, or Grok: Settings → Connectors → add a custom connector with the URL below. No API key is required for these apps.",
     copyUrl: mcpEndpoint,
     image: "/connect-to-your-agent.avif",
     alt: "Adding the Omentir MCP connector URL to an AI chat app",
   },
   {
     number: "3.",
-    title: "Approve access",
+    title: "Approve access (or use an API key)",
     description:
-      "The app sends you to Omentir. Sign in, choose Connect workspace, and you land back in the app connected. Clients that support headers can use an API key instead.",
+      "Chat apps send you to Omentir to sign in and Connect workspace. For Cursor, Claude Code, or scripts, create a key on the API page and send Authorization: Bearer <token> instead.",
     image: "/get-your-api-key.avif",
     alt: "Approving an AI app's access to an Omentir workspace",
   },
   {
     number: "4.",
-    title: "Request your AI",
+    title: "Ask your AI to run Omentir",
     description:
-      "Ask your agent anything about Omentir or the LinkedIn outreach process. It can choose the right tools on its own.",
+      "Enable Omentir tools in the conversation if the app asks, then ask it to list agents, create a lead finder, or start Steal Customers with competitor LinkedIn URLs.",
     image: "/request-your-ai.avif",
     alt: "Requesting an AI agent to run Omentir outreach",
   },
@@ -94,11 +94,11 @@ const toolGroups = [
   {
     group: "Lead discovery",
     tools: [
-      { name: "omentir_create_agent", description: "Create an ICP discovery agent and its target lead group." },
-      { name: "omentir_update_agent", description: "Edit an agent's name, prompt, filters, signal sources, LinkedIn account, lead group, or send window." },
-      { name: "omentir_list_agents", description: "List the discovery agents running in the workspace, with each one's next discovery run and send window." },
-      { name: "omentir_list_leads", description: "Search, filter, sort, and list discovered leads." },
-      { name: "omentir_get_lead", description: "Read one exact lead and its complete qualification record." },
+      { name: "omentir_create_agent", description: "Create a classic lead finder or Steal Customers agent (competitor post commenters + AI outreach; no ICP)." },
+      { name: "omentir_update_agent", description: "Edit any agent: mode, signalSources (competitor + founder/employee URLs), LinkedIn account, lead group, send window, or outreach." },
+      { name: "omentir_list_agents", description: "List all agents (including Steal Customers), with next discovery run, mode, and send window." },
+      { name: "omentir_list_leads", description: "Search, filter, sort, and list leads (includes post/comment engagementContext for Steal Customers)." },
+      { name: "omentir_get_lead", description: "Read one exact lead and its complete record, including engagementContext when present." },
       { name: "omentir_list_groups", description: "List the lead groups in the workspace." },
     ],
   },
@@ -133,42 +133,47 @@ const faqItems = [
   {
     question: "What is the Omentir MCP server?",
     answer:
-      "It's a hosted Model Context Protocol endpoint at omentir.com/api/agent/v1/mcp. Any MCP-capable client - Claude, ChatGPT, Cursor, Hermes, OpenClaw, or a custom assistant - connects with a workspace-scoped token and gets nineteen tools for product context, lead-finder configuration, discovery status, lead inspection, the outreach send schedule, and existing conversations. Nothing to install or self-host.",
+      "A hosted Model Context Protocol endpoint at omentir.com/api/agent/v1/mcp. Claude, ChatGPT, Grok, Cursor, Hermes, OpenClaw, or a custom assistant connects once and gets tools for My Product, classic lead finders, Steal Customers agents, discovery status, leads (including post and comment context), the outreach send schedule, and existing conversations. Nothing to install for the managed product.",
   },
   {
-    question: "How do I authenticate?",
+    question: "How do I connect Claude, ChatGPT, or Grok?",
     answer:
-      "Two ways, and you only need one. Chat apps such as Claude, ChatGPT and Grok take just the connector URL: they register themselves, send you to Omentir to sign in and approve, and receive a token automatically. Clients that let you set headers - Claude Code, Cursor, scripts - can instead use a key from the API page as `Authorization: Bearer <token>`. Tokens are never accepted in URLs, are scoped to exactly one workspace, and can be revoked anytime from the API page, which disconnects that app immediately.",
+      "In the chat app open Settings, then Connectors, and add a custom connector with https://omentir.com/api/agent/v1/mcp. Sign in on Omentir when prompted and choose Connect workspace. Then enable Omentir tools in that chat if the app has a tools menu. No API key is required for these apps.",
+  },
+  {
+    question: "How do I connect Cursor, Claude Code, or a script?",
+    answer:
+      "Create a token on the API page in Omentir, then send it as Authorization: Bearer <token> on every request to the MCP endpoint or the REST API under /api/agent/v1. Tokens are workspace-scoped and revocable from the same page.",
   },
   {
     question: "Why does my chat app show no Omentir tools?",
     answer:
-      "Connecting an app and enabling it in a conversation are separate steps in most chat apps: after approving access, switch Omentir on in that chat's tools menu and send a new message. If the connector never asked you to sign in, the app may have cached a failed attempt - remove it and add the URL again. App connections are included with every paid Omentir plan.",
+      "Connecting an app and enabling it in a conversation are separate steps in most chat apps: after approving access, switch Omentir on in that chat's tools menu and send a new message. If the connector never asked you to sign in, remove it and add the URL again.",
+  },
+  {
+    question: "Can my AI create Steal Customers agents from chat?",
+    answer:
+      "Yes. After My Product is set and LinkedIn is connected, ask the assistant to create an agent with mode steal_customers and your competitor LinkedIn company URLs. It can also pass optional founder or employee profile URLs. Omentir finds employees, scans posts, and turns commenters into leads with AI outreach.",
   },
   {
     question: "Which MCP methods are supported?",
     answer:
-      "The Streamable HTTP server speaks JSON-RPC 2.0 and supports initialize, ping, tools/list, and tools/call, plus the initialized notification. It negotiates the stable MCP protocol version, implements the MCP authorization spec with OAuth 2.1 discovery, dynamic client registration and PKCE, and answers cross-origin preflight so browser-based clients can reach it. A plain GET returns an unauthenticated discovery document for quick client setup checks.",
-  },
-  {
-    question: "Can the server find LinkedIn leads from chat?",
-    answer:
-      "Yes. Your assistant can read the workspace's product context, create a lead finder with complete targeting, and inspect the scored leads Omentir discovers. It can also check activity so it reports when discovery is still pending instead of treating an empty list as a final result.",
+      "Streamable HTTP with JSON-RPC 2.0: initialize, ping, tools/list, tools/call, and the initialized notification. OAuth 2.1 discovery, dynamic client registration, and PKCE are supported for connector-style apps.",
   },
   {
     question: "My agent doesn't speak MCP - is there a REST fallback?",
     answer:
-      "Yes. The same workflow is available through REST endpoints under /api/agent/v1, documented by the OpenAPI schema at /api/agent/v1/openapi.json and the machine-readable guide at /agents.md.",
+      "Yes. The same workflow is available under /api/agent/v1, documented by the OpenAPI schema at /api/agent/v1/openapi.json and the machine-readable guide at /agents.md.",
   },
   {
     question: "How should my agent learn the recommended workflow?",
     answer:
-      "Point it at omentir.com/agents.md. It's a markdown guide written for assistants: the recommended call order (context → product profile → existing agents → discovery → activity → leads → send schedule), the full tool list, how time zones, send windows and daily limits work, and guardrails for retries, asynchronous results, and existing conversations.",
+      "Point it at omentir.com/agents.md (how to connect, classic vs Steal Customers create payloads, tool list, time zones, send windows, and guardrails). Human setup lives on omentir.com/mcp-server and omentir.com/for-agents.",
   },
   {
     question: "Is the MCP server open source?",
     answer:
-      "Yes. Omentir was closed source until July 2026 and is now fully open source under the MIT license. The hosted MCP server runs the same code that is public on GitHub, so you can inspect every tool's implementation - or self-host the whole application with Docker.",
+      "Yes. Omentir is MIT licensed. The hosted MCP server runs the same public GitHub code; you can inspect every tool or self-host with Docker.",
   },
 ];
 
@@ -198,9 +203,10 @@ export default function McpServerPage() {
             <AgentTypewriter agents={["ChatGPT", "Gemini", "Grok", "Claude"]} />
           </h1>
           <p className="hero-lede mx-auto mt-6 max-w-2xl text-[var(--md-sys-color-on-surface-variant)]">
-            One connector links Omentir with your favorite chat apps, so they can
-            configure lead finders, inspect ICP-fit buyers, and explain discovery
-            results from the MCP server you connect once.
+            Connect Claude, ChatGPT, Grok, Cursor, or your own assistant once.
+            From chat they can set My Product, create classic lead finders or Steal
+            Customers agents, inspect leads with post and comment context, and
+            check when outreach will send.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Link

@@ -2767,6 +2767,16 @@ textarea:-webkit-autofill:focus {
   box-shadow: var(--md-sys-card-elevation-hover);
 }
 
+/* Steal Customers agents on /agents: thin red border. Must beat
+   .m3-card-elevated { border: none } (Tailwind border utilities lose that fight). */
+.m3-card-elevated.agent-card-steal-customers {
+  border: 1px solid #ef4444;
+}
+
+.m3-card-elevated.agent-card-steal-customers:hover {
+  border-color: #ef4444;
+}
+
 /* Filled: no shadow; 4% primary overlay → 8% on hover */
 .m3-card-filled {
   background-color: var(--md-sys-card-filled-rest);

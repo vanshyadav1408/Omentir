@@ -344,6 +344,12 @@ async function runAgents(mode: AutomationSafetyMode) {
 
       if (!account) {
         await markAgentRun(agent, false);
+        await safeLogAutomationRun({
+          workspaceId: agent.workspaceId,
+          kind: "agent",
+          status: "error",
+          message: `Agent ${agent.id} needs a connected LinkedIn account before discovery can run.`,
+        });
         continue;
       }
 
@@ -483,12 +489,16 @@ async function runAgents(mode: AutomationSafetyMode) {
 
       await markAgentRun(agent, true);
     } catch (error) {
+      // Soft-fail the agent to error + next daily slot, but always record the
+      // real cause so the activity feed is not just a red badge with no reason.
+      const message = error instanceof Error ? error.message : "Agent run failed";
+      console.error(`[automation] agent ${agent.id} run failed:`, message);
       await markAgentRun(agent, false);
       await logAutomationRun({
         workspaceId: agent.workspaceId,
         kind: "agent",
         status: "error",
-        message: error instanceof Error ? error.message : "Agent run failed",
+        message,
       });
     }
   }

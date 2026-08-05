@@ -10,6 +10,20 @@ Use the managed product at [omentir.com](https://omentir.com), or self-host the 
 
 **One codebase:** hosted cloud and self-host share this repo. `RUN_LOCALLY=TRUE` switches auth, billing, marketing, and hosted-only mail off. Public brand contacts for omentir.com stay in source on purpose (see `src/lib/hosted-identity.ts`); they are not used for self-hosted operation.
 
+### Connect from other AI apps (Claude, ChatGPT, Grok, Cursor, …)
+
+People use Omentir from chat and coding agents without sharing LinkedIn passwords:
+
+1. In Omentir: connect LinkedIn and fill **My Product**.
+2. **Chat apps (Claude, ChatGPT, Grok):** Settings → Connectors → add  
+   `https://omentir.com/api/agent/v1/mcp` → sign in and approve **Connect workspace** → enable tools in the chat.  
+   No API key.
+3. **Cursor / Claude Code / scripts:** create a key on the [API page](https://omentir.com/api-keys) and send  
+   `Authorization: Bearer <token>` to the MCP endpoint or REST `/api/agent/v1/*`.
+4. Ask the assistant to create a classic lead finder or a **Steal Customers** agent (`mode: steal_customers` + competitor company URLs).
+
+Docs: [MCP Server](https://omentir.com/mcp-server) (humans), [For AI Agents](https://omentir.com/for-agents) (operator prompt), [agents.md](https://omentir.com/agents.md) (machine guide), [OpenAPI](https://omentir.com/api/agent/v1/openapi.json).
+
 ---
 
 ## Self-hosting

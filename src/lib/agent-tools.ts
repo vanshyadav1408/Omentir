@@ -13,6 +13,8 @@ export const agentToolInputSchemas = {
     type: "object",
     properties: {},
     additionalProperties: false,
+    description:
+      "Returns every agent in the workspace, including mode steal_customers, classic lead finders, and outreach-only agents.",
   },
   omentir_get_product_profile: {
     type: "object",
@@ -29,7 +31,11 @@ export const agentToolInputSchemas = {
       companySize: { type: "string" },
       painPointsText: { type: "string" },
       pricingDetails: { type: "string" },
-      schedulingLink: { type: "string" },
+      schedulingLink: {
+        type: "string",
+        description:
+          "Workspace demo booking link (https://cal.com/... or https://calendly.com/...). Used by agents whose reply mode is continue-until-booked when they have no per-agent bookingLink override.",
+      },
       keyFeatures: { type: "array", items: { type: "string" } },
       socialProof: { type: "array", items: { type: "string" } },
       linkedInCompanyPage: { type: "string" },
@@ -48,7 +54,7 @@ export const agentToolInputSchemas = {
   },
   omentir_create_agent: {
     type: "object",
-    required: ["groupName", "prompt", "filters"],
+    required: ["groupName"],
     properties: {
       name: { type: "string" },
       groupName: { type: "string" },
@@ -56,15 +62,21 @@ export const agentToolInputSchemas = {
         type: "string",
         description: "Optional connected LinkedIn account id; defaults to the workspace's first account.",
       },
-      mode: { enum: ["signals", "filters", "prompt"], default: "signals" },
+      mode: {
+        enum: ["signals", "filters", "prompt", "steal_customers"],
+        default: "signals",
+        description:
+          "signals/filters/prompt: classic ICP lead discovery (needs prompt+filters). steal_customers (Steal Customers): no ICP; My Product defines buyers; requires competitorUrls and/or founderUrls; finds employees at competitor companies, scans company+employee posts, promotes commenters as leads; AI outreach attached automatically.",
+      },
       prompt: {
         type: "string",
-        description: "Required prospect definition describing who the agent should find.",
+        description:
+          "Prospect definition for classic lead finders. Optional for steal_customers (filled from My Product on the server).",
       },
       filters: {
         type: "object",
         description:
-          "Required targeting filters. Every list must have at least one entry - an agent cannot start with a partial setup.",
+          "Required for classic lead finders (each list needs at least one entry). Omit for steal_customers (filled from My Product).",
         required: ["titles", "industries", "locations", "keywords"],
         properties: {
           titles: { type: "array", items: { type: "string" }, minItems: 1 },
@@ -75,11 +87,52 @@ export const agentToolInputSchemas = {
       },
       signalSources: {
         type: "object",
+        description:
+          "Steal Customers: pass competitorUrls (company pages) and optional founderUrls (founder/employee profiles). At least one URL required. My Product drives buyer fit.",
         properties: {
-          competitorUrls: { type: "array", items: { type: "string" } },
-          founderUrls: { type: "array", items: { type: "string" } },
-          keywords: { type: "array", items: { type: "string" } },
+          competitorUrls: {
+            type: "array",
+            items: { type: "string" },
+            description:
+              "LinkedIn company URLs of competitors. Company pages plus employees at those companies are scanned for posts.",
+          },
+          founderUrls: {
+            type: "array",
+            items: { type: "string" },
+            description:
+              "Optional LinkedIn profile URLs of competitor founders or employees whose posts should also be scanned.",
+          },
+          keywords: {
+            type: "array",
+            items: { type: "string" },
+            description: "Ignored for steal_customers.",
+          },
         },
+      },
+      setupOutreach: {
+        type: "boolean",
+        description:
+          "When true, attaches the default AI outreach sequence. Implied by replyHandling. Always on for steal_customers (cannot be skipped).",
+      },
+      replyHandling: {
+        enum: ["handoff", "ai_until_interest", "ai_until_booked"],
+        description:
+          "When a lead replies: handoff = stop after first reply and email you; ai_until_interest = AI answers until qualified interest then email you; ai_until_booked = AI continues, shares booking link after interest, emails you when a meeting is confirmed. Requires setupOutreach (or implies it).",
+      },
+      bookingLink: {
+        type: "string",
+        description:
+          "Optional per-agent Calendly/Cal.com link for ai_until_booked. Falls back to the product profile schedulingLink.",
+      },
+      notifyOnReply: {
+        type: "boolean",
+        description:
+          "For handoff mode only: email when the first reply arrives (default true). Ignored for ai_until_interest / ai_until_booked, which email on interest or meeting booked instead.",
+      },
+      sendWindow: {
+        enum: ["always", "business", "extended"],
+        description:
+          "When this agent's outreach may send: always (24/7), business (Mon-Fri 09:00-18:00), or extended (daily 07:00-22:00). Defaults to business when outreach is set up here.",
       },
     },
   },
@@ -97,15 +150,20 @@ export const agentToolInputSchemas = {
         type: "string",
         description: "Switch the connected LinkedIn account the agent discovers from.",
       },
-      mode: { enum: ["signals", "filters", "prompt"] },
+      mode: {
+        enum: ["signals", "filters", "prompt", "steal_customers"],
+        description:
+          "signals/filters/prompt: classic ICP lead finder. steal_customers (Steal Customers): competitor post commenters only; no ICP; My Product defines buyer fit; AI outreach required.",
+      },
       prompt: {
         type: "string",
-        description: "Prospect definition describing who the agent should find.",
+        description:
+          "Prospect definition for classic lead finders. Ignored for steal_customers (refilled from My Product on save).",
       },
       filters: {
         type: "object",
         description:
-          "Replacement targeting filters. When provided, every list must have at least one entry.",
+          "Replacement targeting filters for classic lead finders (each list needs at least one entry). Ignored for steal_customers (My Product is used).",
         required: ["titles", "industries", "locations", "keywords"],
         properties: {
           titles: { type: "array", items: { type: "string" }, minItems: 1 },
@@ -116,11 +174,47 @@ export const agentToolInputSchemas = {
       },
       signalSources: {
         type: "object",
+        description:
+          "For Steal Customers (steal_customers): competitorUrls and/or founderUrls (company pages, founders, or employees who post). Required when mode is steal_customers.",
         properties: {
-          competitorUrls: { type: "array", items: { type: "string" } },
-          founderUrls: { type: "array", items: { type: "string" } },
-          keywords: { type: "array", items: { type: "string" } },
+          competitorUrls: {
+            type: "array",
+            items: { type: "string" },
+            description:
+              "LinkedIn company or profile URLs of competitors whose posts are scanned for commenters.",
+          },
+          founderUrls: {
+            type: "array",
+            items: { type: "string" },
+            description:
+              "Optional LinkedIn profile URLs of competitor founders or employees who post about the product.",
+          },
+          keywords: {
+            type: "array",
+            items: { type: "string" },
+            description: "Ignored for steal_customers; used only by classic discovery modes.",
+          },
         },
+      },
+      setupOutreach: {
+        type: "boolean",
+        description:
+          "When true and the agent has no sequence yet, attach the default AI outreach sequence. Also implied when replyHandling is set without an existing campaign.",
+      },
+      replyHandling: {
+        enum: ["handoff", "ai_until_interest", "ai_until_booked"],
+        description:
+          "When a lead replies: handoff = stop after first reply and email you; ai_until_interest = AI answers until qualified interest then email you; ai_until_booked = AI continues, shares booking link after interest, emails you when a meeting is confirmed. Applies to every sequence on this agent's lead group.",
+      },
+      bookingLink: {
+        type: "string",
+        description:
+          "Optional per-agent Calendly/Cal.com link for ai_until_booked. Falls back to the product profile schedulingLink.",
+      },
+      notifyOnReply: {
+        type: "boolean",
+        description:
+          "For handoff mode only: email when the first reply arrives (default true).",
       },
       sendWindow: {
         enum: ["always", "business", "extended"],
@@ -271,25 +365,26 @@ const agentMcpToolDefinitions = [
   },
   {
     name: "omentir_update_product_profile",
-    description: "Update the workspace product profile used to qualify and rank discovered leads.",
+    description:
+      "Update the workspace product profile used to qualify and rank discovered leads. Also sets the workspace demo booking link (schedulingLink: Calendly or Cal.com) used by continue-until-booked outreach.",
     inputSchema: agentToolInputSchemas.omentir_update_product_profile,
   },
   {
     name: "omentir_list_agents",
     description:
-      "List Omentir discovery agents in the token workspace, including each one's next discovery run, send window, and whether an outreach sequence is set up for it.",
+      "List Omentir agents in the token workspace (classic lead finders, outreach-only, and Steal Customers / steal_customers), including each one's mode, next discovery run, send window, replyHandling, booking link, and whether outreach is set up.",
     inputSchema: agentToolInputSchemas.omentir_list_agents,
   },
   {
     name: "omentir_create_agent",
     description:
-      "Create an ICP discovery agent and target lead group. Requires a prompt plus at least one job title, industry, location, and keyword - agents cannot start with a partial setup. The new agent discovers and scores leads only; its outreach sequence is set up in the Omentir app.",
+      "Create an agent. Classic (signals/filters/prompt): prompt + titles/industries/locations/keywords; optional setupOutreach/replyHandling. Steal Customers (mode=steal_customers): groupName + signalSources.competitorUrls and/or founderUrls only (no ICP); My Product required; finds competitor employees, scans company+employee posts, scores commenters as buyers, AI outreach automatic; optional replyHandling/bookingLink/sendWindow. Returns agent + leadGroup for omentir_list_leads. Full lifecycle: list/update/pause/resume/delete also work for steal_customers.",
     inputSchema: agentToolInputSchemas.omentir_create_agent,
   },
   {
     name: "omentir_update_agent",
     description:
-      "Update an existing discovery agent: rename it, change its prompt, mode, filters, or signal sources, switch its LinkedIn account, rename its lead group, or change the send window its outreach uses. Its daily discovery time is fixed at creation and cannot be changed. Only provided fields change.",
+      "Update any agent including Steal Customers (steal_customers): rename, mode, signalSources (competitor + founder/employee URLs), LinkedIn account, lead group, send window, replyHandling, bookingLink, notifyOnReply, setupOutreach, or status active/paused. For steal_customers, prompt/filters are refilled from My Product on save; competitor/founder URLs remain required. Daily discovery time is fixed at creation. Only provided fields change.",
     inputSchema: agentToolInputSchemas.omentir_update_agent,
   },
   {
@@ -300,12 +395,14 @@ const agentMcpToolDefinitions = [
   },
   {
     name: "omentir_list_leads",
-    description: "Search, filter, sort, and list discovered leads, optionally within one lead group.",
+    description:
+      "Search, filter, sort, and list discovered leads, optionally within one lead group. Steal Customers leads include signalText, leadReason, and engagementContext (post text, post URL, comment text, comment URL) for outreach context.",
     inputSchema: agentToolInputSchemas.omentir_list_leads,
   },
   {
     name: "omentir_get_lead",
-    description: "Get the complete workspace-owned lead record for an exact lead id.",
+    description:
+      "Get the complete workspace-owned lead record for an exact lead id, including engagementContext for Steal Customers leads (post text, post URL, comment text, comment URL) plus profile and fit score.",
     inputSchema: agentToolInputSchemas.omentir_get_lead,
   },
   {

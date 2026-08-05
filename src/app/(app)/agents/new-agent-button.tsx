@@ -69,7 +69,7 @@ export default function NewAgentButton({
                 What should this agent do?
               </h2>
               <p className="m3-dialog-body">
-                You can always add outreach to a lead group later with a campaign.
+                Pick how this agent finds people and whether it runs outreach.
               </p>
 
               <div className="mt-5 grid gap-3">
@@ -134,6 +134,28 @@ export default function NewAgentButton({
                     </span>
                     <span className="mt-0.5 block text-xs leading-5 text-[var(--md-sys-color-on-surface-variant)]">
                       Upload LinkedIn profiles and set up messaging without lead discovery.
+                    </span>
+                  </span>
+                </Link>
+
+                <Link
+                  href="/agents/new?mode=steal"
+                  onClick={() => setOpen(false)}
+                  className="group flex items-start gap-3 rounded-lg border border-[var(--md-sys-color-outline-variant)] px-4 py-3.5 transition hover:border-[#ba3871] hover:bg-[rgba(186,56,113,0.05)]"
+                >
+                  <span
+                    className="material-symbols-outlined mt-0.5 text-xl font-light leading-none text-[#ba3871]"
+                    aria-hidden="true"
+                  >
+                    group
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-sm font-semibold text-[var(--md-sys-color-on-surface)]">
+                      Steal Customers
+                    </span>
+                    <span className="mt-0.5 block text-xs leading-5 text-[var(--md-sys-color-on-surface-variant)]">
+                      Find people who comment under competitor posts and AI-reach out with that
+                      post and comment context.
                     </span>
                   </span>
                 </Link>
