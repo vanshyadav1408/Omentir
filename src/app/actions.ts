@@ -39,7 +39,7 @@ import {
 } from "@/lib/server/data";
 import { parseLinkedInLeadCsv } from "@/lib/linkedin-csv";
 import { normalizeLinkedInProfileUrl } from "@/lib/server/firebase";
-import { normalizeSchedulingLink } from "@/lib/scheduling-link";
+import { normalizeSchedulingLink, resolveBookingLink } from "@/lib/scheduling-link";
 import { sendContactFormEmail, sendNewSignupNotification } from "@/lib/server/email";
 import { executeScheduledActionNow } from "@/lib/server/automation";
 import { analyzeWebsiteOrSearch, draftAgentSetupWithGemini } from "@/lib/server/gemini";
@@ -407,7 +407,7 @@ export async function saveProductProfileAction(formData: FormData) {
   );
   const schedulingLink = normalizeSchedulingLink(rawSchedulingLink);
   if (schedulingLink === null) {
-    throw new Error("Use a valid https://cal.com or https://calendly.com scheduling link.");
+    throw new Error("Use a valid https://cal.com or https://calendly.com demo booking link.");
   }
 
   await upsertProductProfile(workspace.id, {
@@ -454,8 +454,26 @@ export async function saveProductProfileAction(formData: FormData) {
     ),
   }, currentProfile);
 
+  // Fill empty booking links on until-booked campaigns so existing agents can
+  // share the My Product demo booking link without re-opening each agent.
+  if (schedulingLink) {
+    const campaigns = await listCampaigns(workspace.id);
+    await Promise.all(
+      campaigns
+        .filter(
+          (campaign) =>
+            campaign.replyHandling === "ai_until_booked" &&
+            !resolveBookingLink(campaign.bookingLink),
+        )
+        .map((campaign) =>
+          updateCampaign(workspace.id, campaign.id, { bookingLink: schedulingLink }),
+        ),
+    );
+  }
+
   revalidatePath("/my-product");
   revalidatePath("/dashboard");
+  revalidatePath("/agents");
 }
 
 // Used by the dashboard "Set deal size" modal to set the average ticket size in
@@ -687,7 +705,7 @@ export async function updateAgentAction(formData: FormData) {
     formData.get("manualDefaultOutreach") === "on"
       ? "handoff"
       : parseReplyHandling(formData.get("replyHandling"));
-  const bookingLink = bookingLinkFromForm(formData, replyHandling);
+  const bookingLink = await bookingLinkFromForm(formData, replyHandling, workspace.id);
   // Editing an agent does not go through createCampaignAction, so the send
   // window picker on the same form has to be applied to the agent's existing
   // campaigns here or it silently does nothing after launch.
@@ -848,13 +866,20 @@ function parseReplyHandling(value: FormDataEntryValue | null): CampaignReplyHand
   return "ai_until_interest";
 }
 
-function bookingLinkFromForm(formData: FormData, replyHandling: CampaignReplyHandling) {
+async function bookingLinkFromForm(
+  formData: FormData,
+  replyHandling: CampaignReplyHandling,
+  workspaceId: string,
+) {
   if (replyHandling !== "ai_until_booked") return undefined;
-  const link = normalizeSchedulingLink(String(formData.get("bookingLink") || ""));
-  if (!link) {
-    throw new Error("Add a valid https://cal.com or https://calendly.com link for booking mode.");
-  }
-  return link;
+  const fromForm = normalizeSchedulingLink(String(formData.get("bookingLink") || ""));
+  if (fromForm) return fromForm;
+  const profile = await getProductProfile(workspaceId);
+  const fromProduct = resolveBookingLink(profile?.schedulingLink);
+  if (fromProduct) return fromProduct;
+  throw new Error(
+    "Add a demo booking link (Calendly or Cal.com) in My Product, or enter one for this agent.",
+  );
 }
 
 export async function createCampaignAction(formData: FormData) {
@@ -877,7 +902,7 @@ export async function createCampaignAction(formData: FormData) {
     formData.get("manualDefaultOutreach") === "on"
       ? "handoff"
       : parseReplyHandling(formData.get("replyHandling"));
-  const bookingLink = bookingLinkFromForm(formData, replyHandling);
+  const bookingLink = await bookingLinkFromForm(formData, replyHandling, workspace.id);
 
   if (status === "active") {
     await assertCampaignCanRun(workspace.id, groupId, steps, {

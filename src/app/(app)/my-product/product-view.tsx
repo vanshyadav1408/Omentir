@@ -406,11 +406,12 @@ export default function ProductView({ profile, saveAction, analyzeAction }: Prod
                 type="url"
                 value={schedulingLink}
                 onChange={setSchedulingLink}
-                label="Calendly or Cal.com link"
+                label="Demo booking link"
                 placeholder="https://cal.com/your-name/intro"
               />
               <p className="mt-1.5 text-[12px] font-medium text-zinc-600">
-                AI may share this after a lead shows interest in campaigns that run until booking.
+                Calendly or Cal.com. Agents that continue until a demo is booked use this
+                link by default. You can override it per agent during setup.
               </p>
             </div>
 

@@ -954,9 +954,12 @@ export default function AgentSetup({
         step === "campaign" &&
         outreachMode === "automatic" &&
         replyHandling === "ai_until_booked" &&
-        !normalizeSchedulingLink(bookingLink)
+        !normalizeSchedulingLink(bookingLink) &&
+        !normalizeSchedulingLink(profile?.schedulingLink || "")
       ) {
-        setSetupStepError("Add a valid Calendly or Cal.com link for meeting-booking mode.");
+        setSetupStepError(
+          "Add a demo booking link in My Product, or enter a Calendly/Cal.com link here.",
+        );
         return;
       }
       setStep(nextStep(step));
@@ -984,9 +987,12 @@ export default function AgentSetup({
     if (
       outreachMode === "automatic" &&
       replyHandling === "ai_until_booked" &&
-      !normalizeSchedulingLink(bookingLink)
+      !normalizeSchedulingLink(bookingLink) &&
+      !normalizeSchedulingLink(profile?.schedulingLink || "")
     ) {
-      setSubmitError("Add a valid Calendly or Cal.com link for meeting-booking mode.");
+      setSubmitError(
+        "Add a demo booking link in My Product, or enter a Calendly/Cal.com link here.",
+      );
       setStep("campaign");
       return;
     }
@@ -1638,12 +1644,16 @@ export default function AgentSetup({
           <div className="rounded-md border border-zinc-200 bg-white p-5">
             <TextField
               type="url"
-              label="Calendly or Cal.com link"
+              label="Demo booking link"
               value={bookingLink}
               onChange={(event) => setBookingLink(event.target.value)}
               placeholder="https://cal.com/your-name/intro"
-              supportingText="Omentir shares this once qualified interest is detected, with a short invitation to book."
-              required
+              supportingText={
+                profile?.schedulingLink
+                  ? "Defaults from My Product. Override only if this agent should use a different calendar."
+                  : "Add this here, or save a demo booking link in My Product for all until-booked agents."
+              }
+              required={!normalizeSchedulingLink(profile?.schedulingLink || "")}
             />
           </div>
         ) : null}

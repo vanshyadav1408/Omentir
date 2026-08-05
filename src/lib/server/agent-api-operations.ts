@@ -112,7 +112,7 @@ export const updateProductProfilePayloadSchema = z.object({
   pricingDetails: z.string().trim().max(4000).optional(),
   schedulingLink: z.string().trim().max(500).refine(
     (value) => normalizeSchedulingLink(value) !== null,
-    "Use a valid https://cal.com or https://calendly.com scheduling link.",
+    "Use a valid https://cal.com or https://calendly.com demo booking link.",
   ).optional(),
   keyFeatures: stringList,
   socialProof: stringList,

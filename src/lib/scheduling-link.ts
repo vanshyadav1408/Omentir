@@ -16,3 +16,14 @@ export function normalizeSchedulingLink(value: string) {
     return null;
   }
 }
+
+// Prefer an explicit campaign override, then the My Product demo booking link.
+export function resolveBookingLink(
+  ...candidates: Array<string | undefined | null>
+) {
+  for (const candidate of candidates) {
+    const normalized = normalizeSchedulingLink(candidate || "");
+    if (normalized) return normalized;
+  }
+  return "";
+}

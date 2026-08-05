@@ -46,6 +46,7 @@ import {
   upsertLead,
 } from "./data";
 import { findNextScheduledStepIndex } from "./campaign-sequence";
+import { resolveBookingLink } from "@/lib/scheduling-link";
 import {
   draftCampaignMessage,
   draftCampaignReplyMessage,
@@ -740,7 +741,8 @@ async function runEnrollment(
       campaignGoal: campaign.campaignGoal,
       messageTone: campaign.messageTone,
       replyHandling: campaign.replyHandling,
-      bookingLink: campaign.bookingLink,
+      // Campaign may override; otherwise use the My Product demo booking link.
+      bookingLink: resolveBookingLink(campaign.bookingLink, profile?.schedulingLink),
     });
 
     const claimed = await claimEnrollmentAction({

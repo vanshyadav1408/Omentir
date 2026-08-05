@@ -98,8 +98,8 @@ export type ProductProfile = {
   // supports monthly, annual, usage-based, and custom pricing without forcing
   // every product into one numeric field.
   pricingDetails?: string;
-  // Workspace default for campaigns that let AI carry a conversation through
-  // booking. Each campaign snapshots the link it launches with.
+  // Workspace demo booking link (Calendly / Cal.com). Agents running until
+  // booking fetch this when the campaign has no override.
   schedulingLink?: string;
   keyFeatures: string[];
   socialProof: string[];
@@ -371,8 +371,8 @@ export type Campaign = {
   // ai_until_interest. Handoff stops after the first reply; ai_until_interest
   // stops at qualified interest; ai_until_booked continues until confirmation.
   replyHandling?: CampaignReplyHandling;
-  // Only used by ai_until_booked. Kept on the campaign so a later My Product
-  // edit does not silently change the link used by an active conversation.
+  // Optional per-campaign override for ai_until_booked. When empty, reply
+  // automation uses ProductProfile.schedulingLink (My Product demo booking link).
   bookingLink?: string;
   // Only consulted on "handoff" campaigns, where the user owns the conversation
   // from the first reply. Unset means "email me" so campaigns created before
