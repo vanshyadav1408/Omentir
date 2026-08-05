@@ -858,9 +858,18 @@ export async function runPeopleEngineForAgent(input: {
     firstSignal: ObservedSignal,
     persistedSignals: LeadSignal[],
   ) => {
+    const mergedLead = mergeLead(existingLead, candidate.lead);
+    if (
+      targetLocations.length &&
+      (!mergedLead.location?.trim() ||
+        !matchesTargetLocation(mergedLead.location, targetLocations))
+    ) {
+      outOfRegionCandidates += 1;
+      return false;
+    }
     const score = await scoreLeadForProduct(
       {
-        ...mergeLead(existingLead, candidate.lead),
+        ...mergedLead,
         signalType: firstSignal.signalType,
         signalSource: firstSignal.signalSource,
         signalText: firstSignal.signalText,
@@ -965,7 +974,11 @@ export async function runPeopleEngineForAgent(input: {
     // Search results often omit location; enrichment fills the real profile
     // location. Drop now if that location is outside the agent's targets so
     // wrong-region leads never get scored or saved.
-    if (!matchesTargetLocation(enrichedLead.location, targetLocations)) {
+    if (
+      targetLocations.length &&
+      (!enrichedLead.location?.trim() ||
+        !matchesTargetLocation(enrichedLead.location, targetLocations))
+    ) {
       outOfRegionCandidates += 1;
       continue;
     }
