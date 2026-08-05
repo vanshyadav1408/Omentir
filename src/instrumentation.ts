@@ -21,6 +21,9 @@ const FIRST_TICK_DELAY_MS = 30 * 1000;
 export async function register() {
   if (process.env.NEXT_RUNTIME !== "nodejs") return;
 
+  const { removeLegacyProductionWorker } = await import("./instrumentation-node");
+  await removeLegacyProductionWorker();
+
   const [{ validateRuntimeConfig }, { isAutomationDisabled }] = await Promise.all([
     import("@/lib/server/runtime-config"),
     import("@/lib/runtime-mode"),
