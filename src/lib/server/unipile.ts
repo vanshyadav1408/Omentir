@@ -506,6 +506,32 @@ function profileLocation(profile: UnipileProfile) {
   );
 }
 
+function profileCompany(profile: UnipileProfile) {
+  const record = asRecord(profile);
+  const direct =
+    cleanString(profile.company) ||
+    pickString(record, ["company_name", "companyName", "current_company", "currentCompany"]);
+  if (direct) return direct;
+
+  const experience = [profile.work_experience, profile.experience].find(Array.isArray) || [];
+  const entries = experience.map(asRecord).filter((entry): entry is RecordLike => Boolean(entry));
+  const current = entries.filter((entry) =>
+    entry.current === true ||
+    entry.is_current === true ||
+    entry.isCurrent === true ||
+    !pickString(entry, ["end", "end_date", "endDate", "ends_at", "endsAt"]),
+  );
+
+  for (const entry of [...current, ...entries]) {
+    const company =
+      pickString(entry, ["company", "company_name", "companyName", "organization", "employer"]) ||
+      pickNestedString(entry, ["company", "organization", "employer"], ["name", "title"]);
+    if (company) return company;
+  }
+
+  return "";
+}
+
 function profileSection(
   profile: UnipileProfile,
   sectionKeys: string[],
@@ -613,7 +639,7 @@ function normalizeUnipileProfile(profile: UnipileProfile) {
     avatarUrl: profileAvatarUrl(profile),
     name,
     title: profile.headline || profile.occupation || "",
-    company: profile.company || "",
+    company: profileCompany(profile),
     location: profileLocation(profile) || "",
     summary: profile.summary || "",
     profileContext: normalizeLinkedInProfileContext(profile),

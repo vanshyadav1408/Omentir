@@ -382,16 +382,13 @@ async function runAgents(mode: AutomationSafetyMode) {
         continue;
       }
 
-      const criteria = await normalizeAgentSearch(agent, profile);
+      const criteria = await normalizeAgentSearch(agent);
       const targetLocations = agentTargetLocations(agent, profile);
 
-      // Daily searches largely return the same people. Known leads must not be
-      // re-scored (burns an AI call each and churns their stored fitScore) and
-      // must not count as newly discovered. Mirrors the signal engine's
-      // existing-lead handling. Loaded before the search so leads already in
-      // this agent's group can be paged past entirely - otherwise a mature
-      // agent re-reads the same first page every day and discovers nobody new.
-      // Leads in OTHER groups still surface so they get adopted into this one.
+      // Daily searches largely return the same people. Leads already in this
+      // group are paged past, while a lead from another group must be scored
+      // against this agent before adoption. A global score from another agent
+      // is not evidence that the person matches this agent's request.
       const existingLeads = await listLeads(agent.workspaceId, undefined, 5000);
       const existingLeadsById = new Map(existingLeads.map((lead) => [lead.id, lead]));
       const groupLeadKeys = new Set(
@@ -422,14 +419,18 @@ async function runAgents(mode: AutomationSafetyMode) {
         }
         const existing = existingLeadsById.get(leadDocId(agent.workspaceId, rawLead));
         if (existing) {
-          // Known person surfaced by this agent too: only make sure they're in
-          // this agent's group; never overwrite their scored fields or status.
           if (!existing.groupIds?.includes(agent.targetGroupId)) {
-            await upsertLead(agent.workspaceId, agent.targetGroupId, {
-              linkedInUrl: existing.linkedInUrl || rawLead.linkedInUrl,
-              providerProfileId: existing.providerProfileId || rawLead.providerProfileId,
-              sourceAgentId: agent.id,
-            });
+            const score = await scoreLeadForProduct(
+              { ...rawLead, ...existing },
+              profile,
+              agent,
+            );
+            if (score.fitScore >= STANDARD_AGENT_SCORE_THRESHOLD) {
+              await upsertLead(agent.workspaceId, agent.targetGroupId, {
+                linkedInUrl: existing.linkedInUrl || rawLead.linkedInUrl,
+                providerProfileId: existing.providerProfileId || rawLead.providerProfileId,
+              });
+            }
           }
           continue;
         }
@@ -446,12 +447,18 @@ async function runAgents(mode: AutomationSafetyMode) {
         );
         if (enrichedExisting) {
           if (!enrichedExisting.groupIds?.includes(agent.targetGroupId)) {
-            await upsertLead(agent.workspaceId, agent.targetGroupId, {
-              linkedInUrl: enrichedExisting.linkedInUrl || enrichedLead.linkedInUrl,
-              providerProfileId:
-                enrichedExisting.providerProfileId || enrichedLead.providerProfileId,
-              sourceAgentId: agent.id,
-            });
+            const score = await scoreLeadForProduct(
+              { ...enrichedLead, ...enrichedExisting },
+              profile,
+              agent,
+            );
+            if (score.fitScore >= STANDARD_AGENT_SCORE_THRESHOLD) {
+              await upsertLead(agent.workspaceId, agent.targetGroupId, {
+                linkedInUrl: enrichedExisting.linkedInUrl || enrichedLead.linkedInUrl,
+                providerProfileId:
+                  enrichedExisting.providerProfileId || enrichedLead.providerProfileId,
+              });
+            }
           }
           continue;
         }

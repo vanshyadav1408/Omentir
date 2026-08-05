@@ -119,7 +119,6 @@ function hasRunTime(deadline: number) {
 
 function getSourceKeywords(
   agent: Agent,
-  profile: ProductProfile | null,
   criteria: SearchCriteria,
 ) {
   // Prefer short, high-recall queries. Do NOT only search "Title + Industry"
@@ -134,8 +133,6 @@ function getSourceKeywords(
     // The work itself, in the words the people who do it use. Titles find the
     // ones who named their role conventionally; this finds the rest.
     ...criteria.roleVocabulary.slice(0, 8),
-    ...(profile?.painPoints || []).slice(0, 6),
-    ...(profile?.keywords || []).slice(0, 8),
     // A few title+industry pairs as optional high-precision queries only.
     ...criteria.titles.slice(0, 4).flatMap((title) =>
       criteria.industries.slice(0, 2).map((industry) => `${title} ${industry}`),
@@ -576,6 +573,7 @@ export async function runPeopleEngineForAgent(input: {
   };
   const existingLeads = await listLeads(input.agent.workspaceId, undefined, 5000);
   const existingLeadIds = new Set(existingLeads.map((lead) => lead.id));
+  const existingLeadsById = new Map(existingLeads.map((lead) => [lead.id, lead]));
   // People searches page past leads already in this agent's group: LinkedIn
   // returns the same first page for the same query day after day, so without
   // this a mature agent re-reads yesterday's results and discovers nobody new.
@@ -586,28 +584,9 @@ export async function runPeopleEngineForAgent(input: {
       .filter((lead) => lead.groupIds?.includes(input.agent.targetGroupId))
       .flatMap((lead) => profileSearchKeys(lead)),
   );
-  const criteria = await planPeopleSearch(input.agent, input.profile).catch(() => ({
-    titles: input.agent.filters.titles,
-    industries: input.agent.filters.industries,
-    locations: input.agent.filters.locations,
-    keywords: input.agent.filters.keywords.length
-      ? input.agent.filters.keywords
-      : input.agent.prompt
-        ? [input.agent.prompt]
-        : input.profile?.keywords || [],
-    postKeywords: [
-      input.agent.prompt,
-      ...(input.profile?.painPoints || []),
-      ...(input.profile?.keywords || []),
-    ].filter(Boolean).slice(0, 8),
-    reasonsToMatch: input.profile?.painPoints?.length
-      ? input.profile.painPoints
-      : ["Matches the product ICP and prospect definition."],
-    useCases: input.profile?.useCases || [],
-    roleVocabulary: input.profile?.roleVocabulary || [],
-  }));
+  const criteria = await planPeopleSearch(input.agent);
 
-  const sourceKeywords = getSourceKeywords(input.agent, input.profile, criteria);
+  const sourceKeywords = getSourceKeywords(input.agent, criteria);
   const searchTitles = getSearchTitles(input.agent, input.profile, criteria);
   const matchTitles = unique([
     ...searchTitles,
@@ -616,10 +595,7 @@ export async function runPeopleEngineForAgent(input: {
   // The domain's own title words, so a lead whose title shares no wording with
   // the target list ("Dispatcher" against "Logistics Coordinator") is still
   // recognized as someone who performs the work.
-  const roleVocabulary = unique([
-    ...criteria.roleVocabulary,
-    ...(input.profile?.roleVocabulary || []),
-  ]);
+  const roleVocabulary = criteria.roleVocabulary;
   // Title searches first so "jobs that need the product" are always attempted
   // even when signal keywords are sparse or competitor URLs are empty.
   const titleLimit = input.initialLeadTarget ? 6 : 12;
@@ -695,10 +671,52 @@ export async function runPeopleEngineForAgent(input: {
   let leadsAdded = 0;
   let signalsObserved = 0;
   let existingQualifiedLeads = 0;
+  let existingRejected = 0;
   let lowScoreCandidates = 0;
   let outOfRegionCandidates = 0;
   let enrichments = 0;
   let timeBudgetExpired = false;
+
+  const qualifyExistingLead = async (
+    existingLead: Lead,
+    candidate: Candidate,
+    firstSignal: ObservedSignal,
+    persistedSignals: LeadSignal[],
+  ) => {
+    const score = await scoreLeadForProduct(
+      {
+        ...mergeLead(existingLead, candidate.lead),
+        signalType: firstSignal.signalType,
+        signalSource: firstSignal.signalSource,
+        signalText: firstSignal.signalText,
+        signalUrl: firstSignal.signalUrl,
+        leadReason: firstSignal.leadReason,
+      },
+      input.profile,
+      input.agent,
+    );
+
+    if (score.fitScore < QUALIFIED_SCORE_THRESHOLD) {
+      existingRejected += 1;
+      return false;
+    }
+
+    const lead = await upsertLead(input.agent.workspaceId, input.agent.targetGroupId, {
+      linkedInUrl: existingLead.linkedInUrl || candidate.lead.linkedInUrl,
+      providerProfileId: existingLead.providerProfileId || candidate.lead.providerProfileId,
+    });
+
+    await Promise.all(
+      persistedSignals.map((signal) =>
+        markLeadSignalPromoted(signal.id, {
+          leadId: lead.id,
+          fitScore: score.fitScore,
+        }),
+      ),
+    );
+    existingQualifiedLeads += 1;
+    return true;
+  };
 
   const rankedCandidates = Array.from(candidates.values())
     .filter(
@@ -728,43 +746,25 @@ export async function runPeopleEngineForAgent(input: {
     const firstSignal = primarySignal(candidate);
     if (!firstSignal) continue;
 
+    // Apply location before both new-lead and existing-lead paths. Otherwise a
+    // known lead could be adopted into a new group without passing the same
+    // deterministic location requirement as a newly discovered person.
+    if (!matchesTargetLocation(candidate.lead.location, targetLocations)) {
+      outOfRegionCandidates += 1;
+      continue;
+    }
+
     const existingLeadId = expectedLeadId(input.agent.workspaceId, candidate.lead);
     if (existingLeadIds.has(existingLeadId)) {
-      const lead = await upsertLead(input.agent.workspaceId, input.agent.targetGroupId, {
-        ...candidate.lead,
-        sourceAgentId: input.agent.id,
-        signalType: firstSignal.signalType,
-        signalSource: firstSignal.signalSource,
-        signalText: firstSignal.signalText,
-        signalUrl: firstSignal.signalUrl,
-        signalObservedAt: firstSignal.signalObservedAt,
-        leadReason: firstSignal.leadReason,
-      });
-
-      await Promise.all(
-        persistedSignals.map((signal) =>
-          markLeadSignalPromoted(signal.id, {
-            leadId: lead.id,
-            fitScore: lead.fitScore,
-          }),
-        ),
-      );
-      existingQualifiedLeads += 1;
+      const existingLead = existingLeadsById.get(existingLeadId);
+      if (!existingLead) continue;
+      await qualifyExistingLead(existingLead, candidate, firstSignal, persistedSignals);
       if (
         input.initialLeadTarget &&
         leadsAdded + existingQualifiedLeads >= input.initialLeadTarget
       ) {
         break;
       }
-      continue;
-    }
-
-    // Enforce the target country. Skip before enrichment when the candidate
-    // already carries an out-of-region location so we don't spend a live
-    // profile view on a lead we'll reject anyway. Blank locations fall through
-    // and get the definitive post-enrichment check below.
-    if (!matchesTargetLocation(candidate.lead.location, targetLocations)) {
-      outOfRegionCandidates += 1;
       continue;
     }
 
@@ -790,26 +790,14 @@ export async function runPeopleEngineForAgent(input: {
     const knownLead = existingLeadIds.has(leadId);
 
     if (knownLead) {
-      const lead = await upsertLead(input.agent.workspaceId, input.agent.targetGroupId, {
-        ...enrichedLead,
-        sourceAgentId: input.agent.id,
-        signalType: firstSignal.signalType,
-        signalSource: firstSignal.signalSource,
-        signalText: firstSignal.signalText,
-        signalUrl: firstSignal.signalUrl,
-        signalObservedAt: firstSignal.signalObservedAt,
-        leadReason: firstSignal.leadReason,
-      });
-
-      await Promise.all(
-        persistedSignals.map((signal) =>
-          markLeadSignalPromoted(signal.id, {
-            leadId: lead.id,
-            fitScore: lead.fitScore,
-          }),
-        ),
+      const existingLead = existingLeadsById.get(leadId);
+      if (!existingLead) continue;
+      await qualifyExistingLead(
+        existingLead,
+        { ...candidate, lead: enrichedLead },
+        firstSignal,
+        persistedSignals,
       );
-      existingQualifiedLeads += 1;
       if (
         input.initialLeadTarget &&
         leadsAdded + existingQualifiedLeads >= input.initialLeadTarget
@@ -825,6 +813,10 @@ export async function runPeopleEngineForAgent(input: {
       {
         ...enrichedLead,
         summary: enrichedLead.summary || firstSignal.signalText,
+        signalType: firstSignal.signalType,
+        signalSource: firstSignal.signalSource,
+        signalText: firstSignal.signalText,
+        signalUrl: firstSignal.signalUrl,
         leadReason: firstSignal.leadReason,
       },
       input.profile,
@@ -854,6 +846,7 @@ export async function runPeopleEngineForAgent(input: {
     });
 
     existingLeadIds.add(lead.id);
+    existingLeadsById.set(lead.id, lead);
     await Promise.all(
       persistedSignals.map((signal) =>
         markLeadSignalPromoted(signal.id, {
@@ -879,7 +872,8 @@ export async function runPeopleEngineForAgent(input: {
     status: "completed",
     message:
       `Agent ${input.agent.id}: ${candidates.size} candidates -> ${leadsAdded} new leads ` +
-      `(${existingQualifiedLeads} already known, ${lowScoreCandidates} low score, ` +
+      `(${existingQualifiedLeads} existing leads requalified, ${existingRejected} existing leads rejected, ` +
+      `${lowScoreCandidates} new leads rejected, ` +
       `${outOfRegionCandidates} out of region, ${enrichments} profile views spent` +
       `${timeBudgetExpired ? ", stopped at time budget" : ""}).`,
   }).catch((error) => {
@@ -891,6 +885,7 @@ export async function runPeopleEngineForAgent(input: {
     signalsObserved,
     leadsAdded,
     existingQualifiedLeads,
+    existingRejected,
     lowScoreCandidates,
     outOfRegionCandidates,
     timeBudgetExpired,
