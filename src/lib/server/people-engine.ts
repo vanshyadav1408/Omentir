@@ -505,9 +505,9 @@ async function persistCandidateSignals(agent: Agent, candidate: Candidate) {
 
 function primarySignal(candidate: Candidate) {
   const strength: Record<LeadSignalType, number> = {
-    post_comment: 3,
-    keyword_search: 2,
-    profile_search: 2,
+    keyword_search: 4,
+    profile_search: 3,
+    post_comment: 2,
     post_reaction: 1,
   };
   return candidate.signals.reduce<ObservedSignal | undefined>(
@@ -524,9 +524,10 @@ function candidatePriority(
   roleVocabulary: string[],
 ) {
   const signalWeight = candidate.signals.reduce((total, signal) => {
-    if (signal.signalType === "post_comment") return total + 3;
-    if (signal.signalType === "post_reaction") return total + 1;
-    return total + 2;
+    if (signal.signalType === "keyword_search") return total + 10;
+    if (signal.signalType === "profile_search") return total + 3;
+    if (signal.signalType === "post_comment") return total + 2;
+    return total;
   }, 0);
   const titleWeight = matchesTargetTitle(candidate.lead.title || "", targetTitles, roleVocabulary)
     ? 5
@@ -538,7 +539,10 @@ function candidatePriority(
     candidate.lead.location && matchesTargetLocation(candidate.lead.location, targetLocations)
       ? 4
       : 0;
-  return signalWeight + titleWeight + locationWeight + Math.max(0, candidate.signals.length - 1) * 2;
+  const corroboratingSearches = candidate.signals.filter(
+    (signal) => signal.signalType === "keyword_search" || signal.signalType === "profile_search",
+  ).length;
+  return signalWeight + titleWeight + locationWeight + Math.max(0, corroboratingSearches - 1) * 2;
 }
 
 function sourceKey(kind: PeopleEngineSource["kind"], value: string) {
