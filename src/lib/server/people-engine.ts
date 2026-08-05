@@ -957,15 +957,14 @@ export async function runPeopleEngineForAgent(input: {
     );
     // Signals above are already persisted; bound the costly part (live profile
     // views) so a high-candidate run can't rack up account-risking view counts.
-    // Grounded exact matches carry independent public evidence and remain
-    // scoreable when that live-view budget is already spent.
-    let enrichedLead = candidate.lead;
-    if (enrichments < enrichmentLimit) {
-      enrichments += 1;
-      enrichedLead = await enrichLinkedInLead(input.account, candidate.lead);
-    } else if (!hasGroundedEvidence) {
-      continue;
-    }
+    if (enrichments >= enrichmentLimit) continue;
+    enrichments += 1;
+    let enrichedLead = await enrichLinkedInLead(input.account, candidate.lead);
+
+    // Grounded web search can verify role and employer context, but a model can
+    // still return a plausible-looking LinkedIn slug. Require Unipile to resolve
+    // that profile to a provider identity before the lead becomes contactable.
+    if (hasGroundedEvidence && !enrichedLead.providerProfileId) continue;
 
     // Enrichment can resolve a profile to the anonymized "LinkedIn Member"
     // placeholder; drop it here so an uncontactable lead is never saved.

@@ -1334,8 +1334,9 @@ Keywords and required context: ${JSON.stringify(agent.filters.keywords.slice(0, 
           evidenceUrl: String(lead?.evidenceUrl || "").trim(),
         }))
         .filter((lead) => {
-          if (!lead.name || !lead.title || !lead.evidence) return false;
+          if (!lead.name || !lead.title || !lead.evidence || !lead.evidenceUrl) return false;
           if (!/^https:\/\/(?:[a-z]+\.)?linkedin\.com\/in\//i.test(lead.linkedInUrl)) return false;
+          if (!/^https:\/\//i.test(lead.evidenceUrl)) return false;
           const key = lead.linkedInUrl.toLowerCase().replace(/[?#].*$/, "").replace(/\/$/, "");
           if (seen.has(key)) return false;
           seen.add(key);
