@@ -399,13 +399,28 @@ async function collectFromKeyword(input: {
       const postId = getLinkedInPostId(post);
       if (!postId) continue;
 
+      const author = normalizeLinkedInActor(post.author || post.user);
+      const postText = getLinkedInPostText(post);
+      const postUrl = getLinkedInPostUrl(post);
+      if (author && !author.linkedInUrl?.includes("/company/")) {
+        addObservedSignal(input.candidates, {
+          lead: author,
+          signalType: "keyword_search",
+          signalSource: `${sourceLabel} authored post`,
+          signalText: postText,
+          signalUrl: postUrl,
+          signalObservedAt: getLinkedInPostCreatedAt(post),
+          leadReason: `Authored a post matching ${sourceLabel}`,
+        });
+      }
+
       await collectPostEngagers({
         agent: input.agent,
         account: input.account,
         candidates: input.candidates,
         postId,
-        postText: getLinkedInPostText(post),
-        postUrl: getLinkedInPostUrl(post),
+        postText,
+        postUrl,
         sourceLabel,
         observedAt: getLinkedInPostCreatedAt(post),
       });

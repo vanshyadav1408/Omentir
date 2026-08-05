@@ -1342,7 +1342,7 @@ The agent prompt and filters are binding. They are the source of truth for who t
 Set agentCriteriaMatched to true only when the available profile and search evidence supports every defining requirement in the agent prompt:
 - The current role must match the requested job function.
 - The current employer or work history must support at least one requested industry when industry is part of the request.
-- A named company, product, platform, certification, or technology must have concrete evidence in the profile, experience, skills, summary, or a profile-keyword match. A reaction or comment on a related post is interest evidence only and does not prove that the person or employer uses that technology.
+- A named company, product, platform, certification, or technology must have concrete evidence in the profile, experience, skills, summary, a profile-keyword match, or a first-person authored post that explicitly states the person or employer uses, implements, supports, or evaluates it. A reaction or generic comment on a related post is interest evidence only and does not prove usage.
 - Location must match when requested. The application also enforces this deterministically.
 - Missing evidence is not a match. Do not infer technology use from a generic healthcare, IT, sales, or operations title.
 
