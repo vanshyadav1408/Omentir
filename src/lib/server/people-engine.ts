@@ -124,6 +124,10 @@ function getSourceKeywords(
   agent: Agent,
   criteria: SearchCriteria,
 ) {
+  const roleContextQueries = criteria.keywords.slice(0, 4).flatMap((keyword) =>
+    criteria.titles.slice(0, 4).map((title) => `${keyword} ${title}`),
+  );
+
   // Prefer short, high-recall queries. Do NOT only search "Title + Industry"
   // AND-pairs - LinkedIn classic search is too strict and returns almost nobody.
   // Title searches are queued separately as kind "title"; keywords here are
@@ -131,6 +135,10 @@ function getSourceKeywords(
   return unique([
     ...(agent.signalSources?.keywords || []),
     ...agent.filters.keywords,
+    // Named technology or required context plus a target role produces fewer
+    // anonymous and adjacent profiles than either term alone, while the short
+    // standalone queries below preserve recall.
+    ...roleContextQueries,
     ...criteria.keywords,
     ...criteria.postKeywords,
     // The work itself, in the words the people who do it use. Titles find the
