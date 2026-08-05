@@ -1335,11 +1335,11 @@ export async function searchLinkedInProfilesAtCompanies(input: {
 
   const profiles = new Map<string, ReturnType<typeof normalizeUnipileProfile>>();
   const excluded = input.excludeKeys;
-  const takeFresh =
-    excluded?.size
-      ? (item: UnipileProfile) =>
-          !profileSearchKeys(normalizeUnipileProfile(item)).some((key) => excluded.has(key))
-      : undefined;
+  const takeFresh = (item: UnipileProfile) => {
+    const profile = normalizeUnipileProfile(item);
+    if (profile.name.trim().toLowerCase() === "linkedin member") return false;
+    return !excluded?.size || !profileSearchKeys(profile).some((key) => excluded.has(key));
+  };
   const companyBatches = Array.from(
     { length: Math.ceil(companyIds.length / 10) },
     (_, index) => companyIds.slice(index * 10, index * 10 + 10),
@@ -1358,7 +1358,7 @@ export async function searchLinkedInProfilesAtCompanies(input: {
           locationIds,
           companyIds: companyBatch,
           take: takeFresh,
-          maxPages: takeFresh ? 3 : undefined,
+          maxPages: 2,
         });
         if (items.length) break;
       }
