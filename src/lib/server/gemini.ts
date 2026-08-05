@@ -1411,6 +1411,7 @@ Set agentCriteriaMatched to true only when the available profile and search evid
 - The current role must match the requested job function.
 - The current employer or work history must support at least one requested industry when industry is part of the request.
 - A named company, product, platform, certification, or technology must have concrete evidence in the profile, experience, skills, summary, a profile-keyword match, or a first-person authored post that explicitly states the person or employer uses, implements, supports, or evaluates it. A reaction or generic comment on a related post is interest evidence only and does not prove usage.
+- When the request asks for customers, users, or partner firms of a named technology, a person employed by that technology vendor is not a match unless the agent explicitly includes the vendor's own employees.
 - Location must match when requested. The application also enforces this deterministically.
 - Missing evidence is not a match. Do not infer technology use from a generic healthcare, IT, sales, or operations title.
 
