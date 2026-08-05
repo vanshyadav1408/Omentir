@@ -14,6 +14,7 @@ import { isAnonymousLinkedInProfile } from "./outreach-rules";
 import {
   balanceTitleSeniority,
   expandedTargetTitles,
+  findGroundedAgentCandidates,
   matchesTargetTitle,
   planPeopleSearch,
   scoreLeadForProduct,
@@ -539,6 +540,7 @@ function candidatePriority(
   roleVocabulary: string[],
 ) {
   const signalWeight = candidate.signals.reduce((total, signal) => {
+    if (signal.signalSource === "Grounded exact-agent web search") return total + 25;
     if (signal.signalType === "keyword_search") return total + 10;
     if (signal.signalType === "profile_search") return total + 3;
     if (signal.signalType === "post_comment") return total + 2;
@@ -685,6 +687,28 @@ export async function runPeopleEngineForAgent(input: {
       sourceUrl: source.value,
       sourceKind: source.kind,
     });
+  }
+
+  const hasProviderPeopleResults = Array.from(candidates.values()).some((candidate) =>
+    candidate.signals.some(
+      (signal) =>
+        signal.signalType === "profile_search" ||
+        (signal.signalType === "keyword_search" && !signal.signalSource.endsWith("authored post")),
+    ),
+  );
+  if (!hasProviderPeopleResults && hasRunTime(deadline)) {
+    const groundedCandidates = await findGroundedAgentCandidates(input.agent);
+    for (const lead of groundedCandidates) {
+      addObservedSignal(candidates, {
+        lead,
+        signalType: "keyword_search",
+        signalSource: "Grounded exact-agent web search",
+        signalText: lead.evidence,
+        signalUrl: lead.evidenceUrl || lead.linkedInUrl,
+        signalObservedAt: nowIso(),
+        leadReason: "Matched every agent requirement in grounded web search",
+      });
+    }
   }
 
   let leadsAdded = 0;
