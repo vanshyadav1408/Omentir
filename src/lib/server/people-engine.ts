@@ -579,6 +579,17 @@ function primarySignal(candidate: Candidate) {
   );
 }
 
+function directSignalEvidence(signal: ObservedSignal) {
+  if (signal.signalSource === "Grounded exact-agent web search") return signal.signalText;
+  if (
+    signal.signalType === "keyword_search" &&
+    signal.signalSource.endsWith("authored post")
+  ) {
+    return signal.signalText;
+  }
+  return "";
+}
+
 function candidatePriority(
   candidate: Candidate,
   targetTitles: string[],
@@ -901,7 +912,10 @@ export async function runPeopleEngineForAgent(input: {
     const score = await scoreLeadForProduct(
       {
         ...enrichedLead,
-        summary: enrichedLead.summary || firstSignal.signalText,
+        // A LinkedIn keyword query returning this person is only a sourcing
+        // hint. It is not their profile text and must never masquerade as
+        // direct evidence when profile enrichment is unavailable.
+        summary: enrichedLead.summary || directSignalEvidence(firstSignal),
         signalType: firstSignal.signalType,
         signalSource: firstSignal.signalSource,
         signalText: firstSignal.signalText,
@@ -918,7 +932,8 @@ export async function runPeopleEngineForAgent(input: {
     }
 
     enrichedLead = mergeLead(enrichedLead, {
-      summary: score.summary || enrichedLead.summary || firstSignal.signalText,
+      summary:
+        score.summary || enrichedLead.summary || directSignalEvidence(firstSignal),
     });
 
     const lead = await upsertLead(input.agent.workspaceId, input.agent.targetGroupId, {
