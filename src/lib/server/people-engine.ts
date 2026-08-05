@@ -2,6 +2,7 @@ import "server-only";
 
 import {
   listLeads,
+  listLinkedInAccounts,
   logAutomationRun,
   markLeadSignalPromoted,
   updateAgentPeopleEngineCursor,
@@ -30,6 +31,7 @@ import {
   normalizeLinkedInActor,
   profileSearchKeys,
   retrieveLinkedInProfile,
+  retrieveLinkedInCompanyEvidence,
   searchLinkedInPosts,
   searchLinkedInProfiles,
 } from "./unipile";
@@ -482,17 +484,49 @@ export async function enrichLinkedInLead(account: LinkedInAccount, lead: Partial
   const identifier = getPublicIdentifier(lead.linkedInUrl) || lead.providerProfileId;
   if (!identifier) return lead;
 
-  try {
-    const profile = await retrieveLinkedInProfile({
-      accountId: account.accountId,
-      identifier,
-    });
+  const workspaceAccounts = await listLinkedInAccounts(account.workspaceId);
+  const enrichmentAccounts = [
+    account,
+    ...workspaceAccounts.filter((candidate) => candidate.id !== account.id),
+  ];
 
-    return profile ? mergeLead(lead, profile) : lead;
-  } catch (error) {
-    console.error("[people-engine] failed to enrich lead:", error);
-    return lead;
+  for (const enrichmentAccount of enrichmentAccounts) {
+    try {
+      const profile = await retrieveLinkedInProfile({
+        accountId: enrichmentAccount.accountId,
+        identifier,
+      });
+      if (!profile) continue;
+
+      const companyEvidence = profile.company
+        ? await retrieveLinkedInCompanyEvidence({
+            accountId: enrichmentAccount.accountId,
+            companyName: profile.company,
+          })
+        : null;
+      const enrichedProfile = companyEvidence
+        ? {
+            ...profile,
+            summary: [profile.summary, companyEvidence.text].filter(Boolean).join("\n"),
+            profileContext: profile.profileContext
+              ? {
+                  ...profile.profileContext,
+                  experience: [companyEvidence.text, ...profile.profileContext.experience],
+                }
+              : profile.profileContext,
+          }
+        : profile;
+
+      return mergeLead(lead, enrichedProfile);
+    } catch (error) {
+      console.error(
+        `[people-engine] failed to enrich lead through ${enrichmentAccount.id}:`,
+        error,
+      );
+    }
   }
+
+  return lead;
 }
 
 async function persistCandidateSignals(agent: Agent, candidate: Candidate) {

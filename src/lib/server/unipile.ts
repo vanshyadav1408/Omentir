@@ -192,6 +192,15 @@ type UnipileAccount = {
   status?: string;
 };
 
+type UnipileCompany = {
+  id?: string;
+  name?: string;
+  profile_url?: string;
+  industry?: string | string[];
+  employee_count?: number;
+  employee_count_range?: { from?: number; to?: number };
+};
+
 type UnipileChatAttendee = {
   id?: string;
   provider_id?: string;
@@ -1120,6 +1129,7 @@ export async function deleteLinkedInAccount(accountId: string) {
 // name across accounts. Failed lookups are not cached so a transient error
 // doesn't permanently disable location targeting for that name.
 const locationIdCache = new Map<string, string | null>();
+const companyEvidenceCache = new Map<string, LinkedInCompanyEvidence>();
 
 async function resolveLinkedInLocationIds(accountId: string, locations: string[]) {
   const ids = new Set<string>();
@@ -1285,6 +1295,67 @@ export async function searchLinkedInProfilesByUrl(input: {
   });
 
   return items.map(normalizeUnipileProfile);
+}
+
+export type LinkedInCompanyEvidence = {
+  text: string;
+  url: string;
+};
+
+export async function retrieveLinkedInCompanyEvidence(input: {
+  accountId: string;
+  companyName: string;
+}): Promise<LinkedInCompanyEvidence | null> {
+  const companyName = input.companyName.trim();
+  if (!isUnipileConfigured() || !companyName) return null;
+
+  const cacheKey = companyName.toLowerCase();
+  const cached = companyEvidenceCache.get(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const parameters = await request<UnipileListResponse<{ id?: string; title?: string }>>(
+      withQuery("/api/v1/linkedin/search/parameters", {
+        account_id: input.accountId,
+        type: "COMPANY",
+        keywords: companyName,
+        limit: 5,
+      }),
+    );
+    const exact = getListItems<{ id?: string; title?: string }>(parameters).find(
+      (item) => item.title?.trim().toLowerCase() === companyName.toLowerCase(),
+    );
+    if (!exact?.id) return null;
+
+    const company = await request<UnipileCompany>(
+      withQuery(`/api/v1/linkedin/company/${encodeURIComponent(exact.id)}`, {
+        account_id: input.accountId,
+      }),
+    );
+    const industries = Array.isArray(company.industry)
+      ? company.industry.filter(Boolean).join(", ")
+      : String(company.industry || "").trim();
+    const from = Number(company.employee_count_range?.from || 0);
+    const to = Number(company.employee_count_range?.to || 0);
+    const range = from && to ? `${from}-${to} employees` : from ? `${from}+ employees` : "";
+    const parts = [
+      `Current company: ${company.name || companyName}`,
+      industries ? `LinkedIn industry: ${industries}` : "",
+      range ? `LinkedIn company size: ${range}` : "",
+      company.employee_count ? `LinkedIn listed employees: ${company.employee_count}` : "",
+    ].filter(Boolean);
+    if (parts.length <= 1) return null;
+
+    const evidence = {
+      text: parts.join("; "),
+      url: company.profile_url || `https://www.linkedin.com/company/${exact.id}`,
+    };
+    companyEvidenceCache.set(cacheKey, evidence);
+    return evidence;
+  } catch (error) {
+    console.error(`[unipile] failed to retrieve company evidence for "${companyName}":`, error);
+    return null;
+  }
 }
 
 export async function searchLinkedInPosts(input: {
