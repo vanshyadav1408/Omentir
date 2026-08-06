@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Group, LeadPreview } from "@/lib/server/types";
 import { deleteGroupAction } from "@/app/actions";
 import { TextField } from "@/app/ui/text-field";
@@ -8,7 +8,11 @@ import { useSidebarResource } from "@/app/use-sidebar-resource";
 import { ContentReveal, LeadsTableSkeleton, Skeleton } from "@/app/app-skeletons";
 import NewAgentButton from "@/app/(app)/agents/new-agent-button";
 import { useBodyScrollLock } from "@/app/use-body-scroll-lock";
-import { useToast, userFacingError } from "@/app/toast";
+import {
+  consumeAgentStartedNotice,
+  useToast,
+  userFacingError,
+} from "@/app/toast";
 import MobileHeaderPortal from "@/app/mobile-header-portal";
 import { useWorkspaceTimeZone } from "@/app/workspace-time-zone";
 import { zonedDayKey } from "@/lib/time-zone";
@@ -177,15 +181,21 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
   const [deleteGroup, setDeleteGroup] = useState<Group | null>(null);
   const [exportGroup, setExportGroup] = useState<Group | null>(null);
   const [deletedGroupIds, setDeletedGroupIds] = useState<Set<string>>(new Set());
-  const { showError } = useToast();
+  const { showError, showAgentStarted } = useToast();
   useBodyScrollLock(Boolean(mobileGroupMenu || deleteGroup || exportGroup));
+
+  // Leads-only agents land here after launch. Show the same started card.
+  useEffect(() => {
+    const notice = consumeAgentStartedNotice();
+    if (!notice) return;
+    showAgentStarted(notice.name || undefined, notice.kind);
+  }, [showAgentStarted]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    // Leads whose every group was deleted (deleting a group/agent strips the
-    // group id but keeps the lead) are hidden everywhere, including All
-    // contacts. Leads of paused agents still belong to a live group, so they
-    // stay visible.
+    // Only show leads that still belong to a live group. Deleting a group
+    // permanently removes its leads from the database; this filter also hides
+    // any legacy orphan rows with empty groupIds.
     const liveGroupIds = new Set(
       loadedGroups
         .filter((group) => !deletedGroupIds.has(group.id))
@@ -870,7 +880,8 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
               Delete lead group?
             </h2>
             <p className="m3-dialog-body">
-              Delete {deleteGroup.name}? Its leads will no longer appear on this page.
+              Delete {deleteGroup.name}? Every lead in this group is permanently deleted
+              from your workspace, including outreach history for those leads.
             </p>
             <div className="m3-dialog-actions">
               <button

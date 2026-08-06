@@ -26,7 +26,7 @@ type EarlyFetchStore = Record<string, Promise<Record<string, unknown> | null>>;
 
 /** Resource strings shared by the dashboard page (script) and its view (hook). */
 export const DASHBOARD_RESOURCE =
-  "agents,groups,leadDashboardPreviews,enrollmentPreviews,conversations";
+  "agents,groups,leadDashboardPreviews,enrollmentPreviews,conversations,activityDays";
 export const LINKEDIN_INBOX_RESOURCE = "linkedinInbox";
 
 /**

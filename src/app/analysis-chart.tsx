@@ -2,18 +2,19 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type {
+  ActivityDay,
   CampaignEnrollmentPreview,
   Conversation,
   LeadDashboardPreview,
 } from "@/lib/server/types";
+import {
+  buildActivityTotalsFromLive,
+  mergeActivityTotals,
+  toActivityChartPoints,
+  type ActivityChartPoint,
+} from "@/lib/activity-overview";
 
-type ChartPoint = {
-  dateKey: string;
-  date: string;
-  found: number;
-  contacted: number;
-  replies: number;
-};
+type ChartPoint = ActivityChartPoint;
 
 type AnalysisChartProps = {
   // Only the timeline fields are read, so the dashboard's slim projection is
@@ -21,6 +22,8 @@ type AnalysisChartProps = {
   leads: LeadDashboardPreview[];
   conversations: Conversation[];
   enrollments: CampaignEnrollmentPreview[];
+  /** Durable day totals that survive agent/lead deletion. */
+  activityDays?: ActivityDay[];
 };
 
 /** Categorical scale: distinct series with solid contrast on light/dark surfaces. */
@@ -39,134 +42,24 @@ const chart = {
   width: 720,
 };
 
-const contactedEnrollmentStatuses = new Set<CampaignEnrollmentPreview["status"]>([
-  "connection_sent",
-  "connected",
-  "message_sent",
-  "reply_received",
-  "replied",
-]);
-
-const contactedLeadStatuses = new Set<LeadDashboardPreview["outreachStatus"]>([
-  "invited",
-  "connected",
-  "messaged",
-  "replied",
-]);
-
-function toDayKey(value?: string) {
-  if (!value) return null;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-
-  return [
-    date.getFullYear(),
-    String(date.getMonth() + 1).padStart(2, "0"),
-    String(date.getDate()).padStart(2, "0"),
-  ].join("-");
-}
-
-function dateFromKey(key: string) {
-  const [year, month, day] = key.split("-").map(Number);
-  return new Date(year, month - 1, day);
-}
-
-function keyFromDate(date: Date) {
-  return [
-    date.getFullYear(),
-    String(date.getMonth() + 1).padStart(2, "0"),
-    String(date.getDate()).padStart(2, "0"),
-  ].join("-");
-}
-
-function addDays(date: Date, amount: number) {
-  const next = new Date(date);
-  next.setDate(next.getDate() + amount);
-  return next;
-}
-
-/** Horizontal axis: month abbreviation + day (Google-style, never rotated). */
-function formatDateLabel(key: string) {
-  return dateFromKey(key).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
-}
-
-function addCount(counts: Map<string, number>, key: string | null) {
-  if (!key) return;
-  counts.set(key, (counts.get(key) || 0) + 1);
-}
-
-function addLeadToDay(map: Map<string, Set<string>>, key: string | null, leadId: string) {
-  if (!key || !leadId) return;
-  const leads = map.get(key) || new Set<string>();
-  leads.add(leadId);
-  map.set(key, leads);
-}
-
 function buildChartData({
   leads,
   conversations,
   enrollments,
+  activityDays = [],
 }: AnalysisChartProps): ChartPoint[] {
-  const foundCounts = new Map<string, number>();
-  const contactedByDay = new Map<string, Set<string>>();
-  const repliesCounts = new Map<string, number>();
-  const contactedFromEnrollments = new Set<string>();
+  const live = buildActivityTotalsFromLive({ leads, enrollments, conversations });
+  const durable = activityDays
+    .filter((day) => day.day)
+    .map((day) => ({
+      dateKey: day.day,
+      found: Number(day.found || 0),
+      contacted: Number(day.contacted || 0),
+      replies: Number(day.replies || 0),
+    }));
 
-  for (const lead of leads) {
-    addCount(foundCounts, toDayKey(lead.createdAt));
-  }
-
-  for (const enrollment of enrollments) {
-    if (!contactedEnrollmentStatuses.has(enrollment.status)) continue;
-    contactedFromEnrollments.add(enrollment.leadId);
-    addLeadToDay(
-      contactedByDay,
-      toDayKey(enrollment.updatedAt || enrollment.createdAt),
-      enrollment.leadId,
-    );
-  }
-
-  for (const lead of leads) {
-    if (contactedFromEnrollments.has(lead.id)) continue;
-    if (!contactedLeadStatuses.has(lead.outreachStatus)) continue;
-    addLeadToDay(contactedByDay, toDayKey(lead.updatedAt || lead.createdAt), lead.id);
-  }
-
-  for (const conversation of conversations) {
-    for (const message of conversation.messages) {
-      if (message.direction !== "inbound") continue;
-      addCount(repliesCounts, toDayKey(message.createdAt));
-    }
-  }
-
-  const activityKeys = new Set<string>([
-    ...foundCounts.keys(),
-    ...contactedByDay.keys(),
-    ...repliesCounts.keys(),
-  ]);
-  if (!activityKeys.size) return [];
-
-  const sortedKeys = [...activityKeys].sort();
-  const earliest = dateFromKey(sortedKeys[0]);
-  const latest = dateFromKey(sortedKeys[sortedKeys.length - 1]);
-  const start = new Date(Math.max(earliest.getTime(), addDays(latest, -10).getTime()));
-  const points: ChartPoint[] = [];
-
-  for (let cursor = start; cursor <= latest; cursor = addDays(cursor, 1)) {
-    const dateKey = keyFromDate(cursor);
-    points.push({
-      dateKey,
-      date: formatDateLabel(dateKey),
-      found: foundCounts.get(dateKey) || 0,
-      contacted: contactedByDay.get(dateKey)?.size || 0,
-      replies: repliesCounts.get(dateKey) || 0,
-    });
-  }
-
-  return points;
+  // max() merge: durable history keeps deleted-agent work; live fills current days.
+  return toActivityChartPoints(mergeActivityTotals(live, durable));
 }
 
 /** Zero-baseline scale; nice steps so labels stay sparse. */

@@ -6,10 +6,17 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import type { FormEvent } from "react";
 import LogoMark from "@/app/logo-mark";
 import AiLoadingOverlay from "@/app/ai-loading-overlay";
+import MobileHeaderPortal from "@/app/mobile-header-portal";
 import { SelectField, type SelectOption } from "@/app/ui/select";
 import { useWorkspaceTimeZone } from "@/app/workspace-time-zone";
 import { TextAreaField, TextField } from "@/app/ui/text-field";
 import { normalizeSchedulingLink } from "@/lib/scheduling-link";
+import {
+  AGENT_STARTED_STORAGE_KEY,
+  markAgentStartedNotice,
+  useToast,
+  type AgentStartedKind,
+} from "@/app/toast";
 import type { Agent, CampaignReplyHandling, SendWindow } from "@/lib/server/types";
 import {
   INDUSTRY_SUGGESTIONS,
@@ -555,6 +562,9 @@ function CompanyEditModal({
   onClose: () => void;
 }) {
   if (!open) return null;
+  // While AI Analyse runs, parent shows AiLoadingOverlay; hide this tall edit
+  // sheet so the wait UI is only the compact card (esp. on mobile).
+  if (analyzing) return null;
   const isWorking = saving || analyzing;
 
   return (
@@ -706,6 +716,24 @@ export default function AgentSetup({
   const stealCustomers =
     stealCustomersProp || initialAgent?.mode === "steal_customers";
   const router = useRouter();
+  const { showAgentStarted } = useToast();
+  const agentStartedKind: AgentStartedKind = outreachOnly
+    ? "outreach_only"
+    : stealCustomers
+      ? "steal_customers"
+      : leadsOnly
+        ? "leads_only"
+        : "full";
+  const agentStartedLabel = () =>
+    name.trim() ||
+    groupName.trim() ||
+    (stealCustomers
+      ? "Steal Customers"
+      : outreachOnly
+        ? "Outreach agent"
+        : leadsOnly
+          ? "Leads agent"
+          : "Your agent");
   // Workspaces that have never saved a zone still get a real name here, from
   // the same detection the rest of the app formats its times with.
   const workspaceTimeZone = useWorkspaceTimeZone();
@@ -970,10 +998,14 @@ export default function AgentSetup({
           return;
         }
         if (preparedAgent?.groupName === groupName.trim()) {
-          router.push("/leads");
+          // Client navigation keeps ToastProvider mounted, so show immediately.
+          showAgentStarted(agentStartedLabel(), "leads_only");
+          router.replace("/agents");
           return;
         }
         const formData = new FormData(event.currentTarget);
+        // Leads-only forces signals mode even if a stale hidden field is present.
+        formData.set("mode", "signals");
         setDiscoveryError("");
         setDiscovering(true);
         try {
@@ -982,7 +1014,8 @@ export default function AgentSetup({
           setPreparedAgentId(result.agentId);
           // Leads-only agents are complete once prepared: the agent and its
           // lead group exist and discovery is scheduled - no campaign step.
-          router.push("/leads");
+          showAgentStarted(agentStartedLabel(), "leads_only");
+          router.replace("/agents");
         } catch (error) {
           setDiscoveryError(
             error instanceof Error ? error.message : "Lead discovery failed.",
@@ -1057,7 +1090,12 @@ export default function AgentSetup({
     setSubmitError("");
     startTransition(async () => {
       try {
+        // Survives navigation to /agents (full, steal, outreach, edit).
+        markAgentStartedNotice(agentStartedLabel(), agentStartedKind);
         await createAgent(formData);
+        // Always land on Agents for every mode. Server actions also redirect
+        // here; client replace covers cases where the redirect is swallowed.
+        router.replace("/agents");
       } catch (error) {
         if (
           typeof error === "object" &&
@@ -1065,7 +1103,15 @@ export default function AgentSetup({
           "digest" in error &&
           String((error as { digest?: unknown }).digest).startsWith("NEXT_REDIRECT")
         ) {
+          // Server redirect already targets /agents; still force client route
+          // so a mismatched redirect cannot leave the user elsewhere.
+          router.replace("/agents");
           throw error;
+        }
+        try {
+          window.sessionStorage.removeItem(AGENT_STARTED_STORAGE_KEY);
+        } catch {
+          // ignore
         }
         setSubmitError(error instanceof Error ? error.message : "Agent launch failed.");
       }
@@ -2327,8 +2373,24 @@ export default function AgentSetup({
     return action.waitValue;
   };
 
+  const mobileContinueLabel = discovering
+    ? leadsOnly
+      ? "Launching..."
+      : "Finding..."
+    : pending
+      ? step === finalStep
+        ? "Launching..."
+        : "Creating..."
+      : step === finalStep
+        ? "Launch"
+        : "Continue";
+
   return (
-    <form onSubmit={handleSubmit} className="app-x flex h-full min-h-0 min-w-0 flex-col gap-2 md:ml-4 md:mr-0.5 md:pb-3">
+    <form
+      id="agent-setup-form"
+      onSubmit={handleSubmit}
+      className="app-x flex h-full min-h-0 min-w-0 flex-col gap-2 md:ml-4 md:mr-0.5 md:pb-3"
+    >
       <AiLoadingOverlay
         open={drafting}
         title="Finding your ideal customer profile with AI"
@@ -2425,36 +2487,24 @@ export default function AgentSetup({
 
       {!setupMode ? (
         <>
-          {/* Mobile-only fixed header buttons (overlays mobile top bar) */}
-          <Link
-            href="/agents"
-            style={{ fontFamily: "var(--font-varta)" }}
-            className="m3-mobile-header-action fixed right-[92px] z-[91] inline-flex h-7 cursor-pointer items-center px-2 text-[12px] font-semibold leading-none text-zinc-700 hover:text-zinc-900 md:hidden"
-          >
-            Cancel
-          </Link>
-          <button
-            type="submit"
-            disabled={pending || discovering}
-            style={{ fontFamily: "var(--font-varta)" }}
-            className="m3-mobile-header-action fixed right-3 z-[91] inline-flex h-7 cursor-pointer items-center justify-center rounded-md bg-[#ba3871] px-3 text-[12px] font-semibold text-white transition hover:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-60 md:hidden"
-          >
-            <span className="translate-y-px leading-none">
-              {discovering
-                ? leadsOnly
-                  ? "Launching..."
-                  : "Finding..."
-                : pending
-                  ? step === finalStep
-                    ? "Launching..."
-                    : "Creating..."
-                  : step === finalStep
-                    ? "Launch"
-                    : "Continue"}
-            </span>
-          </button>
+          {/* Mobile app bar: Continue / Launch on the right so users can advance
+              without scrolling to the card footer. Portaled so fixed position is
+              not trapped by page enter/fade transforms. Laptop header unchanged. */}
+          <MobileHeaderPortal>
+            <div className="pointer-events-none fixed inset-x-0 top-0 z-[92] flex h-14 items-center justify-end px-2 md:hidden">
+              <button
+                type="submit"
+                form="agent-setup-form"
+                disabled={pending || discovering}
+                style={{ fontFamily: "var(--font-varta)" }}
+                className="pointer-events-auto inline-flex h-8 cursor-pointer items-center justify-center rounded-full bg-[var(--md-sys-color-primary)] px-3.5 text-xs font-semibold text-[var(--md-sys-color-on-primary)] transition hover:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <span className="translate-y-px leading-none">{mobileContinueLabel}</span>
+              </button>
+            </div>
+          </MobileHeaderPortal>
 
-          {/* Header - same theme as other pages */}
+          {/* Header - same theme as other pages (desktop / laptop only) */}
           <div className="hidden shrink-0 flex-col items-start justify-between gap-3 pt-6 md:flex md:flex-row md:items-center">
             <div className="min-w-0">
               <h1

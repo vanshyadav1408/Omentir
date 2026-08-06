@@ -12,6 +12,7 @@ import { Skeleton } from "@/app/app-skeletons";
 import { useBodyScrollLock } from "@/app/use-body-scroll-lock";
 import { useHydrated } from "@/app/use-hydrated";
 import type {
+  ActivityDay,
   Agent,
   CampaignEnrollmentPreview,
   Conversation,
@@ -62,6 +63,7 @@ const selectDashboardData = (data: Record<string, unknown>) => ({
   leads: data.leads as LeadDashboardPreview[] || [],
   enrollments: data.enrollments as CampaignEnrollmentPreview[] || [],
   conversations: data.conversations as Conversation[] || [],
+  activityDays: data.activityDays as ActivityDay[] || [],
 });
 
 function timeAgo(iso?: string) {
@@ -113,7 +115,14 @@ export default function DashboardView({
 }: DashboardViewProps) {
   const dashboardResource = useSidebarResource(
     DASHBOARD_RESOURCE,
-    { agents, groups: [] as Group[], leads, enrollments, conversations },
+    {
+      agents,
+      groups: [] as Group[],
+      leads,
+      enrollments,
+      conversations,
+      activityDays: [] as ActivityDay[],
+    },
     selectDashboardData,
   );
   const {
@@ -122,6 +131,7 @@ export default function DashboardView({
     leads: loadedLeads,
     enrollments: loadedEnrollments,
     conversations: loadedConversations,
+    activityDays: loadedActivityDays,
   } = dashboardResource.value;
   const dashboardLoading = dashboardResource.loading;
   const linkedInInboxResource = useSidebarResource(
@@ -445,6 +455,7 @@ export default function DashboardView({
                 leads={loadedLeads}
                 conversations={loadedConversations}
                 enrollments={loadedEnrollments}
+                activityDays={loadedActivityDays}
               />
             )}
           </div>

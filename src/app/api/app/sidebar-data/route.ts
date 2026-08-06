@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import {
   getLeadsByIds,
   getWorkspace,
+  listActivityDays,
   listAgents,
   listAgentApiKeys,
   listAutomationRuns,
@@ -14,6 +15,7 @@ import {
   listLeadDashboardPreviews,
   listLeadPreviews,
   listLinkedInAccounts,
+  reconcileActivityFromLive,
 } from "@/lib/server/data";
 import {
   getVerifiedLinkedInAccount,
@@ -37,6 +39,26 @@ async function loadFirestoreResource(resource: string, workspaceId: string) {
   if (resource === "campaigns") return { campaigns: await listCampaigns(workspaceId) };
   if (resource === "conversations") return { conversations: await listConversations(workspaceId) };
   if (resource === "automationRuns") return { runs: await listAutomationRuns(workspaceId) };
+  if (resource === "activityDays") {
+    // Refresh durable history from whatever CRM rows still exist, then return
+    // the full series. max-merge never shrinks days already frozen by deletes.
+    const [leads, enrollments, conversations] = await Promise.all([
+      listLeadDashboardPreviews(workspaceId),
+      listCampaignEnrollmentPreviews(workspaceId),
+      listConversations(workspaceId),
+    ]);
+    await reconcileActivityFromLive(workspaceId, {
+      leads,
+      enrollments,
+      conversations,
+    }).catch((error) => {
+      console.error(
+        "[sidebar-data] activity reconcile failed:",
+        error instanceof Error ? error.message : error,
+      );
+    });
+    return { activityDays: await listActivityDays(workspaceId) };
+  }
   if (resource === "linkedinConnected") {
     return { connected: Boolean(await getVerifiedLinkedInAccount(workspaceId)) };
   }

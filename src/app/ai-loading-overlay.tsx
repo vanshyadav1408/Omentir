@@ -33,17 +33,17 @@ export default function AiLoadingOverlay({
           }
         ` }} />
       )}
+      {/* Own classes only: never m3-dialog-* (those become tall bottom sheets
+          on mobile). Every AI wait (Fill with AI, AI Analyse, onboarding fetch,
+          lead preview, etc.) shares this compact card. */}
       <div
-        className={`m3-dialog-scrim m3-ai-loading-scrim ${
+        className={`m3-ai-loading-scrim ${
           transparent ? "m3-ai-loading-scrim--transparent" : ""
         }`}
         aria-live="polite"
         aria-busy="true"
       >
-        <div
-          className="m3-dialog-surface m3-ai-loading-surface"
-          role="status"
-        >
+        <div className="m3-ai-loading-surface" role="status">
           <div className="m3-ai-loading-content">
             <svg
               className="m3-ai-loading-indicator"

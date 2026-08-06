@@ -372,7 +372,9 @@ async function runAgents(mode: AutomationSafetyMode) {
         continue;
       }
 
-      await markAgentStarted(agent);
+      // Agent may have been deleted between getDueAgents and here (or mid
+      // cascade). Skip quietly - there is nothing left to mark running/error.
+      if (!(await markAgentStarted(agent))) continue;
 
       if (agentHasSignalSources(agent)) {
         const result = await runPeopleEngineForAgent({
@@ -491,9 +493,12 @@ async function runAgents(mode: AutomationSafetyMode) {
     } catch (error) {
       // Soft-fail the agent to error + next daily slot, but always record the
       // real cause so the activity feed is not just a red badge with no reason.
+      // If the agent was deleted mid-run, markAgentRun no-ops and we skip the
+      // error log - there is no agent left to surface it on.
+      const marked = await markAgentRun(agent, false);
+      if (!marked) continue;
       const message = error instanceof Error ? error.message : "Agent run failed";
       console.error(`[automation] agent ${agent.id} run failed:`, message);
-      await markAgentRun(agent, false);
       await logAutomationRun({
         workspaceId: agent.workspaceId,
         kind: "agent",

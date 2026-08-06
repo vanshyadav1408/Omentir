@@ -397,9 +397,11 @@ export default function ActionsDashboard({ items, title, serverNow, timezone, he
     </label>
   ) : null;
 
+  // Full-height strip so the control is vertically centered in the 56px mobile
+  // app bar (same pattern as the agents header action).
   const mobileViewPicker = (
-    <div className="m3-mobile-header-action fixed right-2 z-[92] md:hidden">
-      <div className="relative">
+    <div className="pointer-events-none fixed inset-x-0 top-0 z-[92] flex h-14 items-center justify-end px-2 md:hidden">
+      <div className="pointer-events-auto relative">
         <svg className="pointer-events-none absolute left-2.5 top-1/2 z-10 h-3.5 w-3.5 -translate-y-1/2 text-[var(--md-sys-color-on-surface-variant)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="M4 5h16l-6 7v5l-4 2v-7L4 5Z" />
         </svg>

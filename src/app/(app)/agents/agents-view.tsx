@@ -2,14 +2,19 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Agent, CampaignEnrollmentPreview, Group, LeadAgentRef } from "@/lib/server/types";
 import { deleteAgentAction, pauseAgentAction, resumeAgentAction } from "@/app/actions";
 import { useSidebarResource } from "@/app/use-sidebar-resource";
 import { ContentReveal, OutreachListSkeleton } from "@/app/app-skeletons";
 import NewAgentButton from "./new-agent-button";
 import { useBodyScrollLock } from "@/app/use-body-scroll-lock";
-import { useToast, userFacingError } from "@/app/toast";
+import {
+  consumeAgentStartedNotice,
+  useToast,
+  userFacingError,
+} from "@/app/toast";
+import MobileHeaderPortal from "@/app/mobile-header-portal";
 import { useWorkspaceTimeZone } from "@/app/workspace-time-zone";
 import { formatZonedDate } from "@/lib/time-zone";
 import {
@@ -134,9 +139,16 @@ export default function AgentsView({
   const [pendingToggleIds, setPendingToggleIds] = useState<Set<string>>(new Set());
   const [optimisticStatuses, setOptimisticStatuses] = useState<Record<string, Agent["status"]>>({});
   const [deleteAgent, setDeleteAgent] = useState<{ id: string; name: string } | null>(null);
-  const { showError } = useToast();
+  const { showError, showAgentStarted } = useToast();
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
   useBodyScrollLock(Boolean(deleteAgent));
+
+  // After launch, setup redirects here for full / steal / outreach agents.
+  useEffect(() => {
+    const notice = consumeAgentStartedNotice();
+    if (!notice) return;
+    showAgentStarted(notice.name || undefined, notice.kind);
+  }, [showAgentStarted]);
   const visibleAgents = useMemo(
     () => loadedAgents.filter((agent) => !deletedIds.has(agent.id)),
     [loadedAgents, deletedIds],
@@ -171,8 +183,27 @@ export default function AgentsView({
     setOptimisticStatuses((current) => ({ ...current, [agent.id]: nextStatus }));
 
     try {
-      if (isActive) await pauseAgentAction(formData);
-      else await resumeAgentAction(formData);
+      if (isActive) {
+        await pauseAgentAction(formData);
+      } else {
+        await resumeAgentAction(formData);
+        const resumeKind =
+          agent.mode === "steal_customers"
+            ? "steal_customers"
+            : agent.mode === "outreach"
+              ? "outreach_only"
+              : agent.leadsOnly
+                ? "leads_only"
+                : "resume";
+        showAgentStarted(
+          agentTitle(agent),
+          resumeKind === "steal_customers" ||
+            resumeKind === "outreach_only" ||
+            resumeKind === "leads_only"
+            ? resumeKind
+            : "resume",
+        );
+      }
       // Drop optimistic override so the next server payload (active after
       // resume, including recovery from status "error") is what we render.
       setOptimisticStatuses((current) => {
@@ -296,30 +327,39 @@ export default function AgentsView({
   );
 
   const mobileHeaderFabClass =
-    "m3-mobile-header-action fixed !top-3 right-2 z-[92] inline-flex h-8 cursor-pointer items-center justify-center gap-1 rounded-full bg-[var(--md-sys-color-primary)] px-3 text-xs font-semibold text-[var(--md-sys-color-on-primary)] transition hover:brightness-[0.98]";
+    "inline-flex h-8 cursor-pointer items-center justify-center gap-1 rounded-full bg-[var(--md-sys-color-primary)] px-3 text-xs font-semibold text-[var(--md-sys-color-on-primary)] transition hover:brightness-[0.98]";
 
   return (
     // Scroll lives on a full-width pane so the scrollbar sits at the right
     // edge of main (not inside app-x padding against the agent cards).
     <div className="flex h-full min-h-0 min-w-0 flex-col gap-3 md:ml-4 md:pb-3">
-      {/* Mobile app bar — trailing create action (matches Campaigns / Leads) */}
-      <div className="app-x md:hidden">
-        {effectiveAtAgentLimit ? (
-          <Link
-            href="/agents/new"
-            aria-label="Add agent"
-            className={mobileHeaderFabClass}
-          >
-            <span className="text-sm leading-none" aria-hidden="true">+</span>
-            Add agent
-          </Link>
-        ) : (
-          <NewAgentButton className={mobileHeaderFabClass}>
-            <span className="text-sm leading-none" aria-hidden="true">+</span>
-            Add agent
-          </NewAgentButton>
-        )}
-      </div>
+      {/* Mobile app bar — full-height strip so the control is vertically centered
+          in the 56px header (same bar as the sidebar title). */}
+      <MobileHeaderPortal>
+        <div className="pointer-events-none fixed inset-x-0 top-0 z-[92] flex h-14 items-center justify-end px-2 md:hidden">
+          <div className="pointer-events-auto">
+            {effectiveAtAgentLimit ? (
+              <Link
+                href="/agents/new"
+                aria-label="New agent"
+                className={mobileHeaderFabClass}
+              >
+                <span className="text-sm leading-none" aria-hidden="true">
+                  +
+                </span>
+                New agent
+              </Link>
+            ) : (
+              <NewAgentButton className={mobileHeaderFabClass} aria-label="New agent">
+                <span className="text-sm leading-none" aria-hidden="true">
+                  +
+                </span>
+                New agent
+              </NewAgentButton>
+            )}
+          </div>
+        </div>
+      </MobileHeaderPortal>
 
       {/* Header — match Leads page metrics */}
       <div className="app-x hidden shrink-0 items-center justify-between gap-3 pt-6 md:flex">
@@ -409,7 +449,7 @@ export default function AgentsView({
                   }`}
                 >
                   {/* Card header */}
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center justify-between gap-3 md:items-start">
                     <div className="flex min-w-0 flex-wrap items-center gap-2">
                       <h2
                         style={{ fontFamily: "var(--font-varta)" }}
@@ -420,20 +460,20 @@ export default function AgentsView({
                       {statusPill(displayStatus)}
                     </div>
 
-                    <div className="flex shrink-0 items-center gap-2">
+                    <div className="flex shrink-0 items-center gap-2 self-center md:self-auto">
                       <button
                         type="button"
                         aria-label={isActive ? "Pause agent" : "Resume agent"}
                         aria-pressed={isActive}
                         disabled={togglePending}
                         onClick={() => toggleAgent(agent)}
-                        className={`relative inline-flex h-4 w-8 shrink-0 items-center rounded-full transition ${
+                        className={`relative h-4 w-8 shrink-0 rounded-full transition ${
                           isActive ? "bg-emerald-500" : "bg-zinc-200"
                         } ${togglePending ? "cursor-default opacity-60" : "cursor-pointer"}`}
                       >
                         <span
-                          className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition ${
-                            isActive ? "translate-x-4" : "translate-x-0.5"
+                          className={`absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full bg-white shadow transition-[left] ${
+                            isActive ? "left-[14px]" : "left-0.5"
                           }`}
                         />
                       </button>
@@ -592,9 +632,8 @@ export default function AgentsView({
               Delete agent?
             </h2>
             <p className="m3-dialog-body">
-              Are you sure you want to delete {deleteAgent.name}? This stops all outreach to the
-              leads it found and deletes its lead group and campaigns. Its leads will no longer
-              appear on the Leads page.
+              Are you sure you want to delete {deleteAgent.name}? This stops outreach, deletes its
+              lead group and campaigns, and permanently deletes the leads in that group.
             </p>
             <div className="m3-dialog-actions">
               <button

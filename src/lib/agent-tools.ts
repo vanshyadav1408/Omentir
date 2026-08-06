@@ -446,7 +446,7 @@ const agentMcpToolDefinitions = [
   {
     name: "omentir_delete_agent",
     description:
-      "Delete an agent permanently: stops all outreach to the leads it sourced and deletes its lead group and the campaigns contacting that group (unless another agent uses the same group). Leads themselves are kept.",
+      "Delete an agent permanently: stops all outreach to the leads it sourced and deletes its lead group and the campaigns contacting that group (unless another agent uses the same group). Leads in that group are permanently deleted.",
     inputSchema: agentToolInputSchemas.omentir_delete_agent,
   },
   {

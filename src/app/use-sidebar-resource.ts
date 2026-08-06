@@ -28,6 +28,7 @@ const RESOURCE_FIELDS: Record<string, string[]> = {
   automationRuns: ["runs"],
   linkedinConnected: ["connected"],
   activityItems: ["items"],
+  activityDays: ["activityDays"],
   linkedinAccounts: ["accounts"],
   linkedinInbox: ["threads", "senderAccounts", "error"],
 };

@@ -20,6 +20,7 @@ import { remapStepIndex } from "./enrollment-remap";
 import { sendWindowTimeZoneForLead } from "./lead-time-zone";
 import { addInviteLimitSignal } from "./outreach-rules";
 import type {
+  ActivityDay,
   Agent,
   AgentApiKey,
   AgentSignalSources,
@@ -45,6 +46,10 @@ import type {
   WorkspaceOnboarding,
   WorkspaceSettings,
 } from "./types";
+import {
+  buildActivityTotalsFromLive,
+  type ActivityDayTotals,
+} from "@/lib/activity-overview";
 
 const DEFAULT_SETTINGS: WorkspaceSettings = {
   dailyInviteLimit: 10,
@@ -898,8 +903,29 @@ async function nextAgentSlot(agent: Agent) {
   }
 }
 
+// Firestore update() throws NOT_FOUND (code 5) when the doc is gone. Agents can
+// be deleted mid-tick (user deletes while discovery is still running, or the
+// cascade finishes after getDueAgents already returned the row). Lifecycle
+// writes must no-op rather than fail the whole agent phase and spam logs.
+function isNotFoundError(error: unknown) {
+  if (!error || typeof error !== "object") return false;
+  const code = (error as { code?: number | string }).code;
+  const message = (error as { message?: string }).message || "";
+  return code === 5 || code === "5" || /NOT_FOUND|No document to update/i.test(message);
+}
+
+async function updateAgentDoc(agentId: string, patch: Record<string, unknown>): Promise<boolean> {
+  try {
+    await collection<Agent>("agents").doc(agentId).update(patch);
+    return true;
+  } catch (error) {
+    if (isNotFoundError(error)) return false;
+    throw error;
+  }
+}
+
 export async function markAgentRun(agent: Agent, ok: boolean) {
-  await collection<Agent>("agents").doc(agent.id).update({
+  return updateAgentDoc(agent.id, {
     status: ok ? "active" : "error",
     lastRunAt: nowIso(),
     runStartedAt: FieldValue.delete(),
@@ -913,14 +939,14 @@ export async function markAgentRun(agent: Agent, ok: boolean) {
 // active subscription). Leaving nextRunAt in the past keeps the agent due on
 // every tick, re-reading its workspace forever for nothing.
 export async function deferAgentRun(agent: Agent) {
-  await collection<Agent>("agents").doc(agent.id).update({
+  return updateAgentDoc(agent.id, {
     nextRunAt: await nextAgentSlot(agent),
     updatedAt: nowIso(),
   });
 }
 
 export async function markAgentStarted(agent: Agent) {
-  await collection<Agent>("agents").doc(agent.id).update({
+  return updateAgentDoc(agent.id, {
     status: "running",
     runStartedAt: nowIso(),
     updatedAt: nowIso(),
@@ -928,7 +954,7 @@ export async function markAgentStarted(agent: Agent) {
 }
 
 export async function updateAgentPeopleEngineCursor(agentId: string, sourceKey: string) {
-  await collection<Agent>("agents").doc(agentId).update({
+  return updateAgentDoc(agentId, {
     peopleEngineCursor: {
       sourceKey,
       updatedAt: nowIso(),
@@ -1033,7 +1059,8 @@ async function wakeAgentPausedEnrollments(workspaceId: string, agent: Agent) {
 // every lead it sourced stops (in whatever campaign it sits), and its lead
 // group plus the campaigns contacting that group are deleted. If another
 // agent still feeds the same group, the group and its campaigns belong to
-// that agent and are kept. The leads themselves are never deleted.
+// that agent and are kept. Otherwise deleteGroup permanently removes the
+// group's leads and related outreach rows.
 export async function deleteAgent(workspaceId: string, agentId: string) {
   const ref = collection<Agent>("agents").doc(agentId);
   const snap = await ref.get();
@@ -1147,6 +1174,90 @@ export async function renameGroup(workspaceId: string, groupId: string, name: st
   return { ...group, name: trimmed };
 }
 
+/** Commit deletes/updates in chunks of 450 (Firestore batch max is 500). */
+async function commitInBatches(
+  refs: FirebaseFirestore.DocumentReference[],
+  apply: (batch: FirebaseFirestore.WriteBatch, ref: FirebaseFirestore.DocumentReference) => void,
+) {
+  for (let index = 0; index < refs.length; index += 450) {
+    const batch = getDb().batch();
+    refs.slice(index, index + 450).forEach((ref) => apply(batch, ref));
+    await batch.commit();
+  }
+}
+
+// Permanently delete leads in a group and their enrollments, conversations,
+// and discovery signals. Used when a lead group is removed so nothing about
+// those people stays in the workspace (no orphaned groupIds-only rows).
+async function deleteLeadsBelongingToGroup(workspaceId: string, groupId: string) {
+  const leads = await listLeads(workspaceId, groupId);
+  if (!leads.length) return 0;
+
+  const leadIds = leads.map((lead) => lead.id);
+  const leadIdSet = new Set(leadIds);
+
+  // Enrollments are keyed by campaign+lead; scan workspace and drop matches.
+  const enrollmentSnap = await collection<CampaignEnrollment>("campaignEnrollments")
+    .where("workspaceId", "==", workspaceId)
+    .get();
+  const enrollmentDocs = enrollmentSnap.docs.filter((doc) =>
+    leadIdSet.has(doc.data().leadId),
+  );
+  const enrollments = enrollmentDocs.map((doc) => doc.data());
+
+  // Conversations use `${workspaceId}-${leadId}`.
+  const conversationRefs = leadIds.map((leadId) =>
+    collection<Conversation>("conversations").doc(`${workspaceId}-${leadId}`),
+  );
+  const conversationSnaps = await Promise.all(conversationRefs.map((ref) => ref.get()));
+  const conversations = conversationSnaps
+    .map((snap) => snap.data())
+    .filter((conversation): conversation is Conversation => Boolean(conversation));
+
+  // Freeze this cohort's contribution into durable activity days BEFORE deletes
+  // so the Activity Overview chart keeps history after agents are removed.
+  await persistActivityTotals(
+    workspaceId,
+    buildActivityTotalsFromLive({ leads, enrollments, conversations }),
+  ).catch((error) => {
+    console.error(
+      "[data] failed to snapshot activity before lead delete:",
+      error instanceof Error ? error.message : error,
+    );
+  });
+
+  await commitInBatches(
+    enrollmentDocs.map((doc) => doc.ref),
+    (batch, ref) => batch.delete(ref),
+  );
+  await commitInBatches(conversationRefs, (batch, ref) => batch.delete(ref));
+
+  // Discovery signals are tagged with the group's id.
+  try {
+    const signalSnap = await collection<LeadSignal>("leadSignals")
+      .where("workspaceId", "==", workspaceId)
+      .where("groupId", "==", groupId)
+      .get();
+    await commitInBatches(
+      signalSnap.docs.map((doc) => doc.ref),
+      (batch, ref) => batch.delete(ref),
+    );
+  } catch (error) {
+    // Missing composite index must not block group delete; leads still go.
+    console.error(
+      "[data] deleteLeadsBelongingToGroup leadSignals cleanup failed:",
+      error instanceof Error ? error.message : error,
+    );
+  }
+
+  await commitInBatches(
+    leadIds.map((id) => collection<Lead>("leads").doc(id)),
+    (batch, ref) => batch.delete(ref),
+  );
+
+  return leads.length;
+}
+
 export async function deleteGroup(workspaceId: string, groupId: string) {
   const ref = collection<Group>("groups").doc(groupId);
   const snap = await ref.get();
@@ -1167,36 +1278,32 @@ export async function deleteGroup(workspaceId: string, groupId: string) {
     throw new Error("Delete or reassign the campaign connected to this lead group first.");
   }
 
-  const leads = await listLeads(workspaceId, groupId, 5000);
-  for (let index = 0; index < leads.length; index += 450) {
-    const batch = getDb().batch();
-    leads.slice(index, index + 450).forEach((lead) => {
-      batch.update(collection<Lead>("leads").doc(lead.id), {
-        groupIds: FieldValue.arrayRemove(groupId),
-        updatedAt: nowIso(),
-      });
-    });
-    await batch.commit();
-  }
-
+  await deleteLeadsBelongingToGroup(workspaceId, groupId);
   await ref.delete();
 }
 
-export async function listLeads(workspaceId: string, groupId?: string, limit = 500) {
+export async function listLeads(workspaceId: string, groupId?: string, limit?: number) {
   let query: FirebaseFirestore.Query<Lead> = collection<Lead>("leads").where(
     "workspaceId",
     "==",
     workspaceId,
   );
   if (groupId) query = query.where("groupIds", "array-contains", groupId);
-  const snap = await query.limit(limit).get();
+  // No default page size: the Leads UI and group delete must see every lead.
+  // Callers that need a bound can still pass limit.
+  if (limit != null && Number.isFinite(limit) && limit > 0) {
+    query = query.limit(limit);
+  }
+  const snap = await query.get();
   return snap.docs.map((doc) => doc.data());
 }
 
 export async function listLeadPreviews(
   workspaceId: string,
   groupId?: string,
-  limit = 500,
+  // No default cap. A 500-page left Steal Customers groups half-empty on
+  // Leads once a workspace grew large; load every preview for the UI.
+  limit?: number,
 ): Promise<LeadPreview[]> {
   let query: FirebaseFirestore.Query<Lead> = collection<Lead>("leads").where(
     "workspaceId",
@@ -1204,30 +1311,31 @@ export async function listLeadPreviews(
     workspaceId,
   );
   if (groupId) query = query.where("groupIds", "array-contains", groupId);
-  const snap = await query
-    .select(
-      "id",
-      "groupIds",
-      "linkedInUrl",
-      "avatarUrl",
-      "name",
-      "title",
-      "company",
-      "location",
-      "summary",
-      "fitScore",
-      "scoreReasons",
-      "signalText",
-      "signalUrl",
-      "leadReason",
-      "engagementContext",
-      "sourceAgentId",
-      "outreachStatus",
-      "createdAt",
-      "updatedAt",
-    )
-    .limit(limit)
-    .get();
+  let projected = query.select(
+    "id",
+    "groupIds",
+    "linkedInUrl",
+    "avatarUrl",
+    "name",
+    "title",
+    "company",
+    "location",
+    "summary",
+    "fitScore",
+    "scoreReasons",
+    "signalText",
+    "signalUrl",
+    "leadReason",
+    "engagementContext",
+    "sourceAgentId",
+    "outreachStatus",
+    "createdAt",
+    "updatedAt",
+  );
+  if (limit != null && Number.isFinite(limit) && limit > 0) {
+    projected = projected.limit(limit);
+  }
+  const snap = await projected.get();
   return snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as LeadPreview);
 }
 
@@ -1238,14 +1346,11 @@ export async function listLeadPreviews(
 // query from ~2.9s to ~1.5s.
 export async function listLeadDashboardPreviews(
   workspaceId: string,
-  // Truncating here is not just a shorter hot-lead list: the dashboard reads
-  // outreachStatus off these rows to recover the stage of enrollments whose
-  // own status has collapsed to "stopped", so a lead outside the page silently
-  // subtracts from the invitations/messages totals. The projection above is
-  // what keeps the payload affordable at this cap.
-  limit = 5000,
+  // No default page: invitations/messages totals need every lead's stage.
+  // Pass limit only when a caller intentionally wants a bound.
+  limit?: number,
 ): Promise<LeadDashboardPreview[]> {
-  const snap = await collection<Lead>("leads")
+  let query: FirebaseFirestore.Query<Lead> = collection<Lead>("leads")
     .where("workspaceId", "==", workspaceId)
     .select(
       "linkedInUrl",
@@ -1258,17 +1363,16 @@ export async function listLeadDashboardPreviews(
       "outreachStatus",
       "createdAt",
       "updatedAt",
-    )
-    .limit(limit)
-    .get();
+    );
+  if (limit != null && Number.isFinite(limit) && limit > 0) {
+    query = query.limit(limit);
+  }
+  const snap = await query.get();
   return snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as LeadDashboardPreview);
 }
 
-// Resolve specific leads by id in batches. The list views above cap at 500
-// leads, so in a larger workspace an enrollment/conversation can reference a
-// lead that falls outside that page - which drops the person's name/details
-// from activity rows. This fetches exactly the referenced leads (regardless of
-// how many total leads the workspace has) so those rows still show the person.
+// Resolve specific leads by id in batches. List views load the full workspace
+// set; this still exists for activity rows that only have a lead id.
 export async function getLeadsByIds(workspaceId: string, ids: string[]): Promise<Lead[]> {
   const unique = [...new Set(ids.filter(Boolean))];
   if (!unique.length) return [];
@@ -1294,15 +1398,16 @@ export async function listLeadAgentRefs(
   workspaceId: string,
   // Every lead has to come back: the Agents page attributes outreach by
   // sourceAgentId, so a truncated page silently drops those leads from each
-  // agent's Contacted/Accepted/Messaged/Replied counts (at 500 a 1.1k-lead
-  // workspace lost ~60% of them). Three projected fields per doc.
-  limit = 5000,
+  // agent's Contacted/Accepted/Messaged/Replied counts.
+  limit?: number,
 ): Promise<LeadAgentRef[]> {
-  const snap = await collection<Lead>("leads")
+  let query: FirebaseFirestore.Query<Lead> = collection<Lead>("leads")
     .where("workspaceId", "==", workspaceId)
-    .select("sourceAgentId", "outreachStatus")
-    .limit(limit)
-    .get();
+    .select("sourceAgentId", "outreachStatus");
+  if (limit != null && Number.isFinite(limit) && limit > 0) {
+    query = query.limit(limit);
+  }
+  const snap = await query.get();
   return snap.docs.map((doc) => ({
     id: doc.id,
     sourceAgentId: (doc.data() as Partial<Lead>).sourceAgentId,
@@ -1813,6 +1918,20 @@ export async function deleteCampaign(workspaceId: string, campaignId: string) {
     .where("workspaceId", "==", workspaceId)
     .where("campaignId", "==", campaignId)
     .get();
+  const enrollments = enrollmentSnap.docs.map((doc) => doc.data());
+  // Contacted counts for Activity Overview come from enrollments. Snapshot
+  // before delete so the chart does not lose outreach history.
+  if (enrollments.length) {
+    await persistActivityTotals(
+      workspaceId,
+      buildActivityTotalsFromLive({ leads: [], enrollments, conversations: [] }),
+    ).catch((error) => {
+      console.error(
+        "[data] failed to snapshot activity before campaign delete:",
+        error instanceof Error ? error.message : error,
+      );
+    });
+  }
   for (let index = 0; index < enrollmentSnap.docs.length; index += 450) {
     const batch = getDb().batch();
     enrollmentSnap.docs.slice(index, index + 450).forEach((doc) => batch.delete(doc.ref));
@@ -2635,6 +2754,87 @@ export async function listAutomationRuns(workspaceId: string, limit = 100) {
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, capped);
   }
+}
+
+// Durable Activity Overview: per-day found/contacted/replies that outlive
+// agent and lead deletes. Docs are never deleted with agents; merge uses max()
+// so a later live recompute cannot shrink history after a delete snapshot.
+export async function listActivityDays(workspaceId: string, limit = 120) {
+  const snap = await getDb()
+    .collection("activityDays")
+    .where("workspaceId", "==", workspaceId)
+    .limit(Math.max(1, Math.min(limit, 400)))
+    .get();
+
+  return snap.docs
+    .map((doc) => {
+      const data = doc.data() as ActivityDay;
+      return {
+        id: doc.id,
+        workspaceId: data.workspaceId || workspaceId,
+        day: data.day || "",
+        found: Number(data.found || 0),
+        contacted: Number(data.contacted || 0),
+        replies: Number(data.replies || 0),
+        updatedAt: data.updatedAt || "",
+      } satisfies ActivityDay;
+    })
+    .filter((day) => Boolean(day.day))
+    .sort((a, b) => a.day.localeCompare(b.day));
+}
+
+/** Max-merge day totals into activityDays. Safe to call before deletes. */
+export async function persistActivityTotals(
+  workspaceId: string,
+  points: ActivityDayTotals[],
+) {
+  if (!points.length) return 0;
+
+  let written = 0;
+  for (const point of points) {
+    if (!point.dateKey) continue;
+    const ref = getDb().collection("activityDays").doc(`${workspaceId}-${point.dateKey}`);
+    await getDb().runTransaction(async (transaction) => {
+      const snap = await transaction.get(ref);
+      const existing = snap.exists ? (snap.data() as ActivityDay) : null;
+      transaction.set(
+        ref,
+        {
+          workspaceId,
+          day: point.dateKey,
+          found: Math.max(Number(existing?.found || 0), Number(point.found || 0)),
+          contacted: Math.max(
+            Number(existing?.contacted || 0),
+            Number(point.contacted || 0),
+          ),
+          replies: Math.max(Number(existing?.replies || 0), Number(point.replies || 0)),
+          updatedAt: nowIso(),
+        },
+        { merge: true },
+      );
+    });
+    written += 1;
+  }
+  return written;
+}
+
+/**
+ * Recompute durable activity from whatever CRM rows still exist and max-merge.
+ * Safe to call on dashboard load: never shrinks history after a prior snapshot.
+ */
+export async function reconcileActivityFromLive(
+  workspaceId: string,
+  input: {
+    leads: Array<Pick<Lead, "id" | "createdAt" | "updatedAt" | "outreachStatus">>;
+    enrollments: Array<
+      Pick<CampaignEnrollment, "leadId" | "status" | "createdAt" | "updatedAt">
+    >;
+    conversations: Array<Pick<Conversation, "messages">>;
+  },
+) {
+  const points = buildActivityTotalsFromLive(input);
+  if (!points.length) return 0;
+  return persistActivityTotals(workspaceId, points);
 }
 
 // The quota day is the workspace's LOCAL calendar day. Keying on the UTC day

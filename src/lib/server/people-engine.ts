@@ -62,6 +62,7 @@ import {
   shouldKeepStealComment,
   sortPostsByRelevance,
 } from "../competitor-engagement";
+import { buildStealProductTerms } from "../steal-customers-targeting";
 
 // 65 matches scoreLeadForProduct's "clear functional buyer" band so people
 // whose job needs the product are not discarded for imperfect title wording.
@@ -1067,15 +1068,28 @@ export async function runPeopleEngineForAgent(input: {
     sourceQueue,
     input.agent.peopleEngineCursor?.sourceKey,
   );
-  const relevanceKeywords = unique([
-    ...sourceKeywords,
-    ...criteria.keywords,
-    ...criteria.postKeywords,
-    ...criteria.useCases,
-    ...(input.profile?.keywords || []),
-    ...(input.profile?.painPoints || []),
-    input.profile?.companyName || "",
-  ]);
+  // Steal Customers: rank posts with concrete product language from My Product
+  // (features, pains, use cases, domain tokens) rather than the seller's brand
+  // name or long marketing sentences that never appear on competitor threads.
+  const relevanceKeywords = stealOnly
+    ? buildStealProductTerms({
+        profile: input.profile,
+        agentPrompt: input.agent.prompt,
+        extraPhrases: [
+          ...criteria.keywords,
+          ...criteria.postKeywords,
+          ...input.agent.filters.keywords,
+        ],
+      })
+    : unique([
+        ...sourceKeywords,
+        ...criteria.keywords,
+        ...criteria.postKeywords,
+        ...criteria.useCases,
+        ...(input.profile?.keywords || []),
+        ...(input.profile?.painPoints || []),
+        input.profile?.companyName || "",
+      ]);
 
   // When company size is binding, source inside companies that LinkedIn has
   // already filtered to that exact headcount band. These candidates are added
@@ -1101,9 +1115,11 @@ export async function runPeopleEngineForAgent(input: {
     const nextSource = orderedSources[(index + 1) % orderedSources.length];
 
     if (nextSource) {
-      await updateAgentPeopleEngineCursor(input.agent.id, nextSource.key).catch((error) => {
-        console.error("[people-engine] failed to update source cursor:", error);
-      });
+      // false = agent doc gone (deleted mid-run). Stop discovery: further
+      // cursor/status writes would also no-op, and leads would orphan to a
+      // deleted sourceAgentId with no group owner left.
+      const cursorSaved = await updateAgentPeopleEngineCursor(input.agent.id, nextSource.key);
+      if (!cursorSaved) break;
     }
 
     if (source.kind === "title") {

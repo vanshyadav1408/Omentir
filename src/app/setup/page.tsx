@@ -60,7 +60,7 @@ async function createAgentFromSetup(formData: FormData) {
     }
     throw error;
   }
-  redirect("/dashboard");
+  redirect("/agents");
 }
 
 export default async function SetupPage() {

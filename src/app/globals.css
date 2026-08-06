@@ -1304,8 +1304,25 @@ button[data-navigation-pending="true"] {
   animation: omentir-navigation-feedback 920ms ease-in-out infinite;
 }
 
+/* Self-contained AI wait overlay (all Fill with AI / AI Analyse / fetch flows).
+   Does not use m3-dialog-* so mobile bottom-sheet rules never stretch it tall. */
 .m3-ai-loading-scrim {
+  position: fixed;
+  inset: 0;
   z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  animation: m3-fade-in var(--md-sys-motion-duration-long)
+    var(--md-sys-motion-easing-standard) both;
+}
+
+html.dark .m3-ai-loading-scrim {
+  background: rgba(0, 0, 0, 0.6);
 }
 
 .m3-ai-loading-scrim--transparent {
@@ -1316,10 +1333,29 @@ html.dark .m3-ai-loading-scrim--transparent {
   background: rgba(0, 0, 0, 0.4);
 }
 
-.m3-dialog-surface.m3-ai-loading-surface {
+/* Laptop / desktop card */
+.m3-ai-loading-surface {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: auto;
   min-width: min(280px, calc(100vw - 48px));
   max-width: 400px;
+  max-height: none;
+  margin: 0;
+  padding: 24px;
   overflow: hidden;
+  border: none;
+  border-radius: var(--md-sys-shape-corner-extra-large);
+  background-color: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface);
+  box-shadow: var(--md-sys-elevation-3);
+  animation: m3-modal-enter var(--md-sys-motion-duration-long)
+    var(--md-sys-motion-easing-standard) both;
+}
+
+html.dark .m3-ai-loading-surface {
+  border: 1px solid var(--google-border);
 }
 
 .m3-ai-loading-content {
@@ -1846,6 +1882,47 @@ html.dark .m3-dialog-surface {
     opacity: 1;
   }
 }
+
+/* Agent-started toast: slide in top-right, hold, then submerge out (laptop). */
+@keyframes omentir-toast-agent {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px) translateX(12px) scale(0.98);
+  }
+  12% {
+    opacity: 1;
+    transform: translateY(0) translateX(0) scale(1);
+  }
+  78% {
+    opacity: 1;
+    transform: translateY(0) translateX(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-6px) translateX(8px) scale(0.98);
+  }
+}
+
+/* Mobile: same toast rises from bottom-center, then settles out. */
+@keyframes omentir-toast-agent-mobile {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+  12% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  78% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+}
+
 @keyframes m3-modal-enter {
   from {
     opacity: 0;
@@ -1952,17 +2029,17 @@ html.dark .m3-dialog-surface {
     padding: 16px !important;
   }
 
-  /* Keep the short new-agent chooser compact and clear of the mobile app bar. */
+  /* Short new-agent chooser: centered card (not a bottom sheet). */
   .m3-modal-scrim.new-agent-choice-mobile-scrim {
-    align-items: flex-start !important;
-    padding: 72px 16px 16px !important;
+    align-items: center !important;
+    padding: 16px !important;
     overflow-y: auto;
   }
 
   .m3-modal-surface.new-agent-choice-mobile-dialog {
     width: calc(100% - 32px) !important;
     max-width: 560px !important;
-    max-height: calc(100dvh - 88px) !important;
+    max-height: min(90dvh, calc(100dvh - 32px)) !important;
     border-radius: 28px !important;
     overflow: auto;
     animation: m3-modal-enter var(--md-sys-motion-duration-long)
@@ -1975,6 +2052,38 @@ html.dark .m3-dialog-surface {
 
   .m3-modal-surface.actions-mobile-sheet::before {
     display: none;
+  }
+
+  /* AI wait card: compact on mobile; laptop keeps base (larger) styles above. */
+  .m3-ai-loading-scrim {
+    padding: 24px;
+  }
+
+  .m3-ai-loading-surface {
+    min-width: min(260px, calc(100vw - 48px));
+    max-width: min(340px, calc(100vw - 48px));
+    padding: 16px 18px;
+    border-radius: 18px;
+  }
+
+  .m3-ai-loading-content {
+    gap: 12px;
+  }
+
+  .m3-ai-loading-indicator {
+    width: 26px;
+    height: 26px;
+    flex: 0 0 26px;
+  }
+
+  .m3-ai-loading-title {
+    font-size: 0.875rem;
+    line-height: 1.35;
+  }
+
+  .m3-ai-loading-note {
+    font-size: 0.75rem;
+    line-height: 1.35;
   }
 
   /* Drag handle — centered capsule at top of sheet */

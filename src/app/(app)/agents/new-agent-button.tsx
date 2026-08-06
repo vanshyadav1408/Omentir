@@ -72,14 +72,14 @@ export default function NewAgentButton({
                 Pick how this agent finds people and whether it runs outreach.
               </p>
 
-              <div className="mt-5 grid gap-3">
+              <div className="mt-5 grid gap-2 md:gap-3">
                 <Link
                   href="/agents/new?mode=leads"
                   onClick={() => setOpen(false)}
-                  className="group flex items-start gap-3 rounded-lg border border-[var(--md-sys-color-outline-variant)] px-4 py-3.5 transition hover:border-[#ba3871] hover:bg-[rgba(186,56,113,0.05)]"
+                  className="group flex items-center gap-3 rounded-lg border border-[var(--md-sys-color-outline-variant)] px-4 py-3 transition hover:border-[#ba3871] hover:bg-[rgba(186,56,113,0.05)] md:items-start md:py-3.5"
                 >
                   <span
-                    className="material-symbols-outlined mt-0.5 text-xl font-light leading-none text-[#ba3871]"
+                    className="material-symbols-outlined shrink-0 text-xl font-light leading-none text-[#ba3871] md:mt-0.5"
                     aria-hidden="true"
                   >
                     person_search
@@ -88,7 +88,7 @@ export default function NewAgentButton({
                     <span className="block text-sm font-semibold text-[var(--md-sys-color-on-surface)]">
                       Only Lead
                     </span>
-                    <span className="mt-0.5 block text-xs leading-5 text-[var(--md-sys-color-on-surface-variant)]">
+                    <span className="mt-0.5 hidden text-xs leading-5 text-[var(--md-sys-color-on-surface-variant)] md:block">
                       Discovers and scores matching people into a lead group. You review them in
                       Leads and contact them yourself.
                     </span>
@@ -98,10 +98,10 @@ export default function NewAgentButton({
                 <Link
                   href="/agents/new"
                   onClick={() => setOpen(false)}
-                  className="group flex items-start gap-3 rounded-lg border border-[var(--md-sys-color-outline-variant)] px-4 py-3.5 transition hover:border-[#ba3871] hover:bg-[rgba(186,56,113,0.05)]"
+                  className="group flex items-center gap-3 rounded-lg border border-[var(--md-sys-color-outline-variant)] px-4 py-3 transition hover:border-[#ba3871] hover:bg-[rgba(186,56,113,0.05)] md:items-start md:py-3.5"
                 >
                   <span
-                    className="material-symbols-outlined mt-0.5 text-xl font-light leading-none text-[#ba3871]"
+                    className="material-symbols-outlined shrink-0 text-xl font-light leading-none text-[#ba3871] md:mt-0.5"
                     aria-hidden="true"
                   >
                     send
@@ -110,7 +110,7 @@ export default function NewAgentButton({
                     <span className="block text-sm font-semibold text-[var(--md-sys-color-on-surface)]">
                       Leads + outreach
                     </span>
-                    <span className="mt-0.5 block text-xs leading-5 text-[var(--md-sys-color-on-surface-variant)]">
+                    <span className="mt-0.5 hidden text-xs leading-5 text-[var(--md-sys-color-on-surface-variant)] md:block">
                       Also runs your LinkedIn connect and message sequence on the leads
                       automatically.
                     </span>
@@ -120,10 +120,10 @@ export default function NewAgentButton({
                 <Link
                   href="/agents/new?mode=outreach"
                   onClick={() => setOpen(false)}
-                  className="group flex items-start gap-3 rounded-lg border border-[var(--md-sys-color-outline-variant)] px-4 py-3.5 transition hover:border-[#ba3871] hover:bg-[rgba(186,56,113,0.05)]"
+                  className="group flex items-center gap-3 rounded-lg border border-[var(--md-sys-color-outline-variant)] px-4 py-3 transition hover:border-[#ba3871] hover:bg-[rgba(186,56,113,0.05)] md:items-start md:py-3.5"
                 >
                   <span
-                    className="material-symbols-outlined mt-0.5 text-xl font-light leading-none text-[#ba3871]"
+                    className="material-symbols-outlined shrink-0 text-xl font-light leading-none text-[#ba3871] md:mt-0.5"
                     aria-hidden="true"
                   >
                     upload_file
@@ -132,7 +132,7 @@ export default function NewAgentButton({
                     <span className="block text-sm font-semibold text-[var(--md-sys-color-on-surface)]">
                       Outreach Only <span className="font-normal">(Bring your own CSV)</span>
                     </span>
-                    <span className="mt-0.5 block text-xs leading-5 text-[var(--md-sys-color-on-surface-variant)]">
+                    <span className="mt-0.5 hidden text-xs leading-5 text-[var(--md-sys-color-on-surface-variant)] md:block">
                       Upload LinkedIn profiles and set up messaging without lead discovery.
                     </span>
                   </span>
@@ -141,10 +141,10 @@ export default function NewAgentButton({
                 <Link
                   href="/agents/new?mode=steal"
                   onClick={() => setOpen(false)}
-                  className="group flex items-start gap-3 rounded-lg border border-[var(--md-sys-color-outline-variant)] px-4 py-3.5 transition hover:border-[#ba3871] hover:bg-[rgba(186,56,113,0.05)]"
+                  className="group flex items-center gap-3 rounded-lg border border-[var(--md-sys-color-outline-variant)] px-4 py-3 transition hover:border-[#ba3871] hover:bg-[rgba(186,56,113,0.05)] md:items-start md:py-3.5"
                 >
                   <span
-                    className="material-symbols-outlined mt-0.5 text-xl font-light leading-none text-[#ba3871]"
+                    className="material-symbols-outlined shrink-0 text-xl font-light leading-none text-[#ba3871] md:mt-0.5"
                     aria-hidden="true"
                   >
                     group
@@ -153,7 +153,7 @@ export default function NewAgentButton({
                     <span className="block text-sm font-semibold text-[var(--md-sys-color-on-surface)]">
                       Steal Customers
                     </span>
-                    <span className="mt-0.5 block text-xs leading-5 text-[var(--md-sys-color-on-surface-variant)]">
+                    <span className="mt-0.5 hidden text-xs leading-5 text-[var(--md-sys-color-on-surface-variant)] md:block">
                       Find people who comment under competitor posts and AI-reach out with that
                       post and comment context.
                     </span>

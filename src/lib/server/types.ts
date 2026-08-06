@@ -526,3 +526,17 @@ export type AutomationRun = {
   message: string;
   createdAt: string;
 };
+
+/**
+ * Durable per-day Activity Overview totals. Survives agent/group/lead deletes
+ * so the dashboard chart keeps historical performance.
+ */
+export type ActivityDay = {
+  id: string;
+  workspaceId: string;
+  day: string;
+  found: number;
+  contacted: number;
+  replies: number;
+  updatedAt: string;
+};

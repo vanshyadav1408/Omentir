@@ -128,10 +128,14 @@ export function isStealWorthyComment(
 ) {
   if (isNoiseEngagementComment(text)) return false;
   const trimmed = text.replace(/\s+/g, " ").trim();
-  if (trimmed.length < 10) return false;
-  return (
-    commentBuyingIntentScore(trimmed, productKeywords) > 0 || trimmed.length >= 25
-  );
+  if (trimmed.length < 12) return false;
+  const intent = commentBuyingIntentScore(trimmed, productKeywords);
+  // Prefer evaluation language or product-term hits. Long cheerleading on a
+  // competitor launch is not a buyer signal just because it is wordy.
+  if (intent >= 3) return true;
+  if (intent > 0 && trimmed.length >= 20) return true;
+  // Fallback: long, specific comments without keywords still sometimes convert.
+  return trimmed.length >= 50 && trimmed.includes("?");
 }
 
 /**
@@ -161,9 +165,77 @@ export function shouldKeepStealComment(input: {
 }
 
 /**
- * For steal agents: keep posts inside the post age window, then rank by product keywords.
- * If the provider omits dates entirely, fall back to relevance-only ranking so discovery
- * does not go empty on date-sparse accounts.
+ * Score how closely a public post matches what the seller offers.
+ * Higher = commenters on this thread are more likely to care about the product.
+ *
+ * Design:
+ * - Multi-word product phrases beat single tokens (less brand fluff noise).
+ * - Hiring / culture / celebration posts are heavily penalized even on competitor pages.
+ * - Product/problem discussion language gets a small bonus independent of keywords.
+ */
+export function scoreStealPostRelevance(text: string, keywords: string[] = []) {
+  const body = text.replace(/\s+/g, " ").trim();
+  if (!body) return 0;
+  const lower = body.toLowerCase();
+
+  let score = 0;
+  const terms = keywords
+    .map((value) => value.trim().toLowerCase())
+    .filter((value) => value.length >= 3);
+
+  // Prefer longer phrases first so "cold email" is not double-counted only as "email".
+  const ordered = [...terms].sort((a, b) => b.length - a.length);
+  const matched = new Set<string>();
+  for (const term of ordered) {
+    if (!lower.includes(term)) continue;
+    // Skip tokens already covered by a longer matched phrase.
+    let covered = false;
+    for (const prior of matched) {
+      if (prior.includes(term)) {
+        covered = true;
+        break;
+      }
+    }
+    if (covered) continue;
+    matched.add(term);
+    const wordCount = term.split(/\s+/).filter(Boolean).length;
+    score += wordCount >= 2 ? 4 : 2;
+  }
+
+  // Discussion of problems/solutions is where buyers hang out.
+  if (
+    /\b(?:launch(?:ing|ed)?|introducing|built|building|how (?:we|to)|playbook|workflow|automat\w*|alternative|vs\.?|versus|migrat\w*|switch(?:ing)?|replac\w*|pricing|demo|trial|customer|pipeline|outbound|inbound|prospect|lead gen|book(?:ing)? demo)\b/i.test(
+      lower,
+    )
+  ) {
+    score += 2;
+  }
+  if (lower.includes("?")) score += 1;
+
+  // Competitor company pages are full of recruiting and culture noise. Those
+  // threads attract job-seekers and employees, not buyers of similar products.
+  if (
+    /\b(?:we(?:'re| are) hiring|hiring|join (?:our|the) team|open role|job open|careers?|culture|offsite|team dinner|happy friday|congratulations to|congrats to|welcome to the team|employee spotlight|proud of our team)\b/i.test(
+      lower,
+    )
+  ) {
+    score -= 6;
+  }
+
+  return score;
+}
+
+/** Minimum score for a post to be scanned in Steal Customers (product-close threads only). */
+export const STEAL_POST_MIN_RELEVANCE = 2;
+
+/**
+ * For steal agents: keep recent posts that actually discuss something close to
+ * the seller's product, then rank by product fit. Weak brand/hiring fluff is
+ * dropped when better posts exist so commenters are more likely to be buyers.
+ *
+ * If the provider omits dates, fall back to relevance-only ranking.
+ * If nothing clears the bar, keep the single best-scoring recent post so the
+ * run is not empty on quiet company pages.
  */
 export function selectStealPosts<T>(
   posts: T[],
@@ -173,14 +245,38 @@ export function selectStealPosts<T>(
     keywords: string[];
     limit: number;
     now?: number;
+    /** Override the product-fit floor (default STEAL_POST_MIN_RELEVANCE). */
+    minScore?: number;
   },
 ) {
   const now = input.now ?? Date.now();
+  const minScore = input.minScore ?? STEAL_POST_MIN_RELEVANCE;
   const datedRecent = posts.filter((post) =>
     isRecentEnough(input.getCreatedAt(post), STEAL_MAX_POST_AGE_MS, now),
   );
   const pool = datedRecent.length ? datedRecent : posts;
-  return sortPostsByRelevance(pool, input.getText, input.keywords).slice(0, input.limit);
+  if (!pool.length) return [];
+
+  const ranked = [...pool].sort(
+    (left, right) =>
+      scoreStealPostRelevance(input.getText(right), input.keywords) -
+      scoreStealPostRelevance(input.getText(left), input.keywords),
+  );
+
+  const strong = ranked.filter(
+    (post) => scoreStealPostRelevance(input.getText(post), input.keywords) >= minScore,
+  );
+  if (strong.length) return strong.slice(0, input.limit);
+
+  // No clear product match: take at most one least-bad recent post (score > 0)
+  // rather than flooding discovery with culture threads.
+  const weakPositive = ranked.filter(
+    (post) => scoreStealPostRelevance(input.getText(post), input.keywords) > 0,
+  );
+  if (weakPositive.length) return weakPositive.slice(0, 1);
+
+  // Completely empty keyword set or unreadable posts: keep newest one only.
+  return ranked.slice(0, 1);
 }
 
 /** Short search queries used to find product-relevant competitor discussion posts. */
@@ -259,30 +355,20 @@ export function engagementLeadReason(sourceLabel: string, kind: EngagementKind) 
 /**
  * Prefer posts that mention product/problem language, but never drop the rest.
  * Warm commenters on any competitor post still beat cold title search.
+ * Steal Customers uses selectStealPosts (harder product-fit floor) instead.
  */
 export function sortPostsByRelevance<T>(
   posts: T[],
   getText: (post: T) => string,
   keywords: string[],
 ): T[] {
-  const terms = keywords
-    .map((value) => value.trim().toLowerCase())
-    .filter((value) => value.length >= 3);
-  if (!terms.length || posts.length <= 1) return posts;
+  if (!keywords.length || posts.length <= 1) return posts;
 
-  const score = (post: T) => {
-    const text = getText(post).toLowerCase();
-    if (!text) return 0;
-    let hits = 0;
-    for (const term of terms) {
-      if (text.includes(term)) hits += 1;
-    }
-    // Slight boost for question-shaped posts (often product discussion).
-    if (text.includes("?")) hits += 0.5;
-    return hits;
-  };
-
-  return [...posts].sort((left, right) => score(right) - score(left));
+  return [...posts].sort(
+    (left, right) =>
+      scoreStealPostRelevance(getText(right), keywords) -
+      scoreStealPostRelevance(getText(left), keywords),
+  );
 }
 
 export type PeopleEngineSourceKind = "competitor" | "founder" | "keyword" | "title";

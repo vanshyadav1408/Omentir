@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import type { LinkedInAccount, Workspace } from "@/lib/server/types";
 import { ContentReveal, LinkedInAccountsSkeleton } from "@/app/app-skeletons";
+import MobileHeaderPortal from "@/app/mobile-header-portal";
 import { useSidebarResource } from "@/app/use-sidebar-resource";
 import SignOutButton from "./sign-out-button";
 import { SelectField } from "@/app/ui/select";
@@ -417,16 +418,26 @@ export default function SettingsView({
     .toUpperCase();
 
   return (
-    <form onSubmit={handleSubmit} className="flex h-full min-h-0 min-w-0 flex-col gap-3 md:ml-4 md:mr-0.5">
-      {/* Mobile header save button - fixed in the top bar */}
-      <button
-        type="submit"
-        disabled={pending}
-        style={{ fontFamily: "var(--font-varta)" }}
-        className="m3-mobile-header-action fixed right-2 z-[91] inline-flex h-10 cursor-pointer items-center justify-center rounded-full bg-[var(--md-sys-color-primary)] px-4 text-xs font-semibold text-[var(--md-sys-color-on-primary)] transition hover:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-60 md:hidden"
-      >
-        <span className="translate-y-px">{pending ? "Saving..." : "Save settings"}</span>
-      </button>
+    <form
+      id="settings-save-form"
+      onSubmit={handleSubmit}
+      className="flex h-full min-h-0 min-w-0 flex-col gap-3 md:ml-4 md:mr-0.5"
+    >
+      {/* Portaled to body so fixed positioning is not trapped by page enter /
+          fade transforms (or main overflow), which hid this control on mobile. */}
+      <MobileHeaderPortal>
+        <div className="pointer-events-none fixed inset-x-0 top-0 z-[92] flex h-14 items-center justify-end px-2 md:hidden">
+          <button
+            type="submit"
+            form="settings-save-form"
+            disabled={pending}
+            style={{ fontFamily: "var(--font-varta)" }}
+            className="pointer-events-auto inline-flex h-8 cursor-pointer items-center justify-center rounded-full bg-[var(--md-sys-color-primary)] px-3 text-xs font-semibold text-[var(--md-sys-color-on-primary)] transition hover:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <span className="translate-y-px">{pending ? "Saving..." : "Save"}</span>
+          </button>
+        </div>
+      </MobileHeaderPortal>
 
       {/* Header — primary action matches Leads "Add leads" */}
       <div className="app-x hidden shrink-0 items-center justify-between gap-3 pt-6 md:flex">
