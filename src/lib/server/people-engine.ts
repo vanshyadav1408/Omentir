@@ -160,6 +160,14 @@ function unique(values: string[]) {
   return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)));
 }
 
+function stableIndex(value: string, length: number) {
+  let hash = 0;
+  for (const character of value) {
+    hash = (hash * 31 + character.charCodeAt(0)) >>> 0;
+  }
+  return length ? hash % length : 0;
+}
+
 function hasRunTime(deadline: number) {
   return Date.now() < deadline - STOP_BUFFER_MS;
 }
@@ -246,9 +254,19 @@ async function searchPeopleForAgentQuery(input: {
   limit: number;
   excludeKeys?: Set<string>;
 }): Promise<Partial<Lead>[]> {
+  // Searching every target country for every title/keyword turns one agent
+  // run into dozens of Classic searches, which regularly exhausts LinkedIn's
+  // provider allowance before any profile can be qualified. Spread each
+  // independent query across the requested countries instead. The query is
+  // stable, so the same role stays in its assigned market while the rotated
+  // source queue covers the rest over subsequent runs.
   const locationBatches =
     input.targetLocations.length > 0
-      ? input.targetLocations.map((location) => [location])
+      ? [[
+          input.targetLocations[
+            stableIndex(input.title || input.keyword || "people", input.targetLocations.length)
+          ],
+        ]]
       : [[] as string[]];
   const found = new Map<string, Partial<Lead>>();
 
@@ -750,6 +768,93 @@ async function collectFromTitle(input: {
   return added;
 }
 
+/**
+ * When Classic people search returns zero (common on restricted free accounts),
+ * post search still works and returns authors with real provider ids. Keep only
+ * authors whose headline matches the agent titles so this stays role discovery,
+ * not unscoped post-noise mining.
+ */
+async function collectFromRolePostAuthors(input: {
+  agent: Agent;
+  account: LinkedInAccount;
+  candidates: Map<string, Candidate>;
+  titles: string[];
+  roleVocabulary: string[];
+  excludeKeys?: Set<string>;
+  limit?: number;
+}): Promise<number> {
+  const limit = input.limit ?? 20;
+  let added = 0;
+  const seen = new Set<string>();
+
+  for (const title of input.titles.slice(0, 6)) {
+    if (added >= limit) break;
+    const queries = [
+      title,
+      `my day as a ${title}`,
+      `as a ${title}`,
+    ];
+    for (const query of queries) {
+      if (added >= limit) break;
+      try {
+        const posts = await searchLinkedInPosts({
+          accountId: input.account.accountId,
+          keywords: query,
+          limit: 12,
+        });
+        for (const post of posts) {
+          if (added >= limit) break;
+          const author = post.author || post.user;
+          if (!author || (author as { is_company?: boolean }).is_company) continue;
+          const lead = normalizeLinkedInActor(author);
+          if (!lead) continue;
+          if (!matchesTargetTitle(lead.title || "", input.titles, input.roleVocabulary)) {
+            continue;
+          }
+          const key = (lead.providerProfileId || lead.linkedInUrl || lead.name || "")
+            .toLowerCase();
+          if (!key || seen.has(key)) continue;
+          if (
+            input.excludeKeys?.size &&
+            profileSearchKeys(lead).some((item) => input.excludeKeys!.has(item))
+          ) {
+            continue;
+          }
+          seen.add(key);
+          addObservedSignal(input.candidates, {
+            lead,
+            signalType: "profile_search",
+            signalSource: `LinkedIn title post author "${title}"`,
+            signalText: getLinkedInPostText(post).slice(0, 280) || title,
+            signalUrl: getLinkedInPostUrl(post) || lead.linkedInUrl || "",
+            signalObservedAt:
+              getLinkedInPostCreatedAtRaw(post) || getLinkedInPostCreatedAt(post) || nowIso(),
+            leadReason: `Job title match from public post author: ${title}`,
+          });
+          added += 1;
+        }
+      } catch (error) {
+        await logSourceError(input.agent, `title post author "${title}"`, error);
+      }
+    }
+  }
+
+  return added;
+}
+
+function namesAlign(claimed: string | undefined, resolved: string | undefined) {
+  const tokens = (value: string | undefined) =>
+    String(value || "")
+      .toLowerCase()
+      .replace(/[^a-z\s]/g, " ")
+      .split(/\s+/)
+      .filter((part) => part.length > 1 && !["linkedin", "member"].includes(part));
+  const left = tokens(claimed);
+  const right = tokens(resolved);
+  if (!left.length || !right.length) return false;
+  return left.some((part) => right.includes(part));
+}
+
 async function collectFromCompanyFilteredSearch(input: {
   agent: Agent;
   account: LinkedInAccount;
@@ -1042,8 +1147,11 @@ export async function runPeopleEngineForAgent(input: {
   // the target list ("Dispatcher" against "Logistics Coordinator") is still
   // recognized as someone who performs the work.
   const roleVocabulary = criteria.roleVocabulary;
-  const titleLimit = input.initialLeadTarget ? 6 : 12;
-  const keywordLimit = input.initialLeadTarget ? 6 : 16;
+  // Keep one run below the LinkedIn Classic-search burst limit. Full source
+  // lists are still retained and rotated via peopleEngineCursor, so narrow
+  // criteria are covered over time without sacrificing the strongest
+  // title-first searches in the current run.
+  const sourceLimit = input.initialLeadTarget ? 6 : 8;
   const sourceQueue: PeopleEngineSource[] = stealOnly
     ? buildPeopleEngineSourceQueue({
         competitorUrls: sources.competitorUrls,
@@ -1060,14 +1168,14 @@ export async function runPeopleEngineForAgent(input: {
         founderUrls: [],
         titles: searchTitles,
         keywords: sourceKeywords,
-        titleLimit,
-        keywordLimit,
+        titleLimit: searchTitles.length,
+        keywordLimit: sourceKeywords.length,
         sourceKey,
       });
   const orderedSources = rotateSources(
     sourceQueue,
     input.agent.peopleEngineCursor?.sourceKey,
-  );
+  ).slice(0, sourceLimit);
   // Steal Customers: rank posts with concrete product language from My Product
   // (features, pains, use cases, domain tokens) rather than the seller's brand
   // name or long marketing sentences that never appear on competitor threads.
@@ -1167,10 +1275,24 @@ export async function runPeopleEngineForAgent(input: {
       message:
         `Agent ${input.agent.id}: people search returned 0 profiles across title/keyword sources` +
         `${targetLocations.length ? ` (locations: ${targetLocations.join(", ")})` : ""}. ` +
-        `Enrichment will only use grounded/company sources if any.`,
+        `Trying title-matched post authors, then grounded/company sources.`,
     }).catch((error) => {
       console.error("[people-engine] failed to log empty people search:", error);
     });
+
+    // Classic people search can return HTTP 200 with an empty set while posts
+    // still work. Title-matched post authors carry real provider ids.
+    if (hasRunTime(deadline) && matchTitles.length) {
+      peopleSearchHits += await collectFromRolePostAuthors({
+        agent: input.agent,
+        account: input.account,
+        candidates,
+        titles: matchTitles,
+        roleVocabulary,
+        excludeKeys: groupLeadKeys,
+        limit: input.initialLeadTarget ? 12 : 20,
+      });
+    }
   }
 
   // Steal agents also search recent product/competitor discussion posts (not
@@ -1229,7 +1351,11 @@ export async function runPeopleEngineForAgent(input: {
   // it. Its evidence is still checked by the same deterministic and model gates.
   // Steal-customers agents stay on competitor post comments only.
   if (!stealOnly && hasRunTime(deadline)) {
-    const groundedCandidates = await findGroundedAgentCandidates(input.agent);
+    const groundedCandidates = await findGroundedAgentCandidates(
+      input.agent,
+      15,
+      input.profile,
+    );
     for (const lead of groundedCandidates) {
       addObservedSignal(candidates, {
         lead,
@@ -1427,6 +1553,31 @@ export async function runPeopleEngineForAgent(input: {
     // that profile to a provider identity before the lead becomes contactable.
     if (hasGroundedEvidence && !enrichedLead.providerProfileId) {
       anonymousDropped += 1;
+      continue;
+    }
+
+    // Wrong-slug grounded hits often resolve to a different person. Drop when
+    // the live profile name does not overlap the claimed candidate name.
+    if (
+      hasGroundedEvidence &&
+      candidate.lead.name &&
+      enrichedLead.name &&
+      !namesAlign(candidate.lead.name, enrichedLead.name)
+    ) {
+      anonymousDropped += 1;
+      continue;
+    }
+
+    // After live enrichment, re-check the current role against the agent titles
+    // so a wrong slug that still returned some profile cannot pass on the
+    // model-claimed title alone.
+    if (
+      !stealOnly &&
+      matchTitles.length &&
+      enrichedLead.title &&
+      !matchesTargetTitle(enrichedLead.title, matchTitles, roleVocabulary)
+    ) {
+      titleFiltered += 1;
       continue;
     }
 

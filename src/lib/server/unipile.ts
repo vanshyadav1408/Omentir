@@ -12,12 +12,20 @@ import { searchableLocationNames } from "./geo";
 
 const UNIPILE_TIMEOUT_MS = 30_000;
 const UNIPILE_MIN_REQUEST_SPACING_MS = 250;
+// Classic LinkedIn search is much more rate-sensitive than messages. A short
+// burst of searches can make Unipile return 429 for every remaining query,
+// which turns a good agent configuration into an empty lead run.
+const LINKEDIN_SEARCH_MIN_REQUEST_SPACING_MS = 2_000;
+const UNIPILE_RATE_LIMIT_RETRY_MS = 15_000;
+const UNIPILE_RATE_LIMIT_RETRIES = 1;
 // Free LinkedIn accounts reject notes over ~200 chars (Unipile returns
 // errors/too_many_characters). Paid accounts allow 300; 200 is safe for both.
 const LINKEDIN_CONNECTION_NOTE_LIMIT = 200;
 const LINKEDIN_MESSAGE_LIMIT = 8000;
 let nextUnipileRequestAt = 0;
 let unipileThrottle = Promise.resolve();
+let nextLinkedInSearchAt = 0;
+let linkedInSearchThrottle = Promise.resolve();
 
 // Every /users/{id} retrieval registers as a profile view on the customer's
 // LinkedIn account. Unbounded views trip LinkedIn's "high volume of profile
@@ -53,11 +61,13 @@ export class UnipileResponseError extends Error {
   // of pattern-matching message strings.
   errorType?: string;
   detail?: string;
+  retryAfterMs?: number;
 
-  constructor(status: number, message: string, body?: string) {
+  constructor(status: number, message: string, body?: string, retryAfterMs?: number) {
     super(message);
     this.name = "UnipileResponseError";
     this.status = status;
+    this.retryAfterMs = retryAfterMs;
     if (body) {
       try {
         const parsed = JSON.parse(body) as { type?: unknown; detail?: unknown };
@@ -86,6 +96,35 @@ async function throttleUnipileRequest() {
   if (waitMs > 0) await wait(waitMs);
   nextUnipileRequestAt = Date.now() + UNIPILE_MIN_REQUEST_SPACING_MS;
   release();
+}
+
+async function throttleLinkedInSearch() {
+  const previous = linkedInSearchThrottle;
+  let release = () => {};
+  linkedInSearchThrottle = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+
+  await previous;
+  const waitMs = Math.max(0, nextLinkedInSearchAt - Date.now());
+  if (waitMs > 0) await wait(waitMs);
+  nextLinkedInSearchAt = Date.now() + LINKEDIN_SEARCH_MIN_REQUEST_SPACING_MS;
+  release();
+}
+
+function deferUnipileRequests(delayMs: number) {
+  nextUnipileRequestAt = Math.max(
+    nextUnipileRequestAt,
+    Date.now() + delayMs,
+  );
+}
+
+function retryAfterMs(value: string | null) {
+  if (!value) return undefined;
+  const seconds = Number(value);
+  if (Number.isFinite(seconds) && seconds >= 0) return seconds * 1000;
+  const at = Date.parse(value);
+  return Number.isFinite(at) ? Math.max(0, at - Date.now()) : undefined;
 }
 
 export type UnipileProfile = {
@@ -355,35 +394,54 @@ async function request<T>(path: string, init?: RequestInit) {
     throw new Error("Unipile is not configured.");
   }
   const isFormData = typeof FormData !== "undefined" && init?.body instanceof FormData;
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), UNIPILE_TIMEOUT_MS);
 
-  try {
-    await throttleUnipileRequest();
-    const response = await fetch(`${config.baseUrl}${path}`, {
-      ...init,
-      signal: init?.signal || controller.signal,
-      headers: {
-        "x-api-key": config.apiKey,
-        ...(isFormData ? {} : { "content-type": "application/json" }),
-        ...(init?.headers || {}),
-      },
-    });
+  for (let attempt = 0; attempt <= UNIPILE_RATE_LIMIT_RETRIES; attempt += 1) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), UNIPILE_TIMEOUT_MS);
 
-    if (!response.ok) {
+    try {
+      await throttleUnipileRequest();
+      const response = await fetch(`${config.baseUrl}${path}`, {
+        ...init,
+        signal: init?.signal || controller.signal,
+        headers: {
+          "x-api-key": config.apiKey,
+          ...(isFormData ? {} : { "content-type": "application/json" }),
+          ...(init?.headers || {}),
+        },
+      });
+
+      if (response.ok) {
+        if (response.status === 204) return undefined as T;
+        return (await response.json()) as T;
+      }
+
       const body = await response.text().catch(() => "");
-      throw new UnipileResponseError(
+      const error = new UnipileResponseError(
         response.status,
         `Unipile request failed: ${response.status}${body ? ` ${body}` : ""}`,
         body,
+        retryAfterMs(response.headers.get("retry-after")),
       );
-    }
+      if (error.status !== 429 || attempt === UNIPILE_RATE_LIMIT_RETRIES) {
+        throw error;
+      }
 
-    if (response.status === 204) return undefined as T;
-    return (await response.json()) as T;
-  } finally {
-    clearTimeout(timeout);
+      // A 429 is an explicit rejection, so retrying after the provider's
+      // requested cooldown is safe. Share that cooldown with every request in
+      // this process instead of immediately hammering the next search source.
+      const delayMs = Math.max(
+        error.retryAfterMs || 0,
+        UNIPILE_RATE_LIMIT_RETRY_MS,
+      );
+      deferUnipileRequests(delayMs);
+      await wait(delayMs);
+    } finally {
+      clearTimeout(timeout);
+    }
   }
+
+  throw new Error("Unreachable Unipile retry state.");
 }
 
 function asRecord(value: unknown): RecordLike | null {
@@ -986,6 +1044,7 @@ async function searchLinkedIn<T>(input: {
   // Unipile reads limit from the query string and pages with a cursor; a
   // single un-paginated request only ever returns the first page.
   for (let page = 0; page < maxPages && items.length < input.limit; page += 1) {
+    await throttleLinkedInSearch();
     const result = await request<UnipileListResponse<T>>(
       withQuery("/api/v1/linkedin/search", {
         account_id: input.accountId,
