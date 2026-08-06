@@ -101,6 +101,13 @@ const LISTINGS = [
     src: "https://saasroots.com/assets/images/badge-dark.png",
   },
   {
+    href: "https://daniellaunches.com",
+    label: "Featured on DanielLaunches",
+    width: 220,
+    height: 48,
+    src: "https://daniellaunches.com/badge-dark.svg",
+  },
+  {
     href: "https://indieai.directory/",
     label: "Listed on IndieAI Directory",
     src: null,
