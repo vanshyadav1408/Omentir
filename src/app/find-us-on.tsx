@@ -57,45 +57,49 @@ const LISTINGS = [
   },
 ] as const;
 
-const cardClassName =
-  "inline-flex items-center justify-center rounded-lg bg-[var(--md-sys-color-surface-container-high)] p-2 ring-1 ring-[var(--md-sys-color-outline-variant)] transition hover:bg-[var(--md-sys-state-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--md-sys-color-primary)]";
+function ListingLink({ listing }: { listing: (typeof LISTINGS)[number] }) {
+  return (
+    <a
+      href={listing.href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex shrink-0 items-center whitespace-nowrap text-sm font-medium text-[var(--md-sys-color-on-surface-variant)] opacity-90 transition hover:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--md-sys-color-primary)]"
+    >
+      {listing.src ? (
+        <Image
+          src={listing.src}
+          alt={listing.label}
+          width={listing.width}
+          height={listing.height}
+          unoptimized
+          draggable={false}
+          style={{ height: listing.height, width: "auto", maxHeight: 54 }}
+        />
+      ) : (
+        listing.label
+      )}
+    </a>
+  );
+}
 
 export default function FindUsOn() {
+  // Duplicate the row so the translate loop can wrap without a jump.
+  const track = [...LISTINGS, ...LISTINGS];
+
   return (
-    <section aria-labelledby="find-us-on" className="px-4 py-6 text-center">
+    <section aria-labelledby="find-us-on" className="py-6 text-center">
       <h2
         id="find-us-on"
-        className="text-sm font-medium text-[var(--md-sys-color-on-surface-variant)]"
+        className="px-4 text-sm font-medium text-[var(--md-sys-color-on-surface-variant)]"
       >
         Find us on
       </h2>
-      <div className="mt-3 flex flex-wrap items-center justify-center gap-4">
-        {LISTINGS.map((listing) => (
-          <a
-            key={listing.href}
-            href={listing.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={
-              listing.src
-                ? cardClassName
-                : `${cardClassName} px-3 py-2 text-sm font-medium text-[var(--md-sys-color-on-surface)]`
-            }
-          >
-            {listing.src ? (
-              <Image
-                src={listing.src}
-                alt={listing.label}
-                width={listing.width}
-                height={listing.height}
-                unoptimized
-                style={{ height: listing.height, width: "auto" }}
-              />
-            ) : (
-              listing.label
-            )}
-          </a>
-        ))}
+      <div className="find-us-marquee mt-4 overflow-hidden">
+        <div className="find-us-marquee-track flex w-max flex-nowrap items-center gap-10 px-6">
+          {track.map((listing, index) => (
+            <ListingLink key={`${listing.href}-${index}`} listing={listing} />
+          ))}
+        </div>
       </div>
     </section>
   );

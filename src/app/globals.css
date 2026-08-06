@@ -3708,3 +3708,30 @@ html.dark td.text-black,
 html.dark .font-semibold.text-black {
   color: rgba(255, 255, 255, 0.92) !important;
 }
+
+/* Homepage "Find us on" logos: single horizontal strip, slow infinite scroll.
+   Track is duplicated in markup; -50% lands on the start of the copy. */
+@keyframes find-us-marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.find-us-marquee-track {
+  animation: find-us-marquee 55s linear infinite;
+  will-change: transform;
+}
+
+.find-us-marquee:hover .find-us-marquee-track,
+.find-us-marquee:focus-within .find-us-marquee-track {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .find-us-marquee-track {
+    animation: none;
+  }
+}
