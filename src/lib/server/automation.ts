@@ -495,15 +495,27 @@ async function runAgents(mode: AutomationSafetyMode) {
       // real cause so the activity feed is not just a red badge with no reason.
       // If the agent was deleted mid-run, markAgentRun no-ops and we skip the
       // error log - there is no agent left to surface it on.
-      const marked = await markAgentRun(agent, false);
-      if (!marked) continue;
       const message = error instanceof Error ? error.message : "Agent run failed";
-      console.error(`[automation] agent ${agent.id} run failed:`, message);
+      console.error(
+        `[automation] agent ${agent.id} run failed:`,
+        message,
+        error instanceof Error ? error.stack : error,
+      );
+
+      // Vertex/Firestore INVALID_ARGUMENT is often one bad candidate payload
+      // after partial progress. Parking the agent as Error until tomorrow
+      // hid working discovery (leads already saved, outreach already running).
+      // Keep the agent active and on its normal daily slot; still log the error.
+      const softRecover = /INVALID_ARGUMENT|Request contains an invalid argument/i.test(
+        message,
+      );
+      const marked = await markAgentRun(agent, softRecover);
+      if (!marked) continue;
       await logAutomationRun({
         workspaceId: agent.workspaceId,
         kind: "agent",
         status: "error",
-        message,
+        message: softRecover ? `Recovered active after: ${message}` : message,
       });
     }
   }

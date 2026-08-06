@@ -13,6 +13,7 @@ import {
   PersonalizeIllustration,
 } from "./landing-illustrations";
 import { HeroGridBackdrop, MarketingFooter, MarketingHeader } from "./marketing-shell";
+import CustomerLogoWall from "./customer-logo-wall";
 import FindUsOn from "./find-us-on";
 import JsonLd from "./json-ld";
 import { LogoGlyph } from "./logo-mark";
@@ -512,6 +513,10 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        <div className="relative z-10">
+          <CustomerLogoWall />
+        </div>
 
         <section
           id="how-it-works"

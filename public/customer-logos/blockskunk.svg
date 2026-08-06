@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" role="img" aria-label="BlockSkunk">
+  <!-- Light frame so the official mark stays legible on Omentir's dark canvas -->
+  <rect width="32" height="32" rx="6" fill="#FDFCF9"/>
+  <rect x="4" y="13" width="24" height="6" fill="#10243E"/>
+  <rect x="4" y="13" width="8" height="6" fill="#B08D2E"/>
+  <rect x="10" y="7" width="3" height="18" fill="#10243E"/>
+  <rect x="10" y="7" width="3" height="6" fill="#B08D2E"/>
+</svg>

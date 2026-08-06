@@ -1501,7 +1501,18 @@ export async function runPeopleEngineForAgent(input: {
       break;
     }
 
-    const persistedSignals = await persistCandidateSignals(input.agent, candidate);
+    let persistedSignals: LeadSignal[];
+    try {
+      persistedSignals = await persistCandidateSignals(input.agent, candidate);
+    } catch (error) {
+      // One bad signal payload (Firestore INVALID_ARGUMENT, etc.) must not
+      // mark the whole agent Error and stop discovery for the day.
+      console.error(
+        "[people-engine] persist signals failed:",
+        error instanceof Error ? error.message : error,
+      );
+      continue;
+    }
     signalsObserved += persistedSignals.length;
 
     const firstSignal = primarySignal(candidate);
@@ -1519,7 +1530,16 @@ export async function runPeopleEngineForAgent(input: {
     if (existingLeadIds.has(existingLeadId)) {
       const existingLead = existingLeadsById.get(existingLeadId);
       if (!existingLead) continue;
-      await qualifyExistingLead(existingLead, candidate, firstSignal, persistedSignals);
+      try {
+        await qualifyExistingLead(existingLead, candidate, firstSignal, persistedSignals);
+      } catch (error) {
+        console.error(
+          "[people-engine] qualify existing lead failed:",
+          error instanceof Error ? error.message : error,
+        );
+        existingRejected += 1;
+        continue;
+      }
       if (
         input.initialLeadTarget &&
         leadsAdded + existingQualifiedLeads >= input.initialLeadTarget
@@ -1656,19 +1676,31 @@ export async function runPeopleEngineForAgent(input: {
         score.summary || enrichedLead.summary || directSignalEvidence(firstSignal),
     });
 
-    const lead = await upsertLead(input.agent.workspaceId, input.agent.targetGroupId, {
-      ...enrichedLead,
-      fitScore: score.fitScore,
-      scoreReasons: [...score.scoreReasons, firstSignal.leadReason],
-      sourceAgentId: input.agent.id,
-      signalType: firstSignal.signalType,
-      signalSource: firstSignal.signalSource,
-      signalText: firstSignal.signalText,
-      signalUrl: firstSignal.signalUrl,
-      signalObservedAt: firstSignal.signalObservedAt,
-      leadReason: firstSignal.leadReason,
-      engagementContext: firstSignal.engagementContext,
-    });
+    let lead: Lead;
+    try {
+      lead = await upsertLead(input.agent.workspaceId, input.agent.targetGroupId, {
+        ...enrichedLead,
+        fitScore: score.fitScore,
+        scoreReasons: [...score.scoreReasons, firstSignal.leadReason],
+        sourceAgentId: input.agent.id,
+        signalType: firstSignal.signalType,
+        signalSource: firstSignal.signalSource,
+        signalText: firstSignal.signalText,
+        signalUrl: firstSignal.signalUrl,
+        signalObservedAt: firstSignal.signalObservedAt,
+        leadReason: firstSignal.leadReason,
+        engagementContext: firstSignal.engagementContext,
+      });
+    } catch (error) {
+      // Nested undefined / invalid profileContext from enrichment used to throw
+      // Firestore INVALID_ARGUMENT and mark the agent Error with 0 leads saved.
+      console.error(
+        "[people-engine] upsert lead failed:",
+        error instanceof Error ? error.message : error,
+      );
+      lowScoreCandidates += 1;
+      continue;
+    }
 
     existingLeadIds.add(lead.id);
     existingLeadsById.set(lead.id, lead);
@@ -1677,6 +1709,11 @@ export async function runPeopleEngineForAgent(input: {
         markLeadSignalPromoted(signal.id, {
           leadId: lead.id,
           fitScore: score.fitScore,
+        }).catch((error) => {
+          console.error(
+            "[people-engine] mark signal promoted failed:",
+            error instanceof Error ? error.message : error,
+          );
         }),
       ),
     );

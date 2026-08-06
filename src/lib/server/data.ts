@@ -63,10 +63,28 @@ function collection<T>(name: string) {
   return getDb().collection(name) as FirebaseFirestore.CollectionReference<T>;
 }
 
-function omitUndefined<T extends Record<string, unknown>>(value: T) {
+// Firestore rejects undefined anywhere in a document (including nested maps).
+// Top-level-only stripping left profileContext/enrichment payloads able to throw
+// INVALID_ARGUMENT mid agent run and mark the whole agent Error.
+function omitUndefinedDeep(value: unknown): unknown {
+  if (value === undefined) return undefined;
+  if (value === null || typeof value !== "object") return value;
+  // Preserve FieldValue sentinels (delete, increment, arrayUnion, ...).
+  if (typeof (value as { isEqual?: unknown }).isEqual === "function") return value;
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => omitUndefinedDeep(item))
+      .filter((item) => item !== undefined);
+  }
   return Object.fromEntries(
-    Object.entries(value).filter(([, item]) => item !== undefined),
-  ) as T;
+    Object.entries(value as Record<string, unknown>)
+      .map(([key, item]) => [key, omitUndefinedDeep(item)] as const)
+      .filter(([, item]) => item !== undefined),
+  );
+}
+
+function omitUndefined<T extends Record<string, unknown>>(value: T) {
+  return omitUndefinedDeep(value) as T;
 }
 
 function updatePatch<T extends Record<string, unknown>>(value: T) {
