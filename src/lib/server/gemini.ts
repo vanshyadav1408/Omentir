@@ -1316,7 +1316,7 @@ export type GroundedAgentCandidate = Pick<
 function buyerCandidateGuidance(profile: ProductProfile | null) {
   const productBits = [
     profile?.companyName ? `Product company: ${profile.companyName}` : "",
-    profile?.productOverview ? `Product: ${profile.productOverview.slice(0, 500)}` : "",
+    profile?.description ? `Product: ${profile.description.slice(0, 500)}` : "",
     profile?.targetBuyers?.length
       ? `Who buys it: ${JSON.stringify(profile.targetBuyers.slice(0, 6))}`
       : "",

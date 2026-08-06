@@ -1350,7 +1350,9 @@ export async function listLeadDashboardPreviews(
   // Pass limit only when a caller intentionally wants a bound.
   limit?: number,
 ): Promise<LeadDashboardPreview[]> {
-  let query: FirebaseFirestore.Query<Lead> = collection<Lead>("leads")
+  // .select() widens the Firestore generic to DocumentData; keep the query
+  // untyped and cast the projected row after merge.
+  let query: FirebaseFirestore.Query = collection<Lead>("leads")
     .where("workspaceId", "==", workspaceId)
     .select(
       "linkedInUrl",
@@ -1368,7 +1370,9 @@ export async function listLeadDashboardPreviews(
     query = query.limit(limit);
   }
   const snap = await query.get();
-  return snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as LeadDashboardPreview);
+  return snap.docs.map(
+    (doc) => ({ ...doc.data(), id: doc.id }) as LeadDashboardPreview,
+  );
 }
 
 // Resolve specific leads by id in batches. List views load the full workspace
@@ -1401,7 +1405,7 @@ export async function listLeadAgentRefs(
   // agent's Contacted/Accepted/Messaged/Replied counts.
   limit?: number,
 ): Promise<LeadAgentRef[]> {
-  let query: FirebaseFirestore.Query<Lead> = collection<Lead>("leads")
+  let query: FirebaseFirestore.Query = collection<Lead>("leads")
     .where("workspaceId", "==", workspaceId)
     .select("sourceAgentId", "outreachStatus");
   if (limit != null && Number.isFinite(limit) && limit > 0) {
