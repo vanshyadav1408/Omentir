@@ -3730,8 +3730,83 @@ html.dark .font-semibold.text-black {
   animation-play-state: paused;
 }
 
+/* Customer logo wall — quiet social-proof strip on dark canvas. */
+.customer-logo-marquee {
+  overflow: hidden;
+  /* Wider soft fade so logos dissolve well before the strip edges. */
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    #000 18%,
+    #000 82%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    #000 18%,
+    #000 82%,
+    transparent 100%
+  );
+}
+
+@media (min-width: 768px) {
+  .customer-logo-marquee {
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent 0%,
+      #000 16%,
+      #000 84%,
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to right,
+      transparent 0%,
+      #000 16%,
+      #000 84%,
+      transparent 100%
+    );
+  }
+}
+
+.customer-logo-marquee-track {
+  animation: find-us-marquee 65s linear infinite;
+  will-change: transform;
+}
+
+.customer-logo-marquee:hover .customer-logo-marquee-track,
+.customer-logo-marquee:focus-within .customer-logo-marquee-track {
+  animation-play-state: paused;
+}
+
+/* Unify mixed brand colors into a soft monochrome set; full color on hover.
+   Keep brightness high so marks stay light on the dark canvas (not muddy black). */
+.customer-logo-img {
+  opacity: 0.78;
+  filter: grayscale(1) brightness(1.75) contrast(0.9);
+  transition:
+    opacity 180ms ease,
+    filter 180ms ease,
+    transform 180ms ease;
+}
+
+.customer-logo-item:hover .customer-logo-img,
+.customer-logo-item:focus-visible .customer-logo-img {
+  opacity: 1;
+  filter: grayscale(0) brightness(1.05) contrast(1);
+  transform: translateY(-1px);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .find-us-marquee-track {
     animation: none;
+  }
+
+  .customer-logo-marquee-track {
+    animation: none;
+  }
+
+  .customer-logo-img {
+    transition: none;
   }
 }

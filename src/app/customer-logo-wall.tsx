@@ -4,22 +4,25 @@ import Image from "next/image";
  * Customer logos for the landing "used by" wall.
  * Files: public/customer-logos/
  *
- * No under-labels — only the logo assets themselves (wordmarks keep their
- * built-in text; icon marks stay icon-only).
+ * Visual treatment: one quiet horizontal row, monochrome by default so mixed
+ * brand colors do not clash on the dark canvas, full color on hover.
+ *
+ * Sizing: base graphic height is +20% over the previous h-8/md:h-9.
+ * VibeDream gets an extra +20% on top of that (thin mark).
  */
 const CUSTOMERS = [
   {
     name: "OutreachPanda",
     href: "https://outreachpanda.com",
-    // Icon mark only (not the long wordmark).
     src: "/customer-logos/outreachpanda.svg",
     width: 40,
     height: 40,
+    // Slightly small mark — +7% over the shared base height.
+    size: "panda" as const,
   },
   {
     name: "IT-Harvest",
     href: "https://it-harvest.com",
-    // Full brand logo (symbol + wordmark).
     src: "/customer-logos/it-harvest.png",
     width: 180,
     height: 60,
@@ -55,7 +58,6 @@ const CUSTOMERS = [
   {
     name: "Nunar",
     href: "https://nunariq.com",
-    // Official wordmark (logo + brand text in the asset).
     src: "/customer-logos/nunariq.svg",
     width: 140,
     height: 36,
@@ -66,6 +68,8 @@ const CUSTOMERS = [
     src: "/customer-logos/vibedream.png",
     width: 40,
     height: 40,
+    // Thin mark — +20% before the shared +20% bump → 1.44× original.
+    size: "vibe" as const,
   },
   {
     name: "Dibe Agency",
@@ -76,52 +80,68 @@ const CUSTOMERS = [
   },
 ] as const;
 
+/** Base +20% wall size; optional per-brand tweaks. */
+const LOGO_SIZE = {
+  base: { box: "h-[2.4rem] md:h-[2.7rem]", img: "h-[2.4rem] md:h-[2.7rem]" },
+  // OutreachPanda +7% over base.
+  panda: { box: "h-[2.57rem] md:h-[2.89rem]", img: "h-[2.57rem] md:h-[2.89rem]" },
+  // VibeDream +20% over base (thin mark).
+  vibe: { box: "h-[2.88rem] md:h-[3.24rem]", img: "h-[2.88rem] md:h-[3.24rem]" },
+} as const;
+
+function LogoLink({ customer }: { customer: (typeof CUSTOMERS)[number] }) {
+  const sizeKey =
+    "size" in customer && customer.size ? customer.size : ("base" as const);
+  const size = LOGO_SIZE[sizeKey];
+
+  return (
+    <a
+      href={customer.href}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`Visit ${customer.name}`}
+      className={`customer-logo-item inline-flex ${size.box} shrink-0 items-center justify-center outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--md-sys-color-primary)]`}
+    >
+      <Image
+        src={customer.src}
+        alt={`${customer.name} logo`}
+        width={customer.width}
+        height={customer.height}
+        unoptimized
+        draggable={false}
+        className={`customer-logo-img block ${size.img} w-auto max-w-none object-contain object-center`}
+        style={{ width: "auto", maxWidth: "none" }}
+      />
+    </a>
+  );
+}
+
 export default function CustomerLogoWall() {
+  // Duplicate the row so the -50% marquee loop is seamless.
+  const track = [...CUSTOMERS, ...CUSTOMERS];
+
   return (
     <section
       aria-labelledby="customer-logo-wall-heading"
-      className="mx-auto w-full max-w-5xl min-w-0 px-4 py-10 md:px-8 md:py-14"
+      className="w-full min-w-0 py-8 md:py-12"
     >
-      <div className="text-center">
-        <p className="text-xs font-medium uppercase tracking-[0.16em] text-[var(--md-sys-color-on-surface-variant)]">
-          Customers
-        </p>
-        <h2
-          id="customer-logo-wall-heading"
-          className="mt-2 text-base font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] md:text-lg"
-        >
-          Trusted by fast-growing companies
-        </h2>
-      </div>
+      <p
+        id="customer-logo-wall-heading"
+        className="px-4 text-center text-[0.7rem] font-medium uppercase tracking-[0.2em] text-[rgba(255,255,255,0.88)] md:text-xs"
+      >
+        Trusted by fast-growing companies
+      </p>
 
-      {/*
-        Equal graphic height: every logo is forced to LOGO_H with width:auto.
-        Do not clamp max-width on the image — that used to shrink wide wordmarks
-        and make their visual height shorter than square marks.
-      */}
-      <ul className="mt-8 flex flex-wrap items-center justify-center gap-x-10 gap-y-8 md:mt-10 md:gap-x-12 md:gap-y-10">
-        {CUSTOMERS.map((customer) => (
-          <li key={customer.name} className="shrink-0">
-            <a
-              href={customer.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`Visit ${customer.name}`}
-              className="inline-flex h-9 items-center justify-center opacity-80 outline-none transition-opacity hover:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--md-sys-color-primary)] md:h-10"
-            >
-              <Image
-                src={customer.src}
-                alt={`${customer.name} logo`}
-                width={customer.width}
-                height={customer.height}
-                unoptimized
-                className="block h-9 w-auto max-w-none object-contain object-center md:h-10"
-                style={{ height: "100%", width: "auto", maxWidth: "none" }}
-              />
-            </a>
-          </li>
-        ))}
-      </ul>
+      {/* Inset on larger screens so the strip does not run edge-to-edge. */}
+      <div className="mx-auto mt-6 w-full max-w-4xl px-6 md:mt-8 md:max-w-5xl md:px-10 lg:max-w-5xl lg:px-16">
+        <div className="customer-logo-marquee relative">
+          <div className="customer-logo-marquee-track flex w-max flex-nowrap items-center gap-14 px-4 md:gap-20 md:px-6">
+            {track.map((customer, index) => (
+              <LogoLink key={`${customer.name}-${index}`} customer={customer} />
+            ))}
+          </div>
+        </div>
+      </div>
     </section>
   );
 }
