@@ -51,6 +51,56 @@ const LISTINGS = [
     src: "https://starterbest.com/badages-awards.svg",
   },
   {
+    href: "https://marketingdb.live",
+    label: "Listed on MarketingDB",
+    width: 190,
+    height: 44,
+    src: "https://marketingdb.live/badge.svg",
+    rel: "noopener noreferrer nofollow sponsored",
+  },
+  {
+    href: "https://acidtools.com/ai/omentir",
+    label: "Acid Tools",
+    width: 200,
+    height: 54,
+    src: "https://acidtools.com/assets/images/badge-dark.png",
+  },
+  {
+    href: "https://saascrawler.com/products/omentir",
+    label: "SaaS Crawler",
+    width: 200,
+    height: 54,
+    src: "https://saascrawler.com/assets/images/badge-dark.png",
+  },
+  {
+    href: "https://shinylaunch.com/product/omentir",
+    label: "ShinyLaunch",
+    width: 200,
+    height: 54,
+    src: "https://shinylaunch.com/assets/images/badge-dark.png",
+  },
+  {
+    href: "https://huntfortools.com/tool/omentir",
+    label: "Hunt for Tools",
+    width: 200,
+    height: 54,
+    src: "https://huntfortools.com/assets/images/badge-dark.png",
+  },
+  {
+    href: "https://launchscroll.com/product/omentir",
+    label: "Launch Scroll",
+    width: 200,
+    height: 54,
+    src: "https://launchscroll.com/assets/images/badge-dark.png",
+  },
+  {
+    href: "https://saasroots.com/product/omentir",
+    label: "SaaS Roots",
+    width: 200,
+    height: 54,
+    src: "https://saasroots.com/assets/images/badge-dark.png",
+  },
+  {
     href: "https://indieai.directory/",
     label: "Listed on IndieAI Directory",
     src: null,
@@ -62,7 +112,7 @@ function ListingLink({ listing }: { listing: (typeof LISTINGS)[number] }) {
     <a
       href={listing.href}
       target="_blank"
-      rel="noopener noreferrer"
+      rel={"rel" in listing && listing.rel ? listing.rel : "noopener noreferrer"}
       className="inline-flex shrink-0 items-center whitespace-nowrap text-sm font-medium text-[var(--md-sys-color-on-surface-variant)] opacity-90 transition hover:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--md-sys-color-primary)]"
     >
       {listing.src ? (
