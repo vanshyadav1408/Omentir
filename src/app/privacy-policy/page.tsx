@@ -1,5 +1,11 @@
+import JsonLd from "../json-ld";
 import { MarketingPage } from "../marketing-shell";
-import { createPageMetadata } from "../seo";
+import {
+  createBreadcrumbJsonLd,
+  createPageMetadata,
+  createWebPageJsonLd,
+  siteUrl,
+} from "../seo";
 
 export const metadata = createPageMetadata({
   title: "Privacy Policy - Omentir",
@@ -53,27 +59,44 @@ const sections = [
 ];
 
 export default function PrivacyPolicyPage() {
+  const jsonLd = [
+    createWebPageJsonLd({
+      name: "Privacy Policy",
+      description:
+        "Read how Omentir collects, uses, stores, and protects account, billing, LinkedIn, lead, campaign, and message data.",
+      url: `${siteUrl}/privacy-policy`,
+      dateModified: "May 4, 2026",
+    }),
+    createBreadcrumbJsonLd([
+      { name: "Home", url: siteUrl },
+      { name: "Privacy Policy", url: `${siteUrl}/privacy-policy` },
+    ]),
+  ];
+
   return (
-    <MarketingPage
-      eyebrow="Legal"
-      title="Privacy Policy"
-      description="How Omentir collects, uses, and protects information while operating the product."
-    >
-      <div className="rounded-xl border border-[#ba3871] bg-white p-6">
-        <p className="text-sm text-zinc-500">Last updated: May 4, 2026</p>
-        <div className="mt-8 space-y-7">
-          {sections.map((section) => (
-            <section key={section.title}>
-              <h2 className="text-xl font-semibold tracking-tight text-zinc-950">
-                {section.title}
-              </h2>
-              <p className="mt-3 text-base leading-7 text-zinc-700">
-                {section.body}
-              </p>
-            </section>
-          ))}
+    <>
+      <JsonLd id="privacy-policy-jsonld" data={jsonLd} />
+      <MarketingPage
+        eyebrow="Legal"
+        title="Privacy Policy"
+        description="How Omentir collects, uses, and protects information while operating the product."
+      >
+        <div className="rounded-xl border border-[#ba3871] bg-white p-6">
+          <p className="text-sm text-zinc-500">Last updated: May 4, 2026</p>
+          <div className="mt-8 space-y-7">
+            {sections.map((section) => (
+              <section key={section.title}>
+                <h2 className="text-xl font-semibold tracking-tight text-zinc-950">
+                  {section.title}
+                </h2>
+                <p className="mt-3 text-base leading-7 text-zinc-700">
+                  {section.body}
+                </p>
+              </section>
+            ))}
+          </div>
         </div>
-      </div>
-    </MarketingPage>
+      </MarketingPage>
+    </>
   );
 }

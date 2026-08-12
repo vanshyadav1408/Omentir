@@ -79,7 +79,7 @@ type PageMetadataOptions = {
 // from the byline the same date renders. That disagreement is precisely what
 // makes a crawler distrust a site's dates, and it moves with the server's
 // timezone, so it cannot be caught by reading the output on one machine.
-function normalizeDate(value: string) {
+export function normalizeDate(value: string) {
   const parsedDate = new Date(`${value} UTC`);
   if (!isNaN(parsedDate.getTime())) {
     return parsedDate.toISOString().split("T")[0];
@@ -113,6 +113,8 @@ export function createPageMetadata({
   const url = `${siteUrl}${path}`;
   const canonicalUrl = `${siteUrl}${canonicalPath}`;
   const blog = getBlogForPath(path);
+  const pageTitle = blog ? `${blog.title} - Omentir` : title;
+  const pageDescription = blog?.description || description;
   const metadataImage = blog && image === defaultOgImage
     ? {
         url: blog.bannerSrc,
@@ -133,8 +135,8 @@ export function createPageMetadata({
 
   const openGraph = blog
     ? {
-        title,
-        description,
+        title: pageTitle,
+        description: pageDescription,
         url,
         siteName: "Omentir",
         type: "article" as const,
@@ -146,8 +148,8 @@ export function createPageMetadata({
         images: [metadataImage],
       }
     : {
-        title,
-        description,
+        title: pageTitle,
+        description: pageDescription,
         url,
         siteName: "Omentir",
         type: "website" as const,
@@ -156,8 +158,8 @@ export function createPageMetadata({
 
   return {
     metadataBase: new URL(siteUrl),
-    title,
-    description,
+    title: pageTitle,
+    description: pageDescription,
     keywords: allKeywords,
     authors: blog ? [{ name: "Vansh Yadav", url: `${siteUrl}/about` }] : [{ name: "Omentir" }],
     creator: "Omentir",
@@ -172,8 +174,8 @@ export function createPageMetadata({
     openGraph,
     twitter: {
       card: "summary_large_image",
-      title,
-      description,
+      title: pageTitle,
+      description: pageDescription,
       images: [metadataImage.url],
     },
     // A post whose release date has not arrived yet is noindexed without each
@@ -408,6 +410,35 @@ export function createBreadcrumbJsonLd(
       name: item.name,
       item: item.url,
     })),
+  };
+}
+
+export function createWebPageJsonLd({
+  name,
+  description,
+  url,
+  dateModified,
+}: {
+  name: string;
+  description: string;
+  url: string;
+  dateModified?: string;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": `${url}#webpage`,
+    name,
+    description,
+    url,
+    inLanguage: "en-US",
+    ...(dateModified ? { dateModified: normalizeDate(dateModified) } : {}),
+    isPartOf: {
+      "@id": `${siteUrl}/#website`,
+    },
+    about: {
+      "@id": `${siteUrl}/#organization`,
+    },
   };
 }
 

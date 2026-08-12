@@ -1,7 +1,13 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import JsonLd from "../json-ld";
 import { MarketingPage } from "../marketing-shell";
-import { createPageMetadata } from "../seo";
+import {
+  createBreadcrumbJsonLd,
+  createPageMetadata,
+  createWebPageJsonLd,
+  siteUrl,
+} from "../seo";
 import { minimumBookingGuaranteeStatement } from "../minimum-booking-guarantee-link";
 
 export const metadata = createPageMetadata({
@@ -218,44 +224,64 @@ const policySections: Array<{ title: string; paragraphs: ReactNode[] }> = [
 ];
 
 export default function MinimumBookingGuaranteePage() {
+  const jsonLd = [
+    createWebPageJsonLd({
+      name: "Minimum Booking Guarantee",
+      description:
+        "The eligibility, warm-up, weekly measurement, and refund terms behind Omentir's booking guarantee.",
+      url: `${siteUrl}/minimum-booking-guarantee`,
+      dateModified: "August 9, 2026",
+    }),
+    createBreadcrumbJsonLd([
+      { name: "Home", url: siteUrl },
+      {
+        name: "Minimum Booking Guarantee",
+        url: `${siteUrl}/minimum-booking-guarantee`,
+      },
+    ]),
+  ];
+
   return (
-    <MarketingPage
-      eyebrow="Policy"
-      title="Minimum Booking Guarantee"
-      description="The eligibility, warm-up, weekly measurement, and refund terms behind Omentir's booking guarantee."
-      contentClassName="max-w-4xl"
-    >
-      <article className="rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container)] p-5 sm:p-8">
-        <div className="rounded-xl border border-[#ba3871] bg-[color-mix(in_srgb,#ba3871_12%,var(--md-sys-color-surface-container-high))] p-5">
-          <p className="text-lg font-bold tracking-tight text-[var(--md-sys-color-on-surface)]">
-            {minimumBookingGuaranteeStatement}
+    <>
+      <JsonLd id="minimum-booking-guarantee-jsonld" data={jsonLd} />
+      <MarketingPage
+        eyebrow="Policy"
+        title="Minimum Booking Guarantee"
+        description="The eligibility, warm-up, weekly measurement, and refund terms behind Omentir's booking guarantee."
+        contentClassName="max-w-4xl"
+      >
+        <article className="rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container)] p-5 sm:p-8">
+          <div className="rounded-xl border border-[#ba3871] bg-[color-mix(in_srgb,#ba3871_12%,var(--md-sys-color-surface-container-high))] p-5">
+            <p className="text-lg font-bold tracking-tight text-[var(--md-sys-color-on-surface)]">
+              {minimumBookingGuaranteeStatement}
+            </p>
+            <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)]">
+              <li>The two-week warm-up period must be complete.</li>
+              <li>At least one agent must remain active for the full week.</li>
+              <li>If there are fewer than three qualifying bookings, you may apply for a full refund.</li>
+            </ul>
+          </div>
+
+          <p className="mt-6 text-sm text-[var(--md-sys-color-on-surface-variant)]">
+            Last updated: August 9, 2026
           </p>
-          <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)]">
-            <li>The two-week warm-up period must be complete.</li>
-            <li>At least one agent must remain active for the full week.</li>
-            <li>If there are fewer than three qualifying bookings, you may apply for a full refund.</li>
-          </ul>
-        </div>
 
-        <p className="mt-6 text-sm text-[var(--md-sys-color-on-surface-variant)]">
-          Last updated: August 9, 2026
-        </p>
-
-        <div className="mt-8 space-y-9">
-          {policySections.map((section) => (
-            <section key={section.title}>
-              <h2 className="text-xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-2xl">
-                {section.title}
-              </h2>
-              <div className="mt-3 space-y-4 text-base leading-7 text-[var(--md-sys-color-on-surface-variant)]">
-                {section.paragraphs.map((paragraph, index) => (
-                  <p key={index}>{paragraph}</p>
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
-      </article>
-    </MarketingPage>
+          <div className="mt-8 space-y-9">
+            {policySections.map((section) => (
+              <section key={section.title}>
+                <h2 className="text-xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-2xl">
+                  {section.title}
+                </h2>
+                <div className="mt-3 space-y-4 text-base leading-7 text-[var(--md-sys-color-on-surface-variant)]">
+                  {section.paragraphs.map((paragraph, index) => (
+                    <p key={index}>{paragraph}</p>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        </article>
+      </MarketingPage>
+    </>
   );
 }

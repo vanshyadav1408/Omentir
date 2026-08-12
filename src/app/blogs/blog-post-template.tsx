@@ -4,7 +4,7 @@ import FaqAccordion from "../faq-accordion";
 import JsonLd from "../json-ld";
 import { HeroGridBackdrop, MarketingHeader, MarketingFooter } from "../marketing-shell";
 import BlogPostGrid from "./blog-post-grid";
-import { createBlogJsonLd, createBreadcrumbJsonLd, createFAQJsonLd, siteUrl } from "../seo";
+import { createBlogJsonLd, createBreadcrumbJsonLd, createFAQJsonLd, normalizeDate, siteUrl } from "../seo";
 import { ALL_BLOGS, isBlogLive } from "./blog-data";
 
 export interface TocItem {
@@ -54,6 +54,14 @@ export default function BlogPostTemplate({
   children,
 }: BlogPostTemplateProps) {
   const blogItem = ALL_BLOGS.find((b) => b.slug === slug);
+  // blog-data is the publication registry and the source of truth for every
+  // public article surface. Keep the fallback props for a page that has not
+  // been added to the registry yet, but never let a registered post split its
+  // title or summary across the H1, metadata, and structured data.
+  const canonicalTitle = blogItem?.title ?? title;
+  const canonicalDescription = blogItem?.description ?? description;
+  const canonicalBannerSrc = blogItem?.bannerSrc ?? bannerSrc;
+  const canonicalBannerAlt = blogItem?.bannerAlt ?? bannerAlt;
   const category = blogItem ? blogItem.category : "Playbooks";
   // Dates come from blog-data and are never passed in per page: the byline, the
   // JSON-LD and the sitemap all have to agree, and a page-level override is how
@@ -70,19 +78,23 @@ export default function BlogPostTemplate({
   const renderedFaqItems = visibleFaqItems ?? faqItems;
   const jsonLd = [
     createBlogJsonLd({
-      title,
-      description,
+      title: canonicalTitle,
+      description: canonicalDescription,
       url: `${siteUrl}/blogs/${slug}`,
       publishedDate,
       modifiedDate: updatedDate,
       authorName: author.name,
       section: category,
-      images: [bannerSrc.startsWith("http") ? bannerSrc : `${siteUrl}${bannerSrc}`],
+      images: [
+        canonicalBannerSrc.startsWith("http")
+          ? canonicalBannerSrc
+          : `${siteUrl}${canonicalBannerSrc}`,
+      ],
     }),
     createBreadcrumbJsonLd([
       { name: "Home", url: siteUrl },
       { name: "Blogs", url: `${siteUrl}/blogs` },
-      { name: title, url: `${siteUrl}/blogs/${slug}` },
+      { name: canonicalTitle, url: `${siteUrl}/blogs/${slug}` },
     ]),
     ...(faqItems.length > 0 ? [createFAQJsonLd(faqItems)] : []),
   ];
@@ -137,17 +149,17 @@ export default function BlogPostTemplate({
                 <span className="font-normal text-[var(--md-sys-color-outline)]" aria-hidden="true">
                   /
                 </span>
-                <span className="line-clamp-1 text-[var(--md-sys-color-on-surface)]">{title}</span>
+                <span className="line-clamp-1 text-[var(--md-sys-color-on-surface)]">{canonicalTitle}</span>
               </nav>
 
               <h1
                 style={{ fontFamily: "var(--font-varta)" }}
                 className="mb-6 max-w-4xl text-[2rem] font-semibold leading-[1.12] tracking-tight text-[var(--md-sys-color-on-surface)] min-[380px]:text-[2.25rem] sm:text-5xl sm:leading-tight lg:text-6xl lg:leading-tight"
               >
-                {title}
+                {canonicalTitle}
               </h1>
               <p className="max-w-2xl text-base leading-8 text-[var(--md-sys-color-on-surface-variant)] sm:text-lg">
-                {description}
+                {canonicalDescription}
               </p>
             </div>
           </div>
@@ -160,11 +172,12 @@ export default function BlogPostTemplate({
         <BlogPostGrid
           author={author}
           publishedDate={publishedDate}
-          bannerSrc={bannerSrc}
-          bannerAlt={bannerAlt}
+          publishedDateTime={normalizeDate(publishedDate)}
+          bannerSrc={canonicalBannerSrc}
+          bannerAlt={canonicalBannerAlt}
           slug={slug}
           category={category}
-          title={title}
+          title={canonicalTitle}
           tocItems={tocItems}
         >
           <>

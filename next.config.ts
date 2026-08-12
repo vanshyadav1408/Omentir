@@ -10,6 +10,7 @@ const privateIndexingRoutes = [
   "/campaigns/:path*",
   "/checkout/:path*",
   "/connect/:path*",
+  "/contact/:path*",
   "/dashboard/:path*",
   "/leads/:path*",
   "/login/:path*",

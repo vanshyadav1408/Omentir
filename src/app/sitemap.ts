@@ -81,11 +81,17 @@ const highIntentBlogSlugs = new Set([
   "setup-autonomous-prospecting-agent",
 ]);
 
+function absoluteUrl(path: string) {
+  // Keep the sitemap's root spelling identical to the canonical root emitted
+  // by Next metadata. Every other public path already has one leading slash.
+  return path === "/" ? siteUrl : `${siteUrl}${path}`;
+}
+
 export default function sitemap(): MetadataRoute.Sitemap {
   const blogsIndexDate = latestBlogDate();
 
   const mainRoutes = publicRoutes.map((route) => ({
-    url: `${siteUrl}${route.path}`,
+    url: absoluteUrl(route.path),
     lastModified:
       route.path === "/blogs" || route.path === "/llms.txt"
         ? blogsIndexDate
@@ -97,7 +103,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // Scheduled posts are deliberately absent: listing a page as noindex in the
   // sitemap asks a crawler to fetch what it is then told to ignore.
   const blogRoutes = liveBlogs().map((blog) => ({
-    url: `${siteUrl}/blogs/${blog.slug}`,
+    url: absoluteUrl(`/blogs/${blog.slug}`),
     lastModified: blogDate(blog),
     images: [`${siteUrl}${blog.bannerSrc}`],
     changeFrequency: "monthly" as const,
