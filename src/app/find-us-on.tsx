@@ -227,6 +227,13 @@ const LISTINGS = [
     src: "https://fazier.com/api/v1//public/badges/launch_badges.svg?badge_type=launched&theme=dark",
   },
   {
+    href: "https://launchleague.xyz/?product=omentir",
+    label: "LaunchLeague Badge",
+    width: 300,
+    height: 66,
+    src: "https://cdn.launchleague.xyz/site-images/badges/badge-dark.svg",
+  },
+  {
     href: "https://indieai.directory/",
     label: "Listed on IndieAI Directory",
     src: null,
