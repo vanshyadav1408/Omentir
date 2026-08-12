@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import type { Metadata } from "next";
-import { Geist_Mono, Google_Sans, Roboto } from "next/font/google";
+import localFont from "next/font/local";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ICON_FONT_URL } from "./icon-font-url";
 import { defaultDescription, defaultKeywords, defaultOgImage, defaultTitle, siteUrl } from "./seo";
@@ -14,23 +14,24 @@ import "./globals.css";
 /* Primary UI faces: Google Sans (display/UI) + Roboto (body). Geist Mono kept for code.
    Google Sans has no size-adjust metrics in next/font yet — disable auto fallback
    override generation so the build doesn't warn on every compile. */
-const googleSans = Google_Sans({
+const googleSans = localFont({
+  src: "./fonts/google-sans-latin.woff2",
   variable: "--font-google-sans",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: "400 700",
   adjustFontFallback: false,
   fallback: ["Roboto", "Helvetica Neue", "Arial", "sans-serif"],
 });
 
-const roboto = Roboto({
+const roboto = localFont({
+  src: "./fonts/roboto-latin.woff2",
   variable: "--font-roboto",
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
+  weight: "400 700",
 });
 
-const geistMono = Geist_Mono({
+const geistMono = localFont({
+  src: "./fonts/geist-mono-latin.woff2",
   variable: "--font-geist-mono",
-  subsets: ["latin"],
+  weight: "100 900",
 });
 
 export const metadata: Metadata = {
