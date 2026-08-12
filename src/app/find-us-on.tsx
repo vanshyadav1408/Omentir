@@ -108,6 +108,48 @@ const LISTINGS = [
     src: "https://daniellaunches.com/badge-dark.svg",
   },
   {
+    href: "https://lemonlaunch.dev/marketing/omentir",
+    label: "Featured on LemonLaunch",
+    width: 188,
+    height: 56,
+    src: "https://lemonlaunch.dev/badge/lemonlaunch-badge-light.svg",
+  },
+  {
+    href: "https://easydofollow.dev/marketing/omentir",
+    label: "Featured on EasyDoFollow",
+    width: 188,
+    height: 56,
+    src: "https://easydofollow.dev/badge/easydofollow-badge-dark.svg",
+  },
+  {
+    href: "https://shipboost.io/tools/omentir",
+    label: "Featured on ShipBoost",
+    width: 244,
+    height: 56,
+    src: "https://shipboost.io/badge/cmsps0nqu0001mw0to4tp6yky?theme=dark",
+  },
+  {
+    href: "https://saasfame.com/item/omentir",
+    label: "Featured on saasfame.com",
+    width: 200,
+    height: 54,
+    src: "https://saasfame.com/badge-dark.svg",
+  },
+  {
+    href: "https://nicklaunches.com/products/omentir/?utm_source=omentir.com&utm_medium=badge&utm_campaign=featured",
+    label: "Omentir on Nick Launches",
+    width: 244,
+    height: 56,
+    src: "https://nicklaunches.com/badges/featured-dark.png",
+  },
+  {
+    href: "https://listmysaas.xyz/",
+    label: "Featured on ListMySaaS",
+    width: 125,
+    height: 44,
+    src: "https://listmysaas.xyz/listmysaasbadgenormal.svg",
+  },
+  {
     href: "https://indieai.directory/",
     label: "Listed on IndieAI Directory",
     src: null,
@@ -151,11 +193,14 @@ export default function FindUsOn() {
       >
         Find us on
       </h2>
-      <div className="find-us-marquee mt-4 overflow-hidden">
-        <div className="find-us-marquee-track flex w-max flex-nowrap items-center gap-10 px-6">
-          {track.map((listing, index) => (
-            <ListingLink key={`${listing.href}-${index}`} listing={listing} />
-          ))}
+      {/* Inset on larger screens so the strip does not run edge-to-edge. */}
+      <div className="mx-auto mt-4 w-full max-w-4xl px-6 md:max-w-5xl md:px-10 lg:max-w-5xl lg:px-16">
+        <div className="find-us-marquee relative overflow-hidden">
+          <div className="find-us-marquee-track flex w-max flex-nowrap items-center gap-10 px-6">
+            {track.map((listing, index) => (
+              <ListingLink key={`${listing.href}-${index}`} listing={listing} />
+            ))}
+          </div>
         </div>
       </div>
     </section>

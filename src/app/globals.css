@@ -3732,6 +3732,44 @@ html.dark .font-semibold.text-black {
   }
 }
 
+/* Soft fade at edges so badges dissolve before the strip bounds (same as logo wall). */
+.find-us-marquee {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    #000 18%,
+    #000 82%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    #000 18%,
+    #000 82%,
+    transparent 100%
+  );
+}
+
+@media (min-width: 768px) {
+  .find-us-marquee {
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent 0%,
+      #000 16%,
+      #000 84%,
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to right,
+      transparent 0%,
+      #000 16%,
+      #000 84%,
+      transparent 100%
+    );
+  }
+}
+
 .find-us-marquee-track {
   animation: find-us-marquee 55s linear infinite;
   will-change: transform;
