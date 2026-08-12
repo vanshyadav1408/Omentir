@@ -171,7 +171,7 @@ export default function BlogPost() {
         Apollo.io publishes self-serve pricing. At the time of writing, its public pricing page lists a free plan and paid plans that begin at $49 per seat per month when billed annually, with higher tiers adding more capacity and workflow features. The important detail is not only the seat price; it is how credits, email sends, mobile access, and team usage affect the real monthly cost.
       </p>
       <p>
-        Once you source your data, use Omentir to qualify prospects and run safe LinkedIn outreach from $29/month. Keep the job boundaries clean: the data vendor helps you identify contact records, and Omentir helps turn qualified prospects into human-paced LinkedIn conversations.
+        Once you source your data, use Omentir to qualify prospects and run safe LinkedIn outreach from $49/month. Keep the job boundaries clean: the data vendor helps you identify contact records, and Omentir helps turn qualified prospects into human-paced LinkedIn conversations.
       </p>
       <p>
         The ROI math should include failure cost. A cheaper database is not cheaper if reps waste hours on bad numbers, compliance review takes longer than expected, or low-fit contacts create noisy pipeline. A premium database is not automatically worth it if your average deal size is low or your motion does not use direct dials.

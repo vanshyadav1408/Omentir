@@ -132,7 +132,7 @@ export default function BlogPost() {
         Keep this product profile short and maintained. A context engine that uses old pricing or stale feature descriptions will create trust problems quickly. Assign one owner to update product facts whenever pricing, plan limits, integrations, or positioning changes.
       </p>
       <p>
-        For Omentir, the verified product context should come from live product pages and plan configuration, not memory. The current core facts are straightforward: Omentir helps find qualified buyers, personalize outreach, book more demos, and manage replies from one workflow. Monthly is $29/month and Lifetime is $99 once, with the same complete product in either option.
+        For Omentir, the verified product context should come from live product pages and plan configuration, not memory. The current core facts are straightforward: Omentir helps find qualified buyers, personalize outreach, book more demos, and manage replies from one workflow. The Pro plan is $49/month, with a minimum of three bookings per week or you pay nothing.
       </p>
 
       <h3 id="claim-policy" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
@@ -207,7 +207,7 @@ export default function BlogPost() {
 <code>{`{
   "product_context": {
     "name": "Omentir",
-    "pricing": "Monthly $29/month, Lifetime $99 once",
+    "pricing": "Pro $49/month, minimum three bookings per week or you pay nothing; Enterprise includes unlimited users, unlimited LinkedIn accounts, SSO, dedicated onboarding, and priority support; guarantee policy: https://omentir.com/minimum-booking-guarantee",
     "case_study": "Helped SDRs reduce manual tracking by 80%"
   },
   "prospect_context": {

@@ -14,29 +14,25 @@ function CheckIcon() {
   );
 }
 
-// Maps a card to the checkout plan key in its href so /upgrade can mark the
-// viewer's current plan without duplicating plan data.
-function planKeyFromHref(href: string) {
-  if (href.includes("plan=solo")) return "solo";
-  if (href.includes("plan=lifetime")) return "lifetime";
-  return null;
-}
+type CurrentPlan = "solo" | "lifetime" | "enterprise";
+type PlanKey = "solo" | "enterprise";
 
-type PurchasablePlan = "solo" | "lifetime";
+function planKeyFromHref(href: string): PlanKey {
+  return href.includes("plan=solo") ? "solo" : "enterprise";
+}
 
 function PricingCard({
   plan,
   currentPlan,
 }: {
   plan: PricingPlan;
-  currentPlan?: "solo" | "lifetime";
+  currentPlan?: CurrentPlan;
 }) {
   const planKey = planKeyFromHref(plan.href);
-  const isCurrent = Boolean(currentPlan) && planKey === currentPlan;
-  // A lifetime owner already has the monthly feature set outright, so the
-  // monthly card must never offer them a second, redundant subscription.
-  const isCoveredByLifetime = currentPlan === "lifetime" && planKey === "solo";
-  const cta = currentPlan === "solo" && planKey === "lifetime" ? "Switch to Lifetime" : plan.cta;
+  const isCurrent = currentPlan === planKey;
+  // Legacy lifetime members remain covered by the Pro feature set, so the
+  // card must never offer them a redundant monthly subscription.
+  const isCoveredByLegacyPlan = currentPlan === "lifetime" && planKey === "solo";
   const ctaClass = `m3-btn w-full h-11 cursor-pointer text-sm ${
     plan.featured
       ? "m3-btn-filled-secondary"
@@ -67,7 +63,17 @@ function PricingCard({
           ) : null}
         </div>
 
-        <div className="mb-6 mt-4 h-px w-full bg-[var(--md-sys-color-outline-variant)]" />
+        {planKey === "solo" ? (
+          <p className="mt-2 max-w-xs text-xs leading-5 text-[var(--md-sys-color-on-surface-variant)]">
+            Get 3 bookings weekly or receive a full refund.
+          </p>
+        ) : (
+          <p className="mt-2 max-w-xs text-xs leading-5 text-[var(--md-sys-color-on-surface-variant)]">
+            Get managed campaigns with bookings guarantees.
+          </p>
+        )}
+
+        <div className="mb-6 mt-6 h-px w-full bg-[var(--md-sys-color-outline-variant)]" />
 
         {plan.includes ? (
           <p className="mb-4 text-sm font-medium text-[var(--md-sys-color-on-surface)]">
@@ -88,17 +94,17 @@ function PricingCard({
         </ul>
 
         <div className="mt-auto pt-8">
-          {isCurrent || isCoveredByLifetime ? (
+          {isCurrent || isCoveredByLegacyPlan ? (
             <span className="m3-btn m3-btn-outlined h-11 w-full cursor-default border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface-container-high)] text-sm text-[var(--md-sys-color-on-surface-variant)]">
-              {isCurrent ? "Your current plan" : "Included in Lifetime"}
+              Your current plan
             </span>
           ) : plan.href.startsWith("http") ? (
             <a href={plan.href} target="_blank" rel="noopener noreferrer" className={ctaClass}>
-              {cta}
+              {plan.cta}
             </a>
           ) : (
             <Link href={plan.href} className={ctaClass}>
-              {cta}
+              {plan.cta}
             </Link>
           )}
         </div>
@@ -112,9 +118,9 @@ export default function PricingCards({
   currentPlan,
 }: {
   className?: string;
-  currentPlan?: PurchasablePlan;
+  currentPlan?: CurrentPlan;
 }) {
-  const [selectedPlan, setSelectedPlan] = useState<PurchasablePlan>("solo");
+  const [selectedPlan, setSelectedPlan] = useState<PlanKey>("solo");
   const mobilePlan = plans.find((plan) => planKeyFromHref(plan.href) === selectedPlan) ?? plans[0];
 
   return (
@@ -128,33 +134,33 @@ export default function PricingCards({
                 : "text-[var(--md-sys-color-on-surface-variant)]"
             }
           >
-            Monthly
+            Pro
           </span>
           <button
             type="button"
-            aria-label="Lifetime billing"
-            aria-pressed={selectedPlan === "lifetime"}
-            onClick={() => setSelectedPlan(selectedPlan === "solo" ? "lifetime" : "solo")}
+            aria-label="Enterprise plan"
+            aria-pressed={selectedPlan === "enterprise"}
+            onClick={() => setSelectedPlan(selectedPlan === "solo" ? "enterprise" : "solo")}
             className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ${
-              selectedPlan === "lifetime"
+              selectedPlan === "enterprise"
                 ? "bg-[var(--md-sys-color-primary)]"
                 : "bg-[var(--md-sys-color-outline-variant)]"
             }`}
           >
             <span
               className={`inline-block h-5 w-5 transform rounded-full bg-white shadow ring-1 ring-black/5 transition-transform duration-200 ${
-                selectedPlan === "lifetime" ? "translate-x-[22px]" : "translate-x-0.5"
+                selectedPlan === "enterprise" ? "translate-x-[22px]" : "translate-x-0.5"
               }`}
             />
           </button>
           <span
             className={
-              selectedPlan === "lifetime"
+              selectedPlan === "enterprise"
                 ? "text-[var(--md-sys-color-on-surface)]"
                 : "text-[var(--md-sys-color-on-surface-variant)]"
             }
           >
-            Lifetime
+            Enterprise
           </span>
         </div>
         <PricingCard plan={mobilePlan} currentPlan={currentPlan} />

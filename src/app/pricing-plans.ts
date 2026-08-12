@@ -17,34 +17,55 @@ export type PricingPlan = {
   features: string[];
 };
 
-// Monthly and Lifetime are the same product on different billing terms, so both
-// cards render the identical limit set from commercialPlanLimits("solo").
+// The public Pro plan renders its enforceable product limits from
+// commercialPlanLimits("solo"). User allowances are part of the public plan
+// packaging and are listed explicitly below.
+const proLimitFeatures = limitFeatureLines("solo").filter(
+  (feature) => feature !== "1 LinkedIn account",
+);
+
 const planFeatures = [
-  ...limitFeatureLines("solo"),
+  "1 user",
+  "1 LinkedIn account",
+  ...proLimitFeatures,
   "AI automated campaigns",
   "API access",
   "Email customer support",
 ];
 
+const enterpriseFeatures = [
+  "Unlimited users",
+  "Unlimited LinkedIn accounts",
+  ...limitFeatureLines("enterprise").filter(
+    (feature) => feature !== "Unlimited LinkedIn accounts",
+  ),
+  "AI automated campaigns",
+  "API access",
+  "Email customer support",
+  "Single sign-on (SSO)",
+  "Dedicated onboarding",
+  "Priority support",
+];
+
 export const pricingPlans: PricingPlan[] = [
   {
-    name: "Monthly",
-    price: "$29/month",
+    name: "Pro",
+    price: "$49/month",
     cadence: "",
     cta: "Start Now",
     href: "/checkout?plan=solo",
     featured: true,
-    includes: "What's included",
+    includes: "Everything you need, guaranteed",
     features: planFeatures,
   },
   {
-    name: "Lifetime",
-    price: "$99",
-    cadence: "one-time",
-    cta: "Get Lifetime Access",
-    href: "/checkout?plan=lifetime",
+    name: "Enterprise",
+    price: "Custom",
+    cadence: "",
+    cta: "Book a call",
+    href: "/demo",
     featured: false,
-    includes: "Everything in Monthly, forever",
-    features: planFeatures,
+    includes: "Everything in Pro, for your whole team",
+    features: enterpriseFeatures,
   },
 ];

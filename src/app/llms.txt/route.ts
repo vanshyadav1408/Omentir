@@ -112,6 +112,7 @@ ${completeBlogLibrary}
 
 ## Legal and Trust
 
+- [Minimum Booking Guarantee](${siteUrl}/minimum-booking-guarantee): Eligibility, warm-up period, weekly measurement, and refund process for the minimum booking guarantee.
 - [Privacy Policy](${siteUrl}/privacy-policy): How Omentir collects, uses, stores, and protects account, LinkedIn, lead, campaign, message, and billing data.
 - [Terms of Service](${siteUrl}/terms-of-service): Terms for using Omentir, connected accounts, outreach responsibility, billing, availability, and liability.
 

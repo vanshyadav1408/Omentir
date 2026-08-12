@@ -19,14 +19,12 @@ export async function GET(request: NextRequest) {
 
   try {
     const requestedPlan = request.nextUrl.searchParams.get("plan");
-    // "startup" is retired and no longer linked from any card, but the value is
-    // still honoured so existing links keep resolving. Anything else is solo.
-    const plan: BillingPlan =
-      requestedPlan === "lifetime"
-        ? "lifetime"
-        : requestedPlan === "startup"
-          ? "startup"
-          : "solo";
+    // Retired plans must never silently turn into a Pro checkout. Existing
+    // subscribers retain their access through billing reconciliation instead.
+    if (requestedPlan && requestedPlan !== "solo") {
+      return NextResponse.redirect(new URL("/pricing", appUrl));
+    }
+    const plan: BillingPlan = "solo";
     const planId = await getWhopCheckoutPlanId(plan);
     const user = await currentUser();
     const email = user?.primaryEmailAddress?.emailAddress;

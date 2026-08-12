@@ -41,7 +41,7 @@ const faqItems = [
   },
   {
     question: "How does Omentir support early-stage bootstrapped founders?",
-    answer: "Omentir offers affordable starter plans beginning at $29/month, providing automated discovery, prompt variables, and safe campaign pacing to help you build pipeline without high software costs."
+    answer: "Omentir offers an affordable Pro plan beginning at $49/month, providing automated discovery, prompt variables, and safe campaign pacing to help you build pipeline without high software costs."
   },
   {
     question: "Should I offer my product for free to my first 10 customers?",
@@ -70,7 +70,7 @@ export default function BlogPost() {
         The goal is not to message thousands of prospects. Instead, focus on finding a small group of high-relevance contacts, writing custom messages, and offering design partnerships.
       </p>
       <p>
-        Omentir supports early stage startups by offering flexible plans starting at $29/month, ensuring you can scale outbound campaigns affordably. Let's walk through the zero-budget sales playbook.
+        Omentir supports early stage startups with a Pro plan starting at $49/month, ensuring you can scale outbound campaigns affordably. Let's walk through the zero-budget sales playbook.
       </p>
       <p>
         Zero budget does not mean zero discipline. In fact, having no budget can be an advantage because it forces you to talk to real buyers before hiding behind ads, content calendars, or expensive tools. You cannot outsource the hardest question: does anyone care enough about this problem to pay?

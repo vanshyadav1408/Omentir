@@ -41,7 +41,7 @@ const faqItems = [
   },
   {
     question: "How does Omentir support founders navigating early growth?",
-    answer: "Omentir offers affordable starter plans beginning at $29/month, allowing founders to run discovery agents, set prompt variables, and manage safe connection pacing with minimal overhead."
+    answer: "Omentir offers an affordable Pro plan beginning at $49/month, allowing founders to run discovery agents, set prompt variables, and manage safe connection pacing with minimal overhead."
   },
   {
     question: "What is a healthy daily routine for a solo founder?",
@@ -73,7 +73,7 @@ export default function BlogPost() {
         To survive this valley, you must manage your mindset. Senders need to transition from feature-chasing distractions to consistent sales habits, using direct outbound outreach to validate demand.
       </p>
       <p>
-        Omentir was built to support teams navigating this early stage, offering campaign tools starting at $29/month to keep outbound consistent. Let's look at how to navigate the early SaaS crisis.
+        Omentir was built to support teams navigating this early stage, offering campaign tools starting at $49/month to keep outbound consistent. Let's look at how to navigate the early SaaS crisis.
       </p>
       <p>
         This is not medical advice, and serious anxiety or depression deserves real support from qualified people. But many founders do not need another motivational quote. They need a way to stop turning uncertainty into random work. The early SaaS crisis is often an evidence problem disguised as an identity problem: you do not yet know who wants the product, why they want it, what they will pay, or what they need next.
@@ -233,8 +233,17 @@ Next action:`}</code>
         Omentir is priced to help teams validate campaigns affordably:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Monthly ($29/month):</strong> Includes one LinkedIn account, unlimited AI agents, leads, campaigns, AI automated campaigns, API access, and email customer support.</li>
-        <li><strong>Lifetime ($99 once):</strong> Includes the same complete product with one payment and no renewals.</li>
+        <li>
+          <strong>Pro ($49/month):</strong> Includes one user, one LinkedIn
+          account, unlimited AI agents, leads, campaigns, AI automated campaigns,
+          API access, email customer support, and a minimum of three bookings per
+          week or you pay nothing.
+        </li>
+        <li>
+          <strong>Enterprise:</strong> Includes unlimited users, unlimited
+          LinkedIn accounts, all Pro features, plus SSO, dedicated onboarding,
+          and priority support. Book a call to discuss your setup.
+        </li>
       </ul>
       <p>
         Focus on securing your first 10 paying customers before worrying about scaling your operations.

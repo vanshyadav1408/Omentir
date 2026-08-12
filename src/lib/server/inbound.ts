@@ -7,7 +7,7 @@ import "server-only";
 // logic lives here instead of inside the webhook route.
 
 import {
-  claimInterestNotification,
+  claimLeadOutcomeNotification,
   claimReplyNotification,
   createConversationMessage,
   getConversation,
@@ -476,7 +476,13 @@ export async function processInboundMessage(input: {
   // meetingBooked always wins: the user should hear about a confirmed booking
   // regardless of which reply mode was running.
   if (email && (meetingBooked || stoppedAtInterest)) {
-    if (await claimInterestNotification(workspaceId, lead.id)) {
+    if (
+      await claimLeadOutcomeNotification(
+        workspaceId,
+        lead.id,
+        meetingBooked ? "meeting" : "interest",
+      )
+    ) {
       try {
         await sendInterestedLeadNotification({
           to: email,

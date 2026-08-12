@@ -19,6 +19,10 @@ import {
 import { remapStepIndex } from "./enrollment-remap";
 import { sendWindowTimeZoneForLead } from "./lead-time-zone";
 import { addInviteLimitSignal } from "./outreach-rules";
+import {
+  leadOutcomeNotificationLockId,
+  type LeadOutcomeNotificationKind,
+} from "./reply-automation-policy";
 import type {
   ActivityDay,
   Agent,
@@ -1564,6 +1568,8 @@ export async function upsertLead(workspaceId: string, groupId: string, lead: Par
       signalObservedAt: lead.signalObservedAt,
       leadReason: lead.leadReason,
       engagementContext: lead.engagementContext,
+      linkedinActivityAt: lead.linkedinActivityAt,
+      linkedinActivitySource: lead.linkedinActivitySource,
       sourceAgentId: lead.sourceAgentId,
       outreachStatus: lead.outreachStatus || "new",
       createdAt: timestamp,
@@ -2566,9 +2572,16 @@ export async function claimReplyNotification(
   });
 }
 
-// Once per lead: interested-lead emails must stay rare and high-signal.
-export async function claimInterestNotification(workspaceId: string, leadId: string) {
-  const ref = getDb().collection("notificationLocks").doc(`${workspaceId}-${leadId}-interest`);
+// Once per lead and outcome: a hot-interest email must not consume the later
+// confirmed-booking notification. Both remain individually idempotent.
+export async function claimLeadOutcomeNotification(
+  workspaceId: string,
+  leadId: string,
+  kind: LeadOutcomeNotificationKind,
+) {
+  const ref = getDb()
+    .collection("notificationLocks")
+    .doc(leadOutcomeNotificationLockId(workspaceId, leadId, kind));
 
   return getDb().runTransaction(async (transaction) => {
     const snap = await transaction.get(ref);
@@ -2576,7 +2589,7 @@ export async function claimInterestNotification(workspaceId: string, leadId: str
     transaction.set(ref, {
       workspaceId,
       leadId,
-      kind: "interest",
+      kind,
       lastSentAt: Date.now(),
       updatedAt: nowIso(),
     });
@@ -2630,6 +2643,7 @@ export async function createConversationMessage(input: {
             replyIntentConfidence: input.replyIntentConfidence ?? 0,
             replyIntentNextStepHint: input.replyIntentNextStepHint || "",
             replyIntentAt: timestamp,
+            ...(input.replyIntent === "meeting_booked" ? { meetingBookedAt: timestamp } : {}),
           }
         : {};
 
@@ -2680,10 +2694,21 @@ export async function setConversationReplyIntent(
         replyIntentConfidence: intent.confidence,
         replyIntentNextStepHint: intent.nextStepHint || "",
         replyIntentAt: timestamp,
+        ...(intent.intent === "meeting_booked" ? { meetingBookedAt: timestamp } : {}),
         updatedAt: timestamp,
       },
       { merge: true },
     );
+}
+
+export async function completeConversationManualFollowUp(workspaceId: string, leadId: string) {
+  const timestamp = nowIso();
+  await collection<Conversation>("conversations")
+    .doc(`${workspaceId}-${leadId}`)
+    .update({
+      manualFollowUpCompletedAt: timestamp,
+      updatedAt: timestamp,
+    });
 }
 
 export async function listConversations(workspaceId: string, limit = 50) {
@@ -2778,7 +2803,7 @@ export async function listAutomationRuns(workspaceId: string, limit = 100) {
   }
 }
 
-// Durable Activity Overview: per-day found/contacted/replies that outlive
+// Durable Activity Overview: per-day found/contacted/replies/bookings that outlive
 // agent and lead deletes. Docs are never deleted with agents; merge uses max()
 // so a later live recompute cannot shrink history after a delete snapshot.
 export async function listActivityDays(workspaceId: string, limit = 120) {
@@ -2798,6 +2823,7 @@ export async function listActivityDays(workspaceId: string, limit = 120) {
         found: Number(data.found || 0),
         contacted: Number(data.contacted || 0),
         replies: Number(data.replies || 0),
+        meetingsBooked: Number(data.meetingsBooked || 0),
         updatedAt: data.updatedAt || "",
       } satisfies ActivityDay;
     })
@@ -2830,6 +2856,10 @@ export async function persistActivityTotals(
             Number(point.contacted || 0),
           ),
           replies: Math.max(Number(existing?.replies || 0), Number(point.replies || 0)),
+          meetingsBooked: Math.max(
+            Number(existing?.meetingsBooked || 0),
+            Number(point.meetingsBooked || 0),
+          ),
           updatedAt: nowIso(),
         },
         { merge: true },
@@ -2851,7 +2881,9 @@ export async function reconcileActivityFromLive(
     enrollments: Array<
       Pick<CampaignEnrollment, "leadId" | "status" | "createdAt" | "updatedAt">
     >;
-    conversations: Array<Pick<Conversation, "messages">>;
+    conversations: Array<
+      Pick<Conversation, "messages" | "replyIntent" | "replyIntentAt" | "meetingBookedAt">
+    >;
   },
 ) {
   const points = buildActivityTotalsFromLive(input);

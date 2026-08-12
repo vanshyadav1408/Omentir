@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useId, useMemo, useRef, useState } from "react";
 import type {
   ActivityDay,
   CampaignEnrollmentPreview,
@@ -31,6 +31,7 @@ const series = [
   { key: "found", label: "Leads found", color: "#0d9488" },
   { key: "contacted", label: "People contacted", color: "#7c3aed" },
   { key: "replies", label: "Replies received", color: "#ba3871" },
+  { key: "meetingsBooked", label: "Meetings booked", color: "#ea580c" },
 ] as const;
 
 const chart = {
@@ -56,6 +57,7 @@ function buildChartData({
       found: Number(day.found || 0),
       contacted: Number(day.contacted || 0),
       replies: Number(day.replies || 0),
+      meetingsBooked: Number(day.meetingsBooked || 0),
     }));
 
   // max() merge: durable history keeps deleted-agent work; live fills current days.
@@ -91,15 +93,16 @@ export default function AnalysisChart(props: AnalysisChartProps) {
 
   const maxObserved = Math.max(
     0,
-    ...chartData.flatMap((item) => [item.found, item.contacted, item.replies]),
+    ...chartData.flatMap((item) => [
+      item.found,
+      item.contacted,
+      item.replies,
+      item.meetingsBooked,
+    ]),
   );
   const scaleMax = getScaleMax(maxObserved);
   const hoverPoint =
     hoverIndex != null ? chartData[Math.min(hoverIndex, chartData.length - 1)] : null;
-
-  useEffect(() => {
-    if (!chartData.length) setHoverIndex(null);
-  }, [chartData.length]);
 
   function getX(index: number) {
     if (chartData.length <= 1) return (chart.left + chart.right) / 2;
@@ -125,6 +128,7 @@ export default function AnalysisChart(props: AnalysisChartProps) {
     found: buildLinePath("found"),
     contacted: buildLinePath("contacted"),
     replies: buildLinePath("replies"),
+    meetingsBooked: buildLinePath("meetingsBooked"),
   };
   /* Hard zero baseline + 4 interval grid (horizontal only). */
   const gridValues = [0, scaleMax / 4, scaleMax / 2, (scaleMax * 3) / 4, scaleMax];
@@ -134,7 +138,7 @@ export default function AnalysisChart(props: AnalysisChartProps) {
     const rect = wrapRef.current?.getBoundingClientRect();
     if (!rect) return;
     setTooltipPos({
-      x: clientX - rect.left,
+      x: Math.min(Math.max(8, clientX - rect.left + 12), rect.width - 160),
       y: clientY - rect.top,
     });
   }
@@ -163,7 +167,7 @@ export default function AnalysisChart(props: AnalysisChartProps) {
           <svg
             viewBox={`0 0 ${chart.width} ${chart.height}`}
             role="img"
-            aria-label="Leads found, people contacted, and replies received over time"
+            aria-label="Leads found, people contacted, replies received, and meetings booked over time"
             className="h-56 w-full sm:h-64"
             onMouseLeave={() => setHoverIndex(null)}
           >
@@ -297,10 +301,7 @@ export default function AnalysisChart(props: AnalysisChartProps) {
             <div
               className="analysis-chart__tooltip pointer-events-none absolute z-10 min-w-[148px] rounded-lg px-3 py-2.5"
               style={{
-                left: Math.min(
-                  Math.max(8, tooltipPos.x + 12),
-                  (wrapRef.current?.clientWidth ?? 320) - 160,
-                ),
+                left: tooltipPos.x,
                 top: Math.max(8, tooltipPos.y - 12),
                 transform: "translateY(-100%)",
               }}
@@ -339,8 +340,8 @@ export default function AnalysisChart(props: AnalysisChartProps) {
             No activity yet
           </p>
           <p className="mt-1 max-w-sm text-xs font-normal leading-5 text-[var(--md-sys-color-text-medium)]">
-            Real leads found, people contacted, and replies received will appear here
-            after Omentir starts working.
+            Real leads found, people contacted, replies received, and meetings booked
+            will appear here after Omentir starts working.
           </p>
         </div>
       )}

@@ -8,8 +8,8 @@ export type WorkspaceSettings = {
 
 export type WorkspaceBilling = {
   provider: "manual" | "whop";
-  // "startup" and "enterprise" are retired from sale but still held by
-  // existing workspaces. "lifetime" is the one-time plan.
+  // "startup" is retired but still held by existing workspaces. Enterprise is
+  // sales-assisted, while "lifetime" is the retired one-time plan.
   plan: "solo" | "lifetime" | "startup" | "enterprise";
   status:
     | "pending"
@@ -254,6 +254,11 @@ export type Lead = {
   signalObservedAt?: string;
   leadReason?: string;
   engagementContext?: LeadEngagementContext;
+  // Discovery persists only people with provider-verifiable LinkedIn activity
+  // inside the current recency window. These fields keep that evidence
+  // auditable without misusing signalObservedAt, which may only be search time.
+  linkedinActivityAt?: string;
+  linkedinActivitySource?: "post" | "comment" | "reaction";
   sourceAgentId?: string;
   outreachStatus:
     | "new"
@@ -491,6 +496,11 @@ export type Conversation = {
   replyIntentConfidence?: number;
   replyIntentNextStepHint?: string;
   replyIntentAt?: string;
+  // Sticky outcome timestamp. Later replies may change replyIntent, but a
+  // confirmed booking remains part of the conversation's history.
+  meetingBookedAt?: string;
+  // Clears a manual follow-up task until a newer inbound reply is classified.
+  manualFollowUpCompletedAt?: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -538,5 +548,6 @@ export type ActivityDay = {
   found: number;
   contacted: number;
   replies: number;
+  meetingsBooked: number;
   updatedAt: string;
 };

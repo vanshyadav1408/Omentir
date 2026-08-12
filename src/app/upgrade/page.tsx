@@ -31,6 +31,14 @@ export default async function UpgradePage() {
   }
 
   const plan = workspace.billing?.plan;
-  // Legacy Startup, Enterprise, and bypassed workspaces have no matching card.
-  return <UpgradeView currentPlan={plan === "solo" || plan === "lifetime" ? plan : undefined} />;
+  // Legacy Startup and bypassed workspaces have no matching card.
+  return (
+    <UpgradeView
+      currentPlan={
+        plan === "solo" || plan === "lifetime" || plan === "enterprise"
+          ? plan
+          : undefined
+      }
+    />
+  );
 }

@@ -72,7 +72,7 @@ export default function BlogPost() {
         Maintaining compliance does not require stopping your outbound campaigns. Senders must align their campaigns with data privacy rules, secure integrations, and organic pacing delays.
       </p>
       <p>
-        Omentir integrates this compliance framework, routing campaigns server-side to protect profile assets, starting at $29/month. Let's walk through the compliance checklist.
+        Omentir integrates this compliance framework, routing campaigns server-side to protect profile assets, starting at $49/month. Let's walk through the compliance checklist.
       </p>
 
       <h2 id="gdpr-compliance-rules" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">

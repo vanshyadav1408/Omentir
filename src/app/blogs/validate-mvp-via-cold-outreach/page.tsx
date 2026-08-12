@@ -41,7 +41,7 @@ const faqItems = [
   },
   {
     question: "How does Omentir support early product validation?",
-    answer: "Omentir offers flexible plans starting at $29/month, allowing you to run discovery agents, set prompt variables, and manage safe connection pacing affordably."
+    answer: "Omentir offers a Pro plan starting at $49/month, allowing you to run discovery agents, set prompt variables, and manage safe connection pacing affordably."
   },
   {
     question: "What metrics indicate that my MVP is validated?",

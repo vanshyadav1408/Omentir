@@ -43,9 +43,28 @@ const faqItems = [
   },
   {
     question: "How does the pricing compare between Artisan and Omentir?",
-    answer: "Artisan now offers a public credit-based pricing page with a free trial and paid tiers. Omentir offers the same complete product as either Monthly at $29/month or Lifetime at $99 once."
+    answer: "Artisan now offers a public credit-based pricing page with a free trial and paid tiers. Omentir offers Pro at $49/month, with a minimum of three bookings per week or you pay nothing, plus Enterprise for teams that need unlimited users, unlimited LinkedIn accounts, SSO, dedicated onboarding, and priority support."
   }
 ] as const;
+
+const visibleFaqItems = faqItems.map((item) => {
+  if (item.question !== "How does the pricing compare between Artisan and Omentir?") {
+    return item;
+  }
+
+  return {
+    ...item,
+    answer: (
+      <>
+        Artisan now offers a public credit-based pricing page with a free trial
+        and paid tiers. Omentir offers Pro at $49/month, with a minimum of
+        three bookings per week or you pay nothing.{" "}
+        Enterprise is for teams that need unlimited users, unlimited LinkedIn
+        accounts, SSO, dedicated onboarding, and priority support.
+      </>
+    ),
+  };
+});
 
 export default function BlogPost() {
   return (
@@ -57,6 +76,7 @@ export default function BlogPost() {
       bannerAlt="Artisan AI Ava versus Omentir comparison dashboard illustration"
       tocItems={tocItems}
       faqItems={faqItems}
+      visibleFaqItems={visibleFaqItems}
     >
       <p id="rise-of-ai-sdr" className="scroll-mt-28">
         The sales development representative role is undergoing a massive transformation. For years, B2B companies scaled outbound pipeline by hiring SDRs to manually build lists, write email sequences, and follow up with leads. Today, growth teams are replacing these manual workflows with autonomous AI agents.
@@ -195,11 +215,21 @@ export default function BlogPost() {
         Artisan publishes a credit-based pricing page with a free trial, a free plan, and paid tiers. Its public site currently describes a 10,000-credit trial for new accounts and a Free plan after the trial if no card is added. Because credits are consumed by actions, buyers should model expected usage rather than comparing only the plan name.
       </p>
       <p>
-        Omentir is built for straightforward self-serve buying with two pricing options:
+        Omentir offers straightforward self-serve Pro pricing, plus Enterprise
+        support for teams with more advanced needs:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Monthly ($29/month):</strong> Includes one LinkedIn account, unlimited AI agents, leads, campaigns, AI automated campaigns, API access, and email customer support.</li>
-        <li><strong>Lifetime ($99 once):</strong> Includes the same complete product with one payment and no renewals.</li>
+        <li>
+          <strong>Pro ($49/month):</strong> Includes one user, one LinkedIn
+          account, unlimited AI agents, leads, campaigns, AI automated campaigns,
+          API access, email customer support, and a minimum of three bookings per
+          week or you pay nothing.
+        </li>
+        <li>
+          <strong>Enterprise:</strong> Includes unlimited users, unlimited
+          LinkedIn accounts, all Pro features, plus SSO, dedicated onboarding,
+          and priority support. Book a call to discuss your setup.
+        </li>
       </ul>
       <p>
         This self-serve model lets you start with a low monthly budget and scale your outbound spending as you book more demos.

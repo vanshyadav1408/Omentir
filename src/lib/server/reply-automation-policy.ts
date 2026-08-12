@@ -2,6 +2,16 @@ import type { CampaignEnrollment, CampaignReplyHandling, ReplyIntent } from "./t
 
 export const HOT_INTEREST_CONFIDENCE = 0.7;
 
+export type LeadOutcomeNotificationKind = "interest" | "meeting";
+
+export function leadOutcomeNotificationLockId(
+  workspaceId: string,
+  leadId: string,
+  kind: LeadOutcomeNotificationKind,
+) {
+  return `${workspaceId}-${leadId}-${kind}`;
+}
+
 export function isTerminalReplyIntent(intent: ReplyIntent | undefined) {
   return intent === "negative" || intent === "not_now" || intent === "ooo";
 }

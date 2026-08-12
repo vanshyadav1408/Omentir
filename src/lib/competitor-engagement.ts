@@ -464,7 +464,8 @@ export function isUnscopedKeywordPostEngagement(signals: Array<{
   const fromCompetitorOrFounder = (source: string) =>
     source.startsWith("competitor ") ||
     source.startsWith("founder ") ||
-    source.startsWith("employee/founder ");
+    source.startsWith("employee/founder ") ||
+    source.startsWith("connected account ");
 
   return signals.every((signal) => {
     if (fromCompetitorOrFounder(signal.signalSource)) return false;

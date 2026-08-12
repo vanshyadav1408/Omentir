@@ -33,6 +33,7 @@ import {
   profileSearchKeys,
   retrieveLinkedInProfile,
   retrieveLinkedInCompanyEvidence,
+  retrieveOwnLinkedInProfile,
   searchLinkedInEmployeesAtCompany,
   searchLinkedInPosts,
   searchLinkedInProfiles,
@@ -63,6 +64,15 @@ import {
   sortPostsByRelevance,
 } from "../competitor-engagement";
 import { buildStealProductTerms } from "../steal-customers-targeting";
+import {
+  recentLinkedInActivityFromPosts,
+  recentLinkedInActivityFromSignals,
+} from "../linkedin-activity";
+import type { LinkedInActivityEvidence } from "../linkedin-activity";
+import {
+  planPeopleEngineSourceRun,
+  selectDailyTargetLocation,
+} from "../people-engine-rotation";
 
 // 65 matches scoreLeadForProduct's "clear functional buyer" band so people
 // whose job needs the product are not discarded for imperfect title wording.
@@ -73,6 +83,10 @@ const DEFAULT_DAILY_QUALIFIED_LEAD_CAP = 75;
 // dailyLeadLimit because most enrichments fail region/score gates before a
 // lead is saved.
 const DEFAULT_MAX_ENRICHMENTS_PER_RUN = 500;
+// Cold people search does not carry an activity timestamp. Check recent posts
+// before spending a profile view, but keep the daily read volume bounded.
+const DEFAULT_MAX_ACTIVITY_CHECKS_PER_RUN = 250;
+const ACTIVITY_POST_LIMIT = 3;
 const PEOPLE_ENGINE_RUN_MS = 15 * 60 * 1000;
 const STOP_BUFFER_MS = 15 * 1000;
 // Competitor/founder pages: pull enough recent posts that product launches and
@@ -109,6 +123,9 @@ type ObservedSignal = {
   signalText: string;
   signalUrl: string;
   signalObservedAt: string;
+  // Only a timestamp produced by the person's own post, comment, or reaction.
+  // Search observation time must never populate this field.
+  activityObservedAt?: string;
   leadReason: string;
   engagementContext?: LeadEngagementContext;
 };
@@ -144,28 +161,15 @@ export function isStealCustomersAgent(
   return hasStealSources && !hasTitles;
 }
 
-export function agentHasSignalSources(agent: Agent) {
-  const sources = agent.signalSources;
-  return Boolean(
-    agent.mode === "signals" ||
-      agent.mode === "steal_customers" ||
-      isStealCustomersAgent(agent) ||
-      sources?.competitorUrls.length ||
-      sources?.founderUrls.length ||
-      sources?.keywords.length,
-  );
+export function agentUsesPeopleEngine(agent: Agent) {
+  // Current agents already use signals mode. Older prompt/filter agents must
+  // use the same qualified and activity-verified path, or they can still save
+  // inactive people through the legacy search loop in automation.ts.
+  return agent.mode !== "outreach";
 }
 
 function unique(values: string[]) {
   return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)));
-}
-
-function stableIndex(value: string, length: number) {
-  let hash = 0;
-  for (const character of value) {
-    hash = (hash * 31 + character.charCodeAt(0)) >>> 0;
-  }
-  return length ? hash % length : 0;
 }
 
 function hasRunTime(deadline: number) {
@@ -263,9 +267,10 @@ async function searchPeopleForAgentQuery(input: {
   const locationBatches =
     input.targetLocations.length > 0
       ? [[
-          input.targetLocations[
-            stableIndex(input.title || input.keyword || "people", input.targetLocations.length)
-          ],
+          selectDailyTargetLocation(
+            input.title || input.keyword || "people",
+            input.targetLocations,
+          )!,
         ]]
       : [[] as string[]];
   const found = new Map<string, Partial<Lead>>();
@@ -454,7 +459,8 @@ async function collectPostEngagers(input: {
     (sourceLabel.startsWith("competitor ") ||
       sourceLabel.startsWith("founder ") ||
       sourceLabel.startsWith("employee/founder ") ||
-      sourceLabel.startsWith("employee "));
+      sourceLabel.startsWith("employee ") ||
+      sourceLabel.startsWith("connected account "));
   const comments = await listLinkedInPostComments({
     accountId: input.account.accountId,
     postId: input.postId,
@@ -508,7 +514,8 @@ async function collectPostEngagers(input: {
         commentText,
       }),
       signalUrl: comment.url || input.postUrl,
-      signalObservedAt: comment.createdAt || input.observedAt,
+      signalObservedAt: comment.createdAt || input.observedAt || nowIso(),
+      activityObservedAt: comment.createdAt || input.observedAt || undefined,
       leadReason: engagementLeadReason(input.sourceLabel, "comment"),
       engagementContext,
     });
@@ -535,7 +542,8 @@ async function collectPostEngagers(input: {
         reactionType: reaction.type,
       }),
       signalUrl: reaction.url || input.postUrl,
-      signalObservedAt: reaction.createdAt || input.observedAt,
+      signalObservedAt: reaction.createdAt || input.observedAt || nowIso(),
+      activityObservedAt: reaction.createdAt || input.observedAt || undefined,
       leadReason: engagementLeadReason(input.sourceLabel, "reaction"),
       engagementContext,
     });
@@ -578,7 +586,7 @@ async function collectEngagersFromPosts(input: {
       postText: getLinkedInPostText(post),
       postUrl: getLinkedInPostUrl(post) || input.fallbackUrl,
       sourceLabel: input.sourceLabel,
-      observedAt: getLinkedInPostCreatedAtRaw(post) || getLinkedInPostCreatedAt(post),
+      observedAt: getLinkedInPostCreatedAtRaw(post),
       stealMode: input.stealMode,
       productKeywords: input.productKeywords,
     });
@@ -679,6 +687,51 @@ async function collectFromLinkedInSource(input: {
         }
       }
     }
+  } catch (error) {
+    await logSourceError(input.agent, sourceLabel, error);
+  }
+}
+
+async function collectFromConnectedAccountPosts(input: {
+  agent: Agent;
+  account: LinkedInAccount;
+  candidates: Map<string, Candidate>;
+  productKeywords: string[];
+  targetLocations: string[];
+}) {
+  const sourceLabel = "connected account own post";
+  try {
+    const ownProfile = await retrieveOwnLinkedInProfile(input.account.accountId);
+    if (!ownProfile?.providerProfileId) return;
+    if (
+      input.targetLocations.length &&
+      (!ownProfile.location ||
+        !matchesTargetLocation(ownProfile.location, input.targetLocations))
+    ) {
+      return;
+    }
+    const posts = await listLinkedInPostsForProfile({
+      accountId: input.account.accountId,
+      identifier: ownProfile.providerProfileId,
+      limit: 5,
+    });
+    const recentPosts = posts.filter((post) =>
+      recentLinkedInActivityFromPosts([
+        { createdAt: getLinkedInPostCreatedAtRaw(post) },
+      ]),
+    );
+    if (!recentPosts.length) return;
+    await collectEngagersFromPosts({
+      agent: input.agent,
+      account: input.account,
+      candidates: input.candidates,
+      posts: recentPosts,
+      sourceLabel,
+      fallbackUrl: "",
+      stealMode: false,
+      productKeywords: input.productKeywords,
+      postLimit: 3,
+    });
   } catch (error) {
     await logSourceError(input.agent, sourceLabel, error);
   }
@@ -789,11 +842,7 @@ async function collectFromRolePostAuthors(input: {
 
   for (const title of input.titles.slice(0, 6)) {
     if (added >= limit) break;
-    const queries = [
-      title,
-      `my day as a ${title}`,
-      `as a ${title}`,
-    ];
+    const queries = [title, `my day as a ${title}`, `as a ${title}`];
     for (const query of queries) {
       if (added >= limit) break;
       try {
@@ -829,6 +878,7 @@ async function collectFromRolePostAuthors(input: {
             signalUrl: getLinkedInPostUrl(post) || lead.linkedInUrl || "",
             signalObservedAt:
               getLinkedInPostCreatedAtRaw(post) || getLinkedInPostCreatedAt(post) || nowIso(),
+            activityObservedAt: getLinkedInPostCreatedAtRaw(post) || undefined,
             leadReason: `Job title match from public post author: ${title}`,
           });
           added += 1;
@@ -948,6 +998,116 @@ export async function enrichLinkedInLead(account: LinkedInAccount, lead: Partial
   return lead;
 }
 
+type ActivityVerification =
+  | {
+      status: "active";
+      evidence: LinkedInActivityEvidence;
+      recentPosts: string[];
+    }
+  | { status: "inactive"; recentPosts: [] }
+  | { status: "unknown"; recentPosts: [] };
+
+function activityIdentifierFromLead(lead: Partial<Lead>) {
+  // The posts route documents the provider-internal id as its primary key.
+  // Fall back to the public slug for older leads that do not have one yet.
+  return lead.providerProfileId || getPublicIdentifier(lead.linkedInUrl) || "";
+}
+
+function formatRecentActivityPosts(
+  posts: Awaited<ReturnType<typeof listLinkedInPostsForProfile>>,
+  nowMs: number,
+) {
+  return posts
+    .filter((post) =>
+      recentLinkedInActivityFromPosts(
+        [{ createdAt: getLinkedInPostCreatedAtRaw(post) }],
+        nowMs,
+      ),
+    )
+    .map((post) => {
+      const text = getLinkedInPostText(post).replace(/\s+/g, " ").trim().slice(0, 600);
+      const createdAt = getLinkedInPostCreatedAtRaw(post);
+      return text && createdAt ? `${createdAt.slice(0, 10)} | ${text}` : "";
+    })
+    .filter(Boolean);
+}
+
+async function verifyRecentLinkedInActivity(input: {
+  account: LinkedInAccount;
+  lead: Partial<Lead>;
+  signals: ObservedSignal[];
+  nowMs: number;
+}): Promise<ActivityVerification> {
+  const signalEvidence = recentLinkedInActivityFromSignals(input.signals, input.nowMs);
+  if (signalEvidence) {
+    return { status: "active", evidence: signalEvidence, recentPosts: [] };
+  }
+
+  const identifier = activityIdentifierFromLead(input.lead);
+  if (!identifier) return { status: "unknown", recentPosts: [] };
+
+  const workspaceAccounts = await listLinkedInAccounts(input.account.workspaceId);
+  const activityAccounts = [
+    input.account,
+    ...workspaceAccounts.filter((candidate) => candidate.id !== input.account.id),
+  ];
+
+  for (const activityAccount of activityAccounts) {
+    try {
+      const posts = await listLinkedInPostsForProfile({
+        accountId: activityAccount.accountId,
+        identifier,
+        limit: ACTIVITY_POST_LIMIT,
+      });
+      const postEvidence = recentLinkedInActivityFromPosts(
+        posts.map((post) => ({ createdAt: getLinkedInPostCreatedAtRaw(post) })),
+        input.nowMs,
+      );
+      if (!postEvidence) return { status: "inactive", recentPosts: [] };
+      return {
+        status: "active",
+        evidence: postEvidence,
+        recentPosts: formatRecentActivityPosts(posts, input.nowMs),
+      };
+    } catch (error) {
+      console.error(
+        `[people-engine] activity check failed through ${activityAccount.id}:`,
+        error instanceof Error ? error.message : error,
+      );
+    }
+  }
+
+  return { status: "unknown", recentPosts: [] };
+}
+
+function applyLinkedInActivity(
+  lead: Partial<Lead>,
+  evidence: LinkedInActivityEvidence,
+  recentPosts: string[],
+) {
+  const existingContext = lead.profileContext;
+  const profileContext = recentPosts.length
+    ? {
+        about: existingContext?.about || "",
+        experience: existingContext?.experience || [],
+        education: existingContext?.education || [],
+        skills: existingContext?.skills || [],
+        certifications: existingContext?.certifications || [],
+        projects: existingContext?.projects || [],
+        volunteering: existingContext?.volunteering || [],
+        languages: existingContext?.languages || [],
+        recentPosts,
+        capturedAt: nowIso(),
+      }
+    : existingContext;
+
+  return mergeLead(lead, {
+    linkedinActivityAt: evidence.observedAt,
+    linkedinActivitySource: evidence.source,
+    ...(profileContext ? { profileContext } : {}),
+  });
+}
+
 async function persistCandidateSignals(agent: Agent, candidate: Candidate) {
   const persisted: LeadSignal[] = [];
 
@@ -988,12 +1148,13 @@ function primarySignal(candidate: Candidate) {
   return candidate.signals.reduce<ObservedSignal | undefined>(
     (best, signal) => {
       const strength = (value: ObservedSignal) => {
-        if (value.signalSource === "Grounded exact-agent web search") return 10;
+        if (value.signalSource.startsWith("Grounded ")) return 10;
         if (
           value.signalType === "post_comment" &&
           (value.signalSource.startsWith("competitor ") ||
             value.signalSource.startsWith("founder ") ||
-            value.signalSource.startsWith("employee/founder "))
+            value.signalSource.startsWith("employee/founder ") ||
+            value.signalSource.startsWith("connected account "))
         ) {
           return 12;
         }
@@ -1001,7 +1162,8 @@ function primarySignal(candidate: Candidate) {
           value.signalType === "post_reaction" &&
           (value.signalSource.startsWith("competitor ") ||
             value.signalSource.startsWith("founder ") ||
-            value.signalSource.startsWith("employee/founder "))
+            value.signalSource.startsWith("employee/founder ") ||
+            value.signalSource.startsWith("connected account "))
         ) {
           return 6;
         }
@@ -1014,7 +1176,7 @@ function primarySignal(candidate: Candidate) {
 }
 
 function directSignalEvidence(signal: ObservedSignal) {
-  if (signal.signalSource === "Grounded exact-agent web search") return signal.signalText;
+  if (signal.signalSource.startsWith("Grounded ")) return signal.signalText;
   if (
     signal.signalType === "keyword_search" &&
     signal.signalSource.endsWith("authored post")
@@ -1067,10 +1229,12 @@ function failsLocationGate(
   location: string | undefined,
   targetLocations: string[],
   signals: Array<{ signalType: string; signalSource: string }>,
+  options?: { allowBlankForEnrichment?: boolean },
 ) {
   if (!targetLocations.length) return false;
   const trimmed = location?.trim() || "";
   if (!trimmed) {
+    if (options?.allowBlankForEnrichment) return false;
     // Location-parameter / title search already scoped the pool. Blank profile
     // locations are common and should not burn the whole run as "out of region".
     return !signals.some((signal) => isLocationScopedPeopleSignal(signal));
@@ -1080,12 +1244,6 @@ function failsLocationGate(
 
 function sourceKey(kind: PeopleEngineSource["kind"], value: string) {
   return `${kind}:${cleanId(value)}`;
-}
-
-function rotateSources(sources: PeopleEngineSource[], cursorKey?: string) {
-  const startIndex = cursorKey ? sources.findIndex((source) => source.key === cursorKey) : -1;
-  if (startIndex <= 0) return sources;
-  return [...sources.slice(startIndex), ...sources.slice(0, startIndex)];
 }
 
 export async function runPeopleEngineForAgent(input: {
@@ -1172,10 +1330,11 @@ export async function runPeopleEngineForAgent(input: {
         keywordLimit: sourceKeywords.length,
         sourceKey,
       });
-  const orderedSources = rotateSources(
+  const sourceRun = planPeopleEngineSourceRun(
     sourceQueue,
     input.agent.peopleEngineCursor?.sourceKey,
-  ).slice(0, sourceLimit);
+    sourceLimit,
+  );
   // Steal Customers: rank posts with concrete product language from My Product
   // (features, pains, use cases, domain tokens) rather than the seller's brand
   // name or long marketing sentences that never appear on competitor threads.
@@ -1199,6 +1358,19 @@ export async function runPeopleEngineForAgent(input: {
         input.profile?.companyName || "",
       ]);
 
+  // People who recently engaged with the sender's own posts are warm,
+  // provider-resolved, and provably active. They still pass every title,
+  // location, enrichment, and fit gate below before becoming leads.
+  if (!stealOnly && hasRunTime(deadline)) {
+    await collectFromConnectedAccountPosts({
+      agent: input.agent,
+      account: input.account,
+      candidates,
+      productKeywords: relevanceKeywords,
+      targetLocations,
+    });
+  }
+
   // When company size is binding, source inside companies that LinkedIn has
   // already filtered to that exact headcount band. These candidates are added
   // first so the limited profile-view budget is spent on the strongest pool.
@@ -1217,10 +1389,8 @@ export async function runPeopleEngineForAgent(input: {
   }
 
   let peopleSearchHits = 0;
-  for (let index = 0; index < orderedSources.length; index += 1) {
+  for (const { source, nextSource } of sourceRun) {
     if (!hasRunTime(deadline)) break;
-    const source = orderedSources[index];
-    const nextSource = orderedSources[(index + 1) % orderedSources.length];
 
     if (nextSource) {
       // false = agent doc gone (deleted mid-run). Stop discovery: further
@@ -1335,7 +1505,7 @@ export async function runPeopleEngineForAgent(input: {
             postText: getLinkedInPostText(post),
             postUrl: getLinkedInPostUrl(post) || "",
             sourceLabel: `competitor discussion "${query}"`,
-            observedAt: getLinkedInPostCreatedAtRaw(post) || getLinkedInPostCreatedAt(post),
+            observedAt: getLinkedInPostCreatedAtRaw(post),
             stealMode: true,
             productKeywords: relevanceKeywords,
           });
@@ -1379,6 +1549,11 @@ export async function runPeopleEngineForAgent(input: {
   let anonymousDropped = 0;
   let titleFiltered = 0;
   let enrichments = 0;
+  let activeCandidates = 0;
+  let inactiveCandidates = 0;
+  let activityUnverifiable = 0;
+  let activityChecks = 0;
+  let activityBudgetSkipped = 0;
   let timeBudgetExpired = false;
 
   const qualifyExistingLead = async (
@@ -1435,6 +1610,9 @@ export async function runPeopleEngineForAgent(input: {
       signalObservedAt: firstSignal.signalObservedAt,
       leadReason: firstSignal.leadReason,
       engagementContext: firstSignal.engagementContext,
+      linkedinActivityAt: mergedLead.linkedinActivityAt,
+      linkedinActivitySource: mergedLead.linkedinActivitySource,
+      profileContext: mergedLead.profileContext,
       fitScore: score.fitScore,
     });
 
@@ -1521,10 +1699,83 @@ export async function runPeopleEngineForAgent(input: {
     // Apply location before both new-lead and existing-lead paths. Otherwise a
     // known lead could be adopted into a new group without passing the same
     // deterministic location requirement as a newly discovered person.
-    if (failsLocationGate(candidate.lead.location, targetLocations, candidate.signals)) {
+    if (
+      failsLocationGate(candidate.lead.location, targetLocations, candidate.signals, {
+        allowBlankForEnrichment: true,
+      })
+    ) {
       outOfRegionCandidates += 1;
       continue;
     }
+
+    const hasGroundedEvidence = candidate.signals.some(
+      (signal) => signal.signalSource.startsWith("Grounded "),
+    );
+    let preEnrichedGroundedIdentity = false;
+    if (hasGroundedEvidence && !candidate.lead.providerProfileId) {
+      if (enrichments >= enrichmentLimit) continue;
+      enrichments += 1;
+      const claimedName = candidate.lead.name;
+      try {
+        candidate.lead = await enrichLinkedInLead(input.account, candidate.lead);
+      } catch (error) {
+        console.error(
+          "[people-engine] grounded identity resolution failed:",
+          error instanceof Error ? error.message : error,
+        );
+        activityUnverifiable += 1;
+        continue;
+      }
+      if (!candidate.lead.providerProfileId || isAnonymousLinkedInProfile(candidate.lead)) {
+        anonymousDropped += 1;
+        continue;
+      }
+      if (claimedName && candidate.lead.name && !namesAlign(claimedName, candidate.lead.name)) {
+        anonymousDropped += 1;
+        continue;
+      }
+      if (
+        !stealOnly &&
+        matchTitles.length &&
+        candidate.lead.title &&
+        !matchesTargetTitle(candidate.lead.title, matchTitles, roleVocabulary)
+      ) {
+        titleFiltered += 1;
+        continue;
+      }
+      if (failsLocationGate(candidate.lead.location, targetLocations, candidate.signals)) {
+        outOfRegionCandidates += 1;
+        continue;
+      }
+      preEnrichedGroundedIdentity = true;
+    }
+
+    const signalActivity = recentLinkedInActivityFromSignals(candidate.signals);
+    if (!signalActivity && activityChecks >= DEFAULT_MAX_ACTIVITY_CHECKS_PER_RUN) {
+      activityBudgetSkipped += 1;
+      continue;
+    }
+    if (!signalActivity) activityChecks += 1;
+    const activity = await verifyRecentLinkedInActivity({
+      account: input.account,
+      lead: candidate.lead,
+      signals: candidate.signals,
+      nowMs: Date.now(),
+    });
+    if (activity.status === "inactive") {
+      inactiveCandidates += 1;
+      continue;
+    }
+    if (activity.status === "unknown") {
+      activityUnverifiable += 1;
+      continue;
+    }
+    activeCandidates += 1;
+    candidate.lead = applyLinkedInActivity(
+      candidate.lead,
+      activity.evidence,
+      activity.recentPosts,
+    );
 
     const existingLeadId = expectedLeadId(input.agent.workspaceId, candidate.lead);
     if (existingLeadIds.has(existingLeadId)) {
@@ -1549,24 +1800,30 @@ export async function runPeopleEngineForAgent(input: {
       continue;
     }
 
-    const hasGroundedEvidence = candidate.signals.some(
-      (signal) => signal.signalSource === "Grounded exact-agent web search",
-    );
     // Signals above are already persisted; bound the costly part (live profile
     // views) so a high-candidate run can't rack up account-risking view counts.
-    if (enrichments >= enrichmentLimit) continue;
-    enrichments += 1;
     let enrichedLead: Partial<Lead>;
-    try {
-      enrichedLead = await enrichLinkedInLead(input.account, candidate.lead);
-    } catch (error) {
-      // Provider blips on one profile must not fail the whole agent run.
-      console.error(
-        "[people-engine] enrich failed:",
-        error instanceof Error ? error.message : error,
-      );
-      continue;
+    if (preEnrichedGroundedIdentity) {
+      enrichedLead = candidate.lead;
+    } else {
+      if (enrichments >= enrichmentLimit) continue;
+      enrichments += 1;
+      try {
+        enrichedLead = await enrichLinkedInLead(input.account, candidate.lead);
+      } catch (error) {
+        // Provider blips on one profile must not fail the whole agent run.
+        console.error(
+          "[people-engine] enrich failed:",
+          error instanceof Error ? error.message : error,
+        );
+        continue;
+      }
     }
+    enrichedLead = applyLinkedInActivity(
+      enrichedLead,
+      activity.evidence,
+      activity.recentPosts,
+    );
 
     // Grounded web search can verify role and employer context, but a model can
     // still return a plausible-looking LinkedIn slug. Require Unipile to resolve
@@ -1741,6 +1998,11 @@ export async function runPeopleEngineForAgent(input: {
       `, skipped post noise: ${skippedPostNoise}` +
       `, title filtered: ${titleFiltered}` +
       `, anonymous/unresolved: ${anonymousDropped}` +
+      `, active in last 30 days: ${activeCandidates}` +
+      `, inactive: ${inactiveCandidates}` +
+      `, activity unverifiable: ${activityUnverifiable}` +
+      `, activity post checks: ${activityChecks}` +
+      `, activity check budget skipped: ${activityBudgetSkipped}` +
       `${timeBudgetExpired ? ", stopped at time budget" : ""}).`,
   }).catch((error) => {
     console.error("[people-engine] failed to log run summary:", error);
@@ -1754,6 +2016,11 @@ export async function runPeopleEngineForAgent(input: {
     existingRejected,
     lowScoreCandidates,
     outOfRegionCandidates,
+    activeCandidates,
+    inactiveCandidates,
+    activityUnverifiable,
+    activityChecks,
+    activityBudgetSkipped,
     timeBudgetExpired,
   };
 }

@@ -22,8 +22,8 @@ const unlimitedLimits: PlanLimits = {
  * Does not apply self-hosted/local overrides. Call planLimits() at runtime.
  */
 export function commercialPlanLimits(plan: PlanId | undefined): PlanLimits {
-  // Enterprise is hidden from the pricing page but still honoured for any
-  // workspace already on it.
+  // Enterprise workspaces receive the uncapped commercial limits advertised
+  // on the sales-assisted plan.
   if (plan === "enterprise") {
     return {
       linkedInAccounts: Number.POSITIVE_INFINITY,
@@ -62,7 +62,7 @@ export function planLimits(plan: PlanId | undefined): PlanLimits {
 
 /**
  * API keys, MCP, and REST agent API. Included on every paid plan since the
- * Startup feature set moved down to the $29 tier; an unsubscribed workspace
+ * Startup feature set moved down to the Pro tier; an unsubscribed workspace
  * (undefined plan) still gets nothing.
  */
 export function planHasApiAccess(plan: PlanId | undefined) {

@@ -72,7 +72,7 @@ export default function BlogPost() {
         Avoiding these alerts requires patience. Senders must implement gradual volume ramp-ups, scaling daily activity over a 4-week curve instead of treating a new profile like an unlimited sending asset.
       </p>
       <p>
-        Omentir integrates this safety layer, offering pacing configurations to protect your profiles, starting at $29/month. Let's look at why ramp-ups are important.
+        Omentir integrates this safety layer, offering pacing configurations to protect your profiles, starting at $49/month. Let's look at why ramp-ups are important.
       </p>
 
       <h3 id="starting-point" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">

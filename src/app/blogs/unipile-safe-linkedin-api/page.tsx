@@ -79,7 +79,7 @@ export default function BlogPost() {
         , you can centralize connection, messaging, invitation, and inbox workflows without asking your team to run fragile browser scripts.
       </p>
       <p>
-        Omentir coordinates campaigns via this secure API layer, protecting your login credentials, starting at $29/month. Let's look at how Unipile secures your profiles.
+        Omentir coordinates campaigns via this secure API layer, protecting your login credentials, starting at $49/month. Let's look at how Unipile secures your profiles.
       </p>
 
       <h3 id="safe-access-means" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">

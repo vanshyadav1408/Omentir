@@ -27,10 +27,11 @@ function BillingMessage({ status }: { status?: string }) {
       <>
         You need an active plan to use Omentir.
         <br />
-        Start at{" "}
-        <span className="font-medium text-orange-500">$29/month</span>, or pay{" "}
-        <span className="font-medium text-orange-500">$99 once</span> for
-        lifetime access.
+        Get everything for{" "}
+        <span className="font-medium text-orange-500">$49/month</span>, with a
+        minimum of three bookings per week or you pay nothing. Need unlimited
+        users, unlimited LinkedIn accounts, SSO, or dedicated
+        support? Book an Enterprise call.
       </>
     );
   }

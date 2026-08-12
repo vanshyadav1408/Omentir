@@ -26,6 +26,7 @@ export interface BlogPostTemplateProps {
   bannerAlt?: string;
   tocItems: readonly TocItem[];
   faqItems?: ReadonlyArray<{ question: string; answer: string }>;
+  visibleFaqItems?: ReadonlyArray<{ question: ReactNode; answer: ReactNode }>;
   children: React.ReactNode;
 }
 
@@ -49,6 +50,7 @@ export default function BlogPostTemplate({
   bannerAlt = "Blog post banner image",
   tocItems,
   faqItems = [],
+  visibleFaqItems,
   children,
 }: BlogPostTemplateProps) {
   const blogItem = ALL_BLOGS.find((b) => b.slug === slug);
@@ -65,6 +67,7 @@ export default function BlogPostTemplate({
   const hasVisibleFaqs = hasFaqSection(children);
   const faqTocItem = tocItems.find((item) => item.label.toLowerCase().includes("faq"));
   const faqSectionId = faqTocItem?.id ?? "faqs";
+  const renderedFaqItems = visibleFaqItems ?? faqItems;
   const jsonLd = [
     createBlogJsonLd({
       title,
@@ -175,7 +178,7 @@ export default function BlogPostTemplate({
                 >
                   Frequently Asked Questions
                 </h2>
-                <FaqAccordion items={faqItems} />
+                <FaqAccordion items={renderedFaqItems} />
               </>
             ) : null}
           </>

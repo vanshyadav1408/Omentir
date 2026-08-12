@@ -76,7 +76,7 @@ export default function BlogPost() {
         To protect your outbox deliverability, you must understand the psychology of spam. By analyzing why prospects report messages, you can rewrite your templates to trigger curiosity instead of irritation.
       </p>
       <p>
-        Omentir helps manage this campaign quality, routing drafted messages to a review queue before delivery, starting at $29/month. Let's look at the triggers of spam reports.
+        Omentir helps manage this campaign quality, routing drafted messages to a review queue before delivery, starting at $49/month. Let's look at the triggers of spam reports.
       </p>
 
       <h3 id="buyer-threat-model" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">

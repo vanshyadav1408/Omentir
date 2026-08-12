@@ -11,6 +11,7 @@ export type ActivityDayTotals = {
   found: number;
   contacted: number;
   replies: number;
+  meetingsBooked: number;
 };
 
 export type ActivityChartPoint = ActivityDayTotals & {
@@ -33,6 +34,9 @@ type EnrollmentLike = {
 
 type ConversationLike = {
   messages?: Array<{ direction?: string; createdAt?: string }>;
+  replyIntent?: string;
+  replyIntentAt?: string;
+  meetingBookedAt?: string;
 };
 
 const CONTACTED_ENROLLMENT_STATUSES = new Set([
@@ -102,6 +106,7 @@ export function buildActivityTotalsFromLive(input: {
   const foundCounts = new Map<string, number>();
   const contactedByDay = new Map<string, Set<string>>();
   const repliesCounts = new Map<string, number>();
+  const meetingsBookedCounts = new Map<string, number>();
   const contactedFromEnrollments = new Set<string>();
 
   for (const lead of input.leads) {
@@ -133,12 +138,16 @@ export function buildActivityTotalsFromLive(input: {
       if (message.direction !== "inbound") continue;
       addCount(repliesCounts, toActivityDayKey(message.createdAt));
     }
+    const meetingBookedAt = conversation.meetingBookedAt ||
+      (conversation.replyIntent === "meeting_booked" ? conversation.replyIntentAt : undefined);
+    addCount(meetingsBookedCounts, toActivityDayKey(meetingBookedAt));
   }
 
   const activityKeys = new Set<string>([
     ...foundCounts.keys(),
     ...contactedByDay.keys(),
     ...repliesCounts.keys(),
+    ...meetingsBookedCounts.keys(),
   ]);
 
   return [...activityKeys]
@@ -148,6 +157,7 @@ export function buildActivityTotalsFromLive(input: {
       found: foundCounts.get(dateKey) || 0,
       contacted: contactedByDay.get(dateKey)?.size || 0,
       replies: repliesCounts.get(dateKey) || 0,
+      meetingsBooked: meetingsBookedCounts.get(dateKey) || 0,
     }));
 }
 
@@ -167,6 +177,7 @@ export function mergeActivityTotals(
           found: Math.max(0, point.found || 0),
           contacted: Math.max(0, point.contacted || 0),
           replies: Math.max(0, point.replies || 0),
+          meetingsBooked: Math.max(0, point.meetingsBooked || 0),
         });
         continue;
       }
@@ -175,6 +186,7 @@ export function mergeActivityTotals(
         found: Math.max(existing.found, point.found || 0),
         contacted: Math.max(existing.contacted, point.contacted || 0),
         replies: Math.max(existing.replies, point.replies || 0),
+        meetingsBooked: Math.max(existing.meetingsBooked, point.meetingsBooked || 0),
       });
     }
   }
@@ -208,6 +220,7 @@ export function toActivityChartPoints(
       found: totalsForDay?.found || 0,
       contacted: totalsForDay?.contacted || 0,
       replies: totalsForDay?.replies || 0,
+      meetingsBooked: totalsForDay?.meetingsBooked || 0,
     });
   }
 

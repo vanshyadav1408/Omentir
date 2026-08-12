@@ -70,7 +70,7 @@ export default function BlogPost() {
         Many early SaaS teams fail because they try to manage too many acquisition channels. The key is to implement three core funnels: sales-led outbound, product-led trials, and inbound content.
       </p>
       <p>
-        Omentir provides the discovery, prompt, and pacing tools to run your outbound funnels safely, supporting campaigns starting at $29/month. Let's look at how to build these funnels.
+        Omentir provides the discovery, prompt, and pacing tools to run your outbound funnels safely, supporting campaigns starting at $49/month. Let's look at how to build these funnels.
       </p>
       <p>
         The mistake is trying to make every funnel work at the same time. Early teams do not need a full growth department. They need one primary way to learn from buyers, one easy way for interested people to try the product, and one way to turn what they learn into public trust. These three funnels serve different jobs.
@@ -143,14 +143,24 @@ export default function BlogPost() {
         The Product-Led Growth (PLG) funnel uses a free trial or low-tier plan to reduce signup friction.
       </p>
       <p>
-        Omentir implements this self-serve model with two straightforward billing options:
+        Omentir offers self-serve Pro pricing, plus Enterprise support for
+        teams with more advanced needs:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Monthly ($29/month):</strong> Includes one LinkedIn account, unlimited AI agents, leads, campaigns, AI automated campaigns, API access, and email customer support.</li>
-        <li><strong>Lifetime ($99 once):</strong> Includes the same complete product with one payment and no renewals.</li>
+        <li>
+          <strong>Pro ($49/month):</strong> Includes one user, one LinkedIn
+          account, unlimited AI agents, leads, campaigns, AI automated campaigns,
+          API access, email customer support, and a minimum of three bookings per
+          week or you pay nothing.
+        </li>
+        <li>
+          <strong>Enterprise:</strong> Includes unlimited users, unlimited
+          LinkedIn accounts, all Pro features, plus SSO, dedicated onboarding,
+          and priority support. Book a call to discuss your setup.
+        </li>
       </ul>
       <p>
-        Offering these tiers allows prospects to sign up and start campaigns with minimal administrative friction.
+        Offering this plan allows prospects to sign up and start campaigns with minimal administrative friction.
       </p>
       <p>
         A product-led funnel only works when the product can deliver a meaningful first result without a long sales process. For early teams, the goal is not to build every PLG feature at once. The goal is to help a new user reach the first valuable moment quickly.

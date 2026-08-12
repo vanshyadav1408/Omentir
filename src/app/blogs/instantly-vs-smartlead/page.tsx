@@ -178,7 +178,7 @@ export default function BlogPost() {
         Do not compare only the headline subscription. Add the cost of domains, inboxes, verification, enrichment, deliverability monitoring, and the person responsible for keeping the system healthy. A cheap sending platform becomes expensive if it produces low-fit replies, burns domains, or creates inbox chaos.
       </p>
       <p>
-        To manage LinkedIn discovery and social outreach alongside email, Omentir plans start at $29/month. The cleanest stack is usually not "one tool does everything." It is a clear separation of jobs: Omentir finds and engages high-fit LinkedIn prospects, while your cold email platform handles the email-specific delivery layer.
+        To manage LinkedIn discovery and social outreach alongside email, the Omentir plan starts at $49/month. The cleanest stack is usually not "one tool does everything." It is a clear separation of jobs: Omentir finds and engages high-fit LinkedIn prospects, while your cold email platform handles the email-specific delivery layer.
       </p>
 
       <h2 id="delivery-decision-rubric" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">

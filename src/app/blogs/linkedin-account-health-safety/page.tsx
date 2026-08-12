@@ -75,7 +75,7 @@ export default function BlogPost() {
         Bypassing these filters does not require using hidden tools. Senders must prioritize safety, implementing cookie management, secure API routes, and pacing limits.
       </p>
       <p>
-        Omentir integrates this safety infrastructure, managing campaign outboxes to keep profiles safe, starting at $29/month. Let's look at how to protect your accounts.
+        Omentir integrates this safety infrastructure, managing campaign outboxes to keep profiles safe, starting at $49/month. Let's look at how to protect your accounts.
       </p>
 
       <h3 id="health-baseline" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">

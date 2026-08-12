@@ -38,7 +38,7 @@ const faqItems = [
   {
     question: "What changed in Omentir pricing?",
     answer:
-      "Omentir has two ways to buy the same complete product: Monthly at $29/month or Lifetime at $99 once. Both include one LinkedIn account, unlimited AI agents, leads, and campaigns, AI automated campaigns, API access, and email customer support.",
+      "Omentir offers Pro at $49/month, plus Enterprise for teams that need unlimited users, unlimited LinkedIn accounts, SSO, dedicated onboarding, and priority support. Pro includes one user, one LinkedIn account, unlimited AI agents, leads, campaigns, AI automated campaigns, API access, email customer support, and a minimum of three bookings per week or you pay nothing.",
   },
   {
     question: "What can Agent API do?",
@@ -61,6 +61,24 @@ const faqItems = [
       "No. Agent actions remain workspace-scoped and pass through Omentir's validation, ownership checks, daily quotas, and LinkedIn connection requirements. The connector gives agents focused access, not unlimited control.",
   },
 ] as const;
+
+const visibleFaqItems = faqItems.map((item) => {
+  if (item.question !== "What changed in Omentir pricing?") return item;
+
+  return {
+    ...item,
+    answer: (
+      <>
+        Omentir offers Pro at $49/month, plus Enterprise for teams that need
+        unlimited users, unlimited LinkedIn accounts, SSO, dedicated onboarding,
+        and priority support. Pro includes one user, one LinkedIn account,
+        unlimited AI agents, leads, campaigns, AI automated campaigns, API
+        access, email customer support, and a minimum of three bookings per week
+        or you pay nothing.
+      </>
+    ),
+  };
+});
 
 export default function BlogPost() {
   return (
@@ -102,12 +120,13 @@ export default function BlogPost() {
         channel, and scale once the pipeline is working.
       </p>
       <p>
-        Omentir has two straightforward ways to buy the same complete product:
-        Monthly at $29/month or Lifetime at $99 once.
+        Omentir offers Pro at $49/month, plus Enterprise for teams that need
+        SSO, dedicated onboarding, and priority support.
       </p>
       <div className="my-8 rounded-xl border border-zinc-200 bg-white p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-        <p className="font-semibold text-zinc-950">Everything is included with either option:</p>
+        <p className="font-semibold text-zinc-950">Everything is included:</p>
         <ul className="mt-3 list-disc space-y-2 pl-6 text-zinc-800">
+          <li>One user</li>
           <li>One LinkedIn account</li>
           <li>Unlimited AI agents, leads, and campaigns</li>
           <li>AI automated campaigns and API access</li>
@@ -115,9 +134,10 @@ export default function BlogPost() {
         </ul>
       </div>
       <p>
-        Choose Monthly when you want the flexibility to cancel at any time.
-        Choose Lifetime when you want the same access with one payment and no
-        renewals.
+        The Pro plan includes a minimum of three bookings per week or you
+        pay nothing.{" "}
+        Enterprise includes unlimited users, unlimited LinkedIn accounts, all
+        Pro features, plus SSO, dedicated onboarding, and priority support.
       </p>
       <p>
         You can see the current plan details on the{" "}
@@ -345,7 +365,7 @@ export default function BlogPost() {
       >
         Frequently Asked Questions
       </h2>
-      <FaqAccordion items={faqItems} />
+      <FaqAccordion items={visibleFaqItems} />
     </BlogPostTemplate>
   );
 }

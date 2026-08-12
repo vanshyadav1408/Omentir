@@ -14,7 +14,7 @@ import {
 export const metadata = createPageMetadata({
   title: "Pricing - Omentir",
   description:
-    "Omentir pricing for founders and solo operators running LinkedIn outbound with AI: $29 per month, or $99 once for lifetime access.",
+    "Omentir pricing for founders and sales teams running LinkedIn outbound with AI: Pro at $49 per month, plus Enterprise support for teams that need SSO.",
   path: "/pricing",
   keywords: ["Omentir pricing", "LinkedIn outreach pricing", "AI sales software pricing"],
 });
@@ -23,17 +23,22 @@ const faqItems = [
   {
     question: "Which Omentir plan should I start with?",
     answer:
-      "Both plans include exactly the same features, so it is only a billing choice. Pick Monthly at $29/month if you want to stay flexible and cancel any time. Pick Lifetime if you already know Omentir is part of your stack: one $99 payment covers you forever, and it costs less than four months of the monthly plan.",
+      "Choose Pro at $49/month when you want to start right away. Choose Enterprise when your team needs SSO, dedicated onboarding, or priority support.",
   },
   {
     question: "What is included in each plan?",
     answer:
-      "One LinkedIn account, unlimited AI agents, unlimited leads per day, unlimited campaigns, AI automated campaigns, API access, and email customer support. Monthly and Lifetime are identical on features.",
+      "Pro includes one user, one LinkedIn account, unlimited AI agents, unlimited leads per day, unlimited campaigns, AI automated campaigns, API access, and email customer support. Enterprise includes unlimited users, unlimited LinkedIn accounts, all Pro features, plus SSO, dedicated onboarding, and priority support.",
   },
   {
-    question: "What does the Lifetime plan actually mean?",
+    question: "What is the booking guarantee?",
     answer:
-      "You pay $99 once and keep your Omentir account with no further charges and no renewal date. There is no subscription to cancel and no price increase later.",
+      "You get a minimum of three bookings per week or you pay nothing. If an eligible weekly guarantee is not met, you can apply for a full refund.",
+  },
+  {
+    question: "How do I get Enterprise?",
+    answer:
+      "Book a call to discuss your team's SSO, onboarding, and support needs.",
   },
   {
     question: "Can I self-host Omentir instead of paying?",
@@ -43,7 +48,7 @@ const faqItems = [
   {
     question: "Is Omentir worth paying for?",
     answer:
-      "Do the math. Omentir starts at $29/month, or $99 once for lifetime access. If one customer is worth more than that to your business, a single conversion can cover the cost. Omentir is for founders who want a consistent LinkedIn outbound pipeline without paying separately for lead databases, sequencing tools, and an SDR team.",
+      "Omentir is $49/month, with a minimum of three bookings per week or you pay nothing. It is for founders who want a consistent LinkedIn outbound pipeline without paying separately for lead databases, sequencing tools, and an SDR team.",
   },
   {
     question: "Can I control sending limits?",
@@ -68,7 +73,14 @@ export default function PricingPage() {
       <MarketingPage
         eyebrow="Pricing"
         title="Simple pricing for every size of business."
-        description="One plan with everything in it: unlimited agents, leads, and campaigns on one LinkedIn account. Pay $29/month, or $99 once and keep it for life."
+        description={
+          <>
+            Start with everything you need for $49/month. Minimum 3 bookings per
+            week or you pay nothing. For unlimited users, unlimited LinkedIn
+            accounts, SSO, dedicated
+            onboarding, and priority support, talk to our Enterprise team.
+          </>
+        }
         centeredHeader
         heroFullHeight
         contentClassName="max-w-7xl"

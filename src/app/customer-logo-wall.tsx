@@ -116,17 +116,18 @@ function LogoLink({ customer }: { customer: (typeof CUSTOMERS)[number] }) {
   );
 }
 
-export default function CustomerLogoWall() {
-  // Duplicate the row so the -50% marquee loop is seamless.
-  const track = [...CUSTOMERS, ...CUSTOMERS];
-
+export default function CustomerLogoWall({
+  headingId = "customer-logo-wall-heading",
+}: {
+  headingId?: string;
+} = {}) {
   return (
     <section
-      aria-labelledby="customer-logo-wall-heading"
+      aria-labelledby={headingId}
       className="w-full min-w-0 py-8 md:py-12"
     >
       <p
-        id="customer-logo-wall-heading"
+        id={headingId}
         className="px-4 text-center text-[0.7rem] font-medium uppercase tracking-[0.2em] text-[rgba(255,255,255,0.88)] md:text-xs"
       >
         Trusted by fast-growing companies
@@ -135,9 +136,19 @@ export default function CustomerLogoWall() {
       {/* Inset on larger screens so the strip does not run edge-to-edge. */}
       <div className="mx-auto mt-6 w-full max-w-4xl px-6 md:mt-8 md:max-w-5xl md:px-10 lg:max-w-5xl lg:px-16">
         <div className="customer-logo-marquee relative">
-          <div className="customer-logo-marquee-track flex w-max flex-nowrap items-center gap-14 px-4 md:gap-20 md:px-6">
-            {track.map((customer, index) => (
-              <LogoLink key={`${customer.name}-${index}`} customer={customer} />
+          <div className="customer-logo-marquee-track flex w-max flex-nowrap items-center">
+            {[0, 1].map((copyIndex) => (
+              <div
+                key={copyIndex}
+                className="flex shrink-0 items-center gap-14 pl-4 pr-14 md:gap-20 md:pl-6 md:pr-20"
+              >
+                {CUSTOMERS.map((customer) => (
+                  <LogoLink
+                    key={`${customer.name}-${copyIndex}`}
+                    customer={customer}
+                  />
+                ))}
+              </div>
             ))}
           </div>
         </div>

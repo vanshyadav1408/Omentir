@@ -178,11 +178,21 @@ export default function BlogPost() {
         Despite this high cost, a human SDR's daily output is limited. They can send 50 to 100 personalized messages per day, log details in the CRM, and handle basic follow-ups. Much of their time is spent on administrative tasks rather than speaking with qualified buyers.
       </p>
       <p>
-        Omentir offers two straightforward ways to buy the same complete product:
+        Omentir offers Pro for self-serve teams and Enterprise for teams that
+        need SSO, dedicated onboarding, and priority support:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Monthly ($29/month):</strong> Includes one LinkedIn account, unlimited AI agents, leads, campaigns, AI automated campaigns, API access, and email customer support.</li>
-        <li><strong>Lifetime ($99 once):</strong> Includes the same complete product with one payment and no renewals.</li>
+        <li>
+          <strong>Pro ($49/month):</strong> Includes one user, one LinkedIn
+          account, unlimited AI agents, leads, campaigns, AI automated campaigns,
+          API access, email customer support, and a minimum of three bookings per
+          week or you pay nothing.
+        </li>
+        <li>
+          <strong>Enterprise:</strong> Includes unlimited users, unlimited
+          LinkedIn accounts, all Pro features, plus SSO, dedicated onboarding,
+          and priority support. Book a call to discuss your setup.
+        </li>
       </ul>
       <p>
         By automating lead research and message drafting, Omentir reduces your acquisition cost while keeping your team focused on booking demos.

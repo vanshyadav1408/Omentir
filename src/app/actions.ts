@@ -11,6 +11,7 @@ import {
   createAgentApiKey,
   createCampaign,
   createOrGetGroup,
+  completeConversationManualFollowUp,
   deleteAgent,
   deleteGroup,
   disconnectLinkedInAccount,
@@ -1057,6 +1058,14 @@ export async function sendLinkedInChatMessageAction(formData: FormData) {
   if (oversized) throw new Error(`"${oversized.name}" is too large - attachments must be under 15MB.`);
 
   await sendLinkedInChatMessage({ chatId, accountId: linkedInAccount.accountId, body, attachments });
+  revalidatePath("/messages");
+}
+
+export async function completeConversationManualFollowUpAction(formData: FormData) {
+  const workspace = await requireWorkspace();
+  const leadId = String(formData.get("leadId") || "").trim();
+  if (!leadId) throw new Error("Lead id is required.");
+  await completeConversationManualFollowUp(workspace.id, leadId);
   revalidatePath("/messages");
 }
 

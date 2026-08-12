@@ -384,9 +384,22 @@ export default function SettingsView({
   const [aiFollowUp, setAiFollowUp] = useState(workspace.settings.aiFollowUpEnabled);
   const [notifEmail, setNotifEmail] = useState(workspace.notificationEmail || user.email);
   const plan = workspace.billing?.plan || "solo";
-  const isLegacyPlan = plan === "startup" || plan === "enterprise";
-  const planName = isLegacyPlan ? "Current subscription" : plan === "lifetime" ? "Lifetime" : "Monthly";
-  const planPrice = isLegacyPlan ? "Active" : plan === "lifetime" ? "$99" : "$29/month";
+  const planName =
+    plan === "startup"
+      ? "Current subscription"
+      : plan === "lifetime"
+        ? "Lifetime"
+        : plan === "enterprise"
+          ? "Enterprise"
+          : "Pro";
+  const planPrice =
+    plan === "startup"
+      ? "Active"
+      : plan === "lifetime"
+        ? "$99"
+        : plan === "enterprise"
+          ? "Custom"
+          : "$49/month";
   // Same ceilings as plan-limits enforcement. Local/self-hosted is unlimited.
   const linkedInAccountCap = localMode
     ? Number.POSITIVE_INFINITY
@@ -778,6 +791,8 @@ export default function SettingsView({
                           // A one-time purchase carries no renewal date, so the
                           // date formatter would fall back to a placeholder.
                           "Lifetime access. No renewal."
+                        ) : plan === "enterprise" ? (
+                          "Custom billing terms."
                         ) : (
                           <>
                             Renews on{" "}

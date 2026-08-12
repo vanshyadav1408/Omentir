@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { MarketingPage } from "../marketing-shell";
 import { createPageMetadata } from "../seo";
 
@@ -9,7 +10,7 @@ export const metadata = createPageMetadata({
   keywords: ["Omentir terms", "Omentir terms of service"],
 });
 
-const sections = [
+const sections: Array<{ title: string; body: React.ReactNode }> = [
   {
     title: "1. Use of Omentir",
     body: "Omentir provides software for product analysis, lead discovery, prospect organization, LinkedIn campaign workflows, outreach drafting, reply tracking, and related business development operations. By creating an account, purchasing a plan, connecting an account, inviting a workspace member, or using any part of Omentir, you agree to these terms. You may use Omentir only for lawful business purposes and only in a way that respects applicable laws, third-party rights, platform rules, and the limits shown inside the product. You are responsible for making sure your users, employees, contractors, and workspace members follow these terms when acting through your account.",
@@ -24,11 +25,69 @@ const sections = [
   },
   {
     title: "4. Campaign responsibility",
-    body: "You control the campaigns, target groups, approvals, sending limits, connected accounts, and messages sent from your account. Omentir provides automation and drafting tools, but you remain responsible for deciding who to contact, what to say, when to send, and whether your outreach is appropriate. You agree to review important AI-generated content before using it, honor opt-out and do-not-contact requests, comply with applicable marketing, privacy, consumer protection, and platform rules, and avoid contacting people where you lack a lawful or appropriate basis to do so. Omentir does not guarantee meetings, replies, revenue, deliverability, account safety, or acceptance by any third-party platform.",
+    body: (
+      <>
+        You control the campaigns, target groups, approvals, sending limits,
+        connected accounts, and messages sent from your account. Omentir
+        provides automation and drafting tools, but you remain responsible for
+        deciding who to contact, what to say, when to send, and whether your
+        outreach is appropriate. You agree to review important AI-generated
+        content before using it, honor opt-out and do-not-contact requests,
+        comply with applicable marketing, privacy, consumer protection, and
+        platform rules, and avoid contacting people where you lack a lawful or
+        appropriate basis to do so. Except for the express terms of the{" "}
+        <Link
+          href="/minimum-booking-guarantee"
+          className="font-medium text-[var(--md-sys-color-primary)] underline underline-offset-4"
+        >
+          Minimum Booking Guarantee
+        </Link>
+        , Omentir does not guarantee meetings, replies, revenue, deliverability,
+        account safety, or acceptance by any third-party platform.
+      </>
+    ),
   },
   {
     title: "5. Billing and refunds",
-    body: "Paid plans are billed through our payment provider and begin when checkout is completed. Prices, plan limits, renewal periods, included usage, and available features may vary by plan and may be shown at checkout or inside the product. Unless required by law or expressly approved by Omentir, fees are non-refundable after the refund window described here. If you are not satisfied with the product, you may apply for a refund only within seven days of the original purchase date. To request a refund, email hi@omentir.com or contact us through an available support channel with the email address used for purchase, your workspace or account name, the purchase date, and a short explanation of why the product did not meet your expectations. The request must be sent within the seven-day window; requests submitted after the seventh day are not eligible unless applicable law requires otherwise. We may ask follow-up questions, request proof of purchase, verify that you control the relevant account or workspace, and review usage history to confirm the request is tied to the purchase being refunded. Submitting a request does not guarantee approval, and we may deny requests that appear abusive, fraudulent, duplicative, connected to a chargeback, tied to a previously refunded account, or inconsistent with this policy. If approved, refunds are generally returned to the original payment method and may take additional time to appear depending on the payment provider, card network, or bank. A refund may terminate or reduce access to paid features, credits, usage limits, workspaces, automations, stored outputs, connected-account workflows, and support associated with the refunded purchase. You are responsible for exporting or preserving any information you need before access changes. The refund window applies to the initial purchase unless Omentir states otherwise in writing; renewals, add-ons, usage overages, partial billing periods, custom services, implementation work, and previously refunded accounts may be ineligible. You may cancel at any time to stop future renewals, but cancellation does not automatically refund amounts already paid. If a refund is required by law, that legal requirement controls this policy.",
+    body: (
+      <>
+        Paid plans are billed through our payment provider and begin when
+        checkout is completed. Prices, plan limits, renewal periods, included
+        usage, and available features may vary by plan and may be shown at
+        checkout or inside the product. Except as expressly stated in the{" "}
+        <Link
+          href="/minimum-booking-guarantee"
+          className="font-medium text-[var(--md-sys-color-primary)] underline underline-offset-4"
+        >
+          Minimum Booking Guarantee
+        </Link>
+        , fees are non-refundable unless required by law or expressly approved
+        by Omentir. Standard satisfaction requests must be made within seven
+        days of the original purchase date. An eligible guarantee claim follows
+        the process and timing on that policy page and may be submitted after a
+        completed eligible week. To request a refund, email hi@omentir.com or
+        contact us through an available support channel with the email address
+        used for purchase, your workspace or account name, the purchase date,
+        and a short explanation of why the product did not meet your
+        expectations. We may ask follow-up questions, request proof of purchase,
+        verify that you control the relevant account or workspace, and review
+        usage history to confirm the request is tied to the purchase being
+        refunded. Submitting a standard request does not guarantee approval, and
+        we may deny requests that appear abusive,
+        fraudulent, duplicative, connected to a chargeback, tied to a previously
+        refunded account, or inconsistent with this policy. If approved, refunds
+        are generally returned to the original payment method and may take
+        additional time to appear depending on the payment provider, card
+        network, or bank. A refund may terminate or reduce access to paid
+        features, credits, usage limits, workspaces, automations, stored outputs,
+        connected-account workflows, and support associated with the refunded
+        purchase. You are responsible for exporting or preserving any information
+        you need before access changes. You may cancel at any time to stop future
+        renewals, but cancellation does not automatically refund amounts already
+        paid. If a refund is required by law, that legal requirement controls this
+        policy.
+      </>
+    ),
   },
   {
     title: "6. Service availability",
@@ -68,7 +127,7 @@ export default function TermsOfServicePage() {
       description="The rules for using Omentir and running outbound workflows through the product."
     >
       <div className="rounded-xl border border-[#ba3871] bg-white p-6">
-        <p className="text-sm text-zinc-500">Last updated: June 12, 2026</p>
+        <p className="text-sm text-zinc-500">Last updated: August 9, 2026</p>
         <div className="mt-8 space-y-7">
           {sections.map((section) => (
             <section key={section.title}>

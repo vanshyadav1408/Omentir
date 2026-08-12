@@ -39,7 +39,7 @@ const faqItems = [
   },
   {
     question: "How does Omentir compare to 11x.ai and Gojiberry?",
-    answer: "Omentir provides builder-friendly infrastructure starting at $29/month, with a hosted Model Context Protocol (MCP) server that lets external AI agents such as Claude configure lead discovery, retrieve scored prospects, and work with existing replies."
+    answer: "Omentir provides builder-friendly infrastructure starting at $49/month, with a hosted Model Context Protocol (MCP) server that lets external AI agents such as Claude configure lead discovery, retrieve scored prospects, and work with existing replies."
   },
   {
     question: "How do they manage LinkedIn limits and account safety?",
@@ -192,7 +192,9 @@ export default function BlogPost() {
         <strong>Gojiberry Pricing:</strong> Gojiberry's public site emphasizes launching an agent quickly, but pricing details are less visible in the materials reviewed here. Treat it as a demo question: ask what is included, how many senders or channels are supported, and where costs increase as volume grows.
       </p>
       <p>
-        <strong>Omentir Pricing:</strong> Monthly is $29/month and Lifetime is $99 once. Both include the same complete product, so you can choose flexibility or one payment with no renewals.
+        <strong>Omentir Pricing:</strong> Pro is $49/month, with a minimum of three bookings per week or you pay nothing.{" "}
+        Enterprise includes unlimited users, unlimited LinkedIn accounts, SSO,
+        dedicated onboarding, and priority support.
       </p>
       <p>
         ROI depends on motion maturity. Enterprise digital workers make sense when the company already understands its ICP, has strong proof, and can assign someone to manage the system. A smaller AI prospecting tool makes sense when you are still testing buyer signals and messaging. A low-cost LinkedIn-first tool like Omentir makes sense when the constraint is daily qualified conversations, not a fully outsourced SDR department.

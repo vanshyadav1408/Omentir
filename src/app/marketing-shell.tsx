@@ -78,6 +78,7 @@ const footerColumns: Array<[string, ...Array<[label: string, href: string]>]> = 
   [
     "Company",
     ["About", "/about"],
+    ["Minimum Booking Guarantee", "/minimum-booking-guarantee"],
     ["Privacy Policy", "/privacy-policy"],
     ["Terms of Service", "/terms-of-service"],
   ],
@@ -196,7 +197,7 @@ export function MarketingFooter() {
 type MarketingPageProps = {
   eyebrow?: string;
   title: string;
-  description?: string;
+  description?: React.ReactNode;
   centeredHeader?: boolean;
   contentClassName?: string;
   titleClassName?: string;

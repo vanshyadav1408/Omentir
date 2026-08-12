@@ -73,7 +73,7 @@ export default function BlogPost() {
         The most effective way to scale to $10k MRR is to build an automated outbound engine. By managing multi-profile campaigns, personalizing copy templates based on buying triggers, and pacing outbox delivery, you can secure predictable B2B sales opportunities.
       </p>
       <p>
-        Omentir serves as the infrastructure for these engines, offering starter plans beginning at $29/month. Let's map out the scaling strategy.
+        Omentir serves as the infrastructure for these engines, offering a Pro plan beginning at $49/month. Let's map out the scaling strategy.
       </p>
       <p>
         The danger is making the math look cleaner than reality. A spreadsheet can say you need a certain number of conversations, demos, and closes. The market will add friction: no-shows, poor-fit buyers, slow onboarding, churn, pricing objections, and segments that look good on paper but do not feel urgent. The purpose of pipeline math is not to predict the future perfectly. It is to reveal which assumptions must become true for $10k MRR to happen.
@@ -114,11 +114,21 @@ export default function BlogPost() {
         To scale volume safely, you must distribute campaigns across multiple sending profiles.
       </p>
       <p>
-        Omentir gives each workspace one LinkedIn account with two billing options:
+        Omentir offers Pro for self-serve teams and Enterprise for teams that
+        need SSO, dedicated onboarding, and priority support:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Monthly ($29/month):</strong> Includes unlimited AI agents, leads, campaigns, AI automated campaigns, API access, and email customer support.</li>
-        <li><strong>Lifetime ($99 once):</strong> Includes the same complete product with one payment and no renewals.</li>
+        <li>
+          <strong>Pro ($49/month):</strong> Includes one user, one LinkedIn
+          account, unlimited AI agents, leads, campaigns, AI automated campaigns,
+          API access, email customer support, and a minimum of three bookings per
+          week or you pay nothing.
+        </li>
+        <li>
+          <strong>Enterprise:</strong> Includes unlimited users, unlimited
+          LinkedIn accounts, all Pro features, plus SSO, dedicated onboarding,
+          and priority support. Book a call to discuss your setup.
+        </li>
       </ul>
       <p>
         Rotating campaigns across multiple accounts allows you to increase outreach volume while keeping individual profile activity within safe limits.

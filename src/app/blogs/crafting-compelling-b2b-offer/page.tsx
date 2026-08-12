@@ -37,7 +37,7 @@ const faqItems = [
   },
   {
     question: "How do I structure value-based pricing for software?",
-    answer: "Align your pricing tiers with the customer's usage metrics (such as Omentir's pricing starting at $29/month based on active accounts and discovery limits) so they pay relative to the value they get."
+    answer: "Align your pricing tiers with the customer's usage metrics (such as Omentir's pricing starting at $49/month based on active accounts and discovery limits) so they pay relative to the value they get."
   },
   {
     question: "How does Omentir help deliver early-stage sales offers?",
@@ -136,11 +136,21 @@ export default function BlogPost() {
         Pricing model design is critical for conversion. High upfront costs create buying hesitation, slowing down your sales cycle.
       </p>
       <p>
-        Omentir is priced to align incentives, with two flexible ways to buy:
+        Omentir is priced to align incentives, with Pro for self-serve teams
+        and Enterprise for teams that need more support:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Monthly ($29/month):</strong> Includes one LinkedIn account, unlimited AI agents, leads, campaigns, AI automated campaigns, API access, and email customer support.</li>
-        <li><strong>Lifetime ($99 once):</strong> Includes the same complete product with one payment and no renewals.</li>
+        <li>
+          <strong>Pro ($49/month):</strong> Includes one user, one LinkedIn
+          account, unlimited AI agents, leads, campaigns, AI automated campaigns,
+          API access, email customer support, and a minimum of three bookings per
+          week or you pay nothing.
+        </li>
+        <li>
+          <strong>Enterprise:</strong> Includes unlimited users, unlimited
+          LinkedIn accounts, all Pro features, plus SSO, dedicated onboarding,
+          and priority support. Book a call to discuss your setup.
+        </li>
       </ul>
       <p>
         This self-serve model reduces purchasing friction, allowing buyers to start at a comfortable scale.

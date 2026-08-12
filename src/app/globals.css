@@ -516,6 +516,18 @@ html::-webkit-scrollbar-thumb:hover {
   background: var(--md-sys-color-on-surface);
 }
 
+/* Desktop pointer feedback for semantic interactive controls. Keep this in
+   the base layer so explicit cursor utilities can still override it. */
+@layer base {
+  :where(
+      a[href]:not([aria-disabled="true"]),
+      button:not(:disabled):not([aria-disabled="true"]),
+      [role="button"]:not([aria-disabled="true"])
+    ) {
+    cursor: pointer;
+  }
+}
+
 /* M3 interactive base: Google Sans / Roboto, medium weight, standard easing.
    Leading-none keeps flex centering exact regardless of font metrics. */
 button,

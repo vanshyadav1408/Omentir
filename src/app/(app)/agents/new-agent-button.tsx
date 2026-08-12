@@ -150,8 +150,11 @@ export default function NewAgentButton({
                     group
                   </span>
                   <span className="min-w-0">
-                    <span className="block text-sm font-semibold text-[var(--md-sys-color-on-surface)]">
+                    <span className="flex items-center gap-2 text-sm font-semibold text-[var(--md-sys-color-on-surface)]">
                       Steal Customers
+                      <span className="inline-flex h-4 items-center rounded-[3px] border border-[#ba3871] bg-[rgba(186,56,113,0.08)] px-1.5 text-[9px] font-bold uppercase leading-none tracking-wide text-[#ba3871]">
+                        Alpha
+                      </span>
                     </span>
                     <span className="mt-0.5 hidden text-xs leading-5 text-[var(--md-sys-color-on-surface-variant)] md:block">
                       Find people who comment under competitor posts and AI-reach out with that

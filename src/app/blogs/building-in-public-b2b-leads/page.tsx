@@ -42,7 +42,7 @@ const faqItems = [
   },
   {
     question: "How does Omentir support founders building in public?",
-    answer: "Omentir offers flexible plans starting at $29/month, allowing founders to run discovery, prompt campaigns, and monitor conversion metrics that they can share publicly."
+    answer: "Omentir offers a Pro plan starting at $49/month, allowing founders to run discovery, prompt campaigns, and monitor conversion metrics that they can share publicly."
   },
   {
     question: "What metrics are most valuable to share with my audience?",
@@ -74,7 +74,7 @@ export default function BlogPost() {
         This transparent approach helps you build authority and drive high-quality inbound leads.
       </p>
       <p>
-        Omentir supports this growth model, providing the campaign analytics and safety controls to help you share verified results, starting at $29/month. Let's look at how to build in public.
+        Omentir supports this growth model, providing the campaign analytics and safety controls to help you share verified results, starting at $49/month. Let's look at how to build in public.
       </p>
       <p>
         The mistake is treating building in public like a personal diary. Buyers do not need every mood swing, every tiny feature decision, or every dramatic lesson. They need evidence that you understand the problem, are moving quickly, and are honest about what is working. The best public building creates trust before the sales conversation starts.
@@ -140,7 +140,9 @@ export default function BlogPost() {
         Revenue validation is highly compelling. When you share verified revenue growth charts, you prove that companies pay for your solution.
       </p>
       <p>
-        Log your MRR updates and pricing choices. For example, explain how giving buyers a choice between Omentir Monthly at $29/month and Lifetime at $99 once helped you onboard early users quickly.
+        Log your MRR updates and pricing choices. For example, explain how
+        Omentir's $49/month Pro plan and booking guarantee helped you
+        onboard early users quickly.
       </p>
       <p>
         Share revenue carefully. Revenue numbers can build trust, but only when they are presented with context. A chart without context can attract vanity engagement while teaching buyers nothing. Explain what caused the movement. Was it a new segment, a better onboarding flow, a pricing change, a founder-led outbound sprint, or one larger customer?

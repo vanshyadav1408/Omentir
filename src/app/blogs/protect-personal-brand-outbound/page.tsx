@@ -73,7 +73,7 @@ export default function BlogPost() {
         To automate sales development without compromising your brand, you must prioritize quality. This involves routing messages to a human review queue, grounding prompts in verified signals, and pacing outbox delivery.
       </p>
       <p>
-        Omentir integrates this safety layer, holding drafted messages in a review queue before delivery, starting at $29/month. Let's look at how to protect your brand.
+        Omentir integrates this safety layer, holding drafted messages in a review queue before delivery, starting at $49/month. Let's look at how to protect your brand.
       </p>
       <p>
         Personal-brand risk is different from deliverability risk. If an email domain gets noisy, you can repair reputation over time or move to a different sending setup. If your own LinkedIn profile becomes associated with lazy automation, the damage follows you into future sales calls, partnerships, hiring conversations, and investor introductions. Buyers remember people who wasted their time.

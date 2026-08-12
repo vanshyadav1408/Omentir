@@ -75,7 +75,7 @@ export default function BlogPost() {
         To bypass automated spam filters, you must maintain high text variance, exclude external links from connection notes, and enforce safe daily quotas.
       </p>
       <p>
-        Omentir integrates this safety infrastructure, managing campaign variables to keep profiles safe, starting at $29/month. Let's look at how platform spam filters operate.
+        Omentir integrates this safety infrastructure, managing campaign variables to keep profiles safe, starting at $49/month. Let's look at how platform spam filters operate.
       </p>
 
       <h3 id="filter-signal-stack" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">

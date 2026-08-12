@@ -1,8 +1,11 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { sendLinkedInChatMessageAction } from "@/app/actions";
+import {
+  completeConversationManualFollowUpAction,
+  sendLinkedInChatMessageAction,
+} from "@/app/actions";
 import { useSidebarResource } from "@/app/use-sidebar-resource";
 import {
   ContentReveal,
@@ -20,6 +23,11 @@ import { TextField } from "@/app/ui/text-field";
 import MobileHeaderPortal from "@/app/mobile-header-portal";
 import { useWorkspaceTimeZone } from "@/app/workspace-time-zone";
 import { formatZonedDate, formatZonedDateTime, zonedDayKey } from "@/lib/time-zone";
+import {
+  conversationCategory,
+  conversationHasMeetingBooked,
+  type ConversationCategory,
+} from "@/lib/conversation-category";
 
 type InboxThread =
   | {
@@ -36,6 +44,7 @@ type InboxThread =
       chatId: string;
       accountId: string;
       lead?: LeadPreview;
+      conversation?: Conversation;
     }
   | {
       id: string;
@@ -50,9 +59,27 @@ type InboxThread =
       messages: ConversationMessage[];
       chatId?: never;
       lead?: LeadPreview;
+      conversation: Conversation;
     };
 
 type LocalMessage = LinkedInInboxMessage & { local: true };
+
+function linkedInProfileKey(value?: string) {
+  if (!value) return "";
+  try {
+    const url = new URL(/^https?:\/\//i.test(value) ? value : `https://${value}`);
+    const hostname = url.hostname.toLowerCase();
+    if (hostname !== "linkedin.com" && !hostname.endsWith(".linkedin.com")) return "";
+    const parts = url.pathname.split("/").filter(Boolean);
+    const profileIndex = parts.findIndex((part) =>
+      ["in", "pub"].includes(part.toLowerCase()),
+    );
+    if (profileIndex < 0 || !parts[profileIndex + 1]) return "";
+    return parts.slice(profileIndex).join("/").toLowerCase();
+  } catch {
+    return "";
+  }
+}
 
 function mergeWithLocalMessages<T extends ConversationMessage | LinkedInInboxMessage>(
   messages: T[],
@@ -77,11 +104,20 @@ function buildThreads(
   hydratedMessages: Record<string, LinkedInInboxMessage[]> = {},
   localMessages: Record<string, LocalMessage[]> = {},
 ): InboxThread[] {
+  // Firestore conversations mirror provider chats. Suppress that mirror only
+  // when both sides identify the same LinkedIn profile, never by name alone.
+  const liveProfileKeys = new Set(
+    linkedInThreads
+      .map((thread) => linkedInProfileKey(thread.profileUrl))
+      .filter(Boolean),
+  );
   const live: InboxThread[] = linkedInThreads.map((thread) => {
+    const profileKey = linkedInProfileKey(thread.profileUrl);
+    const identityLead = profileKey
+      ? leads.find((item) => linkedInProfileKey(item.linkedInUrl) === profileKey)
+      : undefined;
     const id = `linkedin:${thread.id}`;
-    const lead = leads.find(
-      (item) => item.linkedInUrl && thread.profileUrl && item.linkedInUrl === thread.profileUrl,
-    ) || leads.find(
+    const lead = identityLead || leads.find(
       (item) =>
         item.name &&
         thread.profileName &&
@@ -106,12 +142,16 @@ function buildThreads(
       chatId: thread.id,
       accountId: thread.accountId,
       lead,
+      conversation: identityLead
+        ? conversations.find((conversation) => conversation.leadId === identityLead.id)
+        : undefined,
     };
   });
-  const stored: InboxThread[] = conversations.map((thread) => {
+  const stored: InboxThread[] = conversations.flatMap((thread) => {
     const lead = leads.find((item) => item.id === thread.leadId);
+    if (liveProfileKeys.has(linkedInProfileKey(lead?.linkedInUrl))) return [];
     const last = thread.messages[thread.messages.length - 1];
-    return {
+    return [{
       id: `stored:${thread.id}`,
       kind: "stored",
       title: lead?.name || last?.senderName || "LinkedIn lead",
@@ -126,7 +166,8 @@ function buildThreads(
         localMessages[`stored:${thread.id}`] || [],
       ),
       lead,
-    };
+      conversation: thread,
+    }];
   });
   return [...live, ...stored].sort((a, b) => {
     const aDate = a.messages.at(-1)?.createdAt || "";
@@ -208,11 +249,15 @@ function LinkedInProfileLink({
   );
 }
 
-const TABS: Array<{ id: "all" | "unread" | "interested" | "follow"; label: string }> = [
+type MessageTab = "all" | "booked" | ConversationCategory;
+
+const TABS: Array<{ id: MessageTab; label: string }> = [
   { id: "all", label: "All" },
-  { id: "unread", label: "Unread" },
+  { id: "successful", label: "Successful" },
+  { id: "booked", label: "Meetings booked" },
   { id: "interested", label: "Interested" },
-  { id: "follow", label: "Needs follow-up" },
+  { id: "follow", label: "Needs a follow up" },
+  { id: "denied", label: "Denied" },
 ];
 const selectMessageData = (data: Record<string, unknown>) => ({
   conversations: data.conversations as Conversation[] || [],
@@ -280,10 +325,11 @@ export default function MessagesView({
       ),
     [loadedConversations, loadedLeads, loadedLinkedInThreads, hydratedMessages, localMessages],
   );
-  const [tab, setTab] = useState<"all" | "unread" | "interested" | "follow">("all");
+  const [tab, setTab] = useState<MessageTab>("all");
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string>(threads[0]?.id ?? "");
   const [isMobileConversationOpen, setIsMobileConversationOpen] = useState(false);
+  const [isCompletingFollowUp, startCompletingFollowUp] = useTransition();
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -312,7 +358,12 @@ export default function MessagesView({
 
   const filtered = useMemo(() => {
     return threads.filter((thread) => {
-      if (tab === "unread" && !thread.unread) return false;
+      if (tab === "booked" && !conversationHasMeetingBooked(thread.conversation)) return false;
+      if (
+        tab !== "all" &&
+        tab !== "booked" &&
+        conversationCategory(thread.conversation) !== tab
+      ) return false;
       if (search) {
         const q = search.toLowerCase();
         if (!thread.profileName.toLowerCase().includes(q)) {
@@ -327,13 +378,24 @@ export default function MessagesView({
   const counts = useMemo(() => {
     return {
       all: threads.length,
-      unread: threads.filter((thread) => thread.unread).length,
-      interested: 0,
-      follow: 0,
+      successful: threads.filter(
+        (thread) => conversationCategory(thread.conversation) === "successful",
+      ).length,
+      booked: threads.filter((thread) => conversationHasMeetingBooked(thread.conversation)).length,
+      interested: threads.filter(
+        (thread) => conversationCategory(thread.conversation) === "interested",
+      ).length,
+      follow: threads.filter(
+        (thread) => conversationCategory(thread.conversation) === "follow",
+      ).length,
+      denied: threads.filter(
+        (thread) => conversationCategory(thread.conversation) === "denied",
+      ).length,
     };
   }, [threads]);
 
   const selected = filtered.find((thread) => thread.id === selectedId) ?? filtered[0];
+  const selectedCategory = conversationCategory(selected?.conversation);
   const senderAccount =
     (selected?.kind === "linkedin"
       ? loadedSenderAccounts.find((account) => account.accountId === selected.accountId)
@@ -418,6 +480,17 @@ export default function MessagesView({
       ...current,
       [thread.id]: [...(current[thread.id] || []), message],
     }));
+  }
+
+  function completeSelectedFollowUp() {
+    if (!selected?.conversation || isCompletingFollowUp) return;
+    const formData = new FormData();
+    formData.set("leadId", selected.conversation.leadId);
+    startCompletingFollowUp(async () => {
+      await completeConversationManualFollowUpAction(formData);
+      messageDataResource.reload();
+      router.refresh();
+    });
   }
 
   return (
@@ -615,10 +688,19 @@ export default function MessagesView({
                               ? `${last.direction === "outbound" ? "You: " : ""}${last.body}`
                               : "No messages yet"}
                           </div>
-                          {thread.unread ? (
-                            <span className="mt-1.5 inline-flex rounded-full bg-[#ffe8ea] px-2 py-0.5 text-[10px] font-semibold text-[#e85e6b]">
-                              Unread
-                            </span>
+                          {thread.unread || conversationHasMeetingBooked(thread.conversation) ? (
+                            <div className="mt-1.5 flex flex-wrap gap-1.5">
+                              {thread.unread ? (
+                                <span className="inline-flex rounded-full bg-[#ffe8ea] px-2 py-0.5 text-[10px] font-semibold text-[#e85e6b]">
+                                  Unread
+                                </span>
+                              ) : null}
+                              {conversationHasMeetingBooked(thread.conversation) ? (
+                                <span className="inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-800">
+                                  Meeting booked
+                                </span>
+                              ) : null}
+                            </div>
                           ) : null}
                         </div>
                       </button>
@@ -660,6 +742,11 @@ export default function MessagesView({
                             {selected.profileName}
                           </span>
                           <LinkedInProfileLink href={selected.profileUrl} />
+                          {conversationHasMeetingBooked(selected.conversation) ? (
+                            <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-800">
+                              Meeting booked
+                            </span>
+                          ) : null}
                         </div>
                         {selected.profileHeadline ? (
                           <div className="whitespace-normal text-[12px] font-medium leading-4 text-zinc-700 md:truncate">
@@ -668,6 +755,21 @@ export default function MessagesView({
                         ) : null}
                       </div>
                     </div>
+                    {selectedCategory === "follow" ? (
+                      <div className="flex w-full items-center justify-between gap-3 rounded-lg bg-amber-50 px-3 py-2 sm:w-auto">
+                        <span className="text-[11px] font-medium text-amber-900">
+                          Follow up manually, then clear this task.
+                        </span>
+                        <button
+                          type="button"
+                          onClick={completeSelectedFollowUp}
+                          disabled={isCompletingFollowUp}
+                          className="shrink-0 cursor-pointer rounded-md bg-amber-900 px-2.5 py-1.5 text-[11px] font-semibold text-white transition hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {isCompletingFollowUp ? "Saving..." : "Mark follow-up done"}
+                        </button>
+                      </div>
+                    ) : null}
                   </div>
 
                   <div className="min-h-0 flex-1 space-y-3 overflow-y-auto bg-[#fbfaf6] p-4 sm:p-5">

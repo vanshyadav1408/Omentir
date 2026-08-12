@@ -78,6 +78,22 @@ export function fitConnectionNote(note: string | undefined) {
 export const INVITE_LIMIT_SIGNAL_THRESHOLD = 3;
 const INVITE_LIMIT_SIGNAL_WINDOW_MS = 24 * 60 * 60 * 1000;
 
+const INVITE_RESEND_BLOCKED_ERROR_TYPES = new Set([
+  "errors/cannot_resend_yet",
+  "errors/already_invited_recently",
+]);
+
+export function isInviteResendBlockedErrorType(errorType: string | undefined) {
+  return Boolean(errorType && INVITE_RESEND_BLOCKED_ERROR_TYPES.has(errorType));
+}
+
+export function hasInviteResendBlockedError(message: string | undefined) {
+  return Boolean(
+    message &&
+      [...INVITE_RESEND_BLOCKED_ERROR_TYPES].some((errorType) => message.includes(errorType)),
+  );
+}
+
 export function addInviteLimitSignal(
   prior: Record<string, string>,
   leadId: string,

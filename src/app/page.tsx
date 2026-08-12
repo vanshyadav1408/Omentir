@@ -309,7 +309,7 @@ const comparisonRows: { dimension: string; cells: ComparisonCell[] }[] = [
   {
     dimension: "Pricing & setup",
     cells: [
-      { text: "$29/month, live in minutes", mark: "yes" },
+      { text: "$49/month, live in minutes", mark: "yes" },
       { text: "Enterprise contracts and seat provisioning", mark: "no" },
       { text: "Extra tools needed for the full workflow", mark: "partial" },
       { text: "Credit-based pricing", mark: "partial" },
@@ -446,17 +446,17 @@ const faqItems = [
   {
     question: "How much does Omentir cost?",
     answer:
-      "There are two plans and they include exactly the same thing: unlimited AI agents, unlimited leads, unlimited campaigns, and API access on one LinkedIn account. Monthly is $29/month, cancel any time. Lifetime is a single $99 payment with no renewals, ever.",
+      "Pro is $49/month and includes one user, one LinkedIn account, unlimited AI agents, unlimited leads, unlimited campaigns, and API access. Enterprise includes unlimited users, unlimited LinkedIn accounts, and all Pro features, plus SSO, dedicated onboarding, and priority support.",
   },
   {
     question: "Is Omentir worth paying for?",
     answer:
-      "Do the math. Omentir starts at $29/month, or $99 once for lifetime access. If one customer is worth more than that to your business, a single conversion can cover the cost. Omentir is for founders who want a consistent LinkedIn outbound pipeline without paying separately for lead databases, sequencing tools, and an SDR team.",
+      "Omentir is $49/month, with a minimum of three bookings per week or you pay nothing. If an eligible weekly guarantee is not met, you can apply for a full refund. If one customer is worth more than that to your business, a single conversion can cover the cost. Omentir is for founders who want a consistent LinkedIn outbound pipeline without paying separately for lead databases, sequencing tools, and an SDR team.",
   },
   {
     question: "How long does it take to get started?",
     answer:
-      "Minutes. You connect your LinkedIn account, drop in your website or describe your ideal customer, and launch your first campaign. There is no onboarding call or sales process required for either paid plan.",
+      "Minutes. You connect your LinkedIn account, drop in your website or describe your ideal customer, and launch your first campaign. There is no onboarding call or sales process required.",
   },
   {
     question: "Who is Omentir built for?",
@@ -511,10 +511,13 @@ export default function Home() {
                 </div>
               </HeroCopy>
             </div>
+            <div className="mt-[2.4rem] w-full md:hidden">
+              <CustomerLogoWall headingId="customer-logo-wall-heading-mobile" />
+            </div>
           </div>
         </section>
 
-        <div className="relative z-10">
+        <div className="relative z-10 hidden md:block">
           <CustomerLogoWall />
         </div>
 
@@ -681,8 +684,10 @@ export default function Home() {
             <span className="text-gradient-brand">Simple pricing</span> for everyone
           </h2>
           <p className="mt-3 text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)] md:mt-5 md:text-base md:leading-8">
-            One plan with everything in it. Pay monthly, or pay once and keep it
-            for life.
+            Start with Pro at $49/month, with a minimum of three bookings per
+            week or you pay nothing. Choose Enterprise for unlimited users,
+            unlimited LinkedIn accounts,
+            SSO, and dedicated support.
           </p>
         </Reveal>
 

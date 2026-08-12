@@ -74,7 +74,7 @@ export default function BlogPost() {
         To protect your profiles, you must warm them up. Warming up is the practice of gradually increasing manual and paced activity over a 14-day schedule, proving your account behaves like a human user.
       </p>
       <p>
-        Omentir supports this warmup process, enforcing pacing limits and daily quotas to protect your profile health, starting at $29/month. Let's walk through the warmup protocol.
+        Omentir supports this warmup process, enforcing pacing limits and daily quotas to protect your profile health, starting at $49/month. Let's walk through the warmup protocol.
       </p>
 
       <h3 id="readiness-baseline" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">

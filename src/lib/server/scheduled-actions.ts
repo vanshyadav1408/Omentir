@@ -2,7 +2,11 @@ import "server-only";
 
 import { buildActionTimeline, type ActionTimelineItem } from "./action-timeline";
 import { findNextScheduledStepIndex } from "./campaign-sequence";
-import { canSendCampaignMessage, renderTemplate } from "./outreach-rules";
+import {
+  canSendCampaignMessage,
+  hasInviteResendBlockedError,
+  renderTemplate,
+} from "./outreach-rules";
 import {
   isSourcedByLeadsOnlyAgent,
   listAgents,
@@ -128,8 +132,8 @@ export async function listScheduledActions(
         ? "This action is already being processed."
         : awaitingConnection
           ? "The connection must be accepted before this message can be sent."
-          : enrollment.lastError?.includes("cannot_resend_yet")
-            ? "LinkedIn rejected the last invite to this person — they were likely invited before (pending or withdrawn), or the account is at its invite limit. It will retry at the scheduled time; withdrawing old pending invites on LinkedIn lifts the limit sooner."
+          : hasInviteResendBlockedError(enrollment.lastError)
+            ? "LinkedIn says this person was invited recently. Omentir will wait through LinkedIn's cooldown before trying again."
             : enrollment.lastError
               ? `The last attempt failed and will retry at the scheduled time: ${enrollment.lastError}`
               : undefined,

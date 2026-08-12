@@ -41,7 +41,7 @@ const faqItems = [
   },
   {
     question: "How does Omentir support teams searching for PMF?",
-    answer: "Omentir offers flexible plans starting at $29/month, allowing you to run discovery agents, automate prompt variables, and manage safe connection pacing to test ideas affordably."
+    answer: "Omentir offers a Pro plan starting at $49/month, allowing you to run discovery agents, automate prompt variables, and manage safe connection pacing to test ideas affordably."
   },
   {
     question: "How long should I run LinkedIn campaigns to verify product fit?",

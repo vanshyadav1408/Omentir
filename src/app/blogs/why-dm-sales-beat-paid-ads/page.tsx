@@ -41,7 +41,7 @@ const faqItems = [
   },
   {
     question: "How does Omentir lower Customer Acquisition Cost (CAC)?",
-    answer: "Omentir starts at $29/month, allowing you to run discovery, personalize prompts, and pace campaigns without committing to large ad tests before your positioning is validated."
+    answer: "Omentir starts at $49/month, allowing you to run discovery, personalize prompts, and pace campaigns without committing to large ad tests before your positioning is validated."
   },
   {
     question: "Can I transition from paid ads to direct message campaigns completely?",
@@ -70,7 +70,7 @@ export default function BlogPost() {
         Direct message (DM) sales are far more effective for early validation. By messaging target prospects over LinkedIn or email, you build relationships and gather qualitative feedback at a fraction of the cost.
       </p>
       <p>
-        Omentir provides the discovery, prompt, and pacing tools to automate these DM campaigns safely, supporting campaigns starting at $29/month. Let's look at why DMs beat paid ads.
+        Omentir provides the discovery, prompt, and pacing tools to automate these DM campaigns safely, supporting campaigns starting at $49/month. Let's look at why DMs beat paid ads.
       </p>
       <p>
         The important phrase is "early validation." Paid ads can work once you know the buyer, message, offer, landing page, and conversion path. They are much weaker when those pieces are still guesses. At the beginning, the most valuable thing is not traffic. It is conversation.
@@ -173,7 +173,9 @@ export default function BlogPost() {
         <strong>Paid Advertising:</strong> Senders often need a meaningful monthly test budget to gather enough data. If your conversions are low, your Customer Acquisition Cost (CAC) can exceed your product pricing before you learn whether the segment is right.
       </p>
       <p>
-        <strong>DM Outreach:</strong> Software fees are low. Omentir offers Monthly at $29/month or Lifetime at $99 once, with the same complete product in either option.
+        <strong>DM Outreach:</strong> Pro is $49/month, with a minimum of three bookings per week or you pay nothing.{" "}
+        Enterprise includes unlimited users, unlimited LinkedIn accounts, SSO,
+        dedicated onboarding, and priority support.
       </p>
       <p>
         This self-serve pricing lets bootstrapped teams validate campaigns without risking their runway.

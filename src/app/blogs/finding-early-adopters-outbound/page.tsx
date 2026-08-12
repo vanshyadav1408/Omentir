@@ -44,7 +44,7 @@ const faqItems = [
   },
   {
     question: "How does Omentir support early adopter campaigns?",
-    answer: "Omentir offers affordable starter tiers beginning at $29/month, providing automated lead discovery, prompt variables, and safe campaign pacing delays."
+    answer: "Omentir offers an affordable Pro plan beginning at $49/month, providing automated lead discovery, prompt variables, and safe campaign pacing delays."
   },
   {
     question: "What is the collaborative copywriting pitch?",
@@ -76,7 +76,7 @@ export default function BlogPost() {
         Identifying and messaging these adopters requires structure. By checking technical stack maturity, analyzing hiring posts, and writing collaborative pitches, you can secure early users quickly.
       </p>
       <p>
-        Omentir helps manage this discovery loop, offering prompt variables and pacing tools, starting at $29/month. Let's look at how to find early adopters.
+        Omentir helps manage this discovery loop, offering prompt variables and pacing tools, starting at $49/month. Let's look at how to find early adopters.
       </p>
 
       <h3 id="not-every-small-company" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">

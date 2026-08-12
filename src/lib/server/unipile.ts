@@ -18,6 +18,7 @@ const UNIPILE_MIN_REQUEST_SPACING_MS = 250;
 const LINKEDIN_SEARCH_MIN_REQUEST_SPACING_MS = 2_000;
 const UNIPILE_RATE_LIMIT_RETRY_MS = 15_000;
 const UNIPILE_RATE_LIMIT_RETRIES = 1;
+const UNIPILE_TRANSIENT_READ_RETRY_MS = 5_000;
 // Free LinkedIn accounts reject notes over ~200 chars (Unipile returns
 // errors/too_many_characters). Paid accounts allow 300; 200 is safe for both.
 const LINKEDIN_CONNECTION_NOTE_LIMIT = 200;
@@ -57,7 +58,7 @@ function waitForProfileViewSlot() {
 export class UnipileResponseError extends Error {
   status: number;
   // Unipile error identifier from the response body, e.g.
-  // "errors/cannot_resend_yet" - lets callers branch on failure type instead
+  // "errors/cannot_resend_yet" / "errors/already_invited_recently" - lets callers branch on failure type instead
   // of pattern-matching message strings.
   errorType?: string;
   detail?: string;
@@ -388,7 +389,11 @@ function withQuery(path: string, params: Record<string, string | number | boolea
   return suffix ? `${path}?${suffix}` : path;
 }
 
-async function request<T>(path: string, init?: RequestInit) {
+async function request<T>(
+  path: string,
+  init?: RequestInit,
+  options?: { retryTransientReadErrors?: boolean },
+) {
   const config = getConfig();
   if (!config) {
     throw new Error("Unipile is not configured.");
@@ -423,17 +428,27 @@ async function request<T>(path: string, init?: RequestInit) {
         body,
         retryAfterMs(response.headers.get("retry-after")),
       );
-      if (error.status !== 429 || attempt === UNIPILE_RATE_LIMIT_RETRIES) {
+      const retryableTransientReadError =
+        Boolean(options?.retryTransientReadErrors) &&
+        (error.status === 502 ||
+          error.status === 503 ||
+          error.errorType === "errors/no_client_session" ||
+          error.errorType === "errors/disconnected_account");
+      if (
+        (error.status !== 429 && !retryableTransientReadError) ||
+        attempt === UNIPILE_RATE_LIMIT_RETRIES
+      ) {
         throw error;
       }
 
-      // A 429 is an explicit rejection, so retrying after the provider's
-      // requested cooldown is safe. Share that cooldown with every request in
-      // this process instead of immediately hammering the next search source.
-      const delayMs = Math.max(
-        error.retryAfterMs || 0,
-        UNIPILE_RATE_LIMIT_RETRY_MS,
-      );
+      // Search requests are read-only even though LinkedIn Classic search uses
+      // POST. Retrying transient provider/session failures is safe here, while
+      // outbound invite/message requests must never use this option because a
+      // lost response can leave their side effect ambiguous.
+      const delayMs =
+        error.status === 429
+          ? Math.max(error.retryAfterMs || 0, UNIPILE_RATE_LIMIT_RETRY_MS)
+          : UNIPILE_TRANSIENT_READ_RETRY_MS;
       deferUnipileRequests(delayMs);
       await wait(delayMs);
     } finally {
@@ -1066,6 +1081,7 @@ async function searchLinkedIn<T>(input: {
           cursor,
         }),
       },
+      { retryTransientReadErrors: true },
     );
 
     const pageItems = getListItems<T>(result);
@@ -1118,6 +1134,8 @@ export async function retrieveOwnLinkedInProfile(accountId: string) {
   return {
     displayName,
     avatarUrl: profileAvatarUrl(profile),
+    providerProfileId: profile.provider_id || profile.id || profile.public_identifier,
+    location: profileLocation(profile) || "",
   };
 }
 
@@ -1736,6 +1754,8 @@ export async function listLinkedInPostsForProfile(input: {
       is_company: input.isCompany,
       limit: input.limit,
     }),
+    undefined,
+    { retryTransientReadErrors: true },
   );
 
   return getListItems(result).slice(0, input.limit);

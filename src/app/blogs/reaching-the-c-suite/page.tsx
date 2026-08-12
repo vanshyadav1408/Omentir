@@ -74,7 +74,7 @@ export default function BlogPost() {
         To get executive replies, your messages must be short, direct, and grounded in real business outcomes.
       </p>
       <p>
-        Omentir provides the discovery filters and pacing safety to manage these executive campaigns, starting at $29/month. Let's look at how to reach the C-suite.
+        Omentir provides the discovery filters and pacing safety to manage these executive campaigns, starting at $49/month. Let's look at how to reach the C-suite.
       </p>
       <p>
         The mistake most small teams make is treating executive outreach as a louder version of normal SDR outreach. They take a message written for a manager, swap the title field to CEO or CTO, and assume seniority alone will make the pitch more urgent. That usually creates the opposite effect. Executives notice when a message is really meant for someone two levels below them.

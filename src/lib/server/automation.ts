@@ -63,7 +63,7 @@ import {
 import { agentTargetLocations, matchesTargetLocation } from "./geo";
 import { sendWindowTimeZoneForLead } from "./lead-time-zone";
 import {
-  agentHasSignalSources,
+  agentUsesPeopleEngine,
   enrichLinkedInLead,
   runPeopleEngineForAgent,
 } from "./people-engine";
@@ -78,6 +78,7 @@ import {
 import {
   canSendCampaignMessage,
   fitConnectionNote,
+  isInviteResendBlockedErrorType,
   INVITE_LIMIT_SIGNAL_THRESHOLD,
   isAnonymousLinkedInProfile,
   renderTemplate,
@@ -376,7 +377,7 @@ async function runAgents(mode: AutomationSafetyMode) {
       // cascade). Skip quietly - there is nothing left to mark running/error.
       if (!(await markAgentStarted(agent))) continue;
 
-      if (agentHasSignalSources(agent)) {
+      if (agentUsesPeopleEngine(agent)) {
         const result = await runPeopleEngineForAgent({
           agent,
           account,
@@ -1664,7 +1665,7 @@ async function runCampaigns(mode: AutomationSafetyMode) {
         continue;
       }
 
-      if (errorType === "errors/cannot_resend_yet") {
+      if (isInviteResendBlockedErrorType(errorType)) {
         // Unipile's detail text is the same generic "temporary provider limit"
         // whether this one recipient can't be re-invited yet or the whole
         // account hit its weekly cap. The sent-invitations list is ground

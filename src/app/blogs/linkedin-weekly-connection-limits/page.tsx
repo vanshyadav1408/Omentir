@@ -128,11 +128,21 @@ export default function BlogPost() {
         As a team grows, it may need more than one sending profile. Multi-profile outreach can be useful, but it should not become a way to push poor targeting through more accounts.
       </p>
       <p>
-        Omentir gives each workspace one LinkedIn account with two billing options:
+        Omentir offers Pro for self-serve teams and Enterprise for teams that
+        need SSO, dedicated onboarding, and priority support:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Monthly ($29/month):</strong> Includes unlimited AI agents, leads, campaigns, AI automated campaigns, API access, and email customer support.</li>
-        <li><strong>Lifetime ($99 once):</strong> Includes the same complete product with one payment and no renewals.</li>
+        <li>
+          <strong>Pro ($49/month):</strong> Includes one user, one LinkedIn
+          account, unlimited AI agents, leads, campaigns, AI automated campaigns,
+          API access, email customer support, and a minimum of three bookings per
+          week or you pay nothing.
+        </li>
+        <li>
+          <strong>Enterprise:</strong> Includes unlimited users, unlimited
+          LinkedIn accounts, all Pro features, plus SSO, dedicated onboarding,
+          and priority support. Book a call to discuss your setup.
+        </li>
       </ul>
       <p>
         Distributing campaign volume across multiple accounts allows you to increase outreach volume while keeping individual profile activity within safe limits.

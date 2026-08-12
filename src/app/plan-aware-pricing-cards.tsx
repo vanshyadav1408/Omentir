@@ -10,7 +10,7 @@ import PricingCards from "./pricing-cards";
 // and upgrade/downgrade labels on the others.
 export default function PlanAwarePricingCards({ className }: { className?: string }) {
   const { isSignedIn } = useUser();
-  const [plan, setPlan] = useState<"solo" | "lifetime" | undefined>(undefined);
+  const [plan, setPlan] = useState<"solo" | "lifetime" | "enterprise" | undefined>(undefined);
 
   useEffect(() => {
     if (!isSignedIn) return;
@@ -20,7 +20,13 @@ export default function PlanAwarePricingCards({ className }: { className?: strin
       .then((response) => (response.ok ? response.json() : null))
       .then((payload) => {
         if (ignore) return;
-        if (payload?.plan === "solo" || payload?.plan === "lifetime") setPlan(payload.plan);
+        if (
+          payload?.plan === "solo" ||
+          payload?.plan === "lifetime" ||
+          payload?.plan === "enterprise"
+        ) {
+          setPlan(payload.plan);
+        }
       })
       .catch(() => {});
 
