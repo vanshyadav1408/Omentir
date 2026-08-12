@@ -280,7 +280,7 @@ function parseOs(userAgent: string) {
   if (/mac os x|macintosh/i.test(userAgent)) return "macOS";
   if (/cros/i.test(userAgent)) return "ChromeOS";
   if (/linux/i.test(userAgent)) return "Linux";
-  return userAgent ? "Unknown" : "Unknown";
+  return "Unknown";
 }
 
 function parseBrowser(userAgent: string) {
@@ -289,7 +289,7 @@ function parseBrowser(userAgent: string) {
   if (/firefox\//i.test(userAgent)) return "Firefox";
   if (/chrome\//i.test(userAgent) || /crios\//i.test(userAgent)) return "Chrome";
   if (/safari\//i.test(userAgent)) return "Safari";
-  return userAgent ? "Unknown" : "Unknown";
+  return "Unknown";
 }
 
 function formatUtcTime(date = new Date()) {
