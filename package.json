@@ -36,10 +36,6 @@
     "typescript": "^5"
   },
   "overrides": {
-    "uuid": "11.1.1",
-    "next": {
-      "postcss": "8.5.13",
-      "sharp": "0.35.3"
-    }
+    "uuid": "11.1.1"
   }
 }
