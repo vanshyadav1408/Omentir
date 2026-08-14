@@ -278,7 +278,7 @@ export default function BlogPost() {
         Outbound outreach is most effective when it is relationship-focused. Senders who rely on high-volume template campaigns will trigger frequent restrictions and bans.
       </p>
       <p>
-        By understanding the psychology of spam and writing low-friction, relevant copy, you protect your profile assets. Omentir provides the discovery, prompts, and safety tools to support your growth, but the real advantage is restraint: send fewer messages to better-fit people, and make every message easy to decline.
+        By understanding the psychology of spam and writing low-friction, relevant copy, you protect your profile assets. The real advantage is restraint: send fewer messages to better-fit people, and make every message easy to decline without a calendar link in the first note.
       </p>
     </BlogPostTemplate>
   );

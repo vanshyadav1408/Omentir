@@ -74,7 +74,7 @@ export default function BlogPost() {
         This transparent approach helps you build authority and drive high-quality inbound leads.
       </p>
       <p>
-        Omentir supports this growth model, providing the campaign analytics and safety controls to help you share verified results, starting at $49/month. Let's look at how to build in public.
+        Building in public only produces leads when the posts teach something a buyer already wanted to know. A daily "shipped a button" update is not a demand signal.
       </p>
       <p>
         The mistake is treating building in public like a personal diary. Buyers do not need every mood swing, every tiny feature decision, or every dramatic lesson. They need evidence that you understand the problem, are moving quickly, and are honest about what is working. The best public building creates trust before the sales conversation starts.
@@ -332,7 +332,7 @@ Curious: is the painful part finding enough accounts, or deciding which ones are
         B2B buyers prioritize authenticity. By sharing your development and sales journey publicly, you build trust and generate qualified leads.
       </p>
       <p>
-        The winning version is not radical oversharing. It is useful transparency: clear problems, honest decisions, concrete lessons, protected customer data, and respectful follow-up with people who show real interest. Omentir provides the discovery, prompt, and pacing tools to support your outbound campaigns.
+        The winning version is not radical oversharing. It is useful transparency: clear problems, honest decisions, concrete lessons, protected customer data, and respectful follow-up with people who already showed interest in the work, not a cold list you bolted a "build in public" line onto.
       </p>
     </BlogPostTemplate>
   );

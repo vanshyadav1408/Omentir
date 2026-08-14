@@ -177,10 +177,10 @@ export default function BlogPost() {
         Pacing Campaign Activity to Match Platform Security Rules
       </h2>
       <p>
-        LinkedIn monitors both the volume and speed of connection requests and messages. If you send too many invites in a short period, your profile will be restricted.
+        Agent-led outbound looks unsafe when the agent owns both targeting and send time. If it can widen an ICP and fire the sequence in the same turn, you get a one-hour spike that no founder would have clicked.
       </p>
       <p>
-        To protect your account, configure campaigns around conservative daily safety limits, natural sending windows, and reviewable drafts. Omentir manages these safety protocols automatically, coordinating outgoing messages through secure, human-paced queues.
+        Split those jobs. Let the agent propose who to add and what to say. Keep daily invite and message caps in the workspace, and require an explicit yes before those caps move. The agent should report remaining allowance, not invent a new one.
       </p>
       <p>
         Additionally, the platform uses secure APIs provided by third-party integrations like <a href="https://www.unipile.com/" target="_blank" rel="noopener" className="text-blue-600 hover:underline">Unipile</a>, avoiding browser scripts and keeping your account activity safe. For details on pacing, read our comparison of database tools and custom AI layers.

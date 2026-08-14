@@ -70,7 +70,7 @@ export default function BlogPost() {
         To verify PMF, you must measure behavioral engagement. Targeted LinkedIn campaigns are the most effective way to test value. By pitching directly to prospects, you can evaluate interest based on real connection and reply metrics.
       </p>
       <p>
-        Omentir supports this discovery workflow by offering discovery agents, prompt variables, and pacing tools, allowing you to validate your campaigns. Let's walk through the PMF playbook.
+        LinkedIn can tell you whether a segment will take a meeting. It cannot tell you whether they will stay. Keep those two questions separate in the playbook below.
       </p>
       <p>
         LinkedIn is useful for PMF because it lets you test the market one segment at a time. You can reach specific roles, observe which problems create conversations, and see whether the same buyer profile keeps pulling you toward the same product promise. That repeatability is the beginning of fit.
@@ -302,7 +302,7 @@ Are you centralizing prospect research today, or does each rep handle it separat
         Building a B2B product requires market feedback. By using targeted cold outreach to validate your MVP, you ensure your development time is spent resolving real buyer challenges.
       </p>
       <p>
-        Product-market fit appears when acquisition signals, product activation, and retention all point toward the same market. Omentir provides the discovery, prompt, and safety tools to support your growth journey.
+        Product-market fit appears when acquisition signals, product activation, and retention all point toward the same market. LinkedIn is only useful here if the people who accept also stay. Accepts from a segment that churns in a week is not fit.
       </p>
     </BlogPostTemplate>
   );

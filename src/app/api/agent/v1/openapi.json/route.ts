@@ -281,7 +281,7 @@ export async function GET() {
         },
         delete: {
           operationId: "deleteLeadFinder",
-          summary: "Delete any agent (including Steal Customers) while retaining its lead group and discovered leads.",
+          summary: "Delete any agent, including Steal Customers. Removes its exclusive lead group, campaigns on that group, and those leads. If another agent still uses the group, the group and leads stay.",
           requestBody: {
             required: true,
             content: { "application/json": { schema: { $ref: "#/components/schemas/AgentDelete" } } },

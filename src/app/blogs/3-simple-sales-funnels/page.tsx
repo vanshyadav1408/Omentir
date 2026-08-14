@@ -70,7 +70,7 @@ export default function BlogPost() {
         Many early SaaS teams fail because they try to manage too many acquisition channels. The key is to implement three core funnels: sales-led outbound, product-led trials, and inbound content.
       </p>
       <p>
-        Omentir provides the discovery, prompt, and pacing tools to run your outbound funnels safely, supporting campaigns starting at $49/month. Let's look at how to build these funnels.
+        Most early teams only need one working funnel. The rest of this piece is about picking that first path and knowing when a second one is actually earned.
       </p>
       <p>
         The mistake is trying to make every funnel work at the same time. Early teams do not need a full growth department. They need one primary way to learn from buyers, one easy way for interested people to try the product, and one way to turn what they learn into public trust. These three funnels serve different jobs.
@@ -323,7 +323,7 @@ or do you already have a scoring step before outreach starts?`}</code>
         Outbound outreach is most effective when combined with structured acquisition funnels. By managing sales-led outbound, product-led trials, and content-led inbound, you build a diversified B2B pipeline.
       </p>
       <p>
-        Start with the funnel that answers your biggest unknown, then connect the three as evidence grows. Omentir provides the discovery, prompt, and safety tools to help you scale your sales funnels.
+        Start with the funnel that answers your biggest unknown, then connect the three as evidence grows. If outbound is that first funnel, keep the ICP narrow enough that a week of conversations can tell you whether the offer is wrong or the audience is.
       </p>
     </BlogPostTemplate>
   );

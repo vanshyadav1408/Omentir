@@ -197,15 +197,15 @@ const toolGroups = [
     tools: [
       {
         name: "omentir_pause_agent",
-        description: "Pause future discovery runs for one lead finder.",
+        description: "Pause an agent: stops discovery and freezes its automated outreach.",
       },
       {
         name: "omentir_resume_agent",
-        description: "Resume a paused lead finder and schedule it to run again.",
+        description: "Resume a paused agent so discovery and outreach run again.",
       },
       {
         name: "omentir_delete_agent",
-        description: "Delete a lead finder while retaining its lead group and leads.",
+        description: "Delete an agent, its exclusive lead group, campaigns, and those leads. Shared groups stay.",
       },
     ],
   },
@@ -228,7 +228,7 @@ const faqItems = [
   {
     question: "Which AI apps work with Omentir?",
     answer:
-      "Claude, ChatGPT, and Grok via the MCP connector URL (OAuth, no key). Cursor, Claude Code, Codex, Hermes, OpenClaw, and custom agents via an API key as Authorization: Bearer <token>, or the same REST API under /api/agent/v1.",
+      "Claude, ChatGPT, and Grok via the MCP connector URL (OAuth, no key). Cursor, Claude Code, OpenClaw, and any client that can send Authorization: Bearer <token> via the MCP endpoint or REST under /api/agent/v1.",
   },
   {
     question: "How do I connect in five minutes?",
@@ -280,7 +280,7 @@ const restEndpoints: { method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"; path
   { method: "GET", path: "/agents", description: "List agents including Steal Customers, with next discovery run and send window." },
   { method: "POST", path: "/agents", description: "Create a classic lead finder or Steal Customers agent (mode steal_customers + competitorUrls)." },
   { method: "PATCH", path: "/agents", description: "Update any agent: targeting, signalSources, send window, reply mode, or pause/resume." },
-  { method: "DELETE", path: "/agents", description: "Delete any agent while retaining its leads and group." },
+  { method: "DELETE", path: "/agents", description: "Delete an agent, its exclusive lead group, campaigns, and those leads. Shared groups stay." },
   { method: "GET", path: "/groups", description: "List lead groups created by agents." },
   { method: "GET", path: "/leads", description: "Search and list leads (engagementContext on Steal Customers leads)." },
   { method: "GET", path: "/leads/{leadId}", description: "Read one lead including post/comment context when present." },

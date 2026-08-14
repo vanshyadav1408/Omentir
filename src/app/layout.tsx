@@ -45,6 +45,13 @@ export const metadata: Metadata = {
   publisher: "Omentir",
   alternates: {
     canonical: "/",
+    types: {
+      "text/plain": [
+        { url: "/llms.txt", title: "llms.txt" },
+        { url: "/llms-full.txt", title: "llms-full.txt" },
+      ],
+      "text/markdown": [{ url: "/index.md", title: "Markdown" }],
+    },
   },
   openGraph: {
     title: defaultTitle,
@@ -108,6 +115,9 @@ export default async function RootLayout({
       }
     >
       <head>
+        {/* llmstxt.org v2: describedby points agents at the site-wide index
+            that covers every public path. */}
+        <link rel="describedby" href={`${siteUrl}/llms.txt`} title="llms.txt" />
         {/* Material Symbols Outlined (variable: opsz/wght/FILL/GRAD) — M3 icon
             system. Self-hosted subset (~50KB) instead of Google's ~4MB font:
             the CDN version cost two extra origin handshakes plus a stylesheet

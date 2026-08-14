@@ -217,10 +217,10 @@ export default function BlogPost() {
         Pacing Campaign Deliveries to Maintain Account Health
       </h2>
       <p>
-        LinkedIn monitors both the volume and speed of connection requests and messages. If you send too many invites in a short period, your profile will be restricted.
+        MCP tools make it easy to ask an assistant to "create the agent and start outreach." That sentence is where accounts get hurt. The model will happily call create, then update, then create again if you did not tell it to list existing agents first.
       </p>
       <p>
-        To protect your account, configure campaigns around conservative daily quotas, natural sending windows, and reviewable drafts. Omentir manages these safety protocols automatically, coordinating outgoing messages through secure, human-paced queues.
+        Before any send-side tool runs, have the assistant read remaining daily allowance and existing agents. If a finder already covers the ICP, reuse it. If you want more volume, say so in a later message. Tool access is not the same as a raised cap.
       </p>
       <p>
         MCP does not change that philosophy. An agent can configure and inspect lead discovery, but it should not turn LinkedIn into a bulk sender. The best use of agent tooling is to improve lead fit, inspect planned sends, and handle existing conversations while keeping delivery paced by Omentir.

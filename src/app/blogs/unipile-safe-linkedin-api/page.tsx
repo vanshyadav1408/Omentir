@@ -79,7 +79,7 @@ export default function BlogPost() {
         , you can centralize connection, messaging, invitation, and inbox workflows without asking your team to run fragile browser scripts.
       </p>
       <p>
-        Omentir coordinates campaigns via this secure API layer, protecting your login credentials, starting at $49/month. Let's look at how Unipile secures your profiles.
+        The point of a LinkedIn API layer is to keep credentials off laptops and scripts. The rest of this piece is about what that layer actually does, and what it does not excuse.
       </p>
 
       <h3 id="safe-access-means" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
@@ -264,7 +264,7 @@ export default function BlogPost() {
         B2B campaigns require secure infrastructure. By using Unipile's token encryption, proxy geolocations, and server-side routes, you protect your profile assets from restrictions.
       </p>
       <p>
-        Omentir provides the discovery, prompt, and safety tools to support your growth. Use the API layer as infrastructure, not as permission to send more than the account or the market can safely absorb.
+        Use the API layer as infrastructure, not as permission to send more than the account or the market can safely absorb. Unipile moving a message is not the same as a buyer wanting that message.
       </p>
     </BlogPostTemplate>
   );

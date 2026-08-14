@@ -1,292 +1,290 @@
 import Link from "next/link";
 import { createPageMetadata } from "../../seo";
 import BlogPostTemplate from "../blog-post-template";
+import { ArticleImage } from "../article-image";
+
+const slug = "linkedin-spam-filters-how-they-work";
+const coverSrc = `/blogs/${slug}/cover.avif`;
+const title = "LinkedIn Spam Filters: What They Catch, and What They Do Not";
+const description =
+  "LinkedIn's own rules ban using invitations as ads. Here is what the company publishes about spam, what its transparency report shows, and how to stay out of the filter.";
 
 export const metadata = createPageMetadata({
-  title: "How LinkedIn Spam Filters Work and How to Bypass Them - Omentir",
-  description: "Learn how platform security filters scan sales messages. Discover text variation, link constraints, and pacing rules that bypass detection.",
-  path: "/blogs/linkedin-spam-filters-how-they-work",
+  title,
+  description,
+  path: `/blogs/${slug}`,
+  image: {
+    url: coverSrc,
+    width: 3200,
+    height: 1600,
+    alt: "LinkedIn policy quote: do not use the invitation feature to send promotional messages to people you do not know",
+  },
   keywords: [
-    "how linkedin spam filters work",
-    "bypass linkedin invite blocks",
-    "text variance outbound copywriting",
-    "safe link inclusion outreach",
-    "automated outbox throttling engine",
-    "Omentir safety guidelines"
+    "LinkedIn spam filters",
+    "LinkedIn message marked as spam",
+    "LinkedIn invitation spam",
+    "LinkedIn Professional Community Policies spam",
+    "why LinkedIn messages go to spam",
   ],
 });
 
-const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "platform-filter-mechanics", label: "The Heuristics of LinkedIn's Content Filters", level: 1 },
-  { id: "filter-signal-stack", label: "The Signal Stack Behind Restrictions", level: 2 },
-  { id: "link-heuristics-danger", label: "Link Scanning: Banning Tracking Links and URLs", level: 2 },
-  { id: "text-variance-detection", label: "Text Variance: Why Duplicate Messages Trigger Blocks", level: 2 },
-  { id: "rewrite-examples", label: "Rewrite Examples That Lower Risk", level: 2 },
-  { id: "behavioral-pattern-checks", label: "Behavioral Scanning: Identifying Mechanical Sending Speeds", level: 2 },
-  { id: "copywriting-bypass-rules", label: "Copywriting: Structuring Unique, Grounded Templates", level: 1 },
-  { id: "throttling-safety-quotas", label: "Protecting Account Health with Automated Throttling", level: 1 },
-  { id: "reply-quality", label: "Use Reply Quality as the Safety Metric", level: 2 },
-  { id: "pause-rules", label: "Know When to Pause", level: 2 },
-  { id: "filter-safety-sop", label: "SOP: The Campaign Spam-Filter Verification Checklist", level: 1 },
-  { id: "conclusion", label: "Building High-Relevance Outbound Systems", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
-];
+const tocItems = [
+  { id: "not-a-bypass", label: "This is not a bypass guide", level: 1 },
+  { id: "what-policy-says", label: "What LinkedIn's policy actually says", level: 1 },
+  { id: "two-filters", label: "Two different filters", level: 1 },
+  { id: "what-people-report", label: "What people report as spam", level: 1 },
+  { id: "identical-copy", label: "Identical copy is the easy tell", level: 1 },
+  { id: "links-and-asks", label: "Links and meeting asks in the first touch", level: 1 },
+  { id: "stay-out", label: "How to stay out of the filter", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 },
+] as const;
 
 const faqItems = [
   {
-    question: "How do LinkedIn's spam filters analyze message text?",
-    answer: "Filters scan for repetitive word structures, excessive uppercase strings, spam buzzwords (like \"guaranteed sales\"), and identical copy sent to multiple profiles."
+    question: "Does LinkedIn scan connection notes and messages for spam?",
+    answer:
+      "Yes. LinkedIn uses automated systems plus member reports. Its latest community report said automated defenses stopped 98.6 percent of the spam and scam content it removed. First messages that look harmful can also skip the inbox and land in spam.",
   },
   {
-    question: "Should I include links to my website or calendar in connection requests?",
-    answer: "No. Including links in connection invitations significantly increases the probability of triggering spam filters. Keep links restricted to follow-up messages after a conversation has started."
+    question: "Is it against LinkedIn rules to pitch in a connection request?",
+    answer:
+      "The Professional Community Policies say not to use the invitation feature to send promotional messages to people you do not know. A connection note that is an ad is not a grey area. It is the thing the policy names.",
   },
   {
-    question: "How does Omentir ensure campaigns bypass automated filters?",
-    answer: "Omentir generates unique message drafts for every prospect based on their website and career context, ensuring high text variance, and routes them to a pacing engine."
+    question: "Why did my LinkedIn message go to spam?",
+    answer:
+      "A first message can be routed to spam if automated systems think it is harmful or unwanted, especially when you have never talked to that person. Identical copy, links, and a hard sell raise that chance. The recipient can also tap Report.",
   },
   {
-    question: "What is text variance and why is it important?",
-    answer: "Text variance is the degree of difference between sent messages. Having high variance (different words, lengths, and structures) prevents filters from flagging your outbox as automated spam."
-  }
+    question: "Will changing a few words bypass LinkedIn spam filters?",
+    answer:
+      "No. Swapping synonyms in the same pitch is still the same promotional invitation. Filters and people both notice the pattern. Write a different reason for a different person, or do not send the note.",
+  },
+  {
+    question: "Do links in a LinkedIn connection request trigger spam filters?",
+    answer:
+      "They often do, and they are also rude. A connection note is 200 characters and is not a landing page. Keep links out of the first touch. If they ask, send the link inside a conversation they already joined.",
+  },
 ] as const;
+
+const sectionClassName =
+  "mt-10 scroll-mt-28 border-b border-[var(--md-sys-color-outline-variant)] pb-2 pt-2 text-2xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)]";
 
 export default function BlogPost() {
   return (
     <BlogPostTemplate
-      title="LinkedIn Spam Filters: How They Work and How to Bypass Them"
-      description="Protect your sales assets from automated restrictions. Learn how social platform algorithms analyze outreach text, links, and speed, and how to stay safe."
-      slug="linkedin-spam-filters-how-they-work"
-      bannerSrc="/linkedin-spam-filters-how-they-work.avif"
-      bannerAlt="Social platform automated spam filters and copywriting variance diagram"
+      title={title}
+      description={description}
+      slug={slug}
+      bannerSrc={coverSrc}
+      bannerAlt="LinkedIn policy quote: do not use the invitation feature to send promotional messages to people you do not know"
       tocItems={tocItems}
       faqItems={faqItems}
     >
-      <p id="platform-filter-mechanics" className="scroll-mt-28">
-        B2B social selling campaigns require consistent outreach. Growth operations teams configure campaign prompts, verify target buyer databases, and send connection requests to decision makers. But if your outbound campaign trigger platform filters, your sending profiles will be restricted.
+      <p>
+        Search for this topic and you will find a pile of posts about bypassing LinkedIn spam
+        filters. That framing is the problem. LinkedIn publishes a rule against using invitations
+        as ads. It also publishes that most spam is caught by machines, not by a person reading
+        every note. You do not outsmart that by synonym-swapping a pitch.
       </p>
       <p>
-        Modern social networks utilize machine learning filters to protect members from automated spam. These algorithms do not wait for users to report your messages; they scan outbox text, links, and sending speeds automatically.
-      </p>
-      <p>
-        Working with these filters does not involve finding loopholes in platform terms. Senders must design campaigns that look like what they should be: relevant professional conversations between people who have a reasonable reason to talk.
-      </p>
-      <p>
-        To bypass automated spam filters, you must maintain high text variance, exclude external links from connection notes, and enforce safe daily quotas.
-      </p>
-      <p>
-        Omentir integrates this safety infrastructure, managing campaign variables to keep profiles safe, starting at $49/month. Let's look at how platform spam filters operate.
+        This article is about what LinkedIn says it does, what members do when they get a bad
+        request, and how to write so neither one treats you as spam.
       </p>
 
-      <h3 id="filter-signal-stack" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        The Signal Stack Behind Restrictions
-      </h3>
-      <p>
-        Spam filters rarely rely on one signal. A single awkward message usually does not create a restriction by itself. The risk appears when weak signals stack together: identical copy, a link in the first touch, low acceptance rates, fast sending intervals, and prospects ignoring or reporting the sequence.
-      </p>
-      <p>
-        Think of the filter as a trust system. Every campaign action either builds trust or spends it. A relevant message to a narrow buyer list builds trust because more people accept, reply, or at least ignore without negative feedback. A broad blast spends trust because many recipients reject the request.
-      </p>
-      <p>
-        The useful takeaway is that safety and conversion are not separate projects. The same work that makes a buyer more likely to respond also makes the campaign less likely to look abusive: better targeting, clearer context, shorter messages, and slower pacing.
-      </p>
-
-      <h2 id="link-heuristics-danger" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Link Scanning: Banning Tracking Links and URLs
+      <h2 id="not-a-bypass" style={{ fontFamily: "var(--font-varta)" }} className={sectionClassName}>
+        This is not a bypass guide
       </h2>
       <p>
-        URLs are heavily scanned by content filters. If you include external links (such as booking pages or website links) in connection requests, security checks will flag your invitations.
+        A filter exists because the product is full of people who do not want a stranger&apos;s
+        calendar link. Trying to sneak the same calendar link past the filter is still the
+        behavior the rule is about. If your plan only works when the recipient cannot tell it is
+        a blast, the plan is the thing to throw away.
       </p>
       <p>
-        Additionally, avoid using link shorteners or click tracking domains, as these structures are blacklisted by platform filters.
-      </p>
-      <p>
-        Keep connection notes text-only, and only share links in follow-up messages after a prospect has replied.
-      </p>
-      <p>
-        The cleanest first-touch rule is this: do not ask the prospect to leave the conversation before they have agreed the conversation is worth having. A calendar link, pricing page, tracking URL, or PDF link all create extra friction. They also make the message look like a distribution campaign instead of a human opener.
-      </p>
-      <p>
-        If you need to reference a resource, describe it in plain language first. "I have a short checklist for cleaning stale pending invites" is safer and more respectful than dropping a link. If the prospect asks for it, then send the link inside an active conversation.
+        Stay on this page if you want the published rules and the practical tells. If you want a
+        loophole, there is not a durable one.
       </p>
 
-      <h2 id="text-variance-detection" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Text Variance: Why Duplicate Messages Trigger Blocks
+      <h2 id="what-policy-says" style={{ fontFamily: "var(--font-varta)" }} className={sectionClassName}>
+        What LinkedIn&apos;s policy actually says
       </h2>
       <p>
-        Duplicate copy is a major trigger for content filters. If you send identical text blocks to multiple profiles, security algorithms flag the repetition.
+        The{" "}
+        <a
+          href="https://www.linkedin.com/legal/professional-community-policies"
+          target="_blank"
+          rel="noopener"
+          className="text-blue-600 hover:underline"
+        >
+          Professional Community Policies
+        </a>{" "}
+        are plain. Do not spam members. Untargeted, irrelevant, obviously unwanted, unauthorized,
+        or gratuitously repetitive commercial messages are not allowed. Then the line that most
+        outbound posts skip:
+      </p>
+      <blockquote className="border-l-2 border-[var(--md-sys-color-outline-variant)] pl-4 italic">
+        Do not use our invitation feature to send promotional messages to people you don&apos;t
+        know or to otherwise spam people.
+      </blockquote>
+      <p>
+        That is the whole connection-note debate, settled. A noted invite that is a product pitch
+        is not clever outbound. It is the example in the policy.
       </p>
       <p>
-        To bypass this pattern matching, your outreach copy must display high text variance. This is achieved by generating custom variations for every recipient based on their profile data.
-      </p>
-      <p>
-        Variance does not mean randomly swapping synonyms. "I noticed your work at Company" and "I saw your role at Company" are technically different, but they still feel like the same automated line. Meaningful variance comes from different evidence, different buyer problems, and different reasons for reaching out.
-      </p>
-      <p>
-        A strong campaign should have several message families. A hiring-trigger opener should not read like a funding-trigger opener. A founder should not receive the same logic as a VP Sales. When the reason changes, the message structure should change with it.
-      </p>
-      <p>
-        For copywriting guides, see our analysis of{" "}
-        <Link href="/blogs/why-static-templates-are-dead" className="text-blue-600 hover:underline">
-          why static templates are dead
-        </Link>
-        .
+        LinkedIn&apos;s{" "}
+        <a
+          href="https://about.linkedin.com/transparency/community-report"
+          target="_blank"
+          rel="noopener"
+          className="text-blue-600 hover:underline"
+        >
+          Community Report
+        </a>{" "}
+        for the second half of 2025 said spam and scams were the most common violation it acted
+        on, including repetitive communications or invitations meant for financial gain. Automated
+        defenses stopped 98.6 percent of the spam and scam content it removed. The rest was
+        handled by people. You are not talking your way past a junior moderator. You are talking
+        to a system that already removes almost all of this class of content before a human sees
+        it.
       </p>
 
-      <h3 id="rewrite-examples" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Rewrite Examples That Lower Risk
-      </h3>
-      <p>
-        The fastest way to improve a risky campaign is to rewrite the opener around the prospect's world instead of your product. Here are three common patterns and safer alternatives.
-      </p>
-      <div className="my-6 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
-        <p className="text-sm font-semibold text-zinc-900">Risky: generic product pitch</p>
-        <p className="mt-2 font-mono text-sm leading-7 text-zinc-700">
-          We help B2B teams automate LinkedIn outreach and book more demos. Want to see a demo?
-        </p>
-        <p className="mt-4 text-sm font-semibold text-zinc-900">Safer: context-first opener</p>
-        <p className="mt-2 font-mono text-sm leading-7 text-zinc-800">
-          Saw your team is hiring SDRs while expanding into mid-market. Curious if outbound list quality is becoming a bottleneck yet.
-        </p>
+      <h2 id="two-filters" style={{ fontFamily: "var(--font-varta)" }} className={sectionClassName}>
+        Two different filters
+      </h2>
+      <p>People mix these up. They are not the same lever.</p>
+      <div className="not-prose my-8 overflow-hidden rounded-xl border border-[var(--md-sys-color-outline-variant)]">
+        <table className="w-full text-left text-sm">
+          <thead className="bg-[var(--md-sys-color-surface-container-low)] text-[var(--md-sys-color-on-surface)]">
+            <tr>
+              <th className="px-4 py-3 font-semibold">Filter</th>
+              <th className="px-4 py-3 font-semibold">What it does</th>
+              <th className="px-4 py-3 font-semibold">What you notice</th>
+            </tr>
+          </thead>
+          <tbody className="text-[var(--md-sys-color-on-surface-variant)]">
+            <tr className="border-t border-[var(--md-sys-color-outline-variant)]">
+              <td className="px-4 py-3 font-medium text-[var(--md-sys-color-on-surface)]">Content</td>
+              <td className="px-4 py-3">
+                Machines score a first message or invite.{" "}
+                <a
+                  href="https://www.linkedin.com/help/linkedin/answer/a1341705"
+                  target="_blank"
+                  rel="noopener"
+                  className="text-blue-600 hover:underline"
+                >
+                  Harmful message detection
+                </a>{" "}
+                can send a first message straight to spam.
+              </td>
+              <td className="px-4 py-3">They never saw it. Or it sat in Other / spam.</td>
+            </tr>
+            <tr className="border-t border-[var(--md-sys-color-outline-variant)]">
+              <td className="px-4 py-3 font-medium text-[var(--md-sys-color-on-surface)]">Account</td>
+              <td className="px-4 py-3">
+                Volume, ignores, reports, and authenticity signals can restrict invitations. See{" "}
+                <Link href="/blogs/linkedin-weekly-connection-limits" className="text-blue-600 hover:underline">
+                  weekly connection limits
+                </Link>
+                .
+              </td>
+              <td className="px-4 py-3">You cannot send invites. The wait is typically a week.</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-      <div className="my-6 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
-        <p className="text-sm font-semibold text-zinc-900">Risky: premature calendar ask</p>
-        <p className="mt-2 font-mono text-sm leading-7 text-zinc-700">
-          Are you free Tuesday for 15 minutes? Here is my calendar.
-        </p>
-        <p className="mt-4 text-sm font-semibold text-zinc-900">Safer: permission-based next step</p>
-        <p className="mt-2 font-mono text-sm leading-7 text-zinc-800">
-          I can send the two-question filter we use before adding prospects to a sequence. Useful, or not relevant right now?
-        </p>
-      </div>
       <p>
-        Notice what changed. The safer versions do not hide that there may be a business reason for the message. They simply earn the next step before asking for it.
+        A message that never arrives is a content problem. A Connect button that stops working is
+        an account problem. Fixing the first with more volume creates the second.
       </p>
 
-      <h2 id="behavioral-pattern-checks" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Behavioral Scanning: Identifying Mechanical Sending Speeds
+      <h2 id="what-people-report" style={{ fontFamily: "var(--font-varta)" }} className={sectionClassName}>
+        What people report as spam
       </h2>
       <p>
-        In addition to text content, filters check behavioral speeds. Sending invitations at exact intervals (e.g. sending one invite every 60 seconds) indicates automation.
+        The machine is not the only rater. Recipients tap Report. LinkedIn even says members often
+        mark invitations from people they do not know as spam. The human reasons are consistent:
       </p>
-      <p>
-        Outbound campaigns must use pacing engines that add random delays between actions, keeping behavior looking organic.
-      </p>
-      <p>
-        Pacing should also follow the quality of the account. A new sender profile, a profile with low acceptance, or a campaign targeting unfamiliar buyers should move slowly. A healthy profile with strong acceptance can usually support more activity, but only if negative feedback remains low.
-      </p>
-      <p>
-        The mistake is treating daily volume as a fixed setting. It should be a feedback loop. If acceptance drops, replies become hostile, or pending invites pile up, the system should slow down before the platform forces the slowdown for you.
-      </p>
-
-      <div className="my-8 rounded-xl border border-zinc-200 bg-[#f4f2ec] p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)] relative overflow-hidden">
-        <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
-        <div className="pl-4">
-          <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-            Safety Rule: Enforce Safe Quotas 💡
-          </h4>
-          <p className="text-sm text-zinc-650 leading-relaxed">
-            Never send more than 20 connection requests daily from a single profile. Pacing requests with random delays keeps your campaigns safe.
-          </p>
-        </div>
-      </div>
-
-      <h2 id="copywriting-bypass-rules" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Copywriting: Structuring Unique, Grounded Templates
-      </h2>
-      <p>
-        Write short, conversational notes that open by referencing active career triggers:
-      </p>
-      <pre className="overflow-x-auto rounded-lg bg-zinc-900 p-5 text-[13px] leading-6 text-zinc-200 my-4">
-<code>{`Hi {first_name}, saw you are hiring for the sales team at {company_name}.
-We are building a tool to automate lead qualification.
-I noticed you are managing SDR roles and wanted to connect to share some templates.`}</code>
-      </pre>
-      <p>
-        For copywriting templates, see our guide on{" "}
-        <Link href="/blogs/prompts-for-linkedin-copy" className="text-blue-600 hover:underline">
-          outbound copywriting prompts
-        </Link>
-        .
-      </p>
-      <p>
-        A better version would cut the product explanation and make the message easier to answer:
-      </p>
-      <pre className="overflow-x-auto rounded-lg bg-zinc-900 p-5 text-[13px] leading-6 text-zinc-200 my-4">
-<code>{`Hi {first_name}, saw {company_name} is hiring for SDR roles.
-Teams usually hit list-quality issues around that point.
-Are you already using a scoring step before reps start sending?`}</code>
-      </pre>
-      <p>
-        This version is shorter, tied to a visible trigger, and asks a question the buyer can answer without booking a meeting. That is the difference between a pitch and an opener.
-      </p>
-
-      <h2 id="throttling-safety-quotas" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Protecting Account Health with Automated Throttling
-      </h2>
-      <p>
-        Outbound safety depends on pacing. Omentir supports safe connection limits and spaces out requests so campaigns do not behave like bulk sends.
-      </p>
-      <p>
-        For pacing details, see our guide on{" "}
-        <Link href="/blogs/human-paced-outreach" className="text-blue-600 hover:underline">
-          pacing B2B campaigns safely
-        </Link>
-        .
-      </p>
-
-      <h3 id="reply-quality" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Use Reply Quality as the Safety Metric
-      </h3>
-      <p>
-        Teams often watch the wrong numbers. They celebrate sends, profile views, and connection requests because those numbers are easy to increase. Spam filters care more about what happens after the send: acceptances, replies, ignores, blocks, and reports.
-      </p>
-      <p>
-        Build a weekly campaign review around reply quality. Read the actual replies, not just the dashboard summary. If people say "not relevant," "how did you get my profile," or "stop spamming me," treat that as product feedback. The targeting or opener is wrong.
-      </p>
-      <p>
-        A small campaign that produces five thoughtful replies is healthier than a large campaign that produces two meetings and a trail of irritated prospects. The first one can be improved. The second one burns trust while hiding the damage behind booked-call vanity metrics.
-      </p>
-
-      <h3 id="pause-rules" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Know When to Pause
-      </h3>
-      <p>
-        The safest teams have explicit pause rules. If acceptance falls below your normal baseline for two sending days, pause and inspect the audience. If more than one prospect in a small batch complains about relevance, pause and rewrite the opener. If a sender profile starts seeing verification prompts, pause all automation until the account is stable.
-      </p>
-      <p>
-        Pausing is not a failure. It is the mechanism that keeps a fixable campaign from becoming an account-health problem. Most teams damage their sender reputation because they keep sending while hoping the numbers recover by themselves.
-      </p>
-
-      <h2 id="filter-safety-sop" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: The Campaign Spam-Filter Verification Checklist
-      </h2>
-      <p>
-        Audit your campaigns using these steps before launching:
-      </p>
-      <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Step 1:</strong> Verify that connection request templates contain zero URLs or links.</li>
-        <li><strong>Step 2:</strong> Set prompt parameters to generate unique copy variations, ensuring high text variance.</li>
-        <li><strong>Step 3:</strong> Enable random outbox delays and daily connection invite limits.</li>
-        <li><strong>Step 4:</strong> Route all campaign drafts to Omentir's review queue.</li>
-        <li><strong>Step 5:</strong> Review the first 25 replies manually before increasing volume.</li>
-        <li><strong>Step 6:</strong> Pause any sequence where prospects repeatedly ask why they were targeted.</li>
+      <ul className="list-disc space-y-2 pl-6">
+        <li>The note could have been sent to anyone with that job title.</li>
+        <li>It asks for a meeting before there is a conversation.</li>
+        <li>It includes a link or a PDF they did not request.</li>
+        <li>It flatters a background the sender clearly did not read.</li>
+        <li>A follow-up arrives the next morning asking if they saw the first one.</li>
       </ul>
       <p>
-        Omentir handles variable mapping, message drafting, and safety limits, but the operator still owns the quality bar. The software can help you avoid robotic patterns; it cannot rescue a campaign aimed at the wrong people.
+        That list is the same list in{" "}
+        <Link href="/blogs/psychology-of-spam-outreach" className="text-blue-600 hover:underline">
+          why prospects report messages
+        </Link>
+        . The filter and the person are looking for the same shape: a stranger extracting time.
       </p>
 
-      <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Building High-Relevance Outbound Systems
+      <h2 id="identical-copy" style={{ fontFamily: "var(--font-varta)" }} className={sectionClassName}>
+        Identical copy is the easy tell
+      </h2>
+      <ArticleImage
+        src={`/blogs/${slug}/same-letter.avif`}
+        alt="Two identical LinkedIn connection notes sent to Sarah and Priya, only the first name changed"
+        caption="If two notes are the same letter with a different first name, both the filter and the recipient can tell."
+        width={3200}
+        height={1280}
+      />
+      <p>
+        Gratuitously repetitive messages are named in the policy. That does not mean every sentence
+        must be unique poetry. It means the reason has to change when the person changes. &quot;I
+        noticed your work at Company&quot; and &quot;I saw your role at Company&quot; are not two
+        messages. They are one template with a twitch.
+      </p>
+      <p>
+        A hiring-trigger note and a post-trigger note should not share a skeleton. A founder and a
+        finance lead should not get the same logic. If you cannot write the second one without
+        looking at the first, you do not have a second one.
+      </p>
+
+      <h2 id="links-and-asks" style={{ fontFamily: "var(--font-varta)" }} className={sectionClassName}>
+        Links and meeting asks in the first touch
       </h2>
       <p>
-        Social selling campaigns require safety boundaries. By managing session geolocations, text variance, and connection pacing, you protect your profile assets from automated restrictions.
+        A connection note is 200 characters. A first DM is still a first DM. Putting a booking
+        link, a tracking shortener, or a pricing page in that space does two things. It asks them
+        to leave the conversation before they agreed it was worth having. And it looks like
+        distribution, which is what the spam systems are built to catch.
       </p>
       <p>
-        The safest outbound system is also the most useful one: narrow list, clear reason, short opener, no first-touch links, patient follow-up, and fast human review when a prospect replies.
+        If the resource matters, describe it in a clause and wait. &quot;I have a one-page
+        checklist for stale pending invites&quot; is a sentence. A raw URL is a pitch. Send the
+        URL after they ask.
       </p>
       <p>
-        Omentir provides the discovery, prompt, and pacing tools to support that workflow. Use the automation to remove repetitive work, not to remove judgment.
+        The same rule applies to &quot;open to a quick 15 minutes?&quot; in a connection note. They
+        have not accepted the connection. They have not agreed you are a relevant person. The
+        meeting ask is the promotional message the policy names. Write the reason to connect
+        instead. That structure is in{" "}
+        <Link
+          href="/blogs/how-to-write-a-linkedin-connection-request-that-gets-accepted"
+          className="text-blue-600 hover:underline"
+        >
+          how to write a connection request that gets accepted
+        </Link>
+        .
+      </p>
+
+      <h2 id="stay-out" style={{ fontFamily: "var(--font-varta)" }} className={sectionClassName}>
+        How to stay out of the filter
+      </h2>
+      <p>None of this is a trick. It is the inverse of the policy.</p>
+      <ol className="list-decimal space-y-2 pl-6">
+        <li>Invite people you can name a reason for. Job title is not a reason.</li>
+        <li>Do not use the invitation as an ad. Pitch later, if they want that conversation.</li>
+        <li>Write a different reason when the person is different. Do not synonym-swap.</li>
+        <li>Keep links and calendars out of the first touch.</li>
+        <li>Send slowly enough that a human could have typed them. Warm a quiet account first.</li>
+        <li>Stop a batch that is being ignored or reported. More volume is not the fix.</li>
+      </ol>
+      <p>
+        If a note only works when the other person does not look closely, do not send it. The
+        filter is not the audience you have to fool. The person is.
       </p>
     </BlogPostTemplate>
   );

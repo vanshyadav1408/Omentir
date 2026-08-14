@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { LOCAL_SESSION_COOKIE, verifyLocalSession } from "./lib/local-session";
 import { isLocalMode } from "./lib/runtime-mode";
 import { isClerkSessionKeyMismatch } from "./lib/clerk-errors";
+import { isPublicMarketingPath, markdownRewritePath } from "./lib/public-marketing-path";
 
 const isProtectedRoute = createRouteMatcher([
   "/dashboard(.*)", "/actions(.*)", "/activity(.*)", "/agents(.*)",
@@ -103,7 +104,33 @@ async function localMiddleware(request: NextRequest) {
 }
 
 export default function proxy(request: NextRequest, event: NextFetchEvent) {
-  return isLocalMode() ? localMiddleware(request) : hostedMiddleware(request, event);
+  if (isLocalMode()) return localMiddleware(request);
+
+  // Public marketing pages are static and do not need server-side session
+  // state. Keeping them outside Clerk middleware lets the CDN cache crawlable
+  // HTML instead of marking every anonymous response private and no-cache.
+  // `{path}.md` is the markdown twin used by AI agents; rewrite it to the
+  // baked renderer without sending `/dashboard.md` through auth.
+  const markdownDestination = markdownRewritePath(request.nextUrl.pathname);
+  if (markdownDestination) {
+    const destination = request.nextUrl.clone();
+    destination.pathname = markdownDestination;
+    return NextResponse.rewrite(destination);
+  }
+  // `/dashboard.md` would otherwise match Clerk's `/dashboard(.*)` matcher.
+  // Private markdown twins do not exist; return 404 instead of a login wall.
+  if (
+    request.nextUrl.pathname.endsWith(".md") &&
+    request.nextUrl.pathname !== "/agents.md"
+  ) {
+    return new NextResponse("Not found\n", {
+      status: 404,
+      headers: { "content-type": "text/plain; charset=utf-8" },
+    });
+  }
+  if (isPublicMarketingPath(request.nextUrl.pathname)) return NextResponse.next();
+
+  return hostedMiddleware(request, event);
 }
 
 export const config = {

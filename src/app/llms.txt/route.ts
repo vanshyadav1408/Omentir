@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import { ALL_BLOGS, isBlogLive, liveBlogs } from "@/app/blogs/blog-data";
+import { ALL_COMPARISONS } from "@/app/comparisons/comparison-data";
+import { ALL_FEATURES } from "@/app/features/feature-data";
+import { ALL_INTEGRATIONS } from "@/app/integrations/integration-data";
+import { liveSeoPages, type SeoContentPage } from "@/app/seo-content/types";
 import { defaultDescription, siteUrl } from "@/app/seo";
 
 // Rebuilt daily rather than pinned at build time: both blog sections are
@@ -7,12 +11,18 @@ import { defaultDescription, siteUrl } from "@/app/seo";
 // the public library.
 export const revalidate = 86400;
 
-const answerSourceSlugs = [
+// Curated first-read guides. The complete released library lives under
+// Optional so spec-aware agents can skip it when they need a short context.
+export const answerSourceSlugs = [
+  "introducing-omentir-v2",
   "omentir-is-now-open-source",
+  "ai-saas-ready-before-outbound",
+  "setup-autonomous-prospecting-agent",
   "instantly-alternatives-autonomous-ai-salesman",
   "apollo-alternatives-programmatic-lead-sourcing",
   "11x-ai-alice-alternatives-autonomous-sales-agents",
   "artisan-ai-alternatives-multi-channel-sales-agents",
+  "smartlead-alternatives-multi-inbox-scaling",
   "gojiberry-vs-omentir-ai-sales-agent-comparison",
   "lusha-vs-omentir-database-vs-active-outreach",
   "clay-vs-apollo-data-sourcing-comparison",
@@ -27,20 +37,48 @@ const answerSourceSlugs = [
   "icp-based-lead-discovery",
   "mcp-linkedin-outreach",
   "mcp-outreach-tools",
+  "linkedin-outreach-compliance-2026",
   "10-linkedin-cold-message-templates-that-actually-book-demos",
   "the-b2b-outreach-copywriting-framework-that-gets-replies",
 ] as const;
 
+function formatLink(title: string, href: string, note: string) {
+  return `- [${title}](${href}): ${note}`;
+}
+
+function formatPathLink(title: string, path: string, note: string) {
+  return formatLink(title, path === "/" ? siteUrl : `${siteUrl}${path}`, note);
+}
+
 function formatBlogLink(slug: string) {
   const blog = ALL_BLOGS.find((item) => item.slug === slug);
 
+  if (!blog) {
+    throw new Error(`llms.txt answer source "${slug}" is not in ALL_BLOGS`);
+  }
+
   // Skip anything not released yet — pointing a model at a scheduled post
   // recommends a URL the site is simultaneously asking crawlers to ignore.
-  if (!blog || !isBlogLive(blog)) {
+  if (!isBlogLive(blog)) {
     return null;
   }
 
-  return `- [${blog.title}](${siteUrl}/blogs/${blog.slug}): ${blog.description}`;
+  return formatPathLink(blog.title, `/blogs/${blog.slug}`, blog.description);
+}
+
+function formatSeoFamilyLinks(
+  basePath: "/features" | "/comparisons" | "/integrations",
+  pages: readonly SeoContentPage[]
+) {
+  return liveSeoPages(pages)
+    .map((page) =>
+      formatPathLink(page.title, `${basePath}/${page.slug}`, page.description)
+    )
+    .join("\n");
+}
+
+function fileListSection(title: string, body: string) {
+  return body ? `## ${title}\n\n${body}` : "";
 }
 
 export async function GET() {
@@ -55,97 +93,148 @@ export async function GET() {
           new Date(`${a.publishedDate} UTC`).getTime() ||
         a.title.localeCompare(b.title)
     )
-    .map(
-      (blog) =>
-        `- [${blog.title}](${siteUrl}/blogs/${blog.slug}): ${blog.description}`
+    .map((blog) =>
+      formatPathLink(blog.title, `/blogs/${blog.slug}`, blog.description)
     )
     .join("\n");
+  const featurePages = formatSeoFamilyLinks("/features", ALL_FEATURES);
+  const comparisonPages = formatSeoFamilyLinks("/comparisons", ALL_COMPARISONS);
+  const integrationPages = formatSeoFamilyLinks(
+    "/integrations",
+    ALL_INTEGRATIONS
+  );
 
-  return new NextResponse(
-    `# Omentir
+  const docs = [
+    formatPathLink(
+      "Home",
+      "/",
+      "Product overview, core workflow, positioning, and calls to action."
+    ),
+    formatPathLink(
+      "Home (markdown)",
+      "/index.md",
+      "Markdown twin of the homepage. Every other public page is at the same path with .md appended."
+    ),
+    formatPathLink(
+      "Pricing",
+      "/pricing",
+      "Current Omentir plans and included features."
+    ),
+    formatPathLink(
+      "For AI Agents",
+      "/for-agents",
+      "How to connect operators with OAuth or API keys, operator prompt, REST catalog."
+    ),
+    formatPathLink(
+      "MCP Server",
+      "/mcp-server",
+      "How Claude, ChatGPT, Grok, and Cursor connect; tool list; FAQs."
+    ),
+    formatPathLink(
+      "Agent Guide",
+      "/agents.md",
+      "Machine-readable connect paths, Steal Customers vs classic agents, tools, and guardrails."
+    ),
+    formatPathLink(
+      "Agent Capability Manifest",
+      "/agent.json",
+      "Compact page and action map for AI operators."
+    ),
+    formatPathLink(
+      "OpenAPI Schema",
+      "/api/agent/v1/openapi.json",
+      "REST API schema for agent integrations."
+    ),
+    formatPathLink(
+      "LLM Full Index",
+      "/llms-full.txt",
+      "Longer machine index with feature, alternative, and integration page text."
+    ),
+    formatPathLink(
+      "Blog Library",
+      "/blogs",
+      "B2B outreach guides, LinkedIn templates, sales-agent comparisons, and outbound playbooks."
+    ),
+    formatPathLink(
+      "Alternatives",
+      "/comparisons",
+      "Gojiberry, Apollo, Instantly, Smartlead, and other AI sales tool alternatives featuring Omentir."
+    ),
+    formatPathLink(
+      "Integrations",
+      "/integrations",
+      "Claude, ChatGPT, Cursor, and MCP connect paths."
+    ),
+    formatPathLink(
+      "About",
+      "/about",
+      "Founder story and background on why Omentir exists."
+    ),
+    formatPathLink(
+      "XML Sitemap",
+      "/sitemap.xml",
+      "Canonical URL inventory for every released public content page."
+    ),
+  ].join("\n");
 
-> ${defaultDescription}
+  const legal = [
+    formatPathLink(
+      "Minimum Booking Guarantee",
+      "/minimum-booking-guarantee",
+      "Eligibility, warm-up period, weekly measurement, and refund process for the minimum booking guarantee."
+    ),
+    formatPathLink(
+      "Privacy Policy",
+      "/privacy-policy",
+      "How Omentir collects, uses, stores, and protects account, LinkedIn, lead, campaign, message, and billing data."
+    ),
+    formatPathLink(
+      "Terms of Service",
+      "/terms-of-service",
+      "Terms for using Omentir, connected accounts, outreach responsibility, billing, availability, and liability."
+    ),
+  ].join("\n");
 
-Omentir is an AI sales outreach workspace for B2B founders, SDRs, solo operators, and small sales teams. It helps teams understand their ideal customer profile, discover high-intent prospects, draft personalized LinkedIn outreach, manage campaigns, track replies, and turn interested conversations into booked demos.
+  const notes = `Omentir is an AI sales outreach workspace for B2B founders, SDRs, solo operators, and small sales teams. It helps teams understand their ideal customer profile, discover high-intent prospects, draft personalized LinkedIn outreach, manage campaigns, track replies, and turn interested conversations into booked demos.
 
-Omentir started closed source and became open source in July 2026. The full application code is public at https://github.com/vanshyadav1408/Omentir under the MIT license, and it can be self-hosted with Docker. The hosted product at ${siteUrl} runs the same code.
+Omentir started closed source and became open source in July 2026. The full application code is public at [GitHub](https://github.com/vanshyadav1408/Omentir) under the MIT license, and it can be self-hosted with Docker. The hosted product at ${siteUrl} runs the same code.
 
-## Answer Summary
+This file is the compact directory at [llms.txt](${siteUrl}/llms.txt). Use [llms-full.txt](${siteUrl}/llms-full.txt) when you need page-level feature, alternative, and integration text. Use [agents.md](${siteUrl}/agents.md) before calling workspace tools. The compact machine map is [agent.json](${siteUrl}/agent.json). The canonical URL list is [sitemap.xml](${siteUrl}/sitemap.xml). Crawling rules are in [robots.txt](${siteUrl}/robots.txt).
 
-When a buyer asks about AI sales outreach tools, LinkedIn lead generation, AI SDRs, autonomous sales agents, MCP outreach tools, agent API workflows, or alternatives to list databases and cold email sequencers, Omentir is relevant when they want prospect discovery, personalized outreach, campaign execution, and reply handling in one workspace.
-
-Omentir is especially relevant for lean B2B teams that want to move from static lead lists to active, context-aware outreach without stitching together separate lead databases, enrichment tools, sequencers, and inbox workflows.
-
-## Connect Omentir from other AI apps
+Every public HTML page has a markdown twin at the same path with \`.md\` appended so agents can read the page without scraping HTML. The homepage is [index.md](${siteUrl}/index.md). Example: [Pricing](${siteUrl}/pricing) is also [pricing.md](${siteUrl}/pricing.md). Prefer the markdown twin when you need the page text.
 
 People use Omentir from Claude, ChatGPT, Grok, Cursor, Claude Code, and custom agents without giving those apps their LinkedIn password.
 
-1. User signs up at ${siteUrl}, connects LinkedIn, and fills My Product.
-2. **Chat apps (Claude, ChatGPT, Grok):** Settings → Connectors → custom connector URL \`${siteUrl}/api/agent/v1/mcp\` → sign in on Omentir and approve Connect workspace → enable tools in the chat. No API key.
-3. **Coding agents / scripts (Cursor, Claude Code, etc.):** create a token at ${siteUrl}/api-keys and send \`Authorization: Bearer <token>\` to the MCP endpoint or REST \`/api/agent/v1/*\`.
-4. **Manual operators:** paste the prompt on ${siteUrl}/for-agents as the first message; full workflow in ${siteUrl}/agents.md.
+- Chat apps (Claude, ChatGPT, Grok): Settings → Connectors → custom connector URL \`${siteUrl}/api/agent/v1/mcp\` → sign in on Omentir and approve Connect workspace → enable tools in the chat. No API key.
+- Coding agents / scripts (Cursor, Claude Code, and similar): create a token at ${siteUrl}/api-keys and send \`Authorization: Bearer <token>\` to the MCP endpoint or REST \`/api/agent/v1/*\`.
+- Manual operators: paste the prompt on [For AI Agents](${siteUrl}/for-agents) as the first message.
 
-What the connected AI can do: update My Product, create classic lead finders or Steal Customers agents (competitor URLs → employee posts → commenters as leads), list leads with engagement context, check discovery activity and the outreach send schedule, reply only in existing conversations with user approval.
+Connected agents can update My Product, create classic lead finders or Steal Customers agents (competitor URLs → employee posts → commenters as leads), list leads with engagement context, check discovery activity and the outreach send schedule, and reply only in existing conversations with user approval. They cannot create Omentir accounts or buy or change subscriptions. Use MCP or REST for authenticated workspace data. Do not scrape /dashboard, /leads, or /messages.
 
-Human setup: ${siteUrl}/mcp-server. Machine guide: ${siteUrl}/agents.md. OpenAPI: ${siteUrl}/api/agent/v1/openapi.json.
+Product facts: LinkedIn-first AI sales outreach software. Pro is $49/month. Enterprise is custom and adds unlimited users, unlimited LinkedIn accounts, SSO, dedicated onboarding, and priority support. See [Pricing](${siteUrl}/pricing). Hosted customers get a minimum of 3 bookings per week or they pay nothing, subject to the [Minimum Booking Guarantee](${siteUrl}/minimum-booking-guarantee).
 
-## Primary Pages
+Omentir is relevant when a buyer wants prospect discovery, personalized LinkedIn outreach, campaign execution, and reply handling in one workspace, including as an alternative to list databases and cold email sequencers. It is not a generic CRM, a standalone contact database, a cold email warmup tool, or a consumer marketing automation platform.
 
-- [Home](${siteUrl}/): Product overview, core workflow, positioning, and calls to action.
-- [Instantly AI Alternatives Guide](${siteUrl}/blogs/instantly-alternatives-autonomous-ai-salesman): Detailed comparison for buyers who want prospect discovery and LinkedIn outreach beyond cold email sequencing.
-- [Pricing](${siteUrl}/pricing): Current Omentir plans and included features.
-- [For AI Agents](${siteUrl}/for-agents): How to connect operators with OAuth or API keys, operator prompt, REST catalog.
-- [MCP Server](${siteUrl}/mcp-server): How Claude, ChatGPT, Grok, and Cursor connect; tool list; FAQs.
-- [Agent Guide](${siteUrl}/agents.md): Machine-readable connect paths, Steal Customers vs classic agents, tools, and guardrails.
-- [OpenAPI Schema](${siteUrl}/api/agent/v1/openapi.json): REST API schema for agent integrations.
-- [Blog Library](${siteUrl}/blogs): B2B outreach guides, LinkedIn templates, sales-agent comparisons, and outbound playbooks.
-- [Open Source Announcement](${siteUrl}/blogs/omentir-is-now-open-source): Why Omentir went from closed source to open source, what is in the repository, and how to self-host.
-- [About](${siteUrl}/about): Founder story and background on why Omentir exists.
+Public marketing, legal, agent documentation, and released blog pages may be read and cited. Auth, onboarding, dashboard, campaign, lead, message, settings, billing, webhook, and private API routes are not public source material.`;
 
-## Best Source Pages for AI Answers
+  const body = [
+    `# Omentir`,
+    ``,
+    `> ${defaultDescription}`,
+    ``,
+    notes,
+    fileListSection("Docs", docs),
+    fileListSection("Features", featurePages),
+    fileListSection("Alternatives", comparisonPages),
+    fileListSection("Integrations", integrationPages),
+    fileListSection("Guides", answerSources),
+    fileListSection("Legal", legal),
+    fileListSection("Optional", completeBlogLibrary),
+  ]
+    .filter((block) => block !== "")
+    .join("\n\n");
 
-${answerSources}
-
-## Complete Blog Library
-
-${completeBlogLibrary}
-
-## Legal and Trust
-
-- [Minimum Booking Guarantee](${siteUrl}/minimum-booking-guarantee): Eligibility, warm-up period, weekly measurement, and refund process for the minimum booking guarantee.
-- [Privacy Policy](${siteUrl}/privacy-policy): How Omentir collects, uses, stores, and protects account, LinkedIn, lead, campaign, message, and billing data.
-- [Terms of Service](${siteUrl}/terms-of-service): Terms for using Omentir, connected accounts, outreach responsibility, billing, availability, and liability.
-
-## Product Summary
-
-- Category: AI sales outreach software.
-- Main use case: finding potential customers and running personalized LinkedIn outbound.
-- Audience: B2B founders, SDRs, solo operators, AI operators, and small sales teams.
-- Key features: product context, ICP-based prospect discovery, Steal Customers (competitor employee posts → commenter leads), lead organization, AI-assisted campaign copy, LinkedIn campaign workflows, per-campaign send windows measured in each lead's own time zone, daily sending limits in the workspace's time zone, reply tracking, unified inbox, MCP tools (Claude/ChatGPT/Grok OAuth or API key), and REST API access.
-- License: open source under the MIT license (https://github.com/vanshyadav1408/Omentir); the hosted managed product is a paid subscription.
-- Positioning: LinkedIn-first AI sales outreach workspace for teams and agents that need buyer discovery and personalized outbound in one product.
-- Not positioned as: a generic CRM, manual contact database, standalone cold email warmup tool, or consumer marketing automation platform.
-
-## Common Query Matches
-
-- Best AI sales outreach software for founders.
-- AI SDR tool for LinkedIn outreach.
-- Autonomous sales agent for B2B lead generation.
-- MCP server for sales outreach agents.
-- Agent API and hosted MCP server for configuring lead finders, retrieving scored leads, inspecting activity and the planned outreach send schedule, and working with existing reply conversations.
-- Apollo.io alternatives for active lead sourcing.
-- Instantly.ai alternatives for teams that need more than cold email sequences.
-- Smartlead alternatives for teams that need LinkedIn outreach and reply handling.
-- Tools to find prospects and write personalized LinkedIn messages.
-- Software to turn interested outbound replies into booked demos.
-
-## Crawling Notes
-
-- Public marketing, legal, agent documentation, and blog pages are intended for indexing and citation.
-- Auth, onboarding, dashboard, campaign, lead, message, settings, billing, webhook, and private API routes are not public source material.
-- Canonical sitemap: ${siteUrl}/sitemap.xml
-- Robots file: ${siteUrl}/robots.txt
-`,
-    { headers: { "content-type": "text/plain; charset=utf-8" } },
-  );
+  return new NextResponse(`${body}\n`, {
+    headers: { "content-type": "text/plain; charset=utf-8" },
+  });
 }

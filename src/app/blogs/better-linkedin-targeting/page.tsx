@@ -201,10 +201,10 @@ export default function BlogPost() {
         Pacing Campaign Activity Safely to Prevent Restrictions
       </h2>
       <p>
-        LinkedIn monitors both the volume and speed of connection requests and messages. If you send too many invites in a short period, your profile will be restricted.
+        Better targeting reduces waste. It does not give you a free pass to empty a new list in two days. A tighter ICP still produces a spike if you send every match the morning the list lands.
       </p>
       <p>
-        To protect your account, configure campaigns around conservative daily quotas, natural sending windows, and reviewable message drafts. Omentir manages these safety protocols automatically, coordinating outgoing messages through secure, human-paced queues.
+        After you narrow titles, industries, or geographies, leave the daily invite cap where it was. Use the extra precision to raise reply quality, not send volume. If the new list is smaller, send fewer notes, not the same count to a "better" audience.
       </p>
       <p>
         Better targeting also helps safety because it reduces ignored requests. A narrow list lets you send fewer invites while still creating real conversations. That is a healthier system than pushing volume upward to compensate for weak fit.

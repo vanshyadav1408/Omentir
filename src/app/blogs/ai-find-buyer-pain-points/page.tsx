@@ -299,7 +299,7 @@ Are reps doing prospect research manually today?`}</code>
         Outbound outreach is most effective when it is timely and relevant. By using AI crawlers to discover real buyer pain points, you can eliminate guesswork from your sales campaigns.
       </p>
       <p>
-        The best system does not invent pain. It gathers evidence, groups patterns, asks better questions, and learns from replies. Omentir provides the discovery, prompt, and safety tools to help you build a personalized, sustainable B2B sales pipeline.
+        The best system does not invent pain. It gathers evidence, groups patterns, asks better questions, and learns from replies. If a "pain point" never appears in a real conversation, it does not belong in the next first line.
       </p>
     </BlogPostTemplate>
   );

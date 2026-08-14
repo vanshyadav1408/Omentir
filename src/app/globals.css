@@ -2466,6 +2466,40 @@ html[data-theme="dark"] .marketing-cta {
   }
 }
 
+/* Content above --compose-y is readable. Content that has not entered the
+   viewport yet stays unwritten. No pen or edge line. */
+.compose-wrap {
+  position: relative;
+}
+
+.compose-wrap[data-compose] {
+  --compose-y: 0px;
+}
+
+.compose-wrap[data-compose] > .compose {
+  mask-image: linear-gradient(
+    to bottom,
+    #000 0,
+    #000 max(0px, calc(var(--compose-y) - 48px)),
+    rgba(0, 0, 0, 0.55) max(0px, calc(var(--compose-y) - 12px)),
+    transparent var(--compose-y)
+  );
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    #000 0,
+    #000 max(0px, calc(var(--compose-y) - 48px)),
+    rgba(0, 0, 0, 0.55) max(0px, calc(var(--compose-y) - 12px)),
+    transparent var(--compose-y)
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .compose-wrap[data-compose] > .compose {
+    mask-image: none;
+    -webkit-mask-image: none;
+  }
+}
+
 /* Utility surfaces for theme-aware elevation (opt-in). */
 .m3-surface {
   background-color: var(--md-sys-color-surface);
@@ -2743,23 +2777,71 @@ html[data-theme="dark"] .blog-article :not(pre) > code {
   color: var(--google-primary) !important;
 }
 
-/* Tables */
-html.dark .blog-article table,
-html.dark .blog-article thead,
-html.dark .blog-article tbody,
-html.dark .blog-article tr,
-html.dark .blog-article th,
-html.dark .blog-article td,
-html[data-theme="dark"] .blog-article :is(table, thead, tbody, tr, th, td) {
-  border-color: var(--google-border) !important;
-  color: var(--google-text-primary) !important;
+/* Marketing tables: same chrome as /integrations (rounded frame, low
+   surface header, hairline row rules). Blog posts still ship old cream
+   and zinc classes; restyle them here so every public table matches.
+   Selectors include html.dark so they beat the generic blog text-color
+   overrides above. */
+:is(html.dark, html[data-theme="dark"]) .blog-article div:has(> table) {
+  overflow-x: auto;
+  border-radius: 1rem;
+  border: 1px solid var(--md-sys-color-outline-variant) !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
-html.dark .blog-article thead,
-html.dark .blog-article thead tr,
-html.dark .blog-article [class*="bg-[#f4f2ec]"] thead,
-html[data-theme="dark"] .blog-article thead {
-  background-color: var(--google-surface-high) !important;
+:is(html.dark, html[data-theme="dark"]) .blog-article table {
+  width: 100%;
+  min-width: 40rem;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.875rem;
+  background: transparent !important;
+}
+
+:is(html.dark, html[data-theme="dark"]) .blog-article :is(thead, thead tr),
+:is(html.dark, html[data-theme="dark"]) .blog-article [class*="bg-[#f4f2ec]"] thead {
+  background-color: var(--md-sys-color-surface-container-low) !important;
+}
+
+:is(html.dark, html[data-theme="dark"]) .blog-article :is(th, td) {
+  border: 0 !important;
+  background: transparent !important;
+}
+
+:is(html.dark, html[data-theme="dark"]) .blog-article thead th {
+  padding: 0.875rem 1.25rem !important;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface) !important;
+}
+
+:is(html.dark, html[data-theme="dark"]) .blog-article tbody tr {
+  border-top: 1px solid var(--md-sys-color-outline-variant) !important;
+}
+
+:is(html.dark, html[data-theme="dark"]) .blog-article tbody :is(th, td.font-medium),
+:is(html.dark, html[data-theme="dark"]) .blog-article tbody td.font-semibold:not([class*="text-green"]):not([class*="text-red"]):not([class*="text-yellow"]) {
+  padding: 1rem 1.25rem !important;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface) !important;
+}
+
+:is(html.dark, html[data-theme="dark"]) .blog-article tbody td {
+  padding: 1rem 1.25rem !important;
+  line-height: 1.5rem;
+  color: var(--md-sys-color-on-surface-variant) !important;
+}
+
+:is(html.dark, html[data-theme="dark"]) .blog-article tbody :is(td, span).text-green-600 {
+  color: #4ade80 !important;
+}
+
+:is(html.dark, html[data-theme="dark"]) .blog-article tbody :is(td, span).text-red-500 {
+  color: #f87171 !important;
+}
+
+:is(html.dark, html[data-theme="dark"]) .blog-article tbody :is(td, span).text-yellow-600 {
+  color: #facc15 !important;
 }
 
 /* Inline images / figures stay under the fixed marketing header */

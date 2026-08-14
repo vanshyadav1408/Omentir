@@ -213,7 +213,7 @@ export default function BlogPost() {
         <strong>Choose Gojiberry if:</strong> You want a faster way to find high-intent buyers and run AI-assisted outreach without adopting a larger enterprise digital-worker program.
       </p>
       <p>
-        By integrating with your existing tool stack, Omentir provides the customization needed to build a sustainable B2B pipeline.
+        If you already have a CRM and a sequencer, the missing piece is usually not another dashboard. It is a LinkedIn motion that can find buyers and keep replies in the same place you started the conversation.
       </p>
       <p>
         <strong>Choose Omentir if:</strong> you want LinkedIn-first outreach, human-paced sending, visible draft review, and an open MCP/REST surface that lets external agents help without taking over the whole sales motion.

@@ -239,10 +239,10 @@ Draft a response that:
         Maintaining Human Pacing and Platform Security
       </h2>
       <p>
-        LinkedIn monitors both the volume and speed of connection requests and messages. If you send too many invites in a short period, your profile will be restricted.
+        Reply drafts fail in a different way than first-touch invites. A buyer who just asked a real question can still get a canned paragraph three seconds later. The restriction risk is real, but the trust risk is worse: they notice that nobody read them.
       </p>
       <p>
-        To protect your account, configure campaigns around conservative daily safety limits, natural sending windows, and reviewable drafts. Omentir manages these safety protocols automatically, coordinating outgoing messages through secure, human-paced queues.
+        Keep first-touch volume conservative, and keep replies slower than the draft is ready. Review the copy, cut the generic closer, and send it when a person would have finished reading the thread. The queue exists so you skip the blank page, not so you skip judgment.
       </p>
       <p>
         Use your CRM or pipeline tracker as the source of truth after a conversation becomes qualified. Tools like <a href="https://www.hubspot.com/" target="_blank" rel="noopener" className="text-blue-600 hover:underline">HubSpot</a>, <a href="https://www.apollo.io/" target="_blank" rel="noopener" className="text-blue-600 hover:underline">Apollo.io</a>, or <a href="https://www.clay.com/" target="_blank" rel="noopener" className="text-blue-600 hover:underline">Clay</a> can sit around the workflow, but the reply itself should stay grounded in the actual LinkedIn thread and verified product profile.

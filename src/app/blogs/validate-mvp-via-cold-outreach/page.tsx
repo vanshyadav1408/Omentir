@@ -296,7 +296,7 @@ Are you doing prospect research manually today, or is that already centralized?`
         Building a B2B product requires market feedback. By using targeted cold outreach to validate your MVP, you ensure your development time is spent resolving real buyer challenges.
       </p>
       <p>
-        The best validation loop is calm and evidence-driven: pick a segment, ask a real question, classify the replies, and build only from repeated buyer proof. Omentir provides the discovery, prompt, and safety tools to support your growth journey.
+        The best validation loop is calm and evidence-driven: pick a segment, ask a real question, classify the replies, and build only from repeated buyer proof. A yes that never becomes usage is not validation. It is politeness.
       </p>
     </BlogPostTemplate>
   );

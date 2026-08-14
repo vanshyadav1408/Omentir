@@ -309,7 +309,7 @@ export default function BlogPost() {
         B2B outreach is most effective when it is timely and relevant. By building an AI context engine, you eliminate hallucinations from your sales copy.
       </p>
       <p>
-        Omentir provides the discovery, prompt, and safety tools to help you build a personalized, sustainable B2B sales pipeline. Treat context as evidence, not decoration, and your AI-written messages will feel specific without becoming risky.
+        Treat context as evidence, not decoration. A product claim that is not on the site, the pricing page, or a customer quote should not appear in a first message, no matter how well the model phrases it.
       </p>
     </BlogPostTemplate>
   );

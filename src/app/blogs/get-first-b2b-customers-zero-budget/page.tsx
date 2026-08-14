@@ -70,7 +70,7 @@ export default function BlogPost() {
         The goal is not to message thousands of prospects. Instead, focus on finding a small group of high-relevance contacts, writing custom messages, and offering design partnerships.
       </p>
       <p>
-        Omentir supports early stage startups with a Pro plan starting at $49/month, ensuring you can scale outbound campaigns affordably. Let's walk through the zero-budget sales playbook.
+        Zero budget does not mean zero effort. It means you spend time instead of ads, and you cannot afford to waste that time on a wide ICP.
       </p>
       <p>
         Zero budget does not mean zero discipline. In fact, having no budget can be an advantage because it forces you to talk to real buyers before hiding behind ads, content calendars, or expensive tools. You cannot outsource the hardest question: does anyone care enough about this problem to pay?
@@ -315,7 +315,7 @@ Are you handling prospect research manually right now?`}</code>
         Securing your first B2B clients does not require high software budgets. By focusing on manual channels and offering design partnerships, you can validate your product and build initial traction.
       </p>
       <p>
-        Once you have repeatable signals, stronger buyer language, and a few paying design partners, you can begin automating more of the workflow. Omentir provides the discovery, prompt, and pacing tools to help you scale your outbound pipeline as your business grows.
+        Once you have repeatable signals, stronger buyer language, and a few paying design partners, you can begin automating more of the workflow. Automate the search and the first draft. Keep the "should we even send this" decision in your hands until those partners look like a pattern, not a lucky week.
       </p>
     </BlogPostTemplate>
   );

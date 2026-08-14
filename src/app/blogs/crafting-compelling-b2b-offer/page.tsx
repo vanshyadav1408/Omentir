@@ -314,7 +314,7 @@ Worth comparing how you are handling lead quality before the new hire starts?`}<
         B2B outreach is most effective when it is timely and relevant. By framing your product pitches as irresistible, low-risk offers, you remove buying hesitation and accelerate your sales pipeline.
       </p>
       <p>
-        The offer does not need to be loud. It needs to be clear, credible, and easy to try. Omentir provides the discovery, prompt, and pacing tools to support your outbound campaigns.
+        The offer does not need to be loud. It needs to be clear, credible, and easy to try. If a stranger cannot repeat the offer after one read, the copy is not ready for a cold inbox.
       </p>
     </BlogPostTemplate>
   );

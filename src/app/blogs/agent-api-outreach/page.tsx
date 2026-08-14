@@ -242,10 +242,10 @@ Authorization: Bearer <your_omentir_agent_token>`}</code>
         Pacing Campaign Activity Safely to Stay Compliant
       </h2>
       <p>
-        LinkedIn monitors both the volume and speed of connection requests and messages. If you send too many invites in a short period, your profile will be restricted.
+        An Agent API integration can schedule more work than a human would click by hand. That is the risk. A retry loop, a cron that fires twice, or a script that creates two finders for the same ICP will look like a burst of invites even if each request was "valid."
       </p>
       <p>
-        To protect your account, keep workspace daily safety limits conservative. Agent API integrations can update those limits, but they should not raise them silently or treat a configuration change as approval to contact a lead.
+        Keep workspace daily safety limits conservative, and treat a limit change as a product decision, not a deploy default. The API can update those numbers. It should not raise them silently or treat a configuration change as approval to contact a lead.
       </p>
       <p>
         Add a hard rule to your integration: changing discovery or outreach settings requires an explicit operator decision. This keeps engineering convenience from bypassing sales safety.

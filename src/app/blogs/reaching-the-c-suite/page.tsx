@@ -74,7 +74,7 @@ export default function BlogPost() {
         To get executive replies, your messages must be short, direct, and grounded in real business outcomes.
       </p>
       <p>
-        Omentir provides the discovery filters and pacing safety to manage these executive campaigns, starting at $49/month. Let's look at how to reach the C-suite.
+        Executive outbound fails when the note could have been sent to any VP. The rest of this piece is about finding a moment they already care about, then asking for one small next step.
       </p>
       <p>
         The mistake most small teams make is treating executive outreach as a louder version of normal SDR outreach. They take a message written for a manager, swap the title field to CEO or CTO, and assume seniority alone will make the pitch more urgent. That usually creates the opposite effect. Executives notice when a message is really meant for someone two levels below them.
@@ -326,7 +326,7 @@ Are you centralizing prospect research yet, or still letting each rep handle it?
         Reaching C-suite executives requires precision and brevity. By using short, trigger-grounded messages and pacing campaigns safely, small sales teams can build pipeline with enterprise decision makers.
       </p>
       <p>
-        The best campaigns do not flatter executives or overload them with features. They show that you understand a visible business moment, explain why that moment creates pressure, and offer one practical next step. Omentir provides the discovery, prompt, and pacing tools to support that kind of outbound growth.
+        The best campaigns do not flatter executives or overload them with features. They show that you understand a visible business moment, explain why that moment creates pressure, and offer one practical next step. If you cannot name the moment in one clause, do not send the note.
       </p>
     </BlogPostTemplate>
   );

@@ -224,10 +224,10 @@ export default function BlogPost() {
         Managing Outbound Cadences and Account Security
       </h2>
       <p>
-        LinkedIn monitors both the volume and speed of connection requests and messages. If you send too many invites in a short period, your profile will be restricted. 
+        Founders usually break pacing in week two, not week one. Week one is careful. Week two is "this is working, let's do 80 invites." The account that booked two conversations then sits in a checkpoint.
       </p>
       <p>
-        To protect your account, configure campaigns around conservative daily safety limits, natural sending windows, and reviewable drafts. Omentir manages these safety protocols automatically, coordinating outgoing messages through secure, human-paced queues.
+        Pick a daily invite number you can keep for a month without a hero day. Review every first note yourself until the phrasing is boringly consistent. Raise volume only after a full week at the current cap still looks like a person who has a job besides LinkedIn.
       </p>
       <p>
         Conservative pacing is also better for learning. If you send too many messages before reading the replies, you may scale the wrong pitch. Slow batches help you adjust targeting and copy while the campaign is still small enough to steer.

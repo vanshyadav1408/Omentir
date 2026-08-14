@@ -287,7 +287,7 @@ export default function BlogPost() {
         Outbound campaigns are most effective when they are data-driven. By applying machine learning models to analyze buying signals, you can build a predictable, scaling pipeline.
       </p>
       <p>
-        The strongest systems combine models with human review: models find patterns, people judge context, and real outcomes improve the next campaign. Omentir provides the discovery, scoring, and safety tools to help you build a personalized, sustainable B2B sales pipeline.
+        The strongest systems combine models with human review: models find patterns, people judge context, and real outcomes improve the next campaign. A model that never sees "this reply was a no because timing" will keep scoring the same dead segment as hot.
       </p>
     </BlogPostTemplate>
   );

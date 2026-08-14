@@ -73,7 +73,7 @@ export default function BlogPost() {
         To automate sales development without compromising your brand, you must prioritize quality. This involves routing messages to a human review queue, grounding prompts in verified signals, and pacing outbox delivery.
       </p>
       <p>
-        Omentir integrates this safety layer, holding drafted messages in a review queue before delivery, starting at $49/month. Let's look at how to protect your brand.
+        Your LinkedIn profile is the landing page for every invite. If the note and the headline disagree, the reader does not give you the benefit of the doubt. They hit ignore.
       </p>
       <p>
         Personal-brand risk is different from deliverability risk. If an email domain gets noisy, you can repair reputation over time or move to a different sending setup. If your own LinkedIn profile becomes associated with lazy automation, the damage follows you into future sales calls, partnerships, hiring conversations, and investor introductions. Buyers remember people who wasted their time.
@@ -300,7 +300,7 @@ Are you centralizing lead research yet, or is each rep still building lists manu
         Outbound outreach is most effective when it is relationship-focused. Senders who ignore safety boundaries will struggle with frequent restrictions and bans.
       </p>
       <p>
-        By reviewing messages, grounding claims, watching pacing, and treating replies with care, you protect your profile assets while still building pipeline. Omentir provides the discovery, prompt, and pacing tools to support that kind of growth.
+        By reviewing messages, grounding claims, watching pacing, and treating replies with care, you protect your profile assets while still building pipeline. A personal brand is just the residue of those four habits. One sloppy week undoes a month of careful notes.
       </p>
     </BlogPostTemplate>
   );

@@ -1,7 +1,9 @@
-import { authOrSignedOut } from "@/lib/server/clerk-session";
+"use client";
+
+import { useUser } from "@clerk/nextjs";
 import HeroCtaControls from "./hero-cta-controls";
 
-export default async function HeroCta() {
-  const { userId } = await authOrSignedOut();
-  return <HeroCtaControls isSignedIn={Boolean(userId)} />;
+export default function HeroCta() {
+  const { isSignedIn } = useUser();
+  return <HeroCtaControls isSignedIn={Boolean(isSignedIn)} />;
 }

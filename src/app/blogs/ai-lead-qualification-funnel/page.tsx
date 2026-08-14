@@ -299,7 +299,7 @@ Decision: approve | review | reject`}</code>
         Outbound campaigns are most effective when they target qualified buyers. Senders who rely on unverified database exports will see declining deliverability and response rates.
       </p>
       <p>
-        By building an automated lead qualification pipeline with visible evidence, confidence routing, and human review for uncertain leads, you protect your sender reputation and learn from cleaner campaign data. Omentir provides the discovery, scoring, and pacing tools to help you scale your outbound pipeline.
+        By building an automated lead qualification pipeline with visible evidence, confidence routing, and human review for uncertain leads, you protect your sender reputation and learn from cleaner campaign data. The score is only useful if you can point to the field that produced it.
       </p>
     </BlogPostTemplate>
   );

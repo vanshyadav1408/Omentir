@@ -101,6 +101,19 @@ function getBlogForPath(path: string) {
   return ALL_BLOGS.find((blog) => blog.slug === slug);
 }
 
+function markdownAlternatePath(path: string) {
+  if (
+    path === "/agents.md" ||
+    path.endsWith(".txt") ||
+    path.endsWith(".json") ||
+    path.endsWith(".xml") ||
+    path.endsWith(".md")
+  ) {
+    return null;
+  }
+  return path === "/" ? "/index.md" : `${path}.md`;
+}
+
 export function createPageMetadata({
   title,
   description,
@@ -113,7 +126,10 @@ export function createPageMetadata({
   const url = `${siteUrl}${path}`;
   const canonicalUrl = `${siteUrl}${canonicalPath}`;
   const blog = getBlogForPath(path);
-  const pageTitle = blog ? `${blog.title} - Omentir` : title;
+  // Search results already show the Omentir site name beside the title. Keep
+  // article titles focused on the query instead of forcing the same brand
+  // suffix onto every post and giving Google a reason to rewrite long titles.
+  const pageTitle = blog ? blog.title : title;
   const pageDescription = blog?.description || description;
   const metadataImage = blog && image === defaultOgImage
     ? {
@@ -132,6 +148,7 @@ export function createPageMetadata({
       ]
     : [];
   const allKeywords = uniqueValues([...defaultKeywords, ...keywords, ...articleKeywords]);
+  const markdownPath = markdownAlternatePath(canonicalPath);
 
   const openGraph = blog
     ? {
@@ -169,6 +186,19 @@ export function createPageMetadata({
       canonical: canonicalUrl,
       languages: {
         "en-US": canonicalUrl,
+      },
+      types: {
+        "text/plain": [
+          { url: `${siteUrl}/llms.txt`, title: "llms.txt" },
+          { url: `${siteUrl}/llms-full.txt`, title: "llms-full.txt" },
+        ],
+        ...(markdownPath
+          ? {
+              "text/markdown": [
+                { url: `${siteUrl}${markdownPath}`, title: "Markdown" },
+              ],
+            }
+          : {}),
       },
     },
     openGraph,

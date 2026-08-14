@@ -1,300 +1,360 @@
 import Link from "next/link";
 import { createPageMetadata } from "../../seo";
 import BlogPostTemplate from "../blog-post-template";
+import { ArticleImage } from "../article-image";
+
+const slug = "how-to-warm-up-linkedin-account";
+const coverSrc = `/blogs/${slug}/cover.avif`;
+const title = "How to Warm Up a LinkedIn Account Without Getting Restricted";
+const description =
+  "LinkedIn can lock invitations for a week if a quiet account suddenly sends too many. Here is a conservative four-week warmup, plus what to do if you already hit the limit.";
 
 export const metadata = createPageMetadata({
-  title: "How to Warm Up a LinkedIn Account Safely - Omentir",
-  description: "Setting up a new profile for outbound? Learn the step-by-step 14-day warmup schedule and pacing limits to keep your account safe from restrictions.",
-  path: "/blogs/how-to-warm-up-linkedin-account",
+  title,
+  description,
+  path: `/blogs/${slug}`,
+  image: {
+    url: coverSrc,
+    width: 3200,
+    height: 1600,
+    alt: "Four-week LinkedIn warmup plan showing daily invite ceilings from week 1 through week 4",
+  },
   keywords: [
-    "warm up linkedin account outbound",
-    "linkedin profile warmup schedule",
-    "outbound campaign ramp up pacing",
-    "social selling profile validation",
-    "prevent linkedin account restrictions",
-    "Omentir safety guidelines"
+    "how to warm up a LinkedIn account",
+    "LinkedIn account warmup",
+    "LinkedIn invitation restriction",
+    "new LinkedIn profile connection requests",
+    "LinkedIn invite limit reached",
   ],
 });
 
-const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "warmup-importance", label: "Why You Must Warm Up New Outbound Profiles", level: 1 },
-  { id: "readiness-baseline", label: "Establish the Readiness Baseline", level: 2 },
-  { id: "warmup-schedule-blueprint", label: "The 14-Day Warm-Up Schedule Blueprint", level: 1 },
-  { id: "week-1-manual-activity", label: "Week 1: Establishing Organic Presence and Profile Completeness", level: 2 },
-  { id: "week-1-daily-plan", label: "Week 1 Daily Plan", level: 2 },
-  { id: "week-2-gradual-automation", label: "Week 2: Initiating Paced Outreach and Quota Control", level: 2 },
-  { id: "week-2-daily-plan", label: "Week 2 Daily Plan", level: 2 },
-  { id: "copy-relevance-triggers", label: "Grounded Copywriting: Sourcing Relevant Openers", level: 1 },
-  { id: "what-not-to-automate", label: "What Not to Automate Yet", level: 2 },
-  { id: "safety-and-pacing-rules", label: "Enforcing Pacing Limits to Protect Profile Health", level: 1 },
-  { id: "readiness-scorecard", label: "The Account Readiness Scorecard", level: 2 },
-  { id: "warmup-troubleshooting", label: "Warmup Troubleshooting", level: 2 },
-  { id: "warmup-sop-checklist", label: "SOP: The 14-Day Profile Warm-Up Checklist", level: 1 },
-  { id: "conclusion", label: "Maintaining Long-Term Outbox Health", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
-];
+const tocItems = [
+  { id: "what-warmup-is", label: "What warmup actually is", level: 1 },
+  { id: "what-linkedin-publishes", label: "What LinkedIn publishes", level: 1 },
+  { id: "three-starting-states", label: "New, dormant, or already active", level: 1 },
+  { id: "four-week-plan", label: "A conservative four-week plan", level: 1 },
+  { id: "acceptance-governs", label: "Let acceptance govern volume", level: 1 },
+  { id: "do-not-do", label: "What not to do in week one", level: 1 },
+  { id: "if-restricted", label: "If you already hit the limit", level: 1 },
+  { id: "when-warmup-ends", label: "When you can stop calling it warmup", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 },
+] as const;
 
 const faqItems = [
   {
-    question: "What is LinkedIn profile warming?",
-    answer: "It is the process of gradually increasing activity (likes, connections, manual messages) on a new or dormant account over a 14-day to 30-day period to build trust with platform security algorithms."
+    question: "Do I need to warm up a LinkedIn account before sending connection requests?",
+    answer:
+      "Yes if the account is new, recently created, or has been quiet for weeks. LinkedIn looks at sudden changes in invitation volume. A complete, already-active profile can start lower and rise faster. A blank or dormant one should spend the first week on the profile and on people who already know you.",
   },
   {
-    question: "How many connection requests can I send from a new account?",
-    answer: "Start with under 5 manual connection requests daily during the first week, scaling to no more than 10 to 15 paced requests daily by the end of the second week."
+    question: "How long does a LinkedIn invitation restriction last?",
+    answer:
+      "LinkedIn Help says a temporary invitation restriction typically lasts one week. Withdrawing pending invitations does not lift it. You cannot buy more invites while restricted, and Support will not shorten the wait.",
   },
   {
-    question: "How does Omentir manage the account warmup process?",
-    answer: "Omentir helps manage pacing by enforcing workspace daily limits and spacing out sends with random human-like delays."
+    question: "How many connection requests should a new LinkedIn account send per day?",
+    answer:
+      "There is no official daily number. A conservative start is zero to five invites a day, only to people likely to accept. Rise only when acceptance stays healthy and the account has no security prompts. Chasing 20 a day in week one is how quiet accounts get locked.",
   },
   {
-    question: "What happens if I automate outreach without warming up my profile?",
-    answer: "LinkedIn's algorithms will detect the sudden spike in automated activity, flag your profile as suspicious, and place a temporary or permanent restriction on your account."
-  }
+    question: "Does withdrawing old invitations reset my LinkedIn limit?",
+    answer:
+      "No. LinkedIn Help is explicit: withdrawing pending invitations will not remove an invitation restriction. Clean stale pending invites before you scale, in small batches, so you do not create another spike. Do not treat withdraw as an unlock button.",
+  },
+  {
+    question: "How long should a LinkedIn warmup take?",
+    answer:
+      "Four weeks is a safe default for a new or dormant account. An already-active personal profile can often move faster. Do not graduate the account because a calendar said day 15. Graduate it when the profile looks real, acceptance is healthy, and nothing has been flagged.",
+  },
 ] as const;
+
+const sectionClassName =
+  "mt-10 scroll-mt-28 border-b border-[var(--md-sys-color-outline-variant)] pb-2 pt-2 text-2xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)]";
 
 export default function BlogPost() {
   return (
     <BlogPostTemplate
-      title="How to Warm Up a LinkedIn Account for Outbound Automation"
-      description="Setting up a new sales profile? Follow this 14-day warmup schedule and gradual ramp-up limits to keep your account safe from restrictions."
-      slug="how-to-warm-up-linkedin-account"
-      bannerSrc="/how-to-warm-up-linkedin-account.avif"
-      bannerAlt="14-day LinkedIn profile warmup schedule and gradual daily volume limits chart"
+      title={title}
+      description={description}
+      slug={slug}
+      bannerSrc={coverSrc}
+      bannerAlt="Four-week LinkedIn warmup plan showing daily invite ceilings from week 1 through week 4"
       tocItems={tocItems}
       faqItems={faqItems}
     >
-      <p id="warmup-importance" className="scroll-mt-28">
-        Social selling campaigns rely on profile health. B2B sales teams connect sending profiles to automation tools, define prompt parameters, and launch campaigns targeting hundreds of prospects. But if you connect a new or dormant profile and immediately send high volumes of requests, you will be restricted.
+      <p>
+        Warmup is not a growth hack. It is the boring work of making a LinkedIn account look like a
+        person who already uses the product: complete profile, real conversations, invitations to
+        people who will recognize the name. Skip it on a new or quiet account and LinkedIn can stop
+        you from sending invitations for a week. That week costs more pipeline than the warmup would
+        have.
       </p>
       <p>
-        Security algorithms on social networks monitor activity patterns. A sudden transition from zero weekly connections to dozens of automated invites flags the profile as an inorganic spam account.
-      </p>
-      <p>
-        To protect your profiles, you must warm them up. Warming up is the practice of gradually increasing manual and paced activity over a 14-day schedule, proving your account behaves like a human user.
-      </p>
-      <p>
-        Omentir supports this warmup process, enforcing pacing limits and daily quotas to protect your profile health, starting at $49/month. Let's walk through the warmup protocol.
+        This is a conservative four-week plan. The daily numbers below are operator ranges, not a
+        secret official quota. LinkedIn does not publish a safe daily invite count. It publishes
+        what happens when you ignore the spirit of the limit.
       </p>
 
-      <h3 id="readiness-baseline" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Establish the Readiness Baseline
-      </h3>
-      <p>
-        Before the warmup starts, write down the account's current state. How many first-degree connections does it have? Has it posted or commented recently? Are there pending invites already sitting in the outbox? Does the profile clearly explain what the person does?
-      </p>
-      <p>
-        This baseline matters because a warmup is not just a volume schedule. It is a trust-building process. A complete, active founder profile can move faster than a blank sales profile created yesterday. A dormant profile with stale pending invites should move slower.
-      </p>
-      <p>
-        Clean the profile first: update the headline, add a clear company role, remove irrelevant featured links, and withdraw obviously stale pending invites. Do this before connecting automation, not after.
-      </p>
-
-      <h2 id="warmup-schedule-blueprint" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        The 14-Day Warm-Up Schedule Blueprint
+      <h2 id="what-warmup-is" style={{ fontFamily: "var(--font-varta)" }} className={sectionClassName}>
+        What warmup actually is
       </h2>
       <p>
-        A safe warmup protocol scales volume gradually, allowing platform algorithms to index your profile as active and organic.
+        LinkedIn is trying to tell a new account from a spam account. A spam account is created, or
+        dusted off, and immediately sends a pile of invitations to strangers. A real account logs
+        in, finishes the profile, talks to people it already knows, and only later reaches out to
+        people it does not know yet.
       </p>
       <p>
-        We recommend structuring your warmup schedule across two distinct weeks:
+        Warmup is you choosing the second pattern on purpose. You are not tricking a filter. You
+        are giving the account a short history that looks like work. The history is what lets later
+        outreach survive.
       </p>
-      <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Week 1:</strong> Organic actions and complete profile setup (strictly manual).</li>
-        <li><strong>Week 2:</strong> Gradual, paced outreach using campaign tools (restricting daily quotas).</li>
+      <p>
+        That is also why copying someone else&apos;s 14-day spreadsheet can fail. A founder who has
+        posted for two years is not the same starting point as a sales seat created on Monday.
+      </p>
+
+      <h2 id="what-linkedin-publishes" style={{ fontFamily: "var(--font-varta)" }} className={sectionClassName}>
+        What LinkedIn publishes
+      </h2>
+      <p>
+        The useful official pages are short. From{" "}
+        <a
+          href="https://www.linkedin.com/help/linkedin/answer/a550555"
+          target="_blank"
+          rel="noopener"
+          className="text-blue-600 hover:underline"
+        >
+          Invitation limit reached
+        </a>{" "}
+        and{" "}
+        <a
+          href="https://www.linkedin.com/help/linkedin/answer/a542708"
+          target="_blank"
+          rel="noopener"
+          className="text-blue-600 hover:underline"
+        >
+          Invitations on LinkedIn
+        </a>
+        :
+      </p>
+      <ul className="list-disc space-y-2 pl-6">
+        <li>Every member, including Premium, is subject to invitation limits.</li>
+        <li>Hitting the limit can restrict you from sending invitations. The wait is typically one week.</li>
+        <li>Withdrawing pending invitations does not lift that restriction.</li>
+        <li>You cannot buy extra invitations while restricted. Support will not shorten the wait.</li>
+        <li>Members can have at most 30,000 first-degree connections.</li>
+        <li>Incoming invitations are sorted into Focused and Other using authenticity signals.</li>
+        <li>LinkedIn asks you to send invitations to people you know and trust.</li>
       </ul>
       <p>
-        For profile setup ideas, see our guide to{" "}
-        <Link href="/blogs/crafting-a-linkedin-profile-that-doubles-your-outbound-acceptances" className="text-blue-600 hover:underline">
-          crafting high-acceptance LinkedIn profiles
+        Two help pages disagree on personalized notes. The older invitation-limit page still says
+        five noted invites a month for free members. The more recently updated{" "}
+        <a
+          href="https://www.linkedin.com/help/linkedin/answer/a563153"
+          target="_blank"
+          rel="noopener"
+          className="text-blue-600 hover:underline"
+        >
+          personalize invitations
+        </a>{" "}
+        page says three notes a month and 200 characters. Trust what the field in your own account
+        shows, and write as if 200 characters and a small monthly note budget are the rule. For the
+        note itself, use{" "}
+        <Link
+          href="/blogs/how-to-write-a-linkedin-connection-request-that-gets-accepted"
+          className="text-blue-600 hover:underline"
+        >
+          how to write a connection request that gets accepted
         </Link>
         .
       </p>
       <p>
-        The two-week plan is intentionally conservative. Its purpose is not to maximize meetings immediately. Its purpose is to create a believable activity history so the account can support future campaigns without starting from a suspicious spike.
+        Weekly volume is covered on its own in{" "}
+        <Link href="/blogs/linkedin-weekly-connection-limits" className="text-blue-600 hover:underline">
+          LinkedIn weekly connection limits
+        </Link>
+        . Warmup is the period before you should even think about a weekly ceiling.
       </p>
 
-      <h2 id="week-1-manual-activity" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Week 1: Establishing Organic Presence and Profile Completeness
+      <h2 id="three-starting-states" style={{ fontFamily: "var(--font-varta)" }} className={sectionClassName}>
+        New, dormant, or already active
       </h2>
-      <p>
-        During the first week, focus on profile optimization and organic activity. Do not connect any automation tools during this phase.
-      </p>
-      <p>
-        Complete the following tasks manual:
-      </p>
-      <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Profile Setup:</strong> Add a high-resolution photo, write a professional headline, and list your company details.</li>
-        <li><strong>Manual Connections:</strong> Send under 5 connection requests daily to close colleagues or partners who will accept quickly.</li>
-        <li><strong>Engagement:</strong> Like or comment on 3 to 5 posts in your feed daily to build activity patterns.</li>
-      </ul>
-      <p>
-        Prioritize people who are likely to accept: coworkers, partners, customers, investors, founder peers, and people you have actually met. Early acceptance signals matter. Do not waste week one invites on cold prospects who may ignore the request.
-      </p>
-
-      <h3 id="week-1-daily-plan" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Week 1 Daily Plan
-      </h3>
-      <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Day 1:</strong> Complete the profile and remove obvious trust gaps.</li>
-        <li><strong>Day 2:</strong> Connect with 3 to 5 people who already know you.</li>
-        <li><strong>Day 3:</strong> Comment thoughtfully on posts from your target market.</li>
-        <li><strong>Day 4:</strong> Send a few manual messages to existing connections to restart normal conversation activity.</li>
-        <li><strong>Day 5:</strong> Review pending invites and acceptance quality.</li>
-        <li><strong>Days 6-7:</strong> Repeat light engagement without adding automation.</li>
-      </ul>
-      <p>
-        This plan is boring on purpose. You are teaching the account to look like a real professional profile, not a new outbound machine that appeared overnight.
-      </p>
-
-      <h2 id="week-2-gradual-automation" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Week 2: Initiating Paced Outreach and Quota Control
-      </h2>
-      <p>
-        In the second week, you can begin using campaign tools, but you must restrict daily quotas to low numbers.
-      </p>
-      <p>
-        Set campaign parameters to send no more than 5 connection requests daily on Day 8, scaling to under 15 requests daily by Day 14.
-      </p>
-      <p>
-        Ensure all messages are spaced with random delays to mimic manual activity, avoiding block sends.
-      </p>
-      <p>
-        Keep the first automated audience extremely narrow. Choose one ICP segment, one offer, and one message style. If performance is weak, you want to know exactly what failed. Running three campaigns at once during warmup makes the data unreadable.
-      </p>
-
-      <h3 id="week-2-daily-plan" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Week 2 Daily Plan
-      </h3>
-      <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Day 8:</strong> Connect the account and send a tiny batch of highly relevant requests.</li>
-        <li><strong>Day 9:</strong> Read acceptance and reply quality before approving more sends.</li>
-        <li><strong>Day 10:</strong> Keep volume flat if the first batch is unclear.</li>
-        <li><strong>Days 11-12:</strong> Increase only if acceptance is healthy and no one complains about relevance.</li>
-        <li><strong>Days 13-14:</strong> Review the campaign as a whole before moving into normal daily limits.</li>
-      </ul>
-      <p>
-        If anything feels off, hold volume instead of pushing forward. Warmup is easier to extend than to repair after an account warning.
-      </p>
-
-      <div className="my-8 rounded-xl border border-zinc-200 bg-[#f4f2ec] p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)] relative overflow-hidden">
-        <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
-        <div className="pl-4">
-          <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-            Safety Warning: Connection Acceptances 💡
-          </h4>
-          <p className="text-sm text-zinc-650 leading-relaxed">
-            Ensure your connection acceptances stay above 40%. Senders who send low-relevance pitches to cold lists will get low acceptances, indicating spam behavior and triggering restrictions.
-          </p>
-        </div>
+      <p>Write down the starting state before you pick a schedule.</p>
+      <div className="not-prose my-8 overflow-hidden rounded-xl border border-[var(--md-sys-color-outline-variant)]">
+        <table className="w-full text-left text-sm">
+          <thead className="bg-[var(--md-sys-color-surface-container-low)] text-[var(--md-sys-color-on-surface)]">
+            <tr>
+              <th className="px-4 py-3 font-semibold">Starting state</th>
+              <th className="px-4 py-3 font-semibold">What to do first</th>
+            </tr>
+          </thead>
+          <tbody className="text-[var(--md-sys-color-on-surface-variant)]">
+            <tr className="border-t border-[var(--md-sys-color-outline-variant)]">
+              <td className="px-4 py-3 font-medium text-[var(--md-sys-color-on-surface)]">Brand new</td>
+              <td className="px-4 py-3">Finish the profile. Week one is colleagues and activity only. No tools.</td>
+            </tr>
+            <tr className="border-t border-[var(--md-sys-color-outline-variant)]">
+              <td className="px-4 py-3 font-medium text-[var(--md-sys-color-on-surface)]">Dormant</td>
+              <td className="px-4 py-3">Log in for a week like a person. Withdraw stale pending invites slowly. Then treat it like new.</td>
+            </tr>
+            <tr className="border-t border-[var(--md-sys-color-outline-variant)]">
+              <td className="px-4 py-3 font-medium text-[var(--md-sys-color-on-surface)]">Already active</td>
+              <td className="px-4 py-3">You can skip the empty-profile week. Still rise invite volume gradually. Do not jump from 2 a week to 20 a day.</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
+      <p>
+        Also write down pending invites, last post date, connection count, and whether the headline
+        names real work. A warmup on top of 700 ignored pending requests is not a warmup. It is a
+        pile.
+      </p>
 
-      <h2 id="copy-relevance-triggers" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Grounded Copywriting: Sourcing Relevant Openers
+      <h2 id="four-week-plan" style={{ fontFamily: "var(--font-varta)" }} className={sectionClassName}>
+        A conservative four-week plan
       </h2>
       <p>
-        To keep connection rates high, personalize your copy templates. Senders who use generic greetings get ignored.
+        Use this if the account is new or has been quiet. If a week goes well, stay at that volume
+        for a few more days before rising. If anything feels off, hold. Extending warmup is cheap.
+        A one-week lock is not.
       </p>
-      <p>
-        Configure campaign prompts to reference specific career changes or company triggers, as outlined in our guide on{" "}
-        <Link href="/blogs/linkedin-message-hooks" className="text-blue-600 hover:underline">
-          writing high-converting message hooks
-        </Link>
-        .
-      </p>
-      <p>
-        During warmup, keep the opener simple. Do not pitch a demo in the connection note. Do not include links. Do not use jokes, pattern interrupts, or fake compliments. A warmup opener should explain why the connection makes sense and then stop.
-      </p>
-      <div className="my-6 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
-        <p className="font-mono text-sm leading-7 text-zinc-800">
-          Hi Priya, saw your team is hiring for outbound roles while expanding into mid-market. I work on safer LinkedIn prospecting workflows and thought it made sense to connect.
-        </p>
+      <div className="not-prose my-8 overflow-hidden rounded-xl border border-[var(--md-sys-color-outline-variant)]">
+        <table className="w-full text-left text-sm">
+          <thead className="bg-[var(--md-sys-color-surface-container-low)] text-[var(--md-sys-color-on-surface)]">
+            <tr>
+              <th className="px-4 py-3 font-semibold">Week</th>
+              <th className="px-4 py-3 font-semibold">Invites per day</th>
+              <th className="px-4 py-3 font-semibold">Who they go to</th>
+              <th className="px-4 py-3 font-semibold">Everything else</th>
+            </tr>
+          </thead>
+          <tbody className="text-[var(--md-sys-color-on-surface-variant)]">
+            <tr className="border-t border-[var(--md-sys-color-outline-variant)]">
+              <td className="px-4 py-3 font-medium text-[var(--md-sys-color-on-surface)]">1</td>
+              <td className="px-4 py-3">0 to 5</td>
+              <td className="px-4 py-3">People who already know you</td>
+              <td className="px-4 py-3">Photo, headline, About, 3 to 5 real comments. No tools.</td>
+            </tr>
+            <tr className="border-t border-[var(--md-sys-color-outline-variant)]">
+              <td className="px-4 py-3 font-medium text-[var(--md-sys-color-on-surface)]">2</td>
+              <td className="px-4 py-3">5 to 8</td>
+              <td className="px-4 py-3">Warm names: met, commented, same group</td>
+              <td className="px-4 py-3">Reply to every message yourself. Still no bulk follow-up.</td>
+            </tr>
+            <tr className="border-t border-[var(--md-sys-color-outline-variant)]">
+              <td className="px-4 py-3 font-medium text-[var(--md-sys-color-on-surface)]">3</td>
+              <td className="px-4 py-3">8 to 12</td>
+              <td className="px-4 py-3">One narrow segment, not a whole industry</td>
+              <td className="px-4 py-3">One message family. Read every accept and ignore.</td>
+            </tr>
+            <tr className="border-t border-[var(--md-sys-color-outline-variant)]">
+              <td className="px-4 py-3 font-medium text-[var(--md-sys-color-on-surface)]">4</td>
+              <td className="px-4 py-3">10 to 15</td>
+              <td className="px-4 py-3">Same segment, only if week 3 stayed clean</td>
+              <td className="px-4 py-3">Still space sends through the day. Do not dump them at 9:01.</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-
-      <h3 id="what-not-to-automate" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        What Not to Automate Yet
-      </h3>
       <p>
-        Do not automate profile viewing at scale during the first two weeks. Do not send bulk follow-ups. Do not connect multiple tools to the same account at once. Do not let an AI agent launch campaigns without human review.
+        These are ceilings, not targets. Five good invites beat fifteen ignored ones. Spread them
+        through the working day. A burst of twenty in four minutes looks like a script even when a
+        human clicked send.
       </p>
       <p>
-        The account needs a clean, readable activity pattern. Too many tools create noise. If something goes wrong, you will not know whether the issue came from search activity, connection volume, message copy, profile views, or an integration conflict.
+        Week one comments should be comments you would leave if nobody was measuring you. One
+        specific sentence on a post you read. Five &quot;Great share!&quot; clicks are not activity.
+        They are noise.
       </p>
 
-      <h2 id="safety-and-pacing-rules" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Enforcing Pacing Limits to Protect Profile Health
+      <h2 id="acceptance-governs" style={{ fontFamily: "var(--font-varta)" }} className={sectionClassName}>
+        Let acceptance govern volume
       </h2>
       <p>
-        Outbound safety depends on pacing tools. Omentir enforces workspace sending limits and spaces out invitations automatically.
+        The schedule is a starting guess. Acceptance is the governor. If people who should know you
+        are ignoring the request, the account is not ready for strangers. If strangers in one
+        narrow segment accept and nobody complains, you can rise a little.
       </p>
       <p>
-        Pacing limits should respond to evidence. If connection acceptance is strong and replies are neutral or positive, the account can gradually move toward normal campaign volume. If acceptance is weak, slow down and improve targeting instead of increasing sends.
+        There is no official acceptance percentage that unlocks more invites. Treat a week of
+        mostly ignores as a targeting problem, not a reason to send more. A useful operator check:
+        if fewer than about one in three relevant people accept a noted invite, stop raising volume
+        and change who you are asking, or whether you should add a note at all.
       </p>
       <p>
-        For pacing details, see our guide on{" "}
-        <Link href="/blogs/human-paced-outreach" className="text-blue-600 hover:underline">
-          pacing LinkedIn outreach campaigns safely
+        Track each week as its own batch. Role, how you found them, note or no note, sent,
+        accepted, ignored. Do not blend week one colleagues with week three cold names and then
+        celebrate a blended rate.
+      </p>
+
+      <h2 id="do-not-do" style={{ fontFamily: "var(--font-varta)" }} className={sectionClassName}>
+        What not to do in week one
+      </h2>
+      <ul className="list-disc space-y-2 pl-6">
+        <li>Do not connect a sending tool to a profile that still has a logo for a face.</li>
+        <li>Do not send invitations to a purchased list of titles.</li>
+        <li>Do not add calendar links or product lines to the connection note.</li>
+        <li>Do not auto-view hundreds of profiles. That is its own spike.</li>
+        <li>Do not run three campaigns so you can &quot;see what works.&quot; You will not be able to tell.</li>
+        <li>Do not create the account on Monday and go full volume on Tuesday because a competitor does.</li>
+      </ul>
+      <p>
+        If the team is impatient, add another already-healthy profile later. Do not ask one new
+        account to behave like a call center. For the copy side of that pressure, the profile work
+        sits in{" "}
+        <Link
+          href="/blogs/crafting-a-linkedin-profile-that-doubles-your-outbound-acceptances"
+          className="text-blue-600 hover:underline"
+        >
+          how to make the profile survive a five-second glance
         </Link>
         .
       </p>
 
-      <h3 id="readiness-scorecard" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        The Account Readiness Scorecard
-      </h3>
+      <h2 id="if-restricted" style={{ fontFamily: "var(--font-varta)" }} className={sectionClassName}>
+        If you already hit the limit
+      </h2>
+      <ArticleImage
+        src={`/blogs/${slug}/wait-it-out.avif`}
+        alt="Invitation limit reached card listing what LinkedIn Help says: wait one week, withdraw does not lift it"
+        caption="If invitations are locked, the work is to wait. Withdrawing pending requests will not shorten the week."
+        width={3200}
+        height={1440}
+      />
       <p>
-        At the end of day 14, score the account before moving into normal outreach. A ready account has a complete profile, recent manual activity, no security prompts, manageable pending invites, and early acceptance that suggests the ICP is relevant.
+        Stop sending. Do not test whether a different browser still works. Do not open a second
+        tool against the same session. Do not withdraw 400 pending invites in one sitting hoping
+        the counter resets. LinkedIn says that withdraw does not lift the restriction, and a mass
+        withdraw is another unnatural burst.
       </p>
-      <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Profile trust:</strong> photo, headline, company, and activity all look real.</li>
-        <li><strong>Acceptance quality:</strong> early requests are being accepted by relevant people.</li>
-        <li><strong>Inbox health:</strong> replies are being answered by a human, not ignored.</li>
-        <li><strong>System clarity:</strong> one campaign, one toolchain, one owner.</li>
+      <p>
+        Use the week. Answer anyone who already replied. Finish the About section. Comment on a few
+        posts as yourself. When invitations open again, restart below the volume that triggered the
+        lock, not at the same number. If the lock happened at 25 a day, go back to 8 and stay there
+        until acceptance looks normal.
+      </p>
+      <p>
+        If you get an identity check or a phone prompt, complete it as the real owner and then
+        pause outbound for a few days. A prompt plus more sending is how a one-week lock becomes a
+        longer one.
+      </p>
+
+      <h2 id="when-warmup-ends" style={{ fontFamily: "var(--font-varta)" }} className={sectionClassName}>
+        When you can stop calling it warmup
+      </h2>
+      <p>The calendar is not the graduation test. The account is ready when all of these are true:</p>
+      <ul className="list-disc space-y-2 pl-6">
+        <li>The profile looks like a person who does a specific job.</li>
+        <li>There has been real activity for several weeks, not one burst.</li>
+        <li>Pending invites are not a graveyard.</li>
+        <li>Recent invites are being accepted by the people you meant to reach.</li>
+        <li>No security prompt is hanging over the session.</li>
+        <li>You can name one segment that worked, not five that you mixed together.</li>
       </ul>
       <p>
-        If the account fails this scorecard, repeat the second week at the same volume. Do not graduate the account just because the calendar says day 15.
-      </p>
-
-      <h3 id="warmup-troubleshooting" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Warmup Troubleshooting
-      </h3>
-      <p>
-        If acceptance is low, check targeting before changing copy. Many founders rewrite perfectly fine messages while sending them to people who do not own the problem. Tighten the ICP to one role, one company type, and one visible trigger.
-      </p>
-      <p>
-        If the account receives a security prompt, stop automation immediately. Do not keep testing. Confirm the account manually, wait until normal access is stable, and restart from the last safe daily volume.
-      </p>
-      <p>
-        If replies are positive but volume feels too slow, resist the urge to jump. Add consistency before adding scale. A profile that sends 10 relevant requests every workday for a month will usually create more durable pipeline than a profile that spikes to 40 and gets throttled.
-      </p>
-      <p>
-        If the team is impatient, split the market across additional healthy profiles rather than overloading one new account. Scaling safely means adding stable senders, not forcing a single profile to behave like a call center.
-      </p>
-
-      <h2 id="warmup-sop-checklist" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: The 14-Day Profile Warm-Up Checklist
-      </h2>
-      <p>
-        Warm up your new sales profiles using these steps:
-      </p>
-      <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Days 1-7 (Manual):</strong> Complete profile optimization, manually engage on your feed daily, and send under 5 colleague connection invites daily.</li>
-        <li><strong>Days 8-10 (Automation):</strong> Connect the account to Omentir and set a daily invite limit of 5 requests paced safely.</li>
-        <li><strong>Days 11-14 (Automation):</strong> Scale the daily invite limit to 10 requests paced safely.</li>
-        <li><strong>Day 15+ (Automation):</strong> Maintain campaign pacing at normal startup quotas (under 20 invites per profile daily).</li>
-        <li><strong>Before Scaling:</strong> Confirm acceptance quality, reply handling, and account readiness score.</li>
-      </ul>
-      <p>
-        Omentir handles variable mapping and safety limits, allowing you to manage campaigns efficiently. The operator still owns the readiness decision.
-      </p>
-
-      <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Maintaining Long-Term Outbox Health
-      </h2>
-      <p>
-        Social selling requires profile health. By implementing a gradual 14-day warmup schedule and rotating campaigns across multiple profiles, you can build a sustainable B2B sales pipeline.
-      </p>
-      <p>
-        Omentir provides the discovery, prompt, and safety tools to support your growth. Use the warmup period to protect the account, learn which audience responds, and create a clean foundation for the campaigns that follow.
+        If any of those fail, repeat the current week. The point of warmup is a profile you can
+        still use next quarter. A locked account teaches the same lesson, only slower.
       </p>
     </BlogPostTemplate>
   );

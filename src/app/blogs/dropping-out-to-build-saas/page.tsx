@@ -234,7 +234,7 @@ export default function BlogPost() {
         Use outbound to find the truth early. Talk to specific buyers, ask about real workflows, charge sooner than feels comfortable, and build from repeated evidence instead of hope. First MRR usually comes from a narrow problem solved for a narrow segment, not from a grand product vision.
       </p>
       <p>
-        Omentir provides the discovery, drafting, pacing, and reply tools to support that validation loop. The founder's job is to keep the loop honest: one segment, one painful workflow, one clear offer, and enough discipline to learn before overbuilding.
+        The founder's job is to keep the loop honest: one segment, one painful workflow, one clear offer, and enough discipline to learn before overbuilding. Dropping out does not make the first twenty conversations easier. It just removes the other calendar.
       </p>
     </BlogPostTemplate>
   );

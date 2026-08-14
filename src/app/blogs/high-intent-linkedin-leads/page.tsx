@@ -214,7 +214,7 @@ export default function BlogPost() {
         The biggest mistake in signal-led outbound is blasting messages as soon as a signal triggers. If a company gets funded, and you send connection requests to ten executives within five minutes, your activity will look suspicious.
       </p>
       <p>
-        LinkedIn monitors both the volume and speed of outgoing actions. To keep your account safe, you must space out your connection requests and messages. Set conservative daily quotas and avoid sudden spikes after a signal appears.
+        A funding round, hiring spike, or product launch is a reason to write a better note, not a reason to clear the whole buying committee before lunch. Space the first touches across several days so the signal still feels timely without looking like a raid.
       </p>
       <p>
         Omentir keeps your campaigns safe by running all LinkedIn actions within human-like pacing guidelines. It schedules invites gradually, avoiding the sharp spikes that trigger platform security systems.

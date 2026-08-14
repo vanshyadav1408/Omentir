@@ -70,7 +70,7 @@ export default function BlogPost() {
         Direct message (DM) sales are far more effective for early validation. By messaging target prospects over LinkedIn or email, you build relationships and gather qualitative feedback at a fraction of the cost.
       </p>
       <p>
-        Omentir provides the discovery, prompt, and pacing tools to automate these DM campaigns safely, supporting campaigns starting at $49/month. Let's look at why DMs beat paid ads.
+        Paid ads buy attention you have not earned. A DM asks for two minutes from one person. The rest of this piece is about when that trade is worth it, and when it is just unpaid spam.
       </p>
       <p>
         The important phrase is "early validation." Paid ads can work once you know the buyer, message, offer, landing page, and conversion path. They are much weaker when those pieces are still guesses. At the beginning, the most valuable thing is not traffic. It is conversation.
@@ -310,7 +310,7 @@ Are you centralizing prospect research yet, or still doing it manually?`}</code>
         Outbound outreach is most effective when it is relationship-focused. Senders who rely on paid ads without product validation will struggle with high CAC and low engagement.
       </p>
       <p>
-        By focusing on direct message sales campaigns, you build relationships while gathering real market insights. Omentir provides the discovery, prompt, and pacing tools to support your growth.
+        By focusing on direct message sales campaigns, you build relationships while gathering real market insights. The insight is the point. If you cannot write down what the last five conversations taught you, you are running a send metric, not a sales motion.
       </p>
     </BlogPostTemplate>
   );

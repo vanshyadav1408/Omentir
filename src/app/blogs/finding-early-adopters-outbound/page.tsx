@@ -76,7 +76,7 @@ export default function BlogPost() {
         Identifying and messaging these adopters requires structure. By checking technical stack maturity, analyzing hiring posts, and writing collaborative pitches, you can secure early users quickly.
       </p>
       <p>
-        Omentir helps manage this discovery loop, offering prompt variables and pacing tools, starting at $49/month. Let's look at how to find early adopters.
+        Early adopters are not "anyone in the ICP." They are the people who will use an unfinished product because the pain is already expensive. Hunt those people first.
       </p>
 
       <h3 id="not-every-small-company" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
@@ -285,7 +285,7 @@ Open to sharing a 1-minute prototype video to get your feedback.`}</code>
         B2B outreach is most effective when targeted. By focusing campaigns on early adopters, you avoid slow sales loops and secure early users who will guide your product development.
       </p>
       <p>
-        Omentir provides the discovery, prompt, and pacing tools to support your growth. Use those tools to find a small group of urgent, flexible buyers first; broad scale can come after the product has earned it.
+        Find a small group of urgent, flexible buyers first. Broad scale can wait until those people stay long enough to describe the product back to you in their own words.
       </p>
     </BlogPostTemplate>
   );

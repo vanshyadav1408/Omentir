@@ -276,7 +276,7 @@ async function generateMessage(prospect: Prospect, evidence: Evidence): Promise<
         Start with a small batch. Review every source, every draft, and every reply. Once the system consistently produces messages that feel specific, truthful, and easy to answer, scale the campaign in controlled steps.
       </p>
       <p>
-        Omentir provides the discovery, campaign, reply, and safety infrastructure to support that kind of pipeline. The best use of programmatic personalization is not making outreach feel automated. It is making good research and thoughtful writing repeatable.
+        The best use of programmatic personalization is not making outreach feel automated. It is making good research and thoughtful writing repeatable. If the variable is only first name and company, you do not have a program. You have a template.
       </p>
     </BlogPostTemplate>
   );

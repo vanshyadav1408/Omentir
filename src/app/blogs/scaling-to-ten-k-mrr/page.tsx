@@ -320,7 +320,7 @@ Do not mention guaranteed results, fake familiarity, or generic AI benefits.`}</
         Reaching $10k in MRR is a mathematical process. By configuring multi-profile campaigns, using grounded copywriting variables, and pacing campaigns safely, you can build a sustainable pipeline.
       </p>
       <p>
-        But the math only works when the customers stay, the segment is specific, and the messages remain useful as volume increases. Omentir provides the discovery, prompt, and safety tools to support your growth journey.
+        But the math only works when the customers stay, the segment is specific, and the messages remain useful as volume increases. Ten thousand in MRR from one tired pitch is a leak you will pay for in churn and in the next account restriction.
       </p>
     </BlogPostTemplate>
   );

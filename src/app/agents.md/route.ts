@@ -15,6 +15,16 @@ Omentir is open source under the MIT license. The full application code, includi
 
 ${siteUrl}
 
+## Agent capability map
+
+Start with ${siteUrl}/agent.json when you need a compact, machine-readable map of public content, authenticated workspace pages, supported actions, required approvals, and unavailable flows. It is the fastest way to decide whether to use a public page, MCP, or REST.
+
+Public pages: ${siteUrl}/llms.txt (directory) and ${siteUrl}/llms-full.txt (longer page text for features, alternatives, and integrations).
+
+For workspace work, use MCP or REST instead of scraping authenticated dashboard pages. The API mirrors the dashboard's safe operational surfaces: Dashboard (omentir_get_stats), Actions (omentir_list_scheduled_actions), Activity (omentir_list_activity), Agents (omentir_list_agents / omentir_create_agent / omentir_update_agent), Leads (omentir_list_leads / omentir_get_lead), Messages (omentir_list_conversations / omentir_reply_to_lead), My Product (omentir_get_product_profile / omentir_update_product_profile), and Settings (omentir_get_context / omentir_update_settings).
+
+Never create an Omentir account or buy or change a subscription. These flows are deliberately unavailable to agents.
+
 ## How people connect Omentir from other AI apps
 
 Users connect once in Omentir (LinkedIn + plan), then attach their chat app or coding agent. There are **two ways in**; a client only needs one.
@@ -85,7 +95,7 @@ Authorization: Bearer <omentir_agent_token>
 7. Use \`omentir_list_activity\` and the agent's \`status\`, \`lastRunAt\`, and \`nextRunAt\` to explain progress without inventing results.
 8. Use \`omentir_list_scheduled_actions\` to report what outreach is queued and exactly when it sends.
 9. Use \`omentir_list_conversations\` for existing threads. \`omentir_reply_to_lead\` can continue an existing conversation only; show the user the draft and get approval before sending.
-10. Change reply mode or calendar link later with \`omentir_update_agent\` (\`replyHandling\`, \`bookingLink\`) or the workspace booking link with \`omentir_update_product_profile\` (\`schedulingLink\`). Pause, resume, or delete any agent with \`omentir_pause_agent\`, \`omentir_resume_agent\`, or \`omentir_delete_agent\`.
+10. Change reply mode or calendar link later with \`omentir_update_agent\` (\`replyHandling\`, \`bookingLink\`) or the workspace booking link with \`omentir_update_product_profile\` (\`schedulingLink\`). Pause, resume, or delete any agent with \`omentir_pause_agent\`, \`omentir_resume_agent\`, or \`omentir_delete_agent\`. Delete removes the agent, its exclusive lead group, campaigns on that group, and those leads. If another agent still uses the group, the group and leads stay.
 
 ## Creating a Lead Finder
 
@@ -184,7 +194,7 @@ Available tools:
 - \`omentir_update_agent\` (configuration, signalSources, send window, outreach, active/paused status)
 - \`omentir_pause_agent\`
 - \`omentir_resume_agent\`
-- \`omentir_delete_agent\`
+- \`omentir_delete_agent\` (exclusive group, campaigns, and leads are deleted; shared groups stay)
 - \`omentir_list_groups\`
 - \`omentir_list_leads\` (includes engagementContext on Steal Customers leads)
 - \`omentir_get_lead\` (full lead + post/comment context when present)

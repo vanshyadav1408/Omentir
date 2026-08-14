@@ -200,7 +200,7 @@ export default function BlogPost() {
         Before buying, run a small test plan. Pick one narrow ICP, write one sequence, connect a limited number of healthy inboxes, and measure replies by quality rather than raw opens. Track how many replies are from the right type of buyer, how many ask a real buying question, and how quickly your team can respond. That test will reveal more than a feature checklist.
       </p>
       <p>
-        By pairing email delivery with LinkedIn campaigns, you can increase touchpoints with target accounts. Omentir provides the discovery and social engagement tools to help you build a multi-channel outbound engine.
+        By pairing email delivery with LinkedIn campaigns, you can increase touchpoints with target accounts. That only works if the LinkedIn note and the email do not repeat the same paragraph. Two channels with one script is still one script.
       </p>
       <p>
         The best stack is the one your team can operate safely every week. If you need speed and simplicity, lean toward the tool with the cleanest day-to-day workflow. If you need deeper infrastructure control, choose the tool that lets you tune the system without messy workarounds. Either way, keep the channel strategy grounded in fit, timing, and a message worth receiving.

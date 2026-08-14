@@ -17,6 +17,14 @@ import CustomerLogoWall from "./customer-logo-wall";
 import FindUsOn from "./find-us-on";
 import JsonLd from "./json-ld";
 import { LogoGlyph } from "./logo-mark";
+import { ProductHomeLink } from "./seo-content/product-links";
+import {
+  MarketingTable,
+  MarketingTd,
+  MarketingTh,
+  MarketingThead,
+  MarketingTr,
+} from "./marketing-table";
 import PlanAwarePricingCards from "./plan-aware-pricing-cards";
 import Reveal from "./scroll-reveal";
 import {
@@ -126,7 +134,7 @@ const audiences = [
     art: <DeveloperApiIllustration />,
     title: "Developers",
     description:
-      "Build on the Omentir Agent API so OpenClaw, Hermes, Cursor, and your own chatbots can configure lead discovery, retrieve qualified leads, and work with replies over REST.",
+      "Build on the Omentir Agent API so Cursor, Claude Code, OpenClaw, and your own clients can configure lead discovery, retrieve qualified leads, and work with replies over REST.",
     href: "/for-agents",
     linkLabel: "Agent API",
   },
@@ -251,107 +259,68 @@ function OutreachSteps({ items }: { items: typeof steps }) {
 
 const comparisonColumns = ["Omentir", "Cognism", "Gojiberry", "Lusha", "Artisan"];
 
-type ComparisonMarkType = "yes" | "partial" | "no";
-
-type ComparisonCell = { text: string; mark: ComparisonMarkType };
-
-const comparisonRows: { dimension: string; cells: ComparisonCell[] }[] = [
+const comparisonRows: { dimension: string; cells: string[] }[] = [
   {
     dimension: "Lead sourcing",
     cells: [
-      { text: "AI agents search LinkedIn daily and score every lead against your ICP", mark: "yes" },
-      { text: "Static contact database, enterprise-focused", mark: "partial" },
-      { text: "Prompt-based directory search", mark: "partial" },
-      { text: "Manual database filters with credit-based unlocks", mark: "partial" },
-      { text: "Internal B2B contact database", mark: "partial" },
+      "AI agents search LinkedIn daily and score every lead against your ICP",
+      "Static contact database, enterprise-focused",
+      "Prompt-based directory search",
+      "Manual database filters with credit-based unlocks",
+      "Internal B2B contact database",
     ],
   },
   {
     dimension: "LinkedIn outreach",
     cells: [
-      { text: "Built in - connection requests, messages, and follow-ups run on autopilot", mark: "yes" },
-      { text: "None - requires external sequencers", mark: "no" },
-      { text: "Lead discovery first; sequences need external connections", mark: "partial" },
-      { text: "None - export CSVs to other tools", mark: "no" },
-      { text: "Email-first, with limited LinkedIn", mark: "partial" },
+      "Built in - connection requests, messages, and follow-ups run on autopilot",
+      "None - requires external sequencers",
+      "Lead discovery first; sequences need external connections",
+      "None - export CSVs to other tools",
+      "Email-first, with limited LinkedIn",
     ],
   },
   {
     dimension: "AI messages & replies",
     cells: [
-      { text: "Context-aware drafts, and AI handles replies until you take over", mark: "yes" },
-      { text: "No copywriting layer", mark: "no" },
-      { text: "Reply notifications only", mark: "partial" },
-      { text: "Manual templates and merge tags", mark: "no" },
-      { text: "AI email sequences", mark: "partial" },
+      "Context-aware drafts, and AI handles replies until you take over",
+      "No copywriting layer",
+      "Reply notifications only",
+      "Manual templates and merge tags",
+      "AI email sequences",
     ],
   },
   {
     dimension: "Account safety",
     cells: [
-      { text: "Daily invite and message limits enforced automatically", mark: "yes" },
-      { text: "Not applicable (data only)", mark: "no" },
-      { text: "User-managed", mark: "partial" },
-      { text: "No built-in throttling", mark: "no" },
-      { text: "Email deliverability focus", mark: "partial" },
+      "Daily invite and message limits enforced automatically",
+      "Not applicable (data only)",
+      "User-managed",
+      "No built-in throttling",
+      "Email deliverability focus",
     ],
   },
   {
     dimension: "Open source",
     cells: [
-      { text: "Fully open source - MIT licensed, self-hostable, every line public on GitHub", mark: "yes" },
-      { text: "Closed source", mark: "no" },
-      { text: "Closed source", mark: "no" },
-      { text: "Closed source", mark: "no" },
-      { text: "Closed source", mark: "no" },
+      "Fully open source - MIT licensed, self-hostable, every line public on GitHub",
+      "Closed source",
+      "Closed source",
+      "Closed source",
+      "Closed source",
     ],
   },
   {
     dimension: "Pricing & setup",
     cells: [
-      { text: "$49/month, live in minutes", mark: "yes" },
-      { text: "Enterprise contracts and seat provisioning", mark: "no" },
-      { text: "Extra tools needed for the full workflow", mark: "partial" },
-      { text: "Credit-based pricing", mark: "partial" },
-      { text: "High annual commitments, weeks-long onboarding", mark: "no" },
+      "$49/month, live in minutes",
+      "Enterprise contracts and seat provisioning",
+      "Extra tools needed for the full workflow",
+      "Credit-based pricing",
+      "High annual commitments, weeks-long onboarding",
     ],
   },
 ];
-
-function ComparisonMark({ mark }: { mark: ComparisonMarkType }) {
-  const base =
-    "grid h-7 w-7 shrink-0 place-items-center rounded-full transition-transform duration-300 group-hover:scale-125";
-
-  if (mark === "yes") {
-    return (
-      <span
-        className={`${base} border-2 border-[var(--md-sys-color-on-surface)] bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] shadow-[var(--md-sys-elevation-1)]`}
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
-          <path d="M5 13l4 4L19 7" />
-        </svg>
-      </span>
-    );
-  }
-
-  if (mark === "partial") {
-    return (
-      <span className={`${base} border-2 border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface-container)] text-[var(--md-sys-color-on-surface-variant)]`}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="h-3.5 w-3.5">
-          <path d="M5 12h14" />
-        </svg>
-      </span>
-    );
-  }
-
-  return (
-    <span className={`${base} border-2 border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-high)] text-[var(--md-sys-color-text-disabled)]`}>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="h-3.5 w-3.5">
-        <path d="M6 6l12 12M18 6L6 18" />
-      </svg>
-    </span>
-  );
-}
 
 function ComparisonTable() {
   return (
@@ -367,61 +336,42 @@ function ComparisonTable() {
       </Reveal>
 
       <Reveal delay={120} className="mt-10 md:mt-16">
-        <div className="-mx-0 w-full overflow-x-auto rounded-xl border-2 border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface-container)] shadow-[var(--md-sys-elevation-2)]">
-          <table className="min-w-[720px] w-full text-center text-xs md:min-w-[920px] md:text-sm">
-            <thead>
-              <tr className="border-b-2 border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface-container-low)]">
-                <th className="px-4 py-4 font-semibold text-[var(--md-sys-color-on-surface)]" />
-                {comparisonColumns.map((column, index) => (
-                  <th
-                    key={column}
-                    className={`px-4 py-4 text-center align-middle font-semibold ${
-                      index === 0
-                        ? "border-x-2 border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-primary)] text-base text-[var(--md-sys-color-on-primary)]"
-                        : "text-[var(--md-sys-color-on-surface)]"
-                    }`}
-                  >
-                    {index === 0 ? (
-                      <span className="inline-flex items-center justify-center gap-2">
-                        <LogoGlyph className="h-7 w-7 shrink-0" />
-                        {column}
-                      </span>
-                    ) : (
-                      column
-                    )}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[var(--md-sys-color-outline-variant)]">
-              {comparisonRows.map((row) => (
-                <tr
-                  key={row.dimension}
-                  className="group transition-colors duration-300 hover:bg-[var(--md-sys-state-hover)]"
-                >
-                  <td className="px-4 py-5 align-middle font-semibold text-[var(--md-sys-color-on-surface)]">
-                    {row.dimension}
-                  </td>
-                  {row.cells.map((cell, index) => (
-                    <td
-                      key={index}
-                      className={`px-4 py-5 align-middle leading-6 ${
-                        index === 0
-                          ? "border-x-2 border-[var(--md-sys-color-outline)] bg-[color-mix(in_srgb,var(--md-sys-color-primary)_28%,transparent)] font-semibold text-[var(--md-sys-color-on-surface)]"
-                          : "text-[var(--md-sys-color-on-surface-variant)]"
-                      }`}
+        <MarketingTable minWidthClass="min-w-[56rem]">
+          <MarketingThead>
+            <tr>
+              <MarketingTh>Dimension</MarketingTh>
+              {comparisonColumns.map((column, index) => (
+                <MarketingTh key={column}>
+                  {index === 0 ? (
+                    <span className="inline-flex items-center gap-2">
+                      <LogoGlyph className="h-5 w-5 shrink-0" />
+                      {column}
+                    </span>
+                  ) : (
+                    <ProductHomeLink
+                      name={column}
+                      className="underline-offset-4 hover:text-[var(--md-sys-color-primary)] hover:underline"
                     >
-                      <div className="flex flex-col items-center justify-center gap-2">
-                        <ComparisonMark mark={cell.mark} />
-                        <span>{cell.text}</span>
-                      </div>
-                    </td>
-                  ))}
-                </tr>
+                      {column}
+                    </ProductHomeLink>
+                  )}
+                </MarketingTh>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </tr>
+          </MarketingThead>
+          <tbody>
+            {comparisonRows.map((row) => (
+              <MarketingTr key={row.dimension}>
+                <MarketingTh scope="row">{row.dimension}</MarketingTh>
+                {row.cells.map((cell, index) => (
+                  <MarketingTd key={`${row.dimension}-${index}`}>
+                    {cell}
+                  </MarketingTd>
+                ))}
+              </MarketingTr>
+            ))}
+          </tbody>
+        </MarketingTable>
       </Reveal>
     </div>
   );

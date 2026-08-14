@@ -272,7 +272,7 @@ export default function BlogPost() {
         Outbound B2B campaigns require safety boundaries. By implementing a gradual 4-week volume ramp-up schedule and pacing outboxes, you protect your profile assets from restrictions.
       </p>
       <p>
-        Omentir provides the discovery, prompt, and pacing tools to support your growth journey. Use those controls to build a profile history that compounds instead of chasing a one-week volume spike that costs you the channel.
+        Use the four-week ramp to build a profile history that compounds. A one-week volume spike can cost you the channel. If week four still feels slow, that is the point.
       </p>
     </BlogPostTemplate>
   );

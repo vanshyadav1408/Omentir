@@ -18,7 +18,7 @@ import {
 export const metadata = createPageMetadata({
   title: "MCP Server - Omentir",
   description:
-    "Connect Claude, ChatGPT, Cursor, Hermes, OpenClaw, or your own assistant to the Omentir MCP server for LinkedIn lead discovery by tool call.",
+    "Connect Claude, ChatGPT, Grok, Cursor, Claude Code, OpenClaw, or your own assistant to the Omentir MCP server for LinkedIn lead discovery by tool call.",
   path: "/mcp-server",
   keywords: [
     "Omentir MCP server",
@@ -27,6 +27,7 @@ export const metadata = createPageMetadata({
     "MCP LinkedIn outreach",
     "Claude MCP connector",
     "ChatGPT MCP connector",
+    "Grok MCP connector",
     "Cursor MCP server",
     "MCP sales tools",
   ],
@@ -115,9 +116,9 @@ const toolGroups = [
   {
     group: "Lifecycle management",
     tools: [
-      { name: "omentir_pause_agent", description: "Pause future discovery runs for one lead finder." },
-      { name: "omentir_resume_agent", description: "Resume a paused lead finder and schedule it to run again." },
-      { name: "omentir_delete_agent", description: "Delete a lead finder while retaining its lead group and leads." },
+      { name: "omentir_pause_agent", description: "Pause an agent: stops discovery and freezes its automated outreach." },
+      { name: "omentir_resume_agent", description: "Resume a paused agent so discovery and outreach run again." },
+      { name: "omentir_delete_agent", description: "Delete an agent, its exclusive lead group, campaigns, and those leads. Shared groups stay." },
     ],
   },
   {
@@ -133,7 +134,7 @@ const faqItems = [
   {
     question: "What is the Omentir MCP server?",
     answer:
-      "A hosted Model Context Protocol endpoint at omentir.com/api/agent/v1/mcp. Claude, ChatGPT, Grok, Cursor, Hermes, OpenClaw, or a custom assistant connects once and gets tools for My Product, classic lead finders, Steal Customers agents, discovery status, leads (including post and comment context), the outreach send schedule, and existing conversations. Nothing to install for the managed product.",
+      "A hosted Model Context Protocol endpoint at omentir.com/api/agent/v1/mcp. Claude, ChatGPT, and Grok connect with a custom connector and OAuth. Cursor, Claude Code, OpenClaw, or a custom assistant uses a Bearer token. Once connected, the same tools cover My Product, classic lead finders, Steal Customers agents, discovery status, leads, the send schedule, and existing conversations.",
   },
   {
     question: "How do I connect Claude, ChatGPT, or Grok?",
@@ -200,7 +201,7 @@ export default function McpServerPage() {
         <section className="relative z-10 mx-auto flex min-h-screen w-full max-w-4xl min-w-0 flex-col items-center justify-center px-4 py-24 text-center sm:px-8 sm:py-32">
           <h1 className="hero-display text-[var(--md-sys-color-on-surface)]">
             Omentir works with{" "}
-            <AgentTypewriter agents={["ChatGPT", "Gemini", "Grok", "Claude"]} />
+            <AgentTypewriter agents={["Claude", "ChatGPT", "Grok", "Cursor"]} />
           </h1>
           <p className="hero-lede mx-auto mt-6 max-w-2xl text-[var(--md-sys-color-on-surface-variant)]">
             Connect Claude, ChatGPT, Grok, Cursor, or your own assistant once.

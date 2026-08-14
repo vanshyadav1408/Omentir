@@ -297,7 +297,7 @@ Rules:
         Outbound campaigns do not require you to choose between quality and scale. By configuring prompt constraints and negative lists, you can write human-sounding copy for every prospect.
       </p>
       <p>
-        Omentir provides the variable management and safety controls to help you build a personalized, sustainable B2B sales pipeline. The best prompt is not the one that sounds clever; it is the one that helps a buyer immediately understand why the message belongs in their inbox.
+        The best prompt is not the one that sounds clever. It is the one that helps a buyer immediately understand why the message belongs in their inbox, using only facts you would be willing to say on a call.
       </p>
     </BlogPostTemplate>
   );

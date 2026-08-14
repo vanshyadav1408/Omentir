@@ -274,7 +274,7 @@ export default function BlogPost() {
         Outbound campaigns are only as effective as your sales demo execution. By structuring your calls around discovery and outcome mapping, you can convert booked leads into paying B2B clients.
       </p>
       <p>
-        Omentir provides the discovery, prompts, and pacing safety to support your sales pipeline. Your job on the demo is to turn that pipeline into a clear buying decision: problem confirmed, workflow mapped, next step owned, and timeline agreed.
+        Your job on the demo is to turn that conversation into a clear buying decision: problem confirmed, workflow mapped, next step owned, and timeline agreed. If you spend the hour on slides, you already lost the meeting you worked to book.
       </p>
     </BlogPostTemplate>
   );

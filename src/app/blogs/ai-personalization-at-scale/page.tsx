@@ -240,7 +240,7 @@ Rules:
         Start with one segment and one offer. Define strong signals, write the disallowed claims, review the first drafts, and track reply quality. Once the workflow consistently creates useful conversations, scale the volume carefully.
       </p>
       <p>
-        Omentir provides the discovery, drafting, campaign, pacing, and reply tools to support that engine. The standard remains human: would this message make sense if a careful founder wrote it by hand?
+        The standard remains human: would this message make sense if a careful founder wrote it by hand? If the answer is no, the merge fields are not personalization. They are a mail merge with extra steps.
       </p>
     </BlogPostTemplate>
   );

@@ -68,10 +68,13 @@ export default function BlogPostTemplate({
   // they silently stop agreeing.
   const publishedDate = blogItem?.publishedDate ?? "";
   const updatedDate = blogItem?.updatedDate || publishedDate;
-  const relatedBlogs = ALL_BLOGS.filter(
-    (blog) =>
-      blog.slug !== slug && blog.category === category && isBlogLive(blog)
-  ).slice(0, 3);
+  const relatedCandidates = ALL_BLOGS.filter(
+    (blog) => blog.slug !== slug && isBlogLive(blog)
+  );
+  const relatedBlogs = [
+    ...relatedCandidates.filter((blog) => blog.category === category),
+    ...relatedCandidates.filter((blog) => blog.category !== category),
+  ].slice(0, 4);
   const hasVisibleFaqs = hasFaqSection(children);
   const faqTocItem = tocItems.find((item) => item.label.toLowerCase().includes("faq"));
   const faqSectionId = faqTocItem?.id ?? "faqs";
@@ -173,6 +176,8 @@ export default function BlogPostTemplate({
           author={author}
           publishedDate={publishedDate}
           publishedDateTime={normalizeDate(publishedDate)}
+          updatedDate={updatedDate}
+          updatedDateTime={normalizeDate(updatedDate)}
           bannerSrc={canonicalBannerSrc}
           bannerAlt={canonicalBannerAlt}
           slug={slug}
@@ -207,7 +212,7 @@ export default function BlogPostTemplate({
             >
               Related articles
             </h2>
-            <div className="mt-6 grid gap-4 md:grid-cols-3">
+            <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               {relatedBlogs.map((blog) => (
                 <Link
                   key={blog.slug}

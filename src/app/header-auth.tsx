@@ -1,10 +1,12 @@
+"use client";
+
 import Link from "next/link";
-import { authOrSignedOut } from "@/lib/server/clerk-session";
+import { useUser } from "@clerk/nextjs";
 
-export default async function HeaderAuth() {
-  const { userId } = await authOrSignedOut();
+export default function HeaderAuth() {
+  const { isSignedIn } = useUser();
 
-  if (userId) {
+  if (isSignedIn) {
     return (
       <Link
         href="/dashboard"

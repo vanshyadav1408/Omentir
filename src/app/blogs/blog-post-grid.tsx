@@ -15,6 +15,8 @@ export interface BlogPostGridProps {
   };
   publishedDate: string;
   publishedDateTime: string;
+  updatedDate: string;
+  updatedDateTime: string;
   bannerSrc: string;
   bannerAlt: string;
   slug: string;
@@ -28,6 +30,8 @@ export default function BlogPostGrid({
   author,
   publishedDate,
   publishedDateTime,
+  updatedDate,
+  updatedDateTime,
   bannerSrc,
   bannerAlt,
   tocItems,
@@ -52,12 +56,15 @@ export default function BlogPostGrid({
             <div className="text-sm font-semibold text-[var(--md-sys-color-on-surface)]">
               {author.name}
             </div>
-            <time
-              dateTime={publishedDateTime}
-              className="text-xs text-[var(--md-sys-color-on-surface-variant)]"
-            >
-              {publishedDate}
-            </time>
+            <div className="text-xs text-[var(--md-sys-color-on-surface-variant)]">
+              Published <time dateTime={publishedDateTime}>{publishedDate}</time>
+              {updatedDate !== publishedDate ? (
+                <>
+                  {" "}<span aria-hidden="true">&bull;</span>{" "}
+                  Updated <time dateTime={updatedDateTime}>{updatedDate}</time>
+                </>
+              ) : null}
+            </div>
           </div>
         </div>
 

@@ -25,6 +25,7 @@ const privateIndexingRoutes = [
   "/sso-callback/:path*",
   "/subscription-creation-successful/:path*",
   "/upgrade/:path*",
+  "/page-markdown/:path*",
 ];
 
 const nextConfig: NextConfig = {

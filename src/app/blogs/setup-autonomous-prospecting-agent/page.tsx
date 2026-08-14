@@ -70,7 +70,7 @@ export default function BlogPost() {
         Getting started does not require complex setup. Senders can deploy a live, active prospecting agent in under ten minutes.
       </p>
       <p>
-        Omentir provides the discovery, prompt, and safety infrastructure to manage this automated workflow. Let's walk through the setup process.
+        Setup is where most autonomous agents go wrong: the ICP is too wide, the first note is a pitch, and nobody reviews the first twenty sends. Walk through the setup as if you will be blamed for every message.
       </p>
       <p>
         The important word is "configure." An autonomous prospecting agent is only useful when it has clear boundaries. If you give it vague targeting, a loose product description, and permission to send at high speed, it will create the same problem a junior rep creates at scale: noisy lists, generic messages, and risky activity patterns. If you give it a sharp ICP, verified proof points, and a review queue, it becomes a dependable assistant for finding and preparing the right conversations.
@@ -294,7 +294,7 @@ Risk flags: {unsupported_claims_or_sensitive_context}`}</code>
         Automating your B2B sales development does not require complex setup. By deploying an autonomous prospecting agent, you can build a consistent outreach loop.
       </p>
       <p>
-        The best first campaign is not the biggest campaign. It is the cleanest one: narrow ICP, visible signals, grounded copy, safe pacing, and a review queue that teaches you what to improve. Omentir provides the discovery, prompt, and safety controls to help you build that kind of personalized, sustainable outbound engine.
+        The best first campaign is not the biggest campaign. It is the cleanest one: narrow ICP, visible signals, grounded copy, safe pacing, and a review queue that teaches you what to improve. If you cannot explain why the tenth lead is on the list, the finder is still too broad.
       </p>
     </BlogPostTemplate>
   );

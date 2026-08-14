@@ -75,7 +75,7 @@ export default function BlogPost() {
         Bypassing these filters does not require using hidden tools. Senders must prioritize safety, implementing cookie management, secure API routes, and pacing limits.
       </p>
       <p>
-        Omentir integrates this safety infrastructure, managing campaign outboxes to keep profiles safe, starting at $49/month. Let's look at how to protect your accounts.
+        Account health is not a setting. It is the history of where you logged in, how fast you sent, and whether the last fifty notes looked like one person. Treat that history as an asset.
       </p>
 
       <h3 id="health-baseline" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
@@ -318,7 +318,7 @@ export default function BlogPost() {
         Outbound outreach is most effective when it is relationship-focused. Senders who ignore safety boundaries will struggle with frequent restrictions and bans.
       </p>
       <p>
-        By managing session geolocations, API routing, and connection pacing, you protect your profile assets. Omentir provides the discovery, prompt, and pacing tools to support your growth, but healthy outreach still depends on human judgment and consistent account hygiene.
+        By managing session geolocations, API routing, and connection pacing, you protect your profile assets. Healthy outreach still depends on human judgment and consistent account hygiene. A clean integration cannot save a founder who logs in from a new country and sends 60 invites that night.
       </p>
     </BlogPostTemplate>
   );

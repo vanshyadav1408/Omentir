@@ -73,7 +73,7 @@ export default function BlogPost() {
         To build a sustainable pipeline, you must focus on a few key metrics. Senders need to track opportunity conversion rates and cost-per-opportunity to verify real demand.
       </p>
       <p>
-        Omentir provides the variable tracking and dashboard controls to monitor these key indicators, supporting campaigns starting at $49/month. Let's look at how to measure early success.
+        Early outbound dies when the only number on the board is "sends." The useful numbers are smaller, slower, and usually a little embarrassing.
       </p>
       <p>
         The word "early" matters. A mature outbound team can optimize around revenue, win rate, sales cycle length, and quota capacity. An early team is still answering more basic questions: are we contacting the right people, does the problem land, do prospects trust the offer, and are we learning fast enough to improve the next batch?
@@ -300,7 +300,7 @@ export default function BlogPost() {
         Outbound campaigns are only as effective as your metrics tracking. By focusing on Opportunity Conversion Rate and CPO, you can optimize your sales pipeline for real validation.
       </p>
       <p>
-        The best early metric is the one that tells you what to do next. Omentir provides the discovery, prompts, and safety tools to support your growth journey.
+        The best early metric is the one that tells you what to do next. Reply rate without a reason is vanity. A list of "why they said no" is an operating document.
       </p>
     </BlogPostTemplate>
   );

@@ -310,7 +310,7 @@ Worth comparing how you are handling lead quality before sequences start?`}</cod
         Outbound outreach is most effective when it is timely and relevant. By automating competitor website crawls, you ensure your sales battlecards remain accurate.
       </p>
       <p>
-        The value is not in collecting competitor trivia. It is in noticing meaningful changes, translating them into fair sales guidance, and grounding outreach in real buyer problems. Omentir provides the discovery, prompt, and safety tools to help you build a personalized, sustainable B2B sales pipeline.
+        The value is not in collecting competitor trivia. It is in noticing a pricing page change, a new integration, or a support complaint, then writing one sentence a buyer would recognize as true. Trivia-filled notes still read as research theater.
       </p>
     </BlogPostTemplate>
   );

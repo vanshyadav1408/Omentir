@@ -205,10 +205,10 @@ export default function BlogPost() {
         Pacing Campaigns Safely to Protect Account Integrity
       </h2>
       <p>
-        LinkedIn monitors both the volume and speed of connection requests and messages. If you send too many messages in a short period, your profile will be restricted.
+        Research-heavy outreach tempts people to "use the notes." You spend an hour on a prospect, then send a long first message the same afternoon. The research was good. The send pattern still looks like a burst.
       </p>
       <p>
-        To protect your account, configure campaigns around conservative daily safety limits, natural sending windows, and reviewable drafts. Omentir manages these safety protocols automatically, coordinating outgoing messages through secure, human-paced queues.
+        Separate research from delivery. Batch the reading. Send connection notes across the week, in the prospect's local business hours, and keep the first note short enough that the research shows up as one specific fact, not a dossier. Long personalization is still a message in the daily count.
       </p>
       <p>
         Better research should reduce volume pressure. If your agent finds stronger evidence, you can send fewer messages and still create better conversations. That is the opposite of spam automation, where poor targeting is hidden behind higher send counts.

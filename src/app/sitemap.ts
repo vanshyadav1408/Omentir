@@ -1,5 +1,10 @@
 import type { MetadataRoute } from "next";
 import { ALL_BLOGS, isBlogLive, liveBlogs } from "./blogs/blog-data";
+import { ALL_COMPARISONS } from "./comparisons/comparison-data";
+import { ALL_FEATURES } from "./features/feature-data";
+import { ALL_INTEGRATIONS } from "./integrations/integration-data";
+import { liveSeoPages, type SeoContentPage } from "./seo-content/types";
+import { markdownPathFromHtmlPath } from "@/lib/public-page-markdown";
 import { siteUrl } from "./seo";
 
 // Blog visibility and modification dates come from blog-data. Rebuild daily so
@@ -12,16 +17,21 @@ export const revalidate = 86400;
 // Bump a route's date when that page's content meaningfully changes.
 // `/blogs` and `/llms.txt` are exceptions: both are derived below from the
 // newest post, which is genuinely when those generated indexes last changed.
+// Comparison and integration indexes use the newest live child page.
 const publicRoutes = [
   { path: "/", changeFrequency: "weekly", priority: 1.0, lastModified: "2026-07-18" },
   { path: "/blogs", changeFrequency: "weekly", priority: 0.9 },
+  { path: "/comparisons", changeFrequency: "monthly", priority: 0.85 },
+  { path: "/integrations", changeFrequency: "monthly", priority: 0.85 },
   { path: "/pricing", changeFrequency: "monthly", priority: 0.8, lastModified: "2026-07-16" },
   { path: "/minimum-booking-guarantee", changeFrequency: "monthly", priority: 0.5, lastModified: "2026-08-09" },
   { path: "/for-agents", changeFrequency: "monthly", priority: 0.8, lastModified: "2026-07-22" },
   { path: "/mcp-server", changeFrequency: "monthly", priority: 0.8, lastModified: "2026-07-22" },
   { path: "/about", changeFrequency: "monthly", priority: 0.7, lastModified: "2026-07-17" },
   { path: "/llms.txt", changeFrequency: "weekly", priority: 0.4 },
+  { path: "/llms-full.txt", changeFrequency: "weekly", priority: 0.4 },
   { path: "/agents.md", changeFrequency: "monthly", priority: 0.4, lastModified: "2026-07-22" },
+  { path: "/agent.json", changeFrequency: "monthly", priority: 0.4, lastModified: "2026-08-12" },
   { path: "/privacy-policy", changeFrequency: "yearly", priority: 0.3, lastModified: "2026-07-06" },
   { path: "/terms-of-service", changeFrequency: "yearly", priority: 0.3, lastModified: "2026-07-06" },
 ] as const satisfies ReadonlyArray<{
@@ -38,6 +48,10 @@ function blogDate(blog: (typeof ALL_BLOGS)[number]) {
   return new Date(`${blog.updatedDate || blog.publishedDate} UTC`);
 }
 
+function seoPageDate(page: SeoContentPage) {
+  return new Date(`${page.updatedDate || page.publishedDate} UTC`);
+}
+
 // Released posts only: a scheduled post carries a future date, and advertising
 // that as the index's lastmod claims a change that has not happened yet.
 function latestBlogDate() {
@@ -45,6 +59,26 @@ function latestBlogDate() {
     const date = blogDate(blog);
     return date > newest ? date : newest;
   }, new Date(0));
+}
+
+function latestSeoFamilyDate(pages: readonly SeoContentPage[]) {
+  return liveSeoPages(pages).reduce((newest, page) => {
+    const date = seoPageDate(page);
+    return date > newest ? date : newest;
+  }, new Date(0));
+}
+
+function seoFamilyRoutes(
+  basePath: "/features" | "/comparisons" | "/integrations",
+  pages: readonly SeoContentPage[],
+  priority: number
+): MetadataRoute.Sitemap {
+  return liveSeoPages(pages).map((page) => ({
+    url: absoluteUrl(`${basePath}/${page.slug}`),
+    lastModified: seoPageDate(page),
+    changeFrequency: "monthly" as const,
+    priority,
+  }));
 }
 
 const highIntentBlogSlugs = new Set([
@@ -89,13 +123,29 @@ function absoluteUrl(path: string) {
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const blogsIndexDate = latestBlogDate();
+  const featuresIndexDate = latestSeoFamilyDate(ALL_FEATURES);
+  const comparisonsIndexDate = latestSeoFamilyDate(ALL_COMPARISONS);
+  const integrationsIndexDate = latestSeoFamilyDate(ALL_INTEGRATIONS);
+  const llmsIndexDate = [
+    blogsIndexDate,
+    featuresIndexDate,
+    comparisonsIndexDate,
+    integrationsIndexDate,
+  ].reduce((newest, date) => (date > newest ? date : newest), new Date(0));
+
+  const derivedIndexDates: Record<string, Date> = {
+    "/blogs": blogsIndexDate,
+    "/llms.txt": llmsIndexDate,
+    "/llms-full.txt": llmsIndexDate,
+    "/comparisons": comparisonsIndexDate,
+    "/integrations": integrationsIndexDate,
+  };
 
   const mainRoutes = publicRoutes.map((route) => ({
     url: absoluteUrl(route.path),
     lastModified:
-      route.path === "/blogs" || route.path === "/llms.txt"
-        ? blogsIndexDate
-        : new Date(route.lastModified),
+      derivedIndexDates[route.path] ??
+      new Date("lastModified" in route ? route.lastModified : "1970-01-01"),
     changeFrequency: route.changeFrequency,
     priority: route.priority,
   }));
@@ -110,5 +160,35 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: highIntentBlogSlugs.has(blog.slug) ? 0.75 : 0.6,
   }));
 
-  return [...mainRoutes, ...blogRoutes];
+  // Same live-only rule for hand-curated SEO families (features, comparisons,
+  // integrations). Future-dated entries stay out of the sitemap.
+  const featureRoutes = seoFamilyRoutes("/features", ALL_FEATURES, 0.7);
+  const comparisonRoutes = seoFamilyRoutes("/comparisons", ALL_COMPARISONS, 0.7);
+  const integrationRoutes = seoFamilyRoutes("/integrations", ALL_INTEGRATIONS, 0.7);
+
+  const htmlRoutes = [
+    ...mainRoutes,
+    ...blogRoutes,
+    ...featureRoutes,
+    ...comparisonRoutes,
+    ...integrationRoutes,
+  ];
+
+  // Markdown twins are how AI agents read the same public pages without
+  // scraping HTML. Same lastmod as the HTML source: the text is derived.
+  const markdownRoutes = htmlRoutes.flatMap((route) => {
+    const path = new URL(route.url).pathname;
+    const markdownPath = markdownPathFromHtmlPath(path === "/" ? "/" : path);
+    if (!markdownPath) return [];
+    return [
+      {
+        url: absoluteUrl(markdownPath),
+        lastModified: route.lastModified,
+        changeFrequency: route.changeFrequency,
+        priority: Math.max(0.2, Number((route.priority * 0.5).toFixed(2))),
+      },
+    ];
+  });
+
+  return [...htmlRoutes, ...markdownRoutes];
 }

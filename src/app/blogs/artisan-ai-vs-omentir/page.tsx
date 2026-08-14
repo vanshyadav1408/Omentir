@@ -251,7 +251,7 @@ export default function BlogPost() {
         <strong>Choose Omentir if:</strong> You want control over your copywriting prompts, need deep LinkedIn integrations, want to connect external agents like Claude via a hosted MCP server, and want a flexible monthly plan.
       </p>
       <p>
-        By integrating with your existing tool stack, Omentir provides the customization needed to build a sustainable B2B pipeline.
+        Artisan is built as a packaged AI SDR. Omentir is built as a workspace you can read, self-host, and operate from chat. Pick the one whose operating model matches how you actually want to sell, not the one with the louder agent name.
       </p>
       <p>
         If you are choosing between the two, run the same test in both systems. Pick one ICP, one offer, one buyer signal, and one success metric. Compare lead quality, message quality, safety controls, reply handling, and how much manual correction was required. That will reveal whether you need a packaged digital BDR or a more controllable LinkedIn-first engine.

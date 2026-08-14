@@ -73,7 +73,7 @@ export default function BlogPost() {
         To survive this valley, you must manage your mindset. Senders need to transition from feature-chasing distractions to consistent sales habits, using direct outbound outreach to validate demand.
       </p>
       <p>
-        Omentir was built to support teams navigating this early stage, offering campaign tools starting at $49/month to keep outbound consistent. Let's look at how to navigate the early SaaS crisis.
+        The crisis is usually not "I need more features." It is "I do not know who this is for, and I am building anyway." Outbound is how you get a verdict before the next rewrite.
       </p>
       <p>
         This is not medical advice, and serious anxiety or depression deserves real support from qualified people. But many founders do not need another motivational quote. They need a way to stop turning uncertainty into random work. The early SaaS crisis is often an evidence problem disguised as an identity problem: you do not yet know who wants the product, why they want it, what they will pay, or what they need next.
@@ -336,7 +336,7 @@ Next action:`}</code>
         Existential burnout is a natural hurdle in early B2B SaaS. Senders who continue to build features in isolation will struggle to find traction.
       </p>
       <p>
-        By establishing consistent outbound sales habits, keeping a decision log, and building only from evidence, you keep development grounded in real customer demand. Omentir provides the discovery, prompt, and pacing tools to support your growth.
+        By establishing consistent outbound sales habits, keeping a decision log, and building only from evidence, you keep development grounded in real customer demand. The tool is secondary. The log is what stops you from rewriting the product after every awkward call.
       </p>
     </BlogPostTemplate>
   );
