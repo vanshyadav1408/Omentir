@@ -72,7 +72,7 @@ function seoFamilyRoutes(
   basePath: "/features" | "/comparisons" | "/integrations",
   pages: readonly SeoContentPage[],
   priority: number
-): MetadataRoute.Sitemap {
+) {
   return liveSeoPages(pages).map((page) => ({
     url: absoluteUrl(`${basePath}/${page.slug}`),
     lastModified: seoPageDate(page),
