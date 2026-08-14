@@ -55,7 +55,10 @@ export default function StepUpgrade({ status }: { status?: string }) {
       </div>
 
       <div className="w-full text-left">
-        <PricingCards className="mx-auto mt-10 w-full max-w-4xl pb-12 sm:pb-[3.75rem]" />
+        <PricingCards
+          subscribeCta="Subscribe"
+          className="mx-auto mt-10 w-full max-w-4xl pb-12 sm:pb-[3.75rem]"
+        />
       </div>
     </>
   );

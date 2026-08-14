@@ -116,7 +116,10 @@ export async function getWhopCheckoutPlanId(billingPlan: BillingPlan = "solo") {
       order: "created_at",
       direction: "desc",
     });
-    const productPlan = chooseCheckoutPlan(productPlans.data, { includeHidden: true });
+    const productPlan = chooseCheckoutPlan(productPlans.data, {
+      includeHidden: true,
+      requireOmentirTitle: false,
+    });
     if (productPlan) {
       checkoutPlanIds.set(billingPlan, productPlan.id);
       return productPlan.id;

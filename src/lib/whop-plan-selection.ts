@@ -20,15 +20,22 @@ function productTitle(product: unknown): string | undefined {
 
 export function chooseCheckoutPlan(
   plans: WhopPlanCandidate[],
-  options: { includeHidden?: boolean } = {},
+  options: { includeHidden?: boolean; requireOmentirTitle?: boolean } = {},
 ) {
+  // Company-wide discovery must keep the title filter so a non-Omentir
+  // product on the same Whop account cannot become checkout. Product-scoped
+  // lookups already selected the product via WHOP_*_PLAN_ID, so a dashboard
+  // rename (for example "Omentir Monthly" -> "Pro") must not block purchase.
+  const requireOmentirTitle = options.requireOmentirTitle !== false;
+
   return plans
     .filter(
       (plan) =>
         plan.plan_type === "renewal" &&
         plan.release_method === "buy_now" &&
         (options.includeHidden || plan.visibility === "visible") &&
-        (productTitle(plan.product)?.toLowerCase().includes("omentir") ?? true),
+        (!requireOmentirTitle ||
+          (productTitle(plan.product)?.toLowerCase().includes("omentir") ?? true)),
     )
     .sort((a, b) => {
       const memberDelta = (b.member_count ?? 0) - (a.member_count ?? 0);

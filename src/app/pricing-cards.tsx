@@ -24,11 +24,14 @@ function planKeyFromHref(href: string): PlanKey {
 function PricingCard({
   plan,
   currentPlan,
+  subscribeCta,
 }: {
   plan: PricingPlan;
   currentPlan?: CurrentPlan;
+  subscribeCta?: string;
 }) {
   const planKey = planKeyFromHref(plan.href);
+  const cta = planKey === "solo" && subscribeCta ? subscribeCta : plan.cta;
   const isCurrent = currentPlan === planKey;
   // Legacy lifetime members remain covered by the Pro feature set, so the
   // card must never offer them a redundant monthly subscription.
@@ -100,11 +103,11 @@ function PricingCard({
             </span>
           ) : plan.href.startsWith("http") ? (
             <a href={plan.href} target="_blank" rel="noopener noreferrer" className={ctaClass}>
-              {plan.cta}
+              {cta}
             </a>
           ) : (
             <Link href={plan.href} className={ctaClass}>
-              {plan.cta}
+              {cta}
             </Link>
           )}
         </div>
@@ -116,9 +119,11 @@ function PricingCard({
 export default function PricingCards({
   className = "",
   currentPlan,
+  subscribeCta,
 }: {
   className?: string;
   currentPlan?: CurrentPlan;
+  subscribeCta?: string;
 }) {
   const [selectedPlan, setSelectedPlan] = useState<PlanKey>("solo");
   const mobilePlan = plans.find((plan) => planKeyFromHref(plan.href) === selectedPlan) ?? plans[0];
@@ -163,12 +168,12 @@ export default function PricingCards({
             Enterprise
           </span>
         </div>
-        <PricingCard plan={mobilePlan} currentPlan={currentPlan} />
+        <PricingCard plan={mobilePlan} currentPlan={currentPlan} subscribeCta={subscribeCta} />
       </div>
 
       <div className="hidden w-full items-stretch gap-4 lg:grid lg:grid-cols-2 lg:gap-6 xl:gap-8">
         {plans.map((plan) => (
-          <PricingCard key={plan.name} plan={plan} currentPlan={currentPlan} />
+          <PricingCard key={plan.name} plan={plan} currentPlan={currentPlan} subscribeCta={subscribeCta} />
         ))}
       </div>
     </div>
