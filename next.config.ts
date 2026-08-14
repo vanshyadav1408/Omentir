@@ -14,6 +14,7 @@ const privateIndexingRoutes = [
   "/dashboard/:path*",
   "/leads/:path*",
   "/login/:path*",
+  "/logout/:path*",
   "/messages/:path*",
   "/my-product/:path*",
   "/new-user-experience/:path*",

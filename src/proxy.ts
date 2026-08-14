@@ -48,7 +48,7 @@ const hostedMiddleware = clerkMiddleware(async (auth, req) => {
   }
 });
 
-const localPublicPaths = new Set(["/login", "/api/health", "/api/local-auth/login"]);
+const localPublicPaths = new Set(["/login", "/logout", "/api/health", "/api/local-auth/login"]);
 const localServicePrefixes = [
   "/api/agent/v1/",
   // OAuth discovery and the token/registration exchange are called by the AI
