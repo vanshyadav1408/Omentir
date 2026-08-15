@@ -19,6 +19,8 @@ jobs:
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
           VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+          APP_COMMIT_SHA: ${{ github.sha }}
+          APP_REPOSITORY: ${{ github.repository }}
         run: |
           set -euo pipefail
           install -m 700 -d ~/.ssh
@@ -28,7 +30,7 @@ jobs:
           chmod 600 ~/.ssh/known_hosts
           ssh -i ~/.ssh/omentir_vps -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
             "$VPS_USER@$VPS_HOST" \
-            "APP_COMMIT_SHA=0000000000000000000000000000000000000000 APP_REPOSITORY=vanshyadav1408/Omentir bash -s" <<'REMOTE'
+            "APP_COMMIT_SHA=$APP_COMMIT_SHA APP_REPOSITORY=$APP_REPOSITORY bash -s" <<'REMOTE'
           set -euo pipefail
           echo "--- PM2 ---"
           pm2 show omentir | sed -n '/status/,/node.js version/p'
