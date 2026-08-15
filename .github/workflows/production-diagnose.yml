@@ -27,7 +27,8 @@ jobs:
           printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
           ssh -i ~/.ssh/omentir_vps -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
-            "$VPS_USER@$VPS_HOST" 'bash -s' <<'REMOTE'
+            "$VPS_USER@$VPS_HOST" \
+            "APP_COMMIT_SHA=0000000000000000000000000000000000000000 APP_REPOSITORY=vanshyadav1408/Omentir bash -s" <<'REMOTE'
           set -euo pipefail
           echo "--- PM2 ---"
           pm2 show omentir | sed -n '/status/,/node.js version/p'
