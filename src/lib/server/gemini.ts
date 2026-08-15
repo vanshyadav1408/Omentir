@@ -19,7 +19,7 @@ import type {
 
 export type { ReplyIntent };
 
-const DEFAULT_MODEL = "gemini-3.6-flash";
+const DEFAULT_MODEL = "gemini-3.7-flash";
 const MODEL = process.env.GEMINI_MODEL || DEFAULT_MODEL;
 // Deliberately NOT falling back to MODEL. Search-grounded calls are the most
 // latency-sensitive thing here, and an older pinned model cannot serve them:
