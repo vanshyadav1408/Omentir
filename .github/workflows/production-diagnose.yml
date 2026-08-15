@@ -1,0 +1,42 @@
+name: Production Diagnostic
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+    steps:
+      - name: Inspect runtime configuration shape
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/omentir_vps
+          chmod 600 ~/.ssh/omentir_vps
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+          ssh -i ~/.ssh/omentir_vps -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            "$VPS_USER@$VPS_HOST" 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          echo "--- PM2 ---"
+          pm2 show omentir | sed -n '/status/,/node.js version/p'
+          pid="$(pm2 pid omentir)"
+          echo "--- PROCESS ENVIRONMENT SHAPE ---"
+          tr '\0' '\n' < "/proc/$pid/environ" | awk -F= '/^[A-Z][A-Z0-9_]*=/{print $1 "=" (length($2) ? "set" : "empty")}' | sort
+          echo "--- ENV FILE CANDIDATES ---"
+          find "$HOME" /var/www /opt -maxdepth 5 -type f \( -name '.env.production' -o -name '.env.production.*' -o -name '.env' \) -print 2>/dev/null | sort -u | while IFS= read -r file; do
+            echo "[$file]"
+            awk -F= '/^(NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY|CLERK_SECRET_KEY|APP_BASE_URL|NEXT_PUBLIC_APP_URL|RUN_LOCALLY)=/ {print $1 "=" (length($2) ? "set" : "empty")}' "$file" | sort
+          done
+          REMOTE
