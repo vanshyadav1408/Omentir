@@ -3,8 +3,8 @@ export interface BlogItem {
   title: string;
   description: string;
   /**
-   * The date this post actually became publicly readable — and, for a date in
-   * the future, the date it is scheduled to. This is the single source of truth
+   * The date this post actually became publicly readable (and, for a date in
+   * the future, the date it is scheduled to). This is the single source of truth
    * for the date: it feeds the visible byline, the `datePublished` in the
    * article JSON-LD, the Open Graph `publishedTime`, and the sitemap `lastmod`.
    * Individual post pages must not hardcode their own dates, or those surfaces
@@ -49,6 +49,28 @@ export function liveBlogs(now?: Date): BlogItem[] {
 }
 
 export const ALL_BLOGS: BlogItem[] = [
+  {
+    slug: "skills-for-ai-agents",
+    title: "Skills for AI Agents: Complete Guide to Capabilities, Tasks, and Discovery",
+    description: "Learn what skills for AI agents are, how agent architectures use them, essential skill examples for sales, coding, and research, and where to find ready-to-use skills.",
+    publishedDate: "August 15, 2026",
+    updatedDate: "August 15, 2026",
+    category: "Guides",
+    readTime: "11 min read",
+    bannerSrc: "/blogs/skills-for-ai-agents/cover.avif",
+    bannerAlt: "Skills for AI Agents architecture diagram showing reasoning, tool use, and integrations",
+  },
+  {
+    slug: "reddit-marketing-tools-for-saas",
+    title: "Reddit Marketing Tools for Your SaaS: How to Find Leads, Compare Tools, and Win on Reddit",
+    description: "A tactical guide to Reddit marketing for SaaS founders: audience differences between Reddit and LinkedIn, how to find high-intent leads, and a detailed comparison of top Reddit tools.",
+    publishedDate: "August 15, 2026",
+    updatedDate: "August 15, 2026",
+    category: "Guides",
+    readTime: "12 min read",
+    bannerSrc: "/blogs/reddit-marketing-tools-for-saas/cover.avif",
+    bannerAlt: "Reddit marketing tools for SaaS showing conversational network graphs and growth charts",
+  },
   {
     slug: "ai-saas-ready-before-outbound",
     title: "AI Tools to Use Before You Start Outbound",
