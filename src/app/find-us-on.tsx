@@ -340,6 +340,32 @@ const LISTINGS = [
     src: "https://r2.direasy-multi-tenant.focusapps.app/uploads/616d0b1a-3979-4b8c-94d1-b4f1fedd3ead/1783951420330/7dzj96cw6vj/featured-on-dark.svg",
   },
   {
+    href: "https://yo.directory",
+    label: "Featured on Yo.directory",
+    width: 260,
+    height: 94,
+    src: "https://yo.directory/badges/yo-directory-featured-dark.svg",
+    rel: "dofollow noopener",
+  },
+  {
+    href: "https://newtool.site/item/omentir",
+    label: "Featured on NewTool.site",
+    width: 200,
+    height: 54,
+    src: "https://newtool.site/badges/newtool-dark.svg",
+  },
+  {
+    href: "https://www.agenthunter.io?utm_source=badge&utm_medium=embed&utm_campaign=Omentir",
+    label: "Featured AI Agent on AgentHunter",
+    width: 40,
+    height: 40,
+    src: "https://www.agenthunter.io/logo-dark.svg",
+    card: {
+      eyebrow: "AgentHunter",
+      title: "Featured AI Agent",
+    },
+  },
+  {
     href: "https://indieai.directory/",
     label: "Listed on IndieAI Directory",
     src: null,
@@ -347,14 +373,36 @@ const LISTINGS = [
 ] as const;
 
 function ListingLink({ listing }: { listing: (typeof LISTINGS)[number] }) {
+  const card = "card" in listing ? listing.card : null;
+
   return (
     <a
       href={listing.href}
       target="_blank"
       rel={"rel" in listing && listing.rel ? listing.rel : "noopener noreferrer"}
-      className="inline-flex shrink-0 items-center whitespace-nowrap text-sm font-medium text-[var(--md-sys-color-on-surface-variant)] opacity-90 transition hover:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--md-sys-color-primary)]"
+      className={
+        card
+          ? "inline-flex shrink-0 items-center gap-2 rounded-lg border border-[#374151] bg-[#111827] px-3 py-2 no-underline transition hover:border-[#4b5563] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--md-sys-color-primary)]"
+          : "inline-flex shrink-0 items-center whitespace-nowrap text-sm font-medium text-[var(--md-sys-color-on-surface-variant)] opacity-90 transition hover:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--md-sys-color-primary)]"
+      }
     >
-      {listing.src ? (
+      {card && listing.src ? (
+        <>
+          <Image
+            src={listing.src}
+            alt="AgentHunter Badge"
+            width={listing.width}
+            height={listing.height}
+            unoptimized
+            draggable={false}
+            className="h-10 w-10"
+          />
+          <span className="flex flex-col items-start leading-tight">
+            <span className="text-xs text-[#9ca3af]">{card.eyebrow}</span>
+            <span className="text-sm font-semibold text-[#f9fafb]">{card.title}</span>
+          </span>
+        </>
+      ) : listing.src ? (
         <Image
           src={listing.src}
           alt={listing.label}
