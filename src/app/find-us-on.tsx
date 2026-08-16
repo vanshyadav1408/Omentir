@@ -263,6 +263,27 @@ const LISTINGS = [
     src: "https://cdn.launchleague.xyz/site-images/badges/badge-dark.svg",
   },
   {
+    href: "https://www.verifiedtools.info/tools/omentir",
+    label: "Omentir on Verified Tools - AI and SaaS tools directory",
+    width: 200,
+    height: 54,
+    src: "https://www.verifiedtools.info/badge.svg",
+  },
+  {
+    href: "https://pickapps.org",
+    label: "Listed on PickApps",
+    width: 160,
+    height: 48,
+    src: "https://pickapps.org/pickapps-badge.svg",
+  },
+  {
+    href: "https://findly.tools/omentir?utm_source=omentir",
+    label: "Featured on Findly.tools",
+    width: 175,
+    height: 55,
+    src: "https://findly.tools/badges/findly-tools-badge-dark.svg",
+  },
+  {
     href: "https://indieai.directory/",
     label: "Listed on IndieAI Directory",
     src: null,
