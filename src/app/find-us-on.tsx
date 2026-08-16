@@ -305,6 +305,13 @@ const LISTINGS = [
     src: "https://img.turbo0.com/badge-listed-dark.svg",
   },
   {
+    href: "https://verifieddr.com/website/omentir-com",
+    label: "Verified DR - Verified Domain Rating for omentir.com",
+    width: 200,
+    height: 24,
+    src: "https://verifieddr.com/badge/omentir-com-dark.svg?style=minimal",
+  },
+  {
     href: "https://indieai.directory/",
     label: "Listed on IndieAI Directory",
     src: null,
