@@ -11,7 +11,9 @@ import {
   createAgentApiKey,
   createCampaign,
   createOrGetGroup,
+  claimActionSlot,
   completeConversationManualFollowUp,
+  consumeDailyQuota,
   deleteAgent,
   deleteGroup,
   disconnectLinkedInAccount,
@@ -22,6 +24,7 @@ import {
   getLinkedInAccountByAccountId,
   getLinkedInAccountForWorkspace,
   getProductProfile,
+  hasDailyQuotaRemaining,
   listCampaigns,
   listLeads,
   pauseAgent,
@@ -1057,7 +1060,46 @@ export async function sendLinkedInChatMessageAction(formData: FormData) {
   const oversized = attachments.find((file) => file.size > 15 * 1024 * 1024);
   if (oversized) throw new Error(`"${oversized.name}" is too large - attachments must be under 15MB.`);
 
-  await sendLinkedInChatMessage({ chatId, accountId: linkedInAccount.accountId, body, attachments });
+  if (
+    !(await hasDailyQuotaRemaining(
+      workspace.id,
+      "messages",
+      workspace.settings.dailyMessageLimit,
+      workspace.timezone,
+    ))
+  ) {
+    throw new Error("Daily message limit reached. Try again tomorrow.");
+  }
+  const nextSlotAllowedAt = await claimActionSlot(workspace.id, linkedInAccount.id);
+  if (nextSlotAllowedAt) {
+    throw new Error(`This account can send again at ${nextSlotAllowedAt}.`);
+  }
+
+  const result = await sendLinkedInChatMessage({
+    chatId,
+    accountId: linkedInAccount.accountId,
+    body,
+    attachments,
+  });
+  await consumeDailyQuota(
+    workspace.id,
+    "messages",
+    workspace.settings.dailyMessageLimit,
+    workspace.timezone,
+  );
+  const leadId = String(formData.get("leadId") || "").trim();
+  if (leadId && body) {
+    const { createConversationMessage } = await import("@/lib/server/data");
+    await createConversationMessage({
+      workspaceId: workspace.id,
+      leadId,
+      userId: workspace.id,
+      senderName: "You",
+      body,
+      direction: "outbound",
+      providerMessageId: result.id,
+    });
+  }
   revalidatePath("/messages");
 }
 

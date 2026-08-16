@@ -2142,7 +2142,9 @@ function prefilterReplyIntent(latestInbound: string): ReplyIntentClassification 
 
   const lower = text.toLowerCase();
   if (
-    /\b(?:i|we)(?:'ve| have)?\s+(?:just\s+)?(?:booked|scheduled)\b/i.test(text) ||
+    /\b(?:i|we)(?:'ve| have)?\s+(?:just\s+)?(?:booked|scheduled)\s+(?:a\s+)?(?:demo|meeting|call)\b/i.test(
+      text,
+    ) ||
     /\b(?:call|meeting|demo)\s+(?:is|has been)\s+(?:booked|scheduled|confirmed)\b/i.test(text)
   ) {
     return {

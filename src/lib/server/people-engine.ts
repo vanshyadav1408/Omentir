@@ -1063,7 +1063,7 @@ async function verifyRecentLinkedInActivity(input: {
         posts.map((post) => ({ createdAt: getLinkedInPostCreatedAtRaw(post) })),
         input.nowMs,
       );
-      if (!postEvidence) return { status: "inactive", recentPosts: [] };
+      if (!postEvidence) continue;
       return {
         status: "active",
         evidence: postEvidence,

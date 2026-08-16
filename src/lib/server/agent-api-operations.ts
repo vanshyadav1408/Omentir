@@ -3,6 +3,7 @@ import "server-only";
 import { z } from "zod";
 export { agentMcpTools, agentToolInputSchemas } from "@/lib/agent-tools";
 import {
+  claimActionSlot,
   consumeDailyQuota,
   hasDailyQuotaRemaining,
   createAgent,
@@ -1118,6 +1119,13 @@ export async function replyToLeadResource(context: AgentApiContext, payload: unk
     ))
   ) {
     throw new AgentApiOperationError("Daily message limit reached. Try again tomorrow.", 429);
+  }
+  const nextSlotAllowedAt = await claimActionSlot(context.workspace.id, account.id);
+  if (nextSlotAllowedAt) {
+    throw new AgentApiOperationError(
+      `This LinkedIn account can send again at ${nextSlotAllowedAt}.`,
+      429,
+    );
   }
 
   const sendResult = await sendLinkedInMessage({

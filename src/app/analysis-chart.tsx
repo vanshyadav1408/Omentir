@@ -24,6 +24,7 @@ type AnalysisChartProps = {
   enrollments: CampaignEnrollmentPreview[];
   /** Durable day totals that survive agent/lead deletion. */
   activityDays?: ActivityDay[];
+  maxDays?: number;
 };
 
 /** Categorical scale: distinct series with solid contrast on light/dark surfaces. */
@@ -48,6 +49,7 @@ function buildChartData({
   conversations,
   enrollments,
   activityDays = [],
+  maxDays = 11,
 }: AnalysisChartProps): ChartPoint[] {
   const live = buildActivityTotalsFromLive({ leads, enrollments, conversations });
   const durable = activityDays
@@ -61,7 +63,7 @@ function buildChartData({
     }));
 
   // max() merge: durable history keeps deleted-agent work; live fills current days.
-  return toActivityChartPoints(mergeActivityTotals(live, durable));
+  return toActivityChartPoints(mergeActivityTotals(live, durable), { maxDays });
 }
 
 /** Zero-baseline scale; nice steps so labels stay sparse. */

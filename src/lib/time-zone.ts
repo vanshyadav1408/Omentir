@@ -80,6 +80,47 @@ export function zonedDayKey(value: DateInput, timeZone: string | undefined) {
   }).format(date);
 }
 
+/** UTC instant for midnight on the calendar month containing `value` in `timeZone`. */
+export function zonedMonthStart(value: DateInput, timeZone: string | undefined) {
+  const date = toDate(value);
+  if (!date) return NaN;
+  const zone = resolveTimeZone(timeZone);
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: zone,
+    year: "numeric",
+    month: "numeric",
+  }).formatToParts(date);
+  const year = Number(parts.find((part) => part.type === "year")?.value);
+  const month = Number(parts.find((part) => part.type === "month")?.value);
+  let candidate = Date.UTC(year, month - 1, 1);
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const localParts = new Intl.DateTimeFormat("en-US", {
+      timeZone: zone,
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+      second: "numeric",
+      hourCycle: "h23",
+    }).formatToParts(candidate);
+    const valueForPart = (type: string) =>
+      Number(localParts.find((part) => part.type === type)?.value || 0);
+    const localAsUtc = Date.UTC(
+      valueForPart("year"),
+      valueForPart("month") - 1,
+      valueForPart("day"),
+      valueForPart("hour"),
+      valueForPart("minute"),
+      valueForPart("second"),
+    );
+    candidate += Date.UTC(year, month - 1, 1) - localAsUtc;
+  }
+
+  return candidate;
+}
+
 /** "GMT+5:30" - appended where a bare clock time would otherwise be ambiguous. */
 export function timeZoneOffsetLabel(timeZone: string | undefined, at: DateInput = new Date()) {
   const date = toDate(at) || new Date();

@@ -21,6 +21,7 @@ import { sendWindowTimeZoneForLead } from "./lead-time-zone";
 import { addInviteLimitSignal } from "./outreach-rules";
 import {
   leadOutcomeNotificationLockId,
+  MEETING_BOOKED_CONFIDENCE,
   type LeadOutcomeNotificationKind,
 } from "./reply-automation-policy";
 import type {
@@ -239,7 +240,7 @@ export async function ensureWorkspace(userId: string, name = "Omentir workspace"
 
   // Create-on-first-touch stays transactional to avoid two concurrent loads
   // racing to create (and clobber) the same workspace document.
-  return getDb().runTransaction(async (transaction) => {
+  const workspace = await getDb().runTransaction(async (transaction) => {
     const fresh = await transaction.get(ref);
     const timestamp = nowIso();
 
@@ -266,6 +267,7 @@ export async function ensureWorkspace(userId: string, name = "Omentir workspace"
 
     return workspace;
   });
+  return workspace;
 }
 
 export async function getWorkspace(userId: string) {
@@ -307,8 +309,10 @@ export async function consumeLinkedInConnectToken(token: string) {
 // Raw scan for tick-level features that visit every workspace (e.g. daily
 // digests). Docs are returned as stored - callers needing default-filled
 // settings should go through getWorkspace for that workspace instead.
-export async function listWorkspaces(limit = 500) {
-  const snap = await collection<Workspace>("workspaces").limit(limit).get();
+export async function listWorkspaces(limit?: number) {
+  let query: FirebaseFirestore.Query<Workspace> = collection<Workspace>("workspaces");
+  if (limit != null && limit > 0) query = query.limit(limit);
+  const snap = await query.get();
   return snap.docs.map((doc) => doc.data());
 }
 
@@ -737,7 +741,6 @@ export async function getAgent(workspaceId: string, agentId: string) {
 export async function getDueAgents(limit = 25) {
   const snap = await collection<Agent>("agents")
     .where("status", "in", ["active", "error", "running"])
-    .limit(1000)
     .get();
   return snap.docs
     .map((doc) => doc.data())
@@ -1499,11 +1502,31 @@ export function leadDocId(workspaceId: string, lead: Partial<Lead>) {
 
 export async function upsertLead(workspaceId: string, groupId: string, lead: Partial<Lead>) {
   const linkedInUrl = normalizeLinkedInProfileUrl(lead.linkedInUrl) || "";
-  const id = leadDocId(workspaceId, lead);
+  let id = leadDocId(workspaceId, lead);
+  if (lead.providerProfileId || linkedInUrl) {
+    const identityMatch = lead.providerProfileId
+      ? await collection<Lead>("leads")
+          .where("workspaceId", "==", workspaceId)
+          .where("providerProfileId", "==", lead.providerProfileId)
+          .limit(1)
+          .get()
+      : null;
+    const urlMatch =
+      identityMatch?.docs[0] || !linkedInUrl
+        ? null
+        : await collection<Lead>("leads")
+            .where("workspaceId", "==", workspaceId)
+            .where("linkedInUrl", "==", linkedInUrl)
+            .limit(1)
+            .get();
+    if (identityMatch?.docs[0]) id = identityMatch.docs[0].id;
+    else if (urlMatch?.docs[0]) id = urlMatch.docs[0].id;
+  }
   const ref = collection<Lead>("leads").doc(id);
   const groupRef = collection<Group>("groups").doc(groupId);
+  let created = false;
 
-  return getDb().runTransaction(async (transaction) => {
+  const result = await getDb().runTransaction(async (transaction) => {
     const existing = await transaction.get(ref);
     const timestamp = nowIso();
 
@@ -1546,6 +1569,7 @@ export async function upsertLead(workspaceId: string, groupId: string, lead: Par
       };
     }
 
+    created = true;
     const next = omitUndefined({
       id,
       workspaceId,
@@ -1583,6 +1607,10 @@ export async function upsertLead(workspaceId: string, groupId: string, lead: Par
     });
     return next;
   });
+  if (created) {
+    await recordActivityEvent(workspaceId, `lead-${result.id}`, "found", result.createdAt);
+  }
+  return result;
 }
 
 export async function updateLead(workspaceId: string, id: string, patch: Partial<Lead>) {
@@ -1655,11 +1683,11 @@ export async function getCampaign(workspaceId: string, campaignId: string) {
   return campaign && campaign.workspaceId === workspaceId ? campaign : null;
 }
 
-export async function getActiveCampaigns(limit = 1000) {
-  const snap = await collection<Campaign>("campaigns")
+export async function getActiveCampaigns(limit?: number) {
+  let query: FirebaseFirestore.Query<Campaign> = collection<Campaign>("campaigns")
     .where("status", "==", "active")
-    .limit(limit)
-    .get();
+  if (limit != null && limit > 0) query = query.limit(limit);
+  const snap = await query.get();
   return snap.docs.map((doc) => doc.data());
 }
 
@@ -1795,6 +1823,9 @@ export async function updateCampaign(
   });
 
   await ref.update(next);
+  if (patch.steps) {
+    await remapCampaignEnrollments(workspaceId, campaignId, campaign.steps, patch.steps);
+  }
   return { ...campaign, ...next } as Campaign;
 }
 
@@ -2206,7 +2237,6 @@ export async function enrollGroupInCampaign(workspaceId: string, campaign: Campa
 export async function listCampaignEnrollments(workspaceId: string) {
   const snap = await collection<CampaignEnrollment>("campaignEnrollments")
     .where("workspaceId", "==", workspaceId)
-    .limit(500)
     .get();
   return snap.docs.map((doc) => doc.data());
 }
@@ -2267,9 +2297,6 @@ export async function listCampaignEnrollmentPreviews(
       "createdAt",
       "updatedAt",
     )
-    // Every enrollment counts toward the Agents and Dashboard stats, so a
-    // truncated page is a silent undercount rather than a shorter list.
-    .limit(5000)
     .get();
   return snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as CampaignEnrollmentPreview);
 }
@@ -2386,12 +2413,12 @@ function roundRobinEnrollmentsByWorkspace(enrollments: CampaignEnrollment[], lim
 // All of a workspace's invites still waiting on acceptance. Read by the
 // per-account acceptance sweep, which detects accepted invites in one batched
 // sent-invitations comparison instead of a live profile view per pending lead.
-export async function listConnectionSentEnrollments(workspaceId: string, limit = 1000) {
-  const snap = await collection<CampaignEnrollment>("campaignEnrollments")
+export async function listConnectionSentEnrollments(workspaceId: string, limit?: number) {
+  let query: FirebaseFirestore.Query<CampaignEnrollment> = collection<CampaignEnrollment>("campaignEnrollments")
     .where("workspaceId", "==", workspaceId)
-    .where("status", "==", "connection_sent")
-    .limit(limit)
-    .get();
+    .where("status", "==", "connection_sent");
+  if (limit != null && limit > 0) query = query.limit(limit);
+  const snap = await query.get();
   return snap.docs.map((doc) => doc.data());
 }
 
@@ -2617,7 +2644,7 @@ export async function createConversationMessage(input: {
   const id = `${input.workspaceId}-${input.leadId}`;
   const timestamp = nowIso();
   const ref = collection<Conversation>("conversations").doc(id);
-  return getDb().runTransaction(async (transaction) => {
+  const inserted = await getDb().runTransaction(async (transaction) => {
     const snap = await transaction.get(ref);
 
     if (snap.exists && input.providerMessageId) {
@@ -2643,7 +2670,10 @@ export async function createConversationMessage(input: {
             replyIntentConfidence: input.replyIntentConfidence ?? 0,
             replyIntentNextStepHint: input.replyIntentNextStepHint || "",
             replyIntentAt: timestamp,
-            ...(input.replyIntent === "meeting_booked" ? { meetingBookedAt: timestamp } : {}),
+            ...(input.replyIntent === "meeting_booked" &&
+            (input.replyIntentConfidence ?? 1) >= MEETING_BOOKED_CONFIDENCE
+              ? { meetingBookedAt: timestamp }
+              : {}),
           }
         : {};
 
@@ -2671,6 +2701,22 @@ export async function createConversationMessage(input: {
 
     return true;
   });
+  if (inserted) {
+    const eventId = `message-${input.providerMessageId || `${input.leadId}-${timestamp}`}`;
+    await recordActivityEvent(
+      input.workspaceId,
+      eventId,
+      input.direction === "outbound" ? "contacted" : "replies",
+      timestamp,
+    );
+    if (
+      input.replyIntent === "meeting_booked" &&
+      (input.replyIntentConfidence ?? 1) >= MEETING_BOOKED_CONFIDENCE
+    ) {
+      await recordActivityEvent(input.workspaceId, `${eventId}-meeting`, "meetingsBooked", timestamp);
+    }
+  }
+  return inserted;
 }
 
 export async function setConversationReplyIntent(
@@ -2694,7 +2740,10 @@ export async function setConversationReplyIntent(
         replyIntentConfidence: intent.confidence,
         replyIntentNextStepHint: intent.nextStepHint || "",
         replyIntentAt: timestamp,
-        ...(intent.intent === "meeting_booked" ? { meetingBookedAt: timestamp } : {}),
+        ...(intent.intent === "meeting_booked" &&
+        intent.confidence >= MEETING_BOOKED_CONFIDENCE
+          ? { meetingBookedAt: timestamp }
+          : {}),
         updatedAt: timestamp,
       },
       { merge: true },
@@ -2711,12 +2760,49 @@ export async function completeConversationManualFollowUp(workspaceId: string, le
     });
 }
 
-export async function listConversations(workspaceId: string, limit = 50) {
-  const snap = await collection<Conversation>("conversations")
-    .where("workspaceId", "==", workspaceId)
-    .limit(limit)
-    .get();
-  return snap.docs.map((doc) => doc.data());
+export async function listConversations(workspaceId: string, limit = 100) {
+  const capped = Math.min(Math.max(limit, 1), 500);
+  try {
+    const snap = await collection<Conversation>("conversations")
+      .where("workspaceId", "==", workspaceId)
+      .orderBy("updatedAt", "desc")
+      .limit(capped)
+      .get();
+    return snap.docs.map((doc) => doc.data());
+  } catch (error) {
+    console.warn(
+      "[data] ordered conversation query failed; using capped scan:",
+      error instanceof Error ? error.message : error,
+    );
+    const snap = await collection<Conversation>("conversations")
+      .where("workspaceId", "==", workspaceId)
+      .limit(capped)
+      .get();
+    return snap.docs
+      .map((doc) => doc.data())
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  }
+}
+
+/** Server-side paginated conversation read for complete activity aggregation. */
+export async function listConversationsForActivity(workspaceId: string) {
+  const conversations: Conversation[] = [];
+  const pageSize = 250;
+  let lastDoc: FirebaseFirestore.QueryDocumentSnapshot<Conversation> | undefined;
+
+  while (true) {
+    let query: FirebaseFirestore.Query<Conversation> = collection<Conversation>("conversations")
+      .where("workspaceId", "==", workspaceId)
+      .orderBy("__name__", "asc")
+      .limit(pageSize);
+    if (lastDoc) query = query.startAfter(lastDoc);
+    const snap = await query.get();
+    conversations.push(...snap.docs.map((doc) => doc.data()));
+    if (snap.size < pageSize) break;
+    lastDoc = snap.docs[snap.docs.length - 1];
+  }
+
+  return conversations;
 }
 
 export async function getConversation(workspaceId: string, leadId: string) {
@@ -2806,14 +2892,34 @@ export async function listAutomationRuns(workspaceId: string, limit = 100) {
 // Durable Activity Overview: per-day found/contacted/replies/bookings that outlive
 // agent and lead deletes. Docs are never deleted with agents; merge uses max()
 // so a later live recompute cannot shrink history after a delete snapshot.
+async function recordActivityEvent(
+  workspaceId: string,
+  eventId: string,
+  metric: "found" | "contacted" | "replies" | "meetingsBooked",
+  timestamp = nowIso(),
+) {
+  const day = timestamp.slice(0, 10);
+  await getDb()
+    .collection("activityEvents")
+    .doc(`${workspaceId}-${eventId}`)
+    .set({ workspaceId, day, metric, createdAt: timestamp }, { merge: true });
+}
+
 export async function listActivityDays(workspaceId: string, limit = 120) {
-  const snap = await getDb()
+  const [snap, eventSnap] = await Promise.all([
+    getDb()
     .collection("activityDays")
     .where("workspaceId", "==", workspaceId)
     .limit(Math.max(1, Math.min(limit, 400)))
-    .get();
+    .get(),
+    getDb()
+      .collection("activityEvents")
+      .where("workspaceId", "==", workspaceId)
+      .limit(5000)
+      .get(),
+  ]);
 
-  return snap.docs
+  const days = snap.docs
     .map((doc) => {
       const data = doc.data() as ActivityDay;
       return {
@@ -2829,6 +2935,32 @@ export async function listActivityDays(workspaceId: string, limit = 120) {
     })
     .filter((day) => Boolean(day.day))
     .sort((a, b) => a.day.localeCompare(b.day));
+  const byDay = new Map(days.map((day) => [day.day, day]));
+  const eventCounts = new Map<string, Record<string, number>>();
+  for (const doc of eventSnap.docs) {
+    const event = doc.data();
+    if (!event.day || !event.metric) continue;
+    const counts = eventCounts.get(event.day) || {};
+    counts[event.metric] = (counts[event.metric] || 0) + 1;
+    eventCounts.set(event.day, counts);
+  }
+  for (const [day, counts] of eventCounts) {
+    const current = byDay.get(day) || {
+      id: `${workspaceId}-${day}`,
+      workspaceId,
+      day,
+      found: 0,
+      contacted: 0,
+      replies: 0,
+      meetingsBooked: 0,
+      updatedAt: "",
+    };
+    for (const metric of ["found", "contacted", "replies", "meetingsBooked"] as const) {
+      current[metric] = Math.max(current[metric], counts[metric] || 0);
+    }
+    byDay.set(day, current);
+  }
+  return [...byDay.values()].sort((a, b) => a.day.localeCompare(b.day));
 }
 
 /** Max-merge day totals into activityDays. Safe to call before deletes. */
@@ -3072,30 +3204,54 @@ export async function acquireTickLock(
   lockId: string,
   ttlMs: number,
   minimumStartIntervalMs = 0,
-) {
+): Promise<string | null> {
   const ref = getDb().collection("automationLocks").doc(lockId);
   const now = Date.now();
+  const ownerToken = randomBytes(24).toString("hex");
 
   return getDb().runTransaction(async (transaction) => {
     const snap = await transaction.get(ref);
     const lockedAt = snap.exists ? Number(snap.data()?.lockedAt || 0) : 0;
     const lastStartedAt = snap.exists ? Number(snap.data()?.lastStartedAt || 0) : 0;
 
-    if (lockedAt && now - lockedAt < ttlMs) return false;
+    if (lockedAt && now - lockedAt < ttlMs) return null;
     if (minimumStartIntervalMs && lastStartedAt && now - lastStartedAt < minimumStartIntervalMs) {
-      return false;
+      return null;
     }
 
-    transaction.set(ref, { lockedAt: now, lastStartedAt: now, updatedAt: nowIso() });
+    transaction.set(ref, {
+      lockedAt: now,
+      lastStartedAt: now,
+      ownerToken,
+      updatedAt: nowIso(),
+    });
+    return ownerToken;
+  });
+}
+
+export async function renewTickLock(lockId: string, ownerToken: string) {
+  const ref = getDb().collection("automationLocks").doc(lockId);
+  const now = Date.now();
+
+  return getDb().runTransaction(async (transaction) => {
+    const snap = await transaction.get(ref);
+    if (snap.data()?.ownerToken !== ownerToken) return false;
+    transaction.update(ref, { lockedAt: now, updatedAt: nowIso() });
     return true;
   });
 }
 
-export async function releaseTickLock(lockId: string) {
-  await getDb()
-    .collection("automationLocks")
-    .doc(lockId)
-    .set({ lockedAt: 0, updatedAt: nowIso() }, { merge: true });
+export async function releaseTickLock(lockId: string, ownerToken: string) {
+  const ref = getDb().collection("automationLocks").doc(lockId);
+  await getDb().runTransaction(async (transaction) => {
+    const snap = await transaction.get(ref);
+    if (snap.data()?.ownerToken !== ownerToken) return;
+    transaction.update(ref, {
+      lockedAt: 0,
+      ownerToken: FieldValue.delete(),
+      updatedAt: nowIso(),
+    });
+  });
 }
 
 function inviteSafetyLockId(

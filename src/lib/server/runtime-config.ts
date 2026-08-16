@@ -66,6 +66,14 @@ export function validateRuntimeConfig(env: NodeJS.ProcessEnv = process.env) {
   if (!isLocalMode(env)) {
     required(env, "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY");
     required(env, "CLERK_SECRET_KEY");
+    if (!isAutomationDisabled(env)) {
+      const configuredCronSecret = (env.CRON_SECRET || env.AUTOMATION_JOB_SECRET)?.trim();
+      if (!configuredCronSecret) {
+        throw new Error("[config] CRON_SECRET is required unless AUTOMATION_DISABLED=true.");
+      }
+      rejectPlaceholder(configuredCronSecret, "CRON_SECRET");
+      requireEntropy(configuredCronSecret, "CRON_SECRET", 24, 10);
+    }
     return { mode: "hosted" as const, appBaseUrl: getAppBaseUrl(env) };
   }
 

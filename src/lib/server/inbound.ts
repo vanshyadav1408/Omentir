@@ -400,7 +400,7 @@ export async function processInboundMessage(input: {
   await updateLead(workspaceId, lead.id, { outreachStatus: "replied" });
 
   const isHotInterest = isHotReply(classification.intent, classification.confidence);
-  const meetingBooked = isMeetingBooked(classification.intent);
+  const meetingBooked = isMeetingBooked(classification.intent, classification.confidence);
   if (aiReplyEnrollments.length) {
     // Replies are planned as kind "reply", so they outrank queued cold invites
     // for the next free slot - but they still land inside the send window

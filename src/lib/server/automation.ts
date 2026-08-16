@@ -3,6 +3,7 @@ import "server-only";
 import {
   acquireTickLock,
   releaseTickLock,
+  renewTickLock,
   getActiveCampaigns,
   getAgent,
   getDueAgents,
@@ -123,6 +124,7 @@ const TICK_LOCK_ID = "automation-tick";
 // (lock released in finally; only a process kill leaks it) now delays
 // automation by at most 20 minutes, which the account drip safely absorbs.
 const TICK_LOCK_TTL_MS = 20 * 60 * 1000;
+const TICK_LOCK_RENEW_INTERVAL_MS = 5 * 60 * 1000;
 // A distributed cadence gate is separate from the overlap TTL. Production may
 // have several PM2 processes (and an external cron), all with their own timer.
 // 1.75 minutes tolerates scheduler jitter while keeping the intended ~2-minute
@@ -164,6 +166,9 @@ const CONNECTION_SEND_RETRY_MINUTES = 30;
 const ENROLLMENT_RETRY_MINUTES = 6 * 60;
 const ENROLLMENT_COOLDOWN_MINUTES = 24 * 60;
 const MISSING_ACCOUNT_RETRY_MINUTES = 60;
+const UNCONFIRMED_PROVIDER_SEND_PREFIX = "Unconfirmed provider send";
+
+class UnconfirmedProviderSendError extends Error {}
 
 // Human-like pacing. Every outbound action - invite, follow-up, AI reply -
 // now shares one per-account drip of at most one per SPACING_MINUTES, enforced
@@ -227,6 +232,17 @@ type TickBudget = {
 
 function randomInt(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+async function sendProviderAction<T>(action: () => Promise<T>) {
+  try {
+    return await action();
+  } catch (error) {
+    if (error instanceof UnipileResponseError) throw error;
+    throw new UnconfirmedProviderSendError(
+      error instanceof Error ? error.message : "The provider result was unavailable.",
+    );
+  }
 }
 
 function newTickBudget(): TickBudget {
@@ -649,18 +665,19 @@ async function runEnrollment(
         : "queued";
 
   if (enrollment.pendingAction) {
-    // Clear the claim and retry later. Parking on status "error" permanently
-    // removed enrollments from the due queue (error was not a due status), so
-    // a single network blip after claim killed outreach for that lead forever.
-    // If the prior send actually landed, the next attempt sees outreachStatus
-    // / already-connected and stops cleanly; Unipile rejects true duplicates.
+    // A claim proves that an action was about to be sent, not that the provider
+    // did not receive it. Never blindly retry an action whose result was lost.
     await updateCurrentEnrollment({
-      status: enrollment.status === "error" ? recoveredStatus : enrollment.status,
+      status: "error",
       pendingAction: undefined,
-      lastError: `Previous ${enrollment.pendingAction.kind} was unconfirmed; will retry.`,
+      lastError: `${UNCONFIRMED_PROVIDER_SEND_PREFIX}: previous ${enrollment.pendingAction.kind} result was lost; manual verification is required.`,
       nextActionAt: addMinutes(ENROLLMENT_COOLDOWN_MINUTES),
     });
-    return "pending-action";
+    return "unconfirmed-send";
+  }
+
+  if (enrollment.lastError?.startsWith(UNCONFIRMED_PROVIDER_SEND_PREFIX)) {
+    return "unconfirmed-send";
   }
 
   // Re-open recoverable automation failures so they re-enter the normal flow.
@@ -782,12 +799,12 @@ async function runEnrollment(
     });
     if (!claimed) return "action-claimed";
 
-    const sendResult = await sendLinkedInMessage({
+    const sendResult = await sendProviderAction(() => sendLinkedInMessage({
       accountId: account.accountId,
       providerProfileId: lead.providerProfileId,
       linkedInUrl: lead.linkedInUrl,
       body,
-    });
+    }));
     await createConversationMessage({
       workspaceId: enrollment.workspaceId,
       leadId: lead.id,
@@ -1034,12 +1051,12 @@ async function runEnrollment(
     // later enrollment sat on invite-limit with zero outreach.
     let sendResult;
     try {
-      sendResult = await sendConnectionRequest({
+      sendResult = await sendProviderAction(() => sendConnectionRequest({
         accountId: account.accountId,
         providerProfileId: lead.providerProfileId,
         linkedInUrl: lead.linkedInUrl,
         note,
-      });
+      }));
     } catch (error) {
       // Free accounts have a small monthly allowance of personalized invites;
       // once it's spent LinkedIn rejects ANY note as too_many_characters even
@@ -1052,11 +1069,11 @@ async function runEnrollment(
       ) {
         throw error;
       }
-      sendResult = await sendConnectionRequest({
+      sendResult = await sendProviderAction(() => sendConnectionRequest({
         accountId: account.accountId,
         providerProfileId: lead.providerProfileId,
         linkedInUrl: lead.linkedInUrl,
-      });
+      }));
     }
     // The account provably accepts invites, so any tallied cannot_resend_yet
     // rejections were about their recipients, not an account-wide limit.
@@ -1248,12 +1265,12 @@ async function runEnrollment(
 
   budget.messages -= 1;
   // Same as invites: only count quota after Unipile accepts the send.
-  const messageSendResult = await sendLinkedInMessage({
+  const messageSendResult = await sendProviderAction(() => sendLinkedInMessage({
     accountId: account.accountId,
     providerProfileId: lead.providerProfileId,
     linkedInUrl: lead.linkedInUrl,
     body,
-  });
+  }));
   // Record what was sent: follow-up and reply drafting read this transcript,
   // and without it every later message drafts blind and repeats itself.
   await createConversationMessage({
@@ -1647,6 +1664,23 @@ async function runCampaigns(mode: AutomationSafetyMode) {
     } catch (error) {
       const message = error instanceof Error ? error.message : "Enrollment run failed";
       const errorType = error instanceof UnipileResponseError ? error.errorType : undefined;
+
+      if (error instanceof UnconfirmedProviderSendError) {
+        const unconfirmedMessage = `${UNCONFIRMED_PROVIDER_SEND_PREFIX}: ${message}`;
+        await updateEnrollment(enrollment.workspaceId, enrollment.id, {
+          status: "error",
+          lastError: unconfirmedMessage,
+          pendingAction: undefined,
+          nextActionAt: addMinutes(ENROLLMENT_COOLDOWN_MINUTES),
+        });
+        await logAutomationRun({
+          workspaceId: enrollment.workspaceId,
+          kind: "campaign",
+          status: "error",
+          message: unconfirmedMessage,
+        });
+        continue;
+      }
 
       if (errorType === "errors/invalid_recipient") {
         // LinkedIn can never deliver to this recipient (deleted/locked
@@ -2165,25 +2199,33 @@ export async function runAutomationTick(options: RunAutomationTickOptions = {}) 
     return { skipped: true as const, reason: "Automation is disabled by safety configuration." };
   }
 
-  const acquired = await acquireTickLock(
+  const ownerToken = await acquireTickLock(
     TICK_LOCK_ID,
     TICK_LOCK_TTL_MS,
     options.scheduled ? TICK_SCHEDULE_MIN_INTERVAL_MS : 0,
   ).catch((error) => {
     console.error("[automation] failed to acquire tick lock:", error);
-    return false;
+    return null;
   });
-  if (!acquired) {
+  if (!ownerToken) {
     return {
       skipped: true as const,
       reason: "Another automation tick is still running or started recently.",
     };
   }
 
+  const renewTimer = setInterval(() => {
+    void renewTickLock(TICK_LOCK_ID, ownerToken).catch((error) => {
+      console.error("[automation] failed to renew tick lock:", error);
+    });
+  }, TICK_LOCK_RENEW_INTERVAL_MS);
+  renewTimer.unref();
+
   try {
     return await runAutomationTickInner(mode);
   } finally {
-    await releaseTickLock(TICK_LOCK_ID).catch((error) => {
+    clearInterval(renewTimer);
+    await releaseTickLock(TICK_LOCK_ID, ownerToken).catch((error) => {
       console.error("[automation] failed to release tick lock:", error);
     });
   }

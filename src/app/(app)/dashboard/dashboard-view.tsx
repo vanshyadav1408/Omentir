@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { setAverageTicketSizeAction } from "@/app/actions";
 import AnalysisChart from "@/app/analysis-chart";
@@ -28,6 +28,8 @@ import {
   leadStage,
 } from "@/lib/outreach-stage";
 import { TextField } from "@/app/ui/text-field";
+import { useWorkspaceTimeZone } from "@/app/workspace-time-zone";
+import { zonedDayKey, zonedMonthStart } from "@/lib/time-zone";
 
 type DashboardViewProps = {
   agents: Agent[];
@@ -52,7 +54,7 @@ const RANGE_OPTIONS: Array<{ key: RangeKey; label: string; days: number }> = [
   { key: "7d", label: "7 days", days: 7 },
   { key: "30d", label: "30 days", days: 30 },
   { key: "3m", label: "3 months", days: 90 },
-  { key: "month", label: "This month", days: 31 },
+  { key: "month", label: "This month", days: 0 },
 ];
 
 const selectLinkedInThreads = (data: Record<string, unknown>) =>
@@ -133,6 +135,7 @@ export default function DashboardView({
     conversations: loadedConversations,
     activityDays: loadedActivityDays,
   } = dashboardResource.value;
+  const reloadDashboard = dashboardResource.reload;
   const dashboardLoading = dashboardResource.loading;
   const linkedInInboxResource = useSidebarResource(
     LINKEDIN_INBOX_RESOURCE,
@@ -140,10 +143,27 @@ export default function DashboardView({
     selectLinkedInThreads,
   );
   const loadedLinkedInThreads = linkedInInboxResource.value;
+  const reloadLinkedInInbox = linkedInInboxResource.reload;
   const repliesLoading = linkedInInboxResource.loading || dashboardLoading;
   const [range, setRange] = useState<RangeKey>("30d");
   const [now] = useState(() => Date.now());
+  const timeZone = useWorkspaceTimeZone();
   const activeRange = RANGE_OPTIONS.find((option) => option.key === range) ?? RANGE_OPTIONS[1];
+  const currentMonthDay = Number(zonedDayKey(now, timeZone).slice(8, 10)) || 1;
+  const rangeStart = useMemo(() => {
+    if (activeRange.key !== "month") {
+      return now - activeRange.days * 24 * 60 * 60 * 1000;
+    }
+    return zonedMonthStart(now, timeZone);
+  }, [activeRange, now, timeZone]);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      reloadDashboard();
+      reloadLinkedInInbox();
+    }, 15_000);
+    return () => window.clearInterval(interval);
+  }, [reloadDashboard, reloadLinkedInInbox]);
 
   // Average ticket size lives on the product profile. Mirror it locally so the
   // pipeline card updates instantly when set from the modal, before the server
@@ -174,7 +194,7 @@ export default function DashboardView({
   }
 
   const stats = useMemo(() => {
-    const cutoff = now - activeRange.days * 24 * 60 * 60 * 1000;
+    const cutoff = rangeStart;
     const inRange = <T extends { createdAt?: string; updatedAt?: string }>(item: T) => {
       const stamp = item.createdAt || item.updatedAt;
       return stamp ? new Date(stamp).getTime() >= cutoff : false;
@@ -200,7 +220,7 @@ export default function DashboardView({
     ).length;
 
     return { hotOpportunities, invitationsSent, messagesSent };
-  }, [loadedAgents, loadedGroups, loadedLeads, loadedEnrollments, activeRange, now]);
+  }, [loadedAgents, loadedGroups, loadedLeads, loadedEnrollments, rangeStart]);
 
   // Pipeline = current hot opportunities × average deal size, not all leads
   // ever discovered — the card estimates open pipeline, not lifetime volume.
@@ -456,6 +476,11 @@ export default function DashboardView({
                 conversations={loadedConversations}
                 enrollments={loadedEnrollments}
                 activityDays={loadedActivityDays}
+                maxDays={
+                  activeRange.key === "month"
+                    ? currentMonthDay
+                    : activeRange.days
+                }
               />
             )}
           </div>

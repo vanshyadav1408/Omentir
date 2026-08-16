@@ -294,12 +294,14 @@ export default function MessagesView({
     selectMessageData,
   );
   const { conversations: loadedConversations, leads: loadedLeads } = messageDataResource.value;
+  const reloadMessageData = messageDataResource.reload;
   const linkedInInboxResource = useSidebarResource(
     "linkedinInbox",
     { threads: linkedInThreads, senderAccounts },
     selectLinkedInInbox,
   );
   const linkedInInbox = linkedInInboxResource.value;
+  const reloadLinkedInInbox = linkedInInboxResource.reload;
   const isInitialLoading = messageDataResource.loading || linkedInInboxResource.loading;
   const loadedLinkedInThreads = linkedInInbox.threads;
   const loadedSenderAccounts = linkedInInbox.senderAccounts;
@@ -345,7 +347,10 @@ export default function MessagesView({
   }, [linkedInInboxError]);
 
   useEffect(() => {
-    const refresh = () => router.refresh();
+    const refresh = () => {
+      reloadMessageData();
+      reloadLinkedInInbox();
+    };
     const interval = window.setInterval(refresh, 5000);
     window.addEventListener("focus", refresh);
     document.addEventListener("visibilitychange", refresh);
@@ -354,7 +359,7 @@ export default function MessagesView({
       window.removeEventListener("focus", refresh);
       document.removeEventListener("visibilitychange", refresh);
     };
-  }, [router]);
+  }, [reloadMessageData, reloadLinkedInInbox]);
 
   const filtered = useMemo(() => {
     return threads.filter((thread) => {
@@ -904,6 +909,7 @@ function Composer({
       const formData = new FormData();
       formData.set("chatId", selected.chatId);
       formData.set("accountId", selected.accountId);
+      if (selected.lead?.id) formData.set("leadId", selected.lead.id);
       formData.set("body", message);
       for (const file of attachments) {
         formData.append("attachments", file);

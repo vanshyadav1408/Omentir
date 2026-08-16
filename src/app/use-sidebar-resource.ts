@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { adoptEarlyFetch } from "@/app/sidebar-early-fetch";
 
 // Session-wide cache of /api/app/sidebar-data responses, split by resource so
@@ -163,5 +163,9 @@ export function useSidebarResource<T>(
     };
   }, [enabled, reloadCount, resource, select]);
 
-  return { value, loading, reload: () => setReloadCount((current) => current + 1) };
+  const reload = useCallback(() => {
+    setReloadCount((current) => current + 1);
+  }, []);
+
+  return { value, loading, reload };
 }

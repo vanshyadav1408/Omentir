@@ -10,6 +10,7 @@ import {
   listCampaignEnrollmentPreviews,
   listCampaigns,
   listConversations,
+  listConversationsForActivity,
   listGroups,
   listLeadAgentRefs,
   listLeadDashboardPreviews,
@@ -45,7 +46,7 @@ async function loadFirestoreResource(resource: string, workspaceId: string) {
     const [leads, enrollments, conversations] = await Promise.all([
       listLeadDashboardPreviews(workspaceId),
       listCampaignEnrollmentPreviews(workspaceId),
-      listConversations(workspaceId),
+      listConversationsForActivity(workspaceId),
     ]);
     await reconcileActivityFromLive(workspaceId, {
       leads,

@@ -1,6 +1,7 @@
 import type { CampaignEnrollment, CampaignReplyHandling, ReplyIntent } from "./types";
 
 export const HOT_INTEREST_CONFIDENCE = 0.7;
+export const MEETING_BOOKED_CONFIDENCE = 0.7;
 
 export type LeadOutcomeNotificationKind = "interest" | "meeting";
 
@@ -20,8 +21,8 @@ export function isHotReply(intent: ReplyIntent | undefined, confidence: number |
   return intent === "hot" && (confidence || 0) >= HOT_INTEREST_CONFIDENCE;
 }
 
-export function isMeetingBooked(intent: ReplyIntent | undefined) {
-  return intent === "meeting_booked";
+export function isMeetingBooked(intent: ReplyIntent | undefined, confidence?: number) {
+  return intent === "meeting_booked" && (confidence ?? 1) >= MEETING_BOOKED_CONFIDENCE;
 }
 
 export function asksAboutPricing(message: string) {
@@ -55,7 +56,7 @@ export function shouldStopForReply(input: {
   confidence: number | undefined;
 }) {
   if (input.replyHandling === "handoff") return true;
-  if (isTerminalReplyIntent(input.intent) || isMeetingBooked(input.intent)) return true;
+  if (isTerminalReplyIntent(input.intent) || isMeetingBooked(input.intent, input.confidence)) return true;
   return input.replyHandling !== "ai_until_booked" && isHotReply(input.intent, input.confidence);
 }
 

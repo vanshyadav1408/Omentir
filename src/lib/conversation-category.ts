@@ -1,15 +1,19 @@
 import type { ReplyIntent } from "@/lib/server/types";
+import { MEETING_BOOKED_CONFIDENCE } from "@/lib/server/reply-automation-policy";
 
 export type ConversationCategory = "successful" | "interested" | "follow" | "denied";
 
 export function conversationHasMeetingBooked(conversation?: {
   replyIntent?: ReplyIntent;
+  replyIntentConfidence?: number;
   replyIntentAt?: string;
   meetingBookedAt?: string;
 }) {
   return Boolean(
     conversation?.meetingBookedAt ||
-      (conversation?.replyIntent === "meeting_booked" && conversation.replyIntentAt),
+      (conversation?.replyIntent === "meeting_booked" &&
+        (conversation.replyIntentConfidence ?? 1) >= MEETING_BOOKED_CONFIDENCE &&
+        conversation.replyIntentAt),
   );
 }
 
