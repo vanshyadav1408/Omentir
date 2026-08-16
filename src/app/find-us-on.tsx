@@ -366,6 +366,21 @@ const LISTINGS = [
     },
   },
   {
+    href: "https://launchbuck.com/p/omentir",
+    label: "Omentir - Featured on LaunchBuck",
+    width: 168,
+    height: 49,
+    src: "https://launchbuck.com/badges/pill-dark.png",
+  },
+  {
+    href: "https://launchkiwi.com/p/omentir",
+    label: "Featured on LaunchKiwi",
+    width: 198,
+    height: 62,
+    src: "https://launchkiwi.com/badge-dark.svg",
+    rel: "noopener",
+  },
+  {
     href: "https://indieai.directory/",
     label: "Listed on IndieAI Directory",
     src: null,
