@@ -319,6 +319,27 @@ const LISTINGS = [
     src: "https://www.indieneed.com/api/badge/eaad1638-a77f-4a79-b1b4-a199bfd342fd?variant=review&theme=dark",
   },
   {
+    href: "https://showmebest.ai",
+    label: "Featured on ShowMeBestAI",
+    width: 220,
+    height: 60,
+    src: "https://showmebest.ai/badge/feature-badge-dark.webp",
+  },
+  {
+    href: "https://theresatoolfor.com/projects/omentir?utm_source=badge",
+    label: "Featured on There's A Tool For",
+    width: 200,
+    height: 44,
+    src: "https://r2.direasy-multi-tenant.focusapps.app/uploads/616d0b1a-3979-4b8c-94d1-b4f1fedd3ead/1783951420330/7dzj96cw6vj/featured-on-dark.svg",
+  },
+  {
+    href: "https://devtoolsdir.com/projects/omentir?utm_source=badge",
+    label: "Featured on Dev Tools Dir",
+    width: 200,
+    height: 44,
+    src: "https://r2.direasy-multi-tenant.focusapps.app/uploads/616d0b1a-3979-4b8c-94d1-b4f1fedd3ead/1783951420330/7dzj96cw6vj/featured-on-dark.svg",
+  },
+  {
     href: "https://indieai.directory/",
     label: "Listed on IndieAI Directory",
     src: null,
