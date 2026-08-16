@@ -284,6 +284,13 @@ const LISTINGS = [
     src: "https://findly.tools/badges/findly-tools-badge-dark.svg",
   },
   {
+    href: "https://lift-off.sh/p/omentir",
+    label: "LiftOff launch badge",
+    width: 200,
+    height: 54,
+    src: "https://lift-off.sh/images/badges/badgeLaunchedDark.webp",
+  },
+  {
     href: "https://indieai.directory/",
     label: "Listed on IndieAI Directory",
     src: null,
