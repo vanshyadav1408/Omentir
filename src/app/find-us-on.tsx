@@ -312,6 +312,13 @@ const LISTINGS = [
     src: "https://verifieddr.com/badge/omentir-com-dark.svg?style=minimal",
   },
   {
+    href: "https://www.indieneed.com/api/badge/click/eaad1638-a77f-4a79-b1b4-a199bfd342fd?to=review",
+    label: "Leave a review for Omentir on Indie Need",
+    width: 250,
+    height: 54,
+    src: "https://www.indieneed.com/api/badge/eaad1638-a77f-4a79-b1b4-a199bfd342fd?variant=review&theme=dark",
+  },
+  {
     href: "https://indieai.directory/",
     label: "Listed on IndieAI Directory",
     src: null,
