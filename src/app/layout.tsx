@@ -70,6 +70,11 @@ export const metadata: Metadata = {
   icons: {
     icon: "/favicon.ico",
   },
+  verification: {
+    other: {
+      "verifiedtools-verify": "7cef40024fb6d48f8f92ead2500a8ae78b9aa4f89648512e",
+    },
+  },
 };
 
 export default async function RootLayout({
