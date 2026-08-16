@@ -284,13 +284,6 @@ const LISTINGS = [
     src: "https://findly.tools/badges/findly-tools-badge-dark.svg",
   },
   {
-    href: "https://directoryhunt.org/",
-    label: "Featured on DirectoryHunt.org",
-    width: 225,
-    height: 61,
-    src: "https://directoryhunt.org/assets/Badges/featured-dark.svg",
-  },
-  {
     href: "https://indieai.directory/",
     label: "Listed on IndieAI Directory",
     src: null,
