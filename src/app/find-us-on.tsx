@@ -291,6 +291,13 @@ const LISTINGS = [
     src: "https://lift-off.sh/images/badges/badgeLaunchedDark.webp",
   },
   {
+    href: "https://startupfa.st",
+    label: "Powered by Startup Fast",
+    width: 150,
+    height: 44,
+    src: "https://startupfa.st/images/badges/powered-by-dark.svg",
+  },
+  {
     href: "https://indieai.directory/",
     label: "Listed on IndieAI Directory",
     src: null,
