@@ -298,6 +298,13 @@ const LISTINGS = [
     src: "https://startupfa.st/images/badges/powered-by-dark.svg",
   },
   {
+    href: "https://turbo0.com/item/omentir",
+    label: "Listed on Turbo0",
+    width: 200,
+    height: 54,
+    src: "https://img.turbo0.com/badge-listed-dark.svg",
+  },
+  {
     href: "https://indieai.directory/",
     label: "Listed on IndieAI Directory",
     src: null,
