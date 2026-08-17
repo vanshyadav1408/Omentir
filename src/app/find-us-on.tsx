@@ -242,7 +242,7 @@ const LISTINGS = [
     src: "https://launch-list.org/badges/svg/launch_list_badge_live.svg",
   },
   {
-    href: "https://buildrship.xyz/product/omentir",
+    href: "https://buildrship.xyz/products/omentir-5jzb",
     label: "Featured on Buildrship",
     width: 130,
     height: 46,
