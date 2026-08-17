@@ -24,6 +24,7 @@ export interface BlogPostTemplateProps {
   };
   bannerSrc: string;
   bannerAlt?: string;
+  bannerAspectRatio?: "2/1" | "3/2";
   tocItems: readonly TocItem[];
   faqItems?: ReadonlyArray<{ question: string; answer: string }>;
   visibleFaqItems?: ReadonlyArray<{ question: ReactNode; answer: ReactNode }>;
@@ -48,6 +49,7 @@ export default function BlogPostTemplate({
   author = { name: "Vansh Yadav", avatarUrl: "/founder.jpg" },
   bannerSrc,
   bannerAlt = "Blog post banner image",
+  bannerAspectRatio,
   tocItems,
   faqItems = [],
   visibleFaqItems,
@@ -180,6 +182,7 @@ export default function BlogPostTemplate({
           updatedDateTime={normalizeDate(updatedDate)}
           bannerSrc={canonicalBannerSrc}
           bannerAlt={canonicalBannerAlt}
+          bannerAspectRatio={bannerAspectRatio}
           slug={slug}
           category={category}
           title={canonicalTitle}

@@ -50,6 +50,17 @@ export function liveBlogs(now?: Date): BlogItem[] {
 
 export const ALL_BLOGS: BlogItem[] = [
   {
+    slug: "x-marketing-and-sales",
+    title: "X Marketing and Sales: A Practical Guide to Winning Customers on Twitter",
+    description: "Learn how to market and sell on X with a clear profile, useful content, thoughtful replies, honest DMs, and a practical tool stack.",
+    publishedDate: "August 17, 2026",
+    updatedDate: "August 17, 2026",
+    category: "Guides",
+    readTime: "18 min read",
+    bannerSrc: "/blogs/x-marketing-and-sales/cover-attached.avif",
+    bannerAlt: "X marketing and sales workflow connecting conversations, content, and a sales funnel",
+  },
+  {
     slug: "skills-for-ai-agents",
     title: "Skills for AI Agents: Complete Guide to Capabilities, Tasks, and Discovery",
     description: "Learn what skills for AI agents are, how agent architectures use them, essential skill examples for sales, coding, and research, and where to find ready-to-use skills.",

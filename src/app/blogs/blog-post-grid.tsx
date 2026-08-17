@@ -23,6 +23,7 @@ export interface BlogPostGridProps {
   category: string;
   title: string;
   tocItems: readonly TocItem[];
+  bannerAspectRatio?: "2/1" | "3/2";
   children: React.ReactNode;
 }
 
@@ -35,6 +36,7 @@ export default function BlogPostGrid({
   bannerSrc,
   bannerAlt,
   tocItems,
+  bannerAspectRatio = "2/1",
   children,
 }: BlogPostGridProps) {
   return (
@@ -69,7 +71,11 @@ export default function BlogPostGrid({
         </div>
 
         {/* Blog Banner Image — stay below fixed marketing header */}
-        <div className="relative z-0 mb-12 aspect-[2/1] w-full overflow-hidden rounded-xl bg-[var(--md-sys-color-surface-container-low)]">
+        <div
+          className={`relative z-0 mb-12 w-full overflow-hidden rounded-xl bg-[var(--md-sys-color-surface-container-low)] ${
+            bannerAspectRatio === "3/2" ? "aspect-[3/2]" : "aspect-[2/1]"
+          }`}
+        >
           <Image
             src={bannerSrc}
             alt={bannerAlt}
