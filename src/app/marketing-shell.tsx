@@ -114,9 +114,13 @@ export function HeroGridBackdrop({ height = "h-[175vh]" }: { height?: string }) 
 const footerColumns: Array<[string, ...Array<[label: string, href: string]>]> = [
   [
     "Product",
+    ["Features", "/features"],
     ["Pricing", "/pricing"],
     ["For Agents", "/for-agents"],
     ["MCP Server", "/mcp-server"],
+    ["Use cases", "/use-cases"],
+    ["Founder outbound", "/use-cases/outbound-for-founders"],
+    ["Book LinkedIn demos", "/use-cases/book-linkedin-demos"],
     ["Blogs", "/blogs"],
     ["Open Source", "/blogs/omentir-is-now-open-source"],
   ],
@@ -140,6 +144,7 @@ const footerColumns: Array<[string, ...Array<[label: string, href: string]>]> = 
   ],
   [
     "Alternatives",
+    ["All matchups", "/comparisons"],
     ["Gojiberry Alternatives", "/comparisons/omentir-vs-gojiberry"],
     ["Apollo Alternatives", "/comparisons/omentir-vs-apollo"],
     ["Instantly Alternatives", "/comparisons/omentir-vs-instantly"],
@@ -149,6 +154,10 @@ const footerColumns: Array<[string, ...Array<[label: string, href: string]>]> = 
     ["Lusha Alternatives", "/comparisons/omentir-vs-lusha"],
     ["Clay Alternatives", "/comparisons/omentir-vs-clay"],
     ["Cognism Alternatives", "/comparisons/omentir-vs-cognism"],
+    ["HeyReach Alternatives", "/comparisons/omentir-vs-heyreach"],
+    ["Lemlist Alternatives", "/comparisons/omentir-vs-lemlist"],
+    ["Sales Navigator Alternatives", "/comparisons/omentir-vs-sales-navigator"],
+    ["Category roundups", "/alternatives"],
   ],
 ];
 

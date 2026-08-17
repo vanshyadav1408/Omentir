@@ -1,0 +1,415 @@
+import type { SeoContentPage } from "../seo-content/types";
+
+/**
+ * Use-case pages. One motion per slug.
+ * One TypeScript route renders these: `/use-cases/[slug]/page.tsx`.
+ */
+export const ALL_USE_CASES: SeoContentPage[] = [
+  {
+    "slug": "replace-first-sdr",
+    "title": "Replace the first SDR",
+    "description": "When an AI LinkedIn workspace can delay a first sales hire, and when that hire is still the cheaper move.",
+    "summary": "AI outbound versus hiring the first SDR, with honest limits.",
+    "publishedDate": "August 17, 2026",
+    "updatedDate": "August 17, 2026",
+    "layout": "timeline",
+    "keywords": [
+      "replace SDR with AI",
+      "AI SDR versus hiring",
+      "first sales hire LinkedIn"
+    ],
+    "highlights": [
+      "Delay the hire, do not skip judgment",
+      "One account to start",
+      "Human on replies"
+    ],
+    "verdict": "Omentir can cover discovery, first-touch LinkedIn, and draft replies for a founder or a tiny team. It does not replace a person who runs a territory, a CRM, and a forecast.",
+    "phases": [
+      {
+        "title": "Prove the offer gets replies",
+        "detail": "If no one answers a careful founder note, an SDR will not save you. Run one ICP for two weeks. If the promise is wrong, hiring multiplies the mistake."
+      },
+      {
+        "title": "Automate the list, not the close",
+        "detail": "Let a finder or Steal Customers refill the group. Keep send windows and daily limits conservative. The person who takes the meeting still writes the interesting replies."
+      },
+      {
+        "title": "Hire when the inbox is the bottleneck",
+        "detail": "When qualified threads wait a day because you are building product, hire. Software that drafts is cheaper than a full-time SDR. Software that you ignore is more expensive than either."
+      }
+    ],
+    "sections": [
+      {
+        "id": "the-math",
+        "heading": "The hire is a calendar, not a logo",
+        "paragraphs": [
+          "A first SDR costs salary, ramp, tools, and management. An AI workspace costs a subscription and your review time. The comparison is only honest if you count the hours you will still spend on replies. Omentir does not attend the demo.",
+          "Keep the SDR motion if you need phone, email sequences at domain scale, or a multi-seat team with a manager. Those are different jobs. This page is about LinkedIn conversations before a pipeline exists."
+        ]
+      },
+      {
+        "id": "what-not-to-automate",
+        "heading": "What you should not hand to an agent",
+        "paragraphs": [
+          "Pricing exceptions, custom security answers, and anything you would not put in writing on your own profile. Draft approval exists because the model will occasionally overclaim. If you turn that off and walk away, you bought a risk, not a hire."
+        ]
+      }
+    ],
+    "faqItems": [
+      {
+        "question": "Will this replace an SDR team of five?",
+        "answer": "No. It can remove the first-list-and-first-note work for a small team. Coordinated territories, CRM hygiene, and live calls stay human."
+      },
+      {
+        "question": "What if I already hired an SDR?",
+        "answer": "Give them the workspace instead of a CSV plus a sequencer. The useful split is: software finds and drafts, the SDR takes threads that matter."
+      }
+    ],
+    "relatedLinks": [
+      {
+        "label": "Outbound for founders",
+        "href": "/use-cases/outbound-for-founders",
+        "description": "The version where you are still the closer."
+      },
+      {
+        "label": "Open source AI SDR",
+        "href": "/use-cases/open-source-ai-sdr",
+        "description": "When inspectable code is part of the hire decision."
+      },
+      {
+        "label": "AI LinkedIn outreach",
+        "href": "/features/ai-linkedin-outreach",
+        "description": "How sends and follow-ups actually run."
+      }
+    ],
+    "ctaTitle": "Run the two-week test before you post the job",
+    "ctaBody": "If the ICP replies, you know what the hire would scale. If it does not, rewrite the offer."
+  },
+  {
+    "slug": "book-linkedin-demos",
+    "title": "Book demos on LinkedIn",
+    "description": "How Omentir turns a LinkedIn reply into a booked call without dropping a calendar link in the first note.",
+    "summary": "Reply handling and calendar handoff for LinkedIn conversations.",
+    "publishedDate": "August 17, 2026",
+    "updatedDate": "August 17, 2026",
+    "layout": "timeline",
+    "keywords": [
+      "book demos from LinkedIn",
+      "LinkedIn demo booking",
+      "LinkedIn calendar handoff"
+    ],
+    "highlights": [
+      "Interest before the link",
+      "Calendly or Cal.com",
+      "You still own the call"
+    ],
+    "verdict": "A booked demo is the third or fourth message, not the connection request. Omentir can continue a thread until interest, or until a time is confirmed, if you set that mode on purpose.",
+    "phases": [
+      {
+        "title": "Earn a real reply",
+        "detail": "The first note names a specific reason: a role, a post, a comment on a competitor. It does not ask for thirty minutes. If the only CTA is a calendar, you skipped the conversation."
+      },
+      {
+        "title": "Classify the reply before you schedule",
+        "detail": "Interesting is not intent. A question about pricing is closer. A 'not now' is a nurture, not a bump. Omentir can stop at qualified interest so you take the thread, or continue toward a booking link you already trust."
+      },
+      {
+        "title": "Send the link once, then confirm in the thread",
+        "detail": "Use a Calendly or Cal.com URL from My Product or the campaign. After they pick a time, say so in LinkedIn. Do not rely on the invite email alone. The thread is how they remember why they said yes."
+      }
+    ],
+    "sections": [
+      {
+        "id": "what-omentir-does",
+        "heading": "What the product actually does at booking time",
+        "paragraphs": [
+          "Campaigns can hand off on the first reply, keep drafting until the prospect shows interest, or keep going until a meeting is confirmed. The last mode needs a scheduling link. It will not invent a calendar product. It uses yours.",
+          "The hosted guarantee counts bookings under its own rules. This page is about the conversation design, not the refund math. Read the Minimum Booking Guarantee if that is the promise you are buying."
+        ]
+      },
+      {
+        "id": "when-to-keep-the-thread",
+        "heading": "When you should refuse the calendar",
+        "paragraphs": [
+          "If they asked a product question, answer it. If they said they are in a freeze, ask when to come back. Pushing a link through a soft reply trains people to ignore you. The inbox exists so a human can make that call."
+        ]
+      }
+    ],
+    "faqItems": [
+      {
+        "question": "Does Omentir book the calendar for me?",
+        "answer": "No. It can share the scheduling link you configured after the prospect shows interest, and it can email you when a meeting is confirmed. You still take the call."
+      },
+      {
+        "question": "Can I send the calendar in the connection request?",
+        "answer": "You can type anything. You should not. Connection requests that read like meeting invites get ignored. Earn a reply first."
+      }
+    ],
+    "relatedLinks": [
+      {
+        "label": "Turn replies into demos",
+        "href": "/features/demo-booking",
+        "description": "Reply modes and scheduling links."
+      },
+      {
+        "label": "Unified inbox",
+        "href": "/features/unified-inbox",
+        "description": "Where the thread lives."
+      },
+      {
+        "label": "Minimum Booking Guarantee",
+        "href": "/minimum-booking-guarantee",
+        "description": "How hosted bookings are counted."
+      }
+    ],
+    "ctaTitle": "Add a calendar link you actually use",
+    "ctaBody": "Set Calendly or Cal.com on My Product before you turn on booking-mode replies."
+  },
+  {
+    "slug": "prospect-commenters",
+    "title": "Prospect competitor commenters",
+    "description": "Steal Customers finds people who already comment on competitor posts, keeps the post context, and drafts LinkedIn outreach from that signal.",
+    "summary": "Turn competitor LinkedIn commenters into leads you can actually cite.",
+    "publishedDate": "August 17, 2026",
+    "updatedDate": "August 17, 2026",
+    "layout": "timeline",
+    "keywords": [
+      "competitor commenter prospecting",
+      "Steal Customers LinkedIn",
+      "prospect people who comment on competitors"
+    ],
+    "highlights": [
+      "Commenters, not employees",
+      "Post text travels with the lead",
+      "Two or three sources"
+    ],
+    "verdict": "Use this when buyers already argue under a competitor's posts. Skip it when those pages are silent or the comments are vendors pitching each other.",
+    "phases": [
+      {
+        "title": "Pick sources that actually post",
+        "detail": "Two or three competitor company pages, plus a founder profile if they write in public. A long list of quiet logos produces nothing. Steal Customers will not invent intent on an empty feed."
+      },
+      {
+        "title": "Throw away the vendor pile",
+        "detail": "Read the first batch of commenters. If they are agencies selling the same thing, change sources. The lead is the person who sounded like a buyer, not everyone who left a word."
+      },
+      {
+        "title": "Cite the post in the first note",
+        "detail": "Outreach can name the comment. That is the whole advantage over a title-only list. If you strip the context and send a template, you paid for a signal you did not use."
+      }
+    ],
+    "sections": [
+      {
+        "id": "not-a-crawl",
+        "heading": "This is not a website crawl",
+        "paragraphs": [
+          "Prompt-led crawlers start from language and the public web. Steal Customers starts from LinkedIn posts you named. The output is a person plus the comment that made them interesting. If you needed a TAM scrape, use a classic lead finder or a different category of tool."
+        ]
+      },
+      {
+        "id": "run-both",
+        "heading": "Run it beside an ICP finder, not instead",
+        "paragraphs": [
+          "Commenter leads are warmer and noisier. Title-and-industry leads are cleaner and colder. Most teams need both. Do not force Steal Customers on a market where competitors never post."
+        ]
+      }
+    ],
+    "faqItems": [
+      {
+        "question": "Does this scrape private comments?",
+        "answer": "No. It uses public posts and public comments on the sources you configure, subject to LinkedIn access and product limits."
+      },
+      {
+        "question": "Can Claude create a Steal Customers agent?",
+        "answer": "Yes, after My Product is complete and LinkedIn is connected. Pass competitor company URLs and optional founder or employee profile URLs. Do not ask it to invent sources."
+      }
+    ],
+    "relatedLinks": [
+      {
+        "label": "Steal Customers",
+        "href": "/features/steal-customers",
+        "description": "Product page for the agent mode."
+      },
+      {
+        "label": "Gojiberry alternatives",
+        "href": "/comparisons/omentir-vs-gojiberry",
+        "description": "Prompt crawl versus commenter signal."
+      },
+      {
+        "label": "Lead finders",
+        "href": "/features/lead-finders",
+        "description": "The ICP motion to run in parallel."
+      }
+    ],
+    "ctaTitle": "Name two competitors who actually post",
+    "ctaBody": "If you cannot, start with a classic lead finder. Steal Customers needs a live feed."
+  },
+  {
+    "slug": "outbound-for-founders",
+    "title": "Outbound for founders",
+    "description": "A LinkedIn outbound motion a founder can run without hiring an SDR. One account, one ICP, replies in one inbox.",
+    "summary": "Founder-led LinkedIn outbound without a first sales hire.",
+    "publishedDate": "August 17, 2026",
+    "updatedDate": "August 17, 2026",
+    "layout": "timeline",
+    "keywords": [
+      "LinkedIn outbound for founders",
+      "founder LinkedIn outreach",
+      "solo founder SDR"
+    ],
+    "highlights": [
+      "Your profile, not a sender pool",
+      "15 minutes of review",
+      "Replies stay in one inbox"
+    ],
+    "verdict": "Use this when you are the closer and you still need a list that appears every morning. Skip it if you already have a team whose only job is sequences.",
+    "phases": [
+      {
+        "title": "Write the buyer in two sentences",
+        "detail": "Who feels the pain, who can pay, who is a waste even if the title looks senior. Put that in My Product before you create a finder. A vague offer produces notes you will be ashamed to send from your own name."
+      },
+      {
+        "title": "One finder, fifty leads, then send",
+        "detail": "Create one classic lead finder. Review the first fifty people as if you will message them tomorrow. Reject patterns, not individuals. Then start a small campaign with conservative daily limits."
+      },
+      {
+        "title": "Own the inbox for two weeks",
+        "detail": "Every reply is yours. Approve drafts or type the next sentence yourself. Measure meetings, not invites sent. If ignores pile up, change the promise before you raise volume."
+      }
+    ],
+    "sections": [
+      {
+        "id": "what-founders-actually-buy",
+        "heading": "What you are buying is time on your own name",
+        "paragraphs": [
+          "Founders search for an AI SDR when calendar gaps show up and hiring feels early. The useful object is not a robot that 'does sales.' It is a workspace that finds ICP-fit people on LinkedIn, drafts notes from your product brief, and leaves the conversation where you can see it.",
+          "Omentir sends from the LinkedIn account you connect. That is the point and the constraint. You cannot hide behind a pool of unknown senders. If the note is wrong, it is wrong on your profile."
+        ]
+      },
+      {
+        "id": "when-this-fails",
+        "heading": "When founder outbound fails on purpose",
+        "paragraphs": [
+          "It fails when the ICP is 'anyone in SaaS,' when My Product reads like a homepage, and when you treat the first week as a volume test. LinkedIn will throttle a quiet account that suddenly sends. A weak promise at a higher cap just disappoints more people.",
+          "It also fails if you needed email deliverability, not LinkedIn conversations. Warm a domain somewhere else. This motion is for people you can actually see on LinkedIn."
+        ]
+      }
+    ],
+    "faqItems": [
+      {
+        "question": "Can I run this in fifteen minutes a day?",
+        "answer": "After setup, yes: review new leads, approve or edit reply drafts, and pause anything that looks off. Setup itself takes a focused hour because My Product and the first finder have to be specific."
+      },
+      {
+        "question": "Do I need Sales Navigator?",
+        "answer": "Not to start. Omentir discovery runs from the ICP you write and from competitor commenters in Steal Customers. Sales Navigator is still useful if you already live in those filters and want to import a hand-built list later."
+      },
+      {
+        "question": "What if I am not the closer?",
+        "answer": "Then this page is the wrong use case. Hand the inbox to whoever takes the meeting, or wait until that person exists. Founder outbound only works if the founder will answer."
+      }
+    ],
+    "relatedLinks": [
+      {
+        "label": "Lead finders",
+        "href": "/features/lead-finders",
+        "description": "How ICP filters become a list."
+      },
+      {
+        "label": "Reply drafts you approve",
+        "href": "/features/reply-drafts",
+        "description": "What happens after someone writes back."
+      },
+      {
+        "label": "Book demos on LinkedIn",
+        "href": "/use-cases/book-linkedin-demos",
+        "description": "The meeting handoff, not the list."
+      }
+    ],
+    "ctaTitle": "Brief one ICP from your own profile",
+    "ctaBody": "If you cannot name the buyer in two sentences, do not start a campaign yet."
+  },
+  {
+    "slug": "open-source-ai-sdr",
+    "title": "Open source AI SDR",
+    "description": "Omentir is MIT licensed. Use the hosted product, or run the same LinkedIn workspace on your own machine when inspectable code is the buying reason.",
+    "summary": "An inspectable LinkedIn sales agent, hosted or self-hosted.",
+    "publishedDate": "August 17, 2026",
+    "updatedDate": "August 17, 2026",
+    "layout": "timeline",
+    "keywords": [
+      "open source AI SDR",
+      "open source LinkedIn outreach",
+      "self-host AI sales agent"
+    ],
+    "highlights": [
+      "MIT license",
+      "Hosted or Docker",
+      "MCP and REST included"
+    ],
+    "verdict": "Pick Omentir for the license if a reviewer will read the repo. Skip the license pitch if you only wanted a hosted button. The motion is the same either way: My Product, finders, campaigns, inbox.",
+    "phases": [
+      {
+        "title": "Decide what inspectable means for you",
+        "detail": "Some teams need to know what the agent is allowed to send. Some need to self-host later. Some just sleep better with a public repo. Name which one you are. Do not buy open source as a vibe."
+      },
+      {
+        "title": "Start hosted unless you must not",
+        "detail": "The hosted product at omentir.com runs the same code. Self-host when data residency or a security review requires it. Docker is the path. Do not fork on day one."
+      },
+      {
+        "title": "Connect an operator you already use",
+        "detail": "Claude, ChatGPT, Cursor, and scripts talk to Omentir over MCP or REST. They never get your LinkedIn password. That split is the architecture, not a slogan."
+      }
+    ],
+    "sections": [
+      {
+        "id": "not-a-wrapper",
+        "heading": "Open source is not a ChatGPT wrapper",
+        "paragraphs": [
+          "The application includes lead discovery, campaign pacing, reply handling, and the agent API. A prompt file in a repo is not the same object. If you wanted a skill that tells ChatGPT to 'go sell,' look at For Agents for how a real operator is supposed to behave, then decide."
+        ]
+      },
+      {
+        "id": "when-closed-wins",
+        "heading": "When a closed AI SDR is the better buy",
+        "paragraphs": [
+          "Keep 11x, Artisan, or a similar packaged agent if you want a vendor to own the whole motion, including channels Omentir does not run. Closed can be simpler. It is worse when you need to read the send path or keep LinkedIn credentials off a third-party black box you cannot inspect."
+        ]
+      }
+    ],
+    "faqItems": [
+      {
+        "question": "Is the hosted product a different codebase?",
+        "answer": "No. Hosted Omentir runs the public application. You pay for operations, LinkedIn connectivity, and support, not for a secret fork."
+      },
+      {
+        "question": "Do I need to self-host to use MCP?",
+        "answer": "No. The hosted MCP endpoint is https://omentir.com/api/agent/v1/mcp. Self-hosting is for people who need the app on their own infrastructure."
+      }
+    ],
+    "relatedLinks": [
+      {
+        "label": "Open source and self-hosting",
+        "href": "/features/open-source-self-hosting",
+        "description": "How to run it yourself."
+      },
+      {
+        "label": "Agent API and MCP",
+        "href": "/features/agent-api-and-mcp",
+        "description": "Operator tools."
+      },
+      {
+        "label": "GitHub repository",
+        "href": "https://github.com/vanshyadav1408/Omentir",
+        "description": "Source under MIT."
+      }
+    ],
+    "ctaTitle": "Read the repo or start hosted",
+    "ctaBody": "Both are the same product. Choose the operations model, not a different sales motion."
+  }
+];
+
+export function getUseCase(slug: string) {
+  return ALL_USE_CASES.find((page) => page.slug === slug);
+}

@@ -3,10 +3,10 @@
    flat vectors + soft semi-transparent radial gradients for depth;
    abstract, friendly proportions; simple or no facial detail. */
 
-const PINK = "#ba3871";
-const PINK_SOFT = "#e892b2";
-const SURFACE_DIM = "#f0eeea";
-const INK_SOFT = "rgba(23, 23, 23, 0.12)";
+const PINK = "var(--md-sys-color-primary)";
+const PINK_SOFT = "var(--md-ref-primary-70)";
+const SURFACE_DIM = "var(--md-sys-color-surface-container-low)";
+const INK_SOFT = "color-mix(in srgb, var(--md-sys-color-on-surface) 12%, transparent)";
 
 /* Theme-aware palette: these resolve through globals.css so the same shapes
    read correctly on light surfaces and the dark charcoal ladder. */
@@ -245,10 +245,10 @@ export function RepliesIllustration() {
       <circle cx="52" cy="48" r="18" fill={T_RAISED} />
       <circle cx="52" cy="48" r="12" fill={T_INK} />
       <path d="M52 39v18M43 48h18" stroke={T_RAISED} strokeWidth="4" strokeLinecap="round" opacity="0.9" />
-      <circle cx="148" cy="48" r="18" fill="#F3E0D8" />
-      <path d="M148 37c4 6 6 12 0 22-6-10-4-16 0-22Z" fill="#D97757" />
-      <circle cx="100" cy="92" r="18" fill="#E5DDF7" />
-      <path d="M100 80c2 6 6 10 12 12-6 2-10 6-12 12-2-6-6-10-12-12 6-2 10-6 12-12Z" fill="#8E6DCF" />
+      <circle cx="148" cy="48" r="18" fill={T_RAISED_SOFT} />
+      <path d="M148 37c4 6 6 12 0 22-6-10-4-16 0-22Z" fill={T_PRIMARY_CONTAINER} />
+      <circle cx="100" cy="92" r="18" fill={T_RAISED_SOFT} />
+      <path d="M100 80c2 6 6 10 12 12-6 2-10 6-12 12-2-6-6-10-12-12 6-2 10-6 12-12Z" fill={T_PRIMARY} />
       <circle cx="100" cy="58" r="31" fill={`url(#rp-pink-orb)`} />
       <circle cx="100" cy="58" r="31" fill="url(#rp-glow)" />
       <path

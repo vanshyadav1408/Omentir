@@ -7,7 +7,7 @@ import {
 import { BrandLogo } from "../comparisons/brand-logo";
 import { comparisonBrandFromSlug } from "../comparisons/comparison-logos";
 import IntegrationsDirectory from "../integrations/integrations-directory";
-import type { SeoContentPage, SeoFamily } from "./types";
+import type { SeoCatalogEntry, SeoFamily } from "./types";
 import { liveSeoPages } from "./types";
 import {
   familyLabels,
@@ -20,7 +20,7 @@ type SeoIndexPageViewProps = {
   family: SeoFamily;
   title: string;
   description: string;
-  pages: readonly SeoContentPage[];
+  pages: readonly SeoCatalogEntry[];
   compactHero?: boolean;
 };
 

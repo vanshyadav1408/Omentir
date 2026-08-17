@@ -1,9 +1,12 @@
+import { GUIDE_PATHS } from "@/app/guides/slugs";
+
 const EXACT_PUBLIC_PATHS = new Set([
   "/",
   "/about",
   "/agent.json",
   "/agents.md",
   "/blogs",
+  "/alternatives",
   "/comparisons",
   "/demo",
   "/features",
@@ -20,19 +23,23 @@ const EXACT_PUBLIC_PATHS = new Set([
   "/robots.txt",
   "/sitemap.xml",
   "/terms-of-service",
+  "/use-cases",
 ]);
 
 const PUBLIC_PATH_PREFIXES = [
+  "/alternatives/",
   "/blogs/",
   "/comparisons/",
   "/features/",
   "/integrations/",
   "/page-markdown/",
+  "/use-cases/",
 ];
 
 const PUBLIC_MARKDOWN_ROOTS = new Set([
   "/",
   "/about",
+  "/alternatives",
   "/blogs",
   "/comparisons",
   "/features",
@@ -43,6 +50,7 @@ const PUBLIC_MARKDOWN_ROOTS = new Set([
   "/pricing",
   "/privacy-policy",
   "/terms-of-service",
+  "/use-cases",
 ]);
 
 export function htmlPathFromMarkdownPath(pathname: string) {
@@ -55,6 +63,7 @@ export function htmlPathFromMarkdownPath(pathname: string) {
 function isPublicHtmlMarketingPath(pathname: string) {
   return (
     EXACT_PUBLIC_PATHS.has(pathname) ||
+    GUIDE_PATHS.has(pathname) ||
     PUBLIC_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix))
   );
 }
@@ -64,6 +73,7 @@ function isPublicMarkdownTwin(pathname: string) {
   if (!htmlPath) return false;
   return (
     PUBLIC_MARKDOWN_ROOTS.has(htmlPath) ||
+    GUIDE_PATHS.has(htmlPath) ||
     PUBLIC_PATH_PREFIXES.some((prefix) => htmlPath.startsWith(prefix))
   );
 }

@@ -1,0 +1,9 @@
+---
+description: Human, non-AI marketing copy (omentir-marketing-copy skill)
+globs: src/app/**/*-data.ts,src/app/guides/**,src/app/blogs/**,src/app/page.tsx,src/app/marketing-*.tsx,src/app/feature-*.tsx,src/lib/public-page-markdown.ts
+alwaysApply: false
+---
+
+# Marketing copy
+
+Read and follow `.cursor/skills/omentir-marketing-copy/SKILL.md` before adding or editing user-facing text in these files.

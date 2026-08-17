@@ -7,6 +7,7 @@ import {
   MarketingThead,
   MarketingTr,
 } from "../marketing-table";
+import { FaceoffCards, VerdictBanner } from "./layouts";
 import {
   ArticleSection,
   CtaBlock,
@@ -28,15 +29,21 @@ export default function ComparisonPageView({ page }: { page: SeoContentPage }) {
   const secondary = page.secondaryCta ?? { label: "Pricing", href: "/pricing" };
   const competitor = comparisonBrandFromSlug(page.slug);
   const banner = seoHeroImage("comparisons", page.slug);
+  const bannerNode = banner ? (
+    <SeoBanner src={banner.src} alt={banner.alt} width={banner.width} height={banner.height} />
+  ) : null;
 
+  const faceoff = page.layout === "faceoff" && page.comparisonTable;
   const table = page.comparisonTable
-    ? {
-        headers: page.comparisonTable.headers.slice(0, 2),
-        rows: page.comparisonTable.rows.map((row) => ({
-          dimension: row.dimension,
-          cells: row.cells.slice(0, 2),
-        })),
-      }
+    ? faceoff
+      ? page.comparisonTable
+      : {
+          headers: page.comparisonTable.headers.slice(0, 2),
+          rows: page.comparisonTable.rows.map((row) => ({
+            dimension: row.dimension,
+            cells: row.cells.slice(0, 2),
+          })),
+        }
     : null;
 
   const chooseUs = page.sections.find(
@@ -87,19 +94,28 @@ export default function ComparisonPageView({ page }: { page: SeoContentPage }) {
           { label: page.title },
         ]}
         actions={<HeroActions primary={primary} secondary={secondary} />}
-        media={<SeoBanner src={banner.src} alt={banner.alt} width={1280} height={720} />}
+        media={bannerNode}
       />
       <SeoArticle>
-        <div className="lg:hidden">
-          <SeoBanner src={banner.src} alt={banner.alt} width={1280} height={720} />
-        </div>
-        {page.verdict ? (
-          <p className="rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-low)] px-5 py-4 text-base leading-8 text-[var(--md-sys-color-on-surface)]">
-            {page.verdict}
-          </p>
-        ) : null}
+        {banner ? <div className="lg:hidden">{bannerNode}</div> : null}
+        <VerdictBanner page={page} />
 
-        {table ? (
+        {faceoff && table ? (
+          <section aria-label="Three-way comparison">
+            <h2
+              style={{ fontFamily: "var(--font-varta)" }}
+              className="border-b border-[var(--md-sys-color-outline-variant)] pb-2 text-2xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)]"
+            >
+              {table.headers.join(", ").replace(/, ([^,]*)$/, ", and $1")}
+            </h2>
+            <div className="mt-6">
+              <FaceoffCards headers={table.headers} rows={table.rows} />
+            </div>
+            <p className="mt-3 text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)]">
+              Packaging changes. Confirm current limits and channels on each product site before you buy.
+            </p>
+          </section>
+        ) : table ? (
           <section aria-label="Comparison table">
             <h2
               style={{ fontFamily: "var(--font-varta)" }}

@@ -1,9 +1,12 @@
 import type { MetadataRoute } from "next";
+import { ALL_ALTERNATIVES } from "./alternatives/alternative-data";
 import { ALL_BLOGS, isBlogLive, liveBlogs } from "./blogs/blog-data";
 import { ALL_COMPARISONS } from "./comparisons/comparison-data";
 import { ALL_FEATURES } from "./features/feature-data";
+import { ALL_GUIDES } from "./guides/guide-data";
 import { ALL_INTEGRATIONS } from "./integrations/integration-data";
-import { liveSeoPages, type SeoContentPage } from "./seo-content/types";
+import { ALL_USE_CASES } from "./use-cases/use-case-data";
+import { liveSeoPages } from "./seo-content/types";
 import { markdownPathFromHtmlPath } from "@/lib/public-page-markdown";
 import { siteUrl } from "./seo";
 
@@ -21,7 +24,10 @@ export const revalidate = 86400;
 const publicRoutes = [
   { path: "/", changeFrequency: "weekly", priority: 1.0, lastModified: "2026-08-17" },
   { path: "/blogs", changeFrequency: "weekly", priority: 0.9 },
+  { path: "/features", changeFrequency: "monthly", priority: 0.85 },
   { path: "/comparisons", changeFrequency: "monthly", priority: 0.85 },
+  { path: "/alternatives", changeFrequency: "monthly", priority: 0.85 },
+  { path: "/use-cases", changeFrequency: "monthly", priority: 0.85 },
   { path: "/integrations", changeFrequency: "monthly", priority: 0.85 },
   { path: "/pricing", changeFrequency: "monthly", priority: 0.8, lastModified: "2026-08-12" },
   { path: "/minimum-booking-guarantee", changeFrequency: "monthly", priority: 0.5, lastModified: "2026-08-09" },
@@ -48,7 +54,7 @@ function blogDate(blog: (typeof ALL_BLOGS)[number]) {
   return new Date(`${blog.updatedDate || blog.publishedDate} UTC`);
 }
 
-function seoPageDate(page: SeoContentPage) {
+function seoPageDate(page: { publishedDate: string; updatedDate: string }) {
   return new Date(`${page.updatedDate || page.publishedDate} UTC`);
 }
 
@@ -61,7 +67,7 @@ function latestBlogDate() {
   }, new Date(0));
 }
 
-function latestSeoFamilyDate(pages: readonly SeoContentPage[]) {
+function latestSeoFamilyDate(pages: readonly { publishedDate: string; updatedDate: string }[]) {
   return liveSeoPages(pages).reduce((newest, page) => {
     const date = seoPageDate(page);
     return date > newest ? date : newest;
@@ -69,8 +75,8 @@ function latestSeoFamilyDate(pages: readonly SeoContentPage[]) {
 }
 
 function seoFamilyRoutes(
-  basePath: "/features" | "/comparisons" | "/integrations",
-  pages: readonly SeoContentPage[],
+  basePath: "/features" | "/comparisons" | "/integrations" | "/use-cases" | "/alternatives",
+  pages: readonly { slug: string; publishedDate: string; updatedDate: string }[],
   priority: number
 ) {
   return liveSeoPages(pages).map((page) => ({
@@ -126,19 +132,26 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const featuresIndexDate = latestSeoFamilyDate(ALL_FEATURES);
   const comparisonsIndexDate = latestSeoFamilyDate(ALL_COMPARISONS);
   const integrationsIndexDate = latestSeoFamilyDate(ALL_INTEGRATIONS);
+  const useCasesIndexDate = latestSeoFamilyDate(ALL_USE_CASES);
+  const alternativesIndexDate = latestSeoFamilyDate(ALL_ALTERNATIVES);
   const llmsIndexDate = [
     blogsIndexDate,
     featuresIndexDate,
     comparisonsIndexDate,
     integrationsIndexDate,
+    useCasesIndexDate,
+    alternativesIndexDate,
   ].reduce((newest, date) => (date > newest ? date : newest), new Date(0));
 
   const derivedIndexDates: Record<string, Date> = {
     "/blogs": blogsIndexDate,
     "/llms.txt": llmsIndexDate,
     "/llms-full.txt": llmsIndexDate,
+    "/features": featuresIndexDate,
     "/comparisons": comparisonsIndexDate,
     "/integrations": integrationsIndexDate,
+    "/use-cases": useCasesIndexDate,
+    "/alternatives": alternativesIndexDate,
   };
 
   const mainRoutes = publicRoutes.map((route) => ({
@@ -163,8 +176,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // Same live-only rule for hand-curated SEO families (features, comparisons,
   // integrations). Future-dated entries stay out of the sitemap.
   const featureRoutes = seoFamilyRoutes("/features", ALL_FEATURES, 0.7);
-  const comparisonRoutes = seoFamilyRoutes("/comparisons", ALL_COMPARISONS, 0.7);
+  const comparisonRoutes = seoFamilyRoutes("/comparisons", ALL_COMPARISONS, 0.75);
   const integrationRoutes = seoFamilyRoutes("/integrations", ALL_INTEGRATIONS, 0.7);
+  const useCaseRoutes = seoFamilyRoutes("/use-cases", ALL_USE_CASES, 0.75);
+  const alternativeRoutes = seoFamilyRoutes("/alternatives", ALL_ALTERNATIVES, 0.75);
+
+  const guideRoutes = ALL_GUIDES.map((page) => ({
+    url: absoluteUrl(`/${page.slug}`),
+    lastModified: new Date(`${page.updatedDate || page.publishedDate} UTC`),
+    changeFrequency: "monthly" as const,
+    priority: 0.7,
+  }));
 
   const htmlRoutes = [
     ...mainRoutes,
@@ -172,6 +194,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...featureRoutes,
     ...comparisonRoutes,
     ...integrationRoutes,
+    ...useCaseRoutes,
+    ...alternativeRoutes,
+    ...guideRoutes,
   ];
 
   // Markdown twins are how AI agents read the same public pages without

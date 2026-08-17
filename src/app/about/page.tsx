@@ -45,7 +45,7 @@ export default function AboutPage() {
       <JsonLd id="about-jsonld" data={jsonLd} />
       <MarketingPage
         eyebrow="Company"
-        title="We are building AI agents for sales & marketing."
+        title="We are building AI agents for sales and marketing."
         description="Omentir helps founders, SDRs, and small sales teams find potential buyers, organize them into groups, and run LinkedIn campaigns from their own account."
         centeredHeader
       >
@@ -78,13 +78,11 @@ export default function AboutPage() {
 
             <div className="mx-auto mt-10 max-w-xl space-y-6 text-base font-medium leading-8 text-[var(--md-sys-color-on-surface)]">
               <p>
-                After my 15 weeks long solo trip in the mountains out of an
-                existential crisis, I dropped my{" "}
+                After a 15-week solo trip in the mountains, I dropped out of my{" "}
                 <span className="font-bold text-[var(--md-sys-color-on-surface)]">IITB</span> degree and
-                started working on my own app. I shipped an{" "}
+                started building my own app. I shipped an{" "}
                 <span className="font-bold text-[var(--md-sys-color-on-surface)]">AI video editor</span>{" "}
-                I was convinced people would love. Then reality hit. I couldn&apos;t
-                get much users.
+                I thought people would love. It did not get many users.
               </p>
 
               <p>
@@ -96,40 +94,36 @@ export default function AboutPage() {
               </p>
 
               <p>
-                Somehow, that day, I{" "}
-                <span className="font-bold text-[var(--md-sys-color-on-surface)]">booked 2 deals</span>.
-                From <span className="font-semibold">LinkedIn DMs</span>. For a product
-                I was about to give up on.
+                That day, I{" "}
+                <span className="font-bold text-[var(--md-sys-color-on-surface)]">booked two deals</span>{" "}
+                through <span className="font-semibold">LinkedIn DMs</span> for a product I was about to give up on.
               </p>
 
               <p>
-                Then, I started automating the exact motion that worked: find intent,
-                message from your own account, follow up until someone replies.
+                I started automating the motion that worked: find intent, message from
+                your own account, and follow up until someone replies.
               </p>
 
               <p>
-                I later killed the video editor. It was never going to work. But I
-                kept the automation alive, added some opus 4.5 on top of that and
-                this time, I dmed other business owners to try, it kinda worked, they
-                were booking 3-4 demos per week on average only because of it.
+                I later killed the video editor, but kept the automation. I added Opus
+                4.5 and tested the motion with other business owners. It worked well
+                enough that they booked three to four demos per week on average.
               </p>
 
               <p>
-                Now, I present a more refined version of the sales tool I built
-                for myself, and I call it{" "}
+                I turned that internal tool into a product called{" "}
                 <span
                   style={{ fontFamily: "var(--font-varta)" }}
                   className="select-none font-bold text-[var(--md-sys-color-on-surface)]"
                 >
                   Omentir
                 </span>
-                {", because in Quenya, it means "}
+                {". In Quenya, the name means "}
                 <span className="font-bold text-[var(--md-sys-color-on-surface)]">to contact</span>.
               </p>
 
               <p>
-                Oh, and one more thing. Omentir was closed source until
-                recently. Now the entire code is{" "}
+                Omentir was closed source until recently. The entire code is now{" "}
                 <a
                   href="https://github.com/vanshyadav1408/Omentir"
                   target="_blank"
@@ -138,13 +132,11 @@ export default function AboutPage() {
                 >
                   open source on GitHub
                 </a>
-                , so you can read every line of what runs your outreach.
+                , so you can read what runs your outreach.
               </p>
 
               <p className="pt-2 text-center">
-                If you&apos;re where I was a few months ago, you can{" "}
-                <span className="font-bold text-[var(--md-sys-color-on-surface)]">Try Omentir</span>{" "}
-                from the button below.
+                If you are in that same early stage, try Omentir from the button below.
               </p>
             </div>
 

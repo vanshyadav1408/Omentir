@@ -20,6 +20,9 @@ export default function IntegrationPageView({ page }: { page: SeoContentPage }) 
   const secondary = page.secondaryCta ?? { label: "Operator prompt", href: "/for-agents" };
   const compose = page.slug === "claude-code";
   const banner = seoHeroImage("integrations", page.slug);
+  const bannerNode = banner ? (
+    <SeoBanner src={banner.src} alt={banner.alt} width={banner.width} height={banner.height} />
+  ) : null;
 
   return (
     <SeoPageChrome
@@ -37,12 +40,10 @@ export default function IntegrationPageView({ page }: { page: SeoContentPage }) 
           { label: page.title },
         ]}
         actions={<HeroActions primary={primary} secondary={secondary} />}
-        media={<SeoBanner src={banner.src} alt={banner.alt} width={1280} height={720} />}
+        media={bannerNode}
       />
       <SeoArticle>
-        <div className="lg:hidden">
-          <SeoBanner src={banner.src} alt={banner.alt} width={1280} height={720} />
-        </div>
+        {banner ? <div className="lg:hidden">{bannerNode}</div> : null}
         <section className="pt-8 sm:pt-12">
           <h2
             style={{ fontFamily: "var(--font-varta)" }}

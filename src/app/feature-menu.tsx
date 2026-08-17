@@ -2,7 +2,7 @@ import Link from "next/link";
 import FeatureIcon from "./feature-icon";
 import { FEATURE_NAV_ITEMS } from "./feature-nav";
 
-/** Desktop feature navigation. Five columns keep ten links in two compact rows. */
+/** Desktop feature navigation. Five columns, three rows for the current set. */
 export default function FeatureMenu() {
   return (
     <div className="group relative">

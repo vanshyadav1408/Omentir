@@ -1,11 +1,16 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { ALL_ALTERNATIVES } from "@/app/alternatives/alternative-data";
 import { ALL_BLOGS, liveBlogs, type BlogItem } from "@/app/blogs/blog-data";
 import { ALL_COMPARISONS } from "@/app/comparisons/comparison-data";
 import { ALL_FEATURES } from "@/app/features/feature-data";
 import { FEATURE_NAV_ITEMS } from "@/app/feature-nav";
+import { ALL_GUIDES } from "@/app/guides/guide-data";
+import { guideMedia } from "@/app/guides/guide-media";
+import type { GuidePage } from "@/app/guides/types";
 import { ALL_INTEGRATIONS } from "@/app/integrations/integration-data";
 import { integrationConnect } from "@/app/integrations/integration-connect";
+import { ALL_USE_CASES } from "@/app/use-cases/use-case-data";
 import { pricingPlans } from "@/app/pricing-plans";
 import { brandTagline, defaultDescription, siteUrl } from "@/app/seo";
 import { liveSeoPages, type SeoContentPage } from "@/app/seo-content/types";
@@ -34,7 +39,10 @@ const MARKETING_PAGES = [
   { htmlPath: "/privacy-policy", title: "Privacy Policy" },
   { htmlPath: "/terms-of-service", title: "Terms of Service" },
   { htmlPath: "/blogs", title: "Blogs" },
-  { htmlPath: "/comparisons", title: "Alternatives" },
+  { htmlPath: "/features", title: "Features" },
+  { htmlPath: "/comparisons", title: "Comparisons" },
+  { htmlPath: "/alternatives", title: "Tool roundups" },
+  { htmlPath: "/use-cases", title: "Use cases" },
   { htmlPath: "/integrations", title: "Integrations" },
 ] as const;
 
@@ -104,6 +112,10 @@ function pageHeader(title: string, description: string, htmlPath: string) {
   ]
     .filter((line): line is string => Boolean(line))
     .join("\n");
+}
+
+function tryOmentirLine() {
+  return `[Create an Omentir account](${siteUrl}/signup). Pro is $49/month.`;
 }
 
 function linkList(
@@ -180,6 +192,26 @@ export function seoPageToMarkdown(basePath: string, page: SeoContentPage) {
   const cta = page.ctaTitle
     ? `## ${page.ctaTitle}\n\n${page.ctaBody ?? ""}`.trim()
     : "";
+  const start = tryOmentirLine();
+
+  const roundup = page.roundupItems?.length
+    ? `## Shortlist\n\n${page.roundupItems
+        .map(
+          (item) =>
+            `- **${item.name}.** Best for: ${item.bestFor} Watch for: ${item.watchFor}`
+        )
+        .join("\n")}`
+    : "";
+  const phases = page.phases?.length
+    ? `## First weeks\n\n${page.phases
+        .map((phase, index) => `${index + 1}. **${phase.title}.** ${phase.detail}`)
+        .join("\n")}`
+    : "";
+  const thread = page.thread?.length
+    ? `## Sample thread\n\n${page.thread
+        .map((line) => `- **${line.speaker}:** ${line.text}`)
+        .join("\n")}`
+    : "";
 
   return collapseMarkdown(
     [
@@ -188,23 +220,89 @@ export function seoPageToMarkdown(basePath: string, page: SeoContentPage) {
       page.summary,
       highlights,
       setup,
+      roundup,
+      phases,
+      thread,
       sections,
       table,
       related,
       faqs,
       cta,
+      start,
+    ].join("\n\n")
+  );
+}
+
+export function guidePageToMarkdown(page: GuidePage) {
+  const htmlPath = `/${page.slug}`;
+  const media = guideMedia(page.slug);
+  const insertMarkdown = (index: number) =>
+    media.inserts
+      .filter((item) => item.afterIndex === index)
+      .map((item) => {
+        const bits: string[] = [];
+        if (item.caption && item.visual) bits.push(`*${item.caption}*`);
+        if (item.table) {
+          bits.push(
+            [
+              `**${item.table.caption}**`,
+              ``,
+              `| ${item.table.headers.join(" | ")} |`,
+              `| ${item.table.headers.map(() => "---").join(" | ")} |`,
+              ...item.table.rows.map((row) => `| ${row.join(" | ")} |`),
+            ].join("\n")
+          );
+        }
+        return bits.join("\n\n");
+      })
+      .filter(Boolean)
+      .join("\n\n");
+
+  const ledeMedia = insertMarkdown(-1);
+  const sections = page.sections
+    .map((section, index) => {
+      const body = section.paragraphs.join("\n\n");
+      const bullets = section.bullets?.length
+        ? "\n\n" + section.bullets.map((item) => `- ${item}`).join("\n")
+        : "";
+      const extras = insertMarkdown(index);
+      return `## ${section.heading}\n\n${body}${bullets}${extras ? `\n\n${extras}` : ""}`;
+    })
+    .join("\n\n");
+  const related = page.related?.length
+    ? `## Related\n\n${linkList(
+        page.related.map((link) => ({
+          title: link.label,
+          href: link.href,
+        }))
+      )}`
+    : "";
+  const showFaq = media.faq !== false && page.faqItems.length > 0;
+  const faqs = showFaq
+    ? `## Common questions\n\n${page.faqItems
+        .map((item) => `**${item.question}**\n\n${item.answer}`)
+        .join("\n\n")}`
+    : "";
+  return collapseMarkdown(
+    [
+      pageHeader(page.title, page.description, htmlPath),
+      ledeMedia,
+      sections,
+      related,
+      faqs,
+      tryOmentirLine(),
     ].join("\n\n")
   );
 }
 
 function familyIndexMarkdown(
-  htmlPath: "/comparisons" | "/integrations" | "/blogs",
+  htmlPath: "/features" | "/comparisons" | "/integrations" | "/blogs" | "/use-cases" | "/alternatives",
   title: string,
   description: string,
   items: ReadonlyArray<{ title: string; href: string; note: string }>
 ) {
   return collapseMarkdown(
-    `${pageHeader(title, description, htmlPath)}\n\n${linkList(items)}`
+    `${pageHeader(title, description, htmlPath)}\n\n${linkList(items)}\n\n${tryOmentirLine()}`
   );
 }
 
@@ -216,9 +314,12 @@ function homeMarkdown() {
     const number = objectString(step.number) || `${index + 1}.`;
     return `${number} **${objectString(step.title)}.** ${objectString(step.description)}`;
   });
-  const features = objectRows(scope.get("features")).map(
-    (feature) => `- **${objectString(feature.title)}.** ${objectString(feature.description)}`
-  );
+  const features = objectRows(scope.get("features")).map((feature) => {
+    const href = objectString(feature.href);
+    const label = objectString(feature.linkLabel);
+    const link = href ? ` [${label || href}](${internalMarkdownHref(href)})` : "";
+    return `- **${objectString(feature.title)}.** ${objectString(feature.description)}${link}`;
+  });
   const audiences = objectRows(scope.get("audiences")).map((audience) => {
     const href = objectString(audience.href);
     const label = objectString(audience.linkLabel);
@@ -272,14 +373,17 @@ function homeMarkdown() {
       audiences.join("\n"),
       `## How Omentir compares`,
       comparison,
+      `[See all alternatives](${internalMarkdownHref("/comparisons")}) · [Category roundups](${internalMarkdownHref("/alternatives")})`,
       `## Product capabilities`,
       features.join("\n"),
+      `[See all features](${internalMarkdownHref("/features")}) · [Use cases](${internalMarkdownHref("/use-cases")})`,
       `## Features`,
       linkList(
         FEATURE_NAV_ITEMS.map((item) => ({ title: item.label, href: item.href }))
       ),
       storyText ? `## Founder story\n\n${storyText}` : "",
       faqItemsFromSource(source),
+      tryOmentirLine(),
     ].join("\n\n")
   );
 }
@@ -518,6 +622,7 @@ function blogMarkdown(blog: BlogItem) {
       `- Read time: ${blog.readTime}`,
       body,
       faqs,
+      tryOmentirLine(),
     ].join("\n\n")
   );
 }
@@ -557,6 +662,27 @@ export function listPublicMarkdownPages(): PublicMarkdownPage[] {
       kind: "seo",
     });
   }
+  for (const page of ALL_USE_CASES) {
+    pages.push({
+      htmlPath: `/use-cases/${page.slug}`,
+      markdownPath: `/use-cases/${page.slug}.md`,
+      kind: "seo",
+    });
+  }
+  for (const page of ALL_ALTERNATIVES) {
+    pages.push({
+      htmlPath: `/alternatives/${page.slug}`,
+      markdownPath: `/alternatives/${page.slug}.md`,
+      kind: "seo",
+    });
+  }
+  for (const page of ALL_GUIDES) {
+    pages.push({
+      htmlPath: `/${page.slug}`,
+      markdownPath: `/${page.slug}.md`,
+      kind: "seo",
+    });
+  }
   return pages;
 }
 
@@ -584,6 +710,18 @@ export function renderPublicMarkdown(htmlPath: string): string | null {
   }
   if (htmlPath === "/minimum-booking-guarantee") return guaranteeMarkdown();
   if (htmlPath === "/blogs") return blogIndexMarkdown();
+  if (htmlPath === "/features") {
+    return familyIndexMarkdown(
+      "/features",
+      "Omentir features",
+      "Each page covers one product job with setup steps, honest tradeoffs, and when to use something else.",
+      liveSeoPages(ALL_FEATURES).map((page) => ({
+        title: page.title,
+        href: `/features/${page.slug}`,
+        note: page.summary,
+      }))
+    );
+  }
   if (htmlPath === "/comparisons") {
     return familyIndexMarkdown(
       "/comparisons",
@@ -612,6 +750,30 @@ export function renderPublicMarkdown(htmlPath: string): string | null {
       connectNote
     );
   }
+  if (htmlPath === "/use-cases") {
+    return familyIndexMarkdown(
+      "/use-cases",
+      "LinkedIn outbound use cases",
+      "Concrete jobs Omentir is built for. Each page is one motion, not a keyword variant.",
+      liveSeoPages(ALL_USE_CASES).map((page) => ({
+        title: page.title,
+        href: `/use-cases/${page.slug}`,
+        note: page.summary,
+      }))
+    );
+  }
+  if (htmlPath === "/alternatives") {
+    return familyIndexMarkdown(
+      "/alternatives",
+      "Outbound tool roundups",
+      "Pick the category first. Each roundup names the job, the usual tools, and when Omentir is the wrong buy.",
+      liveSeoPages(ALL_ALTERNATIVES).map((page) => ({
+        title: page.title,
+        href: `/alternatives/${page.slug}`,
+        note: page.summary,
+      }))
+    );
+  }
 
   const blogMatch = htmlPath.match(/^\/blogs\/([^/]+)$/);
   if (blogMatch) {
@@ -633,6 +795,21 @@ export function renderPublicMarkdown(htmlPath: string): string | null {
   if (integration) {
     const page = ALL_INTEGRATIONS.find((item) => item.slug === integration[1]);
     return page ? seoPageToMarkdown("/integrations", page) : null;
+  }
+  const useCase = htmlPath.match(/^\/use-cases\/([^/]+)$/);
+  if (useCase) {
+    const page = ALL_USE_CASES.find((item) => item.slug === useCase[1]);
+    return page ? seoPageToMarkdown("/use-cases", page) : null;
+  }
+  const alternative = htmlPath.match(/^\/alternatives\/([^/]+)$/);
+  if (alternative) {
+    const page = ALL_ALTERNATIVES.find((item) => item.slug === alternative[1]);
+    return page ? seoPageToMarkdown("/alternatives", page) : null;
+  }
+
+  if (htmlPath.split("/").length === 2 && htmlPath !== "/") {
+    const page = ALL_GUIDES.find((item) => `/${item.slug}` === htmlPath);
+    return page ? guidePageToMarkdown(page) : null;
   }
 
   return null;

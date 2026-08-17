@@ -7,12 +7,12 @@ export const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://omentir.com
 // tab titles, social cards, structured data, the footer - reads it from here so
 // the site says one thing, and changing the headline changes all of them at
 // once instead of leaving old wording behind in metadata nobody looks at.
-export const brandTagline = "Convert LinkedIn users into your customers";
+export const brandTagline = "AI LinkedIn outreach for founders and small sales teams";
 
 export const defaultTitle = `Omentir - ${brandTagline}`;
 
 export const defaultDescription =
-  "Omentir converts LinkedIn users into your customers: it finds potential customers, personalizes LinkedIn outreach, and turns interested replies into booked demos.";
+  "Omentir finds ICP-fit buyers, drafts LinkedIn outreach from your profile, and keeps interested replies in one inbox.";
 
 export const defaultOgImage = {
   url: "/omentir-og.png",

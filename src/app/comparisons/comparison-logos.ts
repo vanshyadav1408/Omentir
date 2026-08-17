@@ -74,10 +74,61 @@ export const COMPARISON_BRANDS: Record<string, ComparisonBrand> = {
     src: "/comparison-logos/cognism.svg",
     darkSrc: "/comparison-logos/cognism-dark.svg",
   },
+  heyreach: {
+    id: "heyreach",
+    name: "HeyReach",
+    src: "/comparison-logos/heyreach.svg",
+    bleed: true,
+  },
+  expandi: {
+    id: "expandi",
+    name: "Expandi",
+    src: "/comparison-logos/expandi.png",
+    bleed: true,
+  },
+  lemlist: {
+    id: "lemlist",
+    name: "Lemlist",
+    src: "/comparison-logos/lemlist.png",
+    bleed: true,
+  },
+  phantombuster: {
+    id: "phantombuster",
+    name: "PhantomBuster",
+    src: "/comparison-logos/phantombuster.png",
+    bleed: true,
+  },
+  amplemarket: {
+    id: "amplemarket",
+    name: "Amplemarket",
+    src: "/comparison-logos/amplemarket.png",
+    bleed: true,
+  },
+  "la-growth-machine": {
+    id: "la-growth-machine",
+    name: "La Growth Machine",
+    src: "/comparison-logos/la-growth-machine.png",
+    bleed: true,
+  },
+  warmly: {
+    id: "warmly",
+    name: "Warmly",
+    src: "/comparison-logos/warmly.png",
+    bleed: true,
+  },
+  aisdr: {
+    id: "aisdr",
+    name: "AiSDR",
+    src: "/comparison-logos/aisdr.png",
+    bleed: true,
+  },
 };
 
 export function comparisonBrandFromSlug(slug: string): ComparisonBrand | undefined {
-  return COMPARISON_BRANDS[slug.replace(/^omentir-vs-/, "")];
+  const afterOmentir = slug.replace(/^omentir-vs-/, "");
+  if (COMPARISON_BRANDS[afterOmentir]) return COMPARISON_BRANDS[afterOmentir];
+  const first = slug.split("-vs-")[0];
+  return COMPARISON_BRANDS[first];
 }
 
 export function comparisonBrandFromName(name: string): ComparisonBrand | undefined {

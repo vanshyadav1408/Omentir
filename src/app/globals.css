@@ -2383,7 +2383,7 @@ html[data-theme="dark"] .marketing-cta {
   background: color-mix(in srgb, var(--md-sys-color-seed) 52%, var(--google-bg));
 }
 
-/* ── Social brand marks (see brand-marks.tsx) ──────────────────────────────
+/* Social brand marks (see brand-marks.tsx)
    One monochrome treatment for every mark: black on light, white on dark, so a
    row of logos reads as one set instead of five competing brand colours. A
    class rather than a text-[#hex] utility because the dark theme remaps

@@ -40,7 +40,7 @@ import {
 export const metadata = createPageMetadata({
   title: defaultTitle,
   description:
-    "Omentir converts LinkedIn users into your customers: it finds potential customers, contacts them with personalized LinkedIn outreach, and helps turn interested replies into booked demos.",
+    "Omentir finds ICP-fit buyers, drafts LinkedIn outreach from your profile, and helps turn interested replies into booked demos.",
   keywords: [
     "convert LinkedIn users into customers",
     "AI LinkedIn outreach tool",
@@ -76,9 +76,9 @@ const steps = [
   },
   {
     number: "4.",
-    title: "See customers kicking in",
+    title: "See conversations start",
     description:
-      "Watch real conversations and interested replies show up as outreach starts creating traction.",
+      "Review real conversations and interested replies as your outreach starts.",
     image: "/see-customers-kicking-in.avif",
     alt: "Customer replies from manual outreach",
   },
@@ -98,18 +98,24 @@ const features = [
     title: "Find qualified buyers",
     description:
       "Identify companies and contacts that match your ideal customer profile.",
+    href: "/features/lead-finders",
+    linkLabel: "Lead finders",
   },
   {
     art: <PersonalizeIllustration />,
     title: "Personalize outreach",
     description:
       "Write timely, relevant messages using account context and clear intent.",
+    href: "/features/ai-linkedin-outreach",
+    linkLabel: "LinkedIn outreach",
   },
   {
     art: <BookDemosIllustration />,
     title: "Book more demos",
     description:
       "Track replies, handle follow-ups, and move interested buyers to a call.",
+    href: "/features/demo-booking",
+    linkLabel: "Demo booking",
   },
 ];
 
@@ -118,9 +124,9 @@ const audiences = [
     art: <FounderGrowthIllustration />,
     title: "Founders & Sales Teams",
     description:
-      "Run your whole outbound motion from one dashboard - Omentir finds ICP-fit buyers, writes the outreach, and turns warm replies into demos.",
-    href: "/signup",
-    linkLabel: "Start now",
+      "Run outbound from one dashboard. Omentir finds ICP-fit buyers, drafts the outreach, and helps turn replies into demos.",
+    href: "/use-cases/outbound-for-founders",
+    linkLabel: "Founder outbound",
   },
   {
     art: <AgenticPromptIllustration />,
@@ -331,7 +337,20 @@ function ComparisonTable() {
         </h2>
         <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)] md:mt-4 md:text-base">
           Data tools hand you a list. Omentir finds your buyers, runs the
-          outreach, and handles replies - all in one place.
+          outreach, and handles replies in one place.{" "}
+          <Link
+            href="/comparisons"
+            className="font-medium text-[var(--md-sys-color-primary)] underline-offset-4 hover:underline"
+          >
+            See all alternatives
+          </Link>
+          {" · "}
+          <Link
+            href="/alternatives"
+            className="font-medium text-[var(--md-sys-color-primary)] underline-offset-4 hover:underline"
+          >
+            Category roundups
+          </Link>
         </p>
       </Reveal>
 
@@ -391,7 +410,7 @@ const faqItems = [
   {
     question: "Is it safe for my LinkedIn account?",
     answer:
-      "Yes. Omentir enforces daily invite and message limits automatically and sends everything from your own profile at a human pace, so your account stays within LinkedIn's safety boundaries without you having to manage quotas yourself.",
+      "Omentir enforces daily invite and message limits and sends from your profile at a human pace. Those controls reduce sudden volume spikes, but you still own compliance with LinkedIn's rules.",
   },
   {
     question: "How much does Omentir cost?",
@@ -501,6 +520,21 @@ export default function Home() {
           <h2 className="text-center text-[1.75rem] font-semibold leading-tight tracking-tight text-[var(--md-sys-color-on-surface)] md:text-4xl lg:text-5xl">
             Everything you need to <span className="text-gradient-brand">book more sales</span>
           </h2>
+          <p className="mx-auto mt-3 max-w-xl text-center text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)] md:mt-4 md:text-base">
+            <Link
+              href="/features"
+              className="font-medium text-[var(--md-sys-color-primary)] underline-offset-4 hover:underline"
+            >
+              See all features
+            </Link>
+            {" · "}
+            <Link
+              href="/use-cases"
+              className="font-medium text-[var(--md-sys-color-primary)] underline-offset-4 hover:underline"
+            >
+              Use cases
+            </Link>
+          </p>
         </Reveal>
 
         <div className="mt-10 grid grid-cols-1 gap-4 md:mt-16 md:gap-6 lg:grid-cols-3">
@@ -516,6 +550,28 @@ export default function Home() {
                 <p className="mt-2 text-sm leading-6 text-[var(--md-sys-color-on-surface)]/80 md:mt-3 md:text-base md:leading-7">
                   {feature.description}
                 </p>
+                <div className="mt-auto pt-6 md:pt-10">
+                  <Link
+                    href={feature.href}
+                    className="m3-btn m3-btn-filled-secondary h-10 cursor-pointer gap-1.5 px-5 text-sm"
+                  >
+                    {feature.linkLabel}
+                    <svg
+                      viewBox="0 0 10 16"
+                      aria-hidden="true"
+                      className="h-4 w-2.5"
+                      fill="none"
+                    >
+                      <path
+                        d="M1 8h7M5 4l4 4-4 4"
+                        stroke="currentColor"
+                        strokeWidth="2.4"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </Link>
+                </div>
               </article>
             </Reveal>
           ))}
@@ -547,13 +603,11 @@ export default function Home() {
 
           <div className="mx-auto mt-8 max-w-xl space-y-5 text-sm font-medium leading-6 text-[var(--md-sys-color-on-surface)] md:mt-10 md:space-y-6 md:text-base md:leading-8">
             <p>
-              After my 15 weeks long solo trip in the mountains out of an
-              existential crisis, I dropped my{" "}
+              After a 15-week solo trip in the mountains, I dropped out of my{" "}
               <span className="font-bold text-[var(--md-sys-color-on-surface)]">IITB</span> degree and
-              started working on my own app. I shipped an{" "}
+              started building my own app. I shipped an{" "}
               <span className="font-bold text-[var(--md-sys-color-on-surface)]">AI video editor</span>{" "}
-              I was convinced people would love. Then reality hit. I couldn&apos;t
-              get much users.
+              I thought people would love. It did not get many users.
             </p>
 
             <p>
@@ -565,40 +619,36 @@ export default function Home() {
             </p>
 
             <p>
-              Somehow, that day, I{" "}
-              <span className="font-bold text-[var(--md-sys-color-on-surface)]">booked 2 deals</span>.
-              From <span className="font-semibold">LinkedIn DMs</span>. For a product
-              I was about to give up on.
+              That day, I{" "}
+              <span className="font-bold text-[var(--md-sys-color-on-surface)]">booked two deals</span>{" "}
+              through <span className="font-semibold">LinkedIn DMs</span> for a product I was about to give up on.
             </p>
 
             <p>
-              Then, I started automating the exact motion that worked: find intent,
-              message from your own account, follow up until someone replies.
+              I started automating the motion that worked: find intent, message from
+              your own account, and follow up until someone replies.
             </p>
 
             <p>
-              I later killed the video editor. It was never going to work. But I
-              kept the automation alive, added some opus 4.5 on top of that and
-              this time, I dmed other business owners to try, it kinda worked, they
-              were booking 3-4 demos per week on average only because of it.
+              I later killed the video editor, but kept the automation. I added Opus
+              4.5 and tested the motion with other business owners. It worked well
+              enough that they booked three to four demos per week on average.
             </p>
 
             <p>
-              Now, I present a more refined version of the sales tool I built
-              for myself, and I call it{" "}
+              I turned that internal tool into a product called{" "}
               <span
                 style={{ fontFamily: "var(--font-varta)" }}
                 className="select-none font-bold text-[var(--md-sys-color-on-surface)]"
               >
                 Omentir
               </span>
-              {", because in Quenya, it means "}
+                {". In Quenya, the name means "}
               <span className="font-bold text-[var(--md-sys-color-on-surface)]">to contact</span>.
             </p>
 
             <p>
-              Oh, and one more thing. Omentir was closed source until recently.
-              Now the entire code is{" "}
+              Omentir was closed source until recently. The entire code is now{" "}
               <a
                 href="https://github.com/vanshyadav1408/Omentir"
                 target="_blank"
@@ -607,13 +657,11 @@ export default function Home() {
               >
                 open source on GitHub
               </a>
-              , so you can read every line of what runs your outreach.
+              , so you can read what runs your outreach.
             </p>
 
             <p className="pt-2 text-center">
-              If you&apos;re where I was a few months ago, you can{" "}
-              <span className="font-bold text-[var(--md-sys-color-on-surface)]">Try Omentir</span>{" "}
-              from the button below.
+              If you are in that same early stage, try Omentir from the button below.
             </p>
           </div>
 
@@ -662,11 +710,11 @@ export default function Home() {
               <PaperPlaneIllustration />
             </div>
             <h2 className="text-[1.75rem] font-bold leading-tight tracking-tight text-white md:text-4xl">
-              Turn Linkedin into a revenue source
+              Turn LinkedIn conversations into demos
             </h2>
             <p className="mx-auto mt-3 max-w-xl text-sm font-normal leading-6 text-white/90 md:mt-4 md:text-base md:leading-7">
-              Drop in your website. We&apos;ll find the right buyers, write the
-              outreach, and book the demos - so you can focus on closing.
+              Add your website. We&apos;ll find likely buyers, draft the outreach,
+              and help you focus on the replies that deserve a call.
             </p>
             <Link
               href="/signup"

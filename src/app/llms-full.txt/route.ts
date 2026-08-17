@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
+import { ALL_ALTERNATIVES } from "@/app/alternatives/alternative-data";
 import { liveBlogs } from "@/app/blogs/blog-data";
 import { ALL_COMPARISONS } from "@/app/comparisons/comparison-data";
 import { ALL_FEATURES } from "@/app/features/feature-data";
+import { ALL_GUIDES } from "@/app/guides/guide-data";
 import { ALL_INTEGRATIONS } from "@/app/integrations/integration-data";
+import { ALL_USE_CASES } from "@/app/use-cases/use-case-data";
 import { liveSeoPages } from "@/app/seo-content/types";
-import { seoPageToMarkdown } from "@/lib/public-page-markdown";
+import { guidePageToMarkdown, seoPageToMarkdown } from "@/lib/public-page-markdown";
 import { defaultDescription, siteUrl } from "@/app/seo";
 
 export const revalidate = 86400;
@@ -33,18 +36,25 @@ ${blog.description}`
   const features = liveSeoPages(ALL_FEATURES)
     .map((page) => seoPageToMarkdown("/features", page))
     .join("\n\n");
+  const useCases = liveSeoPages(ALL_USE_CASES)
+    .map((page) => seoPageToMarkdown("/use-cases", page))
+    .join("\n\n");
   const comparisons = liveSeoPages(ALL_COMPARISONS)
     .map((page) => seoPageToMarkdown("/comparisons", page))
+    .join("\n\n");
+  const alternatives = liveSeoPages(ALL_ALTERNATIVES)
+    .map((page) => seoPageToMarkdown("/alternatives", page))
     .join("\n\n");
   const integrations = liveSeoPages(ALL_INTEGRATIONS)
     .map((page) => seoPageToMarkdown("/integrations", page))
     .join("\n\n");
+  const guides = ALL_GUIDES.map((page) => guidePageToMarkdown(page)).join("\n\n");
 
   const body = `# Omentir
 
 > ${defaultDescription}
 
-This is the long-form machine index for Omentir. Use ${siteUrl}/llms.txt for the compact directory. Use this file when you need page-level facts without scraping HTML. Every public HTML page also has a markdown twin at the same path with .md appended (homepage: ${siteUrl}/index.md).
+This is the long-form machine index for Omentir. Use ${siteUrl}/llms.txt for the compact directory. Use this file when you need page-level facts without scraping HTML. Every public HTML page also has a markdown twin at the same path with .md appended (homepage: ${siteUrl}/index.md). Prefer those twins when citing a page. Each content page ends with a signup link.
 
 Omentir is an AI sales outreach workspace for B2B founders, SDRs, solo operators, and small sales teams. It finds potential customers, personalizes LinkedIn outreach from the user's own account, and helps turn interested replies into booked demos.
 
@@ -77,13 +87,25 @@ Agents cannot create Omentir accounts or buy or change subscriptions.
 
 ${features}
 
+## Use cases
+
+${useCases}
+
 ## Alternative pages
 
 ${comparisons}
 
+## Tool roundups
+
+${alternatives}
+
 ## Integration pages
 
 ${integrations}
+
+## Search guides
+
+${guides}
 
 ## Blog library
 
@@ -91,9 +113,9 @@ ${blogs}
 
 ## Legal
 
-- ${siteUrl}/minimum-booking-guarantee
-- ${siteUrl}/privacy-policy
-- ${siteUrl}/terms-of-service
+- ${siteUrl}/minimum-booking-guarantee.md
+- ${siteUrl}/privacy-policy.md
+- ${siteUrl}/terms-of-service.md
 `;
 
   return new NextResponse(body, {

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { createPageMetadata } from "../../seo";
 import IntegrationPageView from "../../seo-content/integration-page";
-import { isSeoPageLive, seoHeroImage } from "../../seo-content/types";
+import { isSeoPageLive, seoOgImage } from "../../seo-content/types";
 import { ALL_INTEGRATIONS, getIntegration } from "../integration-data";
 
 type PageProps = {
@@ -25,19 +25,14 @@ export async function generateMetadata({ params }: PageProps) {
     });
   }
 
-  const hero = seoHeroImage("integrations", page.slug);
+  const image = seoOgImage("integrations", page.slug, page.title);
   return createPageMetadata({
     title: `${page.title} - Omentir`,
     description: page.description,
     path: `/integrations/${page.slug}`,
     keywords: page.keywords,
     noIndex: !isSeoPageLive(page),
-    image: {
-      url: hero.src,
-      width: 1280,
-      height: 720,
-      alt: hero.alt,
-    },
+    image,
   });
 }
 

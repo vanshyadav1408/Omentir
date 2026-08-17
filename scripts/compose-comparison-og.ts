@@ -59,8 +59,12 @@ async function compose(slug: string, title: string, competitorSrc: string) {
 async function main() {
   mkdirSync(join("public", "seo", "comparisons"), { recursive: true });
   for (const page of ALL_COMPARISONS) {
+    if (page.layout === "faceoff") continue;
     const brand = comparisonBrandFromSlug(page.slug);
-    if (!brand) throw new Error(`Missing brand for ${page.slug}`);
+    if (!brand || brand.id === "omentir") {
+      console.log("skip compose (no competitor mark)", page.slug);
+      continue;
+    }
     await compose(page.slug, page.title, brand.src);
   }
 }

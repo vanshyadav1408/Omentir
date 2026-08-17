@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
+import { ALL_ALTERNATIVES } from "@/app/alternatives/alternative-data";
 import { ALL_BLOGS, isBlogLive, liveBlogs } from "@/app/blogs/blog-data";
 import { ALL_COMPARISONS } from "@/app/comparisons/comparison-data";
 import { ALL_FEATURES } from "@/app/features/feature-data";
+import { ALL_GUIDES } from "@/app/guides/guide-data";
 import { ALL_INTEGRATIONS } from "@/app/integrations/integration-data";
-import { liveSeoPages, type SeoContentPage } from "@/app/seo-content/types";
+import { ALL_USE_CASES } from "@/app/use-cases/use-case-data";
+import { liveSeoPages, type SeoCatalogEntry, type SeoContentPage } from "@/app/seo-content/types";
 import { defaultDescription, siteUrl } from "@/app/seo";
 
 // Rebuilt daily rather than pinned at build time: both blog sections are
@@ -50,6 +53,19 @@ function formatPathLink(title: string, path: string, note: string) {
   return formatLink(title, path === "/" ? siteUrl : `${siteUrl}${path}`, note);
 }
 
+function markdownTwinPath(htmlPath: string) {
+  return htmlPath === "/" ? "/index.md" : `${htmlPath}.md`;
+}
+
+function formatMarkdownTwinLink(title: string, htmlPath: string, note: string) {
+  const htmlUrl = htmlPath === "/" ? siteUrl : `${siteUrl}${htmlPath}`;
+  return formatPathLink(
+    title,
+    markdownTwinPath(htmlPath),
+    `${note} HTML: ${htmlUrl}`
+  );
+}
+
 function formatBlogLink(slug: string) {
   const blog = ALL_BLOGS.find((item) => item.slug === slug);
 
@@ -63,16 +79,20 @@ function formatBlogLink(slug: string) {
     return null;
   }
 
-  return formatPathLink(blog.title, `/blogs/${blog.slug}`, blog.description);
+  return formatMarkdownTwinLink(blog.title, `/blogs/${blog.slug}`, blog.description);
 }
 
 function formatSeoFamilyLinks(
-  basePath: "/features" | "/comparisons" | "/integrations",
-  pages: readonly SeoContentPage[]
+  basePath: "/features" | "/comparisons" | "/integrations" | "/use-cases" | "/alternatives",
+  pages: readonly SeoCatalogEntry[] | readonly SeoContentPage[]
 ) {
   return liveSeoPages(pages)
     .map((page) =>
-      formatPathLink(page.title, `${basePath}/${page.slug}`, page.description)
+      formatMarkdownTwinLink(
+        page.title,
+        `${basePath}/${page.slug}`,
+        page.description
+      )
     )
     .join("\n");
 }
@@ -94,7 +114,7 @@ export async function GET() {
         a.title.localeCompare(b.title)
     )
     .map((blog) =>
-      formatPathLink(blog.title, `/blogs/${blog.slug}`, blog.description)
+      formatMarkdownTwinLink(blog.title, `/blogs/${blog.slug}`, blog.description)
     )
     .join("\n");
   const featurePages = formatSeoFamilyLinks("/features", ALL_FEATURES);
@@ -103,29 +123,32 @@ export async function GET() {
     "/integrations",
     ALL_INTEGRATIONS
   );
+  const useCasePages = formatSeoFamilyLinks("/use-cases", ALL_USE_CASES);
+  const alternativePages = formatSeoFamilyLinks(
+    "/alternatives",
+    ALL_ALTERNATIVES
+  );
+  const guidePages = ALL_GUIDES.map((page) =>
+    formatMarkdownTwinLink(page.title, `/${page.slug}`, page.description)
+  ).join("\n");
 
   const docs = [
-    formatPathLink(
+    formatMarkdownTwinLink(
       "Home",
       "/",
       "Product overview, core workflow, positioning, and calls to action."
     ),
-    formatPathLink(
-      "Home (markdown)",
-      "/index.md",
-      "Markdown twin of the homepage. Every other public page is at the same path with .md appended."
-    ),
-    formatPathLink(
+    formatMarkdownTwinLink(
       "Pricing",
       "/pricing",
       "Current Omentir plans and included features."
     ),
-    formatPathLink(
+    formatMarkdownTwinLink(
       "For AI Agents",
       "/for-agents",
       "How to connect operators with OAuth or API keys, operator prompt, REST catalog."
     ),
-    formatPathLink(
+    formatMarkdownTwinLink(
       "MCP Server",
       "/mcp-server",
       "How Claude, ChatGPT, Grok, and Cursor connect; tool list; FAQs."
@@ -148,24 +171,39 @@ export async function GET() {
     formatPathLink(
       "LLM Full Index",
       "/llms-full.txt",
-      "Longer machine index with feature, alternative, and integration page text."
+      "Longer machine index with feature, use case, alternative, roundup, and integration page text."
     ),
-    formatPathLink(
+    formatMarkdownTwinLink(
       "Blog Library",
       "/blogs",
       "B2B outreach guides, LinkedIn templates, sales-agent comparisons, and outbound playbooks."
     ),
-    formatPathLink(
+    formatMarkdownTwinLink(
+      "Features",
+      "/features",
+      "LinkedIn outreach, lead finders, reply drafts, demo booking, campaigns, account safety, and agent API."
+    ),
+    formatMarkdownTwinLink(
+      "Use cases",
+      "/use-cases",
+      "Founder outbound, demo booking, first SDR, competitor commenters, open source AI SDR."
+    ),
+    formatMarkdownTwinLink(
       "Alternatives",
       "/comparisons",
-      "Gojiberry, Apollo, Instantly, Smartlead, and other AI sales tool alternatives featuring Omentir."
+      "Gojiberry, Apollo, HeyReach, Lemlist, Sales Navigator, and other matchups featuring Omentir."
     ),
-    formatPathLink(
+    formatMarkdownTwinLink(
+      "Tool roundups",
+      "/alternatives",
+      "Category shortlists for LinkedIn automation, AI SDRs, databases, email, and Sales Navigator."
+    ),
+    formatMarkdownTwinLink(
       "Integrations",
       "/integrations",
       "Claude, ChatGPT, Cursor, and MCP connect paths."
     ),
-    formatPathLink(
+    formatMarkdownTwinLink(
       "About",
       "/about",
       "Founder story and background on why Omentir exists."
@@ -178,17 +216,17 @@ export async function GET() {
   ].join("\n");
 
   const legal = [
-    formatPathLink(
+    formatMarkdownTwinLink(
       "Minimum Booking Guarantee",
       "/minimum-booking-guarantee",
       "Eligibility, warm-up period, weekly measurement, and refund process for the minimum booking guarantee."
     ),
-    formatPathLink(
+    formatMarkdownTwinLink(
       "Privacy Policy",
       "/privacy-policy",
       "How Omentir collects, uses, stores, and protects account, LinkedIn, lead, campaign, message, and billing data."
     ),
-    formatPathLink(
+    formatMarkdownTwinLink(
       "Terms of Service",
       "/terms-of-service",
       "Terms for using Omentir, connected accounts, outreach responsibility, billing, availability, and liability."
@@ -225,8 +263,11 @@ Public marketing, legal, agent documentation, and released blog pages may be rea
     notes,
     fileListSection("Docs", docs),
     fileListSection("Features", featurePages),
+    fileListSection("Use cases", useCasePages),
     fileListSection("Alternatives", comparisonPages),
+    fileListSection("Tool roundups", alternativePages),
     fileListSection("Integrations", integrationPages),
+    fileListSection("Search guides", guidePages),
     fileListSection("Guides", answerSources),
     fileListSection("Legal", legal),
     fileListSection("Optional", completeBlogLibrary),

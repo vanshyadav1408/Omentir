@@ -22,6 +22,10 @@ bun run build
 
 Report every skipped or unavailable check in the pull request.
 
+## Marketing copy
+
+Any change to user-facing site text must follow the humanizer workflow in `AGENTS.md` and pass `bun run lint:copy`.
+
 ## Commits and pull requests
 
 1. Create a focused branch.

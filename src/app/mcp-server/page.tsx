@@ -335,7 +335,7 @@ export default function McpServerPage() {
             style={{ fontFamily: "var(--font-varta)" }}
             className="text-2xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-3xl lg:text-4xl"
           >
-            Frequently Asked Questions
+            Frequently asked questions
           </h2>
         </Reveal>
         <Reveal delay={120} className="mt-12 sm:mt-16">

@@ -128,9 +128,9 @@ export default function CustomerLogoWall({
     >
       <p
         id={headingId}
-        className="px-4 text-center text-[0.7rem] font-medium uppercase tracking-[0.2em] text-[rgba(255,255,255,0.88)] md:text-xs"
+        className="px-4 text-center text-[0.7rem] font-medium uppercase tracking-[0.2em] text-[var(--md-sys-color-on-surface-variant)] md:text-xs"
       >
-        Trusted by fast-growing companies
+        Teams using Omentir
       </p>
 
       {/* Inset on larger screens so the strip does not run edge-to-edge. */}

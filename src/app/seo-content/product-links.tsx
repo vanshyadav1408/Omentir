@@ -88,6 +88,51 @@ export const PRODUCT_HOMEPAGES: readonly ProductEntry[] = [
     names: ["Cognism", "cognism.com"],
   },
   {
+    id: "heyreach",
+    href: "https://www.heyreach.io",
+    names: ["HeyReach", "heyreach.io"],
+  },
+  {
+    id: "expandi",
+    href: "https://expandi.io",
+    names: ["Expandi", "expandi.io"],
+  },
+  {
+    id: "lemlist",
+    href: "https://www.lemlist.com",
+    names: ["Lemlist", "lemlist.com"],
+  },
+  {
+    id: "phantombuster",
+    href: "https://phantombuster.com",
+    names: ["PhantomBuster", "phantombuster.com"],
+  },
+  {
+    id: "amplemarket",
+    href: "https://www.amplemarket.com",
+    names: ["Amplemarket", "amplemarket.com"],
+  },
+  {
+    id: "la-growth-machine",
+    href: "https://lagrowthmachine.com",
+    names: ["La Growth Machine", "lagrowthmachine.com"],
+  },
+  {
+    id: "warmly",
+    href: "https://www.warmly.ai",
+    names: ["Warmly", "warmly.ai"],
+  },
+  {
+    id: "aisdr",
+    href: "https://aisdr.com",
+    names: ["AiSDR", "aisdr.com"],
+  },
+  {
+    id: "sales-navigator",
+    href: "https://www.linkedin.com/products/linkedin-sales-navigator/",
+    names: ["Sales Navigator", "LinkedIn Sales Navigator"],
+  },
+  {
     id: "mcp",
     href: "https://modelcontextprotocol.io",
     names: ["Model Context Protocol"],

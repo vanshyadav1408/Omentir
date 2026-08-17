@@ -546,7 +546,7 @@ export default function ForAgentsPage() {
             style={{ fontFamily: "var(--font-varta)" }}
             className="border-b border-[var(--md-sys-color-outline-variant)] pb-2 text-2xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-3xl"
           >
-            Frequently Asked Questions
+            Frequently asked questions
           </h2>
         </Reveal>
         <Reveal delay={120} className="mt-2">

@@ -19,7 +19,7 @@ ${siteUrl}
 
 Start with ${siteUrl}/agent.json when you need a compact, machine-readable map of public content, authenticated workspace pages, supported actions, required approvals, and unavailable flows. It is the fastest way to decide whether to use a public page, MCP, or REST.
 
-Public pages: ${siteUrl}/llms.txt (directory) and ${siteUrl}/llms-full.txt (longer page text for features, alternatives, and integrations).
+Public pages: ${siteUrl}/llms.txt (directory) and ${siteUrl}/llms-full.txt (longer page text for features, use cases, alternatives, roundups, and integrations). Every public HTML page has a markdown twin at the same path with .md appended (homepage: ${siteUrl}/index.md).
 
 For workspace work, use MCP or REST instead of scraping authenticated dashboard pages. The API mirrors the dashboard's safe operational surfaces: Dashboard (omentir_get_stats), Actions (omentir_list_scheduled_actions), Activity (omentir_list_activity), Agents (omentir_list_agents / omentir_create_agent / omentir_update_agent), Leads (omentir_list_leads / omentir_get_lead), Messages (omentir_list_conversations / omentir_reply_to_lead), My Product (omentir_get_product_profile / omentir_update_product_profile), and Settings (omentir_get_context / omentir_update_settings).
 

@@ -62,3 +62,18 @@ Default to surfacing uncertainty, not hiding it.
 When i say "Push to Github", I mean push the code to github and sync all the 4 branches: main, testup, origin/main and origin/testup should be on the latest code.
 
 Use no em dash ever.
+
+## Marketing copy (all coding agents)
+
+**Mandatory** whenever you add or edit user-facing text on omentir.com (SEO pages, blogs, guides, comparisons, features, meta descriptions, FAQs, hero copy, CTAs, UI labels).
+
+1. Read the **omentir-marketing-copy** skill for your agent:
+   - Cursor: `.cursor/skills/omentir-marketing-copy/SKILL.md`
+   - Grok Build: `.grok/skills/omentir-marketing-copy/SKILL.md`
+   - Claude Code: `.claude/skills/omentir-marketing-copy/SKILL.md`
+   - GitHub Copilot: `.github/copilot-instructions.md`
+2. Read **humanizer** patterns: `humanizer/SKILL.md` in the same skills directory (or `.cursor/skills/humanizer/SKILL.md`).
+3. Humanize every string. Direct voice, honest tradeoffs, no AI hype, no em dashes.
+4. Run `bun run lint:copy` and fix all violations before finishing.
+
+Nested `src/AGENTS.md` applies when working under `src/`. Do not ship marketing copy without this pass.

@@ -6,14 +6,14 @@ import {
   MarketingThead,
   MarketingTr,
 } from "../marketing-table";
-import type { SeoContentPage } from "../seo-content/types";
+import type { SeoCatalogEntry } from "../seo-content/types";
 import { integrationConnect } from "./integration-connect";
 import IntegrationLogo, { integrationName } from "./integration-logo";
 
 export default function IntegrationsDirectory({
   pages,
 }: {
-  pages: readonly SeoContentPage[];
+  pages: readonly Pick<SeoCatalogEntry, "slug" | "title" | "summary">[];
 }) {
   return (
     <div className="space-y-14">

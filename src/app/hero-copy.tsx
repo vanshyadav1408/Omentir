@@ -6,7 +6,7 @@ export default function HeroCopy({ children }: { children: ReactNode }) {
       <style>
         {`
           .hero-guarantee {
-            color: #ba3871;
+            color: var(--md-sys-color-primary);
           }
           .hero-guarantee-title {
             font-size: clamp(1.3rem, 6.7vw, 2.15rem);
@@ -36,9 +36,8 @@ export default function HeroCopy({ children }: { children: ReactNode }) {
         </span>
       </h1>
       <p className="hero-lede hero-enter hero-enter-delay-1 mt-[1.2rem] max-w-2xl text-xs leading-5 text-[var(--md-sys-color-on-surface-variant)] md:mt-6 md:text-sm">
-        Omentir automates LinkedIn outreach for solo founders, agencies, and sales
-        teams to reach out to 1000+ high intent leads weekly to book you meetings
-        that converts.
+        Omentir helps solo founders, agencies, and sales teams find likely buyers,
+        send relevant LinkedIn outreach, and turn interested replies into meetings.
       </p>
       {children}
     </>

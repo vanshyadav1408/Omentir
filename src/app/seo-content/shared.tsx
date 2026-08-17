@@ -21,28 +21,26 @@ export const familyLabels: Record<SeoFamily, string> = {
   features: "Features",
   comparisons: "Alternatives",
   integrations: "Integrations",
+  "use-cases": "Use cases",
+  alternatives: "Tool roundups",
 };
 
 export const familyPaths: Record<SeoFamily, string> = {
   features: "/features",
   comparisons: "/comparisons",
   integrations: "/integrations",
+  "use-cases": "/use-cases",
+  alternatives: "/alternatives",
 };
 
 export function pageJsonLd(family: SeoFamily, page: SeoContentPage) {
   const path = `${familyPaths[family]}/${page.slug}`;
   const pageUrl = `${siteUrl}${path}`;
-  const breadcrumbs =
-    family === "features"
-      ? [
-          { name: "Home", url: siteUrl },
-          { name: page.title, url: pageUrl },
-        ]
-      : [
-          { name: "Home", url: siteUrl },
-          { name: familyLabels[family], url: `${siteUrl}${familyPaths[family]}` },
-          { name: page.title, url: pageUrl },
-        ];
+  const breadcrumbs = [
+    { name: "Home", url: siteUrl },
+    { name: familyLabels[family], url: `${siteUrl}${familyPaths[family]}` },
+    { name: page.title, url: pageUrl },
+  ];
 
   return [
     createWebPageJsonLd({
@@ -353,7 +351,7 @@ export function FaqBlock({ page }: { page: SeoContentPage }) {
         style={{ fontFamily: "var(--font-varta)" }}
         className="border-b border-[var(--md-sys-color-outline-variant)] pb-2 text-2xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)]"
       >
-        Frequently Asked Questions
+        Frequently asked questions
       </h2>
       <div className="mt-2">
         <FaqAccordion
