@@ -76,6 +76,18 @@ export function shouldShareBookingLink(input: {
   );
 }
 
+const PERMANENT_AI_REPLY_BLOCK = [
+  /agent that sourced this lead was deleted/i,
+  /leads-only agent/i,
+  /anonymized LinkedIn Member/i,
+  /recipient unreachable/i,
+];
+
+export function enrollmentBlocksAiReply(enrollment: Pick<CampaignEnrollment, "lastError">) {
+  const err = enrollment.lastError || "";
+  return PERMANENT_AI_REPLY_BLOCK.some((pattern) => pattern.test(err));
+}
+
 export function shouldArmAiReply(input: {
   replyHandling: CampaignReplyHandling | undefined;
   enrollmentStatus: CampaignEnrollment["status"];
@@ -84,7 +96,21 @@ export function shouldArmAiReply(input: {
 }) {
   if (input.replyHandling === "handoff") return false;
 
-  if (["connected", "message_sent", "reply_received"].includes(input.enrollmentStatus)) {
+  // connection_sent: LinkedIn often delivers the accept-and-message webhook
+  // before the relation webhook, so the enrollment is still waiting on the
+  // invite when the first inbound lands. error/stopped: a missed arm, a
+  // sequence that finished unanswered, or a recovered provider blip must not
+  // discard a real reply.
+  if (
+    [
+      "connection_sent",
+      "connected",
+      "message_sent",
+      "reply_received",
+      "error",
+      "stopped",
+    ].includes(input.enrollmentStatus)
+  ) {
     return true;
   }
 
@@ -92,10 +118,10 @@ export function shouldArmAiReply(input: {
   // message may re-arm it only while the prior reply was non-terminal. This is
   // what lets AI own a multi-turn conversation without reviving a deal after
   // a terminal reply. Booking mode is the exception for hot interest because
-  // it keeps ownership until the meeting is confirmed.
+  // it keeps ownership until the meeting is confirmed. Missing previousIntent
+  // is not a stop: classify the new message instead of going silent.
   return (
     input.enrollmentStatus === "replied" &&
-    Boolean(input.previousIntent) &&
     !shouldStopForReply({
       replyHandling: input.replyHandling,
       intent: input.previousIntent,

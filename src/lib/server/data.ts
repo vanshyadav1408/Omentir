@@ -1444,6 +1444,18 @@ export async function listLeadAgentRefs(
   }));
 }
 
+function looksLikeLinkedInProviderId(id: string | undefined): id is string {
+  if (!id) return false;
+  return /^(?:ACo|ACw|AE)/i.test(id) || /^urn:li:person:/i.test(id);
+}
+
+function linkedInPathIdentifier(value?: string) {
+  const normalized = normalizeLinkedInProfileUrl(value);
+  if (!normalized) return "";
+  const parts = normalized.split("/").filter(Boolean);
+  return parts[parts.length - 1] || "";
+}
+
 export async function findLeadForWorkspace(input: {
   workspaceId: string;
   leadId?: string;
@@ -1458,21 +1470,38 @@ export async function findLeadForWorkspace(input: {
   }
 
   const providerProfileId = input.providerProfileId?.trim();
-  if (providerProfileId) {
+  const urlIdentifier = linkedInPathIdentifier(input.linkedInUrl);
+  const publicIdentifier = input.publicIdentifier?.trim();
+  const providerCandidates = [
+    ...new Set(
+      [providerProfileId, urlIdentifier, publicIdentifier].filter((id) =>
+        looksLikeLinkedInProviderId(id),
+      ),
+    ),
+  ];
+
+  for (const id of providerCandidates) {
     const snap = await collection<Lead>("leads")
       .where("workspaceId", "==", input.workspaceId)
-      .where("providerProfileId", "==", providerProfileId)
+      .where("providerProfileId", "==", id)
       .limit(1)
       .get();
     if (snap.docs[0]) return snap.docs[0].data();
   }
 
   const linkedInCandidates = [
-    normalizeLinkedInProfileUrl(input.linkedInUrl),
-    input.publicIdentifier
-      ? normalizeLinkedInProfileUrl(`https://www.linkedin.com/in/${input.publicIdentifier}`)
-      : "",
-  ].filter(Boolean);
+    ...new Set(
+      [
+        normalizeLinkedInProfileUrl(input.linkedInUrl),
+        publicIdentifier
+          ? normalizeLinkedInProfileUrl(`https://www.linkedin.com/in/${publicIdentifier}`)
+          : "",
+        providerProfileId
+          ? normalizeLinkedInProfileUrl(`https://www.linkedin.com/in/${providerProfileId}`)
+          : "",
+      ].filter(Boolean),
+    ),
+  ];
 
   for (const linkedInUrl of linkedInCandidates) {
     const snap = await collection<Lead>("leads")
@@ -1504,7 +1533,7 @@ export async function upsertLead(workspaceId: string, groupId: string, lead: Par
   const linkedInUrl = normalizeLinkedInProfileUrl(lead.linkedInUrl) || "";
   let id = leadDocId(workspaceId, lead);
   if (lead.providerProfileId || linkedInUrl) {
-    const identityMatch = lead.providerProfileId
+    const identityMatch = looksLikeLinkedInProviderId(lead.providerProfileId)
       ? await collection<Lead>("leads")
           .where("workspaceId", "==", workspaceId)
           .where("providerProfileId", "==", lead.providerProfileId)

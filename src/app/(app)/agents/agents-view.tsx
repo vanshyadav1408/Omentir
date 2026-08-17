@@ -22,7 +22,7 @@ import {
   STAGE_CONTACTED,
   STAGE_MESSAGED,
   STAGE_REPLIED,
-  enrollmentStage,
+  enrollmentProgressStage,
   leadStage,
 } from "@/lib/outreach-stage";
 
@@ -263,7 +263,10 @@ export default function AgentsView({
     for (const enrollment of loadedEnrollments) {
       enrollmentStageByLead.set(
         enrollment.leadId,
-        Math.max(enrollmentStageByLead.get(enrollment.leadId) ?? 0, enrollmentStage(enrollment.status)),
+        Math.max(
+          enrollmentStageByLead.get(enrollment.leadId) ?? 0,
+          enrollmentProgressStage(enrollment.status, enrollment.connectionSentAt),
+        ),
       );
     }
 
@@ -537,7 +540,7 @@ export default function AgentsView({
                       </p>
                       <p className="mt-1.5 text-[11px] font-medium text-zinc-700">
                         {agent.leadsOnly
-                          ? "no outreach"
+                          ? "N/A"
                           : metrics.acceptRate === null
                             ? "- accept rate"
                             : `${metrics.acceptRate}% accept rate`}
@@ -552,7 +555,7 @@ export default function AgentsView({
                         {agent.leadsOnly ? "N/A" : metrics.messaged}
                       </p>
                       <p className="mt-1.5 text-[11px] font-medium text-zinc-700">
-                        {agent.leadsOnly ? "no outreach" : "total messaged"}
+                        {agent.leadsOnly ? "N/A" : "total messaged"}
                       </p>
                     </div>
 
@@ -565,7 +568,7 @@ export default function AgentsView({
                       </p>
                       <p className="mt-1.5 text-[11px] font-medium text-zinc-700">
                         {agent.leadsOnly
-                          ? "no outreach"
+                          ? "N/A"
                           : metrics.replyRate === null
                             ? "- reply rate"
                             : `${metrics.replyRate}% reply rate`}

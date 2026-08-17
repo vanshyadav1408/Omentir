@@ -49,6 +49,12 @@ import {
   productProfileIsReadyForSteal,
   targetingFromProductProfile,
 } from "@/lib/steal-customers-targeting";
+import {
+  STAGE_CONTACTED,
+  STAGE_MESSAGED,
+  STAGE_REPLIED,
+  combinedOutreachStage,
+} from "@/lib/outreach-stage";
 
 export class AgentApiOperationError extends Error {
   status: number;
@@ -357,16 +363,17 @@ export async function getWorkspaceStatsResource(context: AgentApiContext) {
 
   const totalLeads = leads.length;
   const hotOpportunities = sumAgentLeadTotals(agents, groups, leads);
-  const invitationsSent = enrollments.filter((enrollment) =>
-    ["connection_sent", "connected", "message_sent", "reply_received", "replied"].includes(
-      enrollment.status,
-    ),
+  const leadStatusById = new Map(leads.map((lead) => [lead.id, lead.outreachStatus]));
+  const stageOf = (enrollment: (typeof enrollments)[number]) =>
+    combinedOutreachStage(enrollment.status, leadStatusById.get(enrollment.leadId));
+  const invitationsSent = enrollments.filter(
+    (enrollment) => stageOf(enrollment) >= STAGE_CONTACTED,
   ).length;
-  const messagesSent = enrollments.filter((enrollment) =>
-    ["message_sent", "reply_received", "replied"].includes(enrollment.status),
+  const messagesSent = enrollments.filter(
+    (enrollment) => stageOf(enrollment) >= STAGE_MESSAGED,
   ).length;
-  const repliesReceived = enrollments.filter((enrollment) =>
-    ["reply_received", "replied"].includes(enrollment.status),
+  const repliesReceived = enrollments.filter(
+    (enrollment) => stageOf(enrollment) >= STAGE_REPLIED,
   ).length;
   const averageTicketSize = profile?.averageTicketSize;
   const pipelineGenerated =
@@ -574,6 +581,13 @@ export async function createAgentResource(context: AgentApiContext, payload: unk
     throw new AgentApiOperationError("filters are required.", 400);
   }
 
+  const wantsOutreach =
+    isStealCustomers ||
+    input.setupOutreach === true ||
+    input.replyHandling !== undefined ||
+    input.bookingLink !== undefined ||
+    input.notifyOnReply !== undefined;
+
   const agent = await createAgent(context.workspace.id, {
     name: input.name || input.groupName,
     mode: input.mode,
@@ -592,17 +606,12 @@ export async function createAgentResource(context: AgentApiContext, payload: unk
         },
     linkedInAccountId: account.id,
     targetGroupName: input.groupName,
+    leadsOnly: wantsOutreach ? undefined : true,
   });
 
   // Same launch path as the app: when the caller asks for outreach (or picks a
   // reply mode), attach the default AI sequence and reply policy immediately.
   // Steal customers always needs AI outreach (comment/post context).
-  const wantsOutreach =
-    isStealCustomers ||
-    input.setupOutreach === true ||
-    input.replyHandling !== undefined ||
-    input.bookingLink !== undefined ||
-    input.notifyOnReply !== undefined;
   let outreachConfigured = false;
   let outreachSummary: {
     replyHandling: CampaignReplyHandling;

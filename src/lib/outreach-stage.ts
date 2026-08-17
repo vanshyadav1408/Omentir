@@ -39,3 +39,15 @@ export function leadStage(outreachStatus?: string) {
 export function enrollmentStage(status?: string) {
   return ENROLLMENT_STAGE[status ?? ""] ?? 0;
 }
+
+export function combinedOutreachStage(enrollmentStatus?: string, outreachStatus?: string) {
+  return Math.max(enrollmentStage(enrollmentStatus), leadStage(outreachStatus));
+}
+
+// A finished or failed enrollment collapses to stopped/error, which scores 0.
+// connectionSentAt is the durable proof an invite went out, so those leads
+// still count as contacted on the Agents page.
+export function enrollmentProgressStage(status?: string, connectionSentAt?: string) {
+  const stage = enrollmentStage(status);
+  return connectionSentAt ? Math.max(stage, STAGE_CONTACTED) : stage;
+}

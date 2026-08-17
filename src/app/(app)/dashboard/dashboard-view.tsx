@@ -24,8 +24,7 @@ import { sumAgentLeadTotals } from "@/lib/agent-lead-totals";
 import {
   STAGE_CONTACTED,
   STAGE_MESSAGED,
-  enrollmentStage,
-  leadStage,
+  combinedOutreachStage,
 } from "@/lib/outreach-stage";
 import { TextField } from "@/app/ui/text-field";
 import { useWorkspaceTimeZone } from "@/app/workspace-time-zone";
@@ -195,10 +194,8 @@ export default function DashboardView({
 
   const stats = useMemo(() => {
     const cutoff = rangeStart;
-    const inRange = <T extends { createdAt?: string; updatedAt?: string }>(item: T) => {
-      const stamp = item.createdAt || item.updatedAt;
-      return stamp ? new Date(stamp).getTime() >= cutoff : false;
-    };
+    const inRange = (stamp?: string) =>
+      Boolean(stamp) && new Date(stamp as string).getTime() >= cutoff;
 
     const hotOpportunities = sumAgentLeadTotals(loadedAgents, loadedGroups, loadedLeads);
 
@@ -207,16 +204,18 @@ export default function DashboardView({
     // the sequence ends, expires or is cut short, which used to drop those
     // invites and messages out of the totals. Where the stage was lost, the
     // lead's own status still remembers how far it got.
-    const leadStageById = new Map(
-      loadedLeads.map((lead) => [lead.id, leadStage(lead.outreachStatus)]),
+    const leadStatusById = new Map(
+      loadedLeads.map((lead) => [lead.id, lead.outreachStatus]),
     );
     const stageOf = (enrollment: CampaignEnrollmentPreview) =>
-      enrollmentStage(enrollment.status) || leadStageById.get(enrollment.leadId) || 0;
+      combinedOutreachStage(enrollment.status, leadStatusById.get(enrollment.leadId));
     const invitationsSent = loadedEnrollments.filter(
-      (enrollment) => stageOf(enrollment) >= STAGE_CONTACTED && inRange(enrollment),
+      (enrollment) =>
+        stageOf(enrollment) >= STAGE_CONTACTED && inRange(enrollment.connectionSentAt),
     ).length;
     const messagesSent = loadedEnrollments.filter(
-      (enrollment) => stageOf(enrollment) >= STAGE_MESSAGED && inRange(enrollment),
+      (enrollment) =>
+        stageOf(enrollment) >= STAGE_MESSAGED && inRange(enrollment.updatedAt),
     ).length;
 
     return { hotOpportunities, invitationsSent, messagesSent };

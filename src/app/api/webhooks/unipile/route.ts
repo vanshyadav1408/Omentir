@@ -10,6 +10,7 @@ import {
 } from "@/lib/server/data";
 import {
   applyConnectionAccepted,
+  enrollmentCanReceiveAcceptance,
   processInboundMessage,
 } from "@/lib/server/inbound";
 import { passwordsMatch } from "@/lib/local-session";
@@ -57,8 +58,12 @@ type UnipileWebhook = {
         text?: string;
         body?: string;
         sender?: UnipileWebhookSender;
+        is_sender?: boolean;
       };
   sender?: UnipileWebhookSender;
+  attendees?: UnipileWebhookSender[];
+  attachments?: unknown[];
+  is_sender?: boolean;
   account_info?: { user_id?: string; user_provider_id?: string };
   profile_url?: string;
   provider_id?: string;
@@ -72,6 +77,37 @@ type UnipileWebhook = {
   campaign_id?: string;
   user_email?: string;
 };
+
+function compactEventName(eventName: string) {
+  return eventName.toLowerCase().replace(/[._-]/g, "");
+}
+
+// Unipile fires message_read / message_delivered / message_reaction on the
+// same messaging webhook. Those are not inbound replies, and storing them
+// under the real message id blocks the later text delivery from being armed.
+function isInboundReplyEvent(eventName: string) {
+  const compact = compactEventName(eventName);
+  return (
+    compact === "messagereceived" ||
+    compact === "newmessage" ||
+    compact === "messagenew" ||
+    compact.includes("newmessage") ||
+    compact.includes("reply")
+  );
+}
+
+function inboundMessageBody(payload: UnipileWebhook) {
+  const nestedMessage = typeof payload.message === "object" ? payload.message : undefined;
+  const text =
+    typeof payload.message === "string"
+      ? payload.message
+      : nestedMessage?.text || nestedMessage?.body || "";
+  if (text.trim()) return text;
+  if (Array.isArray(payload.attachments) && payload.attachments.length > 0) {
+    return "[Sent an attachment]";
+  }
+  return "";
+}
 
 export async function POST(request: NextRequest) {
   if (!isAuthorized(request)) {
@@ -100,8 +136,7 @@ export async function POST(request: NextRequest) {
   if (!payload) return NextResponse.json({ error: "Invalid payload." }, { status: 400 });
   const eventName = payload.event || payload.type || "";
   const normalizedEventName = eventName.toLowerCase();
-  const isReply =
-    normalizedEventName.includes("message") || normalizedEventName.includes("reply");
+  const isReply = isInboundReplyEvent(eventName);
   // Unipile emits "new_relation" when an invite is accepted.
   const isConnectionApproved =
     normalizedEventName.includes("relation") ||
@@ -135,22 +170,36 @@ export async function POST(request: NextRequest) {
 
   const nestedMessage = typeof payload.message === "object" ? payload.message : undefined;
   const messageSender = payload.sender || nestedMessage?.sender;
+  const otherAttendee = (payload.attendees || []).find(
+    (attendee) =>
+      (attendee.provider_id || attendee.attendee_provider_id) &&
+      (attendee.provider_id || attendee.attendee_provider_id) !==
+        (payload.account_info?.user_provider_id || payload.account_info?.user_id),
+  );
   const profileUrl =
     payload.profile_url ||
     payload.user_profile_url ||
     messageSender?.profile_url ||
-    messageSender?.attendee_profile_url;
+    messageSender?.attendee_profile_url ||
+    otherAttendee?.profile_url ||
+    otherAttendee?.attendee_profile_url;
   const providerId =
     payload.provider_id ||
     payload.user_provider_id ||
     messageSender?.provider_id ||
-    messageSender?.attendee_provider_id;
+    messageSender?.attendee_provider_id ||
+    otherAttendee?.provider_id ||
+    otherAttendee?.attendee_provider_id;
   const publicIdentifier = payload.user_public_identifier;
 
   // Messages we send through Unipile come back as message webhooks too; treating
   // them as replies would stop the campaign right after its first message.
   const ownerId = payload.account_info?.user_provider_id || payload.account_info?.user_id;
-  if (isReply && ownerId && providerId && ownerId === providerId) {
+  const isOwnMessage =
+    payload.is_sender === true ||
+    nestedMessage?.is_sender === true ||
+    Boolean(isReply && ownerId && providerId && ownerId === providerId);
+  if (isOwnMessage) {
     return NextResponse.json({ ok: true, ignored: true });
   }
 
@@ -166,43 +215,46 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Lead not found for webhook." }, { status: 404 });
   }
 
+  if (providerId && !lead.providerProfileId) {
+    await updateLead(workspaceId, lead.id, { providerProfileId: providerId });
+    lead.providerProfileId = providerId;
+  }
+
   if (isConnectionApproved && !isReply) {
     const [enrollments, campaigns] = await Promise.all([
       listCampaignEnrollments(workspaceId),
       listCampaigns(workspaceId),
     ]);
     const campaignsById = new Map(campaigns.map((campaign) => [campaign.id, campaign]));
-    await Promise.all(
-      enrollments
-        .filter(
-          (enrollment) =>
-            enrollment.leadId === lead.id && enrollment.status === "connection_sent",
-        )
-        .map((enrollment) =>
-          applyConnectionAccepted({
-            workspaceId,
-            lead,
-            enrollment,
-            campaign: campaignsById.get(enrollment.campaignId),
-            account,
-          }),
-        ),
+    const pending = enrollments.filter(
+      (enrollment) =>
+        enrollment.leadId === lead.id && enrollmentCanReceiveAcceptance(enrollment),
     );
-    await updateLead(workspaceId, lead.id, { outreachStatus: "connected" });
-    revalidateWorkspaceDataPages();
-    await logAutomationRun({
-      workspaceId,
-      kind: "webhook",
-      status: "completed",
-      message: `Stored connection approval from ${lead.name}`,
-    });
+    await Promise.all(
+      pending.map((enrollment) =>
+        applyConnectionAccepted({
+          workspaceId,
+          lead,
+          enrollment,
+          campaign: campaignsById.get(enrollment.campaignId),
+          account,
+        }),
+      ),
+    );
+    if (pending.length) {
+      await updateLead(workspaceId, lead.id, { outreachStatus: "connected" });
+      revalidateWorkspaceDataPages();
+      await logAutomationRun({
+        workspaceId,
+        kind: "webhook",
+        status: "completed",
+        message: `Stored connection approval from ${lead.name}`,
+      });
+    }
     return NextResponse.json({ ok: true });
   }
 
-  const body =
-    typeof payload.message === "string"
-      ? payload.message
-      : nestedMessage?.text || nestedMessage?.body || "";
+  const body = inboundMessageBody(payload);
   const senderName =
     messageSender?.name ||
     messageSender?.attendee_name ||
@@ -222,6 +274,7 @@ export async function POST(request: NextRequest) {
     notifyEmailOverride: payload.user_email,
   });
   if (result.duplicate) {
+    revalidateWorkspaceDataPages();
     return NextResponse.json({ ok: true, duplicate: true });
   }
   revalidateWorkspaceDataPages();

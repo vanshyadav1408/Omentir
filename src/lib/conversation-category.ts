@@ -4,7 +4,7 @@ import { MEETING_BOOKED_CONFIDENCE } from "@/lib/server/reply-automation-policy"
 export type ConversationCategory = "successful" | "interested" | "follow" | "denied";
 
 export function conversationHasMeetingBooked(conversation?: {
-  replyIntent?: ReplyIntent;
+  replyIntent?: string;
   replyIntentConfidence?: number;
   replyIntentAt?: string;
   meetingBookedAt?: string;

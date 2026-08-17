@@ -18,6 +18,8 @@ export type ActivityChartPoint = ActivityDayTotals & {
   date: string;
 };
 
+import { conversationHasMeetingBooked } from "@/lib/conversation-category";
+
 type LeadLike = {
   id: string;
   createdAt?: string;
@@ -30,12 +32,14 @@ type EnrollmentLike = {
   status: string;
   createdAt?: string;
   updatedAt?: string;
+  connectionSentAt?: string;
 };
 
 type ConversationLike = {
   messages?: Array<{ direction?: string; createdAt?: string }>;
   replyIntent?: string;
   replyIntentAt?: string;
+  replyIntentConfidence?: number;
   meetingBookedAt?: string;
 };
 
@@ -114,11 +118,14 @@ export function buildActivityTotalsFromLive(input: {
   }
 
   for (const enrollment of input.enrollments) {
-    if (!CONTACTED_ENROLLMENT_STATUSES.has(enrollment.status)) continue;
+    const sentAt = enrollment.connectionSentAt;
+    const wasContacted =
+      CONTACTED_ENROLLMENT_STATUSES.has(enrollment.status) || Boolean(sentAt);
+    if (!wasContacted) continue;
     contactedFromEnrollments.add(enrollment.leadId);
     addLeadToDay(
       contactedByDay,
-      toActivityDayKey(enrollment.updatedAt || enrollment.createdAt),
+      toActivityDayKey(sentAt || enrollment.createdAt),
       enrollment.leadId,
     );
   }
@@ -138,8 +145,9 @@ export function buildActivityTotalsFromLive(input: {
       if (message.direction !== "inbound") continue;
       addCount(repliesCounts, toActivityDayKey(message.createdAt));
     }
-    const meetingBookedAt = conversation.meetingBookedAt ||
-      (conversation.replyIntent === "meeting_booked" ? conversation.replyIntentAt : undefined);
+    const meetingBookedAt = conversationHasMeetingBooked(conversation)
+      ? conversation.meetingBookedAt || conversation.replyIntentAt
+      : undefined;
     addCount(meetingsBookedCounts, toActivityDayKey(meetingBookedAt));
   }
 

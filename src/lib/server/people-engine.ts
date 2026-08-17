@@ -393,6 +393,49 @@ function expectedLeadId(workspaceId: string, lead: Partial<Lead>) {
   return `${workspaceId}-${cleanId(leadIdentityValue(lead) || lead.name || "lead")}`;
 }
 
+function findKnownLead(
+  existingLeadsById: Map<string, Lead>,
+  existingByProviderId: Map<string, Lead>,
+  existingByUrl: Map<string, Lead>,
+  workspaceId: string,
+  lead: Partial<Lead>,
+) {
+  const byDocId = existingLeadsById.get(expectedLeadId(workspaceId, lead));
+  if (byDocId) return byDocId;
+  if (lead.providerProfileId) {
+    const byProvider = existingByProviderId.get(lead.providerProfileId.toLowerCase());
+    if (byProvider) return byProvider;
+  }
+  const url = normalizeLinkedInProfileUrl(lead.linkedInUrl);
+  if (url) {
+    const byUrl = existingByUrl.get(url);
+    if (byUrl) return byUrl;
+  }
+  const slug = getPublicIdentifier(lead.linkedInUrl).toLowerCase();
+  if (slug) {
+    return existingByProviderId.get(slug) || existingByUrl.get(`slug:${slug}`);
+  }
+  return undefined;
+}
+
+function rememberLead(
+  existingLeadIds: Set<string>,
+  existingLeadsById: Map<string, Lead>,
+  existingByProviderId: Map<string, Lead>,
+  existingByUrl: Map<string, Lead>,
+  lead: Lead,
+) {
+  existingLeadIds.add(lead.id);
+  existingLeadsById.set(lead.id, lead);
+  if (lead.providerProfileId) {
+    existingByProviderId.set(lead.providerProfileId.toLowerCase(), lead);
+  }
+  const url = normalizeLinkedInProfileUrl(lead.linkedInUrl);
+  if (url) existingByUrl.set(url, lead);
+  const slug = getPublicIdentifier(lead.linkedInUrl).toLowerCase();
+  if (slug) existingByUrl.set(`slug:${slug}`, lead);
+}
+
 function mergeLead(base: Partial<Lead>, next: Partial<Lead>) {
   return {
     ...base,
@@ -702,7 +745,8 @@ async function collectFromConnectedAccountPosts(input: {
   const sourceLabel = "connected account own post";
   try {
     const ownProfile = await retrieveOwnLinkedInProfile(input.account.accountId);
-    if (!ownProfile?.providerProfileId) return;
+    const ownIdentifier = ownProfile?.providerProfileId || ownProfile?.publicIdentifier;
+    if (!ownIdentifier) return;
     if (
       input.targetLocations.length &&
       (!ownProfile.location ||
@@ -712,7 +756,7 @@ async function collectFromConnectedAccountPosts(input: {
     }
     const posts = await listLinkedInPostsForProfile({
       accountId: input.account.accountId,
-      identifier: ownProfile.providerProfileId,
+      identifier: ownIdentifier,
       limit: 5,
     });
     const recentPosts = posts.filter((post) =>
@@ -1276,8 +1320,13 @@ export async function runPeopleEngineForAgent(input: {
     keywords: [],
   };
   const existingLeads = await listLeads(input.agent.workspaceId, undefined, 5000);
-  const existingLeadIds = new Set(existingLeads.map((lead) => lead.id));
-  const existingLeadsById = new Map(existingLeads.map((lead) => [lead.id, lead]));
+  const existingLeadIds = new Set<string>();
+  const existingLeadsById = new Map<string, Lead>();
+  const existingByProviderId = new Map<string, Lead>();
+  const existingByUrl = new Map<string, Lead>();
+  for (const lead of existingLeads) {
+    rememberLead(existingLeadIds, existingLeadsById, existingByProviderId, existingByUrl, lead);
+  }
   // People searches page past leads already in this agent's group: LinkedIn
   // returns the same first page for the same query day after day, so without
   // this a mature agent re-reads yesterday's results and discovers nobody new.
@@ -1777,10 +1826,14 @@ export async function runPeopleEngineForAgent(input: {
       activity.recentPosts,
     );
 
-    const existingLeadId = expectedLeadId(input.agent.workspaceId, candidate.lead);
-    if (existingLeadIds.has(existingLeadId)) {
-      const existingLead = existingLeadsById.get(existingLeadId);
-      if (!existingLead) continue;
+    const existingLead = findKnownLead(
+      existingLeadsById,
+      existingByProviderId,
+      existingByUrl,
+      input.agent.workspaceId,
+      candidate.lead,
+    );
+    if (existingLead) {
       try {
         await qualifyExistingLead(existingLead, candidate, firstSignal, persistedSignals);
       } catch (error) {
@@ -1872,14 +1925,17 @@ export async function runPeopleEngineForAgent(input: {
       continue;
     }
 
-    const leadId = expectedLeadId(input.agent.workspaceId, enrichedLead);
-    const knownLead = existingLeadIds.has(leadId);
+    const knownLead = findKnownLead(
+      existingLeadsById,
+      existingByProviderId,
+      existingByUrl,
+      input.agent.workspaceId,
+      enrichedLead,
+    );
 
     if (knownLead) {
-      const existingLead = existingLeadsById.get(leadId);
-      if (!existingLead) continue;
       await qualifyExistingLead(
-        existingLead,
+        knownLead,
         { ...candidate, lead: enrichedLead },
         firstSignal,
         persistedSignals,
@@ -1959,8 +2015,7 @@ export async function runPeopleEngineForAgent(input: {
       continue;
     }
 
-    existingLeadIds.add(lead.id);
-    existingLeadsById.set(lead.id, lead);
+    rememberLead(existingLeadIds, existingLeadsById, existingByProviderId, existingByUrl, lead);
     await Promise.all(
       persistedSignals.map((signal) =>
         markLeadSignalPromoted(signal.id, {

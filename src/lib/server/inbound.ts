@@ -27,6 +27,7 @@ import { SPACING_MINUTES } from "./send-schedule";
 import { classifyReplyIntent, draftCampaignMessage } from "./gemini";
 import { renderTemplate } from "./outreach-rules";
 import {
+  enrollmentBlocksAiReply,
   isHotReply,
   isMeetingBooked,
   shouldArmAiReply,
@@ -290,6 +291,35 @@ function campaignHandsOffOnReply(campaignId: string | undefined, campaigns: Camp
   return campaigns.find((item) => item.id === campaignId)?.replyHandling === "handoff";
 }
 
+export function enrollmentCanReceiveAcceptance(enrollment: CampaignEnrollment) {
+  if (enrollment.status === "connection_sent") return true;
+  if (!enrollment.connectionSentAt) return false;
+  if (enrollment.status !== "stopped" && enrollment.status !== "error") return false;
+  return !enrollmentBlocksAiReply(enrollment);
+}
+
+const LIVE_INBOUND_ENROLLMENT_STATUSES: CampaignEnrollment["status"][] = [
+  "connection_sent",
+  "connected",
+  "message_sent",
+  "reply_received",
+  "replied",
+  "error",
+  "stopped",
+];
+
+function leadEnrollmentsForInbound(
+  enrollments: CampaignEnrollment[],
+  leadId: string,
+) {
+  return enrollments.filter(
+    (enrollment) =>
+      enrollment.leadId === leadId &&
+      LIVE_INBOUND_ENROLLMENT_STATUSES.includes(enrollment.status) &&
+      !enrollmentBlocksAiReply(enrollment),
+  );
+}
+
 export type InboundMessageResult =
   | { duplicate: true }
   | {
@@ -315,6 +345,13 @@ export async function processInboundMessage(input: {
 }): Promise<InboundMessageResult> {
   const { workspaceId, lead } = input;
 
+  // Empty provider events (read receipts, deliveries, reactions) must not be
+  // stored under the real message id. That would make the later text delivery
+  // look like a duplicate and the lead would never get a reply.
+  if (!input.body.trim()) {
+    return { duplicate: true };
+  }
+
   const [enrollments, campaigns, existingConversation, productProfile] = await Promise.all([
     listCampaignEnrollments(workspaceId),
     listCampaigns(workspaceId),
@@ -322,48 +359,47 @@ export async function processInboundMessage(input: {
     getProductProfile(workspaceId),
   ]);
 
-  // Recognize a retried webhook delivery (or a sync pass over an
-  // already-stored message) before spending a Gemini classification on it.
-  // createConversationMessage still dedupes transactionally below.
-  if (
+  const existingMessages = existingConversation?.messages || [];
+  const alreadyStored = Boolean(
     input.providerMessageId &&
-    (existingConversation?.messages || []).some(
-      (message) => message.id === input.providerMessageId,
-    )
-  ) {
-    return { duplicate: true };
-  }
+      existingMessages.some((message) => message.id === input.providerMessageId),
+  );
 
   // Classify before storing so the conversation doc carries intent for the AI
   // reply tick. Failures fall back to neutral inside classifyReplyIntent.
-  const classification = await classifyReplyIntent({
-    lead,
-    productProfile,
-    conversation: existingConversation?.messages || [],
-    latestInbound: input.body,
-  });
+  // Retries reuse the stored classification so a second Gemini call cannot
+  // flip a message we already acted on.
+  const classification = alreadyStored
+    ? {
+        intent: existingConversation?.replyIntent || "neutral",
+        confidence: existingConversation?.replyIntentConfidence || 0,
+        reason: existingConversation?.replyIntentReason || "",
+        nextStepHint: existingConversation?.replyIntentNextStepHint || "",
+      }
+    : await classifyReplyIntent({
+        lead,
+        productProfile,
+        conversation: existingMessages,
+        latestInbound: input.body,
+      });
 
-  const leadEnrollments = enrollments.filter(
-    (enrollment) =>
-      enrollment.leadId === lead.id &&
-      ["connected", "message_sent", "reply_received", "replied"].includes(enrollment.status),
-  );
+  const leadEnrollments = leadEnrollmentsForInbound(enrollments, lead.id);
   // Hand-off campaigns never auto-reply: the user chose to take over the
   // conversation at the first reply, so their enrollments stop instead.
   const handoffEnrollments = leadEnrollments.filter(
     (enrollment) => campaignHandsOffOnReply(enrollment.campaignId, campaigns),
   );
-  const aiReplyCandidates = leadEnrollments.filter(
-    (enrollment) => {
-      const enrollmentCampaign = campaigns.find((item) => item.id === enrollment.campaignId);
-      return shouldArmAiReply({
-        replyHandling: enrollmentCampaign?.replyHandling,
-        enrollmentStatus: enrollment.status,
-        previousIntent: existingConversation?.replyIntent,
-        previousIntentConfidence: existingConversation?.replyIntentConfidence,
-      });
-    },
-  );
+  const previousIntent = existingConversation?.replyIntent;
+  const previousIntentConfidence = existingConversation?.replyIntentConfidence;
+  const aiReplyCandidates = leadEnrollments.filter((enrollment) => {
+    const enrollmentCampaign = campaigns.find((item) => item.id === enrollment.campaignId);
+    return shouldArmAiReply({
+      replyHandling: enrollmentCampaign?.replyHandling,
+      enrollmentStatus: enrollment.status,
+      previousIntent,
+      previousIntentConfidence,
+    });
+  });
   const aiReplyEnrollments = aiReplyCandidates.filter((enrollment) => {
     const enrollmentCampaign = campaigns.find((item) => item.id === enrollment.campaignId);
     return !shouldStopForReply({
@@ -380,70 +416,93 @@ export async function processInboundMessage(input: {
     input.campaignIdHint || leadEnrollments[0]?.campaignId || aiReplyEnrollments[0]?.campaignId;
   const campaign = campaigns.find((item) => item.id === campaignId);
 
-  const inserted = await createConversationMessage({
-    workspaceId,
-    leadId: lead.id,
-    campaignId,
-    userId: workspaceId,
-    senderName: input.senderName,
-    body: input.body,
-    providerMessageId: input.providerMessageId,
-    replyIntent: classification.intent,
-    replyIntentReason: classification.reason,
-    replyIntentConfidence: classification.confidence,
-    replyIntentNextStepHint: classification.nextStepHint,
-  });
+  const inserted = alreadyStored
+    ? false
+    : await createConversationMessage({
+        workspaceId,
+        leadId: lead.id,
+        campaignId,
+        userId: workspaceId,
+        senderName: input.senderName,
+        body: input.body,
+        providerMessageId: input.providerMessageId,
+        replyIntent: classification.intent,
+        replyIntentReason: classification.reason,
+        replyIntentConfidence: classification.confidence,
+        replyIntentNextStepHint: classification.nextStepHint,
+      });
+
+  const conversationAfterInsert = inserted
+    ? [...existingMessages, { direction: "inbound" as const }]
+    : existingMessages;
+  const lastMessage = conversationAfterInsert[conversationAfterInsert.length - 1];
+  // A retry that stored the inbound but crashed before arming still needs the
+  // enrollment woken. If we already sent our reply, the last row is outbound
+  // and there is nothing left to arm.
+  const needsReplyArm = Boolean(inserted || lastMessage?.direction === "inbound");
+
+  if (needsReplyArm) {
+    // Arm enrollments before flipping outreachStatus. The tick used to see
+    // "replied" on the lead while the enrollment was still message_sent and
+    // permanently stop it, so the inbound never got an AI reply.
+    if (aiReplyEnrollments.length) {
+      const toArm = aiReplyEnrollments.filter(
+        (enrollment) => enrollment.status !== "reply_received",
+      );
+      const toStop = stoppedEnrollments.filter(
+        (enrollment) => enrollment.status !== "replied" && enrollment.status !== "stopped",
+      );
+      const armed = await Promise.all(
+        toArm.map(async (enrollment) => ({
+          enrollment,
+          nextActionAt: await planFirstAvailableSlot({
+            workspaceId,
+            campaign: campaigns.find((item) => item.id === enrollment.campaignId),
+            enrollmentId: enrollment.id,
+            kind: "reply",
+            // Keep automated replies human-paced even when the account has been
+            // idle. The shared account drip alone would otherwise allow a reply
+            // on the next tick, only seconds after the lead wrote.
+            earliestAt: Date.now() + SPACING_MINUTES * 60 * 1000,
+            leadLocation: lead.location,
+          }),
+        })),
+      );
+      await Promise.all([
+        ...armed.map(({ enrollment, nextActionAt }) =>
+          updateEnrollment(workspaceId, enrollment.id, {
+            status: "reply_received",
+            nextActionAt,
+            lastError: undefined,
+            pendingAction: undefined,
+            nextMessageDraft: undefined,
+          }),
+        ),
+        ...toStop.map((enrollment) =>
+          updateEnrollment(workspaceId, enrollment.id, { status: "replied" }),
+        ),
+      ]);
+    } else {
+      await Promise.all(
+        leadEnrollments
+          .filter(
+            (enrollment) => enrollment.status !== "replied" && enrollment.status !== "stopped",
+          )
+          .map((enrollment) =>
+            updateEnrollment(workspaceId, enrollment.id, { status: "replied" }),
+          ),
+      );
+    }
+
+    await updateLead(workspaceId, lead.id, { outreachStatus: "replied" });
+  }
+
   if (!inserted) {
     return { duplicate: true };
   }
 
-  await updateLead(workspaceId, lead.id, { outreachStatus: "replied" });
-
   const isHotInterest = isHotReply(classification.intent, classification.confidence);
   const meetingBooked = isMeetingBooked(classification.intent, classification.confidence);
-  if (aiReplyEnrollments.length) {
-    // Replies are planned as kind "reply", so they outrank queued cold invites
-    // for the next free slot - but they still land inside the send window
-    // rather than firing back at 3am just because that is when it arrived.
-    const armed = await Promise.all(
-      aiReplyEnrollments.map(async (enrollment) => ({
-        enrollment,
-        nextActionAt: await planFirstAvailableSlot({
-          workspaceId,
-          campaign: campaigns.find((item) => item.id === enrollment.campaignId),
-          enrollmentId: enrollment.id,
-          kind: "reply",
-          // Keep automated replies human-paced even when the account has been
-          // idle. The shared account drip alone would otherwise allow a reply
-          // on the next tick, only seconds after the lead wrote.
-          earliestAt: Date.now() + SPACING_MINUTES * 60 * 1000,
-          leadLocation: lead.location,
-        }),
-      })),
-    );
-    await Promise.all([
-      ...armed.map(({ enrollment, nextActionAt }) =>
-        updateEnrollment(workspaceId, enrollment.id, {
-          status: "reply_received",
-          nextActionAt,
-          // Any message drafted before this inbound reply is now stale. The
-          // reply path must generate from the complete conversation instead.
-          nextMessageDraft: undefined,
-        }),
-      ),
-      // A lead can sit in campaigns with different reply modes. Stop only the
-      // enrollments whose selected outcome has been reached.
-      ...stoppedEnrollments.map((enrollment) =>
-        updateEnrollment(workspaceId, enrollment.id, { status: "replied" }),
-      ),
-    ]);
-  } else {
-    await Promise.all(
-      leadEnrollments.map((enrollment) =>
-        updateEnrollment(workspaceId, enrollment.id, { status: "replied" }),
-      ),
-    );
-  }
 
   const workspace = await getWorkspace(workspaceId);
   // Product notification emails only go to active (or billing-bypassed) workspaces.

@@ -752,7 +752,11 @@ function normalizeUnipileProfile(profile: UnipileProfile) {
     "LinkedIn profile";
 
   return {
-    providerProfileId: profile.provider_id || profile.id || profile.public_identifier,
+    providerProfileId: looksLikeLinkedInProviderId(profile.provider_id)
+      ? profile.provider_id
+      : looksLikeLinkedInProviderId(profile.id)
+        ? profile.id
+        : undefined,
     linkedInUrl:
       profile.profile_url ||
       profile.linkedin_url ||
@@ -1134,7 +1138,12 @@ export async function retrieveOwnLinkedInProfile(accountId: string) {
   return {
     displayName,
     avatarUrl: profileAvatarUrl(profile),
-    providerProfileId: profile.provider_id || profile.id || profile.public_identifier,
+    providerProfileId: looksLikeLinkedInProviderId(profile.provider_id)
+      ? profile.provider_id
+      : looksLikeLinkedInProviderId(profile.id)
+        ? profile.id
+        : undefined,
+    publicIdentifier: profile.public_identifier || "",
     location: profileLocation(profile) || "",
   };
 }
@@ -2221,11 +2230,32 @@ export function getLinkedInPostUrl(post: UnipilePost) {
 }
 
 /** Prefer absolute ISO timestamps over relative labels like "1w" / "6h". */
+function parseUnipileRelativeTimestamp(value: string) {
+  const match = /^(\d+)\s*(mo|[smhdwy])$/i.exec(value.trim());
+  if (!match) return "";
+  const amount = Number(match[1]);
+  const unit = match[2].toLowerCase();
+  const unitMs: Record<string, number> = {
+    s: 1000,
+    m: 60 * 1000,
+    h: 60 * 60 * 1000,
+    d: 24 * 60 * 60 * 1000,
+    w: 7 * 24 * 60 * 60 * 1000,
+    mo: 30 * 24 * 60 * 60 * 1000,
+    y: 365 * 24 * 60 * 60 * 1000,
+  };
+  const delta = unitMs[unit];
+  if (!delta || !Number.isFinite(amount)) return "";
+  return new Date(Date.now() - amount * delta).toISOString();
+}
+
 function pickParseableTimestamp(...values: Array<string | undefined>) {
   for (const value of values) {
     const text = String(value || "").trim();
     if (!text) continue;
     if (Number.isFinite(Date.parse(text))) return text;
+    const relative = parseUnipileRelativeTimestamp(text);
+    if (relative) return relative;
   }
   return "";
 }
@@ -2255,7 +2285,7 @@ export function getLinkedInPostCreatedAtRaw(post: UnipilePost) {
 // or AE (Recruiter). Public vanity slugs
 // (e.g. "pavanbabar") are not valid provider_id values for /users/invite and
 // produce errors/invalid_parameters ("User ID does not match provider's expected format").
-function looksLikeLinkedInProviderId(id: string | undefined): id is string {
+export function looksLikeLinkedInProviderId(id: string | undefined): id is string {
   if (!id) return false;
   return /^(?:ACo|ACw|AE)/i.test(id) || /^urn:li:person:/i.test(id);
 }
@@ -2309,12 +2339,17 @@ export async function listSentInvitationProviderIds(accountId: string) {
 export async function hasPendingSentInvitation(input: {
   accountId: string;
   providerProfileId?: string;
+  linkedInUrl?: string;
 }) {
-  if (!input.providerProfileId) return null;
+  const keys = profileSearchKeys({
+    providerProfileId: input.providerProfileId,
+    linkedInUrl: input.linkedInUrl,
+  });
+  if (!keys.length) return null;
 
   const ids = await listSentInvitationProviderIds(input.accountId);
   if (!ids) return null;
-  return ids.has(input.providerProfileId.toLowerCase());
+  return keys.some((key) => ids.has(key.toLowerCase()));
 }
 
 export async function sendConnectionRequest(input: {

@@ -58,6 +58,7 @@ import {
 import {
   applyConnectionAccepted,
   draftUpcomingMessagePreview,
+  enrollmentCanReceiveAcceptance,
   processInboundMessage,
   refreshLeadProfileForDrafting,
 } from "./inbound";
@@ -86,7 +87,7 @@ import {
 } from "./outreach-rules";
 import { shouldStopForReply } from "./reply-automation-policy";
 import { localDayAndHour } from "./scheduling";
-import { isWithinSendWindow, type SendActionKind } from "./send-schedule";
+import { isWithinSendWindow, SPACING_MINUTES, type SendActionKind } from "./send-schedule";
 import { hasActiveSubscription } from "./subscription";
 import { getAppBaseUrl } from "./runtime-config";
 import { sendDailyDigestEmail, sendInvitePauseNotification } from "./email";
@@ -591,7 +592,23 @@ async function runEnrollment(
     workspaceId: enrollment.workspaceId,
     leadId: enrollment.leadId,
   });
-  if (!lead || (lead.outreachStatus === "replied" && enrollment.status !== "reply_received")) {
+  if (!lead) {
+    await updateCurrentEnrollment({ status: "stopped" });
+    return "stopped";
+  }
+  if (lead.outreachStatus === "replied" && enrollment.status !== "reply_received") {
+    // Inbound arms the enrollment after it marks the lead replied. Stopping
+    // here used to win that race and permanently drop the AI reply. Live
+    // enrollments wait for the arm instead of sending more sequence messages.
+    if (
+      enrollment.status === "connection_sent" ||
+      enrollment.status === "connected" ||
+      enrollment.status === "message_sent" ||
+      enrollment.status === "error"
+    ) {
+      await updateCurrentEnrollment({ nextActionAt: addMinutes(SPACING_MINUTES) });
+      return "awaiting-reply-arm";
+    }
     await updateCurrentEnrollment({ status: "stopped" });
     return "stopped";
   }
@@ -677,7 +694,22 @@ async function runEnrollment(
   }
 
   if (enrollment.lastError?.startsWith(UNCONFIRMED_PROVIDER_SEND_PREFIX)) {
-    return "unconfirmed-send";
+    if (recoveredStatus !== "queued") {
+      await updateCurrentEnrollment({
+        status: recoveredStatus,
+        pendingAction: undefined,
+        lastError: undefined,
+      });
+      enrollment = {
+        ...enrollment,
+        status: recoveredStatus,
+        pendingAction: undefined,
+        lastError: undefined,
+      };
+    } else {
+      await updateCurrentEnrollment({ nextActionAt: addMinutes(ENROLLMENT_COOLDOWN_MINUTES) });
+      return "unconfirmed-send";
+    }
   }
 
   // Re-open recoverable automation failures so they re-enter the normal flow.
@@ -844,21 +876,26 @@ async function runEnrollment(
       identifier: lead.providerProfileId || lead.linkedInUrl,
     });
 
-    if (accepted !== true) {
-      const sentAt = enrollment.connectionSentAt || enrollment.updatedAt;
+    if (accepted === true) {
+      enrollment = { ...enrollment, status: "connected" };
+      await updateCurrentEnrollment({ status: "connected" });
+      await updateLead(enrollment.workspaceId, lead.id, { outreachStatus: "connected" });
+    } else {
+      const sentAt = enrollment.connectionSentAt || enrollment.createdAt;
       const giveUpAt =
         new Date(sentAt).getTime() + CONNECTION_GIVE_UP_DAYS * 24 * 60 * 60 * 1000;
-      if (Date.now() >= giveUpAt) {
+      if (accepted === false && Date.now() >= giveUpAt) {
         await updateCurrentEnrollment({ status: "stopped" });
         return "invite-expired";
       }
-      await updateCurrentEnrollment({ nextActionAt: new Date(giveUpAt).toISOString() });
+      await updateCurrentEnrollment({
+        nextActionAt:
+          accepted === null
+            ? addMinutes(12 * 60)
+            : new Date(giveUpAt).toISOString(),
+      });
       return "awaiting-connection";
     }
-
-    enrollment = { ...enrollment, status: "connected" };
-    await updateCurrentEnrollment({ status: "connected" });
-    await updateLead(enrollment.workspaceId, lead.id, { outreachStatus: "connected" });
   }
 
   const step = campaign.steps[enrollment.currentStepIndex] as CampaignStep | undefined;
@@ -1474,7 +1511,16 @@ async function previewEnrollment(
     workspaceId: enrollment.workspaceId,
     leadId: enrollment.leadId,
   });
-  if (!lead || (lead.outreachStatus === "replied" && enrollment.status !== "reply_received")) {
+  if (!lead) return "stopped";
+  if (lead.outreachStatus === "replied" && enrollment.status !== "reply_received") {
+    if (
+      enrollment.status === "connection_sent" ||
+      enrollment.status === "connected" ||
+      enrollment.status === "message_sent" ||
+      enrollment.status === "error"
+    ) {
+      return "awaiting-reply-arm";
+    }
     return "stopped";
   }
   if (!lead.groupIds?.includes(campaign.groupId)) return "left-group";
@@ -1720,6 +1766,7 @@ async function runCampaigns(mode: AutomationSafetyMode) {
             ? await hasPendingSentInvitation({
                 accountId: rejectedAccount.accountId,
                 providerProfileId: rejectedLead.providerProfileId,
+                linkedInUrl: rejectedLead.linkedInUrl,
               })
             : null;
 
@@ -1740,6 +1787,21 @@ async function runCampaigns(mode: AutomationSafetyMode) {
             kind: "campaign",
             status: "completed",
             message: `Lead ${enrollment.leadId} already has a pending invite; marked connection_sent and waiting for acceptance.`,
+          });
+          continue;
+        }
+
+        if (invitePending === null) {
+          await updateEnrollment(enrollment.workspaceId, enrollment.id, {
+            lastError: message,
+            nextActionAt: addMinutes(ENROLLMENT_RETRY_MINUTES),
+            pendingAction: undefined,
+          });
+          await logAutomationRun({
+            workspaceId: enrollment.workspaceId,
+            kind: "campaign",
+            status: "error",
+            message: `Could not confirm whether a pending invite already exists for ${enrollment.leadId}; will retry. ${message}`,
           });
           continue;
         }
@@ -1903,16 +1965,17 @@ async function sweepAcceptedInvitations(input: {
   let checks = 0;
   for (const enrollment of enrollments) {
     const lead = await findLeadForWorkspace({ workspaceId, leadId: enrollment.leadId });
-    const providerId = lead?.providerProfileId;
-    if (!lead || !providerId) continue;
+    if (!lead) continue;
+    const identityKeys = profileSearchKeys(lead);
+    if (!identityKeys.length) continue;
     // Still in the sent list: the invite is pending, nothing to do.
-    if (pendingIds.has(providerId.toLowerCase())) continue;
+    if (identityKeys.some((key) => pendingIds.has(key.toLowerCase()))) continue;
     if (checks >= CONNECTION_SWEEP_CHECK_LIMIT) break;
     checks += 1;
 
     const isConnected = await isFirstDegreeConnection({
       accountId: account.accountId,
-      identifier: providerId,
+      identifier: lead.providerProfileId || lead.linkedInUrl,
     });
     // Not first-degree (withdrawn/expired invite) or unknown: leave the
     // enrollment for its give-up date rather than guessing.
@@ -1963,8 +2026,17 @@ async function syncInboundReplies(input: {
     const lead = await findLeadForWorkspace({
       workspaceId,
       providerProfileId: message.senderProviderId,
+      linkedInUrl: message.senderProviderId
+        ? `https://www.linkedin.com/in/${message.senderProviderId}`
+        : undefined,
     });
     if (!lead) continue;
+    if (message.senderProviderId && !lead.providerProfileId) {
+      await updateLead(workspaceId, lead.id, {
+        providerProfileId: message.senderProviderId,
+      });
+      lead.providerProfileId = message.senderProviderId;
+    }
 
     const result = await processInboundMessage({
       workspaceId,
