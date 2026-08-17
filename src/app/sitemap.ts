@@ -19,21 +19,21 @@ export const revalidate = 86400;
 // newest post, which is genuinely when those generated indexes last changed.
 // Comparison and integration indexes use the newest live child page.
 const publicRoutes = [
-  { path: "/", changeFrequency: "weekly", priority: 1.0, lastModified: "2026-07-18" },
+  { path: "/", changeFrequency: "weekly", priority: 1.0, lastModified: "2026-08-17" },
   { path: "/blogs", changeFrequency: "weekly", priority: 0.9 },
   { path: "/comparisons", changeFrequency: "monthly", priority: 0.85 },
   { path: "/integrations", changeFrequency: "monthly", priority: 0.85 },
-  { path: "/pricing", changeFrequency: "monthly", priority: 0.8, lastModified: "2026-07-16" },
+  { path: "/pricing", changeFrequency: "monthly", priority: 0.8, lastModified: "2026-08-12" },
   { path: "/minimum-booking-guarantee", changeFrequency: "monthly", priority: 0.5, lastModified: "2026-08-09" },
-  { path: "/for-agents", changeFrequency: "monthly", priority: 0.8, lastModified: "2026-07-22" },
-  { path: "/mcp-server", changeFrequency: "monthly", priority: 0.8, lastModified: "2026-07-22" },
+  { path: "/for-agents", changeFrequency: "monthly", priority: 0.8, lastModified: "2026-08-14" },
+  { path: "/mcp-server", changeFrequency: "monthly", priority: 0.8, lastModified: "2026-08-14" },
   { path: "/about", changeFrequency: "monthly", priority: 0.7, lastModified: "2026-07-17" },
   { path: "/llms.txt", changeFrequency: "weekly", priority: 0.4 },
   { path: "/llms-full.txt", changeFrequency: "weekly", priority: 0.4 },
-  { path: "/agents.md", changeFrequency: "monthly", priority: 0.4, lastModified: "2026-07-22" },
-  { path: "/agent.json", changeFrequency: "monthly", priority: 0.4, lastModified: "2026-08-12" },
+  { path: "/agents.md", changeFrequency: "monthly", priority: 0.4, lastModified: "2026-08-14" },
+  { path: "/agent.json", changeFrequency: "monthly", priority: 0.4, lastModified: "2026-08-14" },
   { path: "/privacy-policy", changeFrequency: "yearly", priority: 0.3, lastModified: "2026-07-06" },
-  { path: "/terms-of-service", changeFrequency: "yearly", priority: 0.3, lastModified: "2026-07-06" },
+  { path: "/terms-of-service", changeFrequency: "yearly", priority: 0.3, lastModified: "2026-08-09" },
 ] as const satisfies ReadonlyArray<{
   path: string;
   changeFrequency: "weekly" | "monthly" | "yearly";
