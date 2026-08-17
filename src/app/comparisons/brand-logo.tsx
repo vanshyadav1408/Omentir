@@ -51,7 +51,13 @@ export function BrandLogo({
   );
 
   if (!framed) {
-    return <span className={`inline-block shrink-0 ${SIZE_CLASS[size]}`}>{mark}</span>;
+    return (
+      <span
+        className={`inline-flex shrink-0 items-center justify-center ${SIZE_CLASS[size]}`}
+      >
+        {mark}
+      </span>
+    );
   }
 
   return (

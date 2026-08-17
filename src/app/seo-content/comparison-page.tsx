@@ -114,13 +114,7 @@ export default function ComparisonPageView({ page }: { page: SeoContentPage }) {
                   <MarketingTh>Dimension</MarketingTh>
                   {table.headers.map((header) => (
                     <MarketingTh key={header}>
-                      <ProductHomeLink
-                        name={header}
-                        className="inline-flex items-center gap-2 underline-offset-4 hover:text-[var(--md-sys-color-primary)] hover:underline"
-                      >
-                        <BrandLogo brand={header} size="sm" framed={false} />
-                        {header}
-                      </ProductHomeLink>
+                      <ComparisonBrandLabel name={header} />
                     </MarketingTh>
                   ))}
                 </tr>
@@ -150,15 +144,9 @@ export default function ComparisonPageView({ page }: { page: SeoContentPage }) {
                   <dl className="mt-3 space-y-3 text-sm leading-6">
                     {row.cells.map((cell, index) => (
                       <div key={`${row.dimension}-mobile-${index}`}>
-                        <dt className="inline-flex items-center gap-2 text-[var(--md-sys-color-on-surface-variant)]">
+                        <dt className="text-[var(--md-sys-color-on-surface-variant)]">
                           {table.headers[index] ? (
-                            <ProductHomeLink
-                              name={table.headers[index]}
-                              className="inline-flex items-center gap-2 underline-offset-4 hover:text-[var(--md-sys-color-primary)] hover:underline"
-                            >
-                              <BrandLogo brand={table.headers[index]} size="sm" framed={false} />
-                              {table.headers[index]}
-                            </ProductHomeLink>
+                            <ComparisonBrandLabel name={table.headers[index]} />
                           ) : null}
                         </dt>
                         <dd className="mt-1 text-[var(--md-sys-color-on-surface)]">{cell}</dd>
@@ -212,5 +200,19 @@ export default function ComparisonPageView({ page }: { page: SeoContentPage }) {
         />
       </SeoArticle>
     </SeoPageChrome>
+  );
+}
+
+function ComparisonBrandLabel({ name }: { name: string }) {
+  return (
+    <span className="inline-flex items-center gap-2 leading-none">
+      <BrandLogo brand={name} size="sm" framed={false} />
+      <ProductHomeLink
+        name={name}
+        className="underline-offset-4 hover:text-[var(--md-sys-color-primary)] hover:underline"
+      >
+        {name}
+      </ProductHomeLink>
+    </span>
   );
 }
