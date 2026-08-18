@@ -66,15 +66,21 @@ export function fitConnectionNote(note: string | undefined) {
 }
 
 // Unipile reports errors/cannot_resend_yet with one generic "temporary
-// provider limit" detail for two very different situations: a recipient who
-// can't be re-invited yet (a previous invite is pending/withdrawn - LinkedIn
-// blocks re-invites for weeks) and the account's weekly invitation limit. A
-// single rejection is indistinguishable and is usually the recipient case
+// provider limit" detail for three different situations:
+// 1. this recipient already has a pending/withdrawn invite (LinkedIn blocks
+//    re-invites for weeks)
+// 2. the account's weekly invitation limit
+// 3. a free account's personalized-note quota is spent (LinkedIn still accepts
+//    a bare Connect; Unipile's own docs say to retry the same invite type
+//    without a note). too_many_characters is the other note-quota signal.
+// A single rejection is indistinguishable and is usually (1) or (3)
 // (2026-07-13: one such rejection paused a healthy account for a week and
-// emailed the customer a false limit warning). A real account limit rejects
-// EVERY recipient, so only several distinct leads failing with no successful
-// invite in between - callers clear the tally on success - within a day count
-// as evidence of an account-wide limit.
+// emailed the customer a false limit warning). Callers must retry without the
+// note before treating the error as a recipient/account limit. A real weekly
+// limit rejects EVERY recipient even on a bare invite, so only several
+// distinct leads failing with no successful invite in between - callers clear
+// the tally on success - within a day count as evidence of an account-wide
+// limit.
 export const INVITE_LIMIT_SIGNAL_THRESHOLD = 3;
 const INVITE_LIMIT_SIGNAL_WINDOW_MS = 24 * 60 * 60 * 1000;
 
@@ -85,6 +91,17 @@ const INVITE_RESEND_BLOCKED_ERROR_TYPES = new Set([
 
 export function isInviteResendBlockedErrorType(errorType: string | undefined) {
   return Boolean(errorType && INVITE_RESEND_BLOCKED_ERROR_TYPES.has(errorType));
+}
+
+// Noted invite failed in a way LinkedIn often still accepts as a bare Connect.
+// The LinkedIn app's default Connect button has no note, which is why a user
+// can still send from the app while Omentir looks "limit reached".
+export function shouldRetryConnectionWithoutNote(
+  note: string | undefined,
+  errorType: string | undefined,
+) {
+  if (!note) return false;
+  return errorType === "errors/too_many_characters" || isInviteResendBlockedErrorType(errorType);
 }
 
 export function hasInviteResendBlockedError(message: string | undefined) {

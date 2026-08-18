@@ -64,7 +64,7 @@ function resultMessage(result: string, kind: ScheduledAction["kind"]) {
   if (result === "already-connected") return { ok: true, text: "This lead is already connected. The sequence advanced to the next step." };
   if (result === "action-claimed") return { ok: true, text: "This action is already being processed." };
   if (result === "invite-limit") return { ok: false, text: "Today’s connection-request limit has been reached. The action was rescheduled." };
-  if (result === "invite-cooldown") return { ok: false, text: "LinkedIn has paused new invitations. This action remains scheduled for later." };
+  if (result === "invite-cooldown") return { ok: false, text: "New invitations are paused after LinkedIn rejected several attempts. This action remains scheduled; Send connection now will try again." };
   if (result === "invite-spaced") return { ok: false, text: "Another connection request went out in the last few minutes. This one was rescheduled to keep sending human-paced." };
   if (result === "message-limit") return { ok: false, text: "Today’s message limit has been reached. The action was rescheduled." };
   if (result === "message-before-connection") return { ok: false, text: "The connection must be accepted before this message can be sent." };

@@ -25,6 +25,8 @@ import {
   consumeDailyQuota,
   deferAgentRun,
   getInviteCooldown,
+  claimInviteCooldownProbe,
+  clearInviteCooldown,
   hasDailyQuotaRemaining,
   loadSchedulingContext,
   planActionSlots,
@@ -83,6 +85,7 @@ import {
   fitConnectionNote,
   isInviteResendBlockedErrorType,
   INVITE_LIMIT_SIGNAL_THRESHOLD,
+  shouldRetryConnectionWithoutNote,
   isAnonymousLinkedInProfile,
   renderTemplate,
 } from "./outreach-rules";
@@ -194,9 +197,13 @@ const PACING_FALLBACK_MINUTES = 10;
 // account-level circuit breaker needs INVITE_LIMIT_SIGNAL_THRESHOLD distinct
 // recipients rejected with no success in between. Because the provider error
 // cannot distinguish those cases, the breaker rechecks after a few hours
-// instead of claiming a weekly limit and parking the account for days.
+// instead of claiming a weekly limit and parking the account for days. One
+// live probe is allowed inside that window, and parked enrollments wake on
+// this shorter cadence so a successful probe/manual send can resume the rest
+// of the queue without waiting out the full breaker.
 const RESEND_BLOCKED_DEFER_MINUTES = 21 * 24 * 60;
 const INVITE_RECHECK_MINUTES = 6 * 60;
+const INVITE_COOLDOWN_WAKE_MINUTES = 30;
 
 // Daily digest email: 9am in the workspace's local timezone, every day. Ticks
 // run every couple of minutes, so the 9am hour is what normally sends; the
@@ -219,6 +226,9 @@ type TickBudget = {
   // Per-tick cache of this LinkedIn account's invite cooldown: undefined = not yet
   // fetched, null = none active.
   inviteCooldownUntil?: string | null;
+  // Only one enrollment per account per tick is allowed to be the cooldown
+  // probe candidate, so the rest of the queue does not burn profile views.
+  inviteProbeUsed?: boolean;
   // Slots handed out by the planner earlier in this same tick. They are already
   // written to their enrollments, but a Firestore query issued moments later
   // may not see them yet, so they ride along as additionalReserved to stop two
@@ -246,6 +256,36 @@ async function sendProviderAction<T>(action: () => Promise<T>) {
     if (error instanceof UnipileResponseError) throw error;
     throw new UnconfirmedProviderSendError(
       error instanceof Error ? error.message : "The provider result was unavailable.",
+    );
+  }
+}
+
+async function sendConnectionRequestWithNoteFallback(input: {
+  accountId: string;
+  providerProfileId?: string;
+  linkedInUrl: string;
+  note?: string;
+}) {
+  try {
+    return await sendProviderAction(() => sendConnectionRequest(input));
+  } catch (error) {
+    // Personalized-note quota and weekly invite cap share Unipile error types.
+    // A bare Connect is what the LinkedIn app sends, so retry without the note
+    // before treating this as a recipient or account limit.
+    if (
+      !shouldRetryConnectionWithoutNote(
+        input.note,
+        error instanceof UnipileResponseError ? error.errorType : undefined,
+      )
+    ) {
+      throw error;
+    }
+    return sendProviderAction(() =>
+      sendConnectionRequest({
+        accountId: input.accountId,
+        providerProfileId: input.providerProfileId,
+        linkedInUrl: input.linkedInUrl,
+      }),
     );
   }
 }
@@ -570,9 +610,10 @@ async function runEnrollment(
   budgetForAccount: (linkedInAccountId: string) => TickBudget,
   sourceAgentBlock: SourceAgentBlockLookup,
   // A manual "Run now" is the user explicitly choosing this moment, so it may
-  // send outside the campaign's window. The per-account spacing still applies:
-  // that one protects the LinkedIn account, not the recipient's evening.
-  options: { ignoreSendWindow?: boolean } = {},
+  // send outside the campaign's window and may retry through an invite
+  // cooldown. The per-account spacing still applies: that one protects the
+  // LinkedIn account, not the recipient's evening.
+  options: { ignoreSendWindow?: boolean; ignoreInviteCooldown?: boolean } = {},
 ) {
   const updateCurrentEnrollment = (patch: Partial<CampaignEnrollment>) =>
     updateEnrollment(enrollment.workspaceId, enrollment.id, patch);
@@ -952,15 +993,20 @@ async function runEnrollment(
       return "duplicate-lead";
     }
 
-    // Account under a LinkedIn invite limit: park until the cooldown passes
-    // instead of burning attempts. Checked before pacing so the enrollment is
-    // deferred to the cooldown end, not churned every 10 minutes.
+    // Account under a LinkedIn invite breaker: skip bulk sends, but allow one
+    // live probe (or Send connection now) because cannot_resend_yet is also
+    // what LinkedIn returns when a note quota is spent and a bare Connect still
+    // works. Parked enrollments wake on a short cadence so a successful probe
+    // can resume the queue without waiting out the full breaker window.
     if (budget.inviteCooldownUntil === undefined) {
       budget.inviteCooldownUntil = await getInviteCooldown(enrollment.workspaceId, account.id);
     }
-    if (budget.inviteCooldownUntil) {
-      await updateCurrentEnrollment({ nextActionAt: budget.inviteCooldownUntil });
-      return "invite-cooldown";
+    if (budget.inviteCooldownUntil && !options.ignoreInviteCooldown) {
+      if (budget.inviteProbeUsed) {
+        await updateCurrentEnrollment({ nextActionAt: addMinutes(INVITE_COOLDOWN_WAKE_MINUTES) });
+        return "invite-cooldown";
+      }
+      budget.inviteProbeUsed = true;
     }
 
     // Outside this campaign's send window: reschedule to the next opening
@@ -1083,38 +1129,37 @@ async function runEnrollment(
     if (!claimed) return "action-claimed";
 
     budget.connects -= 1;
+    // The probe claim is the last gate before a live send so pacing/window
+    // misses do not spend the one attempt this cooldown window gets.
+    if (budget.inviteCooldownUntil && !options.ignoreInviteCooldown) {
+      const probed = await claimInviteCooldownProbe(enrollment.workspaceId, account.id);
+      if (!probed) {
+        const stillCooling = await getInviteCooldown(enrollment.workspaceId, account.id);
+        if (stillCooling) {
+          budget.inviteCooldownUntil = stillCooling;
+          await updateCurrentEnrollment({
+            nextActionAt: addMinutes(INVITE_COOLDOWN_WAKE_MINUTES),
+            pendingAction: undefined,
+          });
+          return "invite-cooldown";
+        }
+        budget.inviteCooldownUntil = null;
+      }
+    }
     // Send first; only count quota after Unipile accepts. Counting before send
     // burned the full daily invite budget on rejected notes/ids, then every
     // later enrollment sat on invite-limit with zero outreach.
-    let sendResult;
-    try {
-      sendResult = await sendProviderAction(() => sendConnectionRequest({
-        accountId: account.accountId,
-        providerProfileId: lead.providerProfileId,
-        linkedInUrl: lead.linkedInUrl,
-        note,
-      }));
-    } catch (error) {
-      // Free accounts have a small monthly allowance of personalized invites;
-      // once it's spent LinkedIn rejects ANY note as too_many_characters even
-      // under the length cap. A bare invite still goes through and is the
-      // whole point of the step, so retry once without the note.
-      if (
-        !note ||
-        !(error instanceof UnipileResponseError) ||
-        error.errorType !== "errors/too_many_characters"
-      ) {
-        throw error;
-      }
-      sendResult = await sendProviderAction(() => sendConnectionRequest({
-        accountId: account.accountId,
-        providerProfileId: lead.providerProfileId,
-        linkedInUrl: lead.linkedInUrl,
-      }));
-    }
+    const sendResult = await sendConnectionRequestWithNoteFallback({
+      accountId: account.accountId,
+      providerProfileId: lead.providerProfileId,
+      linkedInUrl: lead.linkedInUrl,
+      note,
+    });
     // The account provably accepts invites, so any tallied cannot_resend_yet
     // rejections were about their recipients, not an account-wide limit.
     await clearInviteLimitSignals(enrollment.workspaceId, account.id);
+    await clearInviteCooldown(enrollment.workspaceId, account.id);
+    budget.inviteCooldownUntil = null;
     const counted = await consumeDailyQuota(
       enrollment.workspaceId,
       "invites",
@@ -1436,9 +1481,9 @@ export async function executeScheduledActionNow(workspaceId: string, enrollmentI
         campaign,
         () => manualBudget,
         newSourceAgentBlockLookup(),
-        // The user pressed "Run now"; honouring the campaign's send window here
-        // would silently do nothing outside business hours.
-        { ignoreSendWindow: true },
+        // Send connection now skips the window and the invite breaker: the user
+        // is doing what they can already do in the LinkedIn app.
+        { ignoreSendWindow: true, ignoreInviteCooldown: true },
       );
       await safeLogAutomationRun({
         workspaceId,
@@ -1869,15 +1914,22 @@ async function runCampaigns(mode: AutomationSafetyMode) {
           const alreadyCoolingDown = Boolean(
             await getInviteCooldown(enrollment.workspaceId, rejectedAccount.id),
           );
-          await setInviteCooldown(enrollment.workspaceId, rejectedAccount.id, until);
+          // Do not replace an active window. A failed probe would otherwise
+          // wipe probedAt and let the next tick send again, hammering a real
+          // weekly cap. One live attempt per window is the whole point.
+          if (!alreadyCoolingDown) {
+            await setInviteCooldown(enrollment.workspaceId, rejectedAccount.id, until);
+          }
           const budget = budgetForAccount(rejectedAccount.id);
           budget.connects = 0;
-          budget.inviteCooldownUntil = until;
+          budget.inviteCooldownUntil ??= until;
           await logAutomationRun({
             workspaceId: enrollment.workspaceId,
             kind: "campaign",
             status: "error",
-            message: `${distinctRejections} recipients were rejected within a day on ${rejectedAccount.displayName}; pausing invites for this LinkedIn account until ${until}, then automatically probing again.`,
+            message: alreadyCoolingDown
+              ? `${distinctRejections} recipients were rejected within a day on ${rejectedAccount.displayName}; invite pause already active until ${budget.inviteCooldownUntil}.`
+              : `${distinctRejections} recipients were rejected within a day on ${rejectedAccount.displayName}; pausing invites for this LinkedIn account until ${until}, then automatically probing again.`,
           });
           if (!alreadyCoolingDown) {
             await notifyInvitePause(

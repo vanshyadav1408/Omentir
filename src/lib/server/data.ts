@@ -3391,6 +3391,8 @@ export async function setInviteCooldown(
   linkedInAccountId: string,
   until: string,
 ) {
+  // Full replace so a new window wipes probedAt and the next pause gets one
+  // fresh probe.
   await getDb()
     .collection("automationLocks")
     .doc(inviteSafetyLockId("invite-cooldown", workspaceId, linkedInAccountId))
@@ -3404,6 +3406,35 @@ export async function getInviteCooldown(workspaceId: string, linkedInAccountId: 
     .get();
   const until = snap.data()?.until;
   return typeof until === "string" && until > nowIso() ? until : null;
+}
+
+// One live invite attempt per cooldown window. A successful probe clears the
+// breaker (see clearInviteCooldown). Without this, a false pause would sit
+// idle for hours while the LinkedIn app still accepted Connect.
+export async function claimInviteCooldownProbe(workspaceId: string, linkedInAccountId: string) {
+  const ref = getDb()
+    .collection("automationLocks")
+    .doc(inviteSafetyLockId("invite-cooldown", workspaceId, linkedInAccountId));
+
+  return getDb().runTransaction(async (transaction) => {
+    const snap = await transaction.get(ref);
+    const until = snap.data()?.until;
+    if (typeof until !== "string" || until <= nowIso()) return false;
+    if (typeof snap.data()?.probedAt === "string") return false;
+    transaction.update(ref, { probedAt: nowIso(), updatedAt: nowIso() });
+    return true;
+  });
+}
+
+export async function clearInviteCooldown(workspaceId: string, linkedInAccountId: string) {
+  try {
+    await getDb()
+      .collection("automationLocks")
+      .doc(inviteSafetyLockId("invite-cooldown", workspaceId, linkedInAccountId))
+      .delete();
+  } catch (error) {
+    console.error("[automation] failed to clear invite cooldown:", error);
+  }
 }
 
 // Rolling tally of distinct leads whose invite was rejected with
