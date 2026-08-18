@@ -58,7 +58,7 @@ const faqItems = [
   {
     question: "Should I withdraw old LinkedIn connection requests?",
     answer:
-      "Yes, slowly. A large pile of ignored pending invites is a bad signal. Withdraw stale ones in small batches over days, not hundreds in one sitting. Withdraw does not unlock a restriction that has already started.",
+      "Yes, slowly. A large pile of ignored pending invites is a bad signal. Withdraw stale ones in small batches over days, not hundreds in one sitting. Withdraw does not lift a restriction that has already started.",
   },
   {
     question: "What can I do instead of sending more connection requests?",

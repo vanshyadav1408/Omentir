@@ -11,6 +11,8 @@ type BlogsListProps = {
   categories: string[];
 };
 
+const PAGE_SIZE = 8;
+
 const PUBLISHED_MONTH_INDEX: Record<string, number> = {
   january: 1,
   february: 2,
@@ -61,6 +63,7 @@ function sortByNewestPublishedDate(a: BlogItem, b: BlogItem) {
 export default function BlogsList({ blogs, categories }: BlogsListProps) {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [visible, setVisible] = useState(PAGE_SIZE);
 
   // Curate 6 featured articles
   const featuredSlugs = useMemo(() => [
@@ -94,6 +97,8 @@ export default function BlogsList({ blogs, categories }: BlogsListProps) {
       return matchesCategory && matchesSearch;
     }).sort(sortByNewestPublishedDate);
   }, [blogs, selectedCategory, searchQuery, featuredSlugs]);
+
+  const remaining = filteredBlogs.length - visible;
 
   return (
     <div className="w-full">
@@ -195,7 +200,10 @@ export default function BlogsList({ blogs, categories }: BlogsListProps) {
               variant="filled"
               label="Search articles"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setVisible(PAGE_SIZE);
+              }}
               leadingIcon={
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -215,7 +223,10 @@ export default function BlogsList({ blogs, categories }: BlogsListProps) {
                 searchQuery ? (
                   <button
                     type="button"
-                    onClick={() => setSearchQuery("")}
+                    onClick={() => {
+                      setSearchQuery("");
+                      setVisible(PAGE_SIZE);
+                    }}
                     className="grid h-10 w-10 place-items-center text-[var(--md-sys-color-on-surface-variant)] hover:text-[var(--md-sys-color-on-surface)]"
                     aria-label="Clear search"
                   >
@@ -247,7 +258,10 @@ export default function BlogsList({ blogs, categories }: BlogsListProps) {
               <button
                 key={category}
                 type="button"
-                onClick={() => setSelectedCategory(category)}
+                onClick={() => {
+                  setSelectedCategory(category);
+                  setVisible(PAGE_SIZE);
+                }}
                 className={`inline-flex items-center justify-center rounded-full border px-4 py-1.5 text-xs font-semibold transition-all duration-200 ${
                   isActive
                     ? "border-[var(--md-sys-color-on-surface)] bg-[var(--md-sys-color-on-surface)] text-[var(--md-sys-color-surface)] shadow-sm"
@@ -262,65 +276,78 @@ export default function BlogsList({ blogs, categories }: BlogsListProps) {
 
         {/* Dynamic Articles Grid */}
         {filteredBlogs.length > 0 ? (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {filteredBlogs.map((blog) => (
-              <article
-                key={blog.slug}
-                className="group relative flex flex-col justify-between overflow-hidden rounded-xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container)] p-5 shadow-[var(--md-sys-card-elevation-rest)] transition-all duration-300 hover:-translate-y-0.5 hover:border-[var(--md-sys-color-primary)] hover:shadow-[var(--md-sys-card-elevation-hover)]"
-              >
-                <Link href={`/blogs/${blog.slug}`} className="flex h-full flex-col justify-between">
-                  <div>
-                    {/* Fixed 2:1 aspect ratio banner */}
-                    <div className="relative mb-4 aspect-[2/1] w-full overflow-hidden rounded-lg bg-[var(--md-sys-color-surface-container-low)]">
-                      <Image
-                        src={blog.bannerSrc}
-                        alt={blog.bannerAlt}
-                        fill
-                        className="object-cover transition-transform duration-300 group-hover:scale-[1.01]"
-                        sizes="(max-width: 768px) 100vw, 33vw"
-                      />
+          <>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {filteredBlogs.slice(0, visible).map((blog) => (
+                <article
+                  key={blog.slug}
+                  className="group relative flex flex-col justify-between overflow-hidden rounded-xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container)] p-5 shadow-[var(--md-sys-card-elevation-rest)] transition-all duration-300 hover:-translate-y-0.5 hover:border-[var(--md-sys-color-primary)] hover:shadow-[var(--md-sys-card-elevation-hover)]"
+                >
+                  <Link href={`/blogs/${blog.slug}`} className="flex h-full flex-col justify-between">
+                    <div>
+                      {/* Fixed 2:1 aspect ratio banner */}
+                      <div className="relative mb-4 aspect-[2/1] w-full overflow-hidden rounded-lg bg-[var(--md-sys-color-surface-container-low)]">
+                        <Image
+                          src={blog.bannerSrc}
+                          alt={blog.bannerAlt}
+                          fill
+                          className="object-cover transition-transform duration-300 group-hover:scale-[1.01]"
+                          sizes="(max-width: 768px) 100vw, 33vw"
+                        />
+                      </div>
+
+                      <div className="mb-2 flex items-center gap-2 text-[10px] font-bold text-[var(--md-sys-color-on-surface-variant)]">
+                        <span className="rounded bg-[var(--md-sys-color-primary-container)] px-2 py-0.5 tracking-wider text-[var(--md-sys-color-on-primary-container)]">
+                          {blog.category}
+                        </span>
+                        <span aria-hidden="true">&bull;</span>
+                        <span>{blog.publishedDate}</span>
+                      </div>
+
+                      <h3
+                        style={{ fontFamily: "var(--font-varta)" }}
+                        className="mb-2 line-clamp-2 text-base font-semibold leading-snug tracking-tight text-[var(--md-sys-color-on-surface)] transition-colors duration-200 group-hover:text-[var(--md-sys-color-primary)]"
+                      >
+                        {blog.title}
+                      </h3>
+
+                      <p className="mb-4 line-clamp-3 text-xs leading-relaxed text-[var(--md-sys-color-on-surface-variant)]">
+                        {blog.description}
+                      </p>
                     </div>
 
-                    <div className="mb-2 flex items-center gap-2 text-[10px] font-bold text-[var(--md-sys-color-on-surface-variant)]">
-                      <span className="rounded bg-[var(--md-sys-color-primary-container)] px-2 py-0.5 tracking-wider text-[var(--md-sys-color-on-primary-container)]">
-                        {blog.category}
-                      </span>
-                      <span aria-hidden="true">&bull;</span>
-                      <span>{blog.publishedDate}</span>
+                    <div className="mt-4 flex items-center gap-1 text-xs font-bold text-[var(--md-sys-color-on-surface)] transition-colors group-hover:text-[var(--md-sys-color-primary)]">
+                      <span>Read Article</span>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                        className="h-3 w-3 transition-transform duration-200 group-hover:translate-x-0.5"
+                        aria-hidden="true"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
                     </div>
-
-                    <h3
-                      style={{ fontFamily: "var(--font-varta)" }}
-                      className="mb-2 line-clamp-2 text-base font-semibold leading-snug tracking-tight text-[var(--md-sys-color-on-surface)] transition-colors duration-200 group-hover:text-[var(--md-sys-color-primary)]"
-                    >
-                      {blog.title}
-                    </h3>
-
-                    <p className="mb-4 line-clamp-3 text-xs leading-relaxed text-[var(--md-sys-color-on-surface-variant)]">
-                      {blog.description}
-                    </p>
-                  </div>
-
-                  <div className="mt-4 flex items-center gap-1 text-xs font-bold text-[var(--md-sys-color-on-surface)] transition-colors group-hover:text-[var(--md-sys-color-primary)]">
-                    <span>Read Article</span>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                      className="h-3 w-3 transition-transform duration-200 group-hover:translate-x-0.5"
-                      aria-hidden="true"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-2.293-2.293a1 1 0 010-1.414z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </div>
-                </Link>
-              </article>
-            ))}
-          </div>
+                  </Link>
+                </article>
+              ))}
+            </div>
+            {remaining > 0 ? (
+              <div className="mt-8 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setVisible((count) => count + PAGE_SIZE)}
+                  className="inline-flex h-10 cursor-pointer items-center justify-center rounded-full border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-low)] px-5 text-sm font-semibold text-[var(--md-sys-color-on-surface)] transition hover:bg-[var(--md-sys-state-hover)]"
+                >
+                  See more
+                </button>
+              </div>
+            ) : null}
+          </>
         ) : (
           <div className="mx-auto max-w-xl rounded-xl border border-dashed border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-low)] py-16 text-center">
             <svg
@@ -352,6 +379,7 @@ export default function BlogsList({ blogs, categories }: BlogsListProps) {
               onClick={() => {
                 setSearchQuery("");
                 setSelectedCategory("All");
+                setVisible(PAGE_SIZE);
               }}
               className="inline-flex h-9 items-center justify-center rounded-md bg-[var(--md-sys-color-on-surface)] px-4 text-xs font-semibold text-[var(--md-sys-color-surface)] shadow-sm transition-colors hover:opacity-90"
             >

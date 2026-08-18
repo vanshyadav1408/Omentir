@@ -17,14 +17,14 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "compliance-challenge-emea", label: "GDPR and the European Outbound Challenge", level: 1 },
-  { id: "cognism-overview", label: "Cognism: The Compliance-First EMEA Database", level: 1 },
-  { id: "apollo-overview", label: "Apollo.io: The Global Sourcing Engine", level: 1 },
-  { id: "data-accuracy-mobiles", label: "EMEA Mobile Phone Accuracy and Manual Verification", level: 2 },
-  { id: "gdpr-compliance-checks", label: "GDPR Compliance, Consent Records, and Opt-Out Registers", level: 2 },
-  { id: "pricing-structures-roi", label: "Pricing Comparison: Subscription Retainers vs. Credit Systems", level: 1 },
-  { id: "sourcing-decision-rubric", label: "Decision Matrix: Which Platform Fits Your Sales Team?", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "compliance-challenge-emea", label: "GDPR and the European outbound challenge", level: 1 },
+  { id: "cognism-overview", label: "Cognism: the compliance-first EMEA database", level: 1 },
+  { id: "apollo-overview", label: "Apollo.io: the global sourcing engine", level: 1 },
+  { id: "data-accuracy-mobiles", label: "EMEA mobile phone accuracy and manual verification", level: 2 },
+  { id: "gdpr-compliance-checks", label: "GDPR compliance, consent records, and opt-out registers", level: 2 },
+  { id: "pricing-structures-roi", label: "Pricing comparison: subscription retainers vs. credit systems", level: 1 },
+  { id: "sourcing-decision-rubric", label: "Decision matrix: which platform fits your sales team?", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
@@ -58,23 +58,23 @@ export default function BlogPost() {
       faqItems={faqItems}
     >
       <p id="compliance-challenge-emea" className="scroll-mt-28">
-        Sourcing B2B sales data in North America is relatively straightforward. The regulatory landscape allows growth teams to search databases, export lists of corporate emails, and launch cold outbound campaigns with minimal legal friction. But if you target prospects in Europe, the rules change completely.
+        Sourcing B2B sales data in North America is relatively straightforward. Growth teams can search databases, export lists of corporate emails, and launch cold outbound campaigns with less legal friction. If you target prospects in Europe, the rules change completely.
       </p>
       <p>
         The General Data Protection Regulation (<a href="https://gdpr-info.eu/" target="_blank" rel="noopener" className="text-blue-600 hover:underline">GDPR</a>) enforces strict requirements on how personal information is collected, stored, and utilized. Sending cold sales messages to European buyers without verifying compliance trails can result in significant legal penalties and domain blocks.
       </p>
       <p>
-        For growth teams entering the European market, choosing the right data provider is the most critical decision. Two of the most popular platforms for sourcing B2B leads are Cognism and Apollo.io. 
+        For growth teams entering the European market, choosing the right data provider is the most important decision. Two of the most popular platforms for sourcing B2B leads are Cognism and Apollo.io. 
       </p>
       <p>
-        In this deep dive, we will compare Cognism and Apollo.io head-to-head. We will evaluate how each platform handles GDPR compliance, mobile phone number accuracy, EMEA database coverage, and pricing structures to help you choose the right data engine for your European campaigns.
+        This piece compares Cognism and Apollo.io head-to-head on GDPR handling, mobile phone number accuracy, EMEA database coverage, and pricing. Use it to pick a data engine for European campaigns.
       </p>
       <p>
         This is not legal advice. The practical lesson is that a sales database can reduce operational risk, but it cannot remove your responsibility as the sender. Your team still needs a lawful basis, clean opt-out handling, accurate records, and country-specific rules for email, phone, and LinkedIn outreach.
       </p>
 
       <h2 id="cognism-overview" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Cognism: The Compliance-First EMEA Database
+        Cognism: the compliance-first EMEA database
       </h2>
       <p>
         <a href="https://www.cognism.com/" target="_blank" rel="noopener" className="text-blue-600 hover:underline">Cognism</a> has built its brand reputation on compliant, premium European contact data. The UK-headquartered platform focuses specifically on quality over quantity for EMEA sales teams.
@@ -90,7 +90,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="apollo-overview" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Apollo.io: The Global Sourcing Engine
+        Apollo.io: the global sourcing engine
       </h2>
       <p>
         <a href="https://www.apollo.io/" target="_blank" rel="noopener" className="text-blue-600 hover:underline">Apollo.io</a> is one of the most widely used B2B databases in the world. The platform combines company and contact search with outbound workflows, enrichment, and sales engagement features.
@@ -118,7 +118,7 @@ export default function BlogPost() {
       </div>
 
       <h2 id="data-accuracy-mobiles" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        EMEA Mobile Phone Accuracy and Manual Verification
+        EMEA mobile phone accuracy and manual verification
       </h2>
       <p>
         Mobile phone accuracy has become the deciding factor for sales velocity. With many professionals working remotely, dialing office switchboards is no longer effective.
@@ -134,7 +134,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="gdpr-compliance-checks" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        GDPR Compliance, Consent Records, and Opt-Out Registers
+        GDPR compliance, consent records, and opt-out registers
       </h2>
       <p>
         GDPR regulations distinguish between different kinds of processing, and B2B outreach often relies on legitimate interest when the sender can justify relevance and respect data rights. That is not a free pass. You must maintain strict data protocols:
@@ -159,7 +159,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="pricing-structures-roi" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Pricing Comparison: Subscription Retainers vs. Credit Systems
+        Pricing comparison: subscription retainers vs. credit systems
       </h2>
       <p>
         The financial commitment for each tool matches their data philosophy.
@@ -181,7 +181,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="sourcing-decision-rubric" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Decision Matrix: Which Platform Fits Your Sales Team?
+        Decision matrix: which platform fits your sales team?
       </h2>
       <p>
         Evaluate the following variables before selecting your B2B data provider:

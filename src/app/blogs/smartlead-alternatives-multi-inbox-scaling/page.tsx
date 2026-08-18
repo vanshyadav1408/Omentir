@@ -25,13 +25,13 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems = [
-  { id: "cold-email-mechanics", label: "Cold Email Mechanics and Multi-Inbox Scaling", level: 1 },
-  { id: "why-consider-alternatives", label: "Why Teams Look Beyond Legacy Sequencers", level: 1 },
-  { id: "comparison-table", label: "Smartlead vs. Omentir Head-to-Head", level: 1 },
-  { id: "pitfalls-of-siloed-sending", label: "The Hidden Pitfalls of Siloed Outbox Systems", level: 1 },
-  { id: "transition-to-multichannel", label: "Transitioning to a Unified Multi-Channel Strategy", level: 2 },
-  { id: "step-by-step-setup", label: "Setting Up Your Autonomous AI Campaign", level: 1 },
-  { id: "faq", label: "Email Scaling FAQs", level: 1 }
+  { id: "cold-email-mechanics", label: "Cold email mechanics and multi-inbox scaling", level: 1 },
+  { id: "why-consider-alternatives", label: "Why teams look beyond sequencers", level: 1 },
+  { id: "comparison-table", label: "Smartlead vs. Omentir head-to-head", level: 1 },
+  { id: "pitfalls-of-siloed-sending", label: "The hidden pitfalls of siloed outbox systems", level: 1 },
+  { id: "transition-to-multichannel", label: "Moving to a unified multi-channel strategy", level: 2 },
+  { id: "step-by-step-setup", label: "Setting up your autonomous AI campaign", level: 1 },
+  { id: "faq", label: "Email scaling FAQs", level: 1 }
 ] as const;
 
 export default function BlogPost() {
@@ -60,7 +60,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Cold Email Mechanics and Multi-Inbox Scaling
+          Cold email mechanics and multi-inbox scaling
         </h2>
         <p>
           To understand why multi-inbox rotation is necessary, we must look at the math behind modern deliverability. Google and Microsoft analyze the sending behavior of every domain. If a domain suddenly scales from sending 10 emails a day to 200, the spam filters are triggered instantly.
@@ -72,9 +72,9 @@ export default function BlogPost() {
           <a href="https://www.smartlead.ai/" target="_blank" rel="noopener">Smartlead</a> provides the foundational infrastructure to manage this network. It handles:
         </p>
         <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-850 my-4">
-          <li><strong>Domain Rotation:</strong> Distributing your cold campaigns evenly across dozens of connected email accounts automatically.</li>
-          <li><strong>IP Warm-up Engines:</strong> Gradually increasing sending volume to establish a positive sender reputation with major ESPs.</li>
-          <li><strong>Unified Master Inbox:</strong> Aggregating replies from all connected sender domains into a single interface so reps can manage conversations.</li>
+          <li><strong>Domain rotation:</strong> Distributing your cold campaigns evenly across dozens of connected email accounts automatically.</li>
+          <li><strong>IP warm-up engines:</strong> Gradually increasing sending volume to establish a positive sender reputation with major ESPs.</li>
+          <li><strong>Unified master inbox:</strong> Aggregating replies from all connected sender domains into a single interface so reps can manage conversations.</li>
         </ul>
         <p>
           While this setup is effective for landing messages in the inbox, it represents only a small portion of the overall outbound pipeline.
@@ -85,10 +85,10 @@ export default function BlogPost() {
           <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
           <div className="pl-4">
             <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-              Cross-Linking Insights 💡
+              Cross-linking notes
             </h4>
             <p className="text-sm text-zinc-650 leading-relaxed">
-              If you want to construct robust multi-step outreach sequences, refer to our comprehensive playbook on{" "}
+              If you want to build multi-step outreach sequences, refer to our playbook on{" "}
               <Link href="/blogs/how-to-build-a-high-converting-b2b-sales-sequence-on-linkedin" className="text-black font-bold hover:underline">
                 Building B2B LinkedIn Sales Sequences
               </Link>{" "}
@@ -102,15 +102,15 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Why Teams Look Beyond Legacy Sequencers
+          Why teams look beyond sequencers
         </h2>
         <p>
           As organizations scale, managing a traditional cold email sequencer like <a href="https://www.smartlead.ai/" target="_blank" rel="noopener">Smartlead</a> introduces three major operational bottlenecks:
         </p>
         <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-850 my-4">
-          <li><strong>Siloed Single-Channel Limits:</strong> Cold email is highly competitive. If your prospect is receiving 50 cold emails a day, your message is easily lost. A successful modern campaign requires touching prospects across multiple platforms, such as LinkedIn connection requests, social engagement, and cold email, to increase reply rates.</li>
-          <li><strong>Fragile Outbound Data Pipelines:</strong> <a href="https://www.smartlead.ai/" target="_blank" rel="noopener">Smartlead</a> does not source or enrich leads. You must purchase lead lists from databases, manually clean the data in spreadsheets, run validation checks, and import the CSV files. This multi-tool approach leads to data degradation, broken merge fields, and high software fees.</li>
-          <li><strong>Absence of Conversational AI:</strong> Standard sequencers are built on rigid, linear drip steps. If a prospect replies with a vague objection like *"not right now, circle back next quarter"*, human reps must manually read, classify, and schedule follow-ups.</li>
+          <li><strong>Siloed single-channel limits:</strong> Cold email is highly competitive. If your prospect is receiving 50 cold emails a day, your message is easily lost. A successful modern campaign requires touching prospects across multiple platforms, such as LinkedIn connection requests, social engagement, and cold email, to increase reply rates.</li>
+          <li><strong>Fragile outbound data pipelines:</strong> <a href="https://www.smartlead.ai/" target="_blank" rel="noopener">Smartlead</a> does not source or enrich leads. You must purchase lead lists from databases, manually clean the data in spreadsheets, run validation checks, and import the CSV files. This multi-tool approach leads to data degradation, broken merge fields, and high software fees.</li>
+          <li><strong>Absence of conversational AI:</strong> Standard sequencers are built on rigid, linear drip steps. If a prospect replies with a vague objection like *"not right now, circle back next quarter"*, human reps must manually read, classify, and schedule follow-ups.</li>
         </ul>
         <p>
           This is why modern sales teams are transitioning to autonomous sales workspaces that unify lead generation, data validation, multi-channel outreach, and AI inbox classification in a single tool.
@@ -121,10 +121,10 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          <a href="https://www.smartlead.ai/" target="_blank" rel="noopener">Smartlead</a> vs. Omentir Head-to-Head
+          <a href="https://www.smartlead.ai/" target="_blank" rel="noopener">Smartlead</a> vs. Omentir head-to-head
         </h2>
         <p>
-          Let us compare traditional multi-inbox email sequencers with a unified autonomous salesman workspace:
+          Compare traditional multi-inbox email sequencers with a unified salesman workspace:
         </p>
 
         {/* Comparison Table */}
@@ -172,7 +172,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          The Hidden Pitfalls of Siloed Outbox Systems
+          The hidden pitfalls of siloed outbox systems
         </h2>
         <p>
           Relying exclusively on email introduces serious long-term risks to your corporate domain reputation. If you send thousands of cold emails daily, some recipients will flag your messages as spam. As your spam complaint rate rises above 0.3 percent, major ESPs begin routing all mail from your sending IPs to the spam folder.
@@ -186,7 +186,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-xl font-semibold tracking-tight text-black mt-6 scroll-mt-28"
         >
-          Transitioning to a Unified Multi-Channel Strategy
+          Moving to a unified multi-channel strategy
         </h3>
         <p>
           Switching to a multi-channel campaign protects your sending domains while significantly increasing prospect engagement.
@@ -203,19 +203,19 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Setting Up Your Autonomous AI Campaign
+          Setting up your autonomous AI campaign
         </h2>
         <p>
-          Ready to scale your B2B sales development without the operational complexity of legacy sequencers? Follow this three-step framework:
+          Ready to run B2B sales development without the operational complexity of sequencers? Follow this three-step framework:
         </p>
         <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-          <li><strong>Identify Buying Triggers:</strong> Settle on active signals rather than cold lists. Target organizations that are hiring for specific roles, launching new products, or expanding into new markets.</li>
-          <li><strong>Design Conversational Outlines:</strong> Keep your messages short, conversational, and value-first. Avoid sending long, feature-heavy paragraphs in your initial pitch. Reference our proven outbound copywriting blueprints in{" "}
+          <li><strong>Identify buying triggers:</strong> Settle on active signals rather than cold lists. Target organizations that are hiring for specific roles, launching new products, or expanding into new markets.</li>
+          <li><strong>Design conversational outlines:</strong> Keep your messages short, conversational, and value-first. Avoid sending long, feature-heavy paragraphs in your initial pitch. Reference our proven outbound copywriting blueprints in{" "}
             <Link href="/blogs/the-b2b-outreach-copywriting-framework-that-gets-replies" className="text-blue-600 hover:underline">
               The B2B Outreach Copywriting Framework That Gets Replies
             </Link>{" "}
             to optimize your structure.</li>
-          <li><strong>Let AI Manage Nurturing:</strong> Configure safety-first throttling limits for your accounts. Let the AI salesman manage your follow-up sequence, classify replies, and surface booking opportunities automatically.</li>
+          <li><strong>Let AI manage nurturing:</strong> Configure safety-first throttling limits for your accounts. Let the AI salesman manage your follow-up sequence, classify replies, and surface booking opportunities automatically.</li>
         </ul>
 
 
@@ -224,7 +224,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Best <a href="https://www.smartlead.ai/" target="_blank" rel="noopener">Smartlead</a> Alternatives by Use Case
+          Best <a href="https://www.smartlead.ai/" target="_blank" rel="noopener">Smartlead</a> alternatives by use case
         </h2>
         <p>
           <a href="https://www.smartlead.ai/" target="_blank" rel="noopener">Smartlead</a> is strong for multi-inbox cold email scaling. The best <a href="https://www.smartlead.ai/" target="_blank" rel="noopener">Smartlead</a> alternative depends on whether you want similar sending infrastructure, a more creative engagement platform, a database plus outbound workflow, or a full AI salesman that can source and message across channels.
@@ -246,7 +246,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Migration Checklist From <a href="https://www.smartlead.ai/" target="_blank" rel="noopener">Smartlead</a>
+          Migration checklist from <a href="https://www.smartlead.ai/" target="_blank" rel="noopener">Smartlead</a>
         </h2>
         <p>
           Before leaving <a href="https://www.smartlead.ai/" target="_blank" rel="noopener">Smartlead</a>, identify whether you are replacing email infrastructure or upgrading the entire outbound motion. If <a href="https://www.smartlead.ai/" target="_blank" rel="noopener">Smartlead</a> is working for deliverability but meetings are weak, the issue may be sourcing, list quality, or message relevance rather than the sending platform.
@@ -266,7 +266,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Best <a href="https://www.smartlead.ai/" target="_blank" rel="noopener">Smartlead</a> Alternative by Bottleneck
+          Best <a href="https://www.smartlead.ai/" target="_blank" rel="noopener">Smartlead</a> alternative by bottleneck
         </h2>
         <p>If your bottleneck is inbox scale, compare <a href="https://www.smartlead.ai/" target="_blank" rel="noopener">Smartlead</a> against <a href="https://instantly.ai/" target="_blank" rel="noopener">Instantly.ai</a> and other cold email platforms. If your bottleneck is creative personalization, compare it against <a href="https://www.lemlist.com/" target="_blank" rel="noopener">Lemlist</a>. If your bottleneck is database access, compare it against <a href="https://www.apollo.io/" target="_blank" rel="noopener">Apollo</a>. If your bottleneck is the full process from lead discovery to qualified reply, compare it against Omentir.</p><p>This distinction matters because many teams blame the sending tool for problems that started earlier. Weak targeting creates low replies. Poor verification creates bounces. Generic copy creates spam complaints. Slow reply handling loses warm opportunities. A new multi-inbox tool will not fix those issues unless it also improves the upstream workflow.</p><p>Choose the alternative that solves the actual constraint. For modern B2B teams, that increasingly means moving beyond email-only scaling and toward a system that can coordinate sourcing, personalization, channel selection, and reply management together.</p>
 
@@ -275,7 +275,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          More Detail on Non-Omentir <a href="https://www.smartlead.ai/" target="_blank" rel="noopener">Smartlead</a> Alternatives
+          More detail on non-Omentir <a href="https://www.smartlead.ai/" target="_blank" rel="noopener">Smartlead</a> alternatives
         </h2>
         <p>
           If your team likes the multi-inbox model, compare the email-first alternatives carefully before jumping to a broader AI sales platform. The right answer may simply be a sending tool that fits your agency, sales team, or budget better.
@@ -314,7 +314,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Email Scaling FAQs
+          Email scaling FAQs
         </h2>
       <FaqAccordion
         items={[

@@ -2,8 +2,7 @@
  * Lint marketing copy for common AI-writing tells.
  * Usage: bun scripts/lint-marketing-copy.ts
  *
- * Strict mode (full word list): SEO data files, guides, homepage, marketing shell.
- * Blog paths: hard rules only (dashes, curly quotes, chatbot phrases) until legacy posts are humanized.
+ * Strict mode (full word list): SEO data files, guides, homepage, marketing shell, blogs.
  */
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
@@ -130,7 +129,7 @@ function collectFiles(): Array<{ path: string; strict: boolean }> {
     const found: string[] = [];
     walk(blogDir, found);
     for (const file of found) {
-      files.push({ path: file, strict: false });
+      files.push({ path: file, strict: true });
     }
   }
 
@@ -179,6 +178,32 @@ function isSkippableCodeString(text: string): boolean {
   return false;
 }
 
+/** Isolated banned-word examples, e.g. "seamless" in a list of words to avoid. */
+function isBannedWordExample(text: string): boolean {
+  const trimmed = text.replace(/[.,;:!?"]+/g, "").trim().toLowerCase();
+  return BANNED_WORDS.some((word) => trimmed === word);
+}
+
+/**
+ * Unquoted JSX / markdown-ish prose on a line after tags, braces, and
+ * quoted strings are stripped. Catches multi-line <p> bodies the quote
+ * extractor misses.
+ */
+function extractJsxProse(line: string): string[] {
+  let stripped = line
+    .replace(/"(?:\\.|[^"\\])*"/g, " ")
+    .replace(/'(?:\\.|[^'\\])*'/g, " ")
+    .replace(/`(?:\\.|[^`\\])*`/g, " ");
+  stripped = stripped.replace(/\{[^{}]*\}/g, " ");
+  stripped = stripped.replace(/<[^>]+>/g, " ");
+  const text = stripped.replace(/\s+/g, " ").trim();
+  if (!text || !/[a-zA-Z]/.test(text)) return [];
+  if (/^(import|export|const|let|var|function|return|type|interface)\b/.test(text)) {
+    return [];
+  }
+  return [text];
+}
+
 function wordPattern(word: string): RegExp {
   const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   if (word.includes(" ")) {
@@ -200,6 +225,7 @@ function checkString(
   violations: Violation[],
 ) {
   if (!isLikelyCopy(text, strict) || isSkippableCodeString(text)) return;
+  if (isBannedWordExample(text)) return;
 
   const excerpt = text.length > 80 ? `${text.slice(0, 77)}...` : text;
 
@@ -246,6 +272,10 @@ function lintFile(path: string, strict: boolean): Violation[] {
     while ((match = jsxText.exec(line)) !== null) {
       const text = (match[1] ?? "").trim();
       if (text) checkString(text, strict, rel, lineNo, violations);
+    }
+
+    for (const text of extractJsxProse(line)) {
+      checkString(text, strict, rel, lineNo, violations);
     }
   }
 

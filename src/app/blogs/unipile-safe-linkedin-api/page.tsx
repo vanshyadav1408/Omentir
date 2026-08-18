@@ -4,7 +4,7 @@ import BlogPostTemplate from "../blog-post-template";
 
 export const metadata = createPageMetadata({
   title: "Unipile Safe and Encrypted LinkedIn API Access - Omentir",
-  description: "Learn how Unipile secure API routing protects B2B outreach. Discover cookie encryption, regional proxy IP mapping, and safe integrations.",
+  description: "How Unipile API routing protects B2B outreach: cookie encryption, regional proxy IP mapping, and safer integrations.",
   path: "/blogs/unipile-safe-linkedin-api",
   keywords: [
     "unipile safe linkedin api access",
@@ -17,29 +17,29 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "messaging-api-security", label: "The Security Risks of Outbound Social Integrations", level: 1 },
-  { id: "safe-access-means", label: "What Safe Access Actually Means", level: 2 },
-  { id: "unipile-buffer-architecture", label: "How Unipile Acts as a Secure API Buffer", level: 1 },
-  { id: "hosted-auth-flow", label: "The Hosted Auth Connection Flow", level: 2 },
-  { id: "cookie-token-encryption", label: "Session Security: Token Isolation and Cookie Encryption", level: 2 },
-  { id: "proxy-geolocation-ips", label: "IP Geolocation: Mapping Connections to Regional Proxies", level: 2 },
-  { id: "bypassing-browser-automation", label: "Bypassing Detectable DOM and Browser Automation", level: 1 },
-  { id: "least-privilege-workflows", label: "Design Least-Privilege Workflows", level: 2 },
-  { id: "enforcing-pacing-rules", label: "Enforcing Human Pacing and Daily Volume Limits", level: 1 },
-  { id: "failure-handling", label: "Handle API Failures Safely", level: 2 },
-  { id: "integration-sop-checklist", label: "SOP: Connecting Profiles Safely via API Routes", level: 1 },
-  { id: "conclusion", label: "Enterprise Grade Security for Automated Outbound", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "messaging-api-security", label: "The security risks of outbound social integrations", level: 1 },
+  { id: "safe-access-means", label: "What safe access actually means", level: 2 },
+  { id: "unipile-buffer-architecture", label: "How Unipile acts as a secure API buffer", level: 1 },
+  { id: "hosted-auth-flow", label: "The hosted auth connection flow", level: 2 },
+  { id: "cookie-token-encryption", label: "Session security: token isolation and cookie encryption", level: 2 },
+  { id: "proxy-geolocation-ips", label: "IP geolocation: mapping connections to regional proxies", level: 2 },
+  { id: "bypassing-browser-automation", label: "Avoiding detectable DOM and browser automation", level: 1 },
+  { id: "least-privilege-workflows", label: "Design least-privilege workflows", level: 2 },
+  { id: "enforcing-pacing-rules", label: "Enforcing human pacing and daily volume limits", level: 1 },
+  { id: "failure-handling", label: "Handle API failures safely", level: 2 },
+  { id: "integration-sop-checklist", label: "SOP: connecting profiles safely via API routes", level: 1 },
+  { id: "conclusion", label: "Treat the API as infrastructure", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
   {
     question: "What is Unipile and how does it integrate with Omentir?",
-    answer: "Unipile is an enterprise-grade messaging API that provides secure access to social platforms. Omentir uses Unipile to send messages and monitor reply threads safely without storing raw login passwords."
+    answer: "Unipile is a messaging API that provides access to social platforms. Omentir uses Unipile to send messages and monitor reply threads without storing raw login passwords."
   },
   {
     question: "How does Unipile protect my session tokens?",
-    answer: "Unipile encrypts all login session cookies using advanced security standards, storing tokens in isolated environments that prevent unauthorized access."
+    answer: "Unipile encrypts login session cookies and stores tokens in isolated environments that prevent unauthorized access."
   },
   {
     question: "Why is IP matching important for social profiles?",
@@ -55,7 +55,7 @@ export default function BlogPost() {
   return (
     <BlogPostTemplate
       title="How Unipile Ensures Safe and Encrypted LinkedIn API Access"
-      description="Understand the technical architecture behind secure social selling. Learn how Unipile manages cookie encryption, proxy routing, and server-side API integration."
+      description="How Unipile handles cookie encryption, proxy routing, and server-side API integration for social selling."
       slug="unipile-safe-linkedin-api"
       bannerSrc="/unipile-safe-linkedin-api.avif"
       bannerAlt="Unipile encrypted API routing and session proxy architecture diagram"
@@ -63,7 +63,7 @@ export default function BlogPost() {
       faqItems={faqItems}
     >
       <p id="messaging-api-security" className="scroll-mt-28">
-        Social selling and LinkedIn campaigns are powerful B2B sales channels. Senders build lists in databases, configure copywriting prompts, and launch campaigns targeting hundreds of prospects. But to run these loops, your software must access the target sending profiles.
+        Social selling and LinkedIn campaigns can work as B2B sales channels. Senders build lists in databases, configure copywriting prompts, and launch campaigns targeting hundreds of prospects. To run these loops, your software must access the target sending profiles.
       </p>
       <p>
         Most outbound tools access profiles using risky methods. They ask for raw login passwords, or instruct you to install browser extensions that manipulate the page DOM at mechanical speeds.
@@ -83,7 +83,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="safe-access-means" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        What Safe Access Actually Means
+        What safe access actually means
       </h3>
       <p>
         Safe access does not mean "nothing can ever go wrong." LinkedIn still controls its own platform rules, rate limits, session checks, and account restrictions. Safe access means the software architecture avoids the most reckless patterns: raw password storage, uncontrolled browser extensions, hidden scraping loops, and bulk actions the user cannot review.
@@ -96,13 +96,13 @@ export default function BlogPost() {
       </p>
 
       <h2 id="unipile-buffer-architecture" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        How Unipile Acts as a Secure API Buffer
+        How Unipile acts as a secure API buffer
       </h2>
       <p>
         Unipile is a messaging gateway that provides server-side connections to communication channels, including LinkedIn, WhatsApp, Instagram, Telegram, email, and calendars. In the LinkedIn context, it lets software products connect authenticated user accounts and support workflows such as message sync, sending, invitations, and conversation management.
       </p>
       <p>
-        A professional API buffer manages three core security workflows:
+        An API buffer manages three security workflows:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
         <li><strong>Token Encryption:</strong> Isolating and encrypting login cookies.</li>
@@ -118,7 +118,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="hosted-auth-flow" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        The Hosted Auth Connection Flow
+        The hosted auth connection flow
       </h3>
       <p>
         Unipile's documentation describes hosted authentication as a connection method where the application generates a temporary link and sends the user through an auth wizard. That matters because the user is intentionally connecting the account rather than handing credentials to an operator in a spreadsheet or support chat.
@@ -131,7 +131,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="cookie-token-encryption" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Session Security: Token Isolation and Cookie Encryption
+        Session security: token isolation and cookie encryption
       </h2>
       <p>
         Storing raw passwords in databases is a major security risk. If a database is breached, sender credentials will be compromised.
@@ -140,7 +140,7 @@ export default function BlogPost() {
         Unipile bypasses password storage by using session token isolation. When you connect a profile, Unipile authenticates the session and converts the login cookies into an encrypted token.
       </p>
       <p>
-        This token is stored in a secure environment. Omentir references this token to trigger campaigns, ensuring your passwords are never exposed.
+        This token is stored in a secure environment. Omentir references this token to trigger campaigns, so your passwords are never exposed.
       </p>
       <p>
         The important operating rule is separation. Your application should store only the account identifier and the minimum metadata needed to run the workflow. It should not copy sensitive session material into random tables, logs, analytics events, or support tools.
@@ -150,7 +150,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="proxy-geolocation-ips" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        IP Geolocation: Mapping Connections to Regional Proxies
+        IP geolocation: mapping connections to regional proxies
       </h2>
       <p>
         Platform security algorithms track login geolocations. Triggering campaigns from a cloud server IP in a different region than your manual login will trigger security blocks.
@@ -169,7 +169,7 @@ export default function BlogPost() {
         <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
         <div className="pl-4">
           <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-            Safety Rule: Enforce Daily Limits 💡
+            Safety rule: enforce daily limits
           </h4>
           <p className="text-sm text-zinc-650 leading-relaxed">
             Never bypass daily volume quotas. Even with secure API routing, sending excessive messages will trigger spam flags. Keep invitations under 20 requests per profile daily.
@@ -178,16 +178,13 @@ export default function BlogPost() {
       </div>
 
       <h2 id="bypassing-browser-automation" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Bypassing Detectable DOM and Browser Automation
+        Avoiding detectable DOM and browser automation
       </h2>
       <p>
         Browser extensions automate actions by clicking elements directly on your web pages. Platforms scan for this DOM manipulation, identifying bot behavior instantly.
       </p>
       <p>
-        Unipile routes campaigns server-side, communicating with endpoints directly.
-      </p>
-      <p>
-        This server-to-server integration keeps campaigns looking organic, protecting your domain reputation.
+        Unipile routes campaigns server-side, communicating with endpoints directly. That keeps actions off the page DOM, which platforms scan for bot-like clicks.
       </p>
       <p>
         Server-side execution also makes controls easier to enforce. A backend queue can check plan limits, campaign state, opt-outs, daily quotas, and retry rules before an action is attempted. A browser extension often acts too close to the page, where it is harder to maintain a clean audit trail.
@@ -197,7 +194,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="least-privilege-workflows" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Design Least-Privilege Workflows
+        Design least-privilege workflows
       </h3>
       <p>
         A safe integration should not use every endpoint just because the API exposes it. Start from the workflow the user actually needs. For a LinkedIn outbound system, the core actions are usually account connection, lead/profile lookup within budget, invitation sending, message sending, and inbox sync.
@@ -207,7 +204,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="enforcing-pacing-rules" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Enforcing Human Pacing and Daily Volume Limits
+        Enforcing human pacing and daily volume limits
       </h2>
       <p>
         Outbound safety depends on pacing. Omentir enforces safe connection quotas (restricting invites under 20 requests daily) and spaces out requests using random delays.
@@ -227,7 +224,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="failure-handling" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Handle API Failures Safely
+        Handle API failures safely
       </h3>
       <p>
         Safe infrastructure is not only about successful sends. It is about what happens when something fails. A provider can reject an action, an account can disconnect, a network request can time out, or a profile lookup can return incomplete data.
@@ -240,7 +237,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="integration-sop-checklist" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: Connecting Profiles Safely via API Routes
+        SOP: connecting profiles safely via API routes
       </h2>
       <p>
         Connect your sales profiles safely using these steps:
@@ -258,10 +255,10 @@ export default function BlogPost() {
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Enterprise Grade Security for Automated Outbound
+        Treat the API as infrastructure
       </h2>
       <p>
-        B2B campaigns require secure infrastructure. By using Unipile's token encryption, proxy geolocations, and server-side routes, you protect your profile assets from restrictions.
+        B2B campaigns need secure infrastructure. Unipile's token encryption, proxy geolocations, and server-side routes help protect profile assets from restrictions.
       </p>
       <p>
         Use the API layer as infrastructure, not as permission to send more than the account or the market can safely absorb. Unipile moving a message is not the same as a buyer wanting that message.

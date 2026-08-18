@@ -25,15 +25,15 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems = [
-  { id: "modern-outbound-challenge", label: "The Modern Outbound Challenge", level: 1 },
-  { id: "clay-waterfall-enrichment", label: "Clay: Sourcing-Heavy Waterfall Enrichment", level: 1 },
-  { id: "gojiberry-autonomous-agent", label: "Gojiberry: Autonomous Sales Prospecting Agent", level: 1 },
-  { id: "architectural-comparison", label: "Architectural Comparison: Data Pipelines vs. Agent Workflows", level: 1 },
-  { id: "the-missing-execution-link", label: "The Missing Execution Link in Disconnected Systems", level: 2 },
-  { id: "under-the-hood-mechanics", label: "Under the Hood: Data Waterfall Mechanics", level: 1 },
-  { id: "omentir-unified-solution", label: "Omentir: The Unified Multi-Channel Outbound Workspace", level: 1 },
-  { id: "how-to-choose", label: "How to Choose: Clay, Gojiberry, or Omentir?", level: 1 },
-  { id: "frequently-asked-questions", label: "Frequently Asked Questions", level: 1 }
+  { id: "modern-outbound-challenge", label: "The modern outbound challenge", level: 1 },
+  { id: "clay-waterfall-enrichment", label: "Clay: sourcing-heavy waterfall enrichment", level: 1 },
+  { id: "gojiberry-autonomous-agent", label: "Gojiberry: autonomous sales prospecting agent", level: 1 },
+  { id: "architectural-comparison", label: "Architectural comparison: data pipelines vs agent workflows", level: 1 },
+  { id: "the-missing-execution-link", label: "The missing execution link in disconnected systems", level: 2 },
+  { id: "under-the-hood-mechanics", label: "Under the hood: data waterfall mechanics", level: 1 },
+  { id: "omentir-unified-solution", label: "Omentir: the unified multi-channel outbound workspace", level: 1 },
+  { id: "how-to-choose", label: "How to choose: Clay, Gojiberry, or Omentir?", level: 1 },
+  { id: "frequently-asked-questions", label: "Frequently asked questions", level: 1 }
 ] as const;
 
 export default function BlogPost() {
@@ -48,7 +48,7 @@ export default function BlogPost() {
     >
       <div id="introduction" className="scroll-mt-28">
         <p>
-          The landscape of B2B outbound sales has undergone a fundamental transformation. Buying committees are increasingly fatigued by generic, volume-based cold outreach. As search engines and social platforms implement stricter anti-spam defenses, sales teams must abandon traditional spray-and-pray methods. The emphasis has shifted toward technical precision, data integrity, and context-aware messaging. To build a reliable pipeline, companies require accurate lead intelligence, deep enrichment, and personalized communications.
+          B2B outbound has changed. Buying committees are tired of generic, volume-based cold outreach. As search engines and social platforms implement stricter anti-spam defenses, sales teams must abandon traditional spray-and-pray methods. The emphasis has shifted toward technical precision, data integrity, and context-aware messaging. To build a reliable pipeline, companies need accurate lead intelligence, deep enrichment, and personalized communications.
         </p>
         <p>
           This operational shift has led to the emergence of two distinct software paradigms. On one side are sourcing-heavy data enrichment tools, exemplified by <a href="https://clay.com" target="_blank" rel="noopener" className="text-blue-600 hover:underline">Clay</a>. <a href="https://www.clay.com/" target="_blank" rel="noopener">Clay</a> focuses on building high-fidelity programmatic data pipelines by chaining multiple databases together. On the other side are autonomous prospecting agents, represented by <a href="https://gojiberry.ai" target="_blank" rel="noopener" className="text-blue-600 hover:underline">Gojiberry</a>. <a href="https://gojiberry.ai/" target="_blank" rel="noopener">Gojiberry</a> seeks to replace manual list-building and initial outreach by deploying AI-driven search crawlers and basic messaging models.
@@ -62,7 +62,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          The Modern Outbound Challenge
+          The modern outbound challenge
         </h2>
         <p>
           Modern outbound sales require absolute precision. Buyers are inundated with cold messages, making standard outreach templates completely ineffective. To break through the noise, you must understand a prospect's current business priorities, software stack, hiring patterns, and recent corporate changes. Sourcing these details requires substantial data orchestration.
@@ -79,10 +79,10 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          <a href="https://www.clay.com/" target="_blank" rel="noopener">Clay</a>: Sourcing-Heavy Waterfall Enrichment
+          <a href="https://www.clay.com/" target="_blank" rel="noopener">Clay</a>: sourcing-heavy waterfall enrichment
         </h2>
         <p>
-          <a href="https://www.clay.com/" target="_blank" rel="noopener">Clay</a> is built as a flexible, database-agnostic spreadsheet interface designed for advanced sales operations teams. Rather than hosting its own static database, <a href="https://www.clay.com/" target="_blank" rel="noopener">Clay</a> serves as an orchestrator that integrates with more than fifty third-party data providers, including <a href="https://apollo.io" target="_blank" rel="noopener" className="text-blue-600 hover:underline">Apollo.io</a>, <a href="https://lusha.com" target="_blank" rel="noopener" className="text-blue-600 hover:underline">Lusha</a>, and <a href="https://cognism.com" target="_blank" rel="noopener" className="text-blue-600 hover:underline">Cognism</a>.
+          <a href="https://www.clay.com/" target="_blank" rel="noopener">Clay</a> is built as a flexible, database-agnostic spreadsheet interface designed for advanced sales operations teams. Rather than hosting its own static database, <a href="https://www.clay.com/" target="_blank" rel="noopener">Clay</a> is an orchestrator that integrates with more than fifty third-party data providers, including <a href="https://apollo.io" target="_blank" rel="noopener" className="text-blue-600 hover:underline">Apollo.io</a>, <a href="https://lusha.com" target="_blank" rel="noopener" className="text-blue-600 hover:underline">Lusha</a>, and <a href="https://cognism.com" target="_blank" rel="noopener" className="text-blue-600 hover:underline">Cognism</a>.
         </p>
         <p>
           The core technology behind <a href="https://www.clay.com/" target="_blank" rel="noopener">Clay</a> is the data waterfall cascade. Traditional enrichment requires purchasing separate subscriptions to multiple data directories, manually exporting spreadsheets, running lookup formulas, and merging lists. If a specific lead search on one provider returns a null value for a corporate email address or direct dial, the credits are wasted, and the record remains incomplete.
@@ -105,7 +105,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          <a href="https://gojiberry.ai/" target="_blank" rel="noopener">Gojiberry</a>: Autonomous Sales Prospecting Agent
+          <a href="https://gojiberry.ai/" target="_blank" rel="noopener">Gojiberry</a>: autonomous sales prospecting agent
         </h2>
         <p>
           <a href="https://gojiberry.ai/" target="_blank" rel="noopener">Gojiberry</a> approaches outbound sales from an agentic perspective. Instead of presenting the user with an empty database-agnostic canvas, <a href="https://gojiberry.ai/" target="_blank" rel="noopener">Gojiberry</a> deploys autonomous AI search agents that seek out prospective buyers based on natural language inputs.
@@ -120,7 +120,7 @@ export default function BlogPost() {
           However, <a href="https://gojiberry.ai/" target="_blank" rel="noopener">Gojiberry</a>'s simplicity comes at the expense of granular programmatic control. The platform functions as a closed ecosystem regarding lead discovery and initial message generation. Unlike <a href="https://www.clay.com/" target="_blank" rel="noopener">Clay</a>, where you can precisely configure which API keys are called in which sequence, <a href="https://gojiberry.ai/" target="_blank" rel="noopener">Gojiberry</a> controls the underlying search crawl and data matching. If the AI returns irrelevant records or incorrect contact details, correcting the prompt requires iterative refinement, which can lead to unpredictable credit usage.
         </p>
         <p>
-          Additionally, <a href="https://gojiberry.ai/" target="_blank" rel="noopener">Gojiberry</a> is designed primarily as a point solution for sourcing and drafting. It does not provide complex deliverability infrastructure, domain rotation, native LinkedIn API wrappers for sequence execution, or advanced intent-based inbox sorting. To manage an active, multi-channel campaign, users must export their <a href="https://gojiberry.ai/" target="_blank" rel="noopener">Gojiberry</a> lists and synchronize them with external sequencers, resulting in a fractured sales stack.
+          <a href="https://gojiberry.ai/" target="_blank" rel="noopener">Gojiberry</a> is designed primarily as a point solution for sourcing and drafting. It does not provide complex deliverability infrastructure, domain rotation, native LinkedIn API wrappers for sequence execution, or advanced intent-based inbox sorting. To manage an active, multi-channel campaign, users must export their <a href="https://gojiberry.ai/" target="_blank" rel="noopener">Gojiberry</a> lists and synchronize them with external sequencers, resulting in a fractured sales stack.
         </p>
         <p className="mt-2 flex flex-wrap gap-x-4 gap-y-2 text-sm font-semibold">
           <a href="https://gojiberry.ai/" target="_blank" rel="noopener" className="text-blue-600 hover:underline">Visit Gojiberry</a>
@@ -131,7 +131,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Architectural Comparison: Data Pipelines vs. Agent Workflows
+          Architectural comparison: data pipelines vs agent workflows
         </h2>
         <p>
           To understand which system best fits your company, we must analyze their core architectures. <a href="https://www.clay.com/" target="_blank" rel="noopener">Clay</a> is built around a tabular, programmatic data pipeline. Every row represents a prospect record, and every column represents an API integration, a formula, or an AI query. This design provides maximum visibility and absolute control over how data is processed, verified, and mapped.
@@ -193,7 +193,7 @@ export default function BlogPost() {
           id="the-missing-execution-link"
           className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28"
         >
-          The Missing Execution Link in Disconnected Systems
+          The missing execution link in disconnected systems
         </h3>
         <p>
           When sales teams build their stack around disconnected point solutions, they introduce significant operational risks. Sourcing a list in <a href="https://www.clay.com/" target="_blank" rel="noopener">Clay</a> or <a href="https://gojiberry.ai/" target="_blank" rel="noopener">Gojiberry</a> is only the first step. The major challenge lies in transmitting that data safely to your targets.
@@ -202,7 +202,7 @@ export default function BlogPost() {
           If you export a CSV list from an enrichment tool and upload it manually to an external email sequencer, you create a static data silo. In the time it takes to clean, format, and upload the file, the contact information may decay, or the buying signals may become obsolete.
         </p>
         <p>
-          Executing cold email campaigns without a native connection to a multi-channel social sequence reduces conversion rates. Relying solely on email is insufficient. Modern outbound requires coordinated multi-touch sequences, where a LinkedIn interaction warms up a lead before a cold email is delivered. To understand the strategic balance between these channels, review our comprehensive analysis on{" "}
+          Executing cold email campaigns without a native connection to a multi-channel social sequence reduces conversion rates. Relying solely on email is insufficient. Modern outbound requires coordinated multi-touch sequences, where a LinkedIn interaction warms up a lead before a cold email is delivered. To understand the strategic balance between these channels, review our analysis on{" "}
           <Link href="/blogs/linkedin-outbound-vs-cold-emailing-which-works-best-in-2026" className="text-blue-600 hover:underline">
             LinkedIn Outbound vs. Cold Emailing
           </Link>.
@@ -242,7 +242,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Under the Hood: Data Waterfall Mechanics
+          Under the hood: data waterfall mechanics
         </h2>
         <p>
           To fully appreciate the differences between these platforms, we must look at how they manage API calls, rate limits, and caching.
@@ -270,7 +270,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Omentir: The Unified Multi-Channel Outbound Workspace
+          Omentir: the unified multi-channel outbound workspace
         </h2>
         <p>
           A unified outbound workspace is useful when the team does not want to stitch together a programmatic data spreadsheet like <a href="https://www.clay.com/" target="_blank" rel="noopener">Clay</a>, an autonomous search scraper like <a href="https://gojiberry.ai/" target="_blank" rel="noopener">Gojiberry</a>, and an external cold email sequencer like <a href="https://instantly.ai/" target="_blank" rel="noopener">Instantly</a> or <a href="https://www.smartlead.ai/" target="_blank" rel="noopener">Smartlead</a>. Omentir is one example of that category, but the better choice depends on whether the buyer values control, data depth, channel coverage, or operational simplicity most.
@@ -293,7 +293,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          How to Choose: <a href="https://www.clay.com/" target="_blank" rel="noopener">Clay</a>, <a href="https://gojiberry.ai/" target="_blank" rel="noopener">Gojiberry</a>, or Omentir?
+          How to choose: <a href="https://www.clay.com/" target="_blank" rel="noopener">Clay</a>, <a href="https://gojiberry.ai/" target="_blank" rel="noopener">Gojiberry</a>, or Omentir?
         </h2>
         <p>
           Choosing the right outbound platform depends on your organizational resources, technical capabilities, and workflow structure. Consider the following guidelines to select the optimal setup for your team:
@@ -306,7 +306,7 @@ export default function BlogPost() {
             <strong>Select <a href="https://gojiberry.ai/" target="_blank" rel="noopener">Gojiberry</a> if:</strong> You need a simple, prompt-based lead generation crawler to find niche websites and public contact information, and want an autonomous assistant to compile quick target lists and write draft copy without requiring a built-in delivery system.
           </li>
           <li>
-            <strong>Select Omentir if:</strong> You want a single, unified workspace that combines lead finding, data validation, and safety-first outreach, eliminating the operational overhead of exporting CSVs and syncing disconnected tools. Omentir is ideal for teams that want to utilize professional multi-channel touches across LinkedIn and email natively, while leveraging an autonomous SDR to monitor the inbox, analyze reply intent, and draft relevant responses.
+            <strong>Select Omentir if:</strong> You want a single, unified workspace that combines lead finding, data validation, and safety-first outreach, eliminating the operational overhead of exporting CSVs and syncing disconnected tools. Omentir is ideal for teams that want professional multi-channel touches across LinkedIn and email natively, while using an autonomous SDR to monitor the inbox, analyze reply intent, and draft relevant responses.
           </li>
         </ul>
         <p>
@@ -318,7 +318,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Frequently Asked Questions
+          Frequently asked questions
         </h2>
       <FaqAccordion
         items={[
@@ -328,7 +328,7 @@ export default function BlogPost() {
           },
           {
             question: <>Can I use <a href="https://www.clay.com/" target="_blank" rel="noopener">Clay</a> and Omentir together?</>,
-            answer: <>Yes. If your sales operations team has already built highly customized spreadsheets in <a href="https://www.clay.com/" target="_blank" rel="noopener">Clay</a>, you can export your enriched data and import it into Omentir to leverage its native multi-channel sequencers, safety throttling, and intent-based inbox management.</>,
+            answer: <>Yes. If your sales operations team has already built highly customized spreadsheets in <a href="https://www.clay.com/" target="_blank" rel="noopener">Clay</a>, you can export your enriched data and import it into Omentir to use its native multi-channel sequencers, safety throttling, and intent-based inbox management.</>,
           },
           {
             question: <>How does <a href="https://gojiberry.ai/" target="_blank" rel="noopener">Gojiberry</a> verify email deliverability?</>,

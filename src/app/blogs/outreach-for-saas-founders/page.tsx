@@ -18,23 +18,23 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "founder-led-outbound-validation", label: "Outbound as a Product Validation Engine", level: 1 },
-  { id: "defining-early-adopter-icp", label: "Defining Your Early-Adopter Ideal Customer Profile", level: 1 },
-  { id: "design-partner-copy", label: "The Design Partner Copywriting Strategy", level: 1 },
-  { id: "soft-feedback-pitch", label: "The Feedback Hook Template", level: 2 },
-  { id: "case-study-hook", label: "The Collaborative Case Study Template", level: 2 },
-  { id: "automating-founder-discovery", label: "Automating Sourcing with Workspace Discovery Agents", level: 1 },
-  { id: "founder-review-workflow", label: "Setting Up a Founder-Friendly Review Routine", level: 1 },
-  { id: "pacing-safety-limits", label: "Managing Outbound Cadences and Account Security", level: 1 },
-  { id: "founder-sop-checklist", label: "SOP: The Founder-Led Outreach Checklist", level: 1 },
-  { id: "conclusion", label: "Building a Foundation for Scale", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "founder-led-outbound-validation", label: "Outbound as a product validation engine", level: 1 },
+  { id: "defining-early-adopter-icp", label: "Defining your early-adopter ideal customer profile", level: 1 },
+  { id: "design-partner-copy", label: "The design partner copywriting strategy", level: 1 },
+  { id: "soft-feedback-pitch", label: "The feedback hook template", level: 2 },
+  { id: "case-study-hook", label: "The collaborative case study template", level: 2 },
+  { id: "automating-founder-discovery", label: "Automating sourcing with workspace discovery agents", level: 1 },
+  { id: "founder-review-workflow", label: "Setting up a founder-friendly review routine", level: 1 },
+  { id: "pacing-safety-limits", label: "Managing outbound cadences and account security", level: 1 },
+  { id: "founder-sop-checklist", label: "SOP: the founder-led outreach checklist", level: 1 },
+  { id: "conclusion", label: "Stay close to the problem", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
   {
     question: "Why should SaaS founders run outbound campaigns themselves early on?",
-    answer: "When a founder runs outreach, they gather qualitative feedback on product pain points, competitor gaps, and feature demands that a hired salesperson would miss. This feedback is critical for achieving product-market fit."
+    answer: "When a founder runs outreach, they gather qualitative feedback on product pain points, competitor gaps, and feature demands that a hired salesperson would miss. That feedback is how you get to product-market fit."
   },
   {
     question: "What is a design partner and why should I target them first?",
@@ -65,20 +65,20 @@ export default function BlogPost() {
         One of the biggest mistakes early-stage SaaS founders make is delegating outbound sales too quickly. They hire a sales development representative (SDR) or an agency to book calls, assuming their time is best spent coding the product. In almost every case, this setup fails.
       </p>
       <p>
-        Hired sales reps can only execute a playbook; they cannot write it. If you have not achieved product-market fit, you do not know which messages get responses or which features buyers actually value. Outbound is not just a sales channel at this stage; it is your primary tool for product validation.
+        Hired sales reps can only execute a playbook; they cannot write it. If you have not achieved product-market fit, you do not know which messages get responses or which features buyers actually value. At this stage, outbound is your primary tool for product validation, not only a sales channel.
       </p>
       <p>
         Running outreach on <a href="https://www.linkedin.com" target="_blank" rel="noopener" className="text-blue-600 hover:underline">LinkedIn</a> directly allows you to speak to buyers, hear their objections, and learn what challenges they face. By managing the workflow yourself, you can pivot your product direction based on raw feedback, saving months of wasted dev time.
       </p>
       <p>
-        Omentir is built to support this founder-led outbound motion. The platform runs lead discovery and message drafting in the background, queuing up drafts for your review. This structure lets you stay in control of your copywriting without spending hours on administration. Let's look at how to run outreach to secure your first design partners.
+        Omentir is built to support this founder-led outbound motion. The platform runs lead discovery and message drafting in the background, queuing up drafts for your review. This structure lets you stay in control of your copywriting without spending hours on administration. Here is how to run outreach to secure your first design partners.
       </p>
       <p>
         The goal at this stage is not only revenue. It is learning density. Every reply should teach you something about the buyer, the pain, the urgency, the vocabulary, or the objections. A founder who treats outbound as research will improve the product faster than a founder who treats outbound as a demo-booking machine too early.
       </p>
 
       <h2 id="defining-early-adopter-icp" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Defining Your Early-Adopter Ideal Customer Profile
+        Defining your early-adopter ideal customer profile
       </h2>
       <p>
         When validating a new product, do not target enterprise companies right away. Their sales cycles are too long, and they require security checks that early startups cannot provide. Focus instead on early adopters: growth-stage companies with 10 to 50 employees.
@@ -100,7 +100,7 @@ export default function BlogPost() {
         <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
         <div className="pl-4">
           <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-            Targeting Rule: Look for Early Adopters
+            Targeting rule: look for early adopters
           </h4>
           <p className="text-sm text-zinc-650 leading-relaxed">
             Target tech-forward managers and directors who post on LinkedIn rather than traditional C-level executives. They are more likely to test early products and give detailed feedback.
@@ -109,7 +109,7 @@ export default function BlogPost() {
       </div>
 
       <h2 id="design-partner-copy" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        The Design Partner Copywriting Strategy
+        The design partner copywriting strategy
       </h2>
       <p>
         Do not send a product pitch to your first 50 prospects. If you write, "We built a tool that does X, open to a demo?" most buyers will ignore you. Instead, ask for their advice and invite them to become design partners.
@@ -121,11 +121,11 @@ export default function BlogPost() {
         The copy should make the ask feel honest. Do not disguise a sales call as "research" if the real plan is to pitch for twenty minutes. Tell the buyer what you are building, why you think their perspective matters, and what they will get for helping. That clarity builds more trust than fake softness.
       </p>
       <p>
-        Let's look at two templates designed specifically for founder-led validation.
+        Here are two templates designed specifically for founder-led validation.
       </p>
 
       <h3 id="soft-feedback-pitch" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        The Feedback Hook Template
+        The feedback hook template
       </h3>
       <p>
         Use this template when reaching out to prospects who match your buyer persona but show no active buying signals:
@@ -135,7 +135,7 @@ export default function BlogPost() {
         <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
         <div className="pl-4">
           <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-            Feedback Hook Template
+            Feedback hook template
           </h4>
           <p className="text-sm text-zinc-650 leading-relaxed">
             "Hi [Name], saw you are managing the product team at [Company]. I'm a founder building a tool to automate LinkedIn lead scoring and filter out low-fit prospects. We are looking for product feedback from growth-stage builders. Happy to share a short 2-minute video showing what we have built?"
@@ -155,7 +155,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="case-study-hook" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        The Collaborative Case Study Template
+        The collaborative case study template
       </h3>
       <p>
         If your product is live and you need your first case studies, reach out to prospects with a collaborative offer:
@@ -165,7 +165,7 @@ export default function BlogPost() {
         <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
         <div className="pl-4">
           <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-            Case Study Hook Template
+            Case study hook template
           </h4>
           <p className="text-sm text-zinc-650 leading-relaxed">
             "Hi [Name], congrats on your promotion at [Company]. We are looking for one growth-stage startup to partner with to build a detailed case study around automating lead qualification. We'd set up our tool for free and manage the configuration for you. Open to a brief chat to see if it fits your Q3 roadmap?"
@@ -174,7 +174,7 @@ export default function BlogPost() {
       </div>
 
       <p>
-        This template is compelling because it provides immediate value (free software and setup) in exchange for their case study participation. For tips on managing early demos, read our guide to the{" "}
+        This template works because it provides immediate value (free software and setup) in exchange for their case study participation. For tips on managing early demos, read our guide to the{" "}
         <Link href="/blogs/the-founders-playbook-booking-early-demos-on-linkedin" className="text-blue-600 hover:underline">
           founder's demo playbook
         </Link>
@@ -185,7 +185,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="automating-founder-discovery" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Automating Sourcing with Workspace Discovery Agents
+        Automating sourcing with workspace discovery agents
       </h2>
       <p>
         SaaS founders are always busy. Spending hours every day searching for leads and checking profiles on <a href="https://www.linkedin.com/products/linkedin-sales-navigator/" target="_blank" rel="noopener" className="text-blue-600 hover:underline">LinkedIn Sales Navigator</a> is not a good use of your time.
@@ -202,7 +202,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="founder-review-workflow" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Setting Up a Founder-Friendly Review Routine
+        Setting up a founder-friendly review routine
       </h2>
       <p>
         While automation helps you scale your outbound pipeline, you must review your drafts manually during the validation phase. AI-generated messages can sound generic or miss key profile nuances that a human founder would spot instantly.
@@ -221,7 +221,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="pacing-safety-limits" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Managing Outbound Cadences and Account Security
+        Managing outbound cadences and account security
       </h2>
       <p>
         Founders usually break pacing in week two, not week one. Week one is careful. Week two is "this is working, let's do 80 invites." The account that booked two conversations then sits in a checkpoint.
@@ -234,7 +234,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="founder-sop-checklist" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: The Founder-Led Outreach Checklist
+        SOP: the founder-led outreach checklist
       </h2>
       <p>
         Use this simple checklist to audit your validation campaigns before launching:
@@ -254,13 +254,13 @@ export default function BlogPost() {
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Building a Foundation for Scale
+        Stay close to the problem
       </h2>
       <p>
-        Founder-led outbound is the most reliable way to validate a B2B SaaS product and secure your first design partners. By writing modular, feedback-focused templates and managing your campaigns daily, you can gather the product insights needed to achieve scale.
+        Founder-led outbound is a reliable way to validate a B2B SaaS product and secure your first design partners. Write modular, feedback-focused templates, manage the campaigns daily, and use the replies to decide what to build next.
       </p>
       <p>
-        Let Omentir handle the logistics. Configure your discovery agents, review your drafts every morning, and launch safe, paced sequences that turn warm LinkedIn leads into customer conversations.
+        Let Omentir handle the logistics. Configure your discovery agents, review your drafts every morning, and run paced sequences that turn warm LinkedIn leads into customer conversations.
       </p>
       <p>
         The founder's advantage is proximity to the problem. You can hear a buyer's objection and change the product, the ICP, or the positioning the same day. Use automation to protect that advantage, not to distance yourself from it.
@@ -271,7 +271,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Frequently Asked Questions
+        Frequently asked questions
       </h2>
       <FaqAccordion items={faqItems} />
     </BlogPostTemplate>

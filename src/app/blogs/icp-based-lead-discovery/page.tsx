@@ -18,16 +18,16 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "icp-translation-problem", label: "The Challenge of Translating B2B Buyer Personas", level: 1 },
-  { id: "deconstructing-icp", label: "Deconstructing the Core Pillars of Your ICP", level: 1 },
-  { id: "mapping-filters", label: "Mapping ICP Attributes to LinkedIn Search Parameters", level: 1 },
-  { id: "boolean-logic", label: "Mastering Boolean Search Logic for Title Filtering", level: 2 },
-  { id: "company-filters", label: "Filtering by Company Size, Industry, and Headcount", level: 2 },
-  { id: "automating-discovery", label: "Automating Daily Discovery with Omentir Agents", level: 1 },
-  { id: "reviewing-queue", label: "SOP: Auditing and Refining the Discovered Lead Queue", level: 1 },
-  { id: "personalization-alignment", label: "Aligning Outreach Copy to Specific ICP Pain Points", level: 1 },
-  { id: "conclusion", label: "Moving Beyond Static Lists", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "icp-translation-problem", label: "The challenge of translating B2B buyer personas", level: 1 },
+  { id: "deconstructing-icp", label: "The core pillars of your ICP", level: 1 },
+  { id: "mapping-filters", label: "Mapping ICP attributes to LinkedIn search parameters", level: 1 },
+  { id: "boolean-logic", label: "Boolean search logic for title filtering", level: 2 },
+  { id: "company-filters", label: "Filtering by company size, industry, and headcount", level: 2 },
+  { id: "automating-discovery", label: "Automating daily discovery with Omentir agents", level: 1 },
+  { id: "reviewing-queue", label: "SOP: auditing and refining the discovered lead queue", level: 1 },
+  { id: "personalization-alignment", label: "Matching outreach copy to specific ICP pain points", level: 1 },
+  { id: "conclusion", label: "Moving beyond static lists", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
@@ -37,7 +37,7 @@ const faqItems = [
   },
   {
     question: "How do I translate a complex tech stack requirement into a LinkedIn search?",
-    answer: "While you cannot filter by technology stack directly in standard searches, you can use Boolean keywords such as 'Salesforce' or 'AWS' within the profile keyword field, or leverage external enrichment tools to validate technology usage before importing leads."
+    answer: "You cannot filter by technology stack directly in standard searches. Use Boolean keywords such as 'Salesforce' or 'AWS' in the profile keyword field, or use external enrichment tools to confirm technology usage before importing leads."
   },
   {
     question: "How does Omentir automate the lead discovery process?",
@@ -70,17 +70,17 @@ export default function BlogPost() {
         Dynamic discovery means defining your Ideal Customer Profile (ICP) as a set of active search rules rather than a static document. By running daily searches on <a href="https://www.linkedin.com" target="_blank" rel="noopener" className="text-blue-600 hover:underline">LinkedIn</a>, you can find prospects as they match your criteria, allowing you to reach out at the moment of highest relevance.
       </p>
       <p>
-        Omentir is designed to run this discovery process in the background. By setting up plain-language search rules, the platform monitors target markets, filters out poor fits, and places qualified profiles into your review queue. Let's look at how to deconstruct and translate your ICP into a working search engine.
+        Omentir is designed to run this discovery process in the background. Set up plain-language search rules, and the platform monitors target markets, filters out poor fits, and places qualified profiles into your review queue. Below is how to break your ICP into a working search.
       </p>
       <p>
         A strong ICP workflow is not a bigger list. It is a better decision system. Every profile should either have a clear reason to enter the queue or a clear reason to be rejected. When the criteria are fuzzy, the list grows quickly but the conversations get worse.
       </p>
 
       <h2 id="deconstructing-icp" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Deconstructing the Core Pillars of Your ICP
+        The core pillars of your ICP
       </h2>
       <p>
-        Before you build a search query, you must define the boundaries of your target market. A complete Ideal Customer Profile contains three layers of data:
+        Before you build a search query, define the boundaries of your target market. An Ideal Customer Profile has three layers of data:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
         <li><strong>Firmographic Data:</strong> The organizational boundaries, including company size, industry classification, geographic presence, and employee growth rates.</li>
@@ -110,7 +110,7 @@ export default function BlogPost() {
       </div>
 
       <h2 id="mapping-filters" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Mapping ICP Attributes to LinkedIn Search Parameters
+        Mapping ICP attributes to LinkedIn search parameters
       </h2>
       <p>
         Once your pillars are defined, you must translate them into the search fields of your prospecting tools. The primary engine for B2B active sourcing is <a href="https://www.linkedin.com/products/linkedin-sales-navigator/" target="_blank" rel="noopener" className="text-blue-600 hover:underline">LinkedIn Sales Navigator</a>, which provides advanced filters for title, company size, and headcount growth.
@@ -123,7 +123,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="boolean-logic" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Mastering Boolean Search Logic for Title Filtering
+        Boolean search logic for title filtering
       </h3>
       <p>
         Do not rely on LinkedIn's default title categories, which are often too broad. Instead, build custom Boolean query strings using the AND, OR, and NOT operators. This ensures that you target specific decision-makers while excluding irrelevant support roles.
@@ -142,13 +142,13 @@ export default function BlogPost() {
       </p>
 
       <h3 id="company-filters" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Filtering by Company Size, Industry, and Headcount
+        Filtering by company size, industry, and headcount
       </h3>
       <p>
         After defining the title string, apply firmographic constraints. Use the company headcount filter to exclude organizations that are too small or too large for your sales cycle. 
       </p>
       <p>
-        Additionally, look at department headcount growth rates rather than company-wide growth. A company whose total employee count is flat might still be expanding its engineering team by 30% year-over-year, indicating a growing focus on technical infrastructure.
+        Look at department headcount growth rates rather than company-wide growth. A company whose total employee count is flat might still be expanding its engineering team by 30% year-over-year, which often means more spend on technical infrastructure.
       </p>
       <p>
         Company size should match your sales cycle. A solo founder may buy quickly but have low budget. A 5,000-person enterprise may have budget but a long procurement process. If your product is founder-friendly, target smaller teams with urgent pain. If your product needs security review and implementation support, target larger accounts with clear department ownership.
@@ -158,7 +158,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="automating-discovery" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Automating Daily Discovery with Omentir Agents
+        Automating daily discovery with Omentir agents
       </h2>
       <p>
         Running searches manually every day is a tedious process. It takes hours of click-heavy work that distracts you from closing sales.
@@ -181,7 +181,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="reviewing-queue" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: Auditing and Refining the Discovered Lead Queue
+        SOP: auditing and refining the discovered lead queue
       </h2>
       <p>
         Never import automated search results directly into an outbound sequence without auditing the queue. Even the best search strings return false positives, and sending automated pitches to poor-fit profiles damages your sender reputation.
@@ -190,14 +190,14 @@ export default function BlogPost() {
         Establish a simple daily audit routine for your sales team:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Check the Profile:</strong> Confirm that the prospect's current title matches your Boolean rules and that they have been in their role for at least 30 days.</li>
-        <li><strong>Review the Company Site:</strong> Verify that the company is active, has a working website, and fits your target industry category.</li>
-        <li><strong>Analyze Intent Signals:</strong> Look for recent signals, such as job openings or funding updates, to prioritize outreach. This intent-scoring process is detailed in our guide to{" "}
+        <li><strong>Check the profile:</strong> Confirm that the prospect's current title matches your Boolean rules and that they have been in their role for at least 30 days.</li>
+        <li><strong>Review the company site:</strong> Verify that the company is active, has a working website, and fits your target industry category.</li>
+        <li><strong>Analyze intent signals:</strong> Look for recent signals, such as job openings or funding updates, to prioritize outreach. This intent-scoring process is detailed in our guide to{" "}
           <Link href="/blogs/linkedin-lead-scoring" className="text-blue-600 hover:underline">
             LinkedIn lead scoring rubrics
           </Link>
           .</li>
-        <li><strong>Disqualify Instantly:</strong> If the company is a competitor or does not fit your technographic profile, reject the lead immediately to keep your lists clean.</li>
+        <li><strong>Disqualify immediately:</strong> If the company is a competitor or does not fit your technographic profile, reject the lead immediately to keep your lists clean.</li>
       </ul>
       <p>
         This review step keeps your list quality high. Spending a short moment to check a profile before sending is often the difference between a relevant note and obvious automation.
@@ -207,13 +207,13 @@ export default function BlogPost() {
       </p>
 
       <h2 id="personalization-alignment" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Aligning Outreach Copy to Specific ICP Pain Points
+        Matching outreach copy to specific ICP pain points
       </h2>
       <p>
         A clean prospect list is useless if your outreach copy is generic. Your connection note and first message must speak to the specific challenges that your target persona faces at their type of company.
       </p>
       <p>
-        If your ICP targets growth-stage B2B startups, focus your copy on efficiency and team leverage. If you target enterprise companies, focus on compliance, safety, and integration capabilities.
+        If your ICP targets growth-stage B2B startups, focus your copy on efficiency and what a small team can do without extra headcount. If you target enterprise companies, focus on compliance, safety, and integration capabilities.
       </p>
       <p>
         Omentir ensures your outreach copy matches these parameters by grounding drafts in your product profile and company-specific context. When the system drafts a campaign sequence, it matches the prospect's firmographic attributes with the relevant marketing messages in your database. This structured copywriting strategy is outlined in our guide on{" "}
@@ -230,10 +230,10 @@ export default function BlogPost() {
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Moving Beyond Static Lists
+        Moving beyond static lists
       </h2>
       <p>
-        Building a repeatable sales pipeline requires a shift from stale databases to dynamic, ICP-based lead discovery. By deconstructing your ICP, mapping attributes to specific search parameters, and using automated discovery loops, you can build a reliable GTM machine.
+        Building a repeatable sales pipeline means moving from stale databases to dynamic, ICP-based lead discovery. Break your ICP into search parameters, then run automated discovery loops so new fits keep arriving without a weekly CSV rebuild.
       </p>
       <p>
         Use Omentir to automate the logistics of your search. Set up your discovery agents, review the incoming leads daily, and launch safe, paced sequences that turn warm LinkedIn profiles into qualified demos.
@@ -247,7 +247,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Frequently Asked Questions
+        Frequently asked questions
       </h2>
       <FaqAccordion items={faqItems} />
     </BlogPostTemplate>

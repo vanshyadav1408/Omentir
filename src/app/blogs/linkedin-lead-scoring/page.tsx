@@ -23,13 +23,13 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "score-for-action", label: "Score for Action", level: 1 },
-  { id: "five-inputs", label: "The Five Inputs", level: 1 },
-  { id: "point-system", label: "Point System", level: 1 },
-  { id: "recency-and-decay", label: "Recency and Decay", level: 1 },
-  { id: "worked-examples", label: "Worked Examples", level: 1 },
-  { id: "thresholds", label: "Thresholds and Next Steps", level: 1 },
-  { id: "review-loop", label: "Review Loop", level: 1 },
+  { id: "score-for-action", label: "Score for action", level: 1 },
+  { id: "five-inputs", label: "The five inputs", level: 1 },
+  { id: "point-system", label: "Point system", level: 1 },
+  { id: "recency-and-decay", label: "Recency and decay", level: 1 },
+  { id: "worked-examples", label: "Worked examples", level: 1 },
+  { id: "thresholds", label: "Thresholds and next steps", level: 1 },
+  { id: "review-loop", label: "Review loop", level: 1 },
   { id: "faqs", label: "FAQs", level: 1 },
 ];
 
@@ -90,7 +90,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Score for Action
+        Score for action
       </h2>
       <p>
         The wrong way to score leads is to chase the prettiest number. A 94 out of 100 looks precise, but it does not tell the seller what to do. It also creates false confidence when the inputs are messy.
@@ -116,7 +116,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        The Five Inputs
+        The five inputs
       </h2>
       <p>
         A LinkedIn score needs inputs that are visible on the platform and useful for outreach. Do not mix every data point into one pile. Separate the evidence so the reviewer can see what is strong and what is missing.
@@ -146,7 +146,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Point System
+        Point system
       </h2>
       <p>
         Keep the scale small. A 0 to 3 score for each input is usually enough. It forces discipline and makes review faster.
@@ -196,7 +196,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Recency and Decay
+        Recency and decay
       </h2>
       <p>
         LinkedIn signals go stale. A profile view yesterday is different from a profile view six months ago. A hiring post from last week is more useful than a company announcement from last year.
@@ -221,7 +221,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Worked Examples
+        Worked examples
       </h2>
       <p>
         Imagine you sell software that helps B2B SaaS teams turn LinkedIn outreach replies into qualified demos. Here is how three prospects might score.
@@ -250,7 +250,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Thresholds and Next Steps
+        Thresholds and next steps
       </h2>
       <p>
         Once the scoring inputs are clear, set thresholds that control the queue. Do not let every lead become a send decision.
@@ -281,7 +281,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Review Loop
+        Review loop
       </h2>
       <p>
         A scoring system should improve every week. Review a sample of approved leads, rejected leads, and replies. Ask which scores predicted good conversations and which ones created false positives.

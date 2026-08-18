@@ -17,18 +17,18 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "executive-attention-barrier", label: "The Reality of Sourcing the C-Suite", level: 1 },
-  { id: "which-executive-to-target", label: "Which Executive Should You Target?", level: 2 },
-  { id: "rules-of-executive-copy", label: "The Writing Rules of C-Suite Outreach", level: 1 },
-  { id: "sourcing-operational-triggers", label: "Sourcing Executive Buying Signals", level: 2 },
-  { id: "c-suite-prompt-template", label: "The Executive Messaging Template Blueprint", level: 2 },
-  { id: "executive-rewrite-example", label: "Before and After: Executive Message Rewrite", level: 2 },
-  { id: "multi-channel-orchestration", label: "Orchestrating LinkedIn and Email Outreach Loops", level: 1 },
-  { id: "follow-up-boundaries", label: "Follow-Up Boundaries for Senior Buyers", level: 2 },
-  { id: "safety-and-pacing-limits", label: "Pacing Campaign Activity Safely to Protect Profiles", level: 1 },
-  { id: "executive-sop-checklist", label: "SOP: The C-Suite Outreach Campaign Checklist", level: 1 },
-  { id: "conclusion", label: "Connecting with High-Level B2B Decision Makers", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "executive-attention-barrier", label: "The reality of sourcing the C-suite", level: 1 },
+  { id: "which-executive-to-target", label: "Which executive should you target?", level: 2 },
+  { id: "rules-of-executive-copy", label: "The writing rules of C-suite outreach", level: 1 },
+  { id: "sourcing-operational-triggers", label: "Sourcing executive buying signals", level: 2 },
+  { id: "c-suite-prompt-template", label: "The executive messaging template blueprint", level: 2 },
+  { id: "executive-rewrite-example", label: "Before and after: executive message rewrite", level: 2 },
+  { id: "multi-channel-orchestration", label: "Orchestrating LinkedIn and email outreach loops", level: 1 },
+  { id: "follow-up-boundaries", label: "Follow-up boundaries for senior buyers", level: 2 },
+  { id: "safety-and-pacing-limits", label: "Pacing campaign activity to protect profiles", level: 1 },
+  { id: "executive-sop-checklist", label: "SOP: the C-suite outreach campaign checklist", level: 1 },
+  { id: "conclusion", label: "Connecting with high-level B2B decision makers", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
@@ -84,7 +84,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="which-executive-to-target" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Which Executive Should You Target?
+        Which executive should you target?
       </h2>
       <p>
         "The C-suite" is not one persona. A CEO, CFO, COO, CTO, CRO, and CMO all care about different tradeoffs. Sending one generic executive pitch to all of them weakens your campaign because the proof, trigger, and ask should change by role.
@@ -108,18 +108,18 @@ export default function BlogPost() {
       </p>
 
       <h2 id="rules-of-executive-copy" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        The Writing Rules of C-Suite Outreach
+        The writing rules of C-suite outreach
       </h2>
       <p>
-        C-suite executives evaluate messages in seconds. If your copy does not display value immediately, it is ignored.
+        C-suite executives evaluate messages in seconds. If the first line does not show why it matters, it is ignored.
       </p>
       <p>
         Enforce these writing constraints across your campaigns:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Extreme Brevity:</strong> Keep copy under 50 to 60 words. Short messages fit on mobile screens without scrolling.</li>
-        <li><strong>No Buzzwords:</strong> Banned vague phrases like "leverage synergies" or "digitally transform."</li>
-        <li><strong>Direct Openings:</strong> Skip introductory greetings like "I hope this email finds you well" and state your value proposition in the first sentence.</li>
+        <li><strong>Extreme brevity:</strong> Keep copy under 50 to 60 words. Short messages fit on mobile screens without scrolling.</li>
+        <li><strong>No buzzwords:</strong> Cut vague phrases. If a sentence could be "synergies" or "digitally transform," rewrite it in plain English.</li>
+        <li><strong>Direct openings:</strong> Skip introductory greetings like "I hope this email finds you well" and state your value proposition in the first sentence.</li>
       </ul>
       <p>
         The strongest executive messages usually have four parts: a relevant trigger, a business interpretation of that trigger, one credible way you can help, and a low-pressure question. The trigger proves the message is not random. The interpretation proves you understand why the trigger matters. The offer explains the connection to your product. The question lets the executive reply without committing to a sales call immediately.
@@ -139,7 +139,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="sourcing-operational-triggers" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Sourcing Executive Buying Signals
+        Sourcing executive buying signals
       </h2>
       <p>
         Executives respond to messages that reference their active initiatives.
@@ -148,13 +148,13 @@ export default function BlogPost() {
         Instruct your discovery agents to look for high-level buying signals:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Department Growth:</strong> Senders search for active job postings indicating department expansions.</li>
-        <li><strong>Technology Changes:</strong> Verify competitor technology installations using website crawlers, as detailed in our guide on{" "}
+        <li><strong>Department growth:</strong> Senders search for active job postings indicating department expansions.</li>
+        <li><strong>Technology changes:</strong> Verify competitor technology installations using website crawlers, as detailed in our guide on{" "}
         <Link href="/blogs/ai-crawlers-buying-signals" className="text-blue-600 hover:underline">
           how AI crawlers extract signals
         </Link>
         .</li>
-        <li><strong>Public Milestones:</strong> Reference active company updates or career transitions.</li>
+        <li><strong>Public milestones:</strong> Reference active company updates or career transitions.</li>
       </ul>
       <p>
         A useful executive signal should pass two tests. First, it should be visible enough that referencing it feels fair. Public hiring, website changes, product launches, market expansion, executive appointments, funding announcements, and new compliance pages are all fair game. Second, it should imply a business problem your offer can plausibly help with.
@@ -170,7 +170,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="c-suite-prompt-template" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        The Executive Messaging Template Blueprint
+        The executive messaging template blueprint
       </h2>
       <p>
         Use the template below to draft direct, outcome-focused copy for busy executives:
@@ -193,7 +193,7 @@ Worth comparing notes on how you are handling prospecting quality this quarter?`
       </p>
 
       <h2 id="executive-rewrite-example" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Before and After: Executive Message Rewrite
+        Before and after: executive message rewrite
       </h2>
       <p>
         Here is the kind of message small teams often send when they want to reach senior buyers:
@@ -233,13 +233,13 @@ Are you centralizing prospect research yet, or still letting each rep handle it?
       </div>
 
       <h2 id="multi-channel-orchestration" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Orchestrating LinkedIn and Email Outreach Loops
+        Orchestrating LinkedIn and email outreach loops
       </h2>
       <p>
         C-suite campaigns are most effective when coordinated across multiple channels. If an executive ignores your LinkedIn request, follow up via email after a few days.
       </p>
       <p>
-        Ensure your messaging across channels is aligned, referencing the same business trigger.
+        Ensure your messaging across channels references the same business trigger.
       </p>
       <p>
         Multi-channel does not mean repeating the same pitch everywhere. It means each channel carries one small part of the same argument. LinkedIn can be used for a short connection request tied to a public signal. Email can carry the slightly fuller business context. A later LinkedIn follow-up can reference a useful asset, customer story, or observation without demanding a meeting.
@@ -258,7 +258,7 @@ Are you centralizing prospect research yet, or still letting each rep handle it?
       </p>
 
       <h2 id="follow-up-boundaries" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Follow-Up Boundaries for Senior Buyers
+        Follow-up boundaries for senior buyers
       </h2>
       <p>
         Executives are worth following up with, but they are not worth chasing indefinitely. The goal is to be present, clear, and useful without turning the campaign into pressure. Two follow-ups are usually enough for a cold executive sequence unless the buyer engages.
@@ -271,7 +271,7 @@ Are you centralizing prospect research yet, or still letting each rep handle it?
       </p>
 
       <h2 id="safety-and-pacing-limits" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Pacing Campaign Activity Safely to Protect Profiles
+        Pacing campaign activity to protect profiles
       </h2>
       <p>
         Even with highly personalized copy, you must manage campaign pacing. High outreach speeds will result in profile restrictions.
@@ -291,7 +291,7 @@ Are you centralizing prospect research yet, or still letting each rep handle it?
       </p>
 
       <h2 id="executive-sop-checklist" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: The C-Suite Outreach Campaign Checklist
+        SOP: the C-suite outreach campaign checklist
       </h2>
       <p>
         Launch your C-suite campaigns using these steps:
@@ -320,7 +320,7 @@ Are you centralizing prospect research yet, or still letting each rep handle it?
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Connecting with High-Level B2B Decision Makers
+        Connecting with high-level B2B decision makers
       </h2>
       <p>
         Reaching C-suite executives requires precision and brevity. By using short, trigger-grounded messages and pacing campaigns safely, small sales teams can build pipeline with enterprise decision makers.

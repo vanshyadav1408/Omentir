@@ -18,17 +18,17 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "api-outreach-leverage", label: "Building Custom Integrations via B2B REST APIs", level: 1 },
-  { id: "recommended-call-order", label: "The Recommended API Call Order", level: 2 },
-  { id: "authentication-security", label: "Authenticating API Clients with Bearer Tokens", level: 1 },
-  { id: "lead-discovery-schemas", label: "Creating Discovery Agents and Reading Leads", level: 1 },
-  { id: "campaign-orchestration-api", label: "Controlling Campaigns and Sequence Scheduling", level: 2 },
-  { id: "inbox-webhooks-replies", label: "Monitoring incoming Reply Events and Intent Webhooks", level: 2 },
-  { id: "error-handling-idempotency", label: "Error Handling and Idempotency", level: 2 },
-  { id: "safety-compliance-limits", label: "Pacing Campaign Activity Safely to Stay Compliant", level: 1 },
-  { id: "api-integration-sop", label: "SOP: The B2B Outbound API Integration Checklist", level: 1 },
-  { id: "conclusion", label: "Unlocking Maximum Pipeline Leverage", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "api-outreach-leverage", label: "Building custom integrations with B2B REST APIs", level: 1 },
+  { id: "recommended-call-order", label: "The recommended API call order", level: 2 },
+  { id: "authentication-security", label: "Authenticating API clients with bearer tokens", level: 1 },
+  { id: "lead-discovery-schemas", label: "Creating discovery agents and reading leads", level: 1 },
+  { id: "campaign-orchestration-api", label: "Controlling campaigns and sequence scheduling", level: 2 },
+  { id: "inbox-webhooks-replies", label: "Monitoring incoming reply events and intent webhooks", level: 2 },
+  { id: "error-handling-idempotency", label: "Error handling and idempotency", level: 2 },
+  { id: "safety-compliance-limits", label: "Pacing campaign activity to stay compliant", level: 1 },
+  { id: "api-integration-sop", label: "SOP: the B2B outbound API integration checklist", level: 1 },
+  { id: "conclusion", label: "Make qualification repeatable without losing relevance", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
@@ -75,14 +75,14 @@ export default function BlogPost() {
         <Link href="/blogs/mcp-outreach-tools" className="text-blue-600 hover:underline">
           configuring hosted MCP tools
         </Link>
-        . Let's look at how to build an integration.
+        .
       </p>
       <p>
         Treat the API like an operating workflow. First read the workspace state. Then confirm the product profile. Then create or inspect discovery agents. Finally, search leads, retrieve exact records for the shortlist, and monitor discovery activity.
       </p>
 
       <h2 id="recommended-call-order" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        The Recommended API Call Order
+        The recommended API call order
       </h2>
       <p>
         A good integration should follow the same deliberate workflow a careful operator would use in the product.
@@ -104,10 +104,10 @@ export default function BlogPost() {
       </p>
 
       <h2 id="authentication-security" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Authenticating API Clients with Bearer Tokens
+        Authenticating API clients with bearer tokens
       </h2>
       <p>
-        Security is critical when building custom integrations. Omentir protects your workspace by enforcing token authorization boundaries on all REST endpoints.
+        Security matters when you build custom integrations. Omentir protects your workspace by enforcing token authorization boundaries on all REST endpoints.
       </p>
       <p>
         To authorize your client, generate a secure token on the API page. Pass this token in the Authorization header of every request:
@@ -136,7 +136,7 @@ Authorization: Bearer <your_omentir_agent_token>`}</code>
         <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
         <div className="pl-4">
           <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-            API Security Rule: Restrict Keys 💡
+            API security rule: restrict keys
           </h4>
           <p className="text-sm text-zinc-650 leading-relaxed">
             Never hardcode agent tokens in client-side Javascript. Always store keys in environment variables on your backend or serverless functions to prevent leak risks.
@@ -145,7 +145,7 @@ Authorization: Bearer <your_omentir_agent_token>`}</code>
       </div>
 
       <h2 id="lead-discovery-schemas" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Creating Discovery Agents and Reading Leads
+        Creating discovery agents and reading leads
       </h2>
       <p>
         In the Agent API flow, leads come from Omentir discovery agents. Your integration creates or manages the agent, then searches the resulting lead group and retrieves exact records by ID. This keeps discovery tied to the workspace product profile and lead groups.
@@ -186,7 +186,7 @@ Authorization: Bearer <your_omentir_agent_token>`}</code>
       </p>
 
       <h2 id="campaign-orchestration-api" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Searching and Retrieving Qualified Leads
+        Searching and retrieving qualified leads
       </h2>
       <p>
         Use the lead collection endpoint for ranking and shortlist workflows. Filter by group, search text, minimum fit score, or outreach status, then choose a stable sort order.
@@ -206,7 +206,7 @@ Authorization: Bearer <your_omentir_agent_token>`}</code>
       </p>
 
       <h3 id="inbox-webhooks-replies" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Monitoring incoming Reply Events and Intent Webhooks
+        Monitoring incoming reply events and intent webhooks
       </h3>
       <p>
         To automate CRM status syncs, configure webhooks to listen to reply signals. When a prospect replies, Omentir sends a payload containing the thread content and intent classification.
@@ -226,7 +226,7 @@ Authorization: Bearer <your_omentir_agent_token>`}</code>
       </p>
 
       <h2 id="error-handling-idempotency" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Error Handling and Idempotency
+        Error handling and idempotency
       </h2>
       <p>
         Production integrations fail in boring ways: expired tokens, malformed payloads, missing LinkedIn connections, empty lead groups, duplicate retries, and discovery that has not run yet. Build for those cases from the beginning.
@@ -239,7 +239,7 @@ Authorization: Bearer <your_omentir_agent_token>`}</code>
       </p>
 
       <h2 id="safety-compliance-limits" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Pacing Campaign Activity Safely to Stay Compliant
+        Pacing campaign activity to stay compliant
       </h2>
       <p>
         An Agent API integration can schedule more work than a human would click by hand. That is the risk. A retry loop, a cron that fires twice, or a script that creates two finders for the same ICP will look like a burst of invites even if each request was "valid."
@@ -252,7 +252,7 @@ Authorization: Bearer <your_omentir_agent_token>`}</code>
       </p>
 
       <h2 id="api-integration-sop" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: The B2B Outbound API Integration Checklist
+        SOP: the B2B outbound API integration checklist
       </h2>
       <p>
         Follow this simple SOP to configure and audit your API integrations daily:
@@ -271,10 +271,10 @@ Authorization: Bearer <your_omentir_agent_token>`}</code>
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Unlocking Maximum Pipeline Leverage
+        Make qualification repeatable without losing relevance
       </h2>
       <p>
-        Integrating lead discovery via REST APIs is a reliable way to make qualification workflows repeatable without diluting relevance. By automating finder configuration, shortlist retrieval, and reply routing, you can build a highly leveraged GTM engine.
+        Integrating lead discovery via REST APIs is a reliable way to make qualification workflows repeatable without diluting relevance. Automating finder configuration, shortlist retrieval, and reply routing lets you run a GTM engine that still keeps humans on the interesting replies.
       </p>
       <p>
         The best API integrations do not bypass judgment. They make the right checks easier: read context, ground the product profile, configure discovery, search and retrieve exact leads, inspect activity, and hand warm replies to a human.
@@ -285,7 +285,7 @@ Authorization: Bearer <your_omentir_agent_token>`}</code>
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Frequently Asked Questions
+        Frequently asked questions
       </h2>
       <FaqAccordion items={faqItems} />
     </BlogPostTemplate>

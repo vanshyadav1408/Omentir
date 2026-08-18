@@ -17,15 +17,15 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "writing-for-social-outbox", label: "Why Email Outreach Copy Fails on LinkedIn", level: 1 },
-  { id: "prompt-1-job-change", label: "Prompt 1: The Job Change Milestone Note", level: 1 },
-  { id: "prompt-2-hiring-signal", label: "Prompt 2: The Hiring Board Problem Solver", level: 1 },
-  { id: "prompt-3-shared-content", label: "Prompt 3: The Content Engagement Reference", level: 1 },
-  { id: "prompt-4-tech-integration", label: "Prompt 4: The Tech Stack Integration Hook", level: 2 },
-  { id: "prompt-5-low-friction-ask", label: "Prompt 5: The Permission-Based Discovery Ask", level: 2 },
-  { id: "pacing-and-outbox-safety", label: "Integrating Prompts with Safe Outbox Pacing", level: 1 },
-  { id: "prompts-implementation-sop", label: "SOP: Deploying AI Prompts in Campaigns", level: 1 },
-  { id: "conclusion", label: "Testing and Tuning Your Social Copy", level: 1 }
+  { id: "writing-for-social-outbox", label: "Why email outreach copy fails on LinkedIn", level: 1 },
+  { id: "prompt-1-job-change", label: "Prompt 1: the job change milestone note", level: 1 },
+  { id: "prompt-2-hiring-signal", label: "Prompt 2: the hiring board problem solver", level: 1 },
+  { id: "prompt-3-shared-content", label: "Prompt 3: the content engagement reference", level: 1 },
+  { id: "prompt-4-tech-integration", label: "Prompt 4: the tech stack integration hook", level: 2 },
+  { id: "prompt-5-low-friction-ask", label: "Prompt 5: the permission-based discovery ask", level: 2 },
+  { id: "pacing-and-outbox-safety", label: "Integrating prompts with safe outbox pacing", level: 1 },
+  { id: "prompts-implementation-sop", label: "SOP: deploying AI prompts in campaigns", level: 1 },
+  { id: "conclusion", label: "Testing and tuning your social copy", level: 1 }
 ];
 
 const faqItems = [
@@ -59,20 +59,20 @@ export default function BlogPost() {
       faqItems={faqItems}
     >
       <p id="writing-for-social-outbox" className="scroll-mt-28">
-        Social selling is fundamentally conversational. While cold email relies on structured, multi-paragraph messages containing calendar links, <a href="https://www.linkedin.com" target="_blank" rel="noopener" className="text-blue-600 hover:underline">LinkedIn</a> is a chat-native environment. If your connection request or message reads like a formal sales pitch, prospects will ignore it.
+        Social selling on LinkedIn is conversational. Cold email can use structured, multi-paragraph messages with calendar links. <a href="https://www.linkedin.com" target="_blank" rel="noopener" className="text-blue-600 hover:underline">LinkedIn</a> is a chat-native environment. If your connection request or message reads like a formal sales pitch, prospects will ignore it.
       </p>
       <p>
-        To get responses on social channels, you must write short, direct messages. Your outreach should open by referencing a specific trigger (such as a job change, content comment, or integration update) and lead into a conversational question.
+        To get responses on social channels, write short, direct messages. Your outreach should open by referencing a specific trigger (such as a job change, content comment, or integration update) and lead into a conversational question.
       </p>
       <p>
-        Writing these custom notes manually for every lead limits your campaign capacity. By using structured AI prompts, you can generate personalized copywriting variables programmatically.
+        Writing these custom notes by hand for every lead limits how many people you can contact. Structured AI prompts can generate personalized copy from verified variables.
       </p>
       <p>
         Omentir helps manage this copywriting flow by combining product context, lead context, campaign drafting, and reviewable outreach workflows. The five prompts below are not magic templates. They are safe starting points that force the AI to write from evidence rather than vibes.
       </p>
 
       <h2 id="prompt-1-job-change" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Prompt 1: The Job Change Milestone Note
+        Prompt 1: the job change milestone note
       </h2>
       <p>
         A job change can be a useful reason to reach out because a new leader often reviews priorities, team process, and tooling. But do not assume they are buying. The message should acknowledge the transition and ask a relevant question, not pounce on the move as if it proves pain.
@@ -103,7 +103,7 @@ Rules:
       </p>
 
       <h2 id="prompt-2-hiring-signal" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Prompt 2: The Hiring Board Problem Solver
+        Prompt 2: the hiring board problem solver
       </h2>
       <p>
         Hiring posts are useful because they describe work the company needs done. They are not proof of budget, urgency, or tool preference. The prompt should reference the job responsibility, not overstate the meaning of the job post.
@@ -128,7 +128,7 @@ Rules:
       </p>
 
       <h2 id="prompt-3-shared-content" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Prompt 3: The Content Engagement Reference
+        Prompt 3: the content engagement reference
       </h2>
       <p>
         Content-based outreach is powerful when you actually engage with the idea. It is weak when the AI says "loved your post" without proving it understood anything. The prompt should force a reflection before it mentions your product.
@@ -155,7 +155,7 @@ Rules:
         <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
         <div className="pl-4">
           <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-            Copywriting Rule: No Hard Pitching
+            Copywriting rule: no hard pitching
           </h4>
           <p className="text-sm text-zinc-650 leading-relaxed">
             Do not insert calendar links or case study URLs in the first connection message. The first job is to earn a reply, not force the buyer into a sales path.
@@ -164,7 +164,7 @@ Rules:
       </div>
 
       <h2 id="prompt-4-tech-integration" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Prompt 4: The Tech Stack Integration Hook
+        Prompt 4: the tech stack integration hook
       </h2>
       <p>
         Tech-stack hooks are risky because teams often overclaim what a public signal proves. A script tag, job post, or integration page may suggest a workflow, but it does not always prove active usage. This prompt keeps the claim narrow.
@@ -189,7 +189,7 @@ Rules:
       </p>
 
       <h2 id="prompt-5-low-friction-ask" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Prompt 5: The Permission-Based Discovery Ask
+        Prompt 5: the permission-based discovery ask
       </h2>
       <p>
         Instead of booking a meeting immediately, ask for permission to share a short video or asset. This reduces buyer friction because the prospect can say yes without committing to a call.
@@ -212,7 +212,7 @@ Rules:
       </p>
 
       <h2 id="pacing-and-outbox-safety" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Integrating Prompts with Safe Outbox Pacing
+        Integrating prompts with safe outbox pacing
       </h2>
       <p>
         Strong prompts do not remove the need for safe delivery. If you send too many connection requests or messages too quickly, the campaign can still create account risk. Better copy should reduce your need for volume, not justify more of it.
@@ -229,7 +229,7 @@ Rules:
       </p>
 
       <h2 id="prompts-implementation-sop" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: Deploying AI Prompts in Campaigns
+        SOP: deploying AI prompts in campaigns
       </h2>
       <p>
         Follow these steps to deploy prompt templates:
@@ -256,7 +256,7 @@ Rules:
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Testing and Tuning Your Social Copy
+        Testing and tuning your social copy
       </h2>
       <p>
         Writing copy for social selling requires testing, but do not optimize only for response volume. Track qualified replies, confused replies, objections, accepted conversations, and meetings that match your ICP. A prompt that gets more replies from the wrong people is not better.

@@ -4,7 +4,7 @@ import BlogPostTemplate from "../blog-post-template";
 
 export const metadata = createPageMetadata({
   title: "Programmatic Personalization: How to Write 100 Unique Cold Messages - Omentir",
-  description: "Learn how to build a programmatic personalization script. Copy our TypeScript codebase to crawl sites, call LLM APIs, and write custom sales copy.",
+  description: "How to build a programmatic personalization script. Copy our TypeScript codebase to crawl sites, call LLM APIs, and write custom sales copy.",
   path: "/blogs/programmatic-personalization",
   keywords: [
     "programmatic personalization",
@@ -17,21 +17,21 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "shift-to-programmatic", label: "Moving Beyond Simple Mail Merge Variables", level: 1 },
-  { id: "pipeline-architecture", label: "The Programmatic Personalization Architecture", level: 1 },
-  { id: "enrichment-crawling-step", label: "Extracting Live Context from Company Websites", level: 2 },
-  { id: "copywriting-script-loop", label: "Copyable TypeScript Personalization Script", level: 2 },
-  { id: "fallback-management", label: "Handling Stale Data and Empty Variable Fallbacks", level: 1 },
-  { id: "safe-delivery-integration", label: "Routing Campaigns Safely to Avoid Account Bans", level: 1 },
-  { id: "programmatic-sop-checklist", label: "SOP: Running Your First Programmatic Campaign", level: 1 },
-  { id: "conclusion", label: "Scaling Relevance for Sustainable Outbound", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "shift-to-programmatic", label: "Moving beyond simple mail merge variables", level: 1 },
+  { id: "pipeline-architecture", label: "The programmatic personalization architecture", level: 1 },
+  { id: "enrichment-crawling-step", label: "Extracting live context from company websites", level: 2 },
+  { id: "copywriting-script-loop", label: "Copyable TypeScript personalization script", level: 2 },
+  { id: "fallback-management", label: "Handling stale data and empty variable fallbacks", level: 1 },
+  { id: "safe-delivery-integration", label: "Routing campaigns safely to avoid account bans", level: 1 },
+  { id: "programmatic-sop-checklist", label: "SOP: running your first programmatic campaign", level: 1 },
+  { id: "conclusion", label: "Scale only after the drafts hold up", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
   {
     question: "What is programmatic personalization in outbound sales?",
-    answer: "It is the practice of using custom scripts and API waterfalls to crawl prospect profiles, score business context, and generate unique, custom-tailored outreach copy for every contact."
+    answer: "It is the practice of using custom scripts and API waterfalls to crawl prospect profiles, score business context, and generate unique outreach copy for every contact."
   },
   {
     question: "How do I prevent the LLM API from making up false details in messages?",
@@ -51,7 +51,7 @@ export default function BlogPost() {
   return (
     <BlogPostTemplate
       title="Programmatic Personalization: How to Write 100 Unique Cold Messages"
-      description="Learn how to build a programmatic personalization pipeline. Access copyable TypeScript workflows to crawl sites, call LLM APIs, and automate sales copy."
+      description="How to build a programmatic personalization pipeline. Copyable TypeScript workflows to crawl sites, call LLM APIs, and automate sales copy."
       slug="programmatic-personalization"
       bannerSrc="/programmatic-personalization.avif"
       bannerAlt="Programmatic personalization data flow and script execution diagram"
@@ -72,11 +72,11 @@ export default function BlogPost() {
         <Link href="/blogs/mcp-outreach-tools" className="text-blue-600 hover:underline">
           configuring MCP tool setups
         </Link>
-        . Let's look at the architecture behind a safer personalization pipeline.
+        . The rest of this article covers the architecture behind a safer personalization pipeline.
       </p>
 
       <h2 id="pipeline-architecture" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        The Programmatic Personalization Architecture
+        The programmatic personalization architecture
       </h2>
       <p>
         A programmatic personalization pipeline is a small decision system. It decides which prospects deserve research, which public evidence is useful, which message angle fits, and whether the final draft is safe to send. The LLM is only one part of that system.
@@ -107,7 +107,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="enrichment-crawling-step" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Extracting Live Context from Company Websites
+        Extracting live context from company websites
       </h2>
       <p>
         To personalize a message, you need context that is accurate, current, and relevant to your offer. Not every public detail deserves to be in a cold message. A prospect's homepage tagline may help you understand the business, but it may not be a good opener. A hiring post may be a stronger signal if your product helps with the workflow described in the role.
@@ -131,7 +131,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="copywriting-script-loop" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Copyable TypeScript Personalization Script
+        Copyable TypeScript personalization script
       </h2>
       <p>
         A useful script does not need to be complicated. The core pattern is: accept a prospect, accept verified evidence, refuse weak evidence, and ask the model for a short message that stays inside the facts.
@@ -196,16 +196,16 @@ async function generateMessage(prospect: Prospect, evidence: Evidence): Promise<
         <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
         <div className="pl-4">
           <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-            Engineering Rule: Set Up Variable Fallbacks
+            Engineering rule: set up variable fallbacks
           </h4>
           <p className="text-sm text-zinc-650 leading-relaxed">
-            Ensure your script handles missing context fields. If a web crawl fails, define a fallback variable (such as using their job title and company sector) to write a clean message.
+            Your script needs to handle missing context fields. If a web crawl fails, define a fallback variable (such as using their job title and company sector) to write a clean message.
           </p>
         </div>
       </div>
 
       <h2 id="fallback-management" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Handling Stale Data and Empty Variable Fallbacks
+        Handling stale data and empty variable fallbacks
       </h2>
       <p>
         Web crawlers will occasionally fail. Sites change structure, block automated requests, hide pages behind scripts, or return thin content that teaches you nothing. Profile data can be incomplete too. If your pipeline treats every missing field as usable, the model will produce brittle copy.
@@ -227,7 +227,7 @@ async function generateMessage(prospect: Prospect, evidence: Evidence): Promise<
       </p>
 
       <h2 id="safe-delivery-integration" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Routing Campaigns Safely to Avoid Account Bans
+        Routing campaigns safely to avoid account bans
       </h2>
       <p>
         Generating 100 personalized messages is the easy part. Sending them safely is the part that determines whether the workflow can survive. High volume, stacked campaigns, and unnatural timing can damage sender reputation even when the messages are individually well written.
@@ -247,7 +247,7 @@ async function generateMessage(prospect: Prospect, evidence: Evidence): Promise<
       </p>
 
       <h2 id="programmatic-sop-checklist" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: Running Your First Programmatic Campaign
+        SOP: running your first programmatic campaign
       </h2>
       <p>
         Implement these steps to run a programmatic campaign without turning it into a bulk-blast machine:
@@ -267,13 +267,13 @@ async function generateMessage(prospect: Prospect, evidence: Evidence): Promise<
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Scaling Relevance for Sustainable Outbound
+        Scale only after the drafts hold up
       </h2>
       <p>
-        Outbound campaigns do not require you to choose between quality and scale, but you do have to design the system around quality first. If you automate a weak template, you get weak outreach faster. If you automate evidence collection, draft review, and paced delivery, you get a workflow that can scale without losing the reader.
+        Outbound campaigns do not require you to choose between quality and scale, but you do have to design the system around quality first. If you automate a weak template, you get weak outreach faster. If you automate evidence collection, draft review, and paced delivery, you get a workflow that can grow without losing the reader.
       </p>
       <p>
-        Start with a small batch. Review every source, every draft, and every reply. Once the system consistently produces messages that feel specific, truthful, and easy to answer, scale the campaign in controlled steps.
+        Start with a small batch. Review every source, every draft, and every reply. Once the system consistently produces messages that feel specific, truthful, and easy to answer, raise volume in controlled steps.
       </p>
       <p>
         The best use of programmatic personalization is not making outreach feel automated. It is making good research and thoughtful writing repeatable. If the variable is only first name and company, you do not have a program. You have a template.

@@ -23,13 +23,13 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "warm-is-evidence", label: "Warm Means Evidence", level: 1 },
-  { id: "sort-the-signal", label: "Sort the Signal", level: 1 },
-  { id: "choose-the-next-move", label: "Choose the Next Move", level: 1 },
-  { id: "respond-before-it-cools", label: "Respond Before It Cools", level: 1 },
-  { id: "keep-them-out-of-drips", label: "Keep Them Out of Drips", level: 1 },
-  { id: "build-the-operating-board", label: "Build the Operating Board", level: 1 },
-  { id: "copy-for-warm-signals", label: "Copy for Warm Signals", level: 1 },
+  { id: "warm-is-evidence", label: "Warm means evidence", level: 1 },
+  { id: "sort-the-signal", label: "Sort the signal", level: 1 },
+  { id: "choose-the-next-move", label: "Choose the next move", level: 1 },
+  { id: "respond-before-it-cools", label: "Respond before it cools", level: 1 },
+  { id: "keep-them-out-of-drips", label: "Keep them out of drips", level: 1 },
+  { id: "build-the-operating-board", label: "Build the operating board", level: 1 },
+  { id: "copy-for-warm-signals", label: "Copy for warm signals", level: 1 },
   { id: "faqs", label: "FAQs", level: 1 },
 ];
 
@@ -94,7 +94,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Warm Means Evidence
+        Warm means evidence
       </h2>
       <p>
         Treat warmth like a reason to change the next action, not a vague feeling. A lead becomes warmer when you have proof that the person knows who you are, is connected to the problem, or has a business event that makes your timing more relevant.
@@ -120,7 +120,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Sort the Signal
+        Sort the signal
       </h2>
       <p>
         Build a simple signal map before writing copy. It keeps your team from overreacting to weak signals and underreacting to strong ones.
@@ -146,7 +146,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Choose the Next Move
+        Choose the next move
       </h2>
       <p>
         Warm leads need a decision tree. Without one, the seller either freezes because the opportunity feels important or rushes into a demo ask too early.
@@ -196,7 +196,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Respond Before It Cools
+        Respond before it cools
       </h2>
       <p>
         Warmth decays. A reply that feels active today can feel forgotten by tomorrow afternoon, especially if the prospect asked a practical question. The faster you respond with substance, the less work your next message has to do.
@@ -223,7 +223,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Keep Them Out of Drips
+        Keep them out of drips
       </h2>
       <p>
         The fastest way to waste a warm lead is to let a generic sequence keep running after the person has replied or shown intent. Once there is a live signal, the workflow should pause and the conversation should become context-aware.
@@ -246,7 +246,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Build the Operating Board
+        Build the operating board
       </h2>
       <p>
         A warm-lead system needs somewhere to live. It does not have to be complicated. In fact, complicated boards often hide the work. Use a small number of states that tell the seller exactly what to do next.
@@ -277,7 +277,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Copy for Warm Signals
+        Copy for warm signals
       </h2>
       <p>
         Warm messages should sound less like introductions and more like continuation. The prospect has already created context. Your job is to use it without sounding like you are monitoring every click.

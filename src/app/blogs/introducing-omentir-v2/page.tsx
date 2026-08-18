@@ -20,13 +20,13 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "why-v2", label: "Why We Built Omentir v2", level: 1 },
-  { id: "new-pricing", label: "New Pricing", level: 1 },
+  { id: "why-v2", label: "Why we built Omentir v2", level: 1 },
+  { id: "new-pricing", label: "New pricing", level: 1 },
   { id: "agent-api", label: "Agent API", level: 1 },
-  { id: "connectors", label: "Connectors for Agentic Workflows", level: 1 },
-  { id: "why-this-matters", label: "Why This Matters", level: 1 },
-  { id: "what-comes-next", label: "What Comes Next", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 },
+  { id: "connectors", label: "Connectors for agentic workflows", level: 1 },
+  { id: "why-this-matters", label: "Why this matters", level: 1 },
+  { id: "what-comes-next", label: "What comes next", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 },
 ];
 
 const faqItems = [
@@ -102,7 +102,7 @@ export default function BlogPost() {
         teams a clear way to turn interest into pipeline.
       </p>
       <p>
-        That is what v2 is built around. Omentir is no longer just a LinkedIn
+        That is what v2 is built around. Omentir started as a LinkedIn
         outreach assistant. It is becoming the outbound layer for humans, AI
         agents, and the tools they already use.
       </p>
@@ -112,7 +112,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="mt-10 scroll-mt-28 border-b border-zinc-200 pb-2 pt-2 text-2xl font-semibold tracking-tight text-black"
       >
-        New Pricing
+        New pricing
       </h2>
       <p>
         We are making pricing simpler. The goal is not to create confusing
@@ -230,7 +230,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="mt-10 scroll-mt-28 border-b border-zinc-200 pb-2 pt-2 text-2xl font-semibold tracking-tight text-black"
       >
-        Connectors for Agentic Workflows
+        Connectors for agentic workflows
       </h2>
       <p>
         v2 also introduces connectors for agentic workflows. Omentir now exposes
@@ -300,7 +300,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="mt-10 scroll-mt-28 border-b border-zinc-200 pb-2 pt-2 text-2xl font-semibold tracking-tight text-black"
       >
-        Why This Matters
+        Why this matters
       </h2>
       <p>
         Outbound is changing. The old workflow was manual and fragmented:
@@ -316,9 +316,9 @@ export default function BlogPost() {
         the system.
       </p>
       <p>
-        v2 is our move toward that future. Not more automation for the sake of
-        automation. Better discovery, better outreach, safer execution, and
-        cleaner ways to plug Omentir into the rest of your stack.
+        v2 is built for that workflow. Not more automation for its own sake.
+        Better discovery, better outreach, safer execution, and a cleaner way
+        to plug Omentir into the rest of your stack.
       </p>
 
       <h2
@@ -326,7 +326,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="mt-10 scroll-mt-28 border-b border-zinc-200 pb-2 pt-2 text-2xl font-semibold tracking-tight text-black"
       >
-        What Comes Next
+        What comes next
       </h2>
       <p>
         Omentir v2 is built for founders and teams who want outbound to feel
@@ -363,7 +363,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="mt-10 scroll-mt-28 border-b border-zinc-200 pb-2 pt-2 text-2xl font-semibold tracking-tight text-black"
       >
-        Frequently Asked Questions
+        Frequently asked questions
       </h2>
       <FaqAccordion items={visibleFaqItems} />
     </BlogPostTemplate>

@@ -17,15 +17,15 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "death-of-static-sequence", label: "The Deliverability Failure of Static Sequences", level: 1 },
-  { id: "dynamic-outreach-anatomy", label: "Anatomy of a Dynamic AI Outreach Campaign", level: 1 },
-  { id: "real-time-intent-adaptation", label: "Adapting Message Context Based on Reply Intent", level: 2 },
-  { id: "bypassing-spam-filters", label: "How Text Variance Bypasses Automated Spam Filters", level: 2 },
-  { id: "safety-and-delivery-limits", label: "Protecting Account Health with Pacing Engines", level: 1 },
-  { id: "conversion-metrics-comparison", label: "Performance Comparison: Static vs. Dynamic Outreach", level: 1 },
-  { id: "migration-sop-checklist", label: "SOP: Migrating to Dynamic Outreach Workflows", level: 1 },
-  { id: "conclusion", label: "Building a Conversational Sales Engine", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "death-of-static-sequence", label: "The deliverability failure of static sequences", level: 1 },
+  { id: "dynamic-outreach-anatomy", label: "Anatomy of a dynamic AI outreach campaign", level: 1 },
+  { id: "real-time-intent-adaptation", label: "Adapting message context based on reply intent", level: 2 },
+  { id: "bypassing-spam-filters", label: "How text variance bypasses automated spam filters", level: 2 },
+  { id: "safety-and-delivery-limits", label: "Protecting account health with pacing engines", level: 1 },
+  { id: "conversion-metrics-comparison", label: "Performance comparison: static vs. dynamic outreach", level: 1 },
+  { id: "migration-sop-checklist", label: "SOP: migrating to dynamic outreach workflows", level: 1 },
+  { id: "conclusion", label: "Building a conversational sales engine", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
@@ -75,7 +75,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="dynamic-outreach-anatomy" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Anatomy of a Dynamic AI Outreach Campaign
+        Anatomy of a dynamic AI outreach campaign
       </h2>
       <p>
         A dynamic outbound campaign still needs structure. Without structure, AI output becomes inconsistent and hard to review. The difference is that the structure is a decision system, not a fixed paragraph.
@@ -84,9 +84,9 @@ export default function BlogPost() {
         A good campaign decides which account should be contacted, which signal deserves mention, which offer angle fits the buyer, and which call to action is appropriate for the relationship stage. The message is compiled from those decisions.
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Dynamic Opener:</strong> References a verified signal (such as a career transition or company update), replacing generic greetings.</li>
-        <li><strong>Contextual Value Card:</strong> Outlines how your software solves a specific challenge relevant to their role.</li>
-        <li><strong>Low-Friction CTA:</strong> Asks a simple, conversation-starting question rather than booking a meeting immediately.</li>
+        <li><strong>Dynamic opener:</strong> References a verified signal (such as a career transition or company update), replacing generic greetings.</li>
+        <li><strong>Contextual value card:</strong> Outlines how your software solves a specific challenge relevant to their role.</li>
+        <li><strong>Low-friction CTA:</strong> Asks a simple, conversation-starting question rather than booking a meeting immediately.</li>
       </ul>
       <p>
         The key word is "verified." Dynamic does not mean the AI gets to invent a clever reason to reach out. The opener should come from public profile context, company website context, a hiring signal, a role-based pain, or another source your team can inspect. If the system cannot explain why the account was selected, it should not create a confident personalized message.
@@ -106,7 +106,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="real-time-intent-adaptation" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Adapting Message Context Based on Reply Intent
+        Adapting message context based on reply intent
       </h2>
       <p>
         Static sequences are especially weak after the first reply. They assume the prospect will follow a neat path: receive message, ignore message, receive follow-up, book meeting. Real conversations are messier. Prospects ask for pricing, refer you to a colleague, say timing is bad, ask what you actually do, or respond with one ambiguous word.
@@ -133,7 +133,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="bypassing-spam-filters" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        How Text Variance Reduces Repetition Risk
+        How text variance reduces repetition risk
       </h2>
       <p>
         Text variance is not a magic shield. It will not save a campaign that targets the wrong buyers, sends too fast, or makes weak offers. But repetition is one of the easiest signs that a campaign is automated, and static templates create repetition by design.
@@ -149,7 +149,7 @@ export default function BlogPost() {
         <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
         <div className="pl-4">
           <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-            Safety Warning: Sending Pacing
+            Safety warning: sending pacing
           </h4>
           <p className="text-sm text-zinc-650 leading-relaxed">
             Even strong personalization needs conservative pacing. Treat connection requests and follow-ups as account-health decisions, not only conversion decisions. If a campaign needs unsafe volume to work, the targeting or offer is probably too weak.
@@ -158,7 +158,7 @@ export default function BlogPost() {
       </div>
 
       <h2 id="safety-and-delivery-limits" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Protecting Account Health with Pacing Engines
+        Protecting account health with pacing engines
       </h2>
       <p>
         Dynamic copy solves only one part of the outbound problem. Account health still depends on volume, timing, campaign overlap, reply handling, and the history of the sender profile. A thoughtful message can still create risk if it is sent as part of an aggressive batch.
@@ -178,7 +178,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="conversion-metrics-comparison" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Performance Comparison: Static vs. Dynamic Outreach
+        Performance comparison: static vs. dynamic outreach
       </h2>
       <p>
         Static and dynamic outreach should be judged by more than reply rate. A static campaign can produce replies if the list is big enough. The better question is whether those replies are from the right buyers, with enough intent to justify the time your team spends.
@@ -197,7 +197,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="migration-sop-checklist" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: Migrating to Dynamic Outreach Workflows
+        SOP: migrating to dynamic outreach workflows
       </h2>
       <p>
         Do not migrate by asking AI to rewrite your old templates. That usually creates prettier versions of the same generic campaign. Migrate by changing the workflow underneath the copy.
@@ -218,7 +218,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Building a Conversational Sales Engine
+        Building a conversational sales engine
       </h2>
       <p>
         Static templates are too blunt for the way buyers evaluate outreach now. They may still provide a starting structure, but they should not be the final message, the targeting logic, or the follow-up strategy.

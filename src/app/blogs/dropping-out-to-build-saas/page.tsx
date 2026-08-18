@@ -17,15 +17,15 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "decision-to-dropout", label: "The Shift: Choosing Execution Over Credentials", level: 1 },
-  { id: "validation-vs-building", label: "The Mistake of Building in a Vacuum", level: 1 },
-  { id: "linkedin-outbound-validation", label: "Sourcing Fast Feedback via LinkedIn Outbound", level: 2 },
-  { id: "first-paying-customers", label: "Securing the First Paying Design Partners", level: 2 },
-  { id: "mrr-pricing-milestones", label: "Pricing Structures and Reaching Initial MRR Milestones", level: 1 },
-  { id: "mental-health-pacing", label: "Pacing Your Campaign Execution and Founder Energy", level: 1 },
-  { id: "founder-validation-sop", label: "SOP: The Daily MVP Outbound Validation Checklist", level: 1 },
-  { id: "conclusion", label: "Focusing on Real Market Validation", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "decision-to-dropout", label: "The shift: choosing execution over credentials", level: 1 },
+  { id: "validation-vs-building", label: "The mistake of building in a vacuum", level: 1 },
+  { id: "linkedin-outbound-validation", label: "Sourcing fast feedback via LinkedIn outbound", level: 2 },
+  { id: "first-paying-customers", label: "Securing the first paying design partners", level: 2 },
+  { id: "mrr-pricing-milestones", label: "Pricing structures and reaching initial MRR milestones", level: 1 },
+  { id: "mental-health-pacing", label: "Pacing your campaign execution and founder energy", level: 1 },
+  { id: "founder-validation-sop", label: "SOP: the daily MVP outbound validation checklist", level: 1 },
+  { id: "conclusion", label: "Focusing on real market validation", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
@@ -75,7 +75,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="validation-vs-building" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        The Mistake of Building in a Vacuum
+        The mistake of building in a vacuum
       </h2>
       <p>
         Many technical founders make the same early mistake: they build in isolation because building feels controllable. Code gives immediate feedback. Buyers do not. A compiler tells you exactly where the error is; a market gives you silence, vague praise, or contradictory advice.
@@ -84,9 +84,9 @@ export default function BlogPost() {
         When founders finally launch after months of private work, they often discover one of three uncomfortable truths:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Wrong Targeting:</strong> The buyers they built the tool for do not experience the problem they resolved.</li>
-        <li><strong>Feature Bloat:</strong> Senders built complex administrative panels when users only needed a simple API route.</li>
-        <li><strong>Low Willingness to Pay:</strong> The target market is unwilling to pay a sustainable price for the product.</li>
+        <li><strong>Wrong targeting:</strong> The buyers they built the tool for do not experience the problem they resolved.</li>
+        <li><strong>Feature bloat:</strong> Senders built complex administrative panels when users only needed a simple API route.</li>
+        <li><strong>Low willingness to pay:</strong> The target market is unwilling to pay a sustainable price for the product.</li>
       </ul>
       <p>
         The painful part is that each mistake can look productive while it is happening. Feature bloat feels like progress. A beautiful dashboard feels like polish. A clever architecture feels like defensibility. None of it matters if the buyer does not recognize the problem or feel enough urgency to pay.
@@ -99,7 +99,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="linkedin-outbound-validation" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Sourcing Fast Feedback via LinkedIn Outbound
+        Sourcing fast feedback via LinkedIn outbound
       </h2>
       <p>
         Direct outbound is useful because it forces specificity. You cannot hide behind "the market" when you have to choose a person, write a message, and ask a question. The act of sourcing prospects reveals whether your ICP is real enough to find.
@@ -129,7 +129,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="first-paying-customers" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Securing the First Paying Design Partners
+        Securing the first paying design partners
       </h2>
       <p>
         Design partners are not beta users with a nicer name. A design partner should have the problem, care enough to spend time with you, and be willing to give concrete feedback on the workflow. Ideally, they also pay something, even if the first amount is modest.
@@ -148,7 +148,7 @@ export default function BlogPost() {
         <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
         <div className="pl-4">
           <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-            Mindset Rule: Focus on Revenue Validation
+            Mindset rule: focus on revenue validation
           </h4>
           <p className="text-sm text-zinc-650 leading-relaxed">
             Avoid offering free access to early users. Charging even a nominal fee forces real validation, proving that prospects experience the challenge enough to pay for a solution.
@@ -157,7 +157,7 @@ export default function BlogPost() {
       </div>
 
       <h2 id="mrr-pricing-milestones" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Pricing Structures and Reaching Initial MRR Milestones
+        Pricing structures and reaching initial MRR milestones
       </h2>
       <p>
         Pricing at the first-MRR stage should create commitment without slowing the sale. You are not trying to design the final pricing architecture for the next five years. You are trying to learn whether the buyer values the outcome enough to pay.
@@ -186,7 +186,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="mental-health-pacing" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Pacing Your Campaign Execution and Founder Energy
+        Pacing your campaign execution and founder energy
       </h2>
       <p>
         Founder energy is a real constraint. When you leave school or a job, the temptation is to sprint every day: build until late, send messages in bursts, refresh analytics, and treat every non-reply as a personal verdict. That pace breaks people.
@@ -206,10 +206,10 @@ export default function BlogPost() {
       </p>
 
       <h2 id="founder-validation-sop" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: The Daily MVP Outbound Validation Checklist
+        SOP: the daily MVP outbound validation checklist
       </h2>
       <p>
-        Implement this daily validation routine to test your product concept:
+        Use this daily validation routine to test the product concept:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
         <li><strong>Step 1:</strong> Pick one ICP segment for the week. Do not switch buyer types every day.</li>
@@ -225,7 +225,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Focusing on Real Market Validation
+        Focusing on real market validation
       </h2>
       <p>
         Quitting your academic path or leaving a stable role is not the brave part. The brave part is letting the market judge your idea before you have hidden inside six more months of building. That feedback can be uncomfortable, but it is also the fastest path to clarity.

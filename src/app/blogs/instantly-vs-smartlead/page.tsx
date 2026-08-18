@@ -17,14 +17,14 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "deliverability-landscape-2026", label: "The Shift in Cold Email Infrastructure", level: 1 },
-  { id: "instantly-overview", label: "Instantly.ai: The Volume Scale Engine", level: 1 },
-  { id: "smartlead-overview", label: "Smartlead.io: The Infrastructure-First Router", level: 1 },
-  { id: "multi-inbox-rotation-mechanics", label: "Multi-Inbox Rotation and Warm-Up Pool Architecture", level: 2 },
-  { id: "throttling-and-domain-safety", label: "Throttling Algorithms and Spam Filter Prevention", level: 2 },
-  { id: "pricing-and-roi-analysis", label: "Pricing Comparison: Inbox Capacity vs. Pro Campaigns", level: 1 },
-  { id: "delivery-decision-rubric", label: "Decision Matrix: Which Platform Fits Your Delivery Stack?", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "deliverability-landscape-2026", label: "How cold email infrastructure changed", level: 1 },
+  { id: "instantly-overview", label: "Instantly.ai: the volume scale engine", level: 1 },
+  { id: "smartlead-overview", label: "Smartlead.io: the infrastructure-first router", level: 1 },
+  { id: "multi-inbox-rotation-mechanics", label: "Multi-inbox rotation and warm-up pool architecture", level: 2 },
+  { id: "throttling-and-domain-safety", label: "Throttling algorithms and spam filter prevention", level: 2 },
+  { id: "pricing-and-roi-analysis", label: "Pricing: inbox capacity vs pro campaigns", level: 1 },
+  { id: "delivery-decision-rubric", label: "Decision matrix: which platform fits your delivery stack?", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
@@ -64,17 +64,17 @@ export default function BlogPost() {
         To scale your outreach pipeline in this environment, you must build a multi-inbox infrastructure. This involves purchasing multiple domains, setting up sending profiles, and rotating them to distribute sending volume. Two of the leading platforms for managing this workflow are <a href="https://instantly.ai/" target="_blank" rel="noopener" className="text-blue-600 hover:underline">Instantly.ai</a> and <a href="https://smartlead.ai/" target="_blank" rel="noopener" className="text-blue-600 hover:underline">Smartlead.io</a>.
       </p>
       <p>
-        Both tools provide the core features needed for multi-inbox campaigns: email warm-up pools, address rotation, and consolidated inboxes. But they differ significantly in their throttling logic, API reliability, and workflow layouts.
+        Both tools provide the core features needed for multi-inbox campaigns: email warm-up pools, address rotation, and consolidated inboxes. They differ in throttling logic, API reliability, and workflow layouts.
       </p>
       <p>
-        In this deep dive, we will compare Instantly and Smartlead head-to-head. We will evaluate how their throttling engines work, how they manage domain safety, and how to choose the right delivery engine for your sales stack.
+        This article compares Instantly and Smartlead head-to-head: how their throttling engines work, how they manage domain safety, and how to choose a delivery engine for your sales stack.
       </p>
       <p>
         One caveat before the comparison: cold email platforms change packaging often. Use this article as a buying framework, then check the live pricing and feature pages before committing. The right question is not "which tool is objectively better?" It is "which tool matches the way our team will actually operate outbound every week?"
       </p>
 
       <h2 id="instantly-overview" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Instantly.ai: The Volume Scale Engine
+        Instantly.ai: the volume scale engine
       </h2>
       <p>
         Instantly.ai is designed to simplify cold email setup. The platform is highly popular among growth agencies and startups because of its user-friendly interface and flat-rate pricing.
@@ -90,7 +90,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="smartlead-overview" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Smartlead.io: The Infrastructure-First Router
+        Smartlead.io: the infrastructure-first router
       </h2>
       <p>
         Smartlead.io is built for agencies and enterprises that require precise control over their delivery infrastructure. The platform focuses on backend customization and API performance.
@@ -99,7 +99,7 @@ export default function BlogPost() {
         Smartlead's standout feature is its Master Inbox architecture. This interface helps consolidate replies from many sending addresses into a single view, which is useful when an agency or outbound team is managing several campaigns at once.
       </p>
       <p>
-        Additionally, Smartlead offers a robust REST API. This allows development teams to build custom white-label setups, sync outreach data with CRM databases, and manage sending profiles programmatically.
+        Smartlead also offers a REST API. This lets development teams build custom white-label setups, sync outreach data with CRM databases, and manage sending profiles programmatically.
       </p>
       <p>
         Smartlead is strongest when the outbound operation already has process maturity. If you have a deliverability owner, client-level reporting needs, custom routing rules, and a clear handoff from reply to sales rep, Smartlead gives you more room to shape the machine. If your team is still figuring out basic list quality and messaging, that flexibility can become extra setup burden.
@@ -109,7 +109,7 @@ export default function BlogPost() {
         <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
         <div className="pl-4">
           <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-            Safety Warning: Daily Sent Limits
+            Safety warning: daily sent limits
           </h4>
           <p className="text-sm text-zinc-650 leading-relaxed">
             Treat daily send caps as a risk-control setting, not a growth lever. New domains, cold mailboxes, weak lists, and poor authentication all require more conservative pacing.
@@ -118,7 +118,7 @@ export default function BlogPost() {
       </div>
 
       <h2 id="multi-inbox-rotation-mechanics" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Multi-Inbox Rotation and Warm-Up Pool Architecture
+        Multi-inbox rotation and warm-up pool architecture
       </h2>
       <p>
         To run high-volume campaigns, both platforms use sender rotation. When you import a lead list, the platform selects random active addresses to send the messages, preventing single addresses from hitting daily volume limits.
@@ -140,7 +140,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="throttling-and-domain-safety" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Throttling Algorithms and Spam Filter Prevention
+        Throttling algorithms and spam filter prevention
       </h2>
       <p>
         Throttling is the practice of spacing out message delivery to mimic manual activity. If your delivery engine sends ten emails in a single second, spam filters will identify the pattern and block the sender.
@@ -163,7 +163,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="pricing-and-roi-analysis" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Pricing Comparison: Inbox Capacity vs. Pro Campaigns
+        Pricing comparison: inbox capacity vs pro campaigns
       </h2>
       <p>
         The pricing structures reflect the focus areas of each platform:
@@ -182,7 +182,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="delivery-decision-rubric" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Decision Matrix: Which Platform Fits Your Delivery Stack?
+        Decision matrix: which platform fits your delivery stack?
       </h2>
       <p>
         Evaluate the following variables before selecting your cold email delivery platform:

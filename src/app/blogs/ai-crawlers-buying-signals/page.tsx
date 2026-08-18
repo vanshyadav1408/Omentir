@@ -4,7 +4,7 @@ import BlogPostTemplate from "../blog-post-template";
 
 export const metadata = createPageMetadata({
   title: "How AI Crawlers Analyze B2B Websites for Buying Signals - Omentir",
-  description: "Learn how AI web crawlers analyze corporate sites to extract B2B buying signals. Discover the tools, filters, and schemas used for real-time lead scoring.",
+  description: "Learn how AI web crawlers analyze corporate sites to extract B2B buying signals. Covers the tools, filters, and schemas used for real-time lead scoring.",
   path: "/blogs/ai-crawlers-buying-signals",
   keywords: [
     "AI crawlers buying signals",
@@ -17,15 +17,15 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "limitations-of-static-scraping", label: "The Shift from Static Scrapes to Active Crawling", level: 1 },
-  { id: "crawler-mechanics", label: "How AI Crawlers Scan B2B Corporate Domains", level: 1 },
-  { id: "technical-stack-detection", label: "Detecting Software Integrations and Tech Stack Changes", level: 2 },
-  { id: "hiring-intent-signals", label: "Extracting Pain Points from Active Career Boards", level: 2 },
-  { id: "structured-trigger-schemas", label: "Structuring Crawled Text into Actionable Prompts", level: 1 },
-  { id: "data-quality-filtering", label: "Excluding Competitors and Outdated Websites", level: 1 },
-  { id: "pacing-outbox-delivery", label: "Triggering Paced Outreach when Buying Signals Match", level: 1 },
-  { id: "crawler-sop-checklist", label: "SOP: The Automated Buyer Intent Checklist", level: 1 },
-  { id: "conclusion", label: "Building a Live Intent Outbound Funnel", level: 1 }
+  { id: "limitations-of-static-scraping", label: "The shift from static scrapes to active crawling", level: 1 },
+  { id: "crawler-mechanics", label: "How AI crawlers scan B2B corporate domains", level: 1 },
+  { id: "technical-stack-detection", label: "Detecting software integrations and tech stack changes", level: 2 },
+  { id: "hiring-intent-signals", label: "Extracting pain points from active career boards", level: 2 },
+  { id: "structured-trigger-schemas", label: "Structuring crawled text into actionable prompts", level: 1 },
+  { id: "data-quality-filtering", label: "Excluding competitors and outdated websites", level: 1 },
+  { id: "pacing-outbox-delivery", label: "Triggering paced outreach when buying signals match", level: 1 },
+  { id: "crawler-sop-checklist", label: "SOP: the automated buyer intent checklist", level: 1 },
+  { id: "conclusion", label: "Building a live intent outbound funnel", level: 1 }
 ];
 
 const faqItems = [
@@ -72,7 +72,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="crawler-mechanics" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        How AI Crawlers Scan B2B Corporate Domains
+        How AI crawlers scan B2B corporate domains
       </h2>
       <p>
         AI crawling is more than downloading HTML. A basic scraper can return a blob of navigation links, cookie notices, footer text, and repeated marketing copy. A useful sales crawler needs to separate the page furniture from the page meaning.
@@ -99,7 +99,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="technical-stack-detection" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Detecting Software Integrations and Tech Stack Changes
+        Detecting software integrations and tech stack changes
       </h2>
       <p>
         Software stack signals can be useful because they connect your offer to an existing workflow. If your product improves HubSpot operations, the account is more interesting when the company publicly mentions HubSpot in docs, job posts, integration pages, or customer-facing setup instructions.
@@ -115,7 +115,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="hiring-intent-signals" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Extracting Pain Points from Active Career Boards
+        Extracting pain points from active career boards
       </h2>
       <p>
         Career pages are one of the richest public sources for operational pain because companies describe the work they need done. They list tools, processes, reporting lines, territories, and projects. That does not mean every job post is a buying signal, but it often tells you what the team is trying to build.
@@ -137,7 +137,7 @@ export default function BlogPost() {
         <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
         <div className="pl-4">
           <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-            Discovery Rule: Filter Outdated Signals
+            Discovery rule: filter outdated signals
           </h4>
           <p className="text-sm text-zinc-650 leading-relaxed">
             Record posting dates, crawl dates, and source pages. A signal from an old job post or stale changelog can still be useful for research, but it should not drive urgent copy. When freshness is unclear, lower the confidence score instead of forcing a timely angle.
@@ -146,7 +146,7 @@ export default function BlogPost() {
       </div>
 
       <h2 id="structured-trigger-schemas" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Structuring Crawled Text into Actionable Prompts
+        Structuring crawled text into actionable prompts
       </h2>
       <p>
         Website context becomes valuable when it is structured enough for scoring and restrained enough for messaging. Raw text extracts are noisy. A model needs a schema that separates evidence from interpretation.
@@ -177,7 +177,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="data-quality-filtering" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Excluding Competitors and Outdated Websites
+        Excluding competitors and outdated websites
       </h2>
       <p>
         A crawler that reads everything will eventually score the wrong accounts. Some domains are irrelevant, some are stale, and some should never enter outreach. Data quality is not a cleanup step at the end; it is part of the crawl design.
@@ -193,7 +193,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="pacing-outbox-delivery" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Triggering Paced Outreach when Buying Signals Match
+        Triggering paced outreach when buying signals match
       </h2>
       <p>
         A buying signal should not immediately mean "send a message." It should move the account to the next decision point. The strongest workflow is crawl, score, draft, review, then send at a human pace.
@@ -213,7 +213,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="crawler-sop-checklist" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: The Automated Buyer Intent Checklist
+        SOP: the automated buyer intent checklist
       </h2>
       <p>
         Use this operating checklist before trusting website signals in a live outbound workflow:
@@ -235,13 +235,13 @@ export default function BlogPost() {
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Building a Live Intent Outbound Funnel
+        Building a live intent outbound funnel
       </h2>
       <p>
         Website crawling gives outbound teams a better sense of timing. It helps identify public changes that a normal database misses: new roles, new integrations, new positioning, new product pages, and new operational priorities. Those signals can improve targeting, but only when they are interpreted carefully.
       </p>
       <p>
-        The winning pattern is not "crawl more pages and send more messages." It is "collect better evidence, score it honestly, and write outreach that respects the buyer." That is how AI crawlers become part of a sustainable outbound funnel instead of another source of noisy personalization.
+        The winning pattern is not "crawl more pages and send more messages." It is collect better evidence, score it honestly, and write outreach that respects the buyer. That is how AI crawlers become part of a sustainable outbound funnel instead of another source of noisy personalization.
       </p>
       <p>
         If your current prospecting process starts with static filters, add a small signal layer before scaling. Pick one ICP, crawl the pages most likely to show change, review the first batch manually, and only automate what consistently produces useful evidence. That is the path from basic scraping to a live intent system your sales team can trust.

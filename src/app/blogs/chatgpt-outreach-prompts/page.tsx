@@ -18,16 +18,16 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "danger-of-simple-prompts", label: "The Problem with 'Write a LinkedIn Sales Pitch' Prompts", level: 1 },
-  { id: "anatomy-outreach-prompt", label: "The Four-Part Anatomy of a Professional Outreach Prompt", level: 1 },
-  { id: "product-profile-prompt", label: "Prompt 1: The Product-to-Pain Translation Prompt", level: 1 },
-  { id: "contextual-outreach-prompt", label: "Prompt 2: The Contextual Outreach Draft Prompt", level: 2 },
-  { id: "validation-prompt", label: "Prompt 3: The Copywriting Quality Validation Prompt", level: 2 },
-  { id: "objection-handling-prompts", label: "Prompting ChatGPT to Handle Sensitive Sales Objections", level: 1 },
-  { id: "safety-limits-compliance", label: "Delivering Message Drafts Safely on LinkedIn", level: 1 },
-  { id: "prompt-sop-checklist", label: "SOP: The ChatGPT Outreach Prompting Checklist", level: 1 },
-  { id: "conclusion", label: "Building a System, Not Just a Template", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "danger-of-simple-prompts", label: "The problem with 'write a LinkedIn sales pitch' prompts", level: 1 },
+  { id: "anatomy-outreach-prompt", label: "The four-part anatomy of an outreach prompt", level: 1 },
+  { id: "product-profile-prompt", label: "Prompt 1: the product-to-pain translation prompt", level: 1 },
+  { id: "contextual-outreach-prompt", label: "Prompt 2: the contextual outreach draft prompt", level: 2 },
+  { id: "validation-prompt", label: "Prompt 3: the copywriting quality validation prompt", level: 2 },
+  { id: "objection-handling-prompts", label: "Prompting ChatGPT to handle sensitive sales objections", level: 1 },
+  { id: "safety-limits-compliance", label: "Delivering message drafts safely on LinkedIn", level: 1 },
+  { id: "prompt-sop-checklist", label: "SOP: the ChatGPT outreach prompting checklist", level: 1 },
+  { id: "conclusion", label: "Build a prompting system instead of a one-off template", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
@@ -64,29 +64,29 @@ export default function BlogPost() {
         Using AI to write B2B sales copy is a double-edged sword. When done right, it saves hours of research and helps you send highly relevant, personalized messages. When done poorly, it floods your prospect's inbox with generic, buzzword-heavy sales slop that destroys your brand credibility.
       </p>
       <p>
-        The difference between success and failure comes down to prompt engineering. If you ask <a href="https://chatgpt.com/" target="_blank" rel="noopener" className="text-blue-600 hover:underline">ChatGPT</a> or other LLMs a simple query like "write a connection request note for a sales director," the output will be terrible. It will use clichés like "In today's fast-paced digital landscape," pitch your product features too early, and sound completely mechanical.
+        The difference between success and failure comes down to prompt engineering. If you ask <a href="https://chatgpt.com/" target="_blank" rel="noopener" className="text-blue-600 hover:underline">ChatGPT</a> or other LLMs a simple query like "write a connection request note for a sales director," the output will be terrible. It will use clichés like "fast-paced digital world," pitch your product features too early, and sound completely mechanical.
       </p>
       <p>
         To generate high-quality B2B copy, you must provide structured prompts with clear boundaries, dynamic context variables, and strict copywriting rules. By directing the model to think like a peer rather than a salesperson, you can generate short, conversational drafts that get responses.
       </p>
       <p>
-        Omentir integrates this prompting logic into your daily sales routine. The system combines your product profile settings with real-time lead details, drafting pacing-compliant messages for your final review. Let's look at how to build and configure these prompts for your outbound team.
+        Omentir folds this prompting logic into the daily sales routine. The system combines your product profile settings with live lead details, then drafts pacing-compliant messages for your final review. Here is how to build and configure these prompts for an outbound team.
       </p>
       <p>
         The mistake is treating the prompt as a clever sentence. A good outreach prompt is closer to an operating procedure. It tells the model what facts it can use, what claims it must avoid, what tone to write in, and what the output should look like when the evidence is weak.
       </p>
 
       <h2 id="anatomy-outreach-prompt" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        The Four-Part Anatomy of a Professional Outreach Prompt
+        The four-part anatomy of an outreach prompt
       </h2>
       <p>
         A professional outreach prompt does not leave copy choices up to the model. It defines the constraints and goals of the message. Every sales prompt should contain four core components:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Role & Perspective:</strong> Tell the model who it is (e.g., "You are a B2B SaaS founder contacting a peer") to set the tone.</li>
-        <li><strong>Context Inputs:</strong> Inject the specific data points it must use: product details, target company profile, and active intent signals.</li>
-        <li><strong>Writing Constraints:</strong> Forbid sales buzzwords, limit sentence counts, set strict word limits, and define the formatting style.</li>
-        <li><strong>Output Format:</strong> Instruct the model to return only the final message text, avoiding preambles like "Here is your draft."</li>
+        <li><strong>Role and perspective:</strong> Tell the model who it is (e.g., "You are a B2B SaaS founder contacting a peer") to set the tone.</li>
+        <li><strong>Context inputs:</strong> Inject the specific data points it must use: product details, target company profile, and active intent signals.</li>
+        <li><strong>Writing constraints:</strong> Forbid sales buzzwords, limit sentence counts, set strict word limits, and define the formatting style.</li>
+        <li><strong>Output format:</strong> Instruct the model to return only the final message text, avoiding preambles like "Here is your draft."</li>
       </ul>
       <p>
         By separating your instructions into these blocks, you ensure the AI outputs consistent, high-converting drafts.
@@ -111,7 +111,7 @@ export default function BlogPost() {
       </div>
 
       <h2 id="product-profile-prompt" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Prompt 1: The Product-to-Pain Translation Prompt
+        Prompt 1: the product-to-pain translation prompt
       </h2>
       <p>
         Before writing messages, teach ChatGPT how to frame your product value in terms of the buyer's pain points. Feed the model your feature list and ask it to output the specific challenges those features solve.
@@ -143,7 +143,7 @@ Translate our features into 3 core pain points. For each pain point, write a one
       </p>
 
       <h2 id="contextual-outreach-prompt" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Prompt 2: The Contextual Outreach Draft Prompt
+        Prompt 2: the contextual outreach draft prompt
       </h2>
       <p>
         Once the value statements are defined, build a prompt that combines the product profile with real-time lead context.
@@ -180,7 +180,7 @@ Write a LinkedIn message following these rules:
       </p>
 
       <h2 id="validation-prompt" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Prompt 3: The Copywriting Quality Validation Prompt
+        Prompt 3: the copywriting quality validation prompt
       </h2>
       <p>
         Even with strict constraints, models occasionally output buzzwords or long sentences. Use a second "auditor" prompt to review the draft copy before it is sent to your review queue.
@@ -194,7 +194,7 @@ Write a LinkedIn message following these rules:
 
 Review the copy against these rules:
 - Is the word count under 80 words? If not, shorten it.
-- Does it contain any buzzwords (revolutionize, game-changing, busy landscape)? If so, remove them.
+- Does it contain any buzzwords (revolutionize, game-changing, busy world)? If so, remove them.
 - Does it ask for a call? If so, change it to a low-friction offer (e.g., sharing a resource).
 - Return only the audited, corrected draft.`}</code>
       </pre>
@@ -209,7 +209,7 @@ Review the copy against these rules:
       </p>
 
       <h2 id="objection-handling-prompts" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Prompting ChatGPT to Handle Sensitive Sales Objections
+        Prompting ChatGPT to handle sensitive sales objections
       </h2>
       <p>
         When prospects respond with objections, use ChatGPT to draft responses. Prompt the model to acknowledge their feedback, avoid defensive language, and offer a low-risk alternative.
@@ -225,7 +225,7 @@ Review the copy against these rules:
       </p>
 
       <h2 id="safety-limits-compliance" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Delivering Message Drafts Safely on LinkedIn
+        Delivering message drafts safely on LinkedIn
       </h2>
       <p>
         Even the best ChatGPT prompts will fail if you deliver messages too quickly or trigger platform limits. LinkedIn's algorithms flag profiles that send messages at mechanical speeds or blast large volumes.
@@ -241,17 +241,17 @@ Review the copy against these rules:
       </p>
 
       <h2 id="prompt-sop-checklist" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: The ChatGPT Outreach Prompting Checklist
+        SOP: the ChatGPT outreach prompting checklist
       </h2>
       <p>
         Use this checklist to audit your prompting pipeline daily:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Role Constraint:</strong> Is the role set to founder or peer instead of salesperson?</li>
-        <li><strong>Input Grounding:</strong> Are XML tags used to separate the product profile and lead data?</li>
+        <li><strong>Role constraint:</strong> Is the role set to founder or peer instead of salesperson?</li>
+        <li><strong>Input grounding:</strong> Are XML tags used to separate the product profile and lead data?</li>
         <li><strong>Brevity check:</strong> Is the word count limit strictly set to under 80 words?</li>
-        <li><strong>Formatting Rule:</strong> Is the model instructed to skip preambles and return only the message?</li>
-        <li><strong>Pacing Limit:</strong> Are the outgoing connection requests capped within daily safety quotas?</li>
+        <li><strong>Formatting rule:</strong> Is the model instructed to skip preambles and return only the message?</li>
+        <li><strong>Pacing limit:</strong> Are the outgoing connection requests capped within daily safety quotas?</li>
       </ul>
       <p>
         Add two checklist items for production. First, does the prompt define what to do when context is missing? Second, does the validator reject unsupported claims? Most bad AI outreach comes from one of those two failures.
@@ -261,10 +261,10 @@ Review the copy against these rules:
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Building a System, Not Just a Template
+        Build a prompting system instead of a one-off template
       </h2>
       <p>
-        High-converting B2B outreach is built on structured prompts, context injection, and strict copywriting constraints. By engineering ChatGPT prompts to focus on value and brevity, you can write copy that gets replies.
+        High-converting B2B outreach is built on structured prompts, context injection, and strict copywriting constraints. Direct ChatGPT toward value and brevity, and the drafts have a better chance of getting replies.
       </p>
       <p>
         Let Omentir handle the details. Ground your prompts in your product profile, configure your templates with dynamic variables, and let the system queue up personalized outreach notes safely.
@@ -278,7 +278,7 @@ Review the copy against these rules:
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Frequently Asked Questions
+        Frequently asked questions
       </h2>
       <FaqAccordion items={faqItems} />
     </BlogPostTemplate>

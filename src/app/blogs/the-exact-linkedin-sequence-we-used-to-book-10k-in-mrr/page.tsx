@@ -17,20 +17,20 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems = [
-  { id: "mrr-backstory", label: "The Backstory: Breaking the Pipeline Wall", level: 1 },
-  { id: "multi-step-sequence", label: "The 3-Step Sequence Architecture", level: 1 },
-  { id: "copywriting-templates", label: "The Exact Copy-Paste Templates", level: 1 },
-  { id: "outbound-math-case-study", label: "The Campaign Metrics & Funnel", level: 1 },
-  { id: "core-lessons", label: "3 Core Lessons for Replicating $10k MRR", level: 1 },
-  { id: "safety-automation", label: "Automating the Sequence Safely", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "mrr-backstory", label: "The backstory: breaking the pipeline wall", level: 1 },
+  { id: "multi-step-sequence", label: "The 3-step sequence architecture", level: 1 },
+  { id: "copywriting-templates", label: "The exact copy-paste templates", level: 1 },
+  { id: "outbound-math-case-study", label: "The campaign metrics and funnel", level: 1 },
+  { id: "core-lessons", label: "3 core lessons for replicating $10k MRR", level: 1 },
+  { id: "safety-automation", label: "Automating the sequence safely", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ] as const;
 
 const faqItems = [
   { question: "How long did it take to close the initial 12 customers?", answer: "It took exactly 5 and a half months from the date we re-engineered our sequence copywriting and deployed Omentir's automated intent-sourcing tools." },
   { question: "What was the average contract value (ACV)?", answer: "Our average contract value sat at $850 per month, meaning we needed exactly 12 active premium accounts to cross the sustainable $10k in monthly recurring revenue milestone." },
-  { question: "Did you utilize paid Sales Navigator features?", answer: "Yes. A Sales Navigator subscription is an absolute prerequisite to running clean B2B prospecting campaigns. It allows you to build narrow, highly curated lead lists using real-time intent filters." },
-  { question: "What if our close rate is lower than 25%?", answer: "If your close rate is low, your product validation is likely lagging or your demo presentation focuses on feature lists rather than business outcomes.Retool your demo script, address immediate pain points, and offer low-risk pilot trials to build momentum." },
+  { question: "Did you use paid Sales Navigator features?", answer: "Yes. We treated a Sales Navigator subscription as required for clean B2B prospecting campaigns. It lets you build narrow, curated lead lists using real-time intent filters." },
+  { question: "What if our close rate is lower than 25%?", answer: "If your close rate is low, your product validation is likely lagging or your demo presentation focuses on feature lists rather than business outcomes. Retool your demo script, address immediate pain points, and offer low-risk pilot trials to build momentum." },
 ] as const;
 
 export default function BlogPost() {
@@ -46,10 +46,10 @@ export default function BlogPost() {
     >
       <div id="introduction" className="scroll-mt-28">
         <p>
-          Reaching $10k in Monthly Recurring Revenue (MRR) is one of the most critical milestones for any B2B SaaS startup or growth agency. At this velocity, your product achieves basic validation, your operations find sustainable footing, and your business shifts from a side project into a real, fundable enterprise.
+          Reaching $10k in Monthly Recurring Revenue (MRR) is a practical milestone for a B2B SaaS startup or growth agency. At that point, the product has basic validation, operations can stay funded by customers, and the business is no longer only a side project.
         </p>
         <p>
-          However, scaling to this level is incredibly difficult. While paid advertising channels are prohibitively expensive for early-stage companies and search engine optimization (SEO) takes months to bear fruit, direct outbound remains the fastest path to customer acquisition. We secured our initial $10k in MRR in under six months by running a highly structured, automated LinkedIn outbound sequence. In this case study, we pull back the curtain on the exact copywriting, message timing, and deliverability parameters we used to fill our calendar.
+          Getting there is still hard. Paid ads are expensive for early-stage companies, and search engine optimization (SEO) takes months. Direct outbound was the fastest path to customers for us. We secured our initial $10k in MRR in under six months with a structured, automated LinkedIn outbound sequence. This case study covers the copywriting, message timing, and deliverability parameters we used.
         </p>
 
         <h2
@@ -57,13 +57,13 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          The Backstory: Breaking the Pipeline Wall
+          The backstory: breaking the pipeline wall
         </h2>
         <p>
           When we first launched Omentir, our sales workflow was a complete mess. We fell into the classic "pitch-slap" trap: the second a prospect accepted our connection request, we blasted them with a 300-word block of marketing text detailing our features, along with a Calendly link.
         </p>
         <p>
-          The results were disastrous. Our connection acceptance rates hovered below 25%, and our active reply rates sat at a miserable 3%. Prospects ignored our messages, and some even flagged our profiles as spam. We were spending 4 hours a day manually scraping directories and writing custom notes, only to book a single demo every three weeks.
+          The results were bad. Our connection acceptance rates hovered below 25%, and our active reply rates sat at 3%. Prospects ignored our messages, and some even flagged our profiles as spam. We were spending 4 hours a day manually scraping directories and writing custom notes, only to book a single demo every three weeks.
         </p>
         <p>
           We realized we had to rebuild the approach. We stopped pitching the platform immediately, removed scheduling links from early messages, and focused on disarming, peer-level conversations. Better targeting and cleaner triggers made the campaign easier to manage and easier for prospects to answer.
@@ -74,10 +74,10 @@ export default function BlogPost() {
           <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
           <div className="pl-4">
             <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-              The Campaign Outcome
+              The campaign outcome
             </h4>
             <p className="text-sm text-zinc-650 leading-relaxed">
-              By deploying a 3-step value-first sequence, our connection acceptance rates skyrocketed to 68%. Our positive responder rate doubled, filling our pipeline with 12 new premium clients and successfully pushing our bootstrapped SaaS past the $10,000 MRR milestone in under 90 days.
+              By deploying a 3-step value-first sequence, our connection acceptance rates rose to 68%. Our positive responder rate doubled, filling our pipeline with 12 new premium clients and pushing our bootstrapped SaaS past the $10,000 MRR milestone in under 90 days.
             </p>
           </div>
         </div>
@@ -87,13 +87,13 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          The 3-Step Sequence Architecture
+          The 3-step sequence architecture
         </h2>
         <p>
-          Our winning campaign cadence discarded long corporate messaging blocks in favor of brief, highly conversational Slack-style interactions. By spacing our touchpoints carefully, we gave prospects room to breathe and reply naturally.
+          Our winning campaign cadence discarded long corporate messaging blocks in favor of brief, conversational Slack-style interactions. By spacing our touchpoints carefully, we gave prospects room to breathe and reply naturally.
         </p>
         <p>
-          Let's break down the exact timeline and objective of each sequence touchpoint:
+          Here is the timeline and objective of each sequence touchpoint:
         </p>
 
         <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-3 text-zinc-850 my-4">
@@ -107,10 +107,10 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          The Exact Copy-Paste Templates
+          The exact copy-paste templates
         </h2>
         <p>
-          These exact copy templates formed the bedrock of our MRR growth campaign. You can copy, adapt, and deploy them for your own B2B audience today:
+          These are the copy templates we used. You can copy, adapt, and deploy them for your own B2B audience:
         </p>
 
         {/* Invite Template */}
@@ -137,7 +137,7 @@ export default function BlogPost() {
               We actually put together a 3-step automation blueprint that pulls real-time buyer intent directly into Slack, saving our team about 15 hours. Happy to drop the PDF if you are open to skimming it?"
             </p>
             <div className="mt-4 pt-4 border-t border-zinc-300 text-xs text-zinc-650">
-              <strong>Why it works:</strong> It asks for permission before sharing the link, which bypasses natural spam defense mechanisms. By focusing on a specific pain point ("12 hours of duplicate scraping") rather than generic benefits, it drives high response rates.
+              <strong>Why it works:</strong> It asks for permission before sharing the link, which avoids the usual spam reflex. By focusing on a specific pain point ("12 hours of duplicate scraping") rather than generic benefits, it drives high response rates.
             </div>
           </div>
         </div>
@@ -152,7 +152,7 @@ export default function BlogPost() {
               If you ever want to check out the cached intent workflows in the future, I'll be sharing templates on my profile. Wish you all the best!"
             </p>
             <div className="mt-4 pt-4 border-t border-zinc-300 text-xs text-zinc-650">
-              <strong>Why it works:</strong> It is highly professional, demonstrates high EQ, and removes all transactional sales pressure. Because you took the opportunity away, prospects frequently reply to keep the connection warm.
+              <strong>Why it works:</strong> It is professional and removes sales pressure. Because you took the opportunity away, prospects frequently reply to keep the connection warm.
             </div>
           </div>
         </div>
@@ -162,10 +162,10 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          The Campaign Metrics & Funnel
+          The campaign metrics and funnel
         </h2>
         <p>
-          Let's analyze the exact campaign conversion funnel that delivered the initial $10k in MRR:
+          Here is the campaign conversion funnel that delivered the initial $10k in MRR:
         </p>
 
         <div className="my-6 overflow-x-auto rounded-lg border border-zinc-200 shadow-sm bg-white">
@@ -207,7 +207,7 @@ export default function BlogPost() {
                 <td className="px-4 py-3 font-medium text-black">Closed Customers</td>
                 <td className="px-4 py-3">12 Clients Closed</td>
                 <td className="px-4 py-3">25% Close Rate</td>
-                <td className="px-4 py-3">Average Contract Value of $850/mo, successfully crossing the $10k MRR milestone.</td>
+                <td className="px-4 py-3">Average contract value of $850/mo, which crossed the $10k MRR milestone.</td>
               </tr>
             </tbody>
           </table>
@@ -218,22 +218,22 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          3 Core Lessons for Replicating $10k MRR
+          3 core lessons for replicating $10k MRR
         </h2>
         <p>
-          If you want to duplicate this growth path for your own B2B company, focus your execution on these three core guidelines:
+          If you want to copy this growth path for your own B2B company, focus on these three guidelines:
         </p>
         <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-850 my-4">
           <li><strong>1. Clean your lead lists aggressively.</strong> Automation is only as good as the data feeding it. If your automation outputs uncleaned company strings like "Acme Corp LLC - EMEA Division," prospects will instantly recognize the script. Spend real time cleaning names, titles, and company formats.</li>
           <li><strong>2. Respect the buyer's calendar.</strong> Never pitch booking links in your early messages. Focus entirely on verifying pain points and establishing conversational dialogue first. Once the ice is broken, booking the call is simple.</li>
-          <li><strong>3. Maintain absolute safety.</strong> Do not run high-volume blast campaigns. Sending a steady, safe volume of 15 targeted invitations daily consistently yields better long-term pipeline value than sporadic, massive spamming campaigns.</li>
+          <li><strong>3. Keep volume conservative.</strong> Do not run high-volume blast campaigns. Sending a steady, safe volume of 15 targeted invitations daily consistently yields better long-term pipeline value than sporadic, massive spamming campaigns.</li>
         </ul>
 
         {/* Workflow checklist */}
         <div className="my-10 rounded-2xl border border-zinc-200 bg-[#f4f2ec] p-8 text-center shadow-[0_18px_60px_rgba(15,23,42,0.06)] relative overflow-hidden">
           <div className="absolute inset-x-0 top-0 h-1.5 bg-[#ba3871]" />
           <h3 style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mb-3">
-            Turn the Sequence Into a Repeatable Process
+            Turn the sequence into a repeatable process
           </h3>
           <p className="text-sm text-zinc-650 leading-relaxed max-w-xl mx-auto mb-6">
             Use the sequence above as a repeatable operating model. Keep the list narrow, track each reply type, and only scale what proves it can create useful conversations.
@@ -253,10 +253,10 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Automating the Sequence Safely
+          Automating the sequence safely
         </h2>
         <p>
-          Executing a multi-touch sequence manually is a major time commitment. To scale safely, delegate only the repetitive steps to software and keep the strategy visible. Use random delay pacing, natural spacing, and strict volume limits to protect the profile while preserving message quality.
+          Executing a multi-touch sequence manually is a large time commitment. To scale safely, delegate only the repetitive steps to software and keep the strategy visible. Use random delay pacing, natural spacing, and strict volume limits to protect the profile while preserving message quality.
         </p>
 
 
@@ -265,7 +265,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          How to Adapt the Sequence to Your Market
+          How to adapt the sequence to your market
         </h2>
         <p>
           The exact sequence matters, but copying it blindly is a mistake. The reason it produced $10k in MRR was not the wording alone. It worked because the audience, trigger, offer, and follow-up path all matched each other.
@@ -285,7 +285,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          What to Measure After Launch
+          What to measure after launch
         </h2>
         <p>
           After launching the sequence, measure the full path from invite to revenue. Track connection acceptance, first-message replies, positive replies, booked demos, show rate, close rate, and new MRR. A sequence that books calls but closes poorly may be attracting curiosity rather than buyers.
@@ -298,7 +298,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Frequently Asked Questions
+          Frequently asked questions
         </h2>
 
         <FaqAccordion items={faqItems} />

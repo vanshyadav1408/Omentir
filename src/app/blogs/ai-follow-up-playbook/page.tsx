@@ -23,13 +23,13 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "ai-should-remember-context", label: "AI Should Remember Context", level: 1 },
-  { id: "build-the-memory-card", label: "Build the Memory Card", level: 1 },
-  { id: "sort-by-intent", label: "Sort by Intent", level: 1 },
-  { id: "cadence-with-judgment", label: "Cadence With Judgment", level: 1 },
-  { id: "follow-up-draft-patterns", label: "Draft Patterns", level: 1 },
-  { id: "pause-and-stop-rules", label: "Pause and Stop Rules", level: 1 },
-  { id: "measure-follow-up-quality", label: "Measure Follow-Up Quality", level: 1 },
+  { id: "ai-should-remember-context", label: "AI should remember context", level: 1 },
+  { id: "build-the-memory-card", label: "Build the memory card", level: 1 },
+  { id: "sort-by-intent", label: "Sort by intent", level: 1 },
+  { id: "cadence-with-judgment", label: "Cadence with judgment", level: 1 },
+  { id: "follow-up-draft-patterns", label: "Draft patterns", level: 1 },
+  { id: "pause-and-stop-rules", label: "Pause and stop rules", level: 1 },
+  { id: "measure-follow-up-quality", label: "Measure follow-up quality", level: 1 },
   { id: "faqs", label: "FAQs", level: 1 },
 ];
 
@@ -90,10 +90,10 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        AI Should Remember Context
+        AI should remember context
       </h2>
       <p>
-        The biggest advantage of AI follow-up is memory. A human seller can forget which problem started the conversation, which resource was promised, or whether the buyer said "circle back next month." A good AI system should not.
+        The useful part of AI follow-up is memory. A human seller can forget which problem started the conversation, which resource was promised, or whether the buyer said "circle back next month." A good AI system should not.
       </p>
       <p>
         But memory is only useful if it is structured. A long transcript is not enough. Before drafting the next touch, the AI needs a concise summary of the thread and a clear decision about what state the buyer is in.
@@ -119,7 +119,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Build the Memory Card
+        Build the memory card
       </h2>
       <p>
         Give every active prospect a memory card. This is a compact record the AI can read before drafting or deciding whether a follow-up is due.
@@ -163,7 +163,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Sort by Intent
+        Sort by intent
       </h2>
       <p>
         Follow-up quality improves when the AI classifies intent before drafting. The same delay can mean very different things. A buyer who asked for pricing and went quiet deserves a different next step from someone who never answered the first message.
@@ -218,7 +218,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Cadence With Judgment
+        Cadence with judgment
       </h2>
       <p>
         AI can schedule follow-ups consistently, but consistency is not the same as judgment. A good cadence changes based on the buyer's state.
@@ -244,7 +244,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Draft Patterns
+        Draft patterns
       </h2>
       <p>
         Once the memory card and intent bucket are clear, drafting becomes much easier. The AI should choose a pattern before writing the message.
@@ -291,7 +291,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Pause and Stop Rules
+        Pause and stop rules
       </h2>
       <p>
         The safest follow-up playbook is defined as much by what it refuses to send as by what it sends. AI should pause a sequence when the prospect replies, books a meeting, asks for time, raises a sensitive objection, or gives a clear no.
@@ -315,7 +315,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Measure Follow-Up Quality
+        Measure follow-up quality
       </h2>
       <p>
         Do not measure AI follow-up only by reply rate. A pushy breakup message can get replies while damaging trust. A better dashboard separates useful replies from irritated replies.
@@ -333,7 +333,7 @@ export default function BlogPost() {
         Review follow-up performance weekly. Pull a few examples from each intent bucket and ask whether the AI remembered the original context, added one useful detail, and respected the buyer's state. If the answer is no, fix the memory card or the intent rules before sending more.
       </p>
       <p>
-        The best AI follow-up playbook feels less like automation and more like a careful assistant. It remembers what happened, recommends the next respectful move, and keeps your team from losing good conversations simply because no one remembered to reply.
+        A good follow-up system remembers what happened, suggests the next respectful move, and keeps useful conversations from dying because nobody replied.
       </p>
 
       <h2

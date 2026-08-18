@@ -17,17 +17,17 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "guessing-vs-discovery", label: "The Cost of Guessing Buyer Pain Points", level: 1 },
-  { id: "pain-point-evidence", label: "Pain Points Need Evidence", level: 2 },
-  { id: "discovery-engine-architecture", label: "Architecture of a Pain-Point Discovery Engine", level: 1 },
-  { id: "scraping-review-platforms", label: "Crawling G2 and Capterra to Identify Competitor Flaws", level: 2 },
-  { id: "analyzing-industry-forums", label: "Mining Forums and Technical Q&A Boards", level: 2 },
-  { id: "cluster-and-score", label: "Cluster and Score Pain Points", level: 2 },
-  { id: "copy-mapping-framework", label: "Translating Pain Points into Copy: The PSP Framework", level: 1 },
-  { id: "pacing-campaign-delivery", label: "Scheduling Campaigns Safely to Protect Account Health", level: 1 },
-  { id: "discovery-sop-checklist", label: "SOP: The Automated Pain-Point Extraction Checklist", level: 1 },
-  { id: "conclusion", label: "Data-Driven Personalization for Outbound Success", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "guessing-vs-discovery", label: "The cost of guessing buyer pain points", level: 1 },
+  { id: "pain-point-evidence", label: "Pain points need evidence", level: 2 },
+  { id: "discovery-engine-architecture", label: "Architecture of a pain-point discovery engine", level: 1 },
+  { id: "scraping-review-platforms", label: "Crawling G2 and Capterra to identify competitor flaws", level: 2 },
+  { id: "analyzing-industry-forums", label: "Mining forums and technical Q&A boards", level: 2 },
+  { id: "cluster-and-score", label: "Cluster and score pain points", level: 2 },
+  { id: "copy-mapping-framework", label: "Translating pain points into copy: the PSP framework", level: 1 },
+  { id: "pacing-campaign-delivery", label: "Scheduling campaigns safely to protect account health", level: 1 },
+  { id: "discovery-sop-checklist", label: "SOP: the automated pain-point extraction checklist", level: 1 },
+  { id: "conclusion", label: "Personalization from evidence, not guesses", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
@@ -61,16 +61,16 @@ export default function BlogPost() {
       faqItems={faqItems}
     >
       <p id="guessing-vs-discovery" className="scroll-mt-28">
-        Outbound copywriting has historically relied on assumptions. Sales teams write outreach copy by guessing what challenges target buyers experience, using generic phrases like "optimize efficiency" or "reduce overhead." Because these pitches do not reference specific, day-to-day frustrations, they get low response rates.
+        Outbound copy often starts as a guess. Teams write "optimize efficiency" or "reduce overhead" because they assume that is the pain. Those phrases do not name a real daily frustration, so they get ignored.
       </p>
       <p>
-        To get B2B replies, your copy must address the actual challenges your prospects face. You need to reference the specific software bugs that disrupt their day, the reporting limitations that slow down their work, or the manual steps that waste their time.
+        Replies come when the copy names the actual work: the bugs that interrupt the day, the reporting limits that slow people down, or the manual steps that eat the afternoon.
       </p>
       <p>
-        Gathering these insights manually is too slow to scale. The solution is to automate pain-point discovery. By using AI agents to crawl user reviews, documentation, and forums, you can map buyer challenges programmatically.
+        Doing that research by hand does not scale. AI agents can crawl reviews, docs, and forums and group the complaints so you can map pain programmatically.
       </p>
       <p>
-        Omentir integrates this discovery layer, checking live signals to ensure your outreach copy is relevant. Let's look at how to build an automated pain-point extraction engine.
+        Omentir uses live signals in that discovery layer so outreach copy stays tied to what buyers actually talk about.
       </p>
       <p>
         The important caveat is that AI does not magically know a buyer's internal pain. It can collect public evidence, group repeated complaints, and suggest likely problems. A human still needs to decide whether that pain is relevant to the specific prospect, whether the source is reliable, and whether it belongs in outreach copy.
@@ -80,7 +80,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="pain-point-evidence" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Pain Points Need Evidence
+        Pain points need evidence
       </h2>
       <p>
         Before using a pain point in sales copy, ask where it came from. Was it from a public review, a support forum, a job description, a sales call, a competitor comparison page, or your own customer interviews? Different sources carry different weight.
@@ -98,7 +98,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="discovery-engine-architecture" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Architecture of a Pain-Point Discovery Engine
+        Architecture of a pain-point discovery engine
       </h2>
       <p>
         A pain-point discovery engine scans online sources where buyers discuss their daily challenges.
@@ -108,7 +108,7 @@ export default function BlogPost() {
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
         <li><strong>Crawling:</strong> Extracting discussion text from review platforms, developer docs, and forums.</li>
-        <li><strong>Sentiment Analysis:</strong> Categorizing text blocks by emotion, isolating user complaints and frustrations.</li>
+        <li><strong>Sentiment analysis:</strong> Categorizing text blocks by emotion, isolating user complaints and frustrations.</li>
         <li><strong>Clustering:</strong> Grouping similar challenges into core pain-point profiles.</li>
       </ul>
       <p>
@@ -137,7 +137,7 @@ Safe outreach angle: {diagnostic question, not accusation}`}</code>
       </p>
 
       <h2 id="scraping-review-platforms" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Crawling G2 and Capterra to Identify Competitor Flaws
+        Crawling G2 and Capterra to identify competitor flaws
       </h2>
       <p>
         User review platforms are excellent sources of B2B pain-point data. When users share reviews on <a href="https://www.g2.com" target="_blank" rel="noopener" className="text-blue-600 hover:underline">G2</a> or Capterra, they outline their specific dislikes about competitor tools.
@@ -146,9 +146,9 @@ Safe outreach angle: {diagnostic question, not accusation}`}</code>
         Your discovery agent crawls these directories, searching for competitor profiles and isolating 1-star and 2-star reviews. The crawler extracts complaints about:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Missing Integrations:</strong> Users expressing frustration that a tool does not connect with their CRM.</li>
-        <li><strong>API Failures:</strong> Developers noting frequent downtime or poor documentation.</li>
-        <li><strong>Pacing Restrictions:</strong> Users complaining that a tool's high volume triggered platform bans.</li>
+        <li><strong>Missing integrations:</strong> Users expressing frustration that a tool does not connect with their CRM.</li>
+        <li><strong>API failures:</strong> Developers noting frequent downtime or poor documentation.</li>
+        <li><strong>Pacing restrictions:</strong> Users complaining that a tool's high volume triggered platform bans.</li>
       </ul>
       <p>
         This analysis lets you position your software as a direct solution to those complaints.
@@ -164,7 +164,7 @@ Safe outreach angle: {diagnostic question, not accusation}`}</code>
       </p>
 
       <h2 id="analyzing-industry-forums" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Mining Forums and Technical Q&A Boards
+        Mining forums and technical Q&A boards
       </h2>
       <p>
         Developer forums, Reddit directories, and Q&A boards are useful sources for technical B2B prospecting. On these sites, operators share their active bugs and request workarounds.
@@ -186,7 +186,7 @@ Safe outreach angle: {diagnostic question, not accusation}`}</code>
       </p>
 
       <h2 id="cluster-and-score" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Cluster and Score Pain Points
+        Cluster and score pain points
       </h2>
       <p>
         Once the system extracts complaints, group them into pain categories. Without clustering, you end up with a long list of isolated quotes. Clustering helps you see the pattern behind the comments.
@@ -209,7 +209,7 @@ Safe outreach angle: {diagnostic question, not accusation}`}</code>
         <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
         <div className="pl-4">
           <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-            Targeting Rule: Use Specific Terms 💡
+            Targeting rule: use specific terms
           </h4>
           <p className="text-sm text-zinc-650 leading-relaxed">
             When drafting copy based on pain-point data, use the exact terms your buyers use. If they complain about "deliverability drops," use that phrase instead of "outbound delivery failures" to sound authentic.
@@ -218,7 +218,7 @@ Safe outreach angle: {diagnostic question, not accusation}`}</code>
       </div>
 
       <h2 id="copy-mapping-framework" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Translating Pain Points into Copy: The PSP Framework
+        Translating pain points into copy: the PSP framework
       </h2>
       <p>
         To turn pain-point data into conversions, structure your copy using the Problem-Solution-Proof (PSP) framework:
@@ -249,10 +249,10 @@ Are reps doing prospect research manually today?`}</code>
       </p>
 
       <h2 id="pacing-campaign-delivery" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Scheduling Campaigns Safely to Protect Account Health
+        Scheduling campaigns safely to protect account health
       </h2>
       <p>
-        Even with highly relevant copy, you must manage your sending volume. High outreach speeds will trigger automated spam filters.
+        Even with relevant copy, sending volume still matters. High outreach speeds will trigger automated spam filters.
       </p>
       <p>
         To protect your sending profiles, route campaigns to a paced queue. Omentir enforces daily limits automatically. For pacing metrics, see our guide to{" "}
@@ -269,7 +269,7 @@ Are reps doing prospect research manually today?`}</code>
       </p>
 
       <h2 id="discovery-sop-checklist" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: The Automated Pain-Point Extraction Checklist
+        SOP: the automated pain-point extraction checklist
       </h2>
       <p>
         Implement this discovery workflow to map buyer challenges:
@@ -289,14 +289,14 @@ Are reps doing prospect research manually today?`}</code>
         <li><strong>Step 7:</strong> Review reply data weekly and remove pain angles that create confused or irrelevant conversations.</li>
       </ul>
       <p>
-        Omentir resolves these variables automatically, ensuring your outreach is highly relevant.
+        Omentir fills those variables so the outreach stays tied to the pain you mapped.
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Data-Driven Personalization for Outbound Success
+        Personalization from evidence, not guesses
       </h2>
       <p>
-        Outbound outreach is most effective when it is timely and relevant. By using AI crawlers to discover real buyer pain points, you can eliminate guesswork from your sales campaigns.
+        Outbound works when it is timely and specific. AI crawlers can find real buyer pain so you stop guessing in the first line.
       </p>
       <p>
         The best system does not invent pain. It gathers evidence, groups patterns, asks better questions, and learns from replies. If a "pain point" never appears in a real conversation, it does not belong in the next first line.

@@ -5,7 +5,7 @@ import FaqAccordion from "../../faq-accordion";
 
 export const metadata = createPageMetadata({
   title: "LinkedIn Buyer Signals: Track Active B2B Intent - Omentir",
-  description: "Stop reaching out to cold lists. Master 6 high-converting LinkedIn buyer intent signals, search triggers, and safe campaign pacing.",
+  description: "Stop reaching out to cold lists. Six LinkedIn buyer intent signals, search triggers, and safe campaign pacing.",
   path: "/blogs/linkedin-buyer-signals",
   keywords: [
     "LinkedIn buyer signals",
@@ -18,16 +18,16 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "death-of-cold-lead", label: "The Shift from Static Fit to Active Buyer Intent", level: 1 },
-  { id: "six-intent-signals", label: "Identifying the 6 Core LinkedIn Buyer Signals", level: 1 },
-  { id: "hiring-expansion-signal", label: "Signal 1: The Department Sourcing Expansion Trigger", level: 2 },
-  { id: "executive-promotion-signal", label: "Signal 2: The New Executive Transition Window", level: 2 },
-  { id: "influencer-engagement-signal", label: "Signal 3: Industry Feed and Influencer Comment Activity", level: 2 },
-  { id: "automating-intent-sourcing", label: "Automating Intent Sourcing with Workspace Discovery Agents", level: 1 },
-  { id: "safety-limits-compliance", label: "Managing Outbound Volume Limits and Profile Security", level: 1 },
-  { id: "signal-sop-checklist", label: "SOP: The LinkedIn Intent Sourcing Audit Checklist", level: 1 },
-  { id: "conclusion", label: "Building a Signal-Driven Outbound Motion", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "death-of-cold-lead", label: "The shift from static fit to active buyer intent", level: 1 },
+  { id: "six-intent-signals", label: "Identifying the 6 core LinkedIn buyer signals", level: 1 },
+  { id: "hiring-expansion-signal", label: "Signal 1: the department sourcing expansion trigger", level: 2 },
+  { id: "executive-promotion-signal", label: "Signal 2: the new executive transition window", level: 2 },
+  { id: "influencer-engagement-signal", label: "Signal 3: industry feed and influencer comment activity", level: 2 },
+  { id: "automating-intent-sourcing", label: "Automating intent sourcing with workspace discovery agents", level: 1 },
+  { id: "safety-limits-compliance", label: "Managing outbound volume limits and profile security", level: 1 },
+  { id: "signal-sop-checklist", label: "SOP: the LinkedIn intent sourcing audit checklist", level: 1 },
+  { id: "conclusion", label: "Building a signal-driven outbound motion", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
@@ -53,7 +53,7 @@ export default function BlogPost() {
   return (
     <BlogPostTemplate
       title="LinkedIn Buyer Signals: How to Find and Track Active B2B Intent"
-      description="Stop reaching out to cold lists. Master 6 high-converting LinkedIn buyer intent signals, search triggers, and safe campaign pacing."
+      description="Stop reaching out to cold lists. Six LinkedIn buyer intent signals, search triggers, and safe campaign pacing."
       slug="linkedin-buyer-signals"
       bannerSrc="/linkedin-buyer-signals.avif"
       bannerAlt="LinkedIn buyer signals and active B2B intent tracking dashboard illustration"
@@ -70,22 +70,22 @@ export default function BlogPost() {
         The signal is not proof. It is a reason to investigate. A job post may reveal a workflow, but not budget. A promotion may create a review window, but not buying intent. A comment may show interest in a topic, but not urgency. The best outbound teams use signals to write better questions, not to make private-sounding claims.
       </p>
       <p>
-        Omentir supports this intent-driven layer with discovery agents, ICP-based context, campaign drafting, paced outreach, and reply organization. Let's look at which LinkedIn signals are worth tracking, how to score them, and how to turn them into useful messages without overreaching.
+        Omentir supports this intent-driven layer with discovery agents, ICP-based context, campaign drafting, paced outreach, and reply organization. The rest of this post covers which LinkedIn signals are worth tracking, how to score them, and how to turn them into useful messages without overreaching.
       </p>
 
       <h2 id="six-intent-signals" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Identifying the 6 Core LinkedIn Buyer Signals
+        Identifying the 6 core LinkedIn buyer signals
       </h2>
       <p>
         Potential buyers leave signals across <a href="https://www.linkedin.com" target="_blank" rel="noopener" className="text-blue-600 hover:underline">LinkedIn</a> and related public pages. To build a targeted pipeline, monitor these six event types and score them by relevance:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Department Hiring:</strong> A job listing related to your product may reveal an active workflow or operational gap.</li>
-        <li><strong>New Executive Transition:</strong> A leader in a new role may be reviewing priorities, vendors, and team process.</li>
-        <li><strong>Industry Comment Activity:</strong> Comments on relevant posts can reveal interest in a topic or pain category.</li>
-        <li><strong>Company Funding Event:</strong> Funding may indicate growth pressure, hiring plans, or new operating priorities.</li>
-        <li><strong>Organic Content Posting:</strong> Posts about bottlenecks, team goals, or tooling can create a natural opening.</li>
-        <li><strong>Profile Keyword Update:</strong> New language in a profile can show a shift in responsibility or focus.</li>
+        <li><strong>Department hiring:</strong> A job listing related to your product may reveal an active workflow or operational gap.</li>
+        <li><strong>New executive transition:</strong> A leader in a new role may be reviewing priorities, vendors, and team process.</li>
+        <li><strong>Industry comment activity:</strong> Comments on relevant posts can reveal interest in a topic or pain category.</li>
+        <li><strong>Company funding event:</strong> Funding may indicate growth pressure, hiring plans, or new operating priorities.</li>
+        <li><strong>Organic content posting:</strong> Posts about bottlenecks, team goals, or tooling can create a natural opening.</li>
+        <li><strong>Profile keyword update:</strong> New language in a profile can show a shift in responsibility or focus.</li>
       </ul>
       <p>
         Score each signal by source, freshness, specificity, and connection to your offer. A current job post with exact workflow language is stronger than a vague profile keyword. A comment that explains a problem is stronger than a like. A funding announcement is only useful if your offer connects to what funded companies do next.
@@ -102,7 +102,7 @@ export default function BlogPost() {
         <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
         <div className="pl-4">
           <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-            Targeting Rule: Spot the Transition Window
+            Targeting rule: spot the transition window
           </h4>
           <p className="text-sm text-zinc-650 leading-relaxed">
             A new role can be a good reason to start a conversation, but keep the claim modest. Ask what they are reviewing in the new seat instead of assuming they are shopping for vendors.
@@ -111,7 +111,7 @@ export default function BlogPost() {
       </div>
 
       <h2 id="hiring-expansion-signal" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Signal 1: The Department Sourcing Expansion Trigger
+        Signal 1: the department sourcing expansion trigger
       </h2>
       <p>
         When an organization lists a department vacancy, it often reveals the work the team needs done. A sales role may mention prospecting, pipeline reporting, CRM hygiene, or outbound experimentation. A RevOps role may mention routing, attribution, dashboards, or enrichment. Those responsibilities are more useful than the job title alone.
@@ -128,7 +128,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="executive-promotion-signal" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Signal 2: The New Executive Transition Window
+        Signal 2: the new executive transition window
       </h2>
       <p>
         Track promotions and new hires using advanced filters in <a href="https://www.linkedin.com/products/linkedin-sales-navigator/" target="_blank" rel="noopener" className="text-blue-600 hover:underline">LinkedIn Sales Navigator</a>. A role transition matters because the buyer may be learning the team, auditing tools, and looking for early wins.
@@ -141,7 +141,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="influencer-engagement-signal" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Signal 3: Industry Feed and Influencer Comment Activity
+        Signal 3: industry feed and influencer comment activity
       </h2>
       <p>
         Identify credible voices in your niche and track meaningful engagement with their posts. A comment is more useful than a like because it shows the prospect's point of view. But even a comment does not prove active buying intent; it only gives you a topic the prospect has publicly engaged with.
@@ -158,7 +158,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="automating-intent-sourcing" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Automating Intent Sourcing with Workspace Discovery Agents
+        Automating intent sourcing with workspace discovery agents
       </h2>
       <p>
         Checking LinkedIn feeds and job listings manually takes too much time once your target market grows. Use discovery agents to find candidate leads and collect context, but keep a scoring layer between the signal and the send.
@@ -171,7 +171,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="safety-limits-compliance" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Managing Outbound Volume Limits and Profile Security
+        Managing outbound volume limits and profile security
       </h2>
       <p>
         Signal-based outreach can tempt teams to over-send because every alert feels timely. Resist that. A signal should improve prioritization, not bypass account safety or message quality.
@@ -181,18 +181,18 @@ export default function BlogPost() {
       </p>
 
       <h2 id="signal-sop-checklist" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: The LinkedIn Intent Sourcing Audit Checklist
+        SOP: the LinkedIn intent sourcing audit checklist
       </h2>
       <p>
         Follow this SOP to configure intent-based campaigns:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Verify Intent Signal:</strong> Is the campaign trigger based on a real event (hiring post, promotion, or comment) rather than static data?</li>
-        <li><strong>Score Evidence:</strong> Check source, freshness, specificity, and relevance to your offer.</li>
-        <li><strong>Audit Copy Relevance:</strong> Does your message opening hook reference the signal without overclaiming?</li>
-        <li><strong>Check Pacing Limits:</strong> Keep connection and message volume conservative for the sender profile.</li>
-        <li><strong>Enable Draft Review:</strong> Save new signal campaigns in drafts until the team verifies quality.</li>
-        <li><strong>Track Outcomes:</strong> Record qualified replies, objections, not-now responses, and meetings in your revenue workflow.</li>
+        <li><strong>Verify intent signal:</strong> Is the campaign trigger based on a real event (hiring post, promotion, or comment) rather than static data?</li>
+        <li><strong>Score evidence:</strong> Check source, freshness, specificity, and relevance to your offer.</li>
+        <li><strong>Audit copy relevance:</strong> Does your message opening hook reference the signal without overclaiming?</li>
+        <li><strong>Check pacing limits:</strong> Keep connection and message volume conservative for the sender profile.</li>
+        <li><strong>Enable draft review:</strong> Save new signal campaigns in drafts until the team verifies quality.</li>
+        <li><strong>Track outcomes:</strong> Record qualified replies, objections, not-now responses, and meetings in your revenue workflow.</li>
       </ul>
       <p>
         Revisit the score after replies come in. If a signal produces confused replies, it may be too weak or too far from your offer. If it produces good objections, it may be worth refining. If it produces qualified meetings, it deserves more sourcing attention.
@@ -213,17 +213,11 @@ export default function BlogPost() {
         The final message should stay modest: "Saw the new role includes LinkedIn prospecting and weekly pipeline reporting. Are you trying to make that workflow more repeatable as the team grows?" That line references the signal, asks a real question, and avoids claiming that the company has a broken process.
       </p>
       <p>
-        That restraint is what keeps signal-based outreach from feeling like surveillance.
-      </p>
-      <p>
-        It also makes replies easier, because the buyer can answer the question without defending their internal process.
-      </p>
-      <p>
-        That is the standard worth protecting.
+        That restraint is what keeps signal-based outreach from feeling like surveillance. It also makes replies easier, because the buyer can answer the question without defending their internal process.
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Building a Signal-Driven Outbound Motion
+        Building a signal-driven outbound motion
       </h2>
       <p>
         LinkedIn buyer signals help you move from broad targeting to better timing. They show where a conversation might be more relevant, but they do not remove the need for judgment. Score the evidence, write from public facts, and ask questions instead of making assumptions.
@@ -237,7 +231,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Frequently Asked Questions
+        Frequently asked questions
       </h2>
       <FaqAccordion items={faqItems} />
     </BlogPostTemplate>

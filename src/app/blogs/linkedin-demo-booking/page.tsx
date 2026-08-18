@@ -23,13 +23,13 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "booking-starts-before-the-ask", label: "Booking Starts Before the Ask", level: 1 },
-  { id: "qualify-the-reply", label: "Qualify the Reply", level: 1 },
-  { id: "three-booking-moments", label: "Three Booking Moments", level: 1 },
-  { id: "calendar-link-handoff", label: "Calendar Link Handoff", level: 1 },
-  { id: "scripts-for-common-replies", label: "Scripts for Common Replies", level: 1 },
-  { id: "reduce-no-shows", label: "Reduce No-Shows", level: 1 },
-  { id: "measure-the-handoff", label: "Measure the Handoff", level: 1 },
+  { id: "booking-starts-before-the-ask", label: "Booking starts before the ask", level: 1 },
+  { id: "qualify-the-reply", label: "Qualify the reply", level: 1 },
+  { id: "three-booking-moments", label: "Three booking moments", level: 1 },
+  { id: "calendar-link-handoff", label: "Calendar link handoff", level: 1 },
+  { id: "scripts-for-common-replies", label: "Scripts for common replies", level: 1 },
+  { id: "reduce-no-shows", label: "Reduce no-shows", level: 1 },
+  { id: "measure-the-handoff", label: "Measure the handoff", level: 1 },
   { id: "faqs", label: "FAQs", level: 1 },
 ];
 
@@ -90,7 +90,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Booking Starts Before the Ask
+        Booking starts before the ask
       </h2>
       <p>
         A booked demo is not created by the sentence, "Want to hop on a call?" It is created by the three or four messages before that sentence. The prospect has to understand why the conversation is relevant, why now is a reasonable time to talk, and why the next step will not waste their afternoon.
@@ -113,7 +113,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Qualify the Reply
+        Qualify the reply
       </h2>
       <p>
         A positive reply is not always demo intent. "Interesting" can mean they have budget, or it can mean they are being polite while waiting for a train. Before you ask for time on their calendar, identify which kind of reply you are looking at.
@@ -148,7 +148,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Three Booking Moments
+        Three booking moments
       </h2>
       <p>
         Not every LinkedIn thread should use the same meeting ask. The best wording depends on how much intent the prospect has shown. In practice, there are three common booking moments.
@@ -195,7 +195,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Calendar Link Handoff
+        Calendar link handoff
       </h2>
       <p>
         Calendar links are not the enemy. Bad timing is. Tools like{" "}
@@ -232,7 +232,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Scripts for Common Replies
+        Scripts for common replies
       </h2>
       <p>
         The fastest way to improve LinkedIn demo booking is to stop treating every reply as custom improv. You still personalize, but you should have clear response patterns for common moments.
@@ -283,7 +283,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Reduce No-Shows
+        Reduce no-shows
       </h2>
       <p>
         A booked meeting is not a real opportunity until the buyer shows up prepared. The easiest way to reduce no-shows is to make the meeting feel specific at the moment it is booked.
@@ -313,7 +313,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Measure the Handoff
+        Measure the handoff
       </h2>
       <p>
         If your LinkedIn outreach produces replies but few demos, do not immediately rewrite the whole campaign. Diagnose the handoff. Different drop-offs mean different fixes.

@@ -31,23 +31,23 @@ export const metadata = createPageMetadata({
 const agenticKitUrl = "https://www.agentickit.co/";
 
 const tocItems = [
-  { id: "what-are-agent-skills", label: "What Are Skills for AI Agents?", level: 1 },
-  { id: "taxonomy-table", label: "Prompts vs Tools vs Skills vs Subagents", level: 2 },
-  { id: "how-architectures-execute-skills", label: "How AI Agent Architectures Execute Skills", level: 1 },
-  { id: "mcp-and-standardization", label: "Standardization: Function Calling and MCP", level: 2 },
-  { id: "core-skill-categories", label: "Essential AI Agent Skills and What Tasks You Can Build", level: 1 },
-  { id: "prospecting-and-enrichment", label: "1. Prospecting and Lead Enrichment", level: 2 },
-  { id: "sales-and-outreach", label: "2. Autonomous Outreach and Conversation Handling", level: 2 },
-  { id: "software-engineering-skills", label: "3. Codebase Analysis and Engineering Tasks", level: 2 },
-  { id: "deep-research-and-extraction", label: "4. Web Navigation and Structured Data Extraction", level: 2 },
-  { id: "customer-support-operations", label: "5. Customer Support and Operational Triage", level: 2 },
-  { id: "skill-matrix-table", label: "Complete Agent Skill and Task Breakdown Matrix", level: 2 },
-  { id: "anatomy-of-a-production-skill", label: "The Anatomy of a Production-Ready Agent Skill", level: 1 },
-  { id: "how-to-find-agent-skills", label: "How to Find and Source Pre-Built AI Agent Skills", level: 1 },
-  { id: "agentic-kit-deep-dive", label: "Agentic Kit: The Curated Hub for Agent Skills", level: 2 },
-  { id: "sourcing-comparison-table", label: "Comparison of Skill Sourcing Ecosystems", level: 2 },
-  { id: "evaluating-and-testing-skills", label: "How to Evaluate and Sandbox Skills Safely", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 },
+  { id: "what-are-agent-skills", label: "What are skills for AI agents?", level: 1 },
+  { id: "taxonomy-table", label: "Prompts vs tools vs skills vs subagents", level: 2 },
+  { id: "how-architectures-execute-skills", label: "How AI agent architectures execute skills", level: 1 },
+  { id: "mcp-and-standardization", label: "Standardization: function calling and MCP", level: 2 },
+  { id: "core-skill-categories", label: "Essential AI agent skills and what tasks you can build", level: 1 },
+  { id: "prospecting-and-enrichment", label: "1. Prospecting and lead enrichment", level: 2 },
+  { id: "sales-and-outreach", label: "2. Autonomous outreach and conversation handling", level: 2 },
+  { id: "software-engineering-skills", label: "3. Codebase analysis and engineering tasks", level: 2 },
+  { id: "deep-research-and-extraction", label: "4. Web navigation and structured data extraction", level: 2 },
+  { id: "customer-support-operations", label: "5. Customer support and operational triage", level: 2 },
+  { id: "skill-matrix-table", label: "Agent skill and task breakdown matrix", level: 2 },
+  { id: "anatomy-of-a-production-skill", label: "The anatomy of a production-ready agent skill", level: 1 },
+  { id: "how-to-find-agent-skills", label: "How to find and source pre-built AI agent skills", level: 1 },
+  { id: "agentic-kit-deep-dive", label: "Agentic Kit: the curated hub for agent skills", level: 2 },
+  { id: "sourcing-comparison-table", label: "Comparison of skill sourcing ecosystems", level: 2 },
+  { id: "evaluating-and-testing-skills", label: "How to evaluate and sandbox skills safely", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 },
 ] as const;
 
 const faqItems = [
@@ -240,7 +240,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="taxonomy-table" style={{ fontFamily: "var(--font-varta)" }} className={subSectionClassName}>
-        Taxonomy: Prompts vs Tools vs Skills vs Subagents
+        Taxonomy: prompts vs tools vs skills vs subagents
       </h3>
       <p>
         To build reliable agent workflows, engineers must distinguish between the different abstraction layers of an agent stack:
@@ -275,7 +275,7 @@ export default function BlogPost() {
       </div>
 
       <h2 id="how-architectures-execute-skills" style={{ fontFamily: "var(--font-varta)" }} className={sectionClassName}>
-        How AI Agent Architectures Execute Skills
+        How AI agent architectures execute skills
       </h2>
       <p>
         Modern agent frameworks (such as LangGraph, CrewAI, AutoGen, or custom in-house agent runtimes) follow a structured reasoning loop to execute skills. This loop is commonly known as the ReAct (Reason + Act) pattern or tool-use loop:
@@ -292,7 +292,7 @@ export default function BlogPost() {
       </div>
 
       <h3 id="mcp-and-standardization" style={{ fontFamily: "var(--font-varta)" }} className={subSectionClassName}>
-        Standardization: Function Calling and the Model Context Protocol (MCP)
+        Standardization: function calling and the Model Context Protocol (MCP)
       </h3>
       <p>
         Historically, every framework had a proprietary format for defining tools, forcing developers to rewrite integrations for every model provider. In 2026, the industry has converged around standardized specifications:
@@ -315,14 +315,14 @@ export default function BlogPost() {
       </ul>
 
       <h2 id="core-skill-categories" style={{ fontFamily: "var(--font-varta)" }} className={sectionClassName}>
-        Essential AI Agent Skills and What Tasks You Can Build
+        Essential AI agent skills and what tasks you can build
       </h2>
       <p>
-        Equipping agents with specialized skill sets unlocks autonomous workflows across multiple business functions. Below are five foundational skill categories and the high-value tasks you can build with them.
+        Equipping agents with specialized skill sets enables autonomous workflows across multiple business functions. Below are five foundational skill categories and the high-value tasks you can build with them.
       </p>
 
       <h3 id="prospecting-and-enrichment" style={{ fontFamily: "var(--font-varta)" }} className={subSectionClassName}>
-        1. Prospecting and Lead Enrichment Skills
+        1. Prospecting and lead enrichment skills
       </h3>
       <p>
         Sales and growth teams use prospecting skills to eliminate manual data entry and lead scraping. Rather than having a human sales rep spend hours combing through databases, an agent with lead research skills can autonomously discover, qualify, and enrich accounts.
@@ -341,7 +341,7 @@ export default function BlogPost() {
       </ul>
 
       <h3 id="sales-and-outreach" style={{ fontFamily: "var(--font-varta)" }} className={subSectionClassName}>
-        2. Autonomous Outreach and Conversation Handling Skills
+        2. Autonomous outreach and conversation handling skills
       </h3>
       <p>
         Once leads are identified, outreach skills allow agents to craft hyper-personalized messages and manage communication across email and LinkedIn.
@@ -375,10 +375,10 @@ export default function BlogPost() {
       </p>
 
       <h3 id="software-engineering-skills" style={{ fontFamily: "var(--font-varta)" }} className={subSectionClassName}>
-        3. Codebase Analysis and Engineering Tasks
+        3. Codebase analysis and engineering tasks
       </h3>
       <p>
-        Coding agents require robust skills to navigate file trees, parse Abstract Syntax Trees (ASTs), execute shell commands, and run tests.
+        Coding agents need reliable skills to navigate file trees, parse Abstract Syntax Trees (ASTs), execute shell commands, and run tests.
       </p>
       <p><strong>Tasks you can execute with engineering skills:</strong></p>
       <ul className="list-disc space-y-2 pl-6 text-[var(--md-sys-color-on-surface)]">
@@ -386,7 +386,7 @@ export default function BlogPost() {
           <strong>Static Code Analysis and Lint Fixes:</strong> Identify unused variables, type errors, or security vulnerabilities and apply surgical patch fixes.
         </li>
         <li>
-          <strong>Automated Unit Test Generation:</strong> Read an existing module implementation and generate comprehensive test suites covering edge cases.
+          <strong>Automated Unit Test Generation:</strong> Read an existing module implementation and generate full test suites covering edge cases.
         </li>
         <li>
           <strong>Continuous Repository Maintenance:</strong> Automatically update deprecated dependencies, resolve breaking API migrations, and draft pull request descriptions.
@@ -394,10 +394,10 @@ export default function BlogPost() {
       </ul>
 
       <h3 id="deep-research-and-extraction" style={{ fontFamily: "var(--font-varta)" }} className={subSectionClassName}>
-        4. Web Navigation and Structured Data Extraction Skills
+        4. Web navigation and structured data extraction skills
       </h3>
       <p>
-        Research agents leverage web browsing and document parsing skills to synthesize insights from messy unstructured data.
+        Research agents use web browsing and document parsing skills to synthesize insights from messy unstructured data.
       </p>
       <p><strong>Tasks you can execute with research skills:</strong></p>
       <ul className="list-disc space-y-2 pl-6 text-[var(--md-sys-color-on-surface)]">
@@ -408,12 +408,12 @@ export default function BlogPost() {
           <strong>PDF and Financial Report Extraction:</strong> Parse 10-K filings, annual balance sheets, and earnings call transcripts into clean JSON tables.
         </li>
         <li>
-          <strong>Deep Web Synthesis:</strong> Query multiple search engines, filter clickbait sources, extract citations, and draft comprehensive technical whitepapers.
+          <strong>Deep Web Synthesis:</strong> Query multiple search engines, filter clickbait sources, extract citations, and draft full technical whitepapers.
         </li>
       </ul>
 
       <h3 id="customer-support-operations" style={{ fontFamily: "var(--font-varta)" }} className={subSectionClassName}>
-        5. Customer Support and Operational Triage Skills
+        5. Customer support and operational triage skills
       </h3>
       <p>
         Operational skills connect agents to billing gateways, internal ticket databases, and communication channels to automate day-to-day customer support.
@@ -428,7 +428,7 @@ export default function BlogPost() {
       </ul>
 
       <h3 id="skill-matrix-table" style={{ fontFamily: "var(--font-varta)" }} className={subSectionClassName}>
-        Complete Agent Skill and Task Breakdown Matrix
+        Agent skill and task breakdown matrix
       </h3>
       <p>
         Here is a structured overview of the five primary agent domains, their core capabilities, expected inputs, and generated artifacts:
@@ -463,10 +463,10 @@ export default function BlogPost() {
       </div>
 
       <h2 id="anatomy-of-a-production-skill" style={{ fontFamily: "var(--font-varta)" }} className={sectionClassName}>
-        The Anatomy of a Production-Ready Agent Skill
+        The anatomy of a production-ready agent skill
       </h2>
       <p>
-        A brittle tool is just a simple Python or TypeScript script. A robust, production-grade agent skill consists of four essential components:
+        A brittle tool is just a simple Python or TypeScript script. A production-grade agent skill consists of four essential components:
       </p>
       <div className="not-prose my-8 overflow-hidden rounded-xl border border-[var(--md-sys-color-outline-variant)]">
         <div className="bg-[var(--md-sys-color-surface-container-low)] p-4 border-b border-[var(--md-sys-color-outline-variant)]">
@@ -528,7 +528,7 @@ export const ProspectEnrichmentSkill = {
       </div>
 
       <h2 id="how-to-find-agent-skills" style={{ fontFamily: "var(--font-varta)" }} className={sectionClassName}>
-        How to Find and Source Pre-Built AI Agent Skills
+        How to find and source pre-built AI agent skills
       </h2>
       <p>
         Building every agent skill from scratch is time-consuming. Developers often spend weeks writing boilerplate API wrappers, handling auth flows, and tuning error prompts rather than focusing on their agent core business logic.
@@ -538,7 +538,7 @@ export const ProspectEnrichmentSkill = {
       </p>
 
       <h3 id="agentic-kit-deep-dive" style={{ fontFamily: "var(--font-varta)" }} className={subSectionClassName}>
-        Agentic Kit: The Curated Hub for Agent Skills
+        Agentic Kit: the curated hub for agent skills
       </h3>
       <p>
         When looking for vetted, ready-to-deploy skills and toolkits for autonomous AI agents,{" "}
@@ -552,7 +552,7 @@ export const ProspectEnrichmentSkill = {
             Spotlight: Agentic Kit (<ExternalLink href={agenticKitUrl}>agentickit.co</ExternalLink>)
           </h4>
           <p className="text-sm leading-6 text-zinc-800 m-0">
-            <ExternalLink href={agenticKitUrl}>Agentic Kit</ExternalLink> provides a comprehensive repository of modular skills, prompts, and tool integrations designed specifically for modern AI agents. Instead of reinventing complex integrations, developers can browse verified capabilities across sales automation, web scraping, data processing, and workflow orchestration, and integrate them into their agent stacks in minutes.
+            <ExternalLink href={agenticKitUrl}>Agentic Kit</ExternalLink> provides a large repository of modular skills, prompts, and tool integrations designed specifically for modern AI agents. Instead of reinventing complex integrations, developers can browse verified capabilities across sales automation, web scraping, data processing, and workflow orchestration, and integrate them into their agent stacks in minutes.
           </p>
         </div>
       </div>
@@ -572,7 +572,7 @@ export const ProspectEnrichmentSkill = {
       </ul>
 
       <h3 id="sourcing-comparison-table" style={{ fontFamily: "var(--font-varta)" }} className={subSectionClassName}>
-        Comparison of Skill Sourcing Ecosystems
+        Comparison of skill sourcing ecosystems
       </h3>
       <p>
         Here is an evaluation of the primary pathways to equip your agents with capabilities:
@@ -613,7 +613,7 @@ export const ProspectEnrichmentSkill = {
       </div>
 
       <h2 id="evaluating-and-testing-skills" style={{ fontFamily: "var(--font-varta)" }} className={sectionClassName}>
-        How to Evaluate and Sandbox Skills Safely
+        How to evaluate and sandbox skills safely
       </h2>
       <p>
         Giving autonomous agents execution privileges introduces security and operational risks. An agent equipped with an unvalidated skill could accidentally delete database rows, send unapproved emails, or exceed API billing quotas.

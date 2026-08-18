@@ -4,7 +4,7 @@ import BlogPostTemplate from "../blog-post-template";
 
 export const metadata = createPageMetadata({
   title: "Crafting a Compelling B2B Sales Offer - Omentir",
-  description: "Stop pitching product features. Learn how to structure risk reversals, performance guarantees, and value-based pricing to close more B2B sales.",
+  description: "Stop pitching product features. How to structure risk reversals, performance guarantees, and value-based pricing so a cold B2B offer is easier to try.",
   path: "/blogs/crafting-compelling-b2b-offer",
   keywords: [
     "crafting B2B sales offer",
@@ -17,17 +17,17 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "the-offer-barrier", label: "The Difference Between a Feature Pitch and a Compelling Offer", level: 1 },
-  { id: "diagnose-buyer-friction", label: "Diagnose the Buyer Friction First", level: 2 },
-  { id: "offer-anatomy", label: "Anatomy of an Irresistible B2B Offer", level: 1 },
-  { id: "aligned-incentive-pricing", label: "Pricing: Value-Based and Aligned Pricing Structures", level: 2 },
-  { id: "risk-reversal-guarantees", label: "Risk Reversal: Designing Guarantees and Pilot Programs", level: 2 },
-  { id: "contextual-proof", label: "Contextual Proof: Using Metrics to Ground Your Offer", level: 2 },
-  { id: "offer-message-example", label: "How to Turn the Offer into Outreach Copy", level: 2 },
-  { id: "safety-and-delivery-limits", label: "Pacing Campaign Delivery to Protect Profile Deliverability", level: 1 },
-  { id: "offer-creation-sop", label: "SOP: The 4-Step B2B Offer Construction Checklist", level: 1 },
-  { id: "conclusion", label: "Removing Friction to Accelerate Conversions", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "the-offer-barrier", label: "A feature pitch vs a real offer", level: 1 },
+  { id: "diagnose-buyer-friction", label: "Diagnose the buyer friction first", level: 2 },
+  { id: "offer-anatomy", label: "Anatomy of a B2B offer that is easy to try", level: 1 },
+  { id: "aligned-incentive-pricing", label: "Pricing: match fees to how the buyer gets value", level: 2 },
+  { id: "risk-reversal-guarantees", label: "Risk reversal: guarantees and pilots", level: 2 },
+  { id: "contextual-proof", label: "Proof that matches the buyer", level: 2 },
+  { id: "offer-message-example", label: "Turn the offer into outreach copy", level: 2 },
+  { id: "safety-and-delivery-limits", label: "Pace delivery so the profile stays usable", level: 1 },
+  { id: "offer-creation-sop", label: "SOP: four-step offer checklist", level: 1 },
+  { id: "conclusion", label: "Remove friction. Do not shout the discount.", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
@@ -37,7 +37,7 @@ const faqItems = [
   },
   {
     question: "How do I structure value-based pricing for software?",
-    answer: "Align your pricing tiers with the customer's usage metrics (such as Omentir's pricing starting at $49/month based on active accounts and discovery limits) so they pay relative to the value they get."
+    answer: "Set pricing tiers against the customer's usage metrics (Omentir's Pro plan starts at $49/month based on active accounts and discovery limits) so they pay in proportion to the value they get."
   },
   {
     question: "How does Omentir help deliver early-stage sales offers?",
@@ -53,7 +53,7 @@ export default function BlogPost() {
   return (
     <BlogPostTemplate
       title="Crafting a B2B Offer That Prospects Can't Say No To"
-      description="Stop pitching features and start pitching outcomes. Learn how to structure risk reversals, performance guarantees, and value-based pricing to close deals."
+      description="Stop pitching features and start pitching outcomes. How to structure risk reversals, performance guarantees, and value-based pricing so a cold offer is easier to try."
       slug="crafting-compelling-b2b-offer"
       bannerSrc="/crafting-compelling-b2b-offer.avif"
       bannerAlt="B2B offer design and sales risk reversal framework diagram"
@@ -61,19 +61,19 @@ export default function BlogPost() {
       faqItems={faqItems}
     >
       <p id="the-offer-barrier" className="scroll-mt-28">
-        Outbound campaign success depends on your offer. Senders often spend weeks refining landing page designs, configuring multi-inbox rotation, and writing personalized copywriting prompts. But when you message target prospects, your response rate is driven by what you propose.
+        Outbound results depend on the offer. Teams spend weeks on landing pages, inbox rotation, and personalized prompts. Then they message prospects, and the reply rate is still driven by what they actually proposed.
       </p>
       <p>
-        Most B2B pitches focus on features. Senders write long lists of capabilities, explaining that their software uses machine learning, integrates with multiple CRMs, or provides automated reporting.
+        Most B2B pitches list features. The software uses machine learning. It integrates with CRMs. It has automated reporting.
       </p>
       <p>
-        Feature pitches do not close deals. Buyers do not want more features; they want their challenges resolved.
+        Feature lists do not close deals. Buyers want a problem solved, not a longer spec sheet.
       </p>
       <p>
-        To convert cold leads, you must transition from feature pitching to offer construction. This involves packaging your pricing, risk guarantees, and proof metrics into a proposition that removes buying friction.
+        To convert cold leads, package pricing, risk guarantees, and proof into a proposition that makes the next step easy.
       </p>
       <p>
-        Omentir supports this outreach workflow, automating lead discovery and keeping campaigns paced safely. Let's look at how to construct a compelling B2B offer.
+        Omentir supports that workflow: it finds leads and keeps campaigns paced. The rest of this piece is how to construct the offer itself.
       </p>
       <p>
         A compelling offer is not the same thing as an aggressive discount. Discounts lower the price, but they do not always lower the buyer's perceived risk. A buyer may still worry that the product will take too long to implement, fail to integrate with their workflow, distract their team, or create political risk if the project disappoints.
@@ -83,7 +83,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="diagnose-buyer-friction" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Diagnose the Buyer Friction First
+        Diagnose the buyer friction first
       </h2>
       <p>
         Before improving your offer, identify the exact reason prospects hesitate. Most teams guess. They assume the issue is price, so they discount. Sometimes price is the issue. More often, the buyer is unclear on urgency, unsure whether the product fits their workflow, worried about implementation, or unconvinced that the promised outcome matters enough right now.
@@ -102,10 +102,10 @@ export default function BlogPost() {
       </p>
 
       <h2 id="offer-anatomy" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Anatomy of an Irresistible B2B Offer
+        Anatomy of a B2B offer that is easy to try
       </h2>
       <p>
-        An irresistible B2B offer aligns your solution directly with the buyer's business metrics, reducing the risk of purchase.
+        A usable B2B offer ties your product to the buyer's business metrics and reduces the risk of trying it.
       </p>
       <p>
         A professional B2B sales offer contains three core components:
@@ -130,14 +130,13 @@ export default function BlogPost() {
       </p>
 
       <h2 id="aligned-incentive-pricing" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Pricing: Value-Based and Aligned Pricing Structures
+        Pricing: match fees to how the buyer gets value
       </h2>
       <p>
-        Pricing model design is critical for conversion. High upfront costs create buying hesitation, slowing down your sales cycle.
+        Pricing design is a conversion issue. Large upfront costs make buyers hesitate and stretch the cycle.
       </p>
       <p>
-        Omentir is priced to align incentives, with Pro for self-serve teams
-        and Enterprise for teams that need more support:
+        Omentir is priced so the buyer's cost tracks usage. Pro is self-serve. Enterprise is for teams that need more support:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
         <li>
@@ -159,14 +158,14 @@ export default function BlogPost() {
         For your own product, do not choose a pricing model because it sounds modern. Choose it based on how the buyer experiences value. Seat-based pricing works when each additional user clearly receives value. Usage-based pricing works when activity volume tracks value. Flat monthly pricing works when buyers want predictability and the product is easy to understand. Custom pricing works when implementation, volume, or security requirements vary heavily by customer.
       </p>
       <p>
-        The key is alignment. If a founder is testing outbound for the first time, a large annual contract creates unnecessary friction. If a sales agency is managing multiple accounts, a tiny starter plan may not match the operational value they receive. A compelling offer lets the buyer start at the right commitment level without feeling trapped.
+        The important part is that the fee matches how value shows up. If a founder is testing outbound for the first time, a large annual contract is extra friction. If a sales agency manages multiple accounts, a tiny starter plan may underprice the work. A good offer lets the buyer start at the right commitment without feeling trapped.
       </p>
       <p>
         Avoid hiding pricing behind a sales call unless there is a real reason. Early-stage buyers often interpret hidden pricing as a sign that the product is expensive, complicated, or not designed for them. If you need custom pricing, explain what drives the range: account volume, workflow complexity, onboarding requirements, or integration needs.
       </p>
 
       <h2 id="risk-reversal-guarantees" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Risk Reversal: Designing Guarantees and Pilot Programs
+        Risk reversal: guarantees and pilots
       </h2>
       <p>
         Risk reversal is the most effective way to close deals. By offering guarantees, you shift the purchase risk from the buyer to your business.
@@ -199,16 +198,16 @@ export default function BlogPost() {
         <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
         <div className="pl-4">
           <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-            Offer Rule: Ground Your Copy in Facts 💡
+            Ground copy in facts
           </h4>
           <p className="text-sm text-zinc-650 leading-relaxed">
-            Ensure your outreach copy matches the details in your product profile. Hallucinating pricing details or feature parameters during campaigns damages buyer trust immediately.
+            Make outreach copy match the product. Inventing prices or features in a campaign kills trust immediately.
           </p>
         </div>
       </div>
 
       <h2 id="contextual-proof" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Contextual Proof: Using Metrics to Ground Your Offer
+        Proof that matches the buyer
       </h2>
       <p>
         To make your offer believable, you must include verified proof. Senders who reference general product statements see lower conversion rates.
@@ -233,7 +232,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="offer-message-example" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        How to Turn the Offer into Outreach Copy
+        Turn the offer into outreach copy
       </h2>
       <p>
         Once the offer is clear, your outreach message should not restate every detail. Cold copy should carry the smallest version of the offer that earns a reply. Save the pricing table, pilot terms, and proof packet for the conversation.
@@ -260,7 +259,7 @@ Worth comparing how you are handling lead quality before the new hire starts?`}<
       </p>
 
       <h2 id="safety-and-delivery-limits" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Pacing Campaign Delivery to Protect Profile Deliverability
+        Pace delivery so the profile stays usable
       </h2>
       <p>
         Even with a compelling offer, you must pace your outreach. Sending too many requests too quickly will trigger automated security restrictions.
@@ -280,14 +279,14 @@ Worth comparing how you are handling lead quality before the new hire starts?`}<
       </p>
 
       <h2 id="offer-creation-sop" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: The 4-Step B2B Offer Construction Checklist
+        SOP: four-step offer checklist
       </h2>
       <p>
         Construct your B2B sales offer using these steps:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
         <li><strong>Step 1:</strong> Identify the core pain points resolved by your software.</li>
-        <li><strong>Step 2:</strong> Structure pricing to align with buyer usage parameters.</li>
+        <li><strong>Step 2:</strong> Set pricing against the buyer's usage metrics.</li>
         <li><strong>Step 3:</strong> Add a risk-reversal guarantee (such as a pilot trial period).</li>
         <li><strong>Step 4:</strong> Update copywriting variables in Omentir to reference proof metrics.</li>
       </ul>
@@ -304,14 +303,14 @@ Worth comparing how you are handling lead quality before the new hire starts?`}<
         <li><strong>Proof:</strong> Customer result, workflow example, screenshot, or pilot evidence you can defend.</li>
       </ul>
       <p>
-        Omentir manages these campaign variables automatically, keeping your campaigns personalized and safe.
+        Omentir manages these campaign variables so the copy stays specific and the send stays paced.
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Removing Friction to Accelerate Conversions
+        Remove friction. Do not shout the discount.
       </h2>
       <p>
-        B2B outreach is most effective when it is timely and relevant. By framing your product pitches as irresistible, low-risk offers, you remove buying hesitation and accelerate your sales pipeline.
+        B2B outreach works when it is timely and relevant. Frame the product as a low-risk offer with a clear first step, and hesitation drops. The pipeline moves because trying is easier, not because the copy is louder.
       </p>
       <p>
         The offer does not need to be loud. It needs to be clear, credible, and easy to try. If a stranger cannot repeat the offer after one read, the copy is not ready for a cold inbox.

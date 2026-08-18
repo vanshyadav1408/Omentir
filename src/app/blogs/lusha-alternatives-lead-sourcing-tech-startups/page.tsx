@@ -25,13 +25,13 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems = [
-  { id: "database-landscape", label: "The Shift in Tech Startup Sourcing", level: 1 },
-  { id: "why-seek-alternatives", label: "Why Startups Seek Lusha Alternatives", level: 1 },
-  { id: "comparison-matrix", label: "Lusha vs. Modern Alternatives", level: 1 },
-  { id: "beyond-mobile-scraping", label: "Moving Beyond Mobile Scraping to AI Context", level: 1 },
-  { id: "omentir-difference", label: "Where Omentir Fits: Autonomous Prospecting", level: 2 },
-  { id: "strategic-playbook", label: "Your Sourcing and Outreach Playbook", level: 1 },
-  { id: "faq", label: "Startup Sourcing FAQs", level: 1 }
+  { id: "database-landscape", label: "The shift in tech startup sourcing", level: 1 },
+  { id: "why-seek-alternatives", label: "Why startups seek Lusha alternatives", level: 1 },
+  { id: "comparison-matrix", label: "Lusha vs modern alternatives", level: 1 },
+  { id: "beyond-mobile-scraping", label: "Moving beyond mobile scraping to AI context", level: 1 },
+  { id: "omentir-difference", label: "Where Omentir fits: autonomous prospecting", level: 2 },
+  { id: "strategic-playbook", label: "Your sourcing and outreach playbook", level: 1 },
+  { id: "faq", label: "Startup sourcing FAQs", level: 1 }
 ] as const;
 
 export default function BlogPost() {
@@ -60,13 +60,13 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          The Evolving Lead Sourcing Landscape for Tech Startups
+          The shift in lead sourcing for tech startups
         </h2>
         <p>
           To understand why startups are moving away from traditional databases, it is helpful to look at how buyer behavior has changed. Sourcing a list of generic decision-makers, downloading their phone numbers, and executing high-volume cold calling campaigns is a low-conversion, high-fatigue game.
         </p>
         <p>
-          Furthermore, remote work has decentralized the corporate landscape. Legacy office direct dials are largely obsolete. While mobile phone numbers remain highly valuable, cold calls can feel intrusive to modern buyers unless they are backed by strong context or preceded by social warm-up touchpoints on platforms like LinkedIn.
+          Remote work has also scattered corporate offices. Legacy office direct dials are largely obsolete. While mobile phone numbers remain highly valuable, cold calls can feel intrusive to modern buyers unless they are backed by strong context or preceded by social warm-up touchpoints on platforms like LinkedIn.
         </p>
         <p>
           By combining mobile database intelligence with LinkedIn profile visits, connection requests, and personalized message sequences, systems like Omentir allow growth teams to build multi-channel relationships safely. This approach increases reply rates while building real authority.
@@ -94,7 +94,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Why Modern Tech Startups Seek <a href="https://www.lusha.com/home/" target="_blank" rel="noopener">Lusha</a> Alternatives
+          Why modern tech startups seek <a href="https://www.lusha.com/home/" target="_blank" rel="noopener">Lusha</a> alternatives
         </h2>
         <p>
           While <a href="https://www.lusha.com/home/" target="_blank" rel="noopener">Lusha</a> provides high contact accuracy for sales reps making direct cold calls, high-growth tech startups face three core operational challenges when scaling outbound with traditional databases:
@@ -113,10 +113,10 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          <a href="https://www.lusha.com/home/" target="_blank" rel="noopener">Lusha</a> vs. Modern Alternatives: A Strategic Comparison
+          <a href="https://www.lusha.com/home/" target="_blank" rel="noopener">Lusha</a> vs modern alternatives: a strategic comparison
         </h2>
         <p>
-          Let us look at a head-to-head comparison between traditional B2B databases and modern, unified autonomous sales workspaces:
+          Here is a head-to-head comparison between traditional B2B databases and modern, unified autonomous sales workspaces:
         </p>
 
         {/* Comparison Table */}
@@ -164,7 +164,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Moving Beyond Mobile Scraping to AI Context
+          Moving beyond mobile scraping to AI context
         </h2>
         <p>
           Relying exclusively on mobile database lookups is a short-sighted strategy. Sourcing high-quality contact records is only the beginning of a modern campaign. The real challenge is context.
@@ -178,7 +178,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-xl font-semibold tracking-tight text-black mt-6 scroll-mt-28"
         >
-          Where Omentir Fits: Autonomous Prospecting
+          Where Omentir fits: autonomous prospecting
         </h3>
         <p>
           Omentir acts as an autonomous sales agent that handles both lead discovery and execution natively in a single workspace.
@@ -192,7 +192,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Your Sourcing and Outreach Playbook
+          Your sourcing and outreach playbook
         </h2>
         <p>
           If you want to scale your tech startup's outbound program, follow this three-step blueprint:
@@ -200,7 +200,7 @@ export default function BlogPost() {
         <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
           <li><strong>Identify Active Buying Signals:</strong> Settle on active context rather than static directories. Target companies that have recently raised capital, hired engineering leaders, or implemented specific technical integrations.</li>
           <li><strong>Integrate a Multi-Channel Flow:</strong> Warm up cold phone calls by visiting and connecting on LinkedIn first. Having a presence on social platforms builds trust and dramatically increases conversation conversion rates.</li>
-          <li><strong>Leverage Context-Aware Copywriting:</strong> Ensure every outreach email references unique company achievements or products. Avoid generic, multi-paragraph sales templates that ignore target-specific needs.</li>
+          <li><strong>Write context-aware copy:</strong> Ensure every outreach email references unique company achievements or products. Avoid generic, multi-paragraph sales templates that ignore target-specific needs.</li>
         </ul>
 
 
@@ -209,7 +209,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Best <a href="https://www.lusha.com/home/" target="_blank" rel="noopener">Lusha</a> Alternatives by Use Case
+          Best <a href="https://www.lusha.com/home/" target="_blank" rel="noopener">Lusha</a> alternatives by use case
         </h2>
         <p>
           <a href="https://www.lusha.com/home/" target="_blank" rel="noopener">Lusha</a> is useful when a startup needs quick contact lookup, especially around LinkedIn prospecting. But teams searching for <a href="https://www.lusha.com/home/" target="_blank" rel="noopener">Lusha</a> alternatives usually want one of three things: broader data coverage, better enrichment control, or a system that turns the contact into an actual sales conversation.
@@ -231,7 +231,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          How to Evaluate Data Quality
+          How to evaluate data quality
         </h2>
         <p>
           When comparing <a href="https://www.lusha.com/home/" target="_blank" rel="noopener">Lusha</a> alternatives, run the same test list through each option. Pick 100 accounts from your real ICP, then evaluate how many contacts are found, how many emails verify, how many titles are current, and how many records include useful context for outreach.
@@ -251,7 +251,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Best <a href="https://www.lusha.com/home/" target="_blank" rel="noopener">Lusha</a> Alternative by Startup Stage
+          Best <a href="https://www.lusha.com/home/" target="_blank" rel="noopener">Lusha</a> alternative by startup stage
         </h2>
         <p>Pre-seed teams should usually choose the simplest workflow that creates conversations. At that stage, a founder does not need a large contact database as much as they need a repeatable way to find the right buyers and start relevant conversations. Omentir is strongest when the founder wants that workflow in one place.</p><p>Seed and Series A teams may need more control. If the team has a growth operator, <a href="https://www.clay.com/" target="_blank" rel="noopener">Clay</a> can be useful for custom enrichment and scoring. If the team has SDRs doing phone-heavy outreach, <a href="https://www.cognism.com/" target="_blank" rel="noopener">Cognism</a> or <a href="https://www.zoominfo.com/" target="_blank" rel="noopener">ZoomInfo</a> may be stronger because direct dial coverage matters more. If the team needs affordable, broad database access, <a href="https://www.apollo.io/" target="_blank" rel="noopener">Apollo</a> may be the better first step.</p><p>The main point is to match the tool to the job. <a href="https://www.lusha.com/home/" target="_blank" rel="noopener">Lusha</a> alternatives are not interchangeable. A lookup tool, a database, an enrichment platform, and an AI sales agent solve different problems inside the same lead sourcing category.</p>
 
@@ -260,7 +260,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          More Detail on Non-Omentir <a href="https://www.lusha.com/home/" target="_blank" rel="noopener">Lusha</a> Alternatives
+          More detail on non-Omentir <a href="https://www.lusha.com/home/" target="_blank" rel="noopener">Lusha</a> alternatives
         </h2>
         <p>
           A startup comparing <a href="https://www.lusha.com/home/" target="_blank" rel="noopener">Lusha</a> alternatives should consider whether it needs a lookup tool, a full database, an enrichment workspace, or an outbound execution system. The non-Omentir options can be the better fit when the team already has a sales process and only needs better contact data.
@@ -299,7 +299,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Startup Sourcing FAQs
+          Startup sourcing FAQs
         </h2>
       <FaqAccordion
         items={[

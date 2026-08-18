@@ -23,14 +23,14 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "start-with-the-sales-problem", label: "Start With the Sales Problem", level: 1 },
-  { id: "build-the-prospecting-lane", label: "Build the Prospecting Lane", level: 1 },
-  { id: "write-the-message-system", label: "Write the Message System", level: 1 },
-  { id: "quality-control", label: "Quality Control", level: 1 },
-  { id: "before-after-example", label: "Before and After", level: 2 },
-  { id: "follow-up-without-pressure", label: "Follow Up Without Pressure", level: 1 },
-  { id: "measure-and-adjust", label: "Measure and Adjust", level: 1 },
-  { id: "faqs", label: "FAQs", level: 1 },
+  { id: "start-with-the-sales-problem", label: "Start with the sales problem", level: 1 },
+  { id: "build-the-prospecting-lane", label: "Build the prospecting lane", level: 1 },
+  { id: "write-the-message-system", label: "Write the message system", level: 1 },
+  { id: "quality-control", label: "Quality control", level: 1 },
+  { id: "before-after-example", label: "Before and after", level: 2 },
+  { id: "follow-up-without-pressure", label: "Follow up without pressure", level: 1 },
+  { id: "measure-and-adjust", label: "Measure and adjust", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 },
 ];
 
 const faqItems = [
@@ -86,7 +86,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Start With the Sales Problem
+        Start with the sales problem
       </h2>
       <p>
         Do not start by asking, "How many leads can AI find?" Start with the problem your outbound campaign exists to solve. Are you validating a new ICP, booking founder-led demos, reviving old pipeline, or testing a new offer?
@@ -123,7 +123,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Build the Prospecting Lane
+        Build the prospecting lane
       </h2>
       <p>
         A prospecting lane is narrower than an ICP. Your ICP might be "B2B SaaS founders." A lane is "founders of HR SaaS companies hiring their first sales hire this quarter." Lanes give AI something concrete to search and score.
@@ -159,7 +159,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Write the Message System
+        Write the message system
       </h2>
       <p>
         AI should not produce one-off clever messages forever. It should work inside a message system: a hook, a relevance bridge, a low-pressure question, and a follow-up logic.
@@ -200,7 +200,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Quality Control
+        Quality control
       </h2>
       <p>
         AI outreach needs a quality gate before it reaches prospects. The gate should check list fit, evidence quality, message clarity, claim safety, and sending pace.
@@ -217,10 +217,10 @@ export default function BlogPost() {
       </ul>
 
       <h3 id="before-after-example" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Before and After
+        Before and after
       </h3>
       <p>
-        A weak AI draft sounds polished but interchangeable: "I help SaaS companies streamline operations and drive revenue growth. Would you be open to a quick call?" Nothing in that message proves why this person is being contacted.
+        A weak AI draft sounds polished but interchangeable: "I help SaaS companies optimize operations and drive revenue growth. Would you be open to a quick call?" Nothing in that message proves why this person is being contacted.
       </p>
       <p>
         A stronger draft uses a real signal: "Saw you are hiring two customer success managers after launching your enterprise plan. Are you already happy with how onboarding handoffs are tracked, or is that still a bit manual?"
@@ -240,7 +240,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Follow Up Without Pressure
+        Follow up without pressure
       </h2>
       <p>
         AI follow-up should extend the original context, not restart the pitch. If the first message was about onboarding handoffs, the follow-up should add a small useful angle on that same problem.
@@ -267,7 +267,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Measure and Adjust
+        Measure and adjust
       </h2>
       <p>
         Do not judge an AI outreach campaign only by reply rate. Reply rate can rise because the campaign is controversial, vague, or attracting the wrong people.
@@ -300,7 +300,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        FAQs
+        Frequently asked questions
       </h2>
       <FaqAccordion items={faqItems} />
     </BlogPostTemplate>

@@ -5,7 +5,7 @@ import FaqAccordion from "../../faq-accordion";
 
 export const metadata = createPageMetadata({
   title: "AI Prospect Research: Synthesize B2B Target Data - Omentir",
-  description: "Learn how to use AI to analyze company blogs, posts, and job listings on LinkedIn to build structured research profiles that convert.",
+  description: "Use AI to analyze company blogs, posts, and job listings on LinkedIn, then turn that into structured research profiles you can send from.",
   path: "/blogs/ai-prospect-research",
   keywords: [
     "AI prospect research",
@@ -18,22 +18,22 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "cost-of-manual-research", label: "The Scaling Bottleneck of Manual Prospect Mapping", level: 1 },
-  { id: "sourcing-unstructured-data", label: "Identifying Key Unstructured Data Sources on LinkedIn", level: 1 },
-  { id: "synthesizing-pain-points", label: "Using AI to Synthesize Professional Pain Points", level: 1 },
-  { id: "constructing-profile", label: "Constructing the Structured Prospect Research Profile", level: 2 },
-  { id: "grounding-outreach-copy", label: "Grounding Sales Pitches in Synthesized Research Profiles", level: 2 },
-  { id: "handling-objections", label: "Addressing Sourced Objections Prior to Outreach", level: 1 },
-  { id: "pacing-compliance-standards", label: "Pacing campaigns Safely to Protect Account Integrity", level: 1 },
-  { id: "research-sop-checklist", label: "SOP: The AI Prospect Research Audit Checklist", level: 1 },
-  { id: "conclusion", label: "Unlocking Quality Sourcing at Scale", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "cost-of-manual-research", label: "Why manual prospect research does not scale", level: 1 },
+  { id: "sourcing-unstructured-data", label: "Unstructured data sources on LinkedIn", level: 1 },
+  { id: "synthesizing-pain-points", label: "Turn public context into likely pain points", level: 1 },
+  { id: "constructing-profile", label: "Build a structured research profile", level: 2 },
+  { id: "grounding-outreach-copy", label: "Ground the first message in the research", level: 2 },
+  { id: "handling-objections", label: "Spot objections before you send", level: 1 },
+  { id: "pacing-compliance-standards", label: "Keep research-heavy outreach paced", level: 1 },
+  { id: "research-sop-checklist", label: "AI prospect research audit checklist", level: 1 },
+  { id: "conclusion", label: "Keep research consistent without turning it into spam", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
   {
     question: "What is unstructured prospect data and why should I analyze it?",
-    answer: "Unstructured prospect data includes company updates, personal feed posts, about sections, and job descriptions. Analyzing it allows you to identify specific company challenges that structured data (like city or employee count) cannot reveal."
+    answer: "Unstructured prospect data includes company updates, personal feed posts, about sections, and job descriptions. Reading it can surface specific company challenges that structured fields like city or employee count cannot."
   },
   {
     question: "How does AI analyze a prospect's profile without violating safety?",
@@ -41,7 +41,7 @@ const faqItems = [
   },
   {
     question: "Can I use prospect research to handle sales objections early?",
-    answer: "Yes. By identifying that a prospect recently bought a competitor product or has a flat headcount, you can frame your outreach to highlight integration ease or cost savings."
+    answer: "Yes. If a prospect recently bought a competitor product or has a flat headcount, you can frame the first note around integration effort or cost, instead of pitching a full replacement."
   },
   {
     question: "How long does it take an AI agent to build a research profile?",
@@ -53,7 +53,7 @@ export default function BlogPost() {
   return (
     <BlogPostTemplate
       title="AI Prospect Research: How to Synthesize B2B Target Data at Scale"
-      description="Learn how to use AI to analyze company blogs, posts, and job listings on LinkedIn to build structured research profiles that convert."
+      description="Use AI to analyze company blogs, posts, and job listings on LinkedIn, then turn that into structured research profiles you can send from."
       slug="ai-prospect-research"
       bannerSrc="/ai-prospect-research.avif"
       bannerAlt="AI prospect research and profile data synthesis dashboard illustration"
@@ -67,29 +67,29 @@ export default function BlogPost() {
         The problem is that personalization does not scale. Spending fifteen minutes reading a prospect's LinkedIn feed, company blog, and job openings to write one email is highly inefficient. A sales rep executing this playbook can only contact 10 to 15 people a day, which is not enough volume to sustain a growing pipeline.
       </p>
       <p>
-        To scale your outbound program without reverting to generic spam, you must use AI-driven prospect research. Instead of manual analysis, connect an intelligent agent to your workflow. The AI can read unstructured company profiles, synthesize their main challenges, and build a research sheet in seconds.
+        To scale outbound without going back to generic spam, use AI for prospect research. Instead of reading every profile by hand, connect an agent to your workflow. It can read unstructured company profiles, pull out the main challenges, and build a research sheet in seconds.
       </p>
       <p>
-        Omentir integrates this research layer directly into your lead queue. The platform checks profiles, summarizes their background, and generates outreach drafts, keeping you in control of the final approval. Let's look at how to build a research pipeline using AI.
+        Omentir puts this research layer in your lead queue. It checks profiles, summarizes background, and drafts outreach, while you keep final approval. Here is how to build that research pipeline.
       </p>
       <p>
         The best prospect research does not try to prove that every lead is ready to buy. It tries to answer a narrower question: is there enough observable evidence to justify a thoughtful first message? If the answer is no, the lead should stay out of the campaign, even if the title and company size look perfect.
       </p>
 
       <h2 id="sourcing-unstructured-data" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Identifying Key Unstructured Data Sources on LinkedIn
+        Unstructured data sources on LinkedIn
       </h2>
       <p>
-        Standard database providers supply structured variables: employee count, city, industry category, and job title. While useful, these variables do not reveal buyer intent. To find active need, your agent must analyze unstructured sources on <a href="https://www.linkedin.com" target="_blank" rel="noopener" className="text-blue-600 hover:underline">LinkedIn</a>:
+        Database providers supply structured variables: employee count, city, industry category, and job title. Those fields are useful, but they do not show buyer intent. To find active need, your agent has to read unstructured sources on <a href="https://www.linkedin.com" target="_blank" rel="noopener" className="text-blue-600 hover:underline">LinkedIn</a>:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Profile About Section:</strong> The summary where executives describe their current initiatives, department goals, and technical focus.</li>
-        <li><strong>Recent Feed Posts:</strong> The updates they share about industry trends, team achievements, or operational challenges.</li>
-        <li><strong>LinkedIn Job Openings:</strong> The detailed listings showing which technologies their target teams need to know and what tasks they are expanding to handle.</li>
-        <li><strong>Company Updates:</strong> The press releases, product launch posts, and funding announcements shared on the company page.</li>
+        <li><strong>Profile about section:</strong> The summary where executives describe current initiatives, department goals, and technical focus.</li>
+        <li><strong>Recent feed posts:</strong> Updates they share about industry trends, team work, or operational challenges.</li>
+        <li><strong>LinkedIn job openings:</strong> Listings that show which technologies their teams need and what work they are expanding to handle.</li>
+        <li><strong>Company updates:</strong> Press releases, product launch posts, and funding announcements on the company page.</li>
       </ul>
       <p>
-        By feeding these unstructured documents to an LLM, you extract specific business challenges that static data points miss entirely.
+        Feed those documents to an LLM and you can extract specific business challenges that static data points miss.
       </p>
       <p>
         Treat each source differently. A job post is a stronger operational signal than a vague company tagline. A founder's post about a current bottleneck is stronger than a reposted industry article. A recent product launch is stronger than a two-year-old press release. The AI should rank evidence by freshness, specificity, and relevance to your offer.
@@ -102,7 +102,7 @@ export default function BlogPost() {
         <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
         <div className="pl-4">
           <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-            Research Strategy: Watch the Job Descriptions
+            Research note: watch the job descriptions
           </h4>
           <p className="text-sm text-zinc-650 leading-relaxed">
             Check the 'Requirements' section of active job posts. If a company is hiring engineers who know Python and AWS, it confirms their tech stack is built on those tools, giving you a warm technographic opening.
@@ -111,13 +111,13 @@ export default function BlogPost() {
       </div>
 
       <h2 id="synthesizing-pain-points" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Using AI to Synthesize Professional Pain Points
+        Turn public context into likely pain points
       </h2>
       <p>
-        Once your agent has access to unstructured data, you must instruct it to synthesize relevant pain points. Do not simply ask it to summarize the profile, or you will get generic descriptions like: "This company builds software and is growing."
+        Once the agent can read unstructured data, tell it to extract relevant pain points. Do not only ask it to summarize the profile, or you will get generic lines like: "This company builds software and is growing."
       </p>
       <p>
-        Instead, direct the AI to answer specific business questions:
+        Ask the AI specific business questions instead:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
         <li>What is this department's main operational bottleneck based on active job requirements?</li>
@@ -125,7 +125,7 @@ export default function BlogPost() {
         <li>Does the VP's personal feed indicate they are concerned about deliverability, security, or remote team management?</li>
       </ul>
       <p>
-        This structured focus transforms raw text into actionable insights for your copy. You can learn more about extracting this data in our guide on{" "}
+        That focus turns raw text into something a copywriter can use. You can learn more about extracting this data in our guide on{" "}
         <Link href="/blogs/beyond-database-scraping-how-ai-salesman-qualify-leads" className="text-blue-600 hover:underline">
           how AI qualifiers evaluate leads
         </Link>
@@ -139,10 +139,10 @@ export default function BlogPost() {
       </p>
 
       <h3 id="constructing-profile" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Constructing the Structured Prospect Research Profile
+        Build a structured research profile
       </h3>
       <p>
-        Your system should compile its findings into a standard research profile. This profile acts as the single source of truth for your messaging sequence:
+        Your system should compile findings into a standard research profile. That profile is the source of truth for the messaging sequence:
       </p>
       <p className="rounded bg-zinc-200/50 p-3 font-mono text-sm text-zinc-800">
         - Prospect: Jane Doe, VP of Sales at AcmeV2<br />
@@ -152,7 +152,7 @@ export default function BlogPost() {
         - Recommended Hook: Focus on automated list enrichment
       </p>
       <p>
-        Having a structured profile makes it easy to audit the agent's work and confirm that its claims match verified data. For list qualification templates, check our guide to{" "}
+        A structured profile makes it easy to audit the agent's work and confirm that its claims match verified data. For list qualification templates, check our guide to{" "}
         <Link href="/blogs/ai-linkedin-prospecting" className="text-blue-600 hover:underline">
           AI prospecting architectures
         </Link>
@@ -166,13 +166,13 @@ export default function BlogPost() {
       </p>
 
       <h3 id="grounding-outreach-copy" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Grounding Sales Pitches in Synthesized Research Profiles
+        Ground the first message in the research
       </h3>
       <p>
-        Use the compiled research profile to draft the outreach note. The agent should combine your product profile facts with the prospect's pain points to build a relevant value statement.
+        Use the research profile to draft the outreach note. The agent should combine your product facts with the prospect's pain points to write a relevant value statement.
       </p>
       <p>
-        Omentir handles this grounding process automatically. It combines the prospect's profile data with your settings, drafting a pacing-compliant note that avoids fake product claims. This structured approach is detailed in our guide on{" "}
+        Omentir handles that grounding automatically. It combines the prospect's profile data with your settings, drafting a pacing-compliant note that avoids fake product claims. The same approach is detailed in our guide on{" "}
         <Link href="/blogs/chatgpt-linkedin-leads" className="text-blue-600 hover:underline">
           ChatGPT founder outbound playbooks
         </Link>
@@ -186,10 +186,10 @@ export default function BlogPost() {
       </p>
 
       <h2 id="handling-objections" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Addressing Sourced Objections Prior to Outreach
+        Spot objections before you send
       </h2>
       <p>
-        By analyzing unstructured data, you can often anticipate a prospect's objections before they speak. If their job listings show they use a competitor product, or if their profile mentions they are focusing on team alignment, adapt your first message to match this setup.
+        Reading unstructured data often lets you anticipate objections before they speak. If job listings show they use a competitor, or their profile says they are focusing on team alignment, adapt the first message to that setup.
       </p>
       <p>
         If you know they use a competitor, frame your offer as an integration or a supplementary tool, rather than pitching a replacement. This shows respect for their current workflow and reduces immediate friction.
@@ -202,7 +202,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="pacing-compliance-standards" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Pacing Campaigns Safely to Protect Account Integrity
+        Keep research-heavy outreach paced
       </h2>
       <p>
         Research-heavy outreach tempts people to "use the notes." You spend an hour on a prospect, then send a long first message the same afternoon. The research was good. The send pattern still looks like a burst.
@@ -215,17 +215,17 @@ export default function BlogPost() {
       </p>
 
       <h2 id="research-sop-checklist" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: The AI Prospect Research Audit Checklist
+        AI prospect research audit checklist
       </h2>
       <p>
-        Follow this simple daily routine to audit your research campaigns:
+        Follow this daily routine to audit research campaigns:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Confirm Hook Source:</strong> Is the hook based on a real company event (job change, posting, or hiring) rather than location data?</li>
-        <li><strong>Audit Pain Statement:</strong> Does the pain point match their role? (e.g., target VP of Sales for pipeline, VP of Eng for dev tools).</li>
+        <li><strong>Confirm hook source:</strong> Is the hook based on a real company event (job change, posting, or hiring) rather than location data?</li>
+        <li><strong>Audit pain statement:</strong> Does the pain point match their role? (e.g., target VP of Sales for pipeline, VP of Eng for dev tools).</li>
         <li><strong>Verify copy length:</strong> Is the message under 100 words? Can a prospect read it on a mobile screen in 10 seconds?</li>
-        <li><strong>Check Pacing:</strong> Is the campaign configured to stay within daily safety limits?</li>
-        <li><strong>Test Links:</strong> Do all calendar and resource links resolve correctly?</li>
+        <li><strong>Check pacing:</strong> Is the campaign configured to stay within daily safety limits?</li>
+        <li><strong>Test links:</strong> Do all calendar and resource links resolve correctly?</li>
       </ul>
       <p>
         Add a weekly quality review. Pull ten approved leads and ask whether each one had a clear signal, a truthful hook, and a message you would be comfortable sending manually. If several fail that test, tighten the research prompt before increasing volume.
@@ -235,13 +235,13 @@ export default function BlogPost() {
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Unlocking Quality Sourcing at Scale
+        Keep research consistent without turning it into spam
       </h2>
       <p>
-        AI prospect research is the most reliable way to scale B2B outbound without resorting to generic spam. By analyzing unstructured LinkedIn updates and summarizing buyer intent, you can send highly relevant outreach notes that drive demos.
+        AI prospect research is a reliable way to scale B2B outbound without generic spam. By reading unstructured LinkedIn updates and summarizing buyer intent, you can send relevant notes that lead to demos.
       </p>
       <p>
-        Let Omentir handle the logistics. Configure your discovery agents to track active buyers, summarize their background, and draft safe, paced sequences that turn warm LinkedIn leads into customer conversations.
+        Let Omentir handle the logistics. Configure discovery agents to track active buyers, summarize their background, and draft paced sequences that turn warm LinkedIn leads into conversations.
       </p>
       <p>
         The real advantage is consistency. Human reps are good at judgment, but they get tired, rush research, and skip notes when the queue is full. AI can keep the research format consistent, while humans keep the judgment honest. That combination is what makes personalized outbound scale without turning into generic automation.
@@ -252,7 +252,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Frequently Asked Questions
+        Frequently asked questions
       </h2>
       <FaqAccordion items={faqItems} />
     </BlogPostTemplate>

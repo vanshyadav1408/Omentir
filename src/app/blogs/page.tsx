@@ -6,7 +6,7 @@ import { createBlogCollectionJsonLd, createPageMetadata } from "../seo";
 
 export const metadata = createPageMetadata({
   title: "Blogs - Omentir",
-  description: "Explore tactical, zero-fluff B2B outreach playbooks, connection templates, and guides to scale LinkedIn sales campaigns and book demos consistently.",
+  description: "Guides, templates, and playbooks for LinkedIn outreach, outbound sequences, and booking demos.",
   path: "/blogs",
   keywords: [
     "B2B sales blog",
@@ -50,7 +50,7 @@ export default function BlogsIndexPage() {
               </h1>
 
               <p className="max-w-2xl text-base leading-8 text-[var(--md-sys-color-on-surface-variant)] sm:text-lg">
-                Tactical, zero-fluff guides and frameworks designed for solo founders, B2B sales teams, and modern growth operators to turn LinkedIn outreach into booked demos.
+                Guides and templates for solo founders, B2B sales teams, and growth operators who use LinkedIn to book demos.
               </p>
             </div>
           </div>

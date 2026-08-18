@@ -77,7 +77,7 @@ export const COMPARISON_BRANDS: Record<string, ComparisonBrand> = {
   heyreach: {
     id: "heyreach",
     name: "HeyReach",
-    src: "/comparison-logos/heyreach.svg",
+    src: "/comparison-logos/heyreach.png",
     bleed: true,
   },
   expandi: {
@@ -127,8 +127,10 @@ export const COMPARISON_BRANDS: Record<string, ComparisonBrand> = {
 export function comparisonBrandFromSlug(slug: string): ComparisonBrand | undefined {
   const afterOmentir = slug.replace(/^omentir-vs-/, "");
   if (COMPARISON_BRANDS[afterOmentir]) return COMPARISON_BRANDS[afterOmentir];
-  const first = slug.split("-vs-")[0];
-  return COMPARISON_BRANDS[first];
+  for (const part of slug.split("-vs-")) {
+    if (COMPARISON_BRANDS[part]) return COMPARISON_BRANDS[part];
+  }
+  return undefined;
 }
 
 export function comparisonBrandFromName(name: string): ComparisonBrand | undefined {

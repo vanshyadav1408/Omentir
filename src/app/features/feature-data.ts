@@ -23,7 +23,7 @@ export const ALL_FEATURES: SeoContentPage[] = [
         "id": "why-safety",
         "heading": "Why safety is a product feature",
         "paragraphs": [
-          "LinkedIn outbound fails in two ways: nobody replies, or the account gets restricted because volume looked robotic. Omentir is designed for the first problem without ignoring the second. Outreach runs from your profile with daily limits and human-paced sending rather than unlimited blast mode.",
+          "LinkedIn outbound fails in two ways: nobody replies, or the account gets restricted because volume looked robotic. Omentir targets the first problem without ignoring the second. Outreach runs from your profile with daily limits and human-paced sending rather than unlimited blast mode.",
           "No tool can promise zero risk. Platform rules change, and misuse still belongs to the operator. What Omentir can do is make the safe path the easy path."
         ]
       },
@@ -682,7 +682,7 @@ export const ALL_FEATURES: SeoContentPage[] = [
   {
     "slug": "lead-groups-and-scoring",
     "title": "Lead groups and scoring",
-    "description": "How Omentir organizes discovered prospects into lead groups, scores fit, and helps you decide who gets outreach first.",
+    "description": "How Omentir organizes discovered prospects into lead groups, scores fit, and ranks who should get outreach first.",
     "summary": "Keep ICP-fit buyers organized, review quality before volume, and feed the right people into campaigns.",
     "publishedDate": "August 12, 2026",
     "updatedDate": "August 12, 2026",
@@ -705,7 +705,7 @@ export const ALL_FEATURES: SeoContentPage[] = [
         "id": "scoring",
         "heading": "Scoring as prioritization, not prophecy",
         "paragraphs": [
-          "Scoring helps you rank who looks closest to the buyer you described. It is a prioritization aid, not a guarantee that the top row will buy. Use scores to decide manual review order and campaign priority. Override them when you know the market better than the model.",
+          "Scores rank who looks closest to the buyer you described. That is a prioritization aid, not a guarantee that the top row will buy. Use scores to decide manual review order and campaign priority. Override them when you know the market better than the model.",
           "Weak ICP definitions produce confident but wrong scores. Fix targeting and My Product when the ranking feels consistently off."
         ]
       },
@@ -795,7 +795,7 @@ export const ALL_FEATURES: SeoContentPage[] = [
         "heading": "Outreach that still looks like you",
         "paragraphs": [
           "Omentir is built for LinkedIn-first outbound. Campaigns send connection requests, messages, and follow-ups from the LinkedIn account you connect, not from a black-box sender identity. AI helps draft and personalize copy using product context and lead signals, while you keep control over pacing and campaign goals.",
-          "The goal is not maximum blast volume. The goal is a steady, human-paced motion that finds fit buyers, says something relevant, and captures replies in one place."
+          "Do not optimize for blast volume. Send at a human pace, talk to fit buyers, and keep replies in one place."
         ]
       },
       {
@@ -849,7 +849,7 @@ export const ALL_FEATURES: SeoContentPage[] = [
       },
       {
         "question": "Can I edit AI-written messages?",
-        "answer": "Yes. Campaigns are designed so drafts can be reviewed, edited, or approved according to how you run the workspace. Operator tools that reply to existing threads are intended for draft approval, not silent unsupervised replies."
+        "answer": "Yes. You can review, edit, or approve drafts depending on how you run the workspace. Operator tools that reply to existing threads are meant for draft approval, not silent unsupervised replies."
       },
       {
         "question": "How does Omentir stay within LinkedIn safety boundaries?",
@@ -1234,7 +1234,7 @@ export const ALL_FEATURES: SeoContentPage[] = [
         "id": "what-you-see",
         "heading": "What the unified inbox is for",
         "paragraphs": [
-          "The inbox is where conversations surface after outreach. You can work through interested replies, keep context with the lead, and decide whether to answer, schedule, or stop. Intent-oriented organization helps you spend time on people who are actually engaging.",
+          "The inbox is where conversations surface after outreach. You can work through interested replies, keep context with the lead, and decide whether to answer, schedule, or stop. Sort by intent so you spend time on people who are actually engaging.",
           "Operator tooling can list conversations and draft replies for existing threads, with the expectation that a human approves drafts before anything goes out through reply tools."
         ]
       },
@@ -1242,7 +1242,7 @@ export const ALL_FEATURES: SeoContentPage[] = [
         "id": "booking",
         "heading": "From reply to booked conversation",
         "paragraphs": [
-          "Interested replies are only useful if they turn into meetings or clear next steps. Omentir's broader product motion is built to move from personalized first touches to demos. The Minimum Booking Guarantee on eligible managed plans measures real booked conversations, not vanity send counts.",
+          "Interested replies are only useful if they turn into meetings or clear next steps. The rest of the product is for turning a first touch into a demo. The Minimum Booking Guarantee on eligible managed plans measures real booked conversations, not vanity send counts.",
           "Your booking link, offer clarity, and response speed still matter. Software can collect replies. It cannot invent a reason for someone to meet."
         ]
       },

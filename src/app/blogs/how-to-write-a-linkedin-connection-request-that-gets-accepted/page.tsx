@@ -244,7 +244,7 @@ export default function BlogPost() {
         <li>Their name, once.</li>
         <li>One specific thing only they would recognize: a post, a hire, an event, a group remark.</li>
         <li>One short clause for why you are the person sending this.</li>
-        <li>Stop. No meeting ask. No link. No &quot;let&apos;s explore synergies.&quot;</li>
+        <li>Stop. No meeting ask. No link. No &quot;would love to find synergies.&quot;</li>
       </ol>
       <p>
         In one line: name, specific thing, why you, then stop. If you cannot name the specific thing
@@ -261,7 +261,7 @@ export default function BlogPost() {
       </p>
       <ul className="list-disc space-y-2 pl-6">
         <li>A photo that looks like you, not a logo or a conference booth.</li>
-        <li>A headline that names the work, not a slogan. &quot;Founder, billing for agencies&quot; beats &quot;Helping teams unlock growth.&quot;</li>
+        <li>A headline that names the work, not a slogan. &quot;Founder, billing for agencies&quot; beats &quot;Helping teams grow without limits.&quot;</li>
         <li>An About section a stranger can parse in twenty seconds.</li>
         <li>Some recent public activity, so the account does not look unused.</li>
       </ul>

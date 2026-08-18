@@ -18,15 +18,15 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "the-operational-reality", label: "The Operational Reality of AI SDRs", level: 1 },
-  { id: "defining-delegation-boundaries", label: "Defining the Delegation Boundary", level: 1 },
-  { id: "the-daily-operational-routine", label: "The Daily Outbound Routine", level: 1 },
-  { id: "safeguarding-account-health", label: "Safeguarding LinkedIn Account Health", level: 2 },
-  { id: "mcp-configuration-logic", label: "Configuring the AI SDR Tool Stack", level: 1 },
-  { id: "battle-tested-sequences", label: "Battle-Tested Outreach Sequences", level: 1 },
-  { id: "handling-warm-replies", label: "Handing Off Warm Replies to Humans", level: 2 },
-  { id: "conclusion", label: "Scaling Outbound Safely", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "the-operational-reality", label: "The operational reality of AI SDRs", level: 1 },
+  { id: "defining-delegation-boundaries", label: "Defining the delegation boundary", level: 1 },
+  { id: "the-daily-operational-routine", label: "The daily outbound routine", level: 1 },
+  { id: "safeguarding-account-health", label: "Safeguarding LinkedIn account health", level: 2 },
+  { id: "mcp-configuration-logic", label: "Configuring the AI SDR tool stack", level: 1 },
+  { id: "battle-tested-sequences", label: "Battle-tested outreach sequences", level: 1 },
+  { id: "handling-warm-replies", label: "Handing off warm replies to humans", level: 2 },
+  { id: "conclusion", label: "Scaling outbound safely", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
@@ -63,17 +63,17 @@ export default function BlogPost() {
         The term AI SDR has become a major buzzword in the B2B tech space. Startups and growth agencies are rushing to deploy autonomous sales development agents, hoping to automate the tedious work of pipeline generation. Yet, many teams realize that launching an autonomous outbound agent is not as simple as flipping a switch. Without clear guidelines, these systems either sit idle or blast low-quality messages that put your corporate domain and social accounts at risk.
       </p>
       <p>
-        Operationalizing an AI SDR requires a structured playbook. You must treat the AI as a junior sales representative who needs explicit boundaries, a predictable routine, and regular checks. By establishing this operational cadence, you can leverage the speed and scale of artificial intelligence while preserving the personal touch that builds real relationships.
+        Operationalizing an AI SDR requires a structured playbook. Treat the AI as a junior sales representative who needs explicit boundaries, a predictable routine, and regular checks. That cadence gives you the speed of automation without giving up the personal judgment that builds real relationships.
       </p>
       <p>
-        Omentir serves as the dedicated execution surface for this playbook. It is designed to act as an AI sales assistant that safely interfaces with LinkedIn to manage connection requests, follow-ups, and inbox responses. In this guide, we will outline the operational routine, delegation frameworks, and safety rules needed to run an AI SDR campaign successfully.
+        Omentir is the execution surface for this playbook. It is an AI sales assistant that interfaces with LinkedIn to manage connection requests, follow-ups, and inbox responses. The rest of this article covers the operational routine, delegation frameworks, and safety rules needed to run an AI SDR campaign.
       </p>
       <p>
         The best AI SDR programs start small. Pick one ICP, one offer, one channel, and one human owner. If the agent cannot produce useful leads and drafts inside a narrow workflow, adding more autonomy will only multiply the confusion.
       </p>
 
       <h2 id="defining-delegation-boundaries" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Defining the Delegation Boundary
+        Defining the delegation boundary
       </h2>
       <p>
         The first step in deploying an AI sales agent is determining what tasks it should handle and what decisions must remain with humans. Fully autonomous systems that scrape data and send messages without any manual checks are a significant risk. If the AI hallucinates a product capability or misinterprets a buyer profile, it can damage a sales opportunity before you ever speak to the prospect.
@@ -92,7 +92,7 @@ export default function BlogPost() {
         <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
         <div className="pl-4">
           <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-            The Rules of Safe Delegation
+            The rules of safe delegation
           </h4>
           <p className="text-sm text-zinc-650 leading-relaxed">
             Never give an AI agent the ability to bypass daily sending limits or write message copy without a verified product profile. Always keep a staging environment active where you can review drafted sequences before they go live on LinkedIn.
@@ -101,16 +101,16 @@ export default function BlogPost() {
       </div>
 
       <h2 id="the-daily-operational-routine" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        The Daily Outbound Routine
+        The daily outbound routine
       </h2>
       <p>
         An AI SDR works best when integrated into a structured daily workflow. Rather than logging in occasionally to review performance, establish a clean operational loop that keeps your outbound pipeline moving steadily:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Morning Sync:</strong> The AI SDR runs in the background, finding prospects matching your ICP. It scores each lead and writes tailored message drafts.</li>
-        <li><strong>Review Phase:</strong> The human operator spends 10 minutes reviewing the pending lead queue. You approve candidates who meet the threshold, prompting the system to schedule outreach.</li>
-        <li><strong>Active Sending:</strong> The outreach queue executes gradually throughout the day. It sends connection requests, follows up with past contacts, and updates status flags in your workspace.</li>
-        <li><strong>Inbox Sorting:</strong> As replies arrive, the AI analyzes response sentiment and groups threads into folders like Interested, Out of Office, or Not a Fit.</li>
+        <li><strong>Morning sync:</strong> The AI SDR runs in the background, finding prospects matching your ICP. It scores each lead and writes tailored message drafts.</li>
+        <li><strong>Review phase:</strong> The human operator spends 10 minutes reviewing the pending lead queue. You approve candidates who meet the threshold, prompting the system to schedule outreach.</li>
+        <li><strong>Active sending:</strong> The outreach queue executes gradually throughout the day. It sends connection requests, follows up with past contacts, and updates status flags in your workspace.</li>
+        <li><strong>Inbox sorting:</strong> As replies arrive, the AI analyzes response sentiment and groups threads into folders like Interested, Out of Office, or Not a Fit.</li>
       </ul>
       <p>
         This daily rhythm prevents batch-sending spikes. By spacing out discovery, approvals, and execution, you maintain a natural presence on LinkedIn and avoid triggering compliance flags.
@@ -120,13 +120,13 @@ export default function BlogPost() {
       </p>
 
       <h3 id="safeguarding-account-health" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Safeguarding LinkedIn Account Health
+        Safeguarding LinkedIn account health
       </h3>
       <p>
         Any playbook for LinkedIn outreach must place account security at the center. LinkedIn uses sophisticated activity tracking to detect automation tools, looking for rapid API requests, consistent timing intervals, and high message volume.
       </p>
       <p>
-        To keep your personal profile safe, your automation layer must enforce human-paced limits. Space out invitations, keep daily activity conservative, and avoid sudden spikes. Additionally, avoid browser extensions that depend on brittle page automation, because they create unnecessary operational risk.
+        Space out invitations, keep daily activity conservative, and avoid sudden spikes. Also avoid browser extensions that depend on brittle page automation, because they create unnecessary operational risk.
       </p>
       <p>
         Omentir handles this execution layer securely. By coordinating all profile actions via encrypted API integrations (using Unipile), it acts as a compliant sales buffer. It respects human pacing rules, manages daily invite quotas, and ensures that your outreach matches natural user behavior. This compliant structure is explained in our guide on{" "}
@@ -137,7 +137,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="mcp-configuration-logic" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Configuring the AI SDR Tool Stack
+        Configuring the AI SDR tool stack
       </h2>
       <p>
         Operationalizing your AI sales agent requires connecting it to your existing workflow. In modern sales setups, this is achieved by deploying an MCP (Model Context Protocol) server. The protocol allows AI models to safely access tools for data sourcing, message drafting, and campaign control.
@@ -157,7 +157,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="battle-tested-sequences" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Battle-Tested Outreach Sequences
+        Battle-tested outreach sequences
       </h2>
       <p>
         The copywriting style used by your AI SDR will determine your conversion rate. Avoid sending long paragraphs that detail every feature of your product. Instead, write short, low-friction messages focused on the buyer's challenges. Here are three templates designed for modern outbound campaigns:
@@ -167,7 +167,7 @@ export default function BlogPost() {
         <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
         <div className="pl-4">
           <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-            The Soft-Insight Sequence 💡
+            The soft-insight sequence
           </h4>
           <p className="text-sm text-zinc-650 leading-relaxed mb-4">
             <strong>Step 1 (Connection Invite):</strong> "Hi [Name], saw your team is expanding the React group. Curious if you are managing the UI transition? Would love to connect."
@@ -190,7 +190,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="handling-warm-replies" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Handing Off Warm Replies to Humans
+        Handing off warm replies to humans
       </h3>
       <p>
         The ultimate goal of your AI SDR is to generate active conversations. When a prospect replies with interest (for example, asking for the asset, asking a pricing question, or requesting a call), the AI's automation role should shift.
@@ -210,7 +210,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Scaling Outbound Safely
+        Scaling outbound safely
       </h2>
       <p>
         Operationalizing an AI SDR is about combining scale with security. By setting clear boundaries, using human pacing checks, and maintaining a human-in-the-loop approval step, you can build a sustainable outbound system that generates meetings week after week.
@@ -227,7 +227,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Frequently Asked Questions
+        Frequently asked questions
       </h2>
       <FaqAccordion items={faqItems} />
     </BlogPostTemplate>

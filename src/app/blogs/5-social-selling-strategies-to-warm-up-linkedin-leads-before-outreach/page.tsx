@@ -17,13 +17,13 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems = [
-  { id: "psychology-of-warm-outreach", label: "The Psychological Shift: Cold vs. Warm Outbound", level: 1 },
-  { id: "five-strategies-deep-dive", label: "5 Tactical Warming Strategies Broken Down", level: 1 },
-  { id: "lead-warmth-matrix", label: "The Lead Warmth Scoring Grid", level: 1 },
-  { id: "transition-playbook", label: "The Seamless Transition Playbook", level: 1 },
-  { id: "automation-safety", label: "Running Social Selling Safely at Scale", level: 1 },
-  { id: "pitfalls", label: "Social Selling Traps to Stay Clear Of", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "psychology-of-warm-outreach", label: "The psychological shift: cold vs warm outbound", level: 1 },
+  { id: "five-strategies-deep-dive", label: "5 tactical warming strategies", level: 1 },
+  { id: "lead-warmth-matrix", label: "The lead warmth scoring grid", level: 1 },
+  { id: "transition-playbook", label: "The comment-to-connection playbook", level: 1 },
+  { id: "automation-safety", label: "Running social selling safely at scale", level: 1 },
+  { id: "pitfalls", label: "Social selling traps to stay clear of", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ] as const;
 
 const faqItems = [
@@ -46,10 +46,10 @@ export default function BlogPost() {
     >
       <div id="introduction" className="scroll-mt-28">
         <p>
-          Sending a cold connection request to a high-value B2B decision maker in today's environment is a low-probability play. Busy executives ignore dozens of uninvited outreach notes weekly. The moment they spot a standard sales pitch in their inbox, their natural defense mechanisms trigger, leading to an immediate click of the "Ignore" button.
+          Sending a cold connection request to a high-value B2B decision maker is a low-probability play. Busy executives ignore dozens of uninvited outreach notes weekly. The moment they spot a standard sales pitch, they click "Ignore."
         </p>
         <p>
-          To dramatically increase your outbound conversions, you must warm up leads before initiating direct contact. By leveraging the principles of social selling to build micro-trust and familiarity first, you ensure your eventual connection requests look like natural peer extensions rather than intrusive, unwanted pitches.
+          To raise outbound conversions, warm people up before you ask to connect. Social selling here means building a little familiarity first so the request looks like a peer extension, not an uninvited pitch.
         </p>
 
         <h2
@@ -57,7 +57,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          The Psychological Shift: Cold vs. Warm Outbound
+          The psychological shift: cold vs warm outbound
         </h2>
         <p>
           Humans are wired to protect themselves from transactional solicitation. When an unknown user requests access to their professional network, decision-makers experience a brief moment of anxiety. They ask themselves: <i>"What does this person want from me? Are they going to pitch-slap me the second I accept?"</i>
@@ -74,7 +74,7 @@ export default function BlogPost() {
           <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
           <div className="pl-4">
             <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-              The Familiarity Multiplier
+              The familiarity multiplier
             </h4>
             <p className="text-sm text-zinc-650 leading-relaxed">
               Internal campaign data shows that prospects who have engaged with your profile, comments, or posts prior to receiving a connection invite are 2.5 times more likely to accept your request. Even better, their positive reply rate to your follow-up conversational messages increases by over 180%.
@@ -87,22 +87,22 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          5 Tactical Warming Strategies Broken Down
+          5 tactical warming strategies
         </h2>
         <p>
           Warming up prospects does not require spending hours manual-scrolling your LinkedIn feed. Instead, implement these five highly structured, repeatable micro-actions:
         </p>
 
         {/* Strategy 1 */}
-        <h3 className="text-lg font-bold text-black mt-8 mb-2">1. The Public Profile Footprint</h3>
+        <h3 className="text-lg font-bold text-black mt-8 mb-2">1. The public profile footprint</h3>
         <p>
           The simplest way to initiate contact is by leaving a digital footprint on their profile. Ensure your LinkedIn account safety settings have "Private Mode" disabled. Visit your target lead's profile. This places your headshot and headline directly in their daily "Who viewed your profile" notification feed. Since most B2B professionals check this list weekly, it creates a subtle, low-friction initial touchpoint.
         </p>
 
         {/* Strategy 2 */}
-        <h3 className="text-lg font-bold text-black mt-8 mb-2">2. The 2-Tier Commentary Framework</h3>
+        <h3 className="text-lg font-bold text-black mt-8 mb-2">2. The 2-tier commentary framework</h3>
         <p>
-          Do not leave generic comments like "Great post, thanks for sharing!" This screams automated activity and lacks authenticity. Instead, leverage our 2-Tier Commentary Framework:
+          Do not leave generic comments like "Great post, thanks for sharing!" That reads as automated and empty. Use this 2-tier commentary framework instead:
         </p>
         <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-850 my-4">
           <li><strong>Tier 1: Validation.</strong> Acknowledge a highly specific point within their post. <i>("Loved your framework on structural scaling here, [Name].")</i></li>
@@ -110,19 +110,19 @@ export default function BlogPost() {
         </ul>
 
         {/* Strategy 3 */}
-        <h3 className="text-lg font-bold text-black mt-8 mb-2">3. The Influencer Comment Hijack</h3>
+        <h3 className="text-lg font-bold text-black mt-8 mb-2">3. The influencer comment hijack</h3>
         <p>
           If your target lead is relatively quiet on LinkedIn and rarely posts their own updates, find the prominent industry influencers they actively follow and comment on. Leave highly thoughtful comments on those influencer threads. When your target prospect skims those popular comments, they will encounter your brand organically in a shared community space.
         </p>
 
         {/* Strategy 4 */}
-        <h3 className="text-lg font-bold text-black mt-8 mb-2">4. The Professional Endorsement Pivot</h3>
+        <h3 className="text-lg font-bold text-black mt-8 mb-2">4. The professional endorsement pivot</h3>
         <p>
           If your target lead lists clear core competencies on their profile (e.g., "B2B SaaS Growth," "Kubernetes Infrastructure"), endorse them for one of their top skills. A skill endorsement triggers an instant high-priority notification to their mobile device. Since skill endorsements are relatively rare, this micro-action immediately stands out in their notification queue.
         </p>
 
         {/* Strategy 5 */}
-        <h3 className="text-lg font-bold text-black mt-8 mb-2">5. Authority Broadcasting</h3>
+        <h3 className="text-lg font-bold text-black mt-8 mb-2">5. Authority broadcasting</h3>
         <p>
           Your personal profile must act as a clean B2B landing page. Regularly post clean operational frameworks, templates, checklists, or short case studies on your own feed. When a prospect receives your footprint (Profile Visit, Comment, or Endorsement) and clicks through to inspect your page, they must instantly see a feed packed with deep, non-promotional industry authority.
         </p>
@@ -132,7 +132,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          The Lead Warmth Scoring Grid
+          The lead warmth scoring grid
         </h2>
         <p>
           You should never reach out blindly. To maximize your sales efficiency, map your prospects' micro-interactions into a structured warmth scoring grid. This tells you exactly when a prospect has crossed the threshold from "cold target" to "warm qualified lead."
@@ -182,7 +182,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          The Seamless Transition Playbook
+          The comment-to-connection playbook
         </h2>
         <p>
           Once a lead achieves 25+ Warmth Points on your scoring grid, you have a green light to initiate direct contact. However, your transition must feel completely organic. If you immediately launch into a generic company pitch, you will erase all the trust you've built.
@@ -213,7 +213,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Running Social Selling Safely at Scale
+          Running social selling safely at scale
         </h2>
         <p>
           Many founders complain that social selling is too slow and hard to scale. If you are manually searching for profiles and commenting all day, it will consume your entire calendar.
@@ -231,7 +231,7 @@ export default function BlogPost() {
         <div className="my-10 rounded-2xl border border-zinc-200 bg-[#f4f2ec] p-8 text-center shadow-[0_18px_60px_rgba(15,23,42,0.06)] relative overflow-hidden">
           <div className="absolute inset-x-0 top-0 h-1.5 bg-[#ba3871]" />
           <h3 style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mb-3">
-            Before You Scale Social Warmups
+            Before you scale social warmups
           </h3>
           <p className="text-sm text-zinc-650 leading-relaxed max-w-xl mx-auto mb-6">
             Use the warmup steps above as a checklist before adding tools. The goal is to create visible, relevant context before a direct message, not to manufacture fake engagement.
@@ -251,7 +251,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Social Selling Traps to Stay Clear Of
+          Social selling traps to stay clear of
         </h2>
         <p>
           Warming up leads is a delicate process. If you push too hard or make mistakes, you can permanently damage your brand reputation. Keep your social selling clean by steering clear of these pitfalls:
@@ -269,7 +269,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          A Weekly Social Selling Operating Plan
+          A weekly social selling operating plan
         </h2>
         <p>
           The five strategies above work best when they are arranged into a repeatable weekly operating rhythm. Without a rhythm, social selling turns into random scrolling. With a rhythm, every prospect receives enough familiarity before the first direct message, but not so much engagement that the sequence feels forced.
@@ -289,7 +289,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Frequently Asked Questions
+          Frequently asked questions
         </h2>
         <FaqAccordion items={faqItems} />
       </div>

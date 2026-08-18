@@ -51,8 +51,8 @@ export default function FeaturePageView({ page }: { page: SeoContentPage }) {
         <FaqBlock page={page} />
         <CtaBlock
           page={page}
-          title="Put this feature to work on your LinkedIn account"
-          body="Connect LinkedIn, fill My Product, and run the motion end to end in one workspace."
+          title="Run this on the LinkedIn account you already use"
+          body="Connect LinkedIn, fill My Product, and try the motion in one workspace."
         />
       </SeoArticle>
     </SeoPageChrome>

@@ -118,7 +118,7 @@ export const ALL_BLOGS: BlogItem[] = [
   {
     slug: "linkedin-outreach-compliance-2026",
     title: "The Complete Compliance Checklist for LinkedIn Outreach in 2026",
-    description: "Stay legally compliant. Discover the GDPR, CAN-SPAM, and platform rules sales teams must respect when automating outreach campaigns in 2026.",
+    description: "GDPR, CAN-SPAM, and platform rules sales teams have to follow when automating outreach in 2026.",
     publishedDate: "February 1, 2026",
     updatedDate: "July 26, 2026",
     category: "Guides",
@@ -140,7 +140,7 @@ export const ALL_BLOGS: BlogItem[] = [
   {
     slug: "gradual-outbound-ramp-ups",
     title: "The Importance of Gradual Outbound Ramp-Ups for New Profiles",
-    description: "Stop burning new outreach profiles. Discover how platform security algorithms analyze volume spikes, and learn how to configure a safe 4-week ramp-up curve.",
+    description: "How platform security scores volume spikes, and a 4-week ramp so new outreach profiles do not get burned.",
     publishedDate: "February 3, 2026",
     updatedDate: "July 26, 2026",
     category: "Guides",
@@ -162,7 +162,7 @@ export const ALL_BLOGS: BlogItem[] = [
   {
     slug: "unipile-safe-linkedin-api",
     title: "How Unipile Ensures Safe and Encrypted LinkedIn API Access",
-    description: "Learn how Unipile secure API routing protects B2B outreach. Discover cookie encryption, regional proxy IP mapping, and safe integrations.",
+    description: "How Unipile API routing protects B2B outreach: cookie encryption, regional proxy IPs, and integrations that stay inside the rules.",
     publishedDate: "February 6, 2026",
     updatedDate: "July 26, 2026",
     category: "Automation",
@@ -173,7 +173,7 @@ export const ALL_BLOGS: BlogItem[] = [
   {
     slug: "protect-personal-brand-outbound",
     title: "Protecting Your Personal Brand While Automating Outbound Sales",
-    description: "Learn how to automate outbound campaigns without compromising your personal brand. Discover the review queue and copywriting rules that protect reputation.",
+    description: "How to automate outbound without wrecking your personal brand: review queues and copy rules that protect reputation.",
     publishedDate: "February 7, 2026",
     updatedDate: "July 25, 2026",
     category: "Guides",
@@ -184,7 +184,7 @@ export const ALL_BLOGS: BlogItem[] = [
   {
     slug: "linkedin-account-health-safety",
     title: "The Ultimate Guide to LinkedIn Account Health and Safety",
-    description: "Keep your sales profiles safe. Discover how to manage cookies, session geolocations, API routing, and pacing limits to maintain high account health scores.",
+    description: "How to keep sales profiles healthy: cookies, session location, API routing, and pacing limits.",
     publishedDate: "February 8, 2026",
     updatedDate: "July 25, 2026",
     category: "Automation",
@@ -217,7 +217,7 @@ export const ALL_BLOGS: BlogItem[] = [
   {
     slug: "finding-early-adopters-outbound",
     title: "Finding Your Early Adopters: A Practical Outbound Framework",
-    description: "Stop wasting campaign volume on slow enterprise buyers. Master this outreach framework to source, pitch, and convert early adopters into design partners.",
+    description: "An outreach framework to source, pitch, and convert early adopters into design partners instead of burning volume on slow enterprise buyers.",
     publishedDate: "February 12, 2026",
     updatedDate: "July 25, 2026",
     category: "Guides",
@@ -261,7 +261,7 @@ export const ALL_BLOGS: BlogItem[] = [
   {
     slug: "why-dm-sales-beat-paid-ads",
     title: "Why Direct Message Sales Beat Paid Ads for Early Startups",
-    description: "Stop wasting budget on Google and LinkedIn ads. Discover why direct message outbound drives higher feedback density and lower CAC for early B2B SaaS.",
+    description: "Why direct-message outbound often beats Google and LinkedIn ads for early B2B SaaS: denser feedback and lower CAC.",
     publishedDate: "February 17, 2026",
     updatedDate: "July 24, 2026",
     category: "Guides",
@@ -272,7 +272,7 @@ export const ALL_BLOGS: BlogItem[] = [
   {
     slug: "existential-crisis-early-saas",
     title: "Navigating the Existential Crisis of Early SaaS Development",
-    description: "Bootstrapping a new product? Discover how to manage founder mental health, avoid feature-chasing distractions, and stay focused on outbound validation.",
+    description: "How to manage founder energy while bootstrapping: skip feature-chasing, keep outbound validation as the main job.",
     publishedDate: "February 18, 2026",
     updatedDate: "July 24, 2026",
     category: "Guides",
@@ -316,7 +316,7 @@ export const ALL_BLOGS: BlogItem[] = [
   {
     slug: "handle-first-sales-demo",
     title: "How to Handle Your First Sales Demo and Close the Deal",
-    description: "Stop losing hot leads on sales calls. Master this 30-minute sales demo playbook to run active discovery, handle objections, and close B2B deals.",
+    description: "A 30-minute sales demo playbook: run discovery, handle objections, and close without losing hot leads on the call.",
     publishedDate: "February 23, 2026",
     updatedDate: "July 23, 2026",
     category: "Playbooks",
@@ -393,7 +393,7 @@ export const ALL_BLOGS: BlogItem[] = [
   {
     slug: "machine-learning-in-b2b-sales",
     title: "Machine Learning in B2B Sales: Finding Patterns in Buying Signals",
-    description: "Learn how machine learning models analyze B2B buying signals. Discover the classification, scoring, and feedback systems that optimize outreach.",
+    description: "How machine learning models score B2B buying signals: classification, scoring, and feedback loops that change what you send next.",
     publishedDate: "March 3, 2026",
     updatedDate: "July 22, 2026",
     category: "Automation",
@@ -470,7 +470,7 @@ export const ALL_BLOGS: BlogItem[] = [
   {
     slug: "ai-crawlers-buying-signals",
     title: "How AI Crawlers Analyze B2B Websites for Buying Signals",
-    description: "Learn how AI web crawlers analyze corporate sites to extract B2B buying signals. Discover the tools, filters, and schemas used for real-time lead scoring.",
+    description: "How AI crawlers read corporate sites for buying signals: tools, filters, and schemas used for live lead scoring.",
     publishedDate: "March 12, 2026",
     updatedDate: "July 21, 2026",
     category: "Automation",
@@ -557,7 +557,7 @@ export const ALL_BLOGS: BlogItem[] = [
   },
   {
     slug: "artisan-ai-vs-omentir",
-    title: "Artisan AI (Ava) vs. Omentir: A Deep Dive into Autonomous SDRs",
+    title: "Artisan AI (Ava) vs. Omentir: Autonomous SDRs compared",
     description: "An honest, head-to-head comparison of Artisan AI (Ava) versus Omentir for B2B sales development. Compare platform architecture, data sourcing, safety controls, and pricing.",
     publishedDate: "March 22, 2026",
     updatedDate: "July 20, 2026",
@@ -569,7 +569,7 @@ export const ALL_BLOGS: BlogItem[] = [
   {
     slug: "linkedin-revenue-playbook",
     title: "LinkedIn Revenue Playbook: Scale B2B Pipelines Safely",
-    description: "Stop tracking vanity metrics. Learn the operational playbook to align LinkedIn outreach with pipeline velocity, operator leverage, and LTV.",
+    description: "Stop tracking vanity metrics. Tie LinkedIn outreach to pipeline velocity, operator capacity, and LTV.",
     publishedDate: "March 23, 2026",
     updatedDate: "July 20, 2026",
     category: "Playbooks",
@@ -580,7 +580,7 @@ export const ALL_BLOGS: BlogItem[] = [
   {
     slug: "agent-api-outreach",
     title: "Agent API Outreach: Integrate REST Sales Endpoints",
-    description: "Learn how to build custom outbound sales integrations. Master raw REST API endpoints, token authentication, lead ingestion, and reply hooks.",
+    description: "How to build custom outbound sales integrations: REST endpoints, token auth, lead ingestion, and reply hooks.",
     publishedDate: "March 24, 2026",
     updatedDate: "July 19, 2026",
     category: "Automation",
@@ -590,8 +590,8 @@ export const ALL_BLOGS: BlogItem[] = [
   },
   {
     slug: "chatgpt-reply-drafts",
-    title: "ChatGPT Reply Drafts: Master B2B LinkedIn Responses",
-    description: "Stop letting hot leads go cold. Master structured ChatGPT prompts to classify LinkedIn replies and write context-grounded response drafts.",
+    title: "ChatGPT Reply Drafts: Classify and answer LinkedIn replies",
+    description: "Use structured ChatGPT prompts to classify LinkedIn replies and write response drafts grounded in the thread.",
     publishedDate: "March 25, 2026",
     updatedDate: "July 19, 2026",
     category: "Copywriting",
@@ -602,7 +602,7 @@ export const ALL_BLOGS: BlogItem[] = [
   {
     slug: "why-outbound-needs-ai-salesman",
     title: "Why Your B2B Outbound Stack Needs an AI Salesman, Not Just a Sequencer",
-    description: "Linear sequence tools are failing in modern B2B sales. Discover why the future belongs to context-aware, autonomous AI sales agents that dynamically research, draft, and nurture leads.",
+    description: "Why linear sequence tools stall in B2B sales, and what context-aware agents do instead: research, draft, and follow up from live signals.",
     publishedDate: "March 26, 2026",
     updatedDate: "July 19, 2026",
     category: "Outreach",
@@ -613,7 +613,7 @@ export const ALL_BLOGS: BlogItem[] = [
   {
     slug: "ai-demo-booking-flow",
     title: "AI Demo Booking Flow: Automate B2B Scheduling",
-    description: "Learn how to build an autonomous demo booking flow. Master intent qualification, Calendly integrations, and objection handling on LinkedIn.",
+    description: "How to build an autonomous demo booking flow: intent qualification, Calendly, and objection handling on LinkedIn.",
     publishedDate: "March 28, 2026",
     updatedDate: "July 19, 2026",
     category: "Guides",
@@ -624,7 +624,7 @@ export const ALL_BLOGS: BlogItem[] = [
   {
     slug: "linkedin-message-hooks",
     title: "LinkedIn Message Hooks: Write B2B Openers That Convert",
-    description: "Master the first 15 words of your outreach. Learn 4 high-converting LinkedIn message hook formulas, contextual templates, and safe campaign pacing.",
+    description: "The first 15 words of outreach. Four LinkedIn hook formulas, contextual templates, and safe campaign pacing.",
     publishedDate: "March 29, 2026",
     updatedDate: "July 19, 2026",
     category: "Copywriting",
@@ -635,7 +635,7 @@ export const ALL_BLOGS: BlogItem[] = [
   {
     slug: "outbound-sales-with-ai",
     title: "Outbound Sales with AI: Redesign B2B Teams",
-    description: "Learn how to build and structure an AI-native sales organization. Master task delegation, operational workflows, and safe LinkedIn outreach.",
+    description: "How to structure an AI-native sales team: task delegation, operational workflows, and safe LinkedIn outreach.",
     publishedDate: "March 30, 2026",
     updatedDate: "July 19, 2026",
     category: "Guides",
@@ -646,7 +646,7 @@ export const ALL_BLOGS: BlogItem[] = [
   {
     slug: "linkedin-buyer-signals",
     title: "LinkedIn Buyer Signals: Track Active B2B Intent",
-    description: "Stop reaching out to cold lists. Master 6 high-converting LinkedIn buyer intent signals, search triggers, and safe campaign pacing.",
+    description: "Six LinkedIn buyer-intent signals, search triggers, and pacing rules so you stop blasting cold lists.",
     publishedDate: "March 31, 2026",
     updatedDate: "July 18, 2026",
     category: "Guides",
@@ -657,7 +657,7 @@ export const ALL_BLOGS: BlogItem[] = [
   {
     slug: "sales-pitch-follow-ups",
     title: "Sales Pitch Follow-Ups: High-Converting Copywriting Frameworks",
-    description: "Stop sending 'just bumping this' messages. Master 3 conversational follow-up frameworks, response triggers, and safe campaign pacing.",
+    description: "Three conversational follow-up frameworks, response triggers, and pacing so you can drop 'just bumping this'.",
     publishedDate: "April 1, 2026",
     updatedDate: "July 18, 2026",
     category: "Copywriting",
@@ -668,7 +668,7 @@ export const ALL_BLOGS: BlogItem[] = [
   {
     slug: "better-linkedin-targeting",
     title: "Better LinkedIn Targeting: Build Clean B2B Lists",
-    description: "Stop wasting connection invites on low-fit prospects. Master Boolean search filters, negative exclusions, and technographic triggers on LinkedIn.",
+    description: "Boolean search filters, negative exclusions, and technographic triggers so connection invites go to fit, not volume.",
     publishedDate: "April 3, 2026",
     updatedDate: "July 18, 2026",
     category: "Guides",
@@ -690,7 +690,7 @@ export const ALL_BLOGS: BlogItem[] = [
   {
     slug: "sales-leads-from-linkedin",
     title: "Sales Leads from LinkedIn: Build a B2B Sourcing Pipeline",
-    description: "Learn how to build a high-quality B2B sales lead pipeline from LinkedIn. Master profile enrichment, intent scoring, and safe message personalization.",
+    description: "How to build a LinkedIn lead pipeline: profile enrichment, intent scoring, and message personalization that stays safe to send.",
     publishedDate: "April 5, 2026",
     updatedDate: "July 18, 2026",
     category: "Guides",
@@ -701,7 +701,7 @@ export const ALL_BLOGS: BlogItem[] = [
   {
     slug: "mcp-outreach-tools",
     title: "MCP Outreach Tools: Configure Model Context Protocol",
-    description: "Learn how to connect and configure the hosted Model Context Protocol server. Master client configuration, authentication, and agent tools.",
+    description: "How to connect the hosted Model Context Protocol server: client config, authentication, and agent tools.",
     publishedDate: "April 6, 2026",
     updatedDate: "July 18, 2026",
     category: "Automation",
@@ -712,7 +712,7 @@ export const ALL_BLOGS: BlogItem[] = [
   {
     slug: "openclaw-outreach-flows",
     title: "OpenClaw Outreach Flows: Build B2B Execution Loops",
-    description: "Learn how to build autonomous outbound workflows using OpenClaw agent loops. Master campaign state nodes, context variables, and safe LinkedIn pacing.",
+    description: "How to build outbound workflows with OpenClaw agent loops: campaign state, context variables, and LinkedIn pacing.",
     publishedDate: "April 7, 2026",
     updatedDate: "July 17, 2026",
     category: "Automation",
@@ -723,7 +723,7 @@ export const ALL_BLOGS: BlogItem[] = [
   {
     slug: "chatgpt-outreach-prompts",
     title: "ChatGPT Outreach Prompts: Write High-Converting B2B Copy",
-    description: "Stop sending generic AI sales pitches. Master structured ChatGPT outreach prompts, context injection rules, and validation rubrics for LinkedIn.",
+    description: "Structured ChatGPT outreach prompts, context injection rules, and a validation rubric so LinkedIn copy is not generic AI.",
     publishedDate: "April 9, 2026",
     updatedDate: "July 17, 2026",
     category: "Copywriting",
@@ -734,7 +734,7 @@ export const ALL_BLOGS: BlogItem[] = [
   {
     slug: "agent-led-sales-outreach",
     title: "Agent-Led Sales Outreach: Build Autonomous Pipelines",
-    description: "Learn how to build and integrate autonomous sales agents with your outreach stack. Master REST APIs, task delegation, and safe LinkedIn automation.",
+    description: "How to wire autonomous sales agents into your outreach stack: REST APIs, task delegation, and LinkedIn automation that you can inspect.",
     publishedDate: "April 10, 2026",
     updatedDate: "July 17, 2026",
     category: "Automation",
@@ -767,7 +767,7 @@ export const ALL_BLOGS: BlogItem[] = [
   {
     slug: "sales-pitch-personalization",
     title: "Sales Pitch Personalization: Build Modular B2B Outreach",
-    description: "Learn how to write personalized B2B sales pitches that get replies. Master modular messaging templates, signal-led hooks, and safe LinkedIn delivery.",
+    description: "How to write personalized B2B pitches that get replies: modular templates, signal-led hooks, and LinkedIn delivery that stays within limits.",
     publishedDate: "April 14, 2026",
     updatedDate: "July 17, 2026",
     category: "Copywriting",
@@ -811,7 +811,7 @@ export const ALL_BLOGS: BlogItem[] = [
   {
     slug: "linkedin-follow-up-ideas",
     title: "LinkedIn Follow-Up Ideas: Re-Engage Quiet B2B Leads",
-    description: "Stop sending generic \"just bumping this\" messages. Discover 5 signal-based LinkedIn follow-up ideas and templates that re-engage quiet B2B prospects.",
+    description: "Five signal-based LinkedIn follow-up ideas and templates for prospects who went quiet, without 'just bumping this'.",
     publishedDate: "April 18, 2026",
     updatedDate: "July 16, 2026",
     category: "Copywriting",
@@ -822,7 +822,7 @@ export const ALL_BLOGS: BlogItem[] = [
   {
     slug: "human-paced-outreach",
     title: "Human-Paced Outreach: Why Safe Pacing Beats Bulk Spam",
-    description: "Discover the technical and psychological reasons why warm, paced sales outreach outperforms bulk messaging, and how to configure safe limits for LinkedIn.",
+    description: "Why paced, warm outreach beats bulk messaging, and how to set LinkedIn limits that look like a person.",
     publishedDate: "April 20, 2026",
     updatedDate: "July 16, 2026",
     category: "Guides",
@@ -844,7 +844,7 @@ export const ALL_BLOGS: BlogItem[] = [
   {
     slug: "linkedin-outreach-funnel",
     title: "LinkedIn Outreach Funnel: Optimize Every Stage of Outbound Sales",
-    description: "Stop guessing where your sales pipeline is leaking. Master the LinkedIn outreach funnel with concrete benchmarks, conversion metrics, and tactical optimization tips.",
+    description: "Where a LinkedIn outreach funnel leaks, with conversion benchmarks and what to change at each step.",
     publishedDate: "April 22, 2026",
     updatedDate: "July 16, 2026",
     category: "Playbooks",
@@ -855,7 +855,7 @@ export const ALL_BLOGS: BlogItem[] = [
   {
     slug: "ai-sdr-linkedin-playbook",
     title: "AI SDR LinkedIn Playbook: How to Operationalize Autonomous Outbound",
-    description: "Stop wondering what an AI SDR actually does. Discover the operational routine, delegation frameworks, and daily pacing safety rules to run an autonomous sales agent on LinkedIn.",
+    description: "What an AI SDR actually does day to day: the routine, what you delegate, and daily pacing rules for LinkedIn.",
     publishedDate: "April 23, 2026",
     updatedDate: "July 15, 2026",
     category: "Playbooks",
@@ -866,7 +866,7 @@ export const ALL_BLOGS: BlogItem[] = [
   {
     slug: "b2b-lead-gen-with-ai",
     title: "B2B Lead Gen with AI: Build a Context-Aware Outbound Machine",
-    description: "Ditch generic databases and bulk sequences. Discover how to design a modern B2B lead generation workflow combining AI intent signals, programmatic enrichment, and safe LinkedIn outreach.",
+    description: "A B2B lead gen workflow that combines intent signals, programmatic enrichment, and LinkedIn outreach, instead of a stale database plus a bulk sequence.",
     publishedDate: "April 24, 2026",
     updatedDate: "July 15, 2026",
     category: "Guides",
@@ -1111,7 +1111,7 @@ export const ALL_BLOGS: BlogItem[] = [
   {
     slug: "11x-ai-alice-alternatives-autonomous-sales-agents",
     title: "11x.ai (Alice) Alternatives: Evaluating Autonomous Sales Agents in 2026",
-    description: "An analytical review of autonomous sales agents. Discover the limits of legacy single-channel sequencers and the rise of multi-channel AI salesman.",
+    description: "A review of autonomous sales agents: where single-channel sequencers stop, and what multi-channel AI salesman actually change.",
     publishedDate: "May 21, 2026",
     updatedDate: "July 12, 2026",
     category: "Comparisons",
@@ -1227,7 +1227,7 @@ export const ALL_BLOGS: BlogItem[] = [
     category: "Outreach",
     readTime: "8 min read",
     bannerSrc: "/autonomous-lead-generation-shift-crm-to-ai-sales-agents.avif",
-    bannerAlt: "Autonomous lead generation and CRMs to AI sales agents paradigm shift graphic",
+    bannerAlt: "Autonomous lead generation graphic: moving from CRMs to AI sales agents",
   },
   {
     slug: "why-founders-replace-sdrs-with-ai-salesman",
@@ -1265,7 +1265,7 @@ export const ALL_BLOGS: BlogItem[] = [
   {
     slug: "finding-the-right-ai-salesman-2026-buyers-guide",
     title: "Finding the Right AI Salesman: The 2026 Buyer's Guide for Growth Teams",
-    description: "A complete buyer's guide to evaluate autonomous sales agents. Discover key criteria for multi-channel support, safety throttles, and copywriting quality.",
+    description: "A buyer's guide for autonomous sales agents: multi-channel support, safety throttles, and copy quality.",
     publishedDate: "June 7, 2026",
     updatedDate: "July 9, 2026",
     category: "Guides",
@@ -1287,7 +1287,7 @@ export const ALL_BLOGS: BlogItem[] = [
   {
     slug: "why-high-ticket-outreach-needs-human-in-the-loop-ai-salesman",
     title: "Why High-Ticket B2B Outreach Needs the Human-in-the-Loop AI Salesman",
-    description: "Why fully autonomous engines fail in enterprise campaigns. Discover the power of combining high-efficiency AI agents with human-in-the-loop validation.",
+    description: "Why fully autonomous engines fail in enterprise campaigns, and how to pair AI agents with human-in-the-loop review.",
     publishedDate: "June 10, 2026",
     updatedDate: "July 9, 2026",
     category: "Outreach",
@@ -1368,7 +1368,7 @@ export const ALL_BLOGS: BlogItem[] = [
   {
     slug: "hooking-the-prospect-linkedin-intro-lines-that-drive-40-percent-reply-rates",
     title: "Hooking the Prospect: LinkedIn Intro Lines That Drive 40%+ Reply Rates",
-    description: "Master the art of the opening line. Avoid generic templates and discover personalized hook structures that spark conversations.",
+    description: "Opening lines that are not generic templates. Hook structures that start a conversation instead of a pitch.",
     publishedDate: "June 18, 2026",
     updatedDate: "July 8, 2026",
     category: "Copywriting",
@@ -1390,7 +1390,7 @@ export const ALL_BLOGS: BlogItem[] = [
   {
     slug: "how-to-pitch-a-b2b-saas-on-linkedin-without-being-spammy",
     title: "How to Pitch a B2B SaaS on LinkedIn Without Being Spammy",
-    description: "Stop sending pitches inside connection requests. Discover conversational, soft-landing value offers that turn into live product demos.",
+    description: "Stop sending pitches inside connection requests. Use a soft value offer that can turn into a live demo.",
     publishedDate: "June 20, 2026",
     updatedDate: "July 8, 2026",
     category: "Playbooks",
@@ -1401,7 +1401,7 @@ export const ALL_BLOGS: BlogItem[] = [
   {
     slug: "how-to-use-linkedin-to-book-5-b2b-demos-every-week",
     title: "How to Use LinkedIn to Book 5 B2B Demos Every Week",
-    description: "A comprehensive operational blueprint for B2B founders and SDRs to build a reliable outreach routine that books demos consistently.",
+    description: "A weekly outreach routine for B2B founders and SDRs who need a repeatable way to book demos.",
     publishedDate: "June 22, 2026",
     updatedDate: "July 7, 2026",
     category: "Guides",
@@ -1445,7 +1445,7 @@ export const ALL_BLOGS: BlogItem[] = [
   {
     slug: "the-complete-guide-to-linkedin-inmail-best-practices",
     title: "The Complete Guide to LinkedIn InMail Best Practices",
-    description: "A tactical guide to leveraging paid InMail credits effectively. Learn standard structures that drive high reply rates from open profiles.",
+    description: "How to spend paid InMail credits without wasting them. Standard structures that get replies from open profiles.",
     publishedDate: "June 27, 2026",
     updatedDate: "July 7, 2026",
     category: "Playbooks",
@@ -1478,7 +1478,7 @@ export const ALL_BLOGS: BlogItem[] = [
   {
     slug: "the-founders-playbook-booking-early-demos-on-linkedin",
     title: "The Founder's Playbook: Booking Early Demos on LinkedIn",
-    description: "A comprehensive guide for early-stage B2B SaaS founders to get their first 10-20 customers using highly targeted LinkedIn outreach campaigns.",
+    description: "How early-stage B2B SaaS founders can get their first 10-20 customers with targeted LinkedIn outreach.",
     publishedDate: "June 30, 2026",
     updatedDate: "July 6, 2026",
     category: "Guides",
@@ -1500,7 +1500,7 @@ export const ALL_BLOGS: BlogItem[] = [
   {
     slug: "the-b2b-outreach-copywriting-framework-that-gets-replies",
     title: "The B2B Outreach Copywriting Framework That Gets Replies",
-    description: "Ditch the boring paragraphs. Discover the three-step psychological copywriting framework built specifically for B2B cold outreach campaigns.",
+    description: "A three-step copywriting framework for B2B cold outreach, written for messages people actually reply to.",
     publishedDate: "July 3, 2026",
     updatedDate: "July 6, 2026",
     category: "Copywriting",

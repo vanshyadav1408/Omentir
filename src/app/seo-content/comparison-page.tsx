@@ -208,7 +208,7 @@ export default function ComparisonPageView({ page }: { page: SeoContentPage }) {
         <FaqBlock page={page} />
         <CtaBlock
           page={page}
-          title={page.ctaTitle ?? "Ready to test Omentir on your ICP?"}
+          title={page.ctaTitle ?? "Test Omentir on one ICP"}
           body={
             page.ctaBody ??
             "Run one segment for two weeks. Measure replies and meetings, not vanity sends."

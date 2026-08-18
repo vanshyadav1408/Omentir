@@ -4,7 +4,7 @@ import BlogPostTemplate from "../blog-post-template";
 
 export const metadata = createPageMetadata({
   title: "3 Simple Sales Funnels for Early B2B SaaS - Omentir",
-  description: "Stop guessing your B2B sales funnel. Discover the 3 essential acquisition channels: direct outbound, product-led, and content-led to grow MRR.",
+  description: "Three acquisition channels for early B2B SaaS: direct outbound, product-led trials, and content-led conversations, plus how to pick the first one.",
   path: "/blogs/3-simple-sales-funnels",
   keywords: [
     "3 simple sales funnels B2B",
@@ -17,17 +17,17 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "acquisition-funnel-need", label: "The Need for Structured B2B Acquisition Funnels", level: 1 },
-  { id: "choose-first-funnel", label: "How to Choose the First Funnel", level: 2 },
-  { id: "funnel-1-direct-outbound", label: "Funnel 1: The Direct Outbound Funnel (Sales-Led)", level: 1 },
-  { id: "funnel-2-plg", label: "Funnel 2: The Product-Led Free Trial Funnel (Self-Serve)", level: 1 },
-  { id: "funnel-3-content-conversations", label: "Funnel 3: The Content-to-Conversation Funnel (Inbound-Led)", level: 2 },
-  { id: "connecting-funnels", label: "How the Three Funnels Work Together", level: 2 },
-  { id: "funnel-metrics-comparison", label: "Comparing Funnel Performance: Conversion, Setup, and Costs", level: 2 },
-  { id: "delivery-safety-rules", label: "Managing Outbound Pacing to Protect Funnel Assets", level: 1 },
-  { id: "funnel-sop-checklist", label: "SOP: The Sales Funnel Deployment Checklist", level: 1 },
-  { id: "conclusion", label: "Diversifying Channels for Sustainable MRR Growth", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "acquisition-funnel-need", label: "Why early B2B teams need structured acquisition funnels", level: 1 },
+  { id: "choose-first-funnel", label: "How to choose the first funnel", level: 2 },
+  { id: "funnel-1-direct-outbound", label: "Funnel 1: the direct outbound funnel (sales-led)", level: 1 },
+  { id: "funnel-2-plg", label: "Funnel 2: the product-led free trial funnel (self-serve)", level: 1 },
+  { id: "funnel-3-content-conversations", label: "Funnel 3: the content-to-conversation funnel (inbound-led)", level: 2 },
+  { id: "connecting-funnels", label: "How the three funnels work together", level: 2 },
+  { id: "funnel-metrics-comparison", label: "Comparing funnel performance: conversion, setup, and costs", level: 2 },
+  { id: "delivery-safety-rules", label: "Manage outbound pacing to protect funnel assets", level: 1 },
+  { id: "funnel-sop-checklist", label: "SOP: the sales funnel deployment checklist", level: 1 },
+  { id: "conclusion", label: "Add channels as evidence grows", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
@@ -37,7 +37,7 @@ const faqItems = [
   },
   {
     question: "What is Product-Led Growth (PLG)?",
-    answer: "PLG is an acquisition model where the software product itself serves as the primary driver of customer acquisition, retention, and expansion, typically using free trials or freemium plans."
+    answer: "PLG is an acquisition model where the software product itself is the primary driver of customer acquisition, retention, and expansion, typically using free trials or freemium plans."
   },
   {
     question: "How does Omentir integrate with inbound marketing funnels?",
@@ -53,7 +53,7 @@ export default function BlogPost() {
   return (
     <BlogPostTemplate
       title="3 Simple Sales Funnels Every Early B2B SaaS Needs"
-      description="Stop relying on single-channel growth. Learn how to configure sales-led outbound, self-serve product trials, and inbound content funnels to scale your MRR."
+      description="Configure sales-led outbound, self-serve product trials, and inbound content funnels, then pick the first path based on what you still do not know."
       slug="3-simple-sales-funnels"
       bannerSrc="/3-simple-sales-funnels.avif"
       bannerAlt="Three B2B SaaS sales funnels structure and metrics diagram"
@@ -61,26 +61,26 @@ export default function BlogPost() {
       faqItems={faqItems}
     >
       <p id="acquisition-funnel-need" className="scroll-mt-28">
-        Building a great B2B software product is only the first step. To build a sustainable business, you must establish predictable channels to acquire users. Senders who rely on organic page traffic or word-of-mouth referrals will see flat growth curves.
+        Building a great B2B software product is only the first step. To build a sustainable business, you need predictable channels to acquire users. Teams that rely on organic page traffic or word-of-mouth referrals will see flat growth curves.
       </p>
       <p>
-        To grow your monthly recurring revenue (MRR), you must build structured sales funnels. A funnel is a step-by-step pathway that moves cold prospects from discovery to paid subscriptions.
+        To grow monthly recurring revenue (MRR), build structured sales funnels. A funnel is a step-by-step pathway that moves cold prospects from discovery to paid subscriptions.
       </p>
       <p>
-        Many early SaaS teams fail because they try to manage too many acquisition channels. The key is to implement three core funnels: sales-led outbound, product-led trials, and inbound content.
+        Many early SaaS teams fail because they try to manage too many acquisition channels. Start with three core funnels: sales-led outbound, product-led trials, and inbound content.
       </p>
       <p>
         Most early teams only need one working funnel. The rest of this piece is about picking that first path and knowing when a second one is actually earned.
       </p>
       <p>
-        The mistake is trying to make every funnel work at the same time. Early teams do not need a full growth department. They need one primary way to learn from buyers, one easy way for interested people to try the product, and one way to turn what they learn into public trust. These three funnels serve different jobs.
+        The mistake is trying to make every funnel work at the same time. Early teams do not need a full growth department. They need one primary way to learn from buyers, one easy way for interested people to try the product, and one way to turn what they learn into public trust. These three funnels do different jobs.
       </p>
       <p>
         A funnel is useful only if it tells you what to do next. If a funnel produces traffic but no conversations, it is not teaching enough. If it produces demos but no customers, it is not qualifying well enough. If it produces signups but no activation, the product experience needs work.
       </p>
 
       <h2 id="choose-first-funnel" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        How to Choose the First Funnel
+        How to choose the first funnel
       </h2>
       <p>
         Choose the first funnel based on your biggest unknown. If you do not know who the buyer is, start with direct outbound. If you know the buyer but prospects need to feel the product before they understand it, build a product-led trial. If you have strong insight but not enough trust in the market, build content that turns that insight into conversations.
@@ -98,10 +98,10 @@ export default function BlogPost() {
       </ul>
 
       <h2 id="funnel-1-direct-outbound" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Funnel 1: The Direct Outbound Funnel (Sales-Led)
+        Funnel 1: the direct outbound funnel (sales-led)
       </h2>
       <p>
-        The Direct Outbound Funnel is the most effective channel for early-stage B2B startups. It requires no advertising capital and allows you to target ideal buyers directly.
+        The Direct Outbound Funnel is the most useful channel for early-stage B2B startups. It requires no advertising capital and lets you target ideal buyers directly.
       </p>
       <p>
         A professional outbound funnel coordinates four steps:
@@ -109,7 +109,7 @@ export default function BlogPost() {
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
         <li><strong>Discovery:</strong> Using search filters to locate prospects matching your Ideal Customer Profile (ICP).</li>
         <li><strong>Copywriting:</strong> Writing personalized messages based on career triggers, avoiding generic templates.</li>
-        <li><strong>Review:</strong> Auditing message drafts in a queue to verify tone and alignment.</li>
+        <li><strong>Review:</strong> Auditing message drafts in a queue to verify tone and fit.</li>
         <li><strong>Pacing:</strong> Sending messages spaced out with random human-like delays to protect profile health.</li>
       </ul>
       <p>
@@ -137,7 +137,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="funnel-2-plg" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Funnel 2: The Product-Led Free Trial Funnel (Self-Serve)
+        Funnel 2: the product-led free trial funnel (self-serve)
       </h2>
       <p>
         The Product-Led Growth (PLG) funnel uses a free trial or low-tier plan to reduce signup friction.
@@ -183,10 +183,10 @@ export default function BlogPost() {
       </p>
 
       <h2 id="funnel-3-content-conversations" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Funnel 3: The Content-to-Conversation Funnel (Inbound-Led)
+        Funnel 3: the content-to-conversation funnel (inbound-led)
       </h2>
       <p>
-        The Content-to-Conversation funnel transforms your readers into sales leads. Senders write detailed, educational articles detailing how to solve specific challenges (such as list cleaning or outreach safety).
+        The Content-to-Conversation funnel turns readers into sales leads. Senders write detailed, educational articles on how to solve specific challenges (such as list cleaning or outreach safety).
       </p>
       <p>
         When readers engage with your content, start a conversation thread:
@@ -213,7 +213,7 @@ or do you already have a scoring step before outreach starts?`}</code>
       </p>
 
       <h2 id="connecting-funnels" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        How the Three Funnels Work Together
+        How the three funnels work together
       </h2>
       <p>
         These funnels should not operate as isolated projects. Outbound tells you which pains buyers mention. Content turns those pains into useful public resources. Product-led onboarding turns interested readers and prospects into users who can experience value. Each funnel feeds the next.
@@ -245,7 +245,7 @@ or do you already have a scoring step before outreach starts?`}</code>
       </div>
 
       <h2 id="funnel-metrics-comparison" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Comparing Funnel Performance: Conversion, Setup, and Costs
+        Comparing funnel performance: conversion, setup, and costs
       </h2>
       <p>
         Each acquisition funnel has different resource requirements:
@@ -260,7 +260,7 @@ or do you already have a scoring step before outreach starts?`}</code>
         <strong>Content Funnels:</strong> Setup takes weeks of writing work. Conversion rates are lower, but the traffic scales organically.
       </p>
       <p>
-        We recommend combining outbound outreach with self-serve plans to capture both high-intent buyers and early trials.
+        Combine outbound outreach with self-serve plans so you can capture both high-intent buyers and early trials.
       </p>
       <p>
         Compare funnels by the question they answer:
@@ -275,7 +275,7 @@ or do you already have a scoring step before outreach starts?`}</code>
       </p>
 
       <h2 id="delivery-safety-rules" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Managing Outbound Pacing to Protect Funnel Assets
+        Manage outbound pacing to protect funnel assets
       </h2>
       <p>
         Outbound campaigns require pacing tools to protect profile health and brand trust. Random sending delays keep activity closer to normal manual behavior and reduce risky sending spikes.
@@ -292,7 +292,7 @@ or do you already have a scoring step before outreach starts?`}</code>
       </p>
 
       <h2 id="funnel-sop-checklist" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: The Sales Funnel Deployment Checklist
+        SOP: the sales funnel deployment checklist
       </h2>
       <p>
         Configure your acquisition funnels using these steps:
@@ -317,10 +317,10 @@ or do you already have a scoring step before outreach starts?`}</code>
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Diversifying Channels for Sustainable MRR Growth
+        Add channels as evidence grows
       </h2>
       <p>
-        Outbound outreach is most effective when combined with structured acquisition funnels. By managing sales-led outbound, product-led trials, and content-led inbound, you build a diversified B2B pipeline.
+        Outbound outreach works best when it sits inside structured acquisition funnels. Managing sales-led outbound, product-led trials, and content-led inbound gives you a B2B pipeline that is not stuck on one channel.
       </p>
       <p>
         Start with the funnel that answers your biggest unknown, then connect the three as evidence grows. If outbound is that first funnel, keep the ICP narrow enough that a week of conversations can tell you whether the offer is wrong or the audience is.

@@ -23,13 +23,13 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "qualification-before-personalization", label: "Qualification Before Personalization", level: 1 },
-  { id: "the-six-part-score", label: "The Six-Part Score", level: 1 },
-  { id: "evidence-quality", label: "Evidence Quality", level: 1 },
-  { id: "make-rejections-explicit", label: "Make Rejections Explicit", level: 1 },
-  { id: "human-review-loop", label: "Human Review Loop", level: 1 },
-  { id: "worked-example", label: "Worked Example", level: 1 },
-  { id: "handoff-to-outreach", label: "Handoff to Outreach", level: 1 },
+  { id: "qualification-before-personalization", label: "Qualification before personalization", level: 1 },
+  { id: "the-six-part-score", label: "The six-part score", level: 1 },
+  { id: "evidence-quality", label: "Evidence quality", level: 1 },
+  { id: "make-rejections-explicit", label: "Make rejections explicit", level: 1 },
+  { id: "human-review-loop", label: "Human review loop", level: 1 },
+  { id: "worked-example", label: "Worked example", level: 1 },
+  { id: "handoff-to-outreach", label: "Handoff to outreach", level: 1 },
   { id: "faqs", label: "FAQs", level: 1 },
 ];
 
@@ -90,7 +90,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Qualification Before Personalization
+        Qualification before personalization
       </h2>
       <p>
         Personalization is expensive. Even when AI drafts the first version, a good message still needs a real reason, a clean angle, and a human review path. That work should not be spent on every name that matches a job title filter.
@@ -119,7 +119,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        The Six-Part Score
+        The six-part score
       </h2>
       <p>
         A useful AI lead qualification score should be broken into parts. A single number hides too much. You want to know whether the lead failed because the company was wrong, the person was wrong, the timing was weak, or the evidence was thin.
@@ -185,7 +185,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Evidence Quality
+        Evidence quality
       </h2>
       <p>
         AI can sound confident when the evidence is weak. Your rubric needs a separate field for evidence quality so the model cannot hide a guess behind persuasive language.
@@ -214,7 +214,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Make Rejections Explicit
+        Make rejections explicit
       </h2>
       <p>
         A qualification system is only useful if it rejects leads. If every prospect gets a passing score, the model has become an excuse to send more messages.
@@ -238,7 +238,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Human Review Loop
+        Human review loop
       </h2>
       <p>
         Early AI lead qualification needs human review. Not forever, and not for every field, but enough to train your judgment around the model's misses. Review the first 50 to 100 leads before trusting the system with larger batches.
@@ -260,7 +260,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Worked Example
+        Worked example
       </h2>
       <p>
         Imagine you sell software that helps customer success teams identify expansion risks before renewal. Your ICP is B2B SaaS companies with 30 to 200 employees, a growing CS team, and visible renewal or account management complexity.
@@ -285,7 +285,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Handoff to Outreach
+        Handoff to outreach
       </h2>
       <p>
         Qualification should produce a usable handoff, not just a row in a table. For every approved lead, store the reason, the safest opening angle, the disqualifiers checked, and the next action.

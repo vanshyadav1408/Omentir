@@ -17,13 +17,13 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems = [
-  { id: "modern-outbound-reality", label: "The 2026 Outbound Reality", level: 1 },
-  { id: "sequence-framework", label: "The Multi-Touch Sequencing Framework", level: 1 },
-  { id: "templates-playbooks", label: "4-Step Sequence Scripts & Templates", level: 1 },
-  { id: "technical-safety", label: "Technical Safety & Throttling Limits", level: 1 },
-  { id: "case-study", label: "Case Study: Booking 14 Demos in 30 Days", level: 1 },
-  { id: "pitfalls", label: "Critical Sequence Pitfalls to Avoid", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "modern-outbound-reality", label: "The 2026 outbound reality", level: 1 },
+  { id: "sequence-framework", label: "The multi-touch sequencing framework", level: 1 },
+  { id: "templates-playbooks", label: "4-step sequence scripts and templates", level: 1 },
+  { id: "technical-safety", label: "Technical safety and throttling limits", level: 1 },
+  { id: "case-study", label: "Case study: booking 14 demos in 30 days", level: 1 },
+  { id: "pitfalls", label: "Sequence pitfalls to avoid", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ] as const;
 
 const faqItems = [
@@ -46,7 +46,7 @@ export default function BlogPost() {
     >
       <div id="introduction" className="scroll-mt-28">
         <p>
-          A single cold message is rarely enough to secure a B2B demo. In today's saturated digital landscape, busy decision-makers are bombarded with notifications, emails, and platform updates. They might see your initial message, appreciate the relevance, and even mentally resolve to reply-only to get pulled into an urgent internal meeting and forget your profile entirely.
+          A single cold message is rarely enough to secure a B2B demo. Decision-makers get hit with notifications, emails, and platform updates. They might see your first message, find it relevant, even plan to reply, then get pulled into an internal meeting and forget your profile.
         </p>
         <p>
           Relying on a single touchpoint is leaving money on the table. To build a predictable, scalable sales pipeline, you must establish a multi-step outbound sequence on LinkedIn. A modern sequence guides prospects systematically through connection, initial observation, conversation starters, value-add touches, and thoughtful follow-ups, without ever crossing the line into spam.
@@ -57,7 +57,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          The 2026 Outbound Reality: Multi-Touch or Bust
+          The 2026 outbound reality: multi-touch or bust
         </h2>
         <p>
           The traditional method of "spray and pray"-sending a massive block of pitch text along with a booking link in the first message-is completely dead. In 2026, LinkedIn users have developed acute "pitch slap" blindness. The moment they detect a standardized sales template in their inbox, they archive the thread, delete the request, or worse, mark it as spam.
@@ -71,7 +71,7 @@ export default function BlogPost() {
           <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
           <div className="pl-4">
             <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-              The Golden Rule of Sequencing
+              The golden rule of sequencing
             </h4>
             <p className="text-sm text-zinc-650 leading-relaxed">
               Always structure your automated sequences to stop immediately the moment a prospect replies. Continuing to send pre-programmed follow-ups to a lead who has already replied is the quickest way to destroy your credibility and trigger a spam report. Every touchpoint from the reply onwards must be strictly manual and peer-to-peer.
@@ -84,13 +84,13 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          The Multi-Touch LinkedIn Sequencing Framework
+          The multi-touch LinkedIn sequencing framework
         </h2>
         <p>
           A high-converting sequence is built like a conversation, not a megaphone broadcast. Instead of badgering a prospect to "jump on a quick call," each touchpoint must deliver a discrete slice of value or focus on a highly specific operational trigger. This establishes you as an industry expert who understands their world.
         </p>
         <p>
-          Let's break down the optimal pacing, timing, and structure of a world-class 4-part LinkedIn sequence:
+          Optimal pacing, timing, and structure of a 4-part LinkedIn sequence:
         </p>
 
         <div className="my-6 overflow-x-auto rounded-lg border border-zinc-200 shadow-sm">
@@ -137,14 +137,14 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          The 4-Step High-Converting Sequence Scripting & Templates
+          The 4-step high-converting sequence scripting and templates
         </h2>
         <p>
-          To make this framework highly actionable, let's explore the exact templates you can copy, customize, and deploy today. Each message is engineered to be highly conversational, brief (under 100 words), and heavily focused on the prospect's perspective.
+          Templates you can copy, customize, and deploy. Each message is conversational, brief (under 100 words), and written from the prospect's side of the desk.
         </p>
 
         {/* STEP 1 TEMPLATE */}
-        <h3 className="text-lg font-bold text-black mt-8 mb-3">Step 1: The Low-Friction Connection</h3>
+        <h3 className="text-lg font-bold text-black mt-8 mb-3">Step 1: The low-friction connection</h3>
         <p>
           Your connection request note has one job: get accepted. Adding a sales pitch, a calendar link, or a laundry list of company features will immediately tank your acceptance rate. Instead, mention a shared interest, mutual group, or clean industry topic.
         </p>
@@ -160,7 +160,7 @@ export default function BlogPost() {
         </div>
 
         {/* STEP 2 TEMPLATE */}
-        <h3 className="text-lg font-bold text-black mt-8 mb-3">Step 2: The Conversational Hook (3 Days Post-Acceptance)</h3>
+        <h3 className="text-lg font-bold text-black mt-8 mb-3">Step 2: The conversational hook (3 days post-acceptance)</h3>
         <p>
           Do not pitch your software directly yet. Instead, highlight a common friction point that peers in their exact position experience daily, and ask if they are navigating it.
         </p>
@@ -177,7 +177,7 @@ export default function BlogPost() {
         </div>
 
         {/* STEP 3 TEMPLATE */}
-        <h3 className="text-lg font-bold text-black mt-8 mb-3">Step 3: The Value Reinforcement (4 Days Later)</h3>
+        <h3 className="text-lg font-bold text-black mt-8 mb-3">Step 3: The value reinforcement (4 days later)</h3>
         <p>
           If they didn't reply to Step 2, don't say "just checking in on this." "Checking in" adds zero value and signals that you're just following an automated task list. Instead, drop a high-value asset, such as a short loom video, a PDF checklist, or a case study framework.
         </p>
@@ -194,7 +194,7 @@ export default function BlogPost() {
         </div>
 
         {/* STEP 4 TEMPLATE */}
-        <h3 className="text-lg font-bold text-black mt-8 mb-3">Step 4: The Clean Breakup (6 Days Later)</h3>
+        <h3 className="text-lg font-bold text-black mt-8 mb-3">Step 4: The clean breakup (6 days later)</h3>
         <p>
           If they still haven't engaged, it is time to step away. The "breakup" message is highly effective because it triggers a psychological response known as fear of missing out (FOMO). By taking away the opportunity, you often prompt them to reply to preserve the relationship.
         </p>
@@ -203,7 +203,7 @@ export default function BlogPost() {
           <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">Step 4 Message Template:</span>
           <p className="mt-2 text-zinc-800 font-mono text-sm leading-relaxed">
             "Hey [First_Name], completely understand that automating outbound isn't your main focus right now as you scale. I'll stop cluttering your inbox. <br/><br/>
-            If you ever want to streamline lead sourcing in the future, I'll be sharing updates on my profile. Wish you all the best with [Company_Name]!"
+            If you ever want a cleaner way to source leads in the future, I'll be sharing updates on my profile. Wish you all the best with [Company_Name]!"
           </p>
           <div className="mt-4 pt-4 border-t border-zinc-300 text-xs text-zinc-500">
             <strong>Why it works:</strong> It is polite, demonstrates high professional emotional intelligence (EQ), and removes all sales pressure. Frequently, prospects will reply here with "Sorry, been busy! Tell me more."
@@ -215,7 +215,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Technical Safety, Guardrails & Automation Deliverability
+          Technical safety, guardrails, and automation deliverability
         </h2>
         <p>
           While building a high-converting sequence is a copywriting challenge, executing it safely is a technical challenge. LinkedIn has aggressively stepped up its tracking of automated browsers, browser extensions, and scraping bots. If you run your campaigns using low-grade tools, your profile will end up in "jail"-restricted or permanently banned.
@@ -235,10 +235,10 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Case Study: Booking 14 Demos in 30 Days
+          Case study: booking 14 demos in 30 days
         </h2>
         <p>
-          Let's analyze a real-world scenario where a B2B SaaS startup utilized this exact 4-step sequencing framework to target Series A Product Managers.
+          A B2B SaaS startup used this 4-step sequencing framework to target Series A Product Managers.
         </p>
         <p>
           The company, a technical product intelligence dashboard, identified a highly focused ICP of 400 prospects. They loaded these prospects into their sequence queue and set strict daily constraints of 15 requests per day.
@@ -286,7 +286,7 @@ export default function BlogPost() {
         <div className="my-10 rounded-2xl border border-zinc-200 bg-[#f4f2ec] p-8 text-center shadow-[0_18px_60px_rgba(15,23,42,0.06)] relative overflow-hidden">
           <div className="absolute inset-x-0 top-0 h-1.5 bg-[#ba3871]" />
           <h3 style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mb-3">
-            Review the Sequence Before Scaling
+            Review the sequence before scaling
           </h3>
           <p className="text-sm text-zinc-650 leading-relaxed max-w-xl mx-auto mb-6">
             Use the sequence structure above to define timing, channel choice, and exit rules. Once the manual flow is clear, software can help keep the process consistent.
@@ -306,7 +306,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Critical Sequence Pitfalls to Avoid
+          Sequence pitfalls to avoid
         </h2>
         <p>
           When setting up your first multi-step sequence, it is extremely easy to fall into bad sales habits that tank your conversion rates. Keep your campaigns clean by steering clear of these common mistakes:
@@ -323,7 +323,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Frequently Asked Questions
+          Frequently asked questions
         </h2>
         <FaqAccordion items={faqItems} />
       </div>

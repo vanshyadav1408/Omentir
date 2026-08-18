@@ -4,7 +4,7 @@ import BlogPostTemplate from "../blog-post-template";
 
 export const metadata = createPageMetadata({
   title: "How Building in Public Drives B2B Leads - Omentir",
-  description: "Stop posting generic corporate updates. Learn how sharing revenue, code, and sales metrics builds trust and generates high-quality B2B inbound leads.",
+  description: "Share revenue, code, and sales metrics in public so buyers can see how you work, then turn that trust into B2B inbound leads.",
   path: "/blogs/building-in-public-b2b-leads",
   keywords: [
     "building in public B2B leads",
@@ -17,24 +17,24 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "power-of-transparency", label: "The Shift from Faceless Sales to Transparent Building", level: 1 },
-  { id: "trust-before-inbound", label: "Why Trust Comes Before Inbound", level: 2 },
-  { id: "what-to-share", label: "The Content Framework: What to Share Publicly", level: 1 },
-  { id: "sharing-revenue-charts", label: "Log 1: Sharing Revenue Milestones and MRR Charts", level: 2 },
-  { id: "sharing-failures-bugs", label: "Log 2: Sharing Interface Updates, Bugs, and Failures", level: 2 },
-  { id: "sharing-sales-metrics", label: "Log 3: Sharing Campaign Performance and Conversion Data", level: 2 },
-  { id: "what-not-to-share", label: "What Not to Share Publicly", level: 2 },
-  { id: "converting-social-engagement", label: "Converting Social Engagement into Sales Conversations", level: 1 },
-  { id: "safe-outreach-pacing", label: "Scheduling Campaigns Safely to Protect Profile Health", level: 1 },
-  { id: "build-in-public-sop", label: "SOP: The Weekly Building in Public Content Checklist", level: 1 },
-  { id: "conclusion", label: "Building Long-Term Trust Through Openness", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "power-of-transparency", label: "From faceless sales to transparent building", level: 1 },
+  { id: "trust-before-inbound", label: "Why trust comes before inbound", level: 2 },
+  { id: "what-to-share", label: "The content framework: what to share publicly", level: 1 },
+  { id: "sharing-revenue-charts", label: "Log 1: sharing revenue milestones and MRR charts", level: 2 },
+  { id: "sharing-failures-bugs", label: "Log 2: sharing interface updates, bugs, and failures", level: 2 },
+  { id: "sharing-sales-metrics", label: "Log 3: sharing campaign performance and conversion data", level: 2 },
+  { id: "what-not-to-share", label: "What not to share publicly", level: 2 },
+  { id: "converting-social-engagement", label: "Convert social engagement into sales conversations", level: 1 },
+  { id: "safe-outreach-pacing", label: "Schedule campaigns safely to protect profile health", level: 1 },
+  { id: "build-in-public-sop", label: "SOP: the weekly building in public content checklist", level: 1 },
+  { id: "conclusion", label: "Build long-term trust through openness", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
   {
     question: "Why does building in public attract B2B buyers?",
-    answer: "B2B buyers purchase from vendors they trust. Sharing your development journey, revenue metrics, and product updates demonstrates authenticity and accountability."
+    answer: "B2B buyers purchase from vendors they trust. Sharing your development journey, revenue metrics, and product updates shows how you actually operate."
   },
   {
     question: "Will competitors copy my product if I build in public?",
@@ -54,7 +54,7 @@ export default function BlogPost() {
   return (
     <BlogPostTemplate
       title="Building in Public: How Transparency Drives B2B Leads"
-      description="Stop hiding your startup journey. Discover how to share revenue milestones, code challenges, and campaign metrics to build authority and drive B2B inbound leads."
+      description="Share revenue milestones, code challenges, and campaign metrics so buyers can see how you work, then turn that trust into B2B inbound leads."
       slug="building-in-public-b2b-leads"
       bannerSrc="/building-in-public-b2b-leads.avif"
       bannerAlt="Building publicly on social networks and B2B inbound lead generation diagram"
@@ -62,16 +62,16 @@ export default function BlogPost() {
       faqItems={faqItems}
     >
       <p id="power-of-transparency" className="scroll-mt-28">
-        B2B marketing has historically been dominated by corporate messaging. Companies publish polished press releases, generic product feature updates, and formal case studies. Senders assume that presenting a perfect, faceless corporate image is the most effective way to build credibility.
+        B2B marketing has long been dominated by corporate messaging. Companies publish polished press releases, generic product feature updates, and formal case studies. Senders assume that a perfect, faceless corporate image is the best way to look credible.
       </p>
       <p>
-        In today's B2B market, buyers have developed corporate message fatigue. They are skeptical of exaggerated sales claims and formal pitch decks.
+        B2B buyers are tired of corporate messaging. They are skeptical of exaggerated sales claims and formal pitch decks.
       </p>
       <p>
-        To build trust with modern buyers, you must prioritize authenticity. Building in public (sharing your revenue milestones, feature choices, bugs, and sales metrics) is a powerful alternative.
+        To earn trust, show the work. Building in public (sharing revenue milestones, feature choices, bugs, and sales metrics) is a practical alternative.
       </p>
       <p>
-        This transparent approach helps you build authority and drive high-quality inbound leads.
+        That approach can build authority and bring inbound leads from people who already saw how you operate.
       </p>
       <p>
         Building in public only produces leads when the posts teach something a buyer already wanted to know. A daily "shipped a button" update is not a demand signal.
@@ -84,7 +84,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="trust-before-inbound" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Why Trust Comes Before Inbound
+        Why trust comes before inbound
       </h2>
       <p>
         Building in public does not automatically create leads. Visibility is only the first layer. The commercial value appears when the right people repeatedly see you solving a problem they recognize. A founder posting daily screenshots without a clear buyer problem may gain attention, but attention is not pipeline.
@@ -97,13 +97,13 @@ export default function BlogPost() {
       </p>
 
       <h2 id="what-to-share" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        The Content Framework: What to Share Publicly
+        The content framework: what to share publicly
       </h2>
       <p>
         Building in public is not random posting. Senders must share structured logs that demonstrate execution and product progress.
       </p>
       <p>
-        We recommend sharing three types of updates weekly:
+        Share three types of updates weekly:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
         <li><strong>Revenue Milestones:</strong> Share MRR charts to demonstrate growth.</li>
@@ -111,7 +111,7 @@ export default function BlogPost() {
         <li><strong>Sales Data:</strong> Publish connection rates, reply rates, and booked demo metrics.</li>
       </ul>
       <p>
-        Each update should include a lesson, not just a number. "We hit $1,000 MRR" is a milestone. "We hit $1,000 MRR after narrowing our ICP from all founders to B2B SaaS teams hiring their first SDR" is useful. The second version teaches the reader what changed and why.
+        Each update should include a lesson, not only a number. "We hit $1,000 MRR" is a milestone. "We hit $1,000 MRR after narrowing our ICP from all founders to B2B SaaS teams hiring their first SDR" is useful. The second version teaches the reader what changed and why.
       </p>
       <p>
         Think in weekly themes instead of random posts. One week might focus on lead quality. Another might focus on onboarding friction. Another might focus on how you rewrote your positioning after three prospects misunderstood the product. This keeps your public narrative coherent, and it gives buyers a reason to follow along.
@@ -134,10 +134,10 @@ export default function BlogPost() {
       </p>
 
       <h2 id="sharing-revenue-charts" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Log 1: Sharing Revenue Milestones and MRR Charts
+        Log 1: sharing revenue milestones and MRR charts
       </h2>
       <p>
-        Revenue validation is highly compelling. When you share verified revenue growth charts, you prove that companies pay for your solution.
+        Revenue numbers can be compelling. When you share verified revenue growth charts, you prove that companies pay for your solution.
       </p>
       <p>
         Log your MRR updates and pricing choices. For example, explain how
@@ -164,7 +164,7 @@ So we are changing onboarding to start with ICP scoring before copywriting.`}</c
       </p>
 
       <h2 id="sharing-failures-bugs" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Log 2: Sharing Interface Updates, Bugs, and Failures
+        Log 2: sharing interface updates, bugs, and failures
       </h2>
       <p>
         Sharing failures builds more trust than sharing wins. When you document a software bug or campaign deliverability drop, explain how you resolved it.
@@ -173,7 +173,7 @@ So we are changing onboarding to start with ICP scoring before copywriting.`}</c
         For instance, post about how a pacing error triggered profile limits, and explain that you resolved the issue by implementing random outbox delays.
       </p>
       <p>
-        This level of transparency proves you prioritize reliability.
+        This level of transparency shows you take reliability seriously.
       </p>
       <p>
         Failure posts work when they are specific and responsible. Do not dramatize the failure for engagement. Explain what happened, who was affected, what you changed, and how you will prevent the same issue from returning. This is the difference between transparency and spectacle.
@@ -198,7 +198,7 @@ So we are changing onboarding to start with ICP scoring before copywriting.`}</c
       </div>
 
       <h2 id="sharing-sales-metrics" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Log 3: Sharing Campaign Performance and Conversion Data
+        Log 3: sharing campaign performance and conversion data
       </h2>
       <p>
         Outbound performance data is valuable to other growth operators. Share your conversion charts weekly:
@@ -227,7 +227,7 @@ So we are changing onboarding to start with ICP scoring before copywriting.`}</c
       </p>
 
       <h2 id="what-not-to-share" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        What Not to Share Publicly
+        What not to share publicly
       </h2>
       <p>
         Transparency has boundaries. Some information may create trust with followers while damaging trust with customers, teammates, or prospects. A serious B2B founder should decide what stays private before posting becomes a habit.
@@ -247,10 +247,10 @@ So we are changing onboarding to start with ICP scoring before copywriting.`}</c
       </p>
 
       <h2 id="converting-social-engagement" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Converting Social Engagement into Sales Conversations
+        Convert social engagement into sales conversations
       </h2>
       <p>
-        Building publicly generates organic views and comments. Senders should treat these interactions as sales opportunities.
+        Building publicly generates organic views and comments. Treat those interactions as possible sales conversations, not as a vanity dashboard.
       </p>
       <p>
         When a target buyer comments on your feature update, reach out with a direct message referencing their comment and start a conversational thread, as outlined in our guide on{" "}
@@ -278,7 +278,7 @@ Curious: is the painful part finding enough accounts, or deciding which ones are
       </p>
 
       <h2 id="safe-outreach-pacing" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Scheduling Campaigns Safely to Protect Profile Health
+        Schedule campaigns safely to protect profile health
       </h2>
       <p>
         Even with high inbound interest, you must manage your outreach pacing. Random sending delays keep activity closer to natural manual behavior and reduce risky volume spikes.
@@ -298,7 +298,7 @@ Curious: is the painful part finding enough accounts, or deciding which ones are
       </p>
 
       <h2 id="build-in-public-sop" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: The Weekly Building in Public Content Checklist
+        SOP: the weekly building in public content checklist
       </h2>
       <p>
         Publish your weekly updates using these steps:
@@ -322,14 +322,14 @@ Curious: is the painful part finding enough accounts, or deciding which ones are
         Do not measure only impressions. Track qualified signals: comments from target buyers, inbound messages with a real problem, referral introductions, demo requests, newsletter replies, or prospects mentioning a post during a sales call. Those are the signals that prove your public building is influencing pipeline.
       </p>
       <p>
-        Omentir handles the variable mapping and safety limits, allowing you to validate your MVP efficiently.
+        Omentir handles the variable mapping and safety limits so you can keep public posting and outbound from colliding.
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Building Long-Term Trust Through Openness
+        Build long-term trust through openness
       </h2>
       <p>
-        B2B buyers prioritize authenticity. By sharing your development and sales journey publicly, you build trust and generate qualified leads.
+        B2B buyers care about authenticity. Sharing your development and sales journey publicly can build trust and generate qualified leads.
       </p>
       <p>
         The winning version is not radical oversharing. It is useful transparency: clear problems, honest decisions, concrete lessons, protected customer data, and respectful follow-up with people who already showed interest in the work, not a cold list you bolted a "build in public" line onto.

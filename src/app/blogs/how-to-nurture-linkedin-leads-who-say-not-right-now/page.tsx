@@ -17,11 +17,11 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems = [
-  { id: "psychology-of-not-yet", label: "Value of Soft Rejections", level: 1 },
-  { id: "nurturing-framework", label: "The Nurturing Framework", level: 1 },
-  { id: "nurture-templates", label: "4 Nurture Templates", level: 1 },
-  { id: "technical-crm-coordination", label: "Technical CRM & Safety", level: 1 },
-  { id: "pitfalls-avoid", label: "Pitfalls & Best Practices", level: 1 },
+  { id: "psychology-of-not-yet", label: "Value of soft rejections", level: 1 },
+  { id: "nurturing-framework", label: "The nurturing framework", level: 1 },
+  { id: "nurture-templates", label: "4 nurture templates", level: 1 },
+  { id: "technical-crm-coordination", label: "Technical CRM and safety", level: 1 },
+  { id: "pitfalls-avoid", label: "Pitfalls and practices that work", level: 1 },
   { id: "frequently-asked-questions", label: "Nurturing FAQs", level: 1 }
 ] as const;
 
@@ -29,7 +29,7 @@ const faqItems = [
   { question: "What if the lead never posts on LinkedIn? How do I warm them up?", answer: "If a prospect has a silent feed, you cannot engage with their posts. Instead, focus on company-level updates. Comment on their company's official page posts, or reference their company's recent hiring changes, product updates, or PR statements in your direct messages." },
   { question: "How many times should I nurture a lead before giving up?", answer: "If you have executed four consecutive high-value touchpoints over a 12-month period and received zero replies, route the lead to a \"Passive/Cold\" bucket. Keep them connected, but stop sending direct follow-ups unless a significant company trigger event occurs." },
   { question: "Should I offer a discount during the nurturing re-engagement phase?", answer: "Absolutely not. Offering an unprompted discount in your follow-up cheapens your product and signals desperation. Focus entirely on value, operational outcomes, and solving their specific business challenges." },
-  { question: "How do I manage 100+ warm nurturing leads simultaneously?", answer: "Utilize robust sales execution workspaces like Omentir . By setting up smart reminders, tracking real-time prospect activity, and maintaining a structured campaign schedule, you can safely scale your nurturing outreach without violating LinkedIn's technical safety boundaries." },
+  { question: "How do I manage 100+ warm nurturing leads simultaneously?", answer: "Use sales execution workspaces like Omentir. By setting up smart reminders, tracking real-time prospect activity, and keeping a structured campaign schedule, you can scale nurturing outreach without violating LinkedIn's technical safety boundaries." },
 ] as const;
 
 export default function BlogPost() {
@@ -45,10 +45,10 @@ export default function BlogPost() {
     >
       <div id="introduction" className="scroll-mt-28">
         <p>
-          A soft rejection like "Not right now, try again next quarter" or "We don't have the budget for this until Q3" is one of the most underappreciated goldmines in B2B sales. In cold outbound, a flat "No" or a prompt deletion is the standard response to mismatch. But a "Not right now" is different. It represents a clear timing indicator rather than a rejection. It signals that you have identified the right buyer at the right company with a real, validated problem, but you are currently navigating an internal timing bottleneck.
+          A soft rejection like "Not right now, try again next quarter" or "We don't have the budget for this until Q3" is one of the most underused signals in B2B sales. In cold outbound, a flat "No" or a deletion usually means mismatch. "Not right now" is different. It is a timing signal, not a rejection. You found the right buyer at the right company with a real problem, but you are stuck on an internal timing bottleneck.
         </p>
         <p>
-          Unfortunately, the mistake most modern B2B sales reps and founders make is treating "Not right now" as a closed door. They either abandon the lead entirely-allowing months of prospective pipeline to wither away-or they set a single, sterile automated calendar reminder that results in a robotic "just checking in" message months later. To build a robust, scalable revenue engine, you must establish a value-first social nurturing routine on LinkedIn that keeps your brand top-of-mind without feeling intrusive.
+          Most B2B sales reps and founders treat "Not right now" as a closed door. They either abandon the lead, which lets months of pipeline go cold, or they set a single calendar reminder that produces a robotic "just checking in" months later. If you want a scalable revenue engine, you need a value-first LinkedIn nurturing routine that stays visible without feeling like a chase.
         </p>
 
         <h2
@@ -56,19 +56,19 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          The Psychology and Real Value of the 'Not Right Now' Lead
+          The psychology and real value of the 'not right now' lead
         </h2>
         <p>
           When a prospect takes the time to reply to your cold message with a timing constraint, they are giving you highly valuable intent data. In B2B sales, buyers are constantly juggling multiple high-priority initiatives. A delay is rarely a reflection of your product's utility; instead, it is usually a result of structural hurdles such as:
         </p>
         <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-850 my-4">
-          <li><strong>Fiscal Budget Allocations:</strong> The department's discretionary budget has been fully committed for the current quarter, and new capital won't be unlocked until the next fiscal cycle.</li>
+          <li><strong>Fiscal budget allocations:</strong> The department's discretionary budget has been fully committed for the current quarter, and new capital will not be available until the next fiscal cycle.</li>
           <li><strong>Active Implementation Projects:</strong> The engineering or operations team is currently migrating to a new software suite or database infrastructure, leaving zero bandwidth for new tools.</li>
           <li><strong>Strategic Reorganization:</strong> The company is undergoing leadership changes, acquisitions, or team restructuring, meaning all non-essential vendor decisions are temporarily frozen.</li>
           <li><strong>Contractual Lock-ins:</strong> They are currently bound to an existing vendor contract that does not expire for another four to six months.</li>
         </ul>
         <p>
-          By maintaining a consistent, lightweight, and professional presence on LinkedIn during this waiting period, you build immense peer-to-peer trust. When the prospect's timing constraint eventually unlocks, you will not be just another random vendor trying to squeeze into their inbox; you will be the trusted advisor who has been quietly adding value for months.
+          Stay visible on LinkedIn during the wait, in a light and professional way, and you build peer-to-peer trust. When the timing constraint lifts, you will not be a random vendor in their inbox. You will be the person who has been adding useful context for months.
         </p>
 
         {/* Premium Style Callout Box */}
@@ -76,7 +76,7 @@ export default function BlogPost() {
           <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
           <div className="pl-4">
             <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-              The Golden Rule of B2B Nurturing
+              The golden rule of B2B nurturing
             </h4>
             <p className="text-sm text-zinc-650 leading-relaxed">
               Never pitch, sell, or push for calendar bookings during the nurture phase. Your goal is to decrease the prospect's defensive guard. Focus 100 percent of your efforts on providing educational resources, celebrating their business milestones, and engaging with their public content.
@@ -89,7 +89,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          The 90-Day Value-First Nurturing Framework
+          The 90-day value-first nurturing framework
         </h2>
         <p>
           Nurturing a warm lead is about maintaining visibility without causing inbox fatigue. If you message a prospect every week, you will quickly find your account blocked. Instead, you should implement a structured, multi-touch framework spread out over a 90-day cycle. This approach balances low-friction direct messaging with organic social selling.
@@ -136,7 +136,7 @@ export default function BlogPost() {
         </div>
 
         <p>
-          Let's break down the execution steps for each phase of this 90-day pipeline protection sequence:
+          Execution for each phase of this 90-day pipeline protection sequence:
         </p>
         <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-3 text-zinc-850 my-4">
           <li><strong>Step 1: Immediate Acknowledgment.</strong> As soon as a lead gives you a timing rejection, reply within 24 hours. Validate their constraint. Do not try to push back or overcome the objection. Say: <em>"Totally understand, [FirstName]. Timing is everything. I will keep an eye out on your updates here and check back in around [Stated Month]. Good luck with [Current Project]!"</em></li>
@@ -150,7 +150,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          4 Non-Intrusive, High-Value Nurturing Templates
+          4 non-intrusive, high-value nurturing templates
         </h2>
         <p className="mb-6">
           Use these exact copy-paste templates to maintain professional relationships in your LinkedIn outbox. Be sure to customize every bracketed variable with precise, hyper-personalized context.
@@ -217,10 +217,10 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Technical CRM Tagging and Lead Routing Safeties
+          Technical CRM tagging and lead routing safeties
         </h2>
         <p>
-          Systematic nurturing is impossible to manage manually once you have more than 20 prospects in your pipeline. Without technical automation and robust CRM workflows, high-value leads will inevitably slip through the cracks, or worse, receive overlapping sales pitches that ruin the relationship.
+          Systematic nurturing is impossible to manage manually once you have more than 20 prospects in your pipeline. Without technical automation and CRM workflows, high-value leads slip through, or they receive overlapping sales pitches that ruin the relationship.
         </p>
         <p>
           To coordinate your nurturing pipeline safely:
@@ -235,7 +235,7 @@ export default function BlogPost() {
         <div className="my-8 rounded-xl border border-zinc-200 bg-white p-6 shadow-sm relative overflow-hidden">
           <div className="absolute inset-y-0 left-0 w-1.5 bg-zinc-400" />
           <div className="pl-4">
-            <h4 className="font-bold text-black mb-2">Technical Automation Safeguards</h4>
+            <h4 className="font-bold text-black mb-2">Technical automation safeguards</h4>
             <p className="text-sm text-zinc-650 leading-relaxed mb-4">
               To scale your nurturing sequence without risking account suspensions or spam flags on LinkedIn, you must enforce strict platform safety throttles:
             </p>
@@ -252,7 +252,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Critical Nurturing Pitfalls to Avoid
+          Nurturing pitfalls to avoid
         </h2>
         <p>
           Outbound lead nurturing is a delicate process. A single misstep can shatter months of built-up trust and push your prospect straight into the arms of a competitor. Be sure to audit your campaigns against these common pitfalls:
@@ -269,7 +269,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Frequently Asked Questions
+          Frequently asked questions
         </h2>
 
         <FaqAccordion items={faqItems} />

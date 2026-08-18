@@ -17,17 +17,17 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "competitor-tracking-challenge", label: "The Challenge of Manual Competitor Tracking", level: 1 },
-  { id: "what-to-monitor", label: "What You Should Actually Monitor", level: 2 },
-  { id: "crawler-architecture", label: "Architecture of a Competitor Analysis Engine", level: 1 },
-  { id: "scraping-pricing-grids", label: "Crawling Pricing and Feature Grids automatically", level: 2 },
-  { id: "parsing-positioning-copy", label: "Parsing Value Propositions and Messaging Changes", level: 2 },
-  { id: "ethical-crawling-boundaries", label: "Ethical Crawling Boundaries", level: 2 },
-  { id: "generating-battlecards", label: "Translating Crawled Data into Sales Battlecards", level: 1 },
-  { id: "grounding-outreach-copy", label: "Grounding Outreach Copy in Competitor Strengths and Weaknesses", level: 1 },
-  { id: "analysis-sop-checklist", label: "SOP: The Competitor Intelligence Checklist", level: 1 },
-  { id: "conclusion", label: "Maintaining a Live Competitive Advantage", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "competitor-tracking-challenge", label: "The challenge of manual competitor tracking", level: 1 },
+  { id: "what-to-monitor", label: "What you should actually monitor", level: 2 },
+  { id: "crawler-architecture", label: "Architecture of a competitor analysis engine", level: 1 },
+  { id: "scraping-pricing-grids", label: "Crawling pricing and feature grids automatically", level: 2 },
+  { id: "parsing-positioning-copy", label: "Parsing value propositions and messaging changes", level: 2 },
+  { id: "ethical-crawling-boundaries", label: "Ethical crawling boundaries", level: 2 },
+  { id: "generating-battlecards", label: "Translating crawled data into sales battlecards", level: 1 },
+  { id: "grounding-outreach-copy", label: "Grounding outreach copy in competitor strengths and weaknesses", level: 1 },
+  { id: "analysis-sop-checklist", label: "SOP: the competitor intelligence checklist", level: 1 },
+  { id: "conclusion", label: "Keep competitive intel current", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
@@ -70,7 +70,7 @@ export default function BlogPost() {
         The solution is automated website analysis. By deploying AI crawlers to monitor competitor domains, you can extract pricing changes, product releases, and value positioning copy programmatically.
       </p>
       <p>
-        Omentir supports this discovery workflow, crawling target websites to identify active software installations and competitor usage. Let's look at how to build an automated competitor analysis pipeline.
+        Omentir supports this discovery workflow, crawling target websites to identify active software installations and competitor usage. The rest of this post covers how to build an automated competitor analysis pipeline.
       </p>
       <p>
         The goal is not to spy on competitors or create attack copy. The goal is to keep your own positioning honest and current. If your sales team still says a competitor lacks a feature they launched six weeks ago, you lose credibility. If your messaging ignores a competitor's new segment focus, you miss a market signal. Automated monitoring helps you notice these changes before they show up in lost deals.
@@ -80,7 +80,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="what-to-monitor" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        What You Should Actually Monitor
+        What you should actually monitor
       </h2>
       <p>
         Start with the pages that change buyer perception. You do not need to crawl every page on a competitor's domain. Monitor the pages that sales teams reference, prospects compare, or product marketers use to infer strategy.
@@ -101,7 +101,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="crawler-architecture" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Architecture of a Competitor Analysis Engine
+        Architecture of a competitor analysis engine
       </h2>
       <p>
         A competitor analysis engine uses web crawlers to monitor target domains and extract specific structural sections.
@@ -141,10 +141,10 @@ Recommended action: {battlecard_update | no_action | human_review}`}</code>
       </p>
 
       <h2 id="scraping-pricing-grids" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Crawling Pricing and Feature Grids automatically
+        Crawling pricing and feature grids automatically
       </h2>
       <p>
-        Pricing updates are critical triggers for competitive campaigns. If a competitor increases their pricing tiers or reduces their plan capabilities, their existing customers will begin looking for alternatives.
+        Pricing updates are useful triggers for competitive campaigns. If a competitor increases their pricing tiers or reduces their plan capabilities, their existing customers will begin looking for alternatives.
       </p>
       <p>
         Your crawler targets competitor pricing URLs daily, converting pricing tables into clean JSON objects.
@@ -163,7 +163,7 @@ Recommended action: {battlecard_update | no_action | human_review}`}</code>
       </p>
 
       <h2 id="parsing-positioning-copy" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Parsing Value Propositions and Messaging Changes
+        Parsing value propositions and messaging changes
       </h2>
       <p>
         Analyzing how competitors pitch their features reveals their focus markets. If a competitor changes their landing page copy from "outbound email scaling" to "enterprise CRM data cleaning," they are shifting their targeting.
@@ -191,7 +191,7 @@ Recommended action: {battlecard_update | no_action | human_review}`}</code>
       </p>
 
       <h2 id="ethical-crawling-boundaries" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Ethical Crawling Boundaries
+        Ethical crawling boundaries
       </h2>
       <p>
         Automated analysis should stay inside public, respectful boundaries. Monitor pages that anyone can visit in a browser. Respect robots.txt. Avoid login areas, private documents, customer portals, gated resources, or endpoints that were not intended for public consumption. Keep crawl frequency reasonable so you are not creating load for another site.
@@ -207,7 +207,7 @@ Recommended action: {battlecard_update | no_action | human_review}`}</code>
         <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
         <div className="pl-4">
           <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-            Intelligence Rule: Focus on Real Flaws 💡
+            Intelligence rule: focus on real flaws
           </h4>
           <p className="text-sm text-zinc-650 leading-relaxed">
             Do not copy competitor messaging. Instead, configure your sales battlecards to highlight features they do not support, such as open API access or hosted Model Context Protocol (MCP) servers.
@@ -216,7 +216,7 @@ Recommended action: {battlecard_update | no_action | human_review}`}</code>
       </div>
 
       <h2 id="generating-battlecards" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Translating Crawled Data into Sales Battlecards
+        Translating crawled data into sales battlecards
       </h2>
       <p>
         Raw website crawls are too complex for reps to use during sales calls. Your system must convert crawled text into concise sales battlecards.
@@ -239,7 +239,7 @@ Recommended action: {battlecard_update | no_action | human_review}`}</code>
         <li><strong>Proof to show:</strong> Screenshot, workflow example, demo moment, or customer evidence that supports your claim.</li>
       </ul>
       <p>
-        The "fair response" field is critical. Sales teams lose trust when battlecards train them to exaggerate. A better battlecard says, "This competitor is strong for teams that need X. We are stronger when the buyer needs Y." That helps reps qualify instead of forcing every deal into the same narrative.
+        The "fair response" field matters. Sales teams lose trust when battlecards train them to exaggerate. A better battlecard says, "This competitor is strong for teams that need X. We are stronger when the buyer needs Y." That helps reps qualify instead of forcing every deal into the same narrative.
       </p>
       <p>
         For comparison copy ideas, see our deep dive comparing{" "}
@@ -250,7 +250,7 @@ Recommended action: {battlecard_update | no_action | human_review}`}</code>
       </p>
 
       <h2 id="grounding-outreach-copy" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Grounding Outreach Copy in Competitor Strengths and Weaknesses
+        Grounding outreach copy in competitor strengths and weaknesses
       </h2>
       <p>
         Once competitor battlecards are generated, you can use them in outreach campaigns. When your crawler identifies a prospect using a competitor tool, you can trigger a comparison pitch.
@@ -276,7 +276,7 @@ Worth comparing how you are handling lead quality before sequences start?`}</cod
       </p>
 
       <h2 id="analysis-sop-checklist" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: The Competitor Intelligence Checklist
+        SOP: the competitor intelligence checklist
       </h2>
       <p>
         Set up competitor tracking using these steps:
@@ -300,11 +300,11 @@ Worth comparing how you are handling lead quality before sequences start?`}</cod
         Keep a human approval step for any battlecard change that affects customer-facing copy. Automated crawlers can find differences, but positioning is a judgment call.
       </p>
       <p>
-        Omentir resolves these comparison variables, keeping your outbound campaigns aligned with market changes.
+        Omentir resolves these comparison variables, keeping your outbound campaigns current as the market changes.
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Maintaining a Live Competitive Advantage
+        Keep competitive intel current
       </h2>
       <p>
         Outbound outreach is most effective when it is timely and relevant. By automating competitor website crawls, you ensure your sales battlecards remain accurate.

@@ -5,7 +5,7 @@ import FaqAccordion from "../../faq-accordion";
 
 export const metadata = createPageMetadata({
   title: "B2B Lead Gen with AI: Build a Context-Aware Outbound Machine - Omentir",
-  description: "Ditch generic databases and bulk sequences. Discover how to design a modern B2B lead generation workflow combining AI intent signals, programmatic enrichment, and safe LinkedIn outreach.",
+  description: "How to design a B2B lead generation workflow that uses AI intent signals, enrichment, and paced LinkedIn outreach instead of bulk database dumps.",
   path: "/blogs/b2b-lead-gen-with-ai",
   keywords: [
     "B2B lead gen with AI",
@@ -18,16 +18,16 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "the-death-of-database-scraping", label: "The Death of Database Scraping", level: 1 },
-  { id: "building-the-data-cascade", label: "Building the Outbound Data Cascade", level: 1 },
-  { id: "intent-signals-vs-static-lists", label: "Intent Signals vs. Static Lists", level: 2 },
-  { id: "ai-lead-scoring-logic", label: "AI Lead Scoring: Moving Beyond Job Titles", level: 1 },
-  { id: "implementing-scoring-rules", label: "Implementing Custom Scoring Rules", level: 2 },
-  { id: "safe-linkedin-execution", label: "Safe LinkedIn Execution: Pacing and Consent", level: 1 },
-  { id: "connecting-ai-agents-via-mcp", label: "Connecting AI Agents via MCP", level: 1 },
-  { id: "step-by-step-gtm-playbook", label: "Step-by-Step GTM Outbound Blueprint", level: 1 },
-  { id: "conclusion", label: "The Paradigm Shift in B2B Outreach", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "the-death-of-database-scraping", label: "The death of database scraping", level: 1 },
+  { id: "building-the-data-cascade", label: "Building the outbound data cascade", level: 1 },
+  { id: "intent-signals-vs-static-lists", label: "Intent signals vs. static lists", level: 2 },
+  { id: "ai-lead-scoring-logic", label: "AI lead scoring: moving beyond job titles", level: 1 },
+  { id: "implementing-scoring-rules", label: "Implementing custom scoring rules", level: 2 },
+  { id: "safe-linkedin-execution", label: "Safe LinkedIn execution: pacing and consent", level: 1 },
+  { id: "connecting-ai-agents-via-mcp", label: "Connecting AI agents via MCP", level: 1 },
+  { id: "step-by-step-gtm-playbook", label: "Step-by-step GTM outbound blueprint", level: 1 },
+  { id: "conclusion", label: "What actually changed in B2B outreach", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
@@ -53,7 +53,7 @@ export default function BlogPost() {
   return (
     <BlogPostTemplate
       title="B2B Lead Gen with AI: Build a Context-Aware Outbound Machine"
-      description="Ditch generic databases and bulk sequences. Discover how to design a modern B2B lead generation workflow combining AI intent signals, programmatic enrichment, and safe LinkedIn outreach."
+      description="How to design a B2B lead generation workflow that uses AI intent signals, enrichment, and paced LinkedIn outreach instead of bulk database dumps."
       slug="b2b-lead-gen-with-ai"
       bannerSrc="/b2b-lead-gen-with-ai.avif"
       bannerAlt="B2B lead generation and AI outbound workflow"
@@ -61,17 +61,17 @@ export default function BlogPost() {
       faqItems={faqItems}
     >
       <p id="the-death-of-database-scraping" className="scroll-mt-28">
-        If you are still exporting list after list from static databases, cleaning them in spreadsheets, and throwing them into bulk email sequences, you are playing a losing game. In 2026, buyers are suffering from profound reply fatigue. Traditional outbound methods have become so noisy that standard email service providers and social platforms are aggressively clamping down on automated spam. The result is declining deliverability, restricted accounts, and reply rates that struggle to reach half a percent.
+        If you are still exporting list after list from static databases, cleaning them in spreadsheets, and throwing them into bulk email sequences, you are playing a losing game. In 2026, buyers are tired of generic outreach. Email providers and social platforms are clamping down on automated spam. The result is declining deliverability, restricted accounts, and reply rates that struggle to reach half a percent.
       </p>
       <p>
         Building a modern outbound pipeline requires a change in philosophy. Instead of relying on volume, successful B2B growth teams are shifting to context-aware outbound engines. These systems combine programmatic data enrichment with real-time buying signals and generative artificial intelligence. By verifying actual customer fit before any message is sent, you can scale relevancy instead of scaling noise.
       </p>
       <p>
-        Omentir is built specifically to power this new model of outbound sales. As an AI-native sales agent for LinkedIn, it connects directly to your own profile to find ideal buyers, draft hyper-relevant connection notes, and manage conversations in a unified inbox sorted by intent. In this guide, we will break down the exact architecture of a modern, AI-powered lead generation machine and show you how to implement it for your company.
+        Omentir is built for this outbound model. As an AI-native sales agent for LinkedIn, it connects to your own profile to find buyers, draft relevant connection notes, and manage conversations in a unified inbox sorted by intent. Below is the architecture of an AI-powered lead generation workflow, and how to implement it.
       </p>
 
       <h2 id="building-the-data-cascade" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Building the Outbound Data Cascade
+        Building the outbound data cascade
       </h2>
       <p>
         A great outbound workflow starts with data quality. The old way of prospecting involved filtering a database by industry and company headcount, then pulling contact info. The problem is that database records are static. They are often out of date by three to six months, and they tell you nothing about whether the prospect is actually facing the problem you solve today.
@@ -96,7 +96,7 @@ export default function BlogPost() {
       </div>
 
       <h3 id="intent-signals-vs-static-lists" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Intent Signals vs. Static Lists
+        Intent signals vs. static lists
       </h3>
       <p>
         The core difference between static lists and signal-led lists is timing. Intent signals are observable events that suggest a company has a budget, a pain point, or a strategic transition. Common B2B intent signals include hiring trends in specific departments, tech stack installations, and recent leadership changes.
@@ -105,11 +105,11 @@ export default function BlogPost() {
         For instance, if you sell an developer tooling platform, a static filter for engineering managers is highly inefficient. Instead, query active job listings for teams hiring React developers, or monitor when a competitor stack is removed. Sourcing leads based on these active triggers ensures that your value proposition is relevant to the challenges they are actively discussing.
       </p>
       <p>
-        Furthermore, signal-driven lead generation dramatically improves conversion rates. When a prospect receives a message referencing an event they are actively managing, the interaction shifts from cold intrusion to timely solution. You position your brand as a helpful partner who understands their current operational context rather than a generic vendor blasting templates.
+        Signal-driven lead generation also improves conversion. When a prospect gets a message that references an event they are already managing, it feels timely instead of like a cold interruption. You look like someone who noticed their current work, not a vendor blasting templates.
       </p>
 
       <h2 id="ai-lead-scoring-logic" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        AI Lead Scoring: Moving Beyond Job Titles
+        AI lead scoring: moving beyond job titles
       </h2>
       <p>
         Once you have a list of potential prospects, the next hurdle is qualification. In the past, this was done manually by junior sales development representatives who read through LinkedIn profiles and company websites. It is a slow, error-prone process that limits the speed of your outbound motion.
@@ -121,7 +121,7 @@ export default function BlogPost() {
         The key to successful AI qualification is transparency. If your system flags a lead as a good fit, it must explain why. This prevents black-box decisions where you blast messages to prospects without knowing the underlying reason for their inclusion.
       </p>
       <p>
-        Integrating a scoring rubric ensures that every outreach decision is defensible. If an agent approves a lead, it generates an explanation detailing the alignment between the target ICP and the prospect's profile data. This log provides the necessary context for SDRs to personalize their pitches, turning raw metrics into actionable insight. To learn more about setting up scoring systems, read our guide on{" "}
+        If an agent approves a lead, it should generate an explanation of how the target ICP matches the prospect's profile. That log gives SDRs the context they need to personalize pitches. For more on scoring systems, read our guide on{" "}
         <Link href="/blogs/linkedin-lead-scoring" className="text-blue-600 hover:underline">
           LinkedIn lead scoring models
         </Link>
@@ -129,15 +129,15 @@ export default function BlogPost() {
       </p>
 
       <h3 id="implementing-scoring-rules" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Implementing Custom Scoring Rules
+        Implementing custom scoring rules
       </h3>
       <p>
         To make AI qualification work, you need to define explicit scoring rubrics. Instead of asking a general question like "Is this a good lead?", break the evaluation down into specific criteria:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Role Alignment:</strong> Does the prospect actually manage the budget or the team affected by the problem?</li>
-        <li><strong>Company Profile:</strong> Does the organization sell B2B, and does their product size justify the integration overhead?</li>
-        <li><strong>Contextual Signal:</strong> Is there active evidence (e.g., job postings, software keywords) showing they need a solution?</li>
+        <li><strong>Role fit:</strong> Does the prospect actually manage the budget or the team affected by the problem?</li>
+        <li><strong>Company profile:</strong> Does the organization sell B2B, and does their product size justify the integration overhead?</li>
+        <li><strong>Contextual signal:</strong> Is there active evidence (e.g., job postings, software keywords) showing they need a solution?</li>
       </ul>
       <p>
         Omentir integrates this scoring logic directly into its lead discovery engine. When you set up a discovery agent, it retrieves profiles matching your input criteria and runs them through a context-aware grading prompt. The agent scores each prospect from one to ten, providing a detailed explanation of its reasoning so you can audit the results before launching outreach. You can see how this fits into our broader framework in the{" "}
@@ -148,7 +148,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="safe-linkedin-execution" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Safe LinkedIn Execution: Pacing and Consent
+        Safe LinkedIn execution: pacing and consent
       </h2>
       <p>
         Having a highly qualified lead list is meaningless if your outreach methods get your accounts restricted. Many sales automation platforms scrape data aggressively or send hundreds of messages in bursts. LinkedIn's detection algorithms quickly flag this behavior, leading to account restrictions or permanent bans.
@@ -160,7 +160,7 @@ export default function BlogPost() {
         Omentir protects your account health by using native API wrappers via <a href="https://www.unipile.com/" target="_blank" rel="noopener" className="text-blue-600 hover:underline">Unipile</a>, which manages secure and encrypted access without violating platform terms. Omentir enforces strict daily send quotas and spaces messages naturally. Rather than fully automating the initial connection note, it lets you choose between auto-approval modes and human-in-the-loop validation, ensuring that you maintain full creative control.
       </p>
       <p>
-        This level of compliance is critical for brand safety. Sending unsolicited pitches at scale creates negative impressions and harms your long-term reputation. Using safety throttles ensures that you build high-quality connections with key buyers while keeping your social account active. Check our detailed guide on{" "}
+        Safety throttles matter for brand reputation. Unsolicited pitches at scale create negative impressions. Throttles let you build connections with actual buyers while keeping the social account active. Check our detailed guide on{" "}
         <Link href="/blogs/cold-linkedin-outreach" className="text-blue-600 hover:underline">
           cold LinkedIn outreach workflows
         </Link>{" "}
@@ -180,10 +180,10 @@ export default function BlogPost() {
       </div>
 
       <h2 id="connecting-ai-agents-via-mcp" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Connecting AI Agents via MCP
+        Connecting AI agents via MCP
       </h2>
       <p>
-        The most exciting transition in B2B lead generation is the rise of autonomous AI workers. Instead of manually running search queries and copy-pasting pitches, you can connect your existing AI agents directly to your sales workflow.
+        The bigger change in B2B lead generation is autonomous AI workers. Instead of running search queries and copy-pasting pitches by hand, you can connect existing AI agents to the sales workflow.
       </p>
       <p>
         This is made possible through the <a href="https://modelcontextprotocol.io/" target="_blank" rel="noopener" className="text-blue-600 hover:underline">Model Context Protocol</a>, an open standard that allows models like Claude and ChatGPT to interact with local and hosted databases, tools, and SaaS APIs. By shipping a hosted MCP server, Omentir enables agents to run your entire outbound sequence autonomously.
@@ -200,10 +200,10 @@ export default function BlogPost() {
       </p>
 
       <h2 id="step-by-step-gtm-playbook" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Step-by-Step GTM Outbound Blueprint
+        Step-by-step GTM outbound blueprint
       </h2>
       <p>
-        If you want to set up an AI-driven B2B lead generation engine from scratch, follow this battle-tested blueprint:
+        If you want to set up an AI-driven B2B lead generation engine from scratch, follow this blueprint:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
         <li><strong>Step 1: Define your Target ICP:</strong> Write down your ideal customer profile, including company tags, funding status, role challenges, and specific technology signals.</li>
@@ -217,13 +217,13 @@ export default function BlogPost() {
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        The Paradigm Shift in B2B Outreach
+        What actually changed in B2B outreach
       </h2>
       <p>
-        The era of mindless outbound volume is over. Buyers are smarter, platform spam filters are tighter, and generic sales copy is instantly ignored. The companies that grow in this environment are those that prioritize context, precision, and safe delivery.
+        The era of mindless outbound volume is over. Buyers are sharper, spam filters are tighter, and generic sales copy gets ignored. Teams that grow here prioritize context, precision, and safe delivery.
       </p>
       <p>
-        By combining AI-driven data waterfalls, qualitative scoring rubrics, and a secure LinkedIn execution layer like Omentir, you can run a growth engine that scales without losing the human touch. Start small, verify every signal, and let your AI agent handle the heavy lifting while you focus on building genuine relationships.
+        Combine AI-driven data waterfalls, qualitative scoring rubrics, and a secure LinkedIn execution layer like Omentir, and you can scale without turning every message into noise. Start small, verify every signal, and let the agent handle the repetitive work while you stay on the conversations that matter.
       </p>
 
       <h2
@@ -231,7 +231,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Frequently Asked Questions
+        Frequently asked questions
       </h2>
       <FaqAccordion items={faqItems} />
     </BlogPostTemplate>

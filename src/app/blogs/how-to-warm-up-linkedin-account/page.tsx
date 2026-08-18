@@ -59,7 +59,7 @@ const faqItems = [
   {
     question: "Does withdrawing old invitations reset my LinkedIn limit?",
     answer:
-      "No. LinkedIn Help is explicit: withdrawing pending invitations will not remove an invitation restriction. Clean stale pending invites before you scale, in small batches, so you do not create another spike. Do not treat withdraw as an unlock button.",
+      "No. LinkedIn Help is explicit: withdrawing pending invitations will not remove an invitation restriction. Clean stale pending invites before you scale, in small batches, so you do not create another spike. Do not treat withdraw as a way to lift a restriction.",
   },
   {
     question: "How long should a LinkedIn warmup take?",
@@ -277,7 +277,7 @@ export default function BlogPost() {
         narrow segment accept and nobody complains, you can rise a little.
       </p>
       <p>
-        There is no official acceptance percentage that unlocks more invites. Treat a week of
+        There is no official acceptance percentage that raises how many invites you can send. Treat a week of
         mostly ignores as a targeting problem, not a reason to send more. A useful operator check:
         if fewer than about one in three relevant people accept a noted invite, stop raising volume
         and change who you are asking, or whether you should add a note at all.

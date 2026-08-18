@@ -23,13 +23,13 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "chatgpt-is-the-drafting-room", label: "ChatGPT Is the Drafting Room", level: 1 },
-  { id: "inputs-before-output", label: "Inputs Before Output", level: 1 },
-  { id: "the-message-prompt", label: "The Message Prompt", level: 1 },
-  { id: "draft-patterns", label: "Draft Patterns", level: 1 },
-  { id: "edit-the-draft", label: "Edit the Draft", level: 1 },
-  { id: "bad-chatgpt-habits", label: "Bad ChatGPT Habits", level: 1 },
-  { id: "handoff-to-the-campaign", label: "Handoff to the Campaign", level: 1 },
+  { id: "chatgpt-is-the-drafting-room", label: "ChatGPT is the drafting room", level: 1 },
+  { id: "inputs-before-output", label: "Inputs before output", level: 1 },
+  { id: "the-message-prompt", label: "The message prompt", level: 1 },
+  { id: "draft-patterns", label: "Draft patterns", level: 1 },
+  { id: "edit-the-draft", label: "Edit the draft", level: 1 },
+  { id: "bad-chatgpt-habits", label: "Bad ChatGPT habits", level: 1 },
+  { id: "handoff-to-the-campaign", label: "Handoff to the campaign", level: 1 },
   { id: "faqs", label: "FAQs", level: 1 },
 ];
 
@@ -97,7 +97,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        ChatGPT Is the Drafting Room
+        ChatGPT is the drafting room
       </h2>
       <p>
         Treat ChatGPT as the drafting room, not the sales strategy. It should not decide your ICP, invent the pain, guess which prospects matter, or push messages live. It should transform already-approved context into usable copy.
@@ -106,7 +106,7 @@ export default function BlogPost() {
         That distinction keeps the workflow clean. Prospecting decides who deserves outreach. Qualification decides why they deserve it. Messaging turns that reason into a small, respectful note.
       </p>
       <p>
-        If you skip the first two steps, ChatGPT will compensate with generic benefits: "streamline workflows," "boost productivity," "drive revenue," and other phrases buyers have learned to ignore.
+        If you skip the first two steps, ChatGPT will fill the gap with generic benefits: faster workflows, more productivity, more revenue, and other phrases buyers have learned to ignore.
       </p>
       <div className="my-8 rounded-xl border border-zinc-200 bg-[#f4f2ec] p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)] relative overflow-hidden">
         <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
@@ -123,7 +123,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Inputs Before Output
+        Inputs before output
       </h2>
       <p>
         The quality of a ChatGPT sales message depends mostly on what you give it. The model needs buyer context, product context, channel constraints, and risk boundaries.
@@ -148,7 +148,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        The Message Prompt
+        The message prompt
       </h2>
       <p>
         A useful prompt tells ChatGPT the job, the context, the constraints, and the review criteria. It should ask for options, but not too many. Three drafts are enough: one direct, one softer, and one founder-style.
@@ -185,7 +185,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Draft Patterns
+        Draft patterns
       </h2>
       <p>
         ChatGPT should produce messages in patterns, not random clever lines. Patterns make the copy easier to review and improve.
@@ -230,7 +230,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Edit the Draft
+        Edit the draft
       </h2>
       <p>
         The first ChatGPT draft is rarely the final message. Your editing job is to remove anything that makes the note sound automated, inflated, or too eager.
@@ -276,7 +276,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Bad ChatGPT Habits
+        Bad ChatGPT habits
       </h2>
       <p>
         ChatGPT has a few habits that hurt sales messages. It over-explains, adds cheerful filler, uses abstract value words, and tries to sound helpful by claiming more than the evidence supports.
@@ -295,7 +295,7 @@ export default function BlogPost() {
               <td className="px-4 py-3">Start with the signal instead.</td>
             </tr>
             <tr>
-              <td className="px-4 py-3">"Revolutionize, streamline, unlock" language.</td>
+              <td className="px-4 py-3">Hype verbs and empty benefit language.</td>
               <td className="px-4 py-3">Use the buyer's workflow words.</td>
             </tr>
             <tr>
@@ -318,7 +318,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Handoff to the Campaign
+        Handoff to the campaign
       </h2>
       <p>
         A message is only one piece of the campaign. Store the approved draft with the lead reason, source signal, forbidden claims, and follow-up angle. That way the next touch does not lose context.

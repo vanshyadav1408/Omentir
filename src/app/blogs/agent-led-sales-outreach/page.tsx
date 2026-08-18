@@ -18,15 +18,15 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "evolution-of-sales-agents", label: "From Static Email Sequencers to Autonomous Sales Agents", level: 1 },
-  { id: "agent-outbound-lifecycle", label: "Deconstructing the Autonomous Agent Outbound Lifecycle", level: 1 },
-  { id: "connecting-via-rest-api", label: "Connecting Sales Agents via REST and OpenAPI Endpoints", level: 1 },
-  { id: "designing-custom-agent-tools", label: "Designing Focused Toolsets for Outbound Sales Tasks", level: 2 },
-  { id: "human-in-the-loop-checks", label: "Enforcing Human-in-the-Loop Review Controls", level: 2 },
-  { id: "daily-quotas-pacing", label: "Pacing Campaign Activity to Match Platform Security Rules", level: 1 },
-  { id: "agent-integration-sop", label: "SOP: The Sales Agent Configuration Checklist", level: 1 },
-  { id: "conclusion", label: "Designing for Safety and Leverage", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "evolution-of-sales-agents", label: "From static email sequencers to autonomous sales agents", level: 1 },
+  { id: "agent-outbound-lifecycle", label: "The autonomous agent outbound lifecycle", level: 1 },
+  { id: "connecting-via-rest-api", label: "Connecting sales agents via REST and OpenAPI endpoints", level: 1 },
+  { id: "designing-custom-agent-tools", label: "Designing focused toolsets for outbound sales tasks", level: 2 },
+  { id: "human-in-the-loop-checks", label: "Enforcing human-in-the-loop review controls", level: 2 },
+  { id: "daily-quotas-pacing", label: "Pacing campaign activity to match platform security rules", level: 1 },
+  { id: "agent-integration-sop", label: "SOP: the sales agent configuration checklist", level: 1 },
+  { id: "conclusion", label: "Designing for safety and output per person", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
@@ -60,7 +60,7 @@ export default function BlogPost() {
       faqItems={faqItems}
     >
       <p id="evolution-of-sales-agents" className="scroll-mt-28">
-        B2B outreach is undergoing a major paradigm shift. For the past decade, sales teams scaled campaigns by building longer sequences of automated emails and LinkedIn messages. Today, these linear campaigns are failing. Buyers recognize them instantly as automated spam, and platform filters block them before they land.
+        For the past decade, sales teams scaled campaigns by building longer sequences of automated emails and LinkedIn messages. That model is failing. Buyers recognize those sequences as automated spam, and platform filters block them before they land.
       </p>
       <p>
         The teams that succeed today are moving away from static sequencers and adopting agent-led sales outreach. Instead of running a fixed series of messages, they deploy autonomous AI agents that analyze prospect context, score leads against an Ideal Customer Profile (ICP), write personalized pitches, and handle incoming replies.
@@ -69,14 +69,14 @@ export default function BlogPost() {
         This shift requires a new approach to sales operations. You must move from building rigid templates to designing toolsets and guardrails that allow agents to operate safely on behalf of your brand. When configured correctly, sales agents can manage your entire outbound pipeline, freeing up your team to focus on closing deals.
       </p>
       <p>
-        Omentir supports this transition by exposing a hosted Model Context Protocol (<a href="https://modelcontextprotocol.io" target="_blank" rel="noopener" className="text-blue-600 hover:underline">MCP</a>) server and a robust REST API. This architecture allows developers and growth engineers to connect agents like Claude or custom LLM frameworks to their LinkedIn outbound stack. Let's look at how to build an agent-led sales pipeline.
+        Omentir supports this transition by exposing a hosted Model Context Protocol (<a href="https://modelcontextprotocol.io" target="_blank" rel="noopener" className="text-blue-600 hover:underline">MCP</a>) server and a REST API. Developers and growth engineers can connect agents like Claude or custom LLM frameworks to their LinkedIn outbound stack. The rest of this post covers how to build that pipeline.
       </p>
       <p>
         The key is to design the agent as an operator, not a magician. It should have a narrow job, trusted context, clear tools, and visible checkpoints. If you ask a model to "go get us customers," it will make assumptions. If you ask it to inspect the product profile, propose an ICP, create a draft discovery agent, and explain the evidence before launch, it becomes useful.
       </p>
 
       <h2 id="agent-outbound-lifecycle" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Deconstructing the Autonomous Agent Outbound Lifecycle
+        The autonomous agent outbound lifecycle
       </h2>
       <p>
         An autonomous sales agent does not simply blast connection requests. It executes a structured lifecycle designed to mimic the steps of a high-performing sales development representative (SDR):
@@ -112,7 +112,7 @@ export default function BlogPost() {
       </div>
 
       <h2 id="connecting-via-rest-api" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Connecting Sales Agents via REST and OpenAPI Endpoints
+        Connecting sales agents via REST and OpenAPI endpoints
       </h2>
       <p>
         If your agent does not speak MCP, you can integrate it using standard REST endpoints under <code>/api/agent/v1</code>. The API is documented by an OpenAPI schema, allowing you to feed the endpoints directly into frameworks like LangChain or AutoGPT.
@@ -128,7 +128,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="designing-custom-agent-tools" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Designing Focused Toolsets for Outbound Sales Tasks
+        Designing focused toolsets for outbound sales tasks
       </h3>
       <p>
         To perform lead-discovery tasks, your agent needs access to specific tools. Omentir provides 19 focused tools, including:
@@ -154,7 +154,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="human-in-the-loop-checks" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Enforcing Human-in-the-Loop Review Controls
+        Enforcing human-in-the-loop review controls
       </h3>
       <p>
         Even with advanced LLMs, fully autonomous campaigns carry risks. A slight misinterpretation of a prospect's bio can lead to an awkward pitch that ruins the relationship.
@@ -174,7 +174,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="daily-quotas-pacing" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Pacing Campaign Activity to Match Platform Security Rules
+        Pacing campaign activity to match platform security rules
       </h2>
       <p>
         Agent-led outbound looks unsafe when the agent owns both targeting and send time. If it can widen an ICP and fire the sequence in the same turn, you get a one-hour spike that no founder would have clicked.
@@ -183,7 +183,7 @@ export default function BlogPost() {
         Split those jobs. Let the agent propose who to add and what to say. Keep daily invite and message caps in the workspace, and require an explicit yes before those caps move. The agent should report remaining allowance, not invent a new one.
       </p>
       <p>
-        Additionally, the platform uses secure APIs provided by third-party integrations like <a href="https://www.unipile.com/" target="_blank" rel="noopener" className="text-blue-600 hover:underline">Unipile</a>, avoiding browser scripts and keeping your account activity safe. For details on pacing, read our comparison of database tools and custom AI layers.
+        The platform also uses secure APIs provided by third-party integrations like <a href="https://www.unipile.com/" target="_blank" rel="noopener" className="text-blue-600 hover:underline">Unipile</a>, avoiding browser scripts and keeping your account activity safer. For details on pacing, read our comparison of database tools and custom AI layers.
       </p>
       <p>
         Pacing is not only a platform safety issue. It is also a sales quality issue. If the agent adds too many weak leads, the queue fills with generic messages. If it sends too quickly, replies arrive before a human can handle them well. A healthy system should create fewer, better conversations that your team can actually work.
@@ -193,7 +193,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="agent-integration-sop" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: The Sales Agent Configuration Checklist
+        SOP: the sales agent configuration checklist
       </h2>
       <p>
         Follow this simple SOP to configure your sales agent safely:
@@ -202,7 +202,7 @@ export default function BlogPost() {
         <li><strong>Ground Product Profile:</strong> Ensure the product profile contains verified facts, feature lists, and pricing parameters.</li>
         <li><strong>Limit Campaigns:</strong> Set discovery agents to collect leads within your workspace pacing and review boundaries.</li>
         <li><strong>Review in Omentir:</strong> Set up and review campaigns in Omentir before activating them.</li>
-        <li><strong>Configure Daily Quotas:</strong> Align outbound pacing with LinkedIn safety guidelines.</li>
+        <li><strong>Configure Daily Quotas:</strong> Keep outbound pacing inside LinkedIn safety guidelines.</li>
         <li><strong>Verify Tokens:</strong> Confirm your API token is workspace-scoped and stored securely.</li>
       </ul>
       <p>
@@ -216,16 +216,16 @@ export default function BlogPost() {
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Designing for Safety and Leverage
+        Designing for safety and output per person
       </h2>
       <p>
-        Agent-led sales outreach is the most effective way to scale outbound sales while maintaining deep business relevance. By designing clear toolsets, grounding drafts in your product profile, and enforcing human-in-the-loop reviews, you can build a highly leveraged GTM engine.
+        Agent-led sales outreach is a practical way to scale outbound while keeping messages tied to real business context. Design clear toolsets, ground drafts in your product profile, and keep a human in the review loop.
       </p>
       <p>
         Use Omentir to power your integration. Connect your agent via MCP or REST, configure precise lead finders, review scored prospects, retrieve exact lead context, and route warm replies into customer conversations.
       </p>
       <p>
-        The right version of agent-led outreach is controlled autonomy. Let the agent do the repetitive research, drafting, checking, and routing. Keep humans responsible for positioning, judgment, and relationship risk. That combination gives you leverage without turning your brand into an experiment.
+        The right version of agent-led outreach is controlled autonomy. Let the agent do the repetitive research, drafting, checking, and routing. Keep humans responsible for positioning, judgment, and relationship risk. That combination raises output per person without turning your brand into an experiment.
       </p>
 
       <h2
@@ -233,7 +233,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Frequently Asked Questions
+        Frequently asked questions
       </h2>
       <FaqAccordion items={faqItems} />
     </BlogPostTemplate>

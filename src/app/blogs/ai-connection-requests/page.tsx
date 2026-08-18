@@ -23,13 +23,13 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "the-invite-has-one-job", label: "The Invite Has One Job", level: 1 },
-  { id: "blank-or-personalized", label: "Blank or Personalized", level: 1 },
-  { id: "signals-ai-can-use", label: "Signals AI Can Use", level: 1 },
-  { id: "the-request-prompt", label: "The Request Prompt", level: 1 },
-  { id: "invite-note-patterns", label: "Invite Note Patterns", level: 1 },
-  { id: "batch-review", label: "Batch Review", level: 1 },
-  { id: "after-acceptance", label: "After Acceptance", level: 1 },
+  { id: "the-invite-has-one-job", label: "The invite has one job", level: 1 },
+  { id: "blank-or-personalized", label: "Blank or personalized", level: 1 },
+  { id: "signals-ai-can-use", label: "Signals AI can use", level: 1 },
+  { id: "the-request-prompt", label: "The request prompt", level: 1 },
+  { id: "invite-note-patterns", label: "Invite note patterns", level: 1 },
+  { id: "batch-review", label: "Batch review", level: 1 },
+  { id: "after-acceptance", label: "After acceptance", level: 1 },
   { id: "faqs", label: "FAQs", level: 1 },
 ];
 
@@ -90,7 +90,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        The Invite Has One Job
+        The invite has one job
       </h2>
       <p>
         A LinkedIn invite has one job: earn the accept. It does not need to explain your product, prove your company, show social proof, ask for a meeting, or deliver your entire value proposition.
@@ -116,7 +116,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Blank or Personalized
+        Blank or personalized
       </h2>
       <p>
         The first AI decision should not be "what should the note say?" It should be "should this invite include a note at all?"
@@ -166,7 +166,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Signals AI Can Use
+        Signals AI can use
       </h2>
       <p>
         AI should use signals that are visible, professional, and easy for the prospect to recognize. It should not use anything that feels like surveillance or requires an assumption about private pain.
@@ -188,7 +188,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        The Request Prompt
+        The request prompt
       </h2>
       <p>
         A good AI prompt should produce two outputs: the decision and the note. That lets you reject notes that should never exist.
@@ -222,7 +222,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Invite Note Patterns
+        Invite note patterns
       </h2>
       <p>
         Keep invite notes short enough to feel casual. These patterns are intentionally simple.
@@ -268,7 +268,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Batch Review
+        Batch review
       </h2>
       <p>
         AI connection requests should be reviewed in batches. Individual notes can look fine while the batch feels repetitive. If every note starts with "Saw your post," the pattern becomes obvious.
@@ -308,7 +308,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        After Acceptance
+        After acceptance
       </h2>
       <p>
         The worst move after a thoughtful connection request is an instant pitch. The invite created a small amount of trust. Do not spend it all in the next message.
@@ -338,11 +338,7 @@ export default function BlogPost() {
         once the conversation starts moving.
       </p>
       <p>
-        The clean sequence is simple: qualify the lead, decide blank versus note, send at a human pace, wait for acceptance, then continue the context. AI helps by making the process consistent. Human judgment keeps it respectful.
-        That balance is what protects both the account and the relationship.
-        The best invite feels easy to accept and easy to continue.
-        Keep it that simple.
-        Review weekly.
+        The sequence is simple: qualify the lead, decide blank versus note, send at a human pace, wait for acceptance, then continue the context. AI keeps the process consistent. Human judgment keeps it respectful. Review the batch weekly so the notes stay easy to accept and easy to continue.
       </p>
 
       <h2

@@ -17,17 +17,17 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "leverage-of-autonomous-agents", label: "The Leverage of Automated B2B Prospecting", level: 1 },
-  { id: "what-agent-should-own", label: "What the Agent Should and Should Not Own", level: 2 },
-  { id: "step-1-icp-rules", label: "Step 1: Defining Your Ideal Customer Profile Variables", level: 1 },
-  { id: "step-2-discovery-filters", label: "Step 2: Configuring Discovery Crawlers and Search Filters", level: 1 },
-  { id: "step-3-prompting-ai", label: "Step 3: Customizing the Copywriting Prompts and Grounding", level: 2 },
-  { id: "step-4-pacing-rules", label: "Step 4: Setting Up Organic Pacing and Quota Safety", level: 2 },
-  { id: "step-5-approval-loops", label: "Step 5: Activating the Human-in-the-Loop Review Queue", level: 1 },
-  { id: "first-run-audit", label: "What to Check After the First Run", level: 2 },
-  { id: "quickstart-sop-checklist", label: "SOP: The 10-Minute Agent Configuration Checklist", level: 1 },
-  { id: "conclusion", label: "Unlocking Automated Pipeline Growth", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "leverage-of-autonomous-agents", label: "Why automate B2B prospecting", level: 1 },
+  { id: "what-agent-should-own", label: "What the agent should and should not own", level: 2 },
+  { id: "step-1-icp-rules", label: "Step 1: Define your ideal customer profile", level: 1 },
+  { id: "step-2-discovery-filters", label: "Step 2: Configure discovery crawlers and search filters", level: 1 },
+  { id: "step-3-prompting-ai", label: "Step 3: Customize copywriting prompts and grounding", level: 2 },
+  { id: "step-4-pacing-rules", label: "Step 4: Set organic pacing and quota safety", level: 2 },
+  { id: "step-5-approval-loops", label: "Step 5: Turn on the human-in-the-loop review queue", level: 1 },
+  { id: "first-run-audit", label: "What to check after the first run", level: 2 },
+  { id: "quickstart-sop-checklist", label: "SOP: the 10-minute agent configuration checklist", level: 1 },
+  { id: "conclusion", label: "Start with a small, clean campaign", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
@@ -80,7 +80,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="what-agent-should-own" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        What the Agent Should and Should Not Own
+        What the agent should and should not own
       </h2>
       <p>
         Before configuring anything, decide which parts of prospecting you actually want the agent to own. A good first setup delegates repetitive work, not strategic judgment. Let the system search, enrich, score, draft, pace, and organize. Keep final positioning, risky claims, account prioritization, and unusual edge cases in human hands.
@@ -98,7 +98,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="step-1-icp-rules" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Step 1: Defining Your Ideal Customer Profile Variables
+        Step 1: Define your ideal customer profile variables
       </h2>
       <p>
         Before your agent can find prospects, you must define your targeting criteria. If you provide broad rules, the system will source unqualified contacts.
@@ -129,7 +129,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="step-2-discovery-filters" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Step 2: Configuring Discovery Crawlers and Search Filters
+        Step 2: Configure discovery crawlers and search filters
       </h2>
       <p>
         Once your ICP is defined, you must set up the discovery filters. Omentir's crawlers search live channels rather than relying on stale directories.
@@ -152,7 +152,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="step-3-prompting-ai" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Step 3: Customizing the Copywriting Prompts and Grounding
+        Step 3: Customize the copywriting prompts and grounding
       </h2>
       <p>
         To ensure your outreach copy reads naturally, you must customize your prompt instructions.
@@ -195,7 +195,7 @@ Risk flags: {unsupported_claims_or_sensitive_context}`}</code>
         <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
         <div className="pl-4">
           <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-            Pacing Rule: Keep it Human 💡
+            Pacing rule: keep it human
           </h4>
           <p className="text-sm text-zinc-650 leading-relaxed">
             Never bypass daily volume limits. While you can search thousands of leads, limit sending volume to protect profile health. Keep connection requests under 20 per profile daily.
@@ -204,7 +204,7 @@ Risk flags: {unsupported_claims_or_sensitive_context}`}</code>
       </div>
 
       <h2 id="step-4-pacing-rules" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Step 4: Setting Up Organic Pacing and Quota Safety
+        Step 4: Set organic pacing and quota safety
       </h2>
       <p>
         Outbound campaigns must prioritize account health. Senders who send messages at mechanical speeds will be restricted by platform security.
@@ -224,13 +224,13 @@ Risk flags: {unsupported_claims_or_sensitive_context}`}</code>
       </p>
 
       <h2 id="step-5-approval-loops" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Step 5: Activating the Human-in-the-Loop Review Queue
+        Step 5: Turn on the human-in-the-loop review queue
       </h2>
       <p>
         Before launching your campaign, connect the review queue. The prospecting agent will search leads and draft custom copy, placing the draft messages in the workspace for your review.
       </p>
       <p>
-        This review step allows you to audit copy alignment and make edits before delivery.
+        This review step lets you check the copy against the product profile and edit it before delivery.
       </p>
       <p>
         Review should be fast, but not ceremonial. Give every queued prospect one of four decisions: approve, edit, skip, or retrain. Approve when the account fit and message are both strong. Edit when the prospect is right but the wording misses the angle. Skip when the account is not worth the send. Retrain when the mistake reveals a prompt or filter problem that will repeat.
@@ -243,7 +243,7 @@ Risk flags: {unsupported_claims_or_sensitive_context}`}</code>
       </p>
 
       <h2 id="first-run-audit" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        What to Check After the First Run
+        What to check after the first run
       </h2>
       <p>
         The first run is not only about replies. It is about finding weak points in the workflow. After the first batch, inspect the accounts, signals, drafts, delivery pacing, connection acceptances, replies, and skips. Each metric answers a different question.
@@ -260,7 +260,7 @@ Risk flags: {unsupported_claims_or_sensitive_context}`}</code>
       </p>
 
       <h2 id="quickstart-sop-checklist" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: The 10-Minute Agent Configuration Checklist
+        SOP: the 10-minute agent configuration checklist
       </h2>
       <p>
         Deploy your prospecting campaign using these steps:
@@ -288,7 +288,7 @@ Risk flags: {unsupported_claims_or_sensitive_context}`}</code>
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Unlocking Automated Pipeline Growth
+        Start with a small, clean campaign
       </h2>
       <p>
         Automating your B2B sales development does not require complex setup. By deploying an autonomous prospecting agent, you can build a consistent outreach loop.

@@ -18,15 +18,15 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "productivity-leap-ai", label: "The Shift to AI-Native Outbound Sales Operations", level: 1 },
-  { id: "ai-native-sales-org", label: "Structuring the Modern AI-First B2B Sales Organization", level: 1 },
-  { id: "delegating-tasks-agents", label: "Delegating Tasks: AI Agents vs. Human Operators", level: 1 },
-  { id: "quantifying-sales-roi", label: "Tracking ROI and Operational Metrics in AI Sales Teams", level: 2 },
-  { id: "enriching-lead-databases", label: "Integrating Enrichment Waterfalls and Contact Cleaning", level: 2 },
-  { id: "outbox-health-safety", label: "Protecting Account Health with Paced Delivery Systems", level: 1 },
-  { id: "ai-first-sales-sop", label: "SOP: The AI Outbound Campaign Checklist", level: 1 },
-  { id: "conclusion", label: "Unlocking Leverage and Scale in B2B Sales", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "productivity-leap-ai", label: "The shift to AI-native outbound sales operations", level: 1 },
+  { id: "ai-native-sales-org", label: "Structuring an AI-first B2B sales organization", level: 1 },
+  { id: "delegating-tasks-agents", label: "Delegating tasks: AI agents vs human operators", level: 1 },
+  { id: "quantifying-sales-roi", label: "Tracking ROI and operational metrics in AI sales teams", level: 2 },
+  { id: "enriching-lead-databases", label: "Integrating enrichment waterfalls and contact cleaning", level: 2 },
+  { id: "outbox-health-safety", label: "Protecting account health with paced delivery systems", level: 1 },
+  { id: "ai-first-sales-sop", label: "SOP: the AI outbound campaign checklist", level: 1 },
+  { id: "conclusion", label: "Scale without confusing volume with output", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
@@ -69,11 +69,11 @@ export default function BlogPost() {
         Outbound sales with AI changes the job design. Instead of asking humans to do every repetitive step by hand, you give agents the work they are good at: sourcing candidates, collecting context, scoring fit, drafting first passes, organizing replies, and enforcing process checks. Humans keep the judgment: ICP, offer, account quality, sensitive replies, demos, and closing.
       </p>
       <p>
-        Omentir is designed for this AI-assisted pipeline: discovery agents, lead qualification, campaign creation, draft or active campaign modes, paced LinkedIn outreach, and reply conversations in one place. The team design matters as much as the tool. If you keep the old volume-first process and simply add AI, you get faster noise. If you redesign the work, you get leverage.
+        Omentir is designed for this AI-assisted pipeline: discovery agents, lead qualification, campaign creation, draft or active campaign modes, paced LinkedIn outreach, and reply conversations in one place. The team design matters as much as the tool. If you keep the old volume-first process and simply add AI, you get faster noise. If you redesign the work, you get more output per person.
       </p>
 
       <h2 id="ai-native-sales-org" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Structuring the Modern AI-First B2B Sales Organization
+        Structuring an AI-first B2B sales organization
       </h2>
       <p>
         Redesigning your team around AI agents does not mean replacing the whole sales function. It means moving repetitive execution into a controlled system and raising the standard for human review. The organization should be built around decisions, not chores.
@@ -105,7 +105,7 @@ export default function BlogPost() {
       </div>
 
       <h2 id="delegating-tasks-agents" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Delegating Tasks: AI Agents vs. Human Operators
+        Delegating tasks: AI agents vs human operators
       </h2>
       <p>
         Outbound campaigns involve many tasks, but not every task deserves the same level of human attention. The cleanest teams write down what the agent can do, what the human must approve, and what the system should never do without escalation.
@@ -136,7 +136,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="quantifying-sales-roi" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Tracking ROI and Operational Metrics in AI Sales Teams
+        Tracking ROI and operational metrics in AI sales teams
       </h3>
       <p>
         AI-native sales teams need different metrics from traditional activity teams. Counting how many messages the system can draft is not enough. The question is whether automation creates more qualified conversations with less manual work and less account risk.
@@ -149,7 +149,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="enriching-lead-databases" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Integrating Enrichment Waterfalls and Contact Cleaning
+        Integrating enrichment waterfalls and contact cleaning
       </h3>
       <p>
         Unstructured LinkedIn profile data usually needs enrichment before outreach. A title and company name may not tell you whether the account fits your ICP, whether the buyer owns the pain, or whether there is a timely reason to contact them.
@@ -166,7 +166,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="outbox-health-safety" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Protecting Account Health with Paced Delivery Systems
+        Protecting account health with paced delivery systems
       </h2>
       <p>
         Account health is the constraint that keeps AI outbound honest. If the system can generate thousands of messages, that does not mean the sender profile should deliver them. LinkedIn outreach has to look and feel like a real person working a focused list.
@@ -186,7 +186,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="ai-first-sales-sop" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: The AI Outbound Campaign Checklist
+        SOP: the AI outbound campaign checklist
       </h2>
       <p>
         Follow this SOP to audit AI-first sales operations:
@@ -205,10 +205,10 @@ export default function BlogPost() {
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Unlocking Leverage and Scale in B2B Sales
+        Scale without confusing volume with output
       </h2>
       <p>
-        Outbound success in B2B is driven by leverage, but leverage is not the same as volume. The best AI sales teams use automation to improve the quality and consistency of the work humans were already trying to do: find the right buyers, understand the context, write a relevant message, follow up responsibly, and handle replies quickly.
+        Outbound success in B2B is driven by output per person, but that is not the same as volume. The best AI sales teams use automation to improve the quality and consistency of the work humans were already trying to do: find the right buyers, understand the context, write a relevant message, follow up responsibly, and handle replies quickly.
       </p>
       <p>
         Redesign the team before you scale the campaigns. Decide what agents own, what humans own, which metrics prove quality, and where the safety limits sit. Then use Omentir to run the repetitive pieces: discovery, drafting, campaign execution, pacing, and reply organization.
@@ -222,7 +222,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Frequently Asked Questions
+        Frequently asked questions
       </h2>
       <FaqAccordion items={faqItems} />
     </BlogPostTemplate>

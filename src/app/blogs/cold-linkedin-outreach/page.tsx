@@ -23,13 +23,13 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "cold-does-not-mean-random", label: "Cold Does Not Mean Random", level: 1 },
-  { id: "choose-one-narrow-lane", label: "Choose One Narrow Lane", level: 1 },
-  { id: "warm-the-cold-edge", label: "Warm the Cold Edge", level: 1 },
-  { id: "connection-request", label: "Connection Request", level: 1 },
-  { id: "first-message", label: "First Message", level: 1 },
-  { id: "follow-up-and-stop", label: "Follow-Up and Stop Rules", level: 1 },
-  { id: "measure-the-system", label: "Measure the System", level: 1 },
+  { id: "cold-does-not-mean-random", label: "Cold does not mean random", level: 1 },
+  { id: "choose-one-narrow-lane", label: "Choose one narrow lane", level: 1 },
+  { id: "warm-the-cold-edge", label: "Warm the cold edge", level: 1 },
+  { id: "connection-request", label: "Connection request", level: 1 },
+  { id: "first-message", label: "First message", level: 1 },
+  { id: "follow-up-and-stop", label: "Follow-up and stop rules", level: 1 },
+  { id: "measure-the-system", label: "Measure the system", level: 1 },
   { id: "faqs", label: "FAQs", level: 1 },
 ];
 
@@ -90,7 +90,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Cold Does Not Mean Random
+        Cold does not mean random
       </h2>
       <p>
         A cold prospect is someone who has not raised their hand to talk to you. That does not mean they should be selected randomly. Cold outreach still needs a reason.
@@ -122,7 +122,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Choose One Narrow Lane
+        Choose one narrow lane
       </h2>
       <p>
         Cold outreach works better when each batch is built around one lane. A lane is narrower than an ICP. It combines buyer role, company type, timing signal, and problem hypothesis.
@@ -158,7 +158,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Warm the Cold Edge
+        Warm the cold edge
       </h2>
       <p>
         The best cold outreach often includes a light warm-up step. That does not mean pretending to be friends. It means showing up in a relevant way before asking to connect.
@@ -185,7 +185,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Connection Request
+        Connection request
       </h2>
       <p>
         The connection request should not carry the pitch. Its job is to earn the accept. If you have a clean signal, write one short note. If you do not, a blank request may be better than a forced note.
@@ -217,7 +217,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        First Message
+        First message
       </h2>
       <p>
         After acceptance, do not pitch instantly. Give the connection a little room, then continue the same context that justified the request.
@@ -245,7 +245,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Follow-Up and Stop Rules
+        Follow-up and stop rules
       </h2>
       <p>
         Cold LinkedIn outreach needs follow-up, but only when the follow-up adds something new. Repeating the first message with "just checking in" wastes trust.
@@ -277,7 +277,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Measure the System
+        Measure the system
       </h2>
       <p>
         Do not judge cold LinkedIn outreach only by reply rate. Measure the full chain: candidates sourced, requests sent, accepts, first-message replies, positive replies, wrong-person replies, booked calls, and qualified opportunities.

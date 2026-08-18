@@ -18,15 +18,15 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "follow-up-necessity", label: "Why Traditional Follow-Ups Stall B2B Sales Pipelines", level: 1 },
-  { id: "permission-bump-framework", label: "Framework 1: The Low-Pressure Permission Bump", level: 1 },
-  { id: "asset-drop-framework", label: "Framework 2: The Contextual Value Asset Drop", level: 1 },
-  { id: "break-up-framework", label: "Framework 3: The Collaborative Clean-Break CTA", level: 2 },
-  { id: "configuring-cadences", label: "Configuring Follow-Up Cadences inside Campaigns", level: 2 },
-  { id: "reply-monitoring-rules", label: "Enforcing Reply Detection and Safety Guardrails", level: 1 },
-  { id: "follow-up-sop-checklist", label: "SOP: The Sales Pitch Follow-Up Audit Checklist", level: 1 },
-  { id: "conclusion", label: "Shifting the Outreach Focus to Long-Term Value", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "follow-up-necessity", label: "Why traditional follow-ups stall B2B pipelines", level: 1 },
+  { id: "permission-bump-framework", label: "Framework 1: the low-pressure permission bump", level: 1 },
+  { id: "asset-drop-framework", label: "Framework 2: the contextual value asset drop", level: 1 },
+  { id: "break-up-framework", label: "Framework 3: the collaborative clean-break CTA", level: 2 },
+  { id: "configuring-cadences", label: "Configuring follow-up cadences inside campaigns", level: 2 },
+  { id: "reply-monitoring-rules", label: "Reply detection and safety guardrails", level: 1 },
+  { id: "follow-up-sop-checklist", label: "SOP: the sales pitch follow-up audit checklist", level: 1 },
+  { id: "conclusion", label: "Shift follow-ups toward long-term value", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
@@ -73,7 +73,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="permission-bump-framework" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Framework 1: The Low-Pressure Permission Bump
+        Framework 1: the low-pressure permission bump
       </h2>
       <p>
         The biggest mistake in follow-up copy is escalating the ask when the prospect has not even acknowledged the first one. If someone did not answer a light opener, asking them to "hop on a quick call" usually increases friction rather than reducing it.
@@ -109,7 +109,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="asset-drop-framework" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Framework 2: The Contextual Value Asset Drop
+        Framework 2: the contextual value asset drop
       </h2>
       <p>
         The asset drop is more direct than the permission bump. Instead of asking whether to send a resource, you send a concise resource or insight that stands on its own. Use it when the prospect is a strong fit and the resource is genuinely useful without a call.
@@ -145,7 +145,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="break-up-framework" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Framework 3: The Collaborative Clean-Break CTA
+        Framework 3: the collaborative clean-break CTA
       </h2>
       <p>
         Your final follow-up should not sound annoyed. The clean-break message exists to end the thread respectfully while leaving the door open. It works because it removes pressure and gives the prospect a final chance to correct your assumption.
@@ -158,7 +158,7 @@ export default function BlogPost() {
             Clean-Break Template
           </h4>
           <p className="text-sm text-zinc-650 leading-relaxed">
-            "Hey [Name], assuming this isn't a priority for your team right now, so I'll close the thread. If you ever look to streamline your list qualification workflows down the line, feel free to reach out. Otherwise, best of luck with Q3!"
+            "Hey [Name], assuming this isn't a priority for your team right now, so I'll close the thread. If you ever look to clean up list qualification workflows down the line, feel free to reach out. Otherwise, best of luck with Q3!"
           </p>
         </div>
       </div>
@@ -178,7 +178,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="configuring-cadences" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Configuring Follow-Up Cadences inside Campaigns
+        Configuring follow-up cadences inside campaigns
       </h2>
       <p>
         To run these sequences, configure your campaigns with clear delays and clear stop conditions. The exact spacing depends on the relationship, the channel, and the urgency of the topic. The important thing is that the cadence feels human and gives the buyer room to respond.
@@ -191,7 +191,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="reply-monitoring-rules" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Enforcing Reply Detection and Safety Guardrails
+        Reply detection and safety guardrails
       </h2>
       <p>
         Reply detection is the most important safety rule in any follow-up system. Once a prospect replies, the normal sequence should stop. Nothing feels more automated than receiving a scheduled follow-up after you already answered.
@@ -204,19 +204,19 @@ export default function BlogPost() {
       </p>
 
       <h2 id="follow-up-sop-checklist" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: The Sales Pitch Follow-Up Audit Checklist
+        SOP: the sales pitch follow-up audit checklist
       </h2>
       <p>
         Follow this SOP to audit your campaigns before launching:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Verify Delays:</strong> Do wait times give the prospect enough room to respond naturally?</li>
-        <li><strong>Check Pitch Copy:</strong> Does your follow-up avoid booking links and focus on value drops or permission checks?</li>
-        <li><strong>Check Context:</strong> Does each follow-up add a new useful reason, or does it merely repeat the first pitch?</li>
-        <li><strong>Enforce Safety Pacing:</strong> Confirm connection request and message volume remain conservative.</li>
-        <li><strong>Verify Reply Pauses:</strong> Confirm that the sequence stops immediately when a lead replies.</li>
-        <li><strong>Review Branches:</strong> Confirm positive replies, objections, referrals, and negative replies route differently.</li>
-        <li><strong>Test Links:</strong> Check that resource and video URLs open correctly.</li>
+        <li><strong>Verify delays:</strong> Do wait times give the prospect enough room to respond naturally?</li>
+        <li><strong>Check pitch copy:</strong> Does your follow-up avoid booking links and focus on value drops or permission checks?</li>
+        <li><strong>Check context:</strong> Does each follow-up add a new useful reason, or does it merely repeat the first pitch?</li>
+        <li><strong>Enforce safety pacing:</strong> Confirm connection request and message volume remain conservative.</li>
+        <li><strong>Verify reply pauses:</strong> Confirm that the sequence stops immediately when a lead replies.</li>
+        <li><strong>Review branches:</strong> Confirm positive replies, objections, referrals, and negative replies route differently.</li>
+        <li><strong>Test links:</strong> Check that resource and video URLs open correctly.</li>
       </ul>
       <p>
         Review the first live replies before increasing volume. If prospects seem confused, your first message or follow-up context is weak. If they object on price before understanding the value, the asset or permission bump may be too close to a pitch.
@@ -232,7 +232,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Shifting the Outreach Focus to Long-Term Value
+        Shift follow-ups toward long-term value
       </h2>
       <p>
         Follow-up success is driven by usefulness, not pressure. The best follow-ups make the conversation easier for the buyer: a smaller ask, a sharper resource, a clearer next step, or a respectful exit.
@@ -249,7 +249,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Frequently Asked Questions
+        Frequently asked questions
       </h2>
       <FaqAccordion items={faqItems} />
     </BlogPostTemplate>

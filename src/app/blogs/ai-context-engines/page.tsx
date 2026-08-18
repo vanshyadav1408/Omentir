@@ -4,7 +4,7 @@ import BlogPostTemplate from "../blog-post-template";
 
 export const metadata = createPageMetadata({
   title: "AI Context Engines for Grounded sales Personalization - Omentir",
-  description: "Learn how to build an AI context engine. Gather, clean, and consolidate prospect data streams into a structured prompt payload to ground copywriting.",
+  description: "Build an AI context engine: gather, clean, and consolidate prospect data into a structured prompt payload so copy stays grounded in facts.",
   path: "/blogs/ai-context-engines",
   keywords: [
     "AI context engines sales",
@@ -17,20 +17,20 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "grounding-sales-copy", label: "The Challenge of LLM Hallucinations in Outbound", level: 1 },
-  { id: "context-vs-personalization", label: "Context Is Not the Same as Personalization", level: 2 },
-  { id: "context-engine-architecture", label: "Architecture of an AI Context Engine", level: 1 },
-  { id: "sourcing-product-facts", label: "Sourcing Product Specs, Pricing, and Case Studies", level: 2 },
-  { id: "claim-policy", label: "Define a Claim Policy", level: 2 },
-  { id: "crawling-prospect-data", label: "Crawling Prospect Ecosystems and Website Metadata", level: 2 },
-  { id: "confidence-scoring", label: "Score Context Confidence", level: 2 },
-  { id: "context-payload-schema", label: "Constructing the Unified Context JSON Payload", level: 1 },
-  { id: "prompt-contract", label: "Write the Prompt Contract", level: 2 },
-  { id: "review-gates", label: "Review Gates Before Delivery", level: 2 },
-  { id: "pacing-and-delivery-safety", label: "Enforcing Human Pacing and Deliverability safety", level: 1 },
-  { id: "context-engine-sop", label: "SOP: The 15-Minute Context Assembler Checklist", level: 1 },
-  { id: "conclusion", label: "Driving Outbound Success with Real Data", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "grounding-sales-copy", label: "The challenge of LLM hallucinations in outbound", level: 1 },
+  { id: "context-vs-personalization", label: "Context is not the same as personalization", level: 2 },
+  { id: "context-engine-architecture", label: "Architecture of an AI context engine", level: 1 },
+  { id: "sourcing-product-facts", label: "Source product specs, pricing, and case studies", level: 2 },
+  { id: "claim-policy", label: "Define a claim policy", level: 2 },
+  { id: "crawling-prospect-data", label: "Crawl prospect ecosystems and website metadata", level: 2 },
+  { id: "confidence-scoring", label: "Score context confidence", level: 2 },
+  { id: "context-payload-schema", label: "Construct the unified context JSON payload", level: 1 },
+  { id: "prompt-contract", label: "Write the prompt contract", level: 2 },
+  { id: "review-gates", label: "Review gates before delivery", level: 2 },
+  { id: "pacing-and-delivery-safety", label: "Enforce human pacing and deliverability safety", level: 1 },
+  { id: "context-engine-sop", label: "SOP: the 15-minute context assembler checklist", level: 1 },
+  { id: "conclusion", label: "Ground outbound copy in real data", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
@@ -56,7 +56,7 @@ export default function BlogPost() {
   return (
     <BlogPostTemplate
       title="AI Context Engines: Scaling Personalization Without Sounding Generic"
-      description="Discover how to build an AI context engine that consolidates product specs and prospect data to write highly relevant B2B sales copy."
+      description="Build an AI context engine that consolidates product specs and prospect data so B2B sales copy stays specific and honest."
       slug="ai-context-engines"
       bannerSrc="/ai-context-engines.avif"
       bannerAlt="AI context engine data aggregation and prompt grounding diagram"
@@ -64,20 +64,20 @@ export default function BlogPost() {
       faqItems={faqItems}
     >
       <p id="grounding-sales-copy" className="scroll-mt-28">
-        Language models have simplified B2B sales writing. Senders can configure simple prompts asking the system to write an email pitching their software to a target prospect. While this generates readable copy, it frequently results in errors. The model might invent features, misrepresent pricing, or exaggerate client results.
+        Language models have made B2B sales writing easier. Senders can ask the system to write an email pitching their software to a target prospect. The copy is readable, but it often contains errors. The model might invent features, misrepresent pricing, or exaggerate client results.
       </p>
       <p>
-        These errors occur because the prompt lacks context. Language models rely on general training data. If you do not provide specific product facts and prospect details, the engine will write generic copy that drives low response rates.
+        Those errors happen because the prompt lacks context. Language models rely on general training data. If you do not provide specific product facts and prospect details, the engine writes generic copy that gets few replies.
       </p>
       <p>
-        To scale your outreach successfully, you must build an AI context engine. This is an active data pipeline that gathers, cleans, and structures product specs and buyer details into a single prompt payload.
+        To scale outreach without inventing claims, build an AI context engine. That is an active data pipeline that gathers, cleans, and structures product specs and buyer details into a single prompt payload.
       </p>
       <p>
-        Omentir serves as the execution layer for these campaigns, using live profile signals to personalize outreach. Let's look at how to construct a context engine.
+        Omentir is the execution layer for these campaigns, using live profile signals to personalize outreach. Here is how to construct a context engine.
       </p>
 
       <h3 id="context-vs-personalization" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Context Is Not the Same as Personalization
+        Context is not the same as personalization
       </h3>
       <p>
         Personalization is what the buyer sees in the message. Context is the evidence the system uses before writing that message. If you skip the evidence layer, the output may sound personalized while still being wrong.
@@ -90,13 +90,13 @@ export default function BlogPost() {
       </p>
 
       <h2 id="context-engine-architecture" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Architecture of an AI Context Engine
+        Architecture of an AI context engine
       </h2>
       <p>
         An AI context engine is a data processing system that structures prospect and product information before calling copywriting APIs.
       </p>
       <p>
-        A professional context engine manages three main steps:
+        A working context engine manages three main steps:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
         <li><strong>Sourcing:</strong> Retrieving your product profiles, pricing structures, and case studies.</li>
@@ -115,10 +115,10 @@ export default function BlogPost() {
       </p>
 
       <h2 id="sourcing-product-facts" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Sourcing Product Specs, Pricing, and Case Studies
+        Source product specs, pricing, and case studies
       </h2>
       <p>
-        To ensure your outreach is accurate, you must ground your copywriting prompts in verified product data.
+        To keep outreach accurate, ground copywriting prompts in verified product data.
       </p>
       <p>
         Configure a product profile containing the following details:
@@ -136,7 +136,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="claim-policy" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Define a Claim Policy
+        Define a claim policy
       </h3>
       <p>
         A claim policy tells the AI what it may say. This is different from a product description. The product description explains the product. The claim policy defines proof requirements.
@@ -151,7 +151,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="crawling-prospect-data" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Crawling Prospect Ecosystems and Website Metadata
+        Crawl prospect ecosystems and website metadata
       </h2>
       <p>
         In addition to product data, the context engine crawls the prospect's website to identify active operational parameters.
@@ -171,7 +171,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="confidence-scoring" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Score Context Confidence
+        Score context confidence
       </h3>
       <p>
         Every extracted field should carry confidence. A role listed on a current careers page is high-confidence. A vague phrase from a homepage hero is medium-confidence. A guess inferred from industry category is low-confidence.
@@ -198,7 +198,7 @@ export default function BlogPost() {
       </div>
 
       <h2 id="context-payload-schema" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Constructing the Unified Context JSON Payload
+        Construct the unified context JSON payload
       </h2>
       <p>
         Once variables are extracted, the engine compiles them into a unified JSON payload:
@@ -219,7 +219,7 @@ export default function BlogPost() {
 }`}</code>
       </pre>
       <p>
-        This unified payload is passed to your prompt templates, ensuring the generated copy is accurate.
+        This unified payload is passed to your prompt templates so the generated copy stays accurate.
       </p>
       <p>
         In a real system, add source and confidence fields. The model does not need long raw evidence, but the reviewer does need to know where the evidence came from.
@@ -245,7 +245,7 @@ export default function BlogPost() {
       </pre>
 
       <h3 id="prompt-contract" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Write the Prompt Contract
+        Write the prompt contract
       </h3>
       <p>
         The prompt should behave like a contract, not a creative writing request. Tell the model what evidence it may use, what it must avoid, and what to do when evidence is missing.
@@ -258,7 +258,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="review-gates" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Review Gates Before Delivery
+        Review gates before delivery
       </h3>
       <p>
         Context engines are powerful because they scale decisions. That also means a bad rule can scale mistakes. Put gates before delivery: reject drafts with unsupported claims, reject messages over the length limit, reject first-touch calendar asks, and reject any opener that references sensitive or creepy personal details.
@@ -268,7 +268,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="pacing-and-delivery-safety" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Enforcing Human Pacing and Deliverability safety
+        Enforce human pacing and deliverability safety
       </h2>
       <p>
         Even with highly relevant copy, you must manage outreach volume to protect account safety. Spacing out requests protects your profile health.
@@ -285,7 +285,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="context-engine-sop" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: The 15-Minute Context Assembler Checklist
+        SOP: the 15-minute context assembler checklist
       </h2>
       <p>
         Build your context engine using these steps:
@@ -303,10 +303,10 @@ export default function BlogPost() {
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Driving Outbound Success with Real Data
+        Ground outbound copy in real data
       </h2>
       <p>
-        B2B outreach is most effective when it is timely and relevant. By building an AI context engine, you eliminate hallucinations from your sales copy.
+        B2B outreach works when it is timely and relevant. An AI context engine keeps invented claims out of the sales copy.
       </p>
       <p>
         Treat context as evidence, not decoration. A product claim that is not on the site, the pricing page, or a customer quote should not appear in a first message, no matter how well the model phrases it.

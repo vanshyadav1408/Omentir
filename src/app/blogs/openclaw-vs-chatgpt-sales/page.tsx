@@ -23,13 +23,13 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "quick-answer", label: "Quick Answer", level: 1 },
-  { id: "where-chatgpt-fits", label: "Where ChatGPT Fits", level: 1 },
-  { id: "where-openclaw-fits", label: "Where OpenClaw Fits", level: 1 },
-  { id: "sales-workflow-comparison", label: "Sales Workflow Comparison", level: 1 },
-  { id: "failure-modes", label: "Failure Modes", level: 1 },
-  { id: "how-to-combine-them", label: "How to Combine Them", level: 1 },
-  { id: "decision-guide", label: "Decision Guide", level: 1 },
+  { id: "quick-answer", label: "Quick answer", level: 1 },
+  { id: "where-chatgpt-fits", label: "Where ChatGPT fits", level: 1 },
+  { id: "where-openclaw-fits", label: "Where OpenClaw fits", level: 1 },
+  { id: "sales-workflow-comparison", label: "Sales workflow comparison", level: 1 },
+  { id: "failure-modes", label: "Failure modes", level: 1 },
+  { id: "how-to-combine-them", label: "How to combine them", level: 1 },
+  { id: "decision-guide", label: "Decision guide", level: 1 },
   { id: "faqs", label: "FAQs", level: 1 },
 ];
 
@@ -92,7 +92,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Quick Answer
+        Quick answer
       </h2>
       <p>
         Use ChatGPT when the work is still judgment-heavy. Use OpenClaw when the work is already defined and needs to be operated through connected tools. Use neither as an excuse to blast generic messages from a real{" "}
@@ -113,7 +113,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Where ChatGPT Fits
+        Where ChatGPT fits
       </h2>
       <p>
         ChatGPT is useful before the workflow becomes operational. It is where you shape the thinking: target market, lead scorecard, messaging angles, objection handling, follow-up logic, and review criteria.
@@ -144,7 +144,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Where OpenClaw Fits
+        Where OpenClaw fits
       </h2>
       <p>
         OpenClaw becomes interesting once you know the workflow well enough to operate it. Instead of asking one-off questions, you want an agent to move through connected steps: read the campaign brief, inspect lead groups, call tools, prepare drafts, summarize replies, and ask for approval when the action has risk.
@@ -164,7 +164,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Sales Workflow Comparison
+        Sales workflow comparison
       </h2>
       <p>
         The cleanest way to compare the two is by sales stage. Some stages need flexible thinking. Others need repeatable execution.
@@ -208,7 +208,7 @@ export default function BlogPost() {
         </table>
       </div>
       <p>
-        In short: ChatGPT helps you think and write. OpenClaw helps an agent operate. Omentir provides the sales-specific motion those tools need if the target channel is LinkedIn.
+        ChatGPT helps you think and write. OpenClaw helps an agent operate. Omentir provides the sales-specific motion those tools need if the target channel is LinkedIn.
       </p>
 
       <h2
@@ -216,7 +216,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Failure Modes
+        Failure modes
       </h2>
       <p>
         ChatGPT fails in sales when teams treat a blank prompt as a data source. If you ask it for "50 ideal prospects" without live evidence, it may produce plausible guesses. Those guesses are not leads. They are unverified names wrapped in confidence.
@@ -245,7 +245,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        How to Combine Them
+        How to combine them
       </h2>
       <p>
         The best setup is not usually either-or. Use ChatGPT to design and improve the workflow. Use OpenClaw to operate the stable parts of that workflow through connected tools. Use Omentir for the sales-specific execution layer.
@@ -293,7 +293,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Decision Guide
+        Decision guide
       </h2>
       <p>
         Choose ChatGPT first if your sales process still changes every week. You need fast thinking, feedback, and copy iteration more than agent orchestration.
@@ -302,7 +302,7 @@ export default function BlogPost() {
         Choose OpenClaw-style operations when the process is repeatable enough to describe as steps. You should know what the agent is allowed to read, what it can draft, what it cannot send, and what a successful run produces.
       </p>
       <p>
-        Choose Omentir when the problem is not just "we need an AI tool," but "we need qualified LinkedIn conversations from the right buyers." That requires prospect discovery, scoring, messaging, follow-up, and inbox handling in one workflow.
+        Choose Omentir when the problem is qualified LinkedIn conversations from the right buyers, not a generic AI tool. That requires prospect discovery, scoring, messaging, follow-up, and inbox handling in one workflow.
       </p>
       <p>
         The practical decision is less glamorous than the tool debate: do you need better thinking, better operations, or better sales execution? Once you answer that, the roles become obvious.

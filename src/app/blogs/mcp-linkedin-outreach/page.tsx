@@ -23,13 +23,13 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "why-mcp-matters", label: "Why MCP Matters", level: 1 },
-  { id: "the-safe-tool-contract", label: "The Safe Tool Contract", level: 1 },
-  { id: "workflow-from-brief-to-reply", label: "Brief to Reply Workflow", level: 1 },
-  { id: "agent-prompts-that-work", label: "Agent Prompts That Work", level: 1 },
-  { id: "bad-prompts-to-avoid", label: "Bad Prompts to Avoid", level: 2 },
-  { id: "human-paced-automation", label: "Human-Paced Automation", level: 1 },
-  { id: "omentir-mcp-workflow", label: "Omentir MCP Workflow", level: 1 },
+  { id: "why-mcp-matters", label: "Why MCP matters", level: 1 },
+  { id: "the-safe-tool-contract", label: "The safe tool contract", level: 1 },
+  { id: "workflow-from-brief-to-reply", label: "Brief to reply workflow", level: 1 },
+  { id: "agent-prompts-that-work", label: "Agent prompts that work", level: 1 },
+  { id: "bad-prompts-to-avoid", label: "Bad prompts to avoid", level: 2 },
+  { id: "human-paced-automation", label: "Human-paced automation", level: 1 },
+  { id: "omentir-mcp-workflow", label: "Omentir MCP workflow", level: 1 },
   { id: "faqs", label: "FAQs", level: 1 },
 ];
 
@@ -85,7 +85,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Why MCP Matters
+        Why MCP matters
       </h2>
       <p>
         Most sales work is split across too many surfaces. A founder has a product note in one place, a lead list in another, a sequence tool somewhere else, and replies buried in an inbox. An agent can help only if it can see the right context and take bounded actions.
@@ -117,7 +117,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        The Safe Tool Contract
+        The safe tool contract
       </h2>
       <p>
         A sales MCP server should expose tools in layers. The first layer reads context. The second configures discovery. The third changes limited live state. The safest default is to let agents inspect freely, then require explicit approval before they send a reply.
@@ -169,7 +169,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Brief to Reply Workflow
+        Brief to reply workflow
       </h2>
       <p>
         The cleanest MCP LinkedIn workflow starts with a sales brief. The agent should read your product profile, confirm the target buyer, and ask one or two clarifying questions if the ICP is too broad.
@@ -198,7 +198,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Agent Prompts That Work
+        Agent prompts that work
       </h2>
       <p>
         MCP tools do not remove the need for good prompts. The agent still needs a clear outcome, a bounded task, and a permission boundary. The prompt should tell the agent what to do, what not to do, and what output you expect.
@@ -221,7 +221,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="bad-prompts-to-avoid" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Bad Prompts to Avoid
+        Bad prompts to avoid
       </h3>
       <p>
         Bad prompts collapse too many steps into one instruction. "Find leads and message them" is not a workflow; it is an invitation for the agent to guess, skip review, and optimize for motion instead of quality.
@@ -246,7 +246,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Human-Paced Automation
+        Human-paced automation
       </h2>
       <p>
         The safest LinkedIn outreach does not try to maximize actions per hour. It tries to maintain a believable, relevant, human-paced rhythm from a real profile.
@@ -272,7 +272,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Omentir MCP Workflow
+        Omentir MCP workflow
       </h2>
       <p>
         Omentir is designed so MCP-capable agents can operate lead discovery through a hosted MCP server or Agent API. The agent can read workspace context, update the product profile, configure discovery agents, search and filter leads, retrieve exact lead records, inspect activity, and work with existing reply conversations.

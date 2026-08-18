@@ -17,19 +17,19 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "heuristics-barrier", label: "Understanding Platform Heuristics and Volume Spikes", level: 1 },
-  { id: "starting-point", label: "Choose the Right Starting Point", level: 2 },
-  { id: "comparative-metrics", label: "Comparing Spike Sending vs. Gradual Ramp-Up Outcomes", level: 1 },
-  { id: "designing-ramp-up-curve", label: "Designing Your Gradual Volume Scaling Curve", level: 2 },
-  { id: "ramp-up-control-chart", label: "A Practical Ramp-Up Control Chart", level: 2 },
-  { id: "list-quality-clean", label: "Data Quality: Excluding Bad Leads to Prevent Bounce Alerts", level: 2 },
-  { id: "relevance-focused-copy", label: "Copywriting: The Core Prompt Grounding Rules", level: 1 },
-  { id: "throttling-safety-limits", label: "Protecting Account Health with Automated Throttling", level: 1 },
-  { id: "slowdown-signals", label: "Signals That Mean Slow Down", level: 2 },
-  { id: "restart-after-failed-ramp", label: "Restart After a Failed Ramp", level: 2 },
-  { id: "ramp-up-sop-checklist", label: "SOP: The 4-Week Volume Ramp-Up Checklist", level: 1 },
-  { id: "conclusion", label: "Establishing Safe, Scaling Outbound Systems", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "heuristics-barrier", label: "Understanding platform heuristics and volume spikes", level: 1 },
+  { id: "starting-point", label: "Choose the right starting point", level: 2 },
+  { id: "comparative-metrics", label: "Comparing spike sending vs. gradual ramp-up outcomes", level: 1 },
+  { id: "designing-ramp-up-curve", label: "Designing your gradual volume scaling curve", level: 2 },
+  { id: "ramp-up-control-chart", label: "A practical ramp-up control chart", level: 2 },
+  { id: "list-quality-clean", label: "Data quality: excluding bad leads to prevent bounce alerts", level: 2 },
+  { id: "relevance-focused-copy", label: "Copywriting: the core prompt grounding rules", level: 1 },
+  { id: "throttling-safety-limits", label: "Protecting account health with automated throttling", level: 1 },
+  { id: "slowdown-signals", label: "Signals that mean slow down", level: 2 },
+  { id: "restart-after-failed-ramp", label: "Restart after a failed ramp", level: 2 },
+  { id: "ramp-up-sop-checklist", label: "SOP: the 4-week volume ramp-up checklist", level: 1 },
+  { id: "conclusion", label: "Keep outbound safe as you scale", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
@@ -39,7 +39,7 @@ const faqItems = [
   },
   {
     question: "How long does a proper profile volume ramp-up take?",
-    answer: "A safe, enterprise-grade volume ramp-up takes 3 to 4 weeks, scaling connection requests from 5 daily in week one to under 20 daily by week four."
+    answer: "A safe volume ramp-up takes 3 to 4 weeks, scaling connection requests from 5 daily in week one to under 20 daily by week four."
   },
   {
     question: "How does Omentir manage campaign ramp-up schedules?",
@@ -63,20 +63,20 @@ export default function BlogPost() {
       faqItems={faqItems}
     >
       <p id="heuristics-barrier" className="scroll-mt-28">
-        Outbound B2B campaigns require consistent outreach. Sales development teams configure campaign settings, verify target buyer databases, and send connection requests to decision makers. But if you connect a new profile and immediately start sending messages at scale, you will trigger restrictions.
+        Outbound B2B campaigns need a steady sending rhythm. Sales teams set up campaigns, check their buyer lists, and send connection requests to decision makers. Connecting a new profile and immediately sending at scale will trigger restrictions.
       </p>
       <p>
-        Security algorithms on modern social networks monitor activity velocity. If a profile that has been dormant for months suddenly starts sending connection requests at uniform speeds, security scripts will lock the profile.
+        Security algorithms on social networks watch activity velocity. If a profile that sat quiet for months starts sending connection requests at a uniform pace, security scripts will lock it.
       </p>
       <p>
-        Avoiding these alerts requires patience. Senders must implement gradual volume ramp-ups, scaling daily activity over a 4-week curve instead of treating a new profile like an unlimited sending asset.
+        Avoiding those alerts takes patience. Scale daily activity over a 4-week curve instead of treating a new profile like an unlimited sending asset.
       </p>
       <p>
-        Omentir integrates this safety layer, offering pacing configurations to protect your profiles, starting at $49/month. Let's look at why ramp-ups are important.
+        Omentir includes pacing settings to protect your profiles, starting at $49/month.
       </p>
 
       <h3 id="starting-point" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Choose the Right Starting Point
+        Choose the right starting point
       </h3>
       <p>
         There is no single safe volume for every account. A founder who has posted weekly for years, has a real network, and receives inbound replies can start higher than a brand-new sales profile with no history. The mistake is copying another team's daily limit without understanding the account underneath it.
@@ -89,16 +89,16 @@ export default function BlogPost() {
       </p>
 
       <h2 id="comparative-metrics" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Comparing Spike Sending vs. Gradual Ramp-Up Outcomes
+        Comparing spike sending vs. gradual ramp-up outcomes
       </h2>
       <p>
-        The conversion rates of accounts using sudden volume spikes compare poorly to those utilizing gradual ramp-ups:
+        Accounts that spike volume do worse than accounts that ramp gradually:
       </p>
       <p>
-        <strong>Spike Sending:</strong> Senders connect profiles and send 50 requests daily immediately. Platform security locks the account within 48 to 72 hours, resulting in low connection rates and profile restrictions.
+        <strong>Spike sending:</strong> Senders connect profiles and send 50 requests daily immediately. Platform security locks the account within 48 to 72 hours, resulting in low connection rates and profile restrictions.
       </p>
       <p>
-        <strong>Gradual Ramp-Up:</strong> Connection requests scale from 5 daily in week one to under 20 daily by week four. The profile trust score increases, acceptance rates remain high (target above 40%), and campaigns stay active.
+        <strong>Gradual ramp-up:</strong> Connection requests scale from 5 daily in week one to under 20 daily by week four. The profile trust score increases, acceptance rates remain high (target above 40%), and campaigns stay active.
       </p>
       <p>
         The second path feels slower for the first week, but it compounds. A restricted account loses days to recovery, manual verification, and damaged acceptance rates. A healthy account keeps learning from every batch because the profile stays live and prospects continue seeing normal activity.
@@ -107,7 +107,7 @@ export default function BlogPost() {
         Ramp-ups also create a cleaner experiment. If you send 50 requests on day one and performance is poor, you do not know whether the problem was volume, targeting, copy, or account trust. If you send 5 to 10 carefully selected requests, you can actually read the outcomes and improve the campaign.
       </p>
       <p>
-        Focusing on safety limits ensures your outbound campaigns remain active, as detailed in our guide on{" "}
+        Staying inside safety limits keeps campaigns active, as detailed in our guide on{" "}
         <Link href="/blogs/linkedin-account-health-safety" className="text-blue-600 hover:underline">
           maintaining LinkedIn account health
         </Link>
@@ -115,16 +115,16 @@ export default function BlogPost() {
       </p>
 
       <h2 id="designing-ramp-up-curve" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Designing Your Gradual Volume Scaling Curve
+        Designing your gradual volume scaling curve
       </h2>
       <p>
-        A safe volume scaling curve scales daily invitations over a 4-week period:
+        Scale daily invitations over a 4-week period:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
         <li><strong>Week 1:</strong> Limit to under 5 connection requests daily (strictly manual).</li>
         <li><strong>Week 2:</strong> Connect Omentir and set daily connection limits to 5 requests.</li>
         <li><strong>Week 3:</strong> Scale daily connection limits to 10 requests.</li>
-        <li><strong>Week 4:</strong> Maximize daily quotas to 15 to 20 connection requests, spacing out sends.</li>
+        <li><strong>Week 4:</strong> Raise daily quotas to 15 to 20 connection requests, spacing out sends.</li>
       </ul>
       <p>
         For warmup protocols, see our guide on{" "}
@@ -135,7 +135,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="ramp-up-control-chart" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        A Practical Ramp-Up Control Chart
+        A practical ramp-up control chart
       </h3>
       <p>
         Treat the schedule as a control chart, not a promise. The account earns the right to increase volume only if the previous week looks healthy. If the previous week produces low acceptance, angry replies, or a pile of stale pending invites, hold the line or step down.
@@ -150,10 +150,10 @@ export default function BlogPost() {
       </p>
 
       <h2 id="list-quality-clean" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Data Quality: Excluding Bad Leads to Prevent Bounce Alerts
+        Data quality: excluding bad leads to prevent bounce alerts
       </h2>
       <p>
-        Data accuracy is critical to safety. Messaging invalid accounts or out-of-market profiles drives up rejection rates, flagging your account.
+        Bad data hurts account safety. Messaging invalid accounts or out-of-market profiles drives up rejection rates and flags the account.
       </p>
       <p>
         In a ramp-up period, list quality matters more than list size. The first 50 prospects teach the platform and your team what kind of interactions this profile creates. If those early prospects are a poor fit, the profile starts its campaign history with weak acceptance and negative feedback.
@@ -162,7 +162,7 @@ export default function BlogPost() {
         Build the first ramp-up list from your cleanest segment. Choose people who clearly own the problem, work at companies that match your ICP, and have at least one visible reason for outreach. Save the broader experiments for later, after the account has a healthy baseline.
       </p>
       <p>
-        Ensure your lead list is qualified before importing, as detailed in our guide on{" "}
+        Qualify your lead list before importing, as detailed in our guide on{" "}
         <Link href="/blogs/ai-lead-qualification-funnel" className="text-blue-600 hover:underline">
           AI-driven lead qualification
         </Link>
@@ -173,7 +173,7 @@ export default function BlogPost() {
         <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
         <div className="pl-4">
           <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-            Safety Rule: Enforce Daily Limits 💡
+            Safety rule: enforce daily limits
           </h4>
           <p className="text-sm text-zinc-650 leading-relaxed">
             Never bypass daily volume quotas. Even with gradual ramp-ups, sending excessive messages will trigger safety checks. Keep connection invites under 20 requests per profile daily.
@@ -182,7 +182,7 @@ export default function BlogPost() {
       </div>
 
       <h2 id="relevance-focused-copy" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Copywriting: The Core Prompt Grounding Rules
+        Copywriting: the core prompt grounding rules
       </h2>
       <p>
         Writing high-acceptance copy keeps your campaigns safe. Configure Omentir prompts to reference specific career triggers, keeping copy under 75 words, as detailed in our guide on{" "}
@@ -205,7 +205,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="throttling-safety-limits" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Protecting Account Health with Automated Throttling
+        Protecting account health with automated throttling
       </h2>
       <p>
         Outbound safety depends on pacing. Omentir enforces safe sending limits and spaces out requests using random delays.
@@ -225,7 +225,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="slowdown-signals" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Signals That Mean Slow Down
+        Signals that mean slow down
       </h3>
       <p>
         The ramp-up schedule should never run blindly. Slow down when acceptance rate drops below your normal range, pending invites grow faster than accepts, prospects ask why they were contacted, or the sender profile starts seeing extra security prompts.
@@ -238,7 +238,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="restart-after-failed-ramp" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Restart After a Failed Ramp
+        Restart after a failed ramp
       </h3>
       <p>
         If a ramp-up fails, do not immediately reconnect the same profile to a new campaign. Give the account a quiet recovery window. Stop outbound sends, answer any open conversations manually, withdraw stale pending invites, and spend a few days using the account normally.
@@ -248,7 +248,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="ramp-up-sop-checklist" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: The 4-Week Volume Ramp-Up Checklist
+        SOP: the 4-week volume ramp-up checklist
       </h2>
       <p>
         Ramp up your outreach profiles using these steps:
@@ -259,17 +259,17 @@ export default function BlogPost() {
         <li><strong>Week 3 (Automation):</strong> Scale the daily connection limit to 10 requests paced safely.</li>
         <li><strong>Week 4 (Automation):</strong> Scale the daily connection limit to 15 to 20 connection requests paced safely.</li>
         <li><strong>Every Friday:</strong> Review acceptance rate, reply quality, pending invites, and security prompts before increasing next week's volume.</li>
-        <li><strong>Any Red Flag:</strong> Pause, diagnose the list and copy, then restart from the previous safe volume instead of pushing forward.</li>
+        <li><strong>Any red flag:</strong> Pause, diagnose the list and copy, then restart from the previous safe volume instead of pushing forward.</li>
       </ul>
       <p>
-        Omentir handles variable mapping and safety limits, allowing you to manage campaigns efficiently. The operator still owns the weekly judgment call: increase, hold, or step down.
+        Omentir handles variable mapping and safety limits. The operator still owns the weekly judgment call: increase, hold, or step down.
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Establishing Safe, Scaling Outbound Systems
+        Keep outbound safe as you scale
       </h2>
       <p>
-        Outbound B2B campaigns require safety boundaries. By implementing a gradual 4-week volume ramp-up schedule and pacing outboxes, you protect your profile assets from restrictions.
+        Outbound B2B campaigns need safety boundaries. A gradual 4-week volume ramp-up, with paced sends, protects profiles from restrictions.
       </p>
       <p>
         Use the four-week ramp to build a profile history that compounds. A one-week volume spike can cost you the channel. If week four still feels slow, that is the point.

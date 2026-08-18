@@ -17,20 +17,20 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "spam-as-emotional-response", label: "The Psychology Behind the Spam Flag", level: 1 },
-  { id: "buyer-threat-model", label: "The Buyer's Threat Model", level: 2 },
-  { id: "spam-triggers", label: "The Three Core Copywriting Spam Triggers", level: 1 },
-  { id: "self-centered-pitch", label: "Trigger 1: The Self-Centered Feature Pitch", level: 2 },
-  { id: "intrusive-pacing-sequences", label: "Trigger 2: Intrusive and Over-Frequent Follow-Ups", level: 2 },
-  { id: "contextual-mismatch-targeting", label: "Trigger 3: Context Mismatches and Irrelevant Role Targeting", level: 2 },
-  { id: "before-after-copy", label: "Before and After Copy Rewrites", level: 2 },
-  { id: "low-friction-copy-blueprint", label: "Copywriting: Designing Low-Friction Conversations", level: 1 },
-  { id: "message-empathy-test", label: "The Message Empathy Test", level: 2 },
-  { id: "team-review-rhythm", label: "Create a Review Rhythm", level: 2 },
-  { id: "reply-respect", label: "Respect the Reply You Get", level: 2 },
-  { id: "spam-prevention-sop", label: "SOP: The Spam-Prevention Copywriting Audit", level: 1 },
-  { id: "conclusion", label: "Prioritizing Relevance Over Outreach Volume", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "spam-as-emotional-response", label: "The psychology behind the spam flag", level: 1 },
+  { id: "buyer-threat-model", label: "The buyer's threat model", level: 2 },
+  { id: "spam-triggers", label: "The three core copywriting spam triggers", level: 1 },
+  { id: "self-centered-pitch", label: "Trigger 1: the self-centered feature pitch", level: 2 },
+  { id: "intrusive-pacing-sequences", label: "Trigger 2: intrusive and over-frequent follow-ups", level: 2 },
+  { id: "contextual-mismatch-targeting", label: "Trigger 3: context mismatches and irrelevant role targeting", level: 2 },
+  { id: "before-after-copy", label: "Before and after copy rewrites", level: 2 },
+  { id: "low-friction-copy-blueprint", label: "Copywriting: designing low-friction conversations", level: 1 },
+  { id: "message-empathy-test", label: "The message empathy test", level: 2 },
+  { id: "team-review-rhythm", label: "Create a review rhythm", level: 2 },
+  { id: "reply-respect", label: "Respect the reply you get", level: 2 },
+  { id: "spam-prevention-sop", label: "SOP: the spam-prevention copywriting audit", level: 1 },
+  { id: "conclusion", label: "Prioritize relevance over outreach volume", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
@@ -56,7 +56,7 @@ export default function BlogPost() {
   return (
     <BlogPostTemplate
       title="Understanding the Psychology of Spam: Why Prospects Report Messages"
-      description="Stop getting blocked by B2B buyers. Discover the emotional triggers that cause spam reports and learn how to write low-friction, relevant outreach."
+      description="Stop getting blocked by B2B buyers. The emotional triggers that cause spam reports, and how to write low-friction, relevant outreach."
       slug="psychology-of-spam-outreach"
       bannerSrc="/psychology-of-spam-outreach.avif"
       bannerAlt="Outbound sales copy spam triggers and prospect response psychology diagram"
@@ -73,27 +73,27 @@ export default function BlogPost() {
         If your profiles receive too many spam reports, platform security filters will restrict your accounts, halting your outbound sales development.
       </p>
       <p>
-        To protect your outbox deliverability, you must understand the psychology of spam. By analyzing why prospects report messages, you can rewrite your templates to trigger curiosity instead of irritation.
+        To protect your outbox deliverability, understand the psychology of spam. If you know why prospects report messages, you can rewrite your templates to trigger curiosity instead of irritation.
       </p>
       <p>
-        Omentir helps manage this campaign quality, routing drafted messages to a review queue before delivery, starting at $49/month. Let's look at the triggers of spam reports.
+        Omentir helps manage this campaign quality, routing drafted messages to a review queue before delivery, starting at $49/month. The next sections cover the triggers behind spam reports.
       </p>
 
       <h3 id="buyer-threat-model" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        The Buyer's Threat Model
+        The buyer's threat model
       </h3>
       <p>
         A buyer does not open your message with a neutral mind. They have already seen dozens of lazy pitches this month. Their default question is not "what does this person sell?" It is "is this another stranger trying to extract time from me?"
       </p>
       <p>
-        That threat model is why small details matter. A wrong title, a fake compliment, a calendar link, or a message that ignores the buyer's actual role all tell the reader that the sender did not earn the right to be in the inbox. Once that feeling appears, the spam button becomes emotionally satisfying.
+        That threat model is why small details matter. A wrong title, a fake compliment, a calendar link, or a message that ignores the buyer's actual role all tell the reader that the sender did not earn the right to be in the inbox. Once that feeling appears, the spam button becomes an easy way to get rid of the message.
       </p>
       <p>
-        Good outbound lowers the perceived threat. It proves the sender chose the recipient for a real reason, asks for a small next step, and makes it easy to say no. That does not guarantee a reply, but it dramatically reduces the chance that the prospect feels tricked or cornered.
+        Good outbound lowers the perceived threat. It proves the sender chose the recipient for a real reason, asks for a small next step, and makes it easy to say no. That does not guarantee a reply, but it reduces the chance that the prospect feels tricked or cornered.
       </p>
 
       <h2 id="spam-triggers" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        The Three Core Copywriting Spam Triggers
+        The three core copywriting spam triggers
       </h2>
       <p>
         Prospects identify spam based on specific copywriting patterns.
@@ -115,7 +115,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="self-centered-pitch" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Trigger 1: The Self-Centered Feature Pitch
+        Trigger 1: the self-centered feature pitch
       </h2>
       <p>
         The most common outbound error is the feature dump. Senders write long messages explaining what their software does, expecting prospects to schedule calls to learn more.
@@ -131,7 +131,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="intrusive-pacing-sequences" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Trigger 2: Intrusive and Over-Frequent Follow-Ups
+        Trigger 2: intrusive and over-frequent follow-ups
       </h2>
       <p>
         Intrusive follow-up campaigns damage brand reputation. If you send daily check-ins asking "Did you see my last message?" prospects will feel harassed.
@@ -147,7 +147,7 @@ export default function BlogPost() {
         <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
         <div className="pl-4">
           <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-            Copywriting Rule: Restrict the Token Length 💡
+            Copywriting rule: restrict the token length
           </h4>
           <p className="text-sm text-zinc-650 leading-relaxed">
             Keep your messages under 75 words. Long blocks of text look like automated essays in chat interfaces, driving immediate opt-outs.
@@ -156,10 +156,10 @@ export default function BlogPost() {
       </div>
 
       <h2 id="contextual-mismatch-targeting" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Trigger 3: Context Mismatches and Irrelevant Role Targeting
+        Trigger 3: context mismatches and irrelevant role targeting
       </h2>
       <p>
-        Targeting precision is critical to safety. Senders exporting broad database lists often message irrelevant roles (e.g. pitching lead generation tools to a software developer).
+        Targeting precision matters for safety. Senders exporting broad database lists often message irrelevant roles (e.g. pitching lead generation tools to a software developer).
       </p>
       <p>
         Ensure your campaign prompts verify prospect titles, as outlined in our guide on{" "}
@@ -173,7 +173,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="before-after-copy" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Before and After Copy Rewrites
+        Before and after copy rewrites
       </h3>
       <p>
         The fastest way to reduce spam reports is to remove pressure from the first message. Here is a common before-and-after pattern.
@@ -193,7 +193,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="low-friction-copy-blueprint" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Copywriting: Designing Low-Friction Conversations
+        Copywriting: designing low-friction conversations
       </h2>
       <p>
         To prevent spam reports, write conversational outreach copy that opens by referencing a specific trigger and leads into a soft question.
@@ -215,7 +215,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="message-empathy-test" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        The Message Empathy Test
+        The message empathy test
       </h3>
       <p>
         Before launching a sequence, read the opener as if you were the buyer on a busy Monday morning. Would you understand why this person chose you? Would you know what they are asking? Would saying no feel easy? If the answer to any of those questions is no, the message is likely to create resistance.
@@ -225,7 +225,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="team-review-rhythm" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Create a Review Rhythm
+        Create a review rhythm
       </h3>
       <p>
         Spam prevention gets easier when the team reviews real conversations every week. Pick ten recent outbound threads: three positive replies, three ignores, three objections, and one opt-out. Read them together and ask what the buyer likely felt at each step.
@@ -241,20 +241,20 @@ export default function BlogPost() {
       </p>
 
       <h3 id="reply-respect" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Respect the Reply You Get
+        Respect the reply you get
       </h3>
       <p>
         Spam psychology does not end when the first reply arrives. If a prospect says "not now" and the sequence keeps pushing for a meeting, the sender has taught them that replying was a mistake. That is when mild annoyance becomes a report.
       </p>
       <p>
-        Treat every reply as a state change. Positive replies should move to a human conversation. Neutral replies should get a useful, brief answer. Negative replies should stop the sequence immediately. Opt-outs should update the suppression list, not just the current thread.
+        Treat every reply as a state change. Positive replies should move to a human conversation. Neutral replies should get a useful, brief answer. Negative replies should stop the sequence immediately. Opt-outs should update the suppression list as well as the current thread.
       </p>
       <p>
         This is where a shared inbox and intent sorting matter. The goal is not to automate past the buyer's signal. The goal is to make sure the right human sees the signal quickly enough to respond appropriately.
       </p>
 
       <h2 id="spam-prevention-sop" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: The Spam-Prevention Copywriting Audit
+        SOP: the spam-prevention copywriting audit
       </h2>
       <p>
         Audit your campaign copy using these steps before launching:
@@ -272,10 +272,10 @@ export default function BlogPost() {
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Prioritizing Relevance Over Outreach Volume
+        Prioritize relevance over outreach volume
       </h2>
       <p>
-        Outbound outreach is most effective when it is relationship-focused. Senders who rely on high-volume template campaigns will trigger frequent restrictions and bans.
+        Outbound works best when it is relationship-focused. Senders who rely on high-volume template campaigns will trigger frequent restrictions and bans.
       </p>
       <p>
         By understanding the psychology of spam and writing low-friction, relevant copy, you protect your profile assets. The real advantage is restraint: send fewer messages to better-fit people, and make every message easy to decline without a calendar link in the first note.

@@ -4,7 +4,7 @@ import BlogPostTemplate from "../blog-post-template";
 
 export const metadata = createPageMetadata({
   title: "How to Handle Your First Sales Demo and Close B2B Deals - Omentir",
-  description: "Learn how to structure your first sales demo. Copy our 30-minute call framework, discover mapping questions, and master closing tactics.",
+  description: "A 30-minute sales demo structure, discovery questions, and closing steps for first B2B calls.",
   path: "/blogs/handle-first-sales-demo",
   keywords: [
     "handle first sales demo",
@@ -17,25 +17,25 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "leverage-of-demos", label: "The Shift from Sourcing Leads to Closing Demos", level: 1 },
-  { id: "pre-call-brief", label: "Prepare the Pre-Call Brief", level: 2 },
-  { id: "demo-call-framework", label: "The 30-Minute Sales Demo Structure", level: 1 },
-  { id: "active-discovery-stage", label: "The Discovery Stage: Uncovering Operational Bottlenecks", level: 2 },
-  { id: "discovery-script", label: "Use a Simple Discovery Script", level: 2 },
-  { id: "mapped-walkthrough-stage", label: "The Walkthrough: Showing Outcomes over Feature Lists", level: 2 },
-  { id: "objection-handling-pricing", label: "Handling Objections: Pricing, Timing, and Integrations", level: 1 },
-  { id: "objection-scripts", label: "Objection Scripts You Can Reuse", level: 2 },
-  { id: "closing-next-steps", label: "The Close: Aligning Commitments and Closing Steps", level: 1 },
-  { id: "post-call-follow-up", label: "Send a Useful Follow-Up", level: 2 },
-  { id: "demo-sop-checklist", label: "SOP: The Sales Demo Preparation Checklist", level: 1 },
-  { id: "conclusion", label: "Perfecting Your Sales Pitch for Growth", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "leverage-of-demos", label: "The shift from sourcing leads to closing demos", level: 1 },
+  { id: "pre-call-brief", label: "Prepare the pre-call brief", level: 2 },
+  { id: "demo-call-framework", label: "The 30-minute sales demo structure", level: 1 },
+  { id: "active-discovery-stage", label: "The discovery stage: operational bottlenecks", level: 2 },
+  { id: "discovery-script", label: "Use a simple discovery script", level: 2 },
+  { id: "mapped-walkthrough-stage", label: "The walkthrough: outcomes over feature lists", level: 2 },
+  { id: "objection-handling-pricing", label: "Handling objections: pricing, timing, and integrations", level: 1 },
+  { id: "objection-scripts", label: "Objection scripts you can reuse", level: 2 },
+  { id: "closing-next-steps", label: "The close: commitments and next steps", level: 1 },
+  { id: "post-call-follow-up", label: "Send a useful follow-up", level: 2 },
+  { id: "demo-sop-checklist", label: "SOP: the sales demo preparation checklist", level: 1 },
+  { id: "conclusion", label: "Turn the demo into a buying decision", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
   {
     question: "What discovery questions are most effective during a B2B demo?",
-    answer: "Focus on uncovering manual bottlenecks: \"How much time does your team spend sourcing lists?\" or \"What happens to your pipeline when emails bounce?\" Senders must map the product value directly to these pain points."
+    answer: "Ask about manual bottlenecks: \"How much time does your team spend sourcing lists?\" or \"What happens to your pipeline when emails bounce?\" Then map the product to those answers, not to a generic feature tour."
   },
   {
     question: "Should I show my product's entire settings panel during the demo?",
@@ -47,7 +47,7 @@ const faqItems = [
   },
   {
     question: "What is the best next-step agreement at the end of a call?",
-    answer: "Never end a call with \"I'll send an email follow-up.\" Always align on a specific next action, such as scheduling a setup call or sending a contract link with a defined review date."
+    answer: "Never end a call with \"I'll send an email follow-up.\" Agree on a specific next action, such as scheduling a setup call or sending a contract link with a review date."
   }
 ] as const;
 
@@ -55,7 +55,7 @@ export default function BlogPost() {
   return (
     <BlogPostTemplate
       title="How to Handle Your First Sales Demo and Close the Deal"
-      description="Stop losing hot leads on sales calls. Master this 30-minute sales demo playbook to run active discovery, handle objections, and close B2B deals."
+      description="A 30-minute sales demo playbook for discovery, objections, and closing B2B deals."
       slug="handle-first-sales-demo"
       bannerSrc="/handle-first-sales-demo.avif"
       bannerAlt="B2B sales demo structure and closing pipeline diagram"
@@ -72,11 +72,11 @@ export default function BlogPost() {
         A demo is not a software tutorial. It is a structured sales conversation designed to verify pain points, map solutions to outcomes, and secure commitments.
       </p>
       <p>
-        Omentir helps book these demos by running live prospecting agents in the background. Let's walk through how to handle the call and close the contract.
+        Omentir helps book these demos by running live prospecting agents in the background. The rest of this piece is about handling the call and closing the contract.
       </p>
 
       <h3 id="pre-call-brief" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Prepare the Pre-Call Brief
+        Prepare the pre-call brief
       </h3>
       <p>
         Your first demo should not start when the video call opens. Ten minutes before the meeting, write a one-page brief with the prospect's company, role, likely pain, source of the lead, exact message that booked the call, and the strongest reason they agreed to talk.
@@ -89,7 +89,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="demo-call-framework" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        The 30-Minute Sales Demo Structure
+        The 30-minute sales demo structure
       </h2>
       <p>
         To keep calls focused and professional, structure your demos around a strict 30-minute framework:
@@ -97,7 +97,7 @@ export default function BlogPost() {
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
         <li><strong>Discovery (0-7 minutes):</strong> Ask target questions to uncover current bottlenecks and goals.</li>
         <li><strong>Walkthrough (7-22 minutes):</strong> Show specific outcomes, mapping features directly to discovery answers.</li>
-        <li><strong>Closing (22-30 minutes):</strong> Address pricing objections, outline next steps, and align on timeline commitments.</li>
+        <li><strong>Closing (22-30 minutes):</strong> Address pricing objections, outline next steps, and agree on a timeline.</li>
       </ul>
       <p>
         For details on early sales validation, check out our guide to{" "}
@@ -111,7 +111,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="active-discovery-stage" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        The Discovery Stage: Uncovering Operational Bottlenecks
+        The discovery stage: operational bottlenecks
       </h2>
       <p>
         Before you show your product, you must understand your buyer's current processes.
@@ -132,7 +132,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="discovery-script" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Use a Simple Discovery Script
+        Use a simple discovery script
       </h3>
       <p>
         Do not improvise the first five minutes. Use a repeatable script so you can compare calls and learn faster.
@@ -150,7 +150,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="mapped-walkthrough-stage" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        The Walkthrough: Showing Outcomes over Feature Lists
+        The walkthrough: outcomes over feature lists
       </h2>
       <p>
         During the product walkthrough, do not show general menus. Focus only on features that resolve the pain points identified during discovery.
@@ -167,7 +167,7 @@ export default function BlogPost() {
         <li><strong>Follow-up problem:</strong> show how interested replies land in one inbox instead of being lost across tabs.</li>
       </ul>
       <p>
-        Keep checking for alignment during the walkthrough. Ask, "Is this close to how your team would want to review leads?" or "Would this remove the manual step you mentioned?" These questions keep the buyer involved and reveal objections while you can still address them.
+        Keep checking during the walkthrough. Ask, "Is this close to how your team would want to review leads?" or "Would this remove the manual step you mentioned?" These questions keep the buyer involved and surface objections while you can still address them.
       </p>
 
       <div className="my-8 rounded-xl border border-zinc-200 bg-[#f4f2ec] p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)] relative overflow-hidden">
@@ -183,13 +183,13 @@ export default function BlogPost() {
       </div>
 
       <h2 id="objection-handling-pricing" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Handling Objections: Pricing, Timing, and Integrations
+        Handling objections: pricing, timing, and integrations
       </h2>
       <p>
         Objections are natural parts of B2B sales. Senders should treat them as opportunities to clarify product value.
       </p>
       <p>
-        When buyers object to pricing, reference the ROI: compare the cost of your software (such as Omentir's $49/month Pro plan) to the cost of manual lead sourcing and verification databases, demonstrating how much budget is saved.
+        When buyers object to pricing, compare the cost of your software (such as Omentir's $49/month Pro plan) to the cost of manual lead sourcing and verification databases. That is the ROI argument: time and budget saved versus the monthly fee.
       </p>
       <p>
         Timing objections usually mean one of two things: the buyer has a real constraint, or you have not made the pain feel urgent enough. Ask which one it is. "Is this not a priority until next quarter, or is there a specific blocker we would need to solve first?" The answer tells you whether to nurture, close, or disqualify.
@@ -199,7 +199,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="objection-scripts" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Objection Scripts You Can Reuse
+        Objection scripts you can reuse
       </h3>
       <p>
         Your first demos will feel easier if you prepare plain-language responses to the objections you know are coming.
@@ -214,10 +214,10 @@ export default function BlogPost() {
       </p>
 
       <h2 id="closing-next-steps" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        The Close: Aligning Commitments and Closing Steps
+        The close: commitments and next steps
       </h2>
       <p>
-        To close B2B contracts, you must align next steps.
+        To close B2B contracts, you have to agree on next steps.
       </p>
       <p>
         State the timeline clearly:
@@ -235,7 +235,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="post-call-follow-up" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Send a Useful Follow-Up
+        Send a useful follow-up
       </h3>
       <p>
         The follow-up email should be short and useful. Do not send a generic "great chatting" note with five attachments. Send the buyer's problem, the agreed next step, the owner, and the deadline.
@@ -250,7 +250,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="demo-sop-checklist" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: The Sales Demo Preparation Checklist
+        SOP: the sales demo preparation checklist
       </h2>
       <p>
         Prepare for your B2B sales calls using these steps:
@@ -268,10 +268,10 @@ export default function BlogPost() {
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Perfecting Your Sales Pitch for Growth
+        Turn the demo into a buying decision
       </h2>
       <p>
-        Outbound campaigns are only as effective as your sales demo execution. By structuring your calls around discovery and outcome mapping, you can convert booked leads into paying B2B clients.
+        Outbound campaigns are only as useful as the demo that follows. Structure the call around discovery and outcome mapping, and you have a real shot at converting booked leads into paying clients.
       </p>
       <p>
         Your job on the demo is to turn that conversation into a clear buying decision: problem confirmed, workflow mapped, next step owned, and timeline agreed. If you spend the hour on slides, you already lost the meeting you worked to book.

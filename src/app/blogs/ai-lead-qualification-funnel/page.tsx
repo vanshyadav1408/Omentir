@@ -17,17 +17,17 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "cost-of-list-noise", label: "The Hidden Cost of Unqualified B2B Lists", level: 1 },
-  { id: "define-qualified-before-ai", label: "Define Qualified Before You Add AI", level: 2 },
-  { id: "qualification-pipeline-architecture", label: "Architecture of an AI-Driven Lead Qualification Pipeline", level: 1 },
-  { id: "stage-1-b2b-classification", label: "Stage 1: B2B vs. B2C Audience Classification", level: 2 },
-  { id: "stage-2-tech-stack-checks", label: "Stage 2: Technical Integrations and Competitor Stack Verification", level: 2 },
-  { id: "stage-3-ICP-fit-scoring", label: "Stage 3: Grounded Fit Scoring and Semantic Search", level: 2 },
-  { id: "confidence-routing", label: "Confidence Routing: Approve, Review, or Reject", level: 2 },
-  { id: "pacing-outbox-delivery", label: "Routing Qualified Leads Safely into Paced Outboxes", level: 1 },
-  { id: "qualification-sop-checklist", label: "SOP: The 5-Minute Lead Cleansing Workflow", level: 1 },
-  { id: "conclusion", label: "Focusing Outbound Volume on Verified Buyers", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "cost-of-list-noise", label: "The hidden cost of unqualified B2B lists", level: 1 },
+  { id: "define-qualified-before-ai", label: "Define qualified before you add AI", level: 2 },
+  { id: "qualification-pipeline-architecture", label: "Architecture of an AI-driven lead qualification pipeline", level: 1 },
+  { id: "stage-1-b2b-classification", label: "Stage 1: B2B vs. B2C audience classification", level: 2 },
+  { id: "stage-2-tech-stack-checks", label: "Stage 2: technical integrations and competitor stack verification", level: 2 },
+  { id: "stage-3-ICP-fit-scoring", label: "Stage 3: grounded fit scoring and semantic search", level: 2 },
+  { id: "confidence-routing", label: "Confidence routing: approve, review, or reject", level: 2 },
+  { id: "pacing-outbox-delivery", label: "Routing qualified leads safely into paced outboxes", level: 1 },
+  { id: "qualification-sop-checklist", label: "SOP: the 5-minute lead cleansing workflow", level: 1 },
+  { id: "conclusion", label: "Focusing outbound volume on verified buyers", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
@@ -53,7 +53,7 @@ export default function BlogPost() {
   return (
     <BlogPostTemplate
       title="AI-Driven Lead Qualification: Filtering Out the Noise in B2B Lists"
-      description="Discover how to build a multi-stage lead qualification pipeline that filters out unqualified accounts and protects your sending domain reputation."
+      description="Build a multi-stage lead qualification pipeline that filters out unqualified accounts and protects your sending domain reputation."
       slug="ai-lead-qualification-funnel"
       bannerSrc="/ai-lead-qualification-funnel.avif"
       bannerAlt="AI lead qualification pipeline stages diagram"
@@ -61,16 +61,16 @@ export default function BlogPost() {
       faqItems={faqItems}
     >
       <p id="cost-of-list-noise" className="scroll-mt-28">
-        Outbound campaigns frequently suffer from low conversion rates due to unqualified targeting lists. Growth teams export directory lists based on general parameters like industry and geography, and immediately import them into campaigns. This results in messaging contacts who do not match your ideal buyer profile.
+        Outbound campaigns often fail because the list is wrong. Teams export directory data by industry and geography, then import it straight into a campaign. The messages go to people who were never the buyer.
       </p>
       <p>
-        Messaging unqualified leads wastes sending quotas, drives up unsubscribe rates, and triggers spam blocks. If your sales team spends hours reviewing prospects manually, your pipeline scaling will be limited by administrative overhead.
+        Messaging unqualified leads wastes sending quotas, raises unsubscribes, and can trigger spam blocks. If reps spend hours reviewing prospects by hand, the pipeline cannot scale past that admin work.
       </p>
       <p>
-        To build a sustainable outbound system, you must automate list qualification. By implementing a multi-stage AI qualification pipeline, you can filter out irrelevant accounts programmatically.
+        A sustainable outbound system qualifies the list first. A multi-stage AI pipeline can drop irrelevant accounts before anyone spends a send.
       </p>
       <p>
-        Omentir coordinates this qualification layer, analyzing prospect profiles to ensure campaigns target verified buyers. Let's look at how to structure a lead qualification pipeline.
+        Omentir runs that qualification layer against prospect profiles so campaigns hit verified buyers.
       </p>
       <p>
         The real cost of list noise is not only lower reply rates. Bad leads also distort your learning. If half of your campaign goes to companies that cannot buy, you will blame the message, the channel, or the offer when the problem was routing. A clean qualification layer protects both your outbox and your judgment.
@@ -80,7 +80,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="define-qualified-before-ai" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Define Qualified Before You Add AI
+        Define qualified before you add AI
       </h2>
       <p>
         Before building a qualification funnel, write a plain-language definition of a good account. Do not start with a prompt. Start with your sales reality. Who can buy, who feels the problem, who is reachable, and who would be a poor use of sending capacity?
@@ -99,18 +99,18 @@ export default function BlogPost() {
       </p>
 
       <h2 id="qualification-pipeline-architecture" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Architecture of an AI-Driven Lead Qualification Pipeline
+        Architecture of an AI-driven lead qualification pipeline
       </h2>
       <p>
         An automated qualification pipeline processes raw lead lists through sequential filters, removing unqualified contacts at each step.
       </p>
       <p>
-        We recommend structuring your qualification pipeline into three stages:
+        Structure the pipeline in three stages:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Stage 1:</strong> Audience Classification (separating B2B platforms from consumer services).</li>
-        <li><strong>Stage 2:</strong> Technical Stack Verification (verifying integrations and tools).</li>
-        <li><strong>Stage 3:</strong> ICP Fit Scoring (comparing site context against your buyer criteria).</li>
+        <li><strong>Stage 1:</strong> Audience classification (separating B2B platforms from consumer services).</li>
+        <li><strong>Stage 2:</strong> Technical stack verification (verifying integrations and tools).</li>
+        <li><strong>Stage 3:</strong> ICP fit scoring (comparing site context against your buyer criteria).</li>
       </ul>
       <p>
         In practice, add a pre-stage and a post-stage. The pre-stage cleans obvious bad data before AI spends time reading it. Remove duplicates, missing domains, personal emails when you only sell to companies, invalid profile URLs, existing customers, and previously rejected accounts. This simple cleanup prevents the model from doing expensive reasoning on records that should never have entered the list.
@@ -127,7 +127,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="stage-1-b2b-classification" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Stage 1: B2B vs. B2C Audience Classification
+        Stage 1: B2B vs. B2C audience classification
       </h2>
       <p>
         Broad database exports often contain B2C companies (such as local retail stores or consumer agencies) that do not buy B2B software.
@@ -156,7 +156,7 @@ Decision: approve | review | reject`}</code>
       </p>
 
       <h2 id="stage-2-tech-stack-checks" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Stage 2: Technical Integrations and Competitor Stack Verification
+        Stage 2: technical integrations and competitor stack verification
       </h2>
       <p>
         Technical integrations are powerful buying signals. If your software complements HubSpot or replaces a competitor tool, you want to verify the prospect's tech stack before reaching out.
@@ -186,7 +186,7 @@ Decision: approve | review | reject`}</code>
         <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
         <div className="pl-4">
           <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-            Qualification Rule: Exclude Existing Clients 💡
+            Qualification rule: exclude existing clients
           </h4>
           <p className="text-sm text-zinc-650 leading-relaxed">
             Ensure your qualification script checks domains against your CRM database. Pitching your product to an active customer or partner damages your brand relationship.
@@ -195,7 +195,7 @@ Decision: approve | review | reject`}</code>
       </div>
 
       <h2 id="stage-3-ICP-fit-scoring" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Stage 3: Grounded Fit Scoring and Semantic Search
+        Stage 3: grounded fit scoring and semantic search
       </h2>
       <p>
         The final step is ICP fit scoring. Senders map prospect website text to their target buyer criteria using LLM semantic search.
@@ -204,9 +204,9 @@ Decision: approve | review | reject`}</code>
         The engine scores each lead on a scale from 1 to 5:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Score 5 (Perfect Fit):</strong> Matches target titles, geography, tech stack, and has active buying triggers.</li>
-        <li><strong>Score 3-4 (Moderate Fit):</strong> Matches target titles and size, but has no active hiring signals.</li>
-        <li><strong>Score 1-2 (Poor Fit):</strong> Missing key targeting parameters or matches exclusion keywords. Exclude automatically.</li>
+        <li><strong>Score 5 (perfect fit):</strong> Matches target titles, geography, tech stack, and has active buying triggers.</li>
+        <li><strong>Score 3-4 (moderate fit):</strong> Matches target titles and size, but has no active hiring signals.</li>
+        <li><strong>Score 1-2 (poor fit):</strong> Missing key targeting parameters or matches exclusion keywords. Exclude automatically.</li>
       </ul>
       <p>
         A score is only useful if every point has a reason. Avoid black-box scores that say "4.2 out of 5" without showing the underlying evidence. The reviewer should understand whether the score came from title fit, company size, hiring activity, product category, recent trigger, or a weaker semantic match.
@@ -229,7 +229,7 @@ Decision: approve | review | reject`}</code>
       </p>
 
       <h2 id="confidence-routing" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Confidence Routing: Approve, Review, or Reject
+        Confidence routing: approve, review, or reject
       </h2>
       <p>
         Qualification should not produce one giant approved list. It should produce routing decisions. The most useful funnel has three lanes:
@@ -247,7 +247,7 @@ Decision: approve | review | reject`}</code>
       </p>
 
       <h2 id="pacing-outbox-delivery" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Routing Qualified Leads Safely into Paced Outboxes
+        Routing qualified leads safely into paced outboxes
       </h2>
       <p>
         Once leads are qualified, they can be routed to your campaign queues. Senders must manage outreach pacing to protect account health.
@@ -267,7 +267,7 @@ Decision: approve | review | reject`}</code>
       </p>
 
       <h2 id="qualification-sop-checklist" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: The 5-Minute Lead Cleansing Workflow
+        SOP: the 5-minute lead cleansing workflow
       </h2>
       <p>
         Implement this qualification checklist to clean your prospect lists:
@@ -289,14 +289,14 @@ Decision: approve | review | reject`}</code>
         For the first few campaigns, keep a qualification error log. Record false positives, false negatives, weak evidence, duplicate accounts, and title mismatches. This gives you a practical way to improve the funnel instead of simply trusting the initial prompt.
       </p>
       <p>
-        Omentir automates this validation process, ensuring your campaigns target qualified buyers.
+        Omentir automates this validation so campaigns target qualified buyers.
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Focusing Outbound Volume on Verified Buyers
+        Focusing outbound volume on verified buyers
       </h2>
       <p>
-        Outbound campaigns are most effective when they target qualified buyers. Senders who rely on unverified database exports will see declining deliverability and response rates.
+        Outbound works when it reaches people who can buy. Unverified database exports usually mean worse deliverability and weaker replies.
       </p>
       <p>
         By building an automated lead qualification pipeline with visible evidence, confidence routing, and human review for uncertain leads, you protect your sender reputation and learn from cleaner campaign data. The score is only useful if you can point to the field that produced it.

@@ -5,12 +5,12 @@ import FaqAccordion from "../../faq-accordion";
 
 export const metadata = createPageMetadata({
   title: "LinkedIn Revenue Playbook: Scale B2B Pipelines - Omentir",
-  description: "Stop tracking vanity metrics. Learn the operational playbook to align LinkedIn outreach with pipeline velocity, operator leverage, and LTV.",
+  description: "Stop tracking vanity metrics. Connect LinkedIn outreach to pipeline velocity, operator capacity, and LTV.",
   path: "/blogs/linkedin-revenue-playbook",
   keywords: [
     "LinkedIn revenue playbook",
     "B2B sales pipeline efficiency",
-    "calculate operator leverage",
+    "calculate operator capacity",
     "outbound sales economics",
     "high-LTV lead targeting",
     "Omentir revenue strategy"
@@ -18,25 +18,25 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "outbound-financial-model", label: "Outbound Sales as a Predictable Financial Equation", level: 1 },
-  { id: "revenue-equation-inputs", label: "Deconstructing the B2B LinkedIn Revenue Equation", level: 1 },
-  { id: "sourcing-high-ltv", label: "Sourcing High-LTV Lead Verticals for Outbound Success", level: 1 },
-  { id: "scoring-pipeline-velocity", label: "Applying ICP Fit Scoring to Maximize Pipeline Velocity", level: 2 },
-  { id: "calculating-operator-leverage", label: "Calculating Sales Operator Leverage with AI Automation", level: 2 },
-  { id: "pacing-compliance-standards", label: "Managing Message Pacing and Platform Safety Limits", level: 1 },
-  { id: "revenue-playbook-sop", label: "SOP: The LinkedIn Revenue Sourcing Audit Checklist", level: 1 },
-  { id: "conclusion", label: "Building a Foundation for Scalable Growth", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "outbound-financial-model", label: "Outbound sales as a financial equation", level: 1 },
+  { id: "revenue-equation-inputs", label: "The B2B LinkedIn revenue equation", level: 1 },
+  { id: "sourcing-high-ltv", label: "Sourcing high-LTV lead verticals", level: 1 },
+  { id: "scoring-pipeline-velocity", label: "Apply ICP fit scoring to pipeline velocity", level: 2 },
+  { id: "calculating-operator-leverage", label: "Calculating sales operator capacity with AI", level: 2 },
+  { id: "pacing-compliance-standards", label: "Managing message pacing and platform safety limits", level: 1 },
+  { id: "revenue-playbook-sop", label: "SOP: the LinkedIn revenue sourcing audit checklist", level: 1 },
+  { id: "conclusion", label: "Building a foundation for scalable growth", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
   {
     question: "Why should sales leaders focus on revenue metrics instead of vanity metrics?",
-    answer: "Vanity metrics (like raw connection request volumes) do not tell you if you are booking qualified demos or generating revenue. Aligning outreach with pipeline velocity ensures your team's energy is spent on high-value accounts."
+    answer: "Vanity metrics (like raw connection request volumes) do not tell you if you are booking qualified demos or generating revenue. Connecting outreach to pipeline velocity keeps your team's energy on high-value accounts."
   },
   {
-    question: "How do I calculate Sales Operator Leverage in my outbound team?",
-    answer: "Sales Operator Leverage measures the volume of qualified leads one sales rep can manage using AI. By automating lead discovery and copywriting drafts, a single operator can manage multiple campaign channels, driving higher leverage."
+    question: "How do I calculate sales operator capacity in my outbound team?",
+    answer: "Sales operator capacity is how many qualified leads one sales rep can manage using AI. Automating lead discovery and copywriting drafts lets one operator cover multiple campaign channels without dropping quality."
   },
   {
     question: "Can Omentir sync revenue data directly to my CRM platform?",
@@ -52,7 +52,7 @@ export default function BlogPost() {
   return (
     <BlogPostTemplate
       title="LinkedIn Revenue Playbook: How to Scale B2B Pipelines Safely"
-      description="Stop tracking vanity metrics. Learn the operational playbook to align LinkedIn outreach with pipeline velocity, operator leverage, and LTV."
+      description="Stop tracking vanity metrics. Connect LinkedIn outreach to pipeline velocity, operator capacity, and LTV."
       slug="linkedin-revenue-playbook"
       bannerSrc="/linkedin-revenue-playbook.avif"
       bannerAlt="LinkedIn revenue playbook and B2B pipeline scalability dashboard illustration"
@@ -73,7 +73,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="revenue-equation-inputs" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Deconstructing the B2B LinkedIn Revenue Equation
+        The B2B LinkedIn revenue equation
       </h2>
       <p>
         A predictable outbound machine is built on a handful of inputs. Some are conversion metrics. Some are economic constraints. You need both because a campaign can look good at the top of the funnel and still produce bad business.
@@ -106,7 +106,7 @@ export default function BlogPost() {
       </div>
 
       <h2 id="sourcing-high-ltv" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Sourcing High-LTV Lead Verticals for Outbound Success
+        Sourcing high-LTV lead verticals
       </h2>
       <p>
         To scale revenue, start with the verticals where your product has the clearest economic value. Do not begin with "any B2B company" or "any founder." Begin with the segment where the pain is frequent, visible, expensive, and owned by a reachable buyer.
@@ -122,10 +122,10 @@ export default function BlogPost() {
       </p>
 
       <h3 id="scoring-pipeline-velocity" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Applying ICP Fit Scoring to Maximize Pipeline Velocity
+        Apply ICP fit scoring to pipeline velocity
       </h3>
       <p>
-        ICP scoring should rank accounts by fit, signal, and economic upside. Fit is the enduring match: industry, size, business model, buyer role, and problem. Signal is the timing clue: hiring, role change, public initiative, tool adoption, or website change. Economic upside is whether the account can become a customer worth pursuing.
+        ICP scoring should rank accounts by fit, signal, and economic upside. Fit is the standing match: industry, size, business model, buyer role, and problem. Signal is the timing clue: hiring, role change, public initiative, tool adoption, or website change. Economic upside is whether the account can become a customer worth pursuing.
       </p>
       <p>
         The score should change what happens next. High-fit, high-signal accounts can enter a reviewed outreach queue. High-fit, low-signal accounts can be monitored or added to a slower nurture path. Low-fit accounts should be rejected even if they have an interesting signal. A recent job change at the wrong type of company is not a revenue opportunity.
@@ -142,16 +142,16 @@ export default function BlogPost() {
       </p>
 
       <h3 id="calculating-operator-leverage" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Calculating Sales Operator Leverage with AI Automation
+        Calculating sales operator capacity with AI
       </h3>
       <p>
-        Sales operator leverage is not the number of campaigns one person can technically launch. It is the amount of qualified pipeline one person can create and manage without quality dropping. That distinction matters because AI can increase activity faster than it increases judgment.
+        Sales operator capacity is not the number of campaigns one person can technically launch. It is the amount of qualified pipeline one person can create and manage without quality dropping. That distinction matters because AI can increase activity faster than it increases judgment.
       </p>
       <p>
-        A useful leverage model looks at four tasks: sourcing, research, drafting, and follow-up. AI can reduce manual work in each area, but the operator still needs to review the system's choices. The goal is for one person to manage a better process, not for one person to approve a flood of mediocre messages.
+        A useful capacity model looks at four tasks: sourcing, research, drafting, and follow-up. AI can reduce manual work in each area, but the operator still needs to review the system's choices. The goal is for one person to manage a better process, not for one person to approve a flood of mediocre messages.
       </p>
       <p>
-        Track leverage with business outcomes. How many qualified accounts did the operator review? How many drafts were rejected? How many positive replies required human handling? How many meetings were accepted by the right buyer? These numbers reveal whether automation is creating leverage or simply moving busywork into a different dashboard.
+        Track capacity with business outcomes. How many qualified accounts did the operator review? How many drafts were rejected? How many positive replies required human handling? How many meetings were accepted by the right buyer? These numbers reveal whether automation is raising output per person or simply moving busywork into a different dashboard.
       </p>
       <p>
         For detailed founder playbooks, check our guide on{" "}
@@ -162,7 +162,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="pacing-compliance-standards" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Managing Message Pacing and Platform Safety Limits
+        Managing message pacing and platform safety limits
       </h2>
       <p>
         LinkedIn account health is part of revenue strategy. If a sender profile gets restricted or starts generating negative responses, the pipeline model breaks. Safe pacing is not a compliance footnote; it protects the channel you are trying to scale.
@@ -182,7 +182,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="revenue-playbook-sop" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: The LinkedIn Revenue Sourcing Audit Checklist
+        SOP: the LinkedIn revenue sourcing audit checklist
       </h2>
       <p>
         Follow this SOP to configure and audit revenue-based campaigns:
@@ -204,7 +204,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Building a Foundation for Scalable Growth
+        Building a foundation for scalable growth
       </h2>
       <p>
         B2B outbound scales when the economics are clear. The right question is not "how many people can we message?" It is "which buyers are worth careful outreach, why now, and what revenue outcome would make the effort worthwhile?"
@@ -221,7 +221,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Frequently Asked Questions
+        Frequently asked questions
       </h2>
       <FaqAccordion items={faqItems} />
     </BlogPostTemplate>

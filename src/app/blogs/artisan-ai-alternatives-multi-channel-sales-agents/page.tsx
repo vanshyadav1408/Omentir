@@ -24,13 +24,13 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems = [
-  { id: "outbound-landscape-2026", label: "The Shift in Autonomous Outbound Sales", level: 1 },
-  { id: "evaluating-artisan-ai", label: "Deep Dive into Artisan AI (Ava)", level: 1 },
-  { id: "single-vs-multi-channel", label: "Single-Channel vs. Multi-Channel Prospecting", level: 1 },
-  { id: "top-artisan-alternatives", label: "Top 5 Artisan AI Alternatives in 2026", level: 1 },
-  { id: "human-in-the-loop", label: "The Importance of Human-in-the-Loop Workflows", level: 2 },
-  { id: "why-omentir-wins", label: "Where Omentir Fits Among Artisan AI Alternatives", level: 1 },
-  { id: "frequently-asked-questions", label: "Frequently Asked Questions", level: 1 }
+  { id: "outbound-landscape-2026", label: "The shift in autonomous outbound sales", level: 1 },
+  { id: "evaluating-artisan-ai", label: "A closer look at Artisan AI (Ava)", level: 1 },
+  { id: "single-vs-multi-channel", label: "Single-channel vs multi-channel prospecting", level: 1 },
+  { id: "top-artisan-alternatives", label: "Top 5 Artisan AI alternatives in 2026", level: 1 },
+  { id: "human-in-the-loop", label: "Why human-in-the-loop workflows matter", level: 2 },
+  { id: "why-omentir-wins", label: "Where Omentir fits among Artisan AI alternatives", level: 1 },
+  { id: "frequently-asked-questions", label: "Frequently asked questions", level: 1 }
 ] as const;
 
 export default function BlogPost() {
@@ -48,7 +48,7 @@ export default function BlogPost() {
           B2B outbound sales has transitioned from manual, repetitive lists to highly automated, intelligent workflows. Historically, sales teams relied on static search interfaces to compile leads and manual execution to deliver campaigns. Today, autonomous sales development representatives, commonly referred to as AI SDRs, can crawl the web, enrich contacts, draft personalized outreach, and manage initial responses with minimal human input. The goal is to build a scalable pipeline that operates continuously without sacrificing message quality or domain reputation.
         </p>
         <p>
-          Among the early entries in this category, <a href="https://artisan.co" target="_blank" rel="noopener" className="text-blue-600 hover:underline">Artisan AI</a> introduced <a href="https://www.artisan.co/" target="_blank" rel="noopener">Ava</a>: an AI sales agent designed to automate lead generation and email outreach. <a href="https://www.artisan.co/" target="_blank" rel="noopener">Ava</a> acts as a digital SDR by running prospecting searches, pulling contact details, and writing email sequences. However, as outbound landscapes become more complex, enterprise-heavy pricing models and rigid channel strategies are prompting teams to evaluate alternatives. High-performing campaigns require multi-channel orchestration that spans LinkedIn and email natively while maintaining safe, human-in-the-loop validation checkpoints.
+          Among the early entries in this category, <a href="https://artisan.co" target="_blank" rel="noopener" className="text-blue-600 hover:underline">Artisan AI</a> introduced <a href="https://www.artisan.co/" target="_blank" rel="noopener">Ava</a>: an AI sales agent designed to automate lead generation and email outreach. <a href="https://www.artisan.co/" target="_blank" rel="noopener">Ava</a> acts as a digital SDR by running prospecting searches, pulling contact details, and writing email sequences. As outbound gets harder, enterprise-heavy pricing and rigid channel strategies are prompting teams to evaluate alternatives. High-performing campaigns need multi-channel orchestration that spans LinkedIn and email natively, with human-in-the-loop validation checkpoints.
         </p>
         <p>
           To select the most effective system for your pipeline, it is essential to evaluate the pros and cons of single-channel automation, analyze the limitations of enterprise-scale AI platforms, and examine the top alternatives that prioritize safety and conversions.
@@ -59,7 +59,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          The Shift in Autonomous Outbound Sales
+          The shift in autonomous outbound sales
         </h2>
         <p>
           Traditional outbound methodologies are hitting a point of diminishing returns. A standard campaign setup involved purchasing list credits from database providers like <a href="https://apollo.io" target="_blank" rel="noopener" className="text-blue-600 hover:underline">Apollo.io</a>, <a href="https://lusha.com" target="_blank" rel="noopener" className="text-blue-600 hover:underline">Lusha</a>, or <a href="https://cognism.com" target="_blank" rel="noopener" className="text-blue-600 hover:underline">Cognism</a>, formatting spreadsheets manually, and importing those lists into cold email software such as <a href="https://instantly.ai" target="_blank" rel="noopener" className="text-blue-600 hover:underline">Instantly</a> or <a href="https://smartlead.ai" target="_blank" rel="noopener" className="text-blue-600 hover:underline">Smartlead</a>.
@@ -76,13 +76,13 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Deep Dive into <a href="https://www.artisan.co/" target="_blank" rel="noopener">Artisan AI</a> (<a href="https://www.artisan.co/" target="_blank" rel="noopener">Ava</a>)
+          A closer look at <a href="https://www.artisan.co/" target="_blank" rel="noopener">Artisan AI</a> (<a href="https://www.artisan.co/" target="_blank" rel="noopener">Ava</a>)
         </h2>
         <p>
           <a href="https://www.artisan.co/" target="_blank" rel="noopener">Artisan AI</a> is an enterprise-oriented platform built to act as a virtual teammate. Its primary agent, <a href="https://www.artisan.co/" target="_blank" rel="noopener">Ava</a>, handles prospect sourcing, list building, and email sequence execution.
         </p>
         <p className="font-semibold text-black mt-4">
-          The Advantages of <a href="https://www.artisan.co/" target="_blank" rel="noopener">Artisan AI</a>
+          The advantages of <a href="https://www.artisan.co/" target="_blank" rel="noopener">Artisan AI</a>
         </p>
         <p>
           <a href="https://www.artisan.co/" target="_blank" rel="noopener">Ava</a> provides several significant benefits for larger sales operations:
@@ -93,7 +93,7 @@ export default function BlogPost() {
           <li><strong>Polished User Experience:</strong> The platform features a beautiful dashboard that mimics the experience of managing a real human teammate.</li>
         </ul>
         <p className="font-semibold text-black mt-4">
-          The Disadvantages and Limitations of <a href="https://www.artisan.co/" target="_blank" rel="noopener">Artisan AI</a>
+          The disadvantages and limitations of <a href="https://www.artisan.co/" target="_blank" rel="noopener">Artisan AI</a>
         </p>
         <p>
           Despite its strengths, several operational bottlenecks make teams seek alternatives:
@@ -101,8 +101,8 @@ export default function BlogPost() {
         <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-850 my-4">
           <li><strong>High Financial Commitment:</strong> <a href="https://www.artisan.co/" target="_blank" rel="noopener">Artisan AI</a> targets enterprise-scale companies. Their pricing structure involves high annual commitments that are often prohibitive for startups, solo founders, and mid-sized agencies.</li>
           <li><strong>Email-Centric Sourcing:</strong> While <a href="https://www.artisan.co/" target="_blank" rel="noopener">Ava</a> handles cold email sequences effectively, its native integration with social channels like LinkedIn remains limited. This makes it difficult to run highly coordinated, multi-channel campaigns that start with social warming.</li>
-          <li><strong>Lack of Granular Control:</strong> The agent often acts as a black box. If the AI drafts and sends outreach without robust approval queues, you risk sending inaccurate messages, which can damage your brand equity and burn primary sending domains.</li>
-          <li><strong>Complex Onboarding:</strong> Setting up <a href="https://www.artisan.co/" target="_blank" rel="noopener">Ava</a> and configuring its workflows to align with custom CRM setups can take weeks, introducing immediate friction for agile teams.</li>
+          <li><strong>Lack of Granular Control:</strong> The agent often acts as a black box. If the AI drafts and sends outreach without solid approval queues, you risk sending inaccurate messages, which can damage your brand and burn primary sending domains.</li>
+          <li><strong>Complex Onboarding:</strong> Setting up <a href="https://www.artisan.co/" target="_blank" rel="noopener">Ava</a> and configuring its workflows to match custom CRM setups can take weeks, introducing immediate friction for agile teams.</li>
         </ul>
 
         <h2
@@ -110,7 +110,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Single-Channel vs. Multi-Channel Prospecting
+          Single-channel vs multi-channel prospecting
         </h2>
         <p>
           A major strategic decision in outbound sales is whether to focus on a single outreach channel or execute a coordinated multi-channel campaign. Historically, cold email was the default channel because of its scalability. However, relying solely on email limits your reach, especially when targeting executives who receive hundreds of pitch emails daily.
@@ -119,7 +119,7 @@ export default function BlogPost() {
           The Limitations of Single-Channel Email Outreach
         </p>
         <p>
-          Cold email success is increasingly tied to technical deliverability. With major email providers implementing strict spam thresholds, scaling email volume is difficult and risky. If your domains hit high spam complaint rates, your deliverability collapses. Additionally, cold email lacks the personal credibility that a professional social profile provides. A prospect receiving an email from a stranger is highly likely to ignore it unless they can easily verify who they are dealing with.
+          Cold email success is increasingly tied to technical deliverability. With major email providers implementing strict spam thresholds, scaling email volume is difficult and risky. If your domains hit high spam complaint rates, your deliverability collapses. Cold email also lacks the personal credibility that a professional social profile provides. A prospect receiving an email from a stranger is highly likely to ignore it unless they can easily verify who they are dealing with.
         </p>
         <p className="font-semibold text-black mt-4">
           The Power of Coordinated LinkedIn and Email Outbound
@@ -147,7 +147,7 @@ export default function BlogPost() {
               Outbound Sequence Strategy 💡
             </h4>
             <p className="text-sm text-zinc-650 leading-relaxed">
-              Building a robust outbound flow requires careful timing and channel coordination. Learn how to design a complete workflow in our guide on <Link href="/blogs/how-to-build-a-high-converting-b2b-sales-sequence-on-linkedin" className="text-black font-bold hover:underline">building a high-converting B2B sales sequence</Link> to maximize your booking efficiency.
+              Building a reliable outbound flow requires careful timing and channel coordination. Learn how to design a complete workflow in our guide on <Link href="/blogs/how-to-build-a-high-converting-b2b-sales-sequence-on-linkedin" className="text-black font-bold hover:underline">building a high-converting B2B sales sequence</Link> to maximize your booking efficiency.
             </p>
           </div>
         </div>
@@ -157,7 +157,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Top 5 <a href="https://www.artisan.co/" target="_blank" rel="noopener">Artisan AI</a> Alternatives in 2026
+          Top 5 <a href="https://www.artisan.co/" target="_blank" rel="noopener">Artisan AI</a> alternatives in 2026
         </h2>
         <p>
           If you are seeking high-converting sales agents that offer better value, deeper multi-channel execution, or more granular control than <a href="https://www.artisan.co/" target="_blank" rel="noopener">Artisan AI</a>, consider these top five alternatives in 2026:
@@ -202,7 +202,7 @@ export default function BlogPost() {
           id="human-in-the-loop"
           className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28"
         >
-          The Importance of Human-in-the-Loop Workflows
+          Why human-in-the-loop workflows matter
         </h3>
         <p>
           While autonomous sales agents are highly efficient, fully automating your outbound operations without human supervision is dangerous. Cold email sending domains and professional social profiles represent critical brand assets. If an AI agent hallucinates details, sends inappropriate pitches, or targets the wrong contacts at scale, the damage to your brand reputation and domain health can be permanent.
@@ -224,7 +224,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Where Omentir Fits Among <a href="https://www.artisan.co/" target="_blank" rel="noopener">Artisan AI</a> Alternatives
+          Where Omentir fits among <a href="https://www.artisan.co/" target="_blank" rel="noopener">Artisan AI</a> alternatives
         </h2>
         <p>
           Omentir is one option for teams that want a less enterprise-heavy workflow than agent platforms like <a href="https://www.artisan.co/" target="_blank" rel="noopener">Artisan AI</a>. It is most relevant when the buyer wants lead sourcing, enrichment, LinkedIn outreach, email outreach, and reply review in the same workspace, while still keeping human control over important messages.
@@ -263,7 +263,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          More Detail on Non-Omentir <a href="https://www.artisan.co/" target="_blank" rel="noopener">Artisan AI</a> Alternatives
+          More detail on non-Omentir <a href="https://www.artisan.co/" target="_blank" rel="noopener">Artisan AI</a> alternatives
         </h2>
         <p>
           Teams evaluating alternatives to <a href="https://www.artisan.co/" target="_blank" rel="noopener">Ava</a> should separate full AI SDR platforms from data and delivery tools. Some options replace the agent experience directly. Others replace only the sourcing, enrichment, or sending layer.
@@ -302,7 +302,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Frequently Asked Questions
+          Frequently asked questions
         </h2>
 
         <h4 className="text-base font-bold text-zinc-950 mt-6">Are autonomous SDR agents safe for my LinkedIn profile?</h4>
@@ -312,12 +312,12 @@ export default function BlogPost() {
 
         <h4 className="text-base font-bold text-zinc-950 mt-6">How does Omentir ensure cold email deliverability?</h4>
         <p className="text-zinc-700">
-          Omentir protects your email domain health by validating every email address through a cascading verification sequence before any message is sent. It also integrates seamlessly with domain warming strategies and supports rotating sending domains to distribute email volume safely.
+          Omentir protects your email domain health by validating every email address through a cascading verification sequence before any message is sent. It also works with domain warming strategies and supports rotating sending domains to distribute email volume safely.
         </p>
 
         <h4 className="text-base font-bold text-zinc-950 mt-6">Can I customize the outreach templates?</h4>
         <p className="text-zinc-700 font-semibold mb-8">
-          Absolutely. You have complete control over the templates, variables, and context that the AI uses to draft messages. You can review and edit every single draft in the approval queue before it is sent to ensure absolute alignment with your brand voice.
+          Yes. You have complete control over the templates, variables, and context that the AI uses to draft messages. You can review and edit every single draft in the approval queue before it is sent so the copy matches your brand voice.
         </p>
       </div>
     </BlogPostTemplate>

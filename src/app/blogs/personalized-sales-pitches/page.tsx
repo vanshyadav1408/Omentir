@@ -23,13 +23,13 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "personalization-is-a-reason", label: "Personalization Is a Reason", level: 1 },
-  { id: "six-layer-stack", label: "Six-Layer Pitch Stack", level: 1 },
-  { id: "choose-one-angle", label: "Choose One Angle", level: 1 },
-  { id: "write-the-first-version", label: "Write the First Version", level: 1 },
-  { id: "make-it-answerable", label: "Make It Answerable", level: 1 },
-  { id: "examples", label: "Before and After Examples", level: 1 },
-  { id: "quality-check", label: "Quality Check", level: 1 },
+  { id: "personalization-is-a-reason", label: "Personalization is a reason", level: 1 },
+  { id: "six-layer-stack", label: "Six-layer pitch stack", level: 1 },
+  { id: "choose-one-angle", label: "Choose one angle", level: 1 },
+  { id: "write-the-first-version", label: "Write the first version", level: 1 },
+  { id: "make-it-answerable", label: "Make it answerable", level: 1 },
+  { id: "examples", label: "Before and after examples", level: 1 },
+  { id: "quality-check", label: "Quality check", level: 1 },
   { id: "faqs", label: "FAQs", level: 1 },
 ];
 
@@ -37,7 +37,7 @@ const faqItems = [
   {
     question: "What makes a sales pitch personalized?",
     answer:
-      "A personalized sales pitch uses a real buyer signal, role-specific problem, relevant proof, and a next step that fits the buyer's current context. It is not just a first name or company variable.",
+      "A personalized sales pitch uses a real buyer signal, a role-specific problem, relevant proof, and a next step that fits the buyer's current context. A first name or company variable is not enough.",
   },
   {
     question: "How long should a personalized LinkedIn pitch be?",
@@ -94,7 +94,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Personalization Is a Reason
+        Personalization is a reason
       </h2>
       <p>
         The point of personalization is not to prove you researched the buyer. The point is to give the pitch a fair reason to exist.
@@ -120,7 +120,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Six-Layer Pitch Stack
+        Six-layer pitch stack
       </h2>
       <p>
         Build personalized sales pitches from six layers. You do not need all six in the final message, but you should understand all six before you write.
@@ -155,7 +155,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Choose One Angle
+        Choose one angle
       </h2>
       <p>
         Personalization gets messy when a message tries to use every fact you found. A buyer does not need your whole research file. They need one relevant angle.
@@ -208,7 +208,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Write the First Version
+        Write the first version
       </h2>
       <p>
         Use a four-sentence first draft. Sentence one names the signal. Sentence two names the problem hypothesis. Sentence three gives proof or a useful offer. Sentence four asks one low-friction question.
@@ -236,7 +236,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Make It Answerable
+        Make it answerable
       </h2>
       <p>
         Many personalized pitches fail because the ask is too large. The buyer might agree with the problem but still avoid replying because the next step feels like a meeting request in disguise.
@@ -266,7 +266,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Before and After Examples
+        Before and after examples
       </h2>
       <p>
         The easiest way to improve a pitch is to compare the surface-personalized version with the reason-personalized version.
@@ -304,7 +304,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Quality Check
+        Quality check
       </h2>
       <p>
         Before sending a personalized pitch, run a short review. The review should be stricter than your ego. A clever sentence that does not help the buyer answer should go.
@@ -320,7 +320,7 @@ export default function BlogPost() {
         Omentir is built around this same order: find ICP-fit buyers, score the lead, draft personalized outreach from real context, follow up at human-paced limits, and collect replies in one inbox sorted by intent. The pitch works because it starts from the buyer evidence, not because it sounds impressive in isolation.
       </p>
       <p>
-        Review the pitch again after the first ten replies. If people say "not my area," your person context is weak. If they say "not a priority," your timing signal is weak. If they ask "what do you do?" your pitch is too vague. Replies are not just outcomes; they are feedback on the personalization system.
+        Review the pitch again after the first ten replies. If people say "not my area," your person context is weak. If they say "not a priority," your timing signal is weak. If they ask "what do you do?" your pitch is too vague. Replies are feedback on the personalization system. They tell you which layer failed.
       </p>
       <p>
         Personalized sales pitches are not about writing longer messages. They are about making a shorter message carry a better reason. When the reason is clear, the buyer knows exactly what to answer.

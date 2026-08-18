@@ -17,15 +17,15 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "personalization-scaling-dilemma", label: "The Challenge of Scaling Personalized Outreach", level: 1 },
-  { id: "engine-architecture", label: "Architecture of an AI Personalization Engine", level: 1 },
-  { id: "grounding-context", label: "Grounding the Copywriter in Company Facts", level: 1 },
-  { id: "prompt-framework", label: "A Copyable Copywriting Prompt Blueprint", level: 2 },
-  { id: "inputs-and-variables", label: "Gathering Web Inputs and Personalization Signals", level: 2 },
-  { id: "human-in-the-loop", label: "Managing the Draft Review and Approval Process", level: 1 },
-  { id: "benchmarks-and-metrics", label: "Outbound Success Benchmarks and Reply Rates", level: 1 },
-  { id: "conclusion", label: "Combining Systems with Quality Outreach", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "personalization-scaling-dilemma", label: "The problem with scaling personalized outreach", level: 1 },
+  { id: "engine-architecture", label: "Architecture of an AI personalization engine", level: 1 },
+  { id: "grounding-context", label: "Grounding the copywriter in company facts", level: 1 },
+  { id: "prompt-framework", label: "A copyable copywriting prompt blueprint", level: 2 },
+  { id: "inputs-and-variables", label: "Gathering web inputs and personalization signals", level: 2 },
+  { id: "human-in-the-loop", label: "Managing the draft review and approval process", level: 1 },
+  { id: "benchmarks-and-metrics", label: "Outbound success benchmarks and reply rates", level: 1 },
+  { id: "conclusion", label: "Combining systems with quality outreach", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
@@ -51,7 +51,7 @@ export default function BlogPost() {
   return (
     <BlogPostTemplate
       title="How to Use AI to Personalize B2B Outreach at Scale"
-      description="Discover how to build a personalization pipeline that writes high-converting B2B outreach copy grounded in prospect context."
+      description="How to build a personalization pipeline that writes B2B outreach from prospect context, not merge fields."
       slug="ai-personalization-at-scale"
       bannerSrc="/ai-personalization-at-scale.avif"
       bannerAlt="AI personalization at scale workflow architecture illustration"
@@ -72,7 +72,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="engine-architecture" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Architecture of an AI Personalization Engine
+        Architecture of an AI personalization engine
       </h2>
       <p>
         An automated personalization pipeline should not feed a prospect's name into a language model and ask for a sales pitch. That approach produces polite nonsense: "I noticed your impressive work at Company" followed by a generic value proposition. It is technically personalized and practically invisible.
@@ -81,11 +81,11 @@ export default function BlogPost() {
         A useful personalization engine operates as a structured decision pipeline:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Data Sourcing Layer:</strong> Pulls dynamic variables (job changes, company updates, technology stacks) from live prospect profiles.</li>
-        <li><strong>Context Grounding Layer:</strong> Combines prospect variables with your product facts and case studies, setting boundaries to prevent false claims.</li>
-        <li><strong>Execution Layer:</strong> Processes variables through structured copywriting rules to output a concise, clear message.</li>
-        <li><strong>Quality Gate:</strong> Rejects weak evidence, unsupported claims, awkward tone, and poor-fit accounts before sending.</li>
-        <li><strong>Learning Loop:</strong> Feeds replies, objections, and rejected drafts back into sourcing and prompt rules.</li>
+        <li><strong>Data sourcing layer:</strong> Pulls dynamic variables (job changes, company updates, technology stacks) from live prospect profiles.</li>
+        <li><strong>Context grounding layer:</strong> Combines prospect variables with your product facts and case studies, and sets boundaries so the model cannot invent claims.</li>
+        <li><strong>Execution layer:</strong> Processes variables through structured copywriting rules and outputs a concise, clear message.</li>
+        <li><strong>Quality gate:</strong> Rejects weak evidence, unsupported claims, awkward tone, and poor-fit accounts before sending.</li>
+        <li><strong>Learning loop:</strong> Feeds replies, objections, and rejected drafts back into sourcing and prompt rules.</li>
       </ul>
       <p>
         The quality gate is what separates useful AI personalization from automated flattery. If the only available signal is "prospect has a VP title," the system should write a role-based message or reject the lead. It should not pretend to have discovered a deep insight.
@@ -102,7 +102,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="grounding-context" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Grounding the Copywriter in Company Facts
+        Grounding the copywriter in company facts
       </h2>
       <p>
         AI models require strict reference boundaries. If you ask a model to pitch your product without constraints, it may invent features, exaggerate proof, imply integrations you do not support, or make promises your team cannot keep. The copy may sound confident while being wrong.
@@ -111,10 +111,10 @@ export default function BlogPost() {
         Grounding starts with a verified product profile. This profile should contain:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Product Scope:</strong> What your platform does and does not do.</li>
-        <li><strong>Target Audience:</strong> The challenges your software resolves for specific roles.</li>
-        <li><strong>Proof Boundaries:</strong> Approved customer examples, claims, and outcomes the model is allowed to mention.</li>
-        <li><strong>Disallowed Claims:</strong> Features, guarantees, pricing, integrations, or compliance statements the model must not invent.</li>
+        <li><strong>Product scope:</strong> What your platform does and does not do.</li>
+        <li><strong>Target audience:</strong> The challenges your software resolves for specific roles.</li>
+        <li><strong>Proof boundaries:</strong> Approved customer examples, claims, and outcomes the model is allowed to mention.</li>
+        <li><strong>Disallowed claims:</strong> Features, guarantees, pricing, integrations, or compliance statements the model must not invent.</li>
       </ul>
       <p>
         Instruct the engine to only write claims present in this profile or in sourceable prospect evidence. If the product profile does not mention a CRM integration, the message cannot mention one. If the prospect evidence does not prove a pain point, the message should ask a question rather than declare the pain.
@@ -124,7 +124,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="prompt-framework" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        A Copyable Copywriting Prompt Blueprint
+        A copyable copywriting prompt blueprint
       </h2>
       <p>
         A structured prompt is essential, but the prompt should not try to do everything. It should receive already-clean evidence, a clear product profile, and rules for what good copy looks like. The prompt below is a safer starting point:
@@ -167,7 +167,7 @@ Rules:
       </div>
 
       <h2 id="inputs-and-variables" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Gathering Web Inputs and Personalization Signals
+        Gathering web inputs and personalization signals
       </h2>
       <p>
         Dynamic variables are only useful when they are verified and relevant. A recent post can be a great opener if it relates to your offer. It is a distraction if the post is personal, old, or unrelated. A hiring signal can be strong if it points to a workflow your product improves. It is weak if the job post has nothing to do with your buyer.
@@ -176,12 +176,12 @@ Rules:
         Useful inputs often come from public sources such as:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Hiring Posts:</strong> Identify roles they are recruiting for (e.g. "building out your SDR team in London").</li>
-        <li><strong>Competitor Tech Stacks:</strong> Note if they use tools your software replaces or integrates with.</li>
-        <li><strong>Profile Updates:</strong> Reference specific milestones, such as a recent executive transition.</li>
-        <li><strong>Website Positioning:</strong> Understand the buyer's market, product category, and stated value proposition.</li>
-        <li><strong>Product or Changelog Pages:</strong> Detect new initiatives that may change operational priorities.</li>
-        <li><strong>Role Context:</strong> Use the prospect's responsibilities to ask a relevant question without needing a flashy trigger.</li>
+        <li><strong>Hiring posts:</strong> Identify roles they are recruiting for (e.g. "building out your SDR team in London").</li>
+        <li><strong>Competitor tech stacks:</strong> Note if they use tools your software replaces or integrates with.</li>
+        <li><strong>Profile updates:</strong> Reference specific milestones, such as a recent executive transition.</li>
+        <li><strong>Website positioning:</strong> Understand the buyer's market, product category, and stated value proposition.</li>
+        <li><strong>Product or changelog pages:</strong> Detect new initiatives that may change operational priorities.</li>
+        <li><strong>Role context:</strong> Use the prospect's responsibilities to ask a relevant question without needing a flashy trigger.</li>
       </ul>
       <p>
         Store the source beside the signal. "Careers page says the role owns outbound reporting" is usable. "They need outbound automation" is an interpretation. The message should be written from the sourceable fact, while the interpretation can guide the angle.
@@ -189,13 +189,13 @@ Rules:
       <p>
         For details on how to write hooks based on these signals, see our guide on{" "}
         <Link href="/blogs/linkedin-message-hooks" className="text-blue-600 hover:underline">
-          writing high-converting LinkedIn message hooks
+          writing LinkedIn message hooks
         </Link>
         .
       </p>
 
       <h2 id="human-in-the-loop" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Managing the Draft Review and Approval Process
+        Managing the draft review and approval process
       </h2>
       <p>
         Even with strong prompts, you should not treat every draft as send-ready. AI models can misread context, overstate a signal, choose an awkward tone, or write a message that is technically accurate but commercially weak. Review is not a formality; it is part of the system.
@@ -211,17 +211,17 @@ Rules:
       </p>
 
       <h2 id="benchmarks-and-metrics" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Outbound Success Benchmarks and Reply Rates
+        Outbound success benchmarks and reply rates
       </h2>
       <p>
         Do not judge personalization by whether the message includes a custom sentence. Judge it by whether the custom sentence improves the conversation. The right metrics are quality metrics, not vanity metrics.
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Qualified Reply Rate:</strong> How many replies come from buyers who match the ICP and show real interest?</li>
-        <li><strong>Objection Quality:</strong> Are prospects raising useful objections, or are they confused about why you contacted them?</li>
-        <li><strong>Draft Rejection Rate:</strong> How many AI drafts fail review, and why?</li>
-        <li><strong>Signal Accuracy:</strong> How often does the referenced signal hold up when reviewed by a human?</li>
-        <li><strong>Meeting Fit:</strong> Do booked calls involve the right role, account type, and problem?</li>
+        <li><strong>Qualified reply rate:</strong> How many replies come from buyers who match the ICP and show real interest?</li>
+        <li><strong>Objection quality:</strong> Are prospects raising useful objections, or are they confused about why you contacted them?</li>
+        <li><strong>Draft rejection rate:</strong> How many AI drafts fail review, and why?</li>
+        <li><strong>Signal accuracy:</strong> How often does the referenced signal hold up when reviewed by a human?</li>
+        <li><strong>Meeting fit:</strong> Do booked calls involve the right role, account type, and problem?</li>
       </ul>
       <p>
         Compare campaigns with similar ICPs and pacing. If one campaign produces more replies but most are poor-fit, it is not better. If another produces fewer replies but more qualified conversations, it may be the healthier campaign.
@@ -231,7 +231,7 @@ Rules:
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Combining Systems with Quality Outreach
+        Combining systems with quality outreach
       </h2>
       <p>
         Outbound outreach does not have to be a choice between quality and scale, but quality has to lead. If the system starts with weak targeting and asks AI to make the message feel personal, it will create polished spam. If the system starts with evidence, product truth, and review, it can scale thoughtful outreach.

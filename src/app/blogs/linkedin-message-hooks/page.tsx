@@ -5,7 +5,7 @@ import FaqAccordion from "../../faq-accordion";
 
 export const metadata = createPageMetadata({
   title: "LinkedIn Message Hooks: Write B2B Openers That Convert - Omentir",
-  description: "Master the first 15 words of your outreach. Learn 4 high-converting LinkedIn message hook formulas, contextual templates, and safe campaign pacing.",
+  description: "The first 15 words of your outreach. Four LinkedIn message hook formulas, contextual templates, and safe campaign pacing.",
   path: "/blogs/linkedin-message-hooks",
   keywords: [
     "LinkedIn message hooks",
@@ -18,17 +18,17 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "threesecond-window-reality", label: "The Three-Second Window: Why Sourcing the Hook Matters Most", level: 1 },
-  { id: "anatomy-good-hook", label: "The Anatomy of a High-Converting Message Hook", level: 1 },
-  { id: "hiring-trigger-formula", label: "Hook Formula 1: The Active Sourcing Department Trigger", level: 1 },
-  { id: "content-reflection-formula", label: "Hook Formula 2: The Content Reflection and Feed Update Hook", level: 2 },
-  { id: "mutual-referral-formula", label: "Hook Formula 3: The Peer-to-Peer Mutual Connection Hook", level: 2 },
-  { id: "immediate-value-formula", label: "Hook Formula 4: The Frictionless Asset Offer Hook", level: 2 },
-  { id: "automating-hook-generation", label: "Automating Hook Sourcing with Workspace Discovery Agents", level: 1 },
-  { id: "safety-limits-compliance", label: "Maintaining Outreach Safety Cadences and Account Security", level: 1 },
-  { id: "hook-sop-checklist", label: "SOP: The LinkedIn Message Hook Copywriting Checklist", level: 1 },
-  { id: "conclusion", label: "Establishing Immediate Connection Value", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "threesecond-window-reality", label: "The three-second window: why sourcing the hook matters most", level: 1 },
+  { id: "anatomy-good-hook", label: "What a good message hook contains", level: 1 },
+  { id: "hiring-trigger-formula", label: "Hook formula 1: the active sourcing department trigger", level: 1 },
+  { id: "content-reflection-formula", label: "Hook formula 2: the content reflection and feed update hook", level: 2 },
+  { id: "mutual-referral-formula", label: "Hook formula 3: the peer-to-peer mutual connection hook", level: 2 },
+  { id: "immediate-value-formula", label: "Hook formula 4: the frictionless asset offer hook", level: 2 },
+  { id: "automating-hook-generation", label: "Automating hook sourcing with workspace discovery agents", level: 1 },
+  { id: "safety-limits-compliance", label: "Maintaining outreach safety cadences and account security", level: 1 },
+  { id: "hook-sop-checklist", label: "SOP: the LinkedIn message hook copywriting checklist", level: 1 },
+  { id: "conclusion", label: "Make the first line earn the rest", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
@@ -54,7 +54,7 @@ export default function BlogPost() {
   return (
     <BlogPostTemplate
       title="LinkedIn Message Hooks: How to Write B2B Openers That Get Replies"
-      description="Master the first 15 words of your outreach. Learn 4 high-converting LinkedIn message hook formulas, contextual templates, and safe campaign pacing."
+      description="The first 15 words of your outreach. Four LinkedIn message hook formulas, contextual templates, and safe campaign pacing."
       slug="linkedin-message-hooks"
       bannerSrc="/linkedin-message-hooks.avif"
       bannerAlt="LinkedIn message hooks and B2B opening copywriting illustration"
@@ -75,10 +75,10 @@ export default function BlogPost() {
       </p>
 
       <h2 id="anatomy-good-hook" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        The Anatomy of a High-Converting Message Hook
+        What a good message hook contains
       </h2>
       <p>
-        A great LinkedIn hook does not sell. It establishes relevance and creates a small opening for conversation. The prospect should understand why you reached out before they understand every feature you offer.
+        A good LinkedIn hook does not sell. It creates relevance and a small opening for conversation. The prospect should understand why you reached out before they understand every feature you offer.
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
         <li><strong>Brevity:</strong> Keep the opening short enough to understand in a notification preview.</li>
@@ -105,7 +105,7 @@ export default function BlogPost() {
         <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
         <div className="pl-4">
           <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-            Copywriting Strategy: Skip the Hype
+            Copywriting strategy: skip the hype
           </h4>
           <p className="text-sm text-zinc-650 leading-relaxed">
             Avoid opening with greeting lines like 'I hope this message finds you well' or 'Congrats on your success'. These are empty fillers that waste lock screen preview characters.
@@ -114,7 +114,7 @@ export default function BlogPost() {
       </div>
 
       <h2 id="hiring-trigger-formula" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Hook Formula 1: The Active Sourcing Department Trigger
+        Hook formula 1: the active sourcing department trigger
       </h2>
       <p>
         Hiring is one of the cleanest public signals because companies describe work they need done. A role description can reveal tools, responsibilities, goals, and gaps in the current team. It does not prove they want your product, but it can give you a relevant question.
@@ -127,7 +127,7 @@ export default function BlogPost() {
         <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
         <div className="pl-4">
           <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-            Hiring Hook Template
+            Hiring hook template
           </h4>
           <p className="text-sm text-zinc-650 leading-relaxed">
             "Saw the new growth role includes LinkedIn prospecting and weekly pipeline reporting..."
@@ -147,7 +147,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="content-reflection-formula" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Hook Formula 2: The Content Reflection and Feed Update Hook
+        Hook formula 2: the content reflection and feed update hook
       </h2>
       <p>
         Content hooks work when the prospect has shared something that genuinely relates to your offer. They fail when the reference is shallow. "Loved your post" is one of the most overused lines in outbound because it asks for credit without proving any thought.
@@ -160,7 +160,7 @@ export default function BlogPost() {
         <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
         <div className="pl-4">
           <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-            Content Hook Template
+            Content hook template
           </h4>
           <p className="text-sm text-zinc-650 leading-relaxed">
             "Your point about outbound quality dropping when volume rises felt very real..."
@@ -180,7 +180,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="mutual-referral-formula" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Hook Formula 3: The Peer-to-Peer Mutual Connection Hook
+        Hook formula 3: the peer-to-peer mutual connection hook
       </h2>
       <p>
         Mutual connections can create trust, but they are easy to misuse. A shared LinkedIn connection is not the same as a referral. Do not imply endorsement unless the person actually introduced you or gave permission.
@@ -193,7 +193,7 @@ export default function BlogPost() {
         <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
         <div className="pl-4">
           <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-            Mutual Referral Hook Template
+            Mutual referral hook template
           </h4>
           <p className="text-sm text-zinc-650 leading-relaxed">
             "Saw we both know [Name] from the early-stage SaaS world..."
@@ -208,7 +208,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="immediate-value-formula" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Hook Formula 4: The Frictionless Asset Offer Hook
+        Hook formula 4: the frictionless asset offer hook
       </h2>
       <p>
         Asset hooks are useful when you do not have a strong personal or company signal, but you still have something genuinely helpful for the buyer. The asset should solve a narrow problem, not act as a disguised brochure.
@@ -221,7 +221,7 @@ export default function BlogPost() {
         <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
         <div className="pl-4">
           <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-            Asset Offer Hook Template
+            Asset offer hook template
           </h4>
           <p className="text-sm text-zinc-650 leading-relaxed">
             "Put together a short QA checklist for LinkedIn outreach before teams scale volume..."
@@ -236,7 +236,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="automating-hook-generation" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Automating Hook Sourcing with Workspace Discovery Agents
+        Automating hook sourcing with workspace discovery agents
       </h2>
       <p>
         Sourcing hooks manually for every prospect takes time, but automation only helps if the evidence is clean. A hook generation workflow should gather a small number of useful signals, score them, choose the safest angle, and draft a line that a human can review quickly.
@@ -249,7 +249,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="safety-limits-compliance" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Maintaining Outreach Safety Cadences and Account Security
+        Maintaining outreach safety cadences and account security
       </h2>
       <p>
         Great hooks do not make unsafe sending safe. LinkedIn outreach still depends on pacing, sender reputation, campaign overlap, and reply behavior. If you send too much activity too quickly, strong copy will not protect the account.
@@ -262,26 +262,26 @@ export default function BlogPost() {
       </p>
 
       <h2 id="hook-sop-checklist" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: The LinkedIn Message Hook Copywriting Checklist
+        SOP: the LinkedIn message hook copywriting checklist
       </h2>
       <p>
         Follow this SOP to audit opening hooks before launch:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Brevity Check:</strong> Can the hook be understood in a notification preview?</li>
-        <li><strong>Evidence Check:</strong> Is the hook grounded in a real profile, company, content, hiring, or mutual-context signal?</li>
-        <li><strong>Relevance Check:</strong> Does the signal connect to the problem your product solves?</li>
-        <li><strong>Assumption Check:</strong> Does the hook avoid diagnosing private pain from public evidence?</li>
-        <li><strong>Tone Check:</strong> Does it sound like a person starting a conversation, not a marketer launching a campaign?</li>
-        <li><strong>Reply Check:</strong> Is the next sentence a low-pressure question someone could answer quickly?</li>
-        <li><strong>Safety Check:</strong> Are drafts reviewed and delivery paced before scaling volume?</li>
+        <li><strong>Brevity check:</strong> Can the hook be understood in a notification preview?</li>
+        <li><strong>Evidence check:</strong> Is the hook grounded in a real profile, company, content, hiring, or mutual-context signal?</li>
+        <li><strong>Relevance check:</strong> Does the signal connect to the problem your product solves?</li>
+        <li><strong>Assumption check:</strong> Does the hook avoid diagnosing private pain from public evidence?</li>
+        <li><strong>Tone check:</strong> Does it sound like a person starting a conversation, not a marketer launching a campaign?</li>
+        <li><strong>Reply check:</strong> Is the next sentence a low-pressure question someone could answer quickly?</li>
+        <li><strong>Safety check:</strong> Are drafts reviewed and delivery paced before scaling volume?</li>
       </ul>
       <p>
         Keep a swipe file of hooks that earned good replies, but do not blindly reuse them. The pattern may be reusable; the sentence should still fit the next prospect's context.
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Establishing Immediate Connection Value
+        Make the first line earn the rest
       </h2>
       <p>
         Outreach success on LinkedIn is not determined by cleverness. It is determined by whether the buyer sees a real reason to continue reading. A good hook is short, grounded, restrained, and connected to a question that makes sense for the person's role.
@@ -298,7 +298,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Frequently Asked Questions
+        Frequently asked questions
       </h2>
       <FaqAccordion items={faqItems} />
     </BlogPostTemplate>

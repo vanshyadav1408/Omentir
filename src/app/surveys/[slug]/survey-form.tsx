@@ -74,7 +74,7 @@ export default function SurveyForm({
           Thank you!
         </p>
         <p className="mt-2 text-base text-[var(--md-sys-color-on-surface-variant)]">
-          {survey.thankYou || "Your feedback means a lot — we read every response."}
+          {survey.thankYou || "Your feedback means a lot. We read every response."}
         </p>
       </div>
     );

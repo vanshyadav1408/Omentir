@@ -22,6 +22,7 @@ export default function AlternativesIndexPage() {
       title="Outbound tool roundups"
       description="Pick the category first. Each roundup names the job, the usual tools, and when Omentir is the wrong buy."
       pages={ALL_ALTERNATIVES}
+      compactHero
     />
   );
 }

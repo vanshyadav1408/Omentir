@@ -5,7 +5,7 @@ import FaqAccordion from "../../faq-accordion";
 
 export const metadata = createPageMetadata({
   title: "OpenClaw Outreach Flows: Build B2B Execution Loops - Omentir",
-  description: "Learn how to build autonomous outbound workflows using OpenClaw agent loops. Master campaign state nodes, context variables, and safe LinkedIn pacing.",
+  description: "How to build outbound workflows with OpenClaw agent loops, including campaign state nodes, context variables, and safe LinkedIn pacing.",
   path: "/blogs/openclaw-outreach-flows",
   keywords: [
     "OpenClaw outreach flows",
@@ -18,16 +18,16 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "execution-loop-necessity", label: "The Shift from Linear Scripts to Autonomous Execution Loops", level: 1 },
-  { id: "anatomy-openclaw-loop", label: "The Anatomy of an OpenClaw Outbound Loop", level: 1 },
-  { id: "configuring-campaign-nodes", label: "Configuring Campaign State Nodes for Safe Execution", level: 1 },
-  { id: "mapping-context-variables", label: "Mapping Real-Time Context Signals to Flow Parameters", level: 2 },
-  { id: "approval-checkpoint-system", label: "Establishing the Campaign Draft Review Checkpoint", level: 2 },
-  { id: "objection-handling-loops", label: "Objection Resolution Rules in Autonomous Flow Trees", level: 1 },
-  { id: "volume-limits-safety", label: "Pacing Campaign Invites to Stay Within Platform Limits", level: 1 },
-  { id: "openclaw-flow-checklist", label: "SOP: The OpenClaw Campaign Configuration Checklist", level: 1 },
-  { id: "conclusion", label: "Maximizing Sales Pipeline Efficiency", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "execution-loop-necessity", label: "Why linear scripts break", level: 1 },
+  { id: "anatomy-openclaw-loop", label: "The anatomy of an OpenClaw outbound loop", level: 1 },
+  { id: "configuring-campaign-nodes", label: "Configuring campaign state nodes for safe execution", level: 1 },
+  { id: "mapping-context-variables", label: "Mapping real-time context signals to flow parameters", level: 2 },
+  { id: "approval-checkpoint-system", label: "The campaign draft review checkpoint", level: 2 },
+  { id: "objection-handling-loops", label: "Objection resolution rules in autonomous flow trees", level: 1 },
+  { id: "volume-limits-safety", label: "Pacing campaign invites to stay within platform limits", level: 1 },
+  { id: "openclaw-flow-checklist", label: "SOP: the OpenClaw campaign configuration checklist", level: 1 },
+  { id: "conclusion", label: "Keep the loop narrow at first", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
@@ -53,7 +53,7 @@ export default function BlogPost() {
   return (
     <BlogPostTemplate
       title="OpenClaw Outreach Flows: How to Build B2B Execution Loops"
-      description="Learn how to build autonomous outbound workflows using OpenClaw agent loops. Master campaign state nodes, context variables, and safe LinkedIn pacing."
+      description="How to build outbound workflows with OpenClaw agent loops, including campaign state nodes, context variables, and safe LinkedIn pacing."
       slug="openclaw-outreach-flows"
       bannerSrc="/openclaw-outreach-flows.avif"
       bannerAlt="OpenClaw outreach flows and autonomous campaign state loops dashboard illustration"
@@ -74,7 +74,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="anatomy-openclaw-loop" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        The Anatomy of an OpenClaw Outbound Loop
+        The anatomy of an OpenClaw outbound loop
       </h2>
       <p>
         An outbound loop is built as a series of connected nodes. Each node should have a clear input, output, and failure mode. If a node cannot explain what evidence it used, the next node should not blindly continue.
@@ -99,7 +99,7 @@ export default function BlogPost() {
         <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
         <div className="pl-4">
           <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-            OpenClaw Flow Rule
+            OpenClaw flow rule
           </h4>
           <p className="text-sm text-zinc-650 leading-relaxed">
             Never let a connector activate campaigns live. Keep campaign setup and approval in Omentir, while the agent focuses on discovery evidence, scheduled-action visibility, and existing conversations.
@@ -108,7 +108,7 @@ export default function BlogPost() {
       </div>
 
       <h2 id="configuring-campaign-nodes" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Configuring Campaign State Nodes for Safe Execution
+        Configuring campaign state nodes for safe execution
       </h2>
       <p>
         To build a campaign flow, define target parameters and inputs for each node. The agent should not receive a vague instruction like "find good leads and message them." It should receive structured context: ICP, exclusions, product facts, allowed claims, campaign goal, sending account, review preference, and safety constraints.
@@ -121,7 +121,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="mapping-context-variables" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Mapping Real-Time Context Signals to Flow Parameters
+        Mapping real-time context signals to flow parameters
       </h3>
       <p>
         Your drafting node should use dynamic variables to customize outreach, but each variable needs a confidence level. Funding, hiring, website copy, profile updates, and role context are not equal. Some are strong evidence. Some are weak hints. Some are too stale to mention.
@@ -140,7 +140,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="approval-checkpoint-system" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Establishing the Campaign Draft Review Checkpoint
+        The campaign draft review checkpoint
       </h3>
       <p>
         Once the agent identifies qualified leads, the workflow needs a review checkpoint. A human sets up the connection note and follow-up sequence in Omentir, where new ICPs and high-value accounts can be reviewed before activation.
@@ -157,7 +157,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="objection-handling-loops" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Objection Resolution Rules in Autonomous Flow Trees
+        Objection resolution rules in autonomous flow trees
       </h2>
       <p>
         Reply handling is where execution loops become more useful than static campaigns. Once a prospect replies, the old sequence should stop and the loop should route the conversation based on intent. A question, referral, objection, interested reply, and negative reply each need a different path.
@@ -174,7 +174,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="volume-limits-safety" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Pacing Campaign Invites to Stay Within Platform Limits
+        Pacing campaign invites to stay within platform limits
       </h2>
       <p>
         Agent loops can create activity faster than a human seller would. That is exactly why pacing must live outside the model's discretion. The agent can request an action; the outreach system should decide whether that action is allowed now.
@@ -187,7 +187,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="openclaw-flow-checklist" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: The OpenClaw Campaign Configuration Checklist
+        SOP: the OpenClaw campaign configuration checklist
       </h2>
       <p>
         Follow this SOP to configure campaign loops before launch:
@@ -209,7 +209,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Maximizing Sales Pipeline Efficiency
+        Keep the loop narrow at first
       </h2>
       <p>
         Outbound success is driven by relevance, timing, and restraint. OpenClaw-style loops can help because they make outreach stateful: the agent can inspect context, draft from evidence, pause for approval, and adapt when replies arrive.
@@ -226,7 +226,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Frequently Asked Questions
+        Frequently asked questions
       </h2>
       <FaqAccordion items={faqItems} />
     </BlogPostTemplate>

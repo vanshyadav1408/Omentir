@@ -5,7 +5,7 @@ import FaqAccordion from "../../faq-accordion";
 
 export const metadata = createPageMetadata({
   title: "AI Demo Booking Flow: Automate B2B Scheduling - Omentir",
-  description: "Learn how to build an autonomous demo booking flow. Master intent qualification, Calendly integrations, and objection handling on LinkedIn.",
+  description: "Learn how to build an autonomous demo booking flow: intent qualification, Calendly integrations, and objection handling on LinkedIn.",
   path: "/blogs/ai-demo-booking-flow",
   keywords: [
     "AI demo booking flow",
@@ -18,15 +18,15 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "booking-friction-challenge", label: "The Scheduling Friction That Kills B2B Sales Pipelines", level: 1 },
-  { id: "anatomy-booking-flow", label: "The Anatomy of an Autonomous AI Demo Booking Flow", level: 1 },
-  { id: "qualifying-intent-autonomously", label: "Qualifying Intent: Separating Warm Interest from Noise", level: 1 },
-  { id: "lowfriction-link-delivery", label: "Delivering Booking Links Contextually Without Sales Pressure", level: 2 },
-  { id: "scheduling-objection-loops", label: "Resolving Scheduling Objections and Rescheduling Loops", level: 2 },
-  { id: "pacing-compliance-standards", label: "Ensuring Safe Campaign Deliveries and Account Security", level: 1 },
-  { id: "booking-sop-checklist", label: "SOP: The AI Demo Booking Configuration Checklist", level: 1 },
-  { id: "conclusion", label: "Unlocking Frictionless Pipeline Growth", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "booking-friction-challenge", label: "The scheduling friction that kills B2B sales pipelines", level: 1 },
+  { id: "anatomy-booking-flow", label: "The anatomy of an autonomous AI demo booking flow", level: 1 },
+  { id: "qualifying-intent-autonomously", label: "Qualifying intent: separating warm interest from noise", level: 1 },
+  { id: "lowfriction-link-delivery", label: "Delivering booking links contextually without sales pressure", level: 2 },
+  { id: "scheduling-objection-loops", label: "Resolving scheduling objections and rescheduling loops", level: 2 },
+  { id: "pacing-compliance-standards", label: "Ensuring safe campaign deliveries and account security", level: 1 },
+  { id: "booking-sop-checklist", label: "SOP: the AI demo booking configuration checklist", level: 1 },
+  { id: "conclusion", label: "Faster bookings without a pushy calendar dump", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
@@ -52,7 +52,7 @@ export default function BlogPost() {
   return (
     <BlogPostTemplate
       title="AI Demo Booking Flow: How to Automate B2B Scheduling on LinkedIn"
-      description="Learn how to build an autonomous demo booking flow. Master intent qualification, Calendly integrations, and objection handling on LinkedIn."
+      description="Learn how to build an autonomous demo booking flow: intent qualification, Calendly integrations, and objection handling on LinkedIn."
       slug="ai-demo-booking-flow"
       bannerSrc="/ai-demo-booking-flow.avif"
       bannerAlt="AI demo booking flow and B2B scheduling automation illustration"
@@ -63,26 +63,26 @@ export default function BlogPost() {
         One of the easiest places to lose a B2B deal is the gap between a positive reply and a booked meeting. A prospect replies, "sounds interesting," "how does it work?" or "send more info," and the seller responds hours later with a calendar link that feels disconnected from the question. The thread cools before the meeting exists.
       </p>
       <p>
-        The problem is not just speed. A fast but lazy calendar link can also kill momentum. If the buyer asked a real question and you skip straight to "book time here," they may feel pushed. Demo booking works when the system recognizes the type of reply, answers just enough, and offers the next step at the right moment.
+        Speed is only part of it. A fast but lazy calendar link can also kill momentum. If the buyer asked a real question and you skip straight to "book time here," they may feel pushed. Demo booking works when the system recognizes the type of reply, answers just enough, and offers the next step at the right moment.
       </p>
       <p>
         An AI demo booking flow should help with that judgment. It can classify replies, draft short responses, surface interested conversations, and remind the team when a prospect needs follow-up. But it should not turn every reply into a calendar push. The booking link is useful only after the conversation has earned it.
       </p>
       <p>
-        Omentir helps manage this pipeline by collecting LinkedIn replies in one inbox, supporting AI-drafted replies, and keeping outreach paced. Let's design a demo booking flow that is fast without being pushy, automated without becoming careless, and structured enough for a founder or sales operator to trust.
+        Omentir helps manage this pipeline by collecting LinkedIn replies in one inbox, supporting AI-drafted replies, and keeping outreach paced. The flow below is fast without being pushy, automated without becoming careless, and structured enough for a founder or sales operator to trust.
       </p>
 
       <h2 id="anatomy-booking-flow" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        The Anatomy of an Autonomous AI Demo Booking Flow
+        The anatomy of an autonomous AI demo booking flow
       </h2>
       <p>
-        A demo booking flow is not just a template with a calendar link. It is a state machine that decides what should happen next based on the prospect's reply. The same "interesting" reply can mean curiosity, buying intent, or polite deflection depending on the surrounding context.
+        A demo booking flow is a state machine that decides what happens next based on the prospect's reply, not a template with a calendar link. The same "interesting" reply can mean curiosity, buying intent, or polite deflection depending on the surrounding context.
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Intent Classification:</strong> The system reads the incoming reply and scores it to determine if they are interested, asking a question, or objecting.</li>
-        <li><strong>Contextual Response:</strong> The agent drafts a message that answers their specific questions without using generic templates.</li>
-        <li><strong>Link Presentation:</strong> The agent offers your scheduling link (like <a href="https://calendly.com/" target="_blank" rel="noopener" className="text-blue-600 hover:underline">Calendly</a>) in a low-pressure format.</li>
-        <li><strong>Pipeline Update:</strong> The team records the conversation status, next step, and original signal in its workspace or revenue tracker.</li>
+        <li><strong>Intent classification:</strong> The system reads the incoming reply and scores it to determine if they are interested, asking a question, or objecting.</li>
+        <li><strong>Contextual response:</strong> The agent drafts a message that answers their specific questions without using generic templates.</li>
+        <li><strong>Link presentation:</strong> The agent offers your scheduling link (like <a href="https://calendly.com/" target="_blank" rel="noopener" className="text-blue-600 hover:underline">Calendly</a>) in a low-pressure format.</li>
+        <li><strong>Pipeline update:</strong> The team records the conversation status, next step, and original signal in its workspace or revenue tracker.</li>
       </ul>
       <p>
         By establishing these phases, you keep the workflow from making the most common automation mistake: treating every reply as a green light. A buyer who asks, "what does this cost?" needs a different response from someone who says, "happy to take a look next week." A buyer who says, "not my area" should not receive the same follow-up as a buyer who asks for implementation details.
@@ -98,7 +98,7 @@ export default function BlogPost() {
         <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
         <div className="pl-4">
           <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-            Booking Rule: Never Send Links First
+            Booking rule: never send links first
           </h4>
           <p className="text-sm text-zinc-650 leading-relaxed">
             Do not include scheduling links in your connection request or first-touch message. Pitching a meeting before establishing relevance triggers sales filters and lowers your acceptance rate.
@@ -107,7 +107,7 @@ export default function BlogPost() {
       </div>
 
       <h2 id="qualifying-intent-autonomously" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Qualifying Intent: Separating Warm Interest from Noise
+        Qualifying intent: separating warm interest from noise
       </h2>
       <p>
         Before delivering a booking link, qualify the reply. Not all replies are created equal. Some are buying signals. Some are research questions. Some are referrals. Some are polite ways of saying no. The system should classify them before drafting a response.
@@ -116,10 +116,10 @@ export default function BlogPost() {
         Use structured intent buckets:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>High Intent:</strong> "Can we chat?", "send times," "this is relevant," or "we are looking at this now."</li>
+        <li><strong>High intent:</strong> "Can we chat?", "send times," "this is relevant," or "we are looking at this now."</li>
         <li><strong>Question:</strong> "How does it work?", "what does pricing look like?", or "how is this different from Apollo?"</li>
         <li><strong>Referral:</strong> "Talk to our RevOps lead" or "my cofounder owns this."</li>
-        <li><strong>Not Now:</strong> "Circle back next quarter" or "too busy this month."</li>
+        <li><strong>Not now:</strong> "Circle back next quarter" or "too busy this month."</li>
         <li><strong>Negative:</strong> "Not interested," "remove me," or an irritated response.</li>
       </ul>
       <p>
@@ -137,7 +137,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="lowfriction-link-delivery" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Delivering Booking Links Contextually Without Sales Pressure
+        Delivering booking links contextually without sales pressure
       </h2>
       <p>
         When presenting your calendar link, avoid high-pressure calls to action like "book a time on my calendar immediately." It feels aggressive because it skips the buyer's control. The best booking messages make scheduling easy without making the prospect feel trapped.
@@ -150,7 +150,7 @@ export default function BlogPost() {
         <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
         <div className="pl-4">
           <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-            Low-Friction CTA Template
+            Low-friction CTA template
           </h4>
           <p className="text-sm text-zinc-650 leading-relaxed">
             "Glad you found the video useful, [Name]. If you are open to a brief chat to see how this fits your workflow, feel free to grab a slot here: [Calendly_URL]. No pressure either way!"
@@ -173,7 +173,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="scheduling-objection-loops" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Resolving Scheduling Objections and Rescheduling Loops
+        Resolving scheduling objections and rescheduling loops
       </h3>
       <p>
         Prospects often raise scheduling objections: "too busy this week," "circle back next month," "send info first," or "does this work in our time zone?" These are not all the same objection. Treating them the same creates clumsy follow-up.
@@ -197,7 +197,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="pacing-compliance-standards" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Ensuring Safe Campaign Deliveries and Account Security
+        Ensuring safe campaign deliveries and account security
       </h2>
       <p>
         Demo booking flows sit on top of your outreach motion, so account safety still matters. If you over-send connection requests or follow-ups to create more booking opportunities, you can damage the channel before it produces revenue.
@@ -210,19 +210,19 @@ export default function BlogPost() {
       </p>
 
       <h2 id="booking-sop-checklist" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: The AI Demo Booking Configuration Checklist
+        SOP: the AI demo booking configuration checklist
       </h2>
       <p>
         Follow this SOP to configure and audit your booking flow:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Verify Calendar Links:</strong> Ensure Calendly, SavvyCal, or scheduling redirect URLs are active and point to the correct meeting type.</li>
-        <li><strong>Review Intent Buckets:</strong> Confirm that the agent only sends booking links to leads scored as warm or interested.</li>
-        <li><strong>Review Answer Quality:</strong> Make sure pricing, competitor, and security questions are answered accurately or routed to a human.</li>
-        <li><strong>Enable Draft Review:</strong> Keep sensitive booking replies in drafts until the team trusts the flow.</li>
-        <li><strong>Check Stop Conditions:</strong> Ensure normal follow-ups stop when a prospect replies or books.</li>
-        <li><strong>Limit Daily Invites:</strong> Maintain conservative connection volume and avoid overlapping campaigns on one sender.</li>
-        <li><strong>Update Pipeline:</strong> Record booked meetings, referrals, not-now replies, and no-shows with the original signal attached.</li>
+        <li><strong>Verify calendar links:</strong> Ensure Calendly, SavvyCal, or scheduling redirect URLs are active and point to the correct meeting type.</li>
+        <li><strong>Review intent buckets:</strong> Confirm that the agent only sends booking links to leads scored as warm or interested.</li>
+        <li><strong>Review answer quality:</strong> Make sure pricing, competitor, and security questions are answered accurately or routed to a human.</li>
+        <li><strong>Enable draft review:</strong> Keep sensitive booking replies in drafts until the team trusts the flow.</li>
+        <li><strong>Check stop conditions:</strong> Ensure normal follow-ups stop when a prospect replies or books.</li>
+        <li><strong>Limit daily invites:</strong> Maintain conservative connection volume and avoid overlapping campaigns on one sender.</li>
+        <li><strong>Update pipeline:</strong> Record booked meetings, referrals, not-now replies, and no-shows with the original signal attached.</li>
       </ul>
       <p>
         Review no-shows too. If many people book but do not attend, the problem may be qualification, the calendar page, or the promise in the message. A booking flow is only healthy when booked meetings turn into real conversations.
@@ -235,7 +235,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Unlocking Frictionless Pipeline Growth
+        Faster bookings without a pushy calendar dump
       </h2>
       <p>
         Automating your demo booking flow is not about throwing calendar links into every thread faster. It is about recognizing warm intent, answering the right question, and making the next step easy while the buyer still cares.
@@ -249,7 +249,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Frequently Asked Questions
+        Frequently asked questions
       </h2>
       <FaqAccordion items={faqItems} />
     </BlogPostTemplate>

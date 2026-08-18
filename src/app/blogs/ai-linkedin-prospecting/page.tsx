@@ -23,13 +23,13 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "prospecting-is-not-messaging", label: "Prospecting Is Not Messaging", level: 1 },
-  { id: "map-the-market", label: "Map the Market", level: 1 },
-  { id: "collect-signal-sources", label: "Collect Signal Sources", level: 1 },
-  { id: "rank-in-batches", label: "Rank in Batches", level: 1 },
-  { id: "create-work-queues", label: "Create Work Queues", level: 1 },
-  { id: "review-before-outreach", label: "Review Before Outreach", level: 1 },
-  { id: "weekly-operating-rhythm", label: "Weekly Operating Rhythm", level: 1 },
+  { id: "prospecting-is-not-messaging", label: "Prospecting is not messaging", level: 1 },
+  { id: "map-the-market", label: "Map the market", level: 1 },
+  { id: "collect-signal-sources", label: "Collect signal sources", level: 1 },
+  { id: "rank-in-batches", label: "Rank in batches", level: 1 },
+  { id: "create-work-queues", label: "Create work queues", level: 1 },
+  { id: "review-before-outreach", label: "Review before outreach", level: 1 },
+  { id: "weekly-operating-rhythm", label: "Weekly operating rhythm", level: 1 },
   { id: "faqs", label: "FAQs", level: 1 },
 ];
 
@@ -94,7 +94,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Prospecting Is Not Messaging
+        Prospecting is not messaging
       </h2>
       <p>
         Many teams collapse prospecting and messaging into one AI task: "Find leads and write messages." That sounds efficient, but it creates muddy output. The model tries to find fit, invent context, and pitch in the same breath.
@@ -120,7 +120,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Map the Market
+        Map the market
       </h2>
       <p>
         AI needs a narrower map than "B2B SaaS founders" or "heads of sales." Start with a prospecting lane, which combines account fit, person fit, timing, and a reason the channel makes sense.
@@ -150,7 +150,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Collect Signal Sources
+        Collect signal sources
       </h2>
       <p>
         Do not start by scraping everything. Start with a few signal sources that match your lane. Good sources include saved LinkedIn searches, post commenters, people who viewed your profile, event attendees, job-change alerts, hiring posts, and company pages.
@@ -173,7 +173,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Rank in Batches
+        Rank in batches
       </h2>
       <p>
         AI is more useful when it compares a batch than when it scores one profile at a time. Batch review exposes patterns. You can see whether the source is producing the wrong roles, whether all the timing signals are weak, or whether one company type keeps rising to the top.
@@ -198,7 +198,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Create Work Queues
+        Create work queues
       </h2>
       <p>
         A prospecting system should not produce one giant lead list. It should produce work queues. Queues tell you what to do next.
@@ -221,7 +221,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Review Before Outreach
+        Review before outreach
       </h2>
       <p>
         Before any approved lead moves into messaging, review a sample manually. Look for three problems: invented evidence, title-only scoring, and weak timing. Those are the most common signs that AI prospecting is drifting.
@@ -261,7 +261,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Weekly Operating Rhythm
+        Weekly operating rhythm
       </h2>
       <p>
         AI LinkedIn prospecting improves when the loop is boring and repeatable. Do not reinvent the prompt every day. Keep the lane stable long enough to learn which signals create replies.
@@ -274,7 +274,7 @@ export default function BlogPost() {
         <li><strong>Friday:</strong> update the lane, reject rules, and source list before the next batch.</li>
       </ul>
       <p>
-        Omentir can run the repeatable parts of this loop: finding ICP-fit buyers, scoring them against your criteria, drafting outreach, following up at human-paced limits, and collecting replies in one inbox sorted by intent. The value is not just automation. The value is keeping the evidence attached from prospecting through reply handling.
+        Omentir can run the repeatable parts of this loop: finding ICP-fit buyers, scoring them against your criteria, drafting outreach, following up at human-paced limits, and collecting replies in one inbox sorted by intent. The useful part is keeping the evidence attached from prospecting through reply handling.
       </p>
       <p>
         Once a lead is approved, the outreach step should continue the same context. The guide to{" "}

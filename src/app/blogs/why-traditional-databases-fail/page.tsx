@@ -17,15 +17,15 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "decay-of-b2b-directories", label: "The Hidden Decay Rate of B2B Contact Databases", level: 1 },
-  { id: "why-static-lists-fail", label: "Why Buying Flat Contact Lists Underperforms", level: 1 },
-  { id: "defining-autonomous-sourcing", label: "The Architecture of an Autonomous Sourcing Layer", level: 1 },
-  { id: "extracting-buying-signals", label: "Monitoring Corporate Sites and Live Career Portals", level: 2 },
-  { id: "verification-waterfall-cascades", label: "Validating Emails and Phone Records Automatically", level: 2 },
-  { id: "account-reputation-security", label: "Protecting Domain Health from High Bounce Rates", level: 1 },
-  { id: "autonomous-sourcing-sop", label: "SOP: The Real-Time Lead Discovery Checklist", level: 1 },
-  { id: "conclusion", label: "Shifting Sourcing from Static to Active", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "decay-of-b2b-directories", label: "The hidden decay rate of B2B contact databases", level: 1 },
+  { id: "why-static-lists-fail", label: "Why buying flat contact lists underperforms", level: 1 },
+  { id: "defining-autonomous-sourcing", label: "The architecture of an autonomous sourcing layer", level: 1 },
+  { id: "extracting-buying-signals", label: "Monitoring corporate sites and live career portals", level: 2 },
+  { id: "verification-waterfall-cascades", label: "Validating emails and phone records automatically", level: 2 },
+  { id: "account-reputation-security", label: "Protecting domain health from high bounce rates", level: 1 },
+  { id: "autonomous-sourcing-sop", label: "SOP: the real-time lead discovery checklist", level: 1 },
+  { id: "conclusion", label: "Shifting sourcing from static to active", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
@@ -68,11 +68,11 @@ export default function BlogPost() {
         That is why static databases fail without an autonomous sourcing layer. The database can be an input, but something has to re-check the account, verify fit, look for current signals, and decide whether the lead deserves outreach now. Without that layer, outbound becomes a race to send more messages before the list gets worse.
       </p>
       <p>
-        Omentir is built around live discovery and ICP-based qualification rather than selling a static contact dump. It helps teams find relevant buyers, draft context-aware LinkedIn outreach, pace campaigns, and organize replies. Let's look at why flat lists underperform and what a modern sourcing layer should do instead.
+        Omentir is built around live discovery and ICP-based qualification rather than selling a static contact dump. It helps teams find relevant buyers, draft context-aware LinkedIn outreach, pace campaigns, and organize replies. The rest of this post covers why flat lists underperform and what a sourcing layer should do instead.
       </p>
 
       <h2 id="why-static-lists-fail" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Why Buying Flat Contact Lists Underperforms
+        Why buying flat contact lists underperforms
       </h2>
       <p>
         Buying a flat contact list underperforms because it separates contact data from buying context. The list might tell you a person's title, company, and email. It usually does not tell you whether they still own the problem, whether the company fits your current ICP, or whether there is any timely reason to reach out.
@@ -81,11 +81,11 @@ export default function BlogPost() {
         When you send campaigns directly to outdated or unreviewed databases, you run into predictable issues:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>High Bounce Rates:</strong> Messages sent to inactive accounts bounce, alerting spam filters that you are using low-quality lists.</li>
-        <li><strong>Low Relevance:</strong> If a prospect has recently changed roles, your pitch will be irrelevant to their new responsibilities.</li>
-        <li><strong>Wasted Quotas:</strong> Your sending profiles will waste connection limits messaging profiles that are no longer active.</li>
-        <li><strong>False Fit:</strong> A title may match your search while the company, team size, or business model does not.</li>
-        <li><strong>Missing Timing:</strong> The account may be a good theoretical fit with no current trigger for conversation.</li>
+        <li><strong>High bounce rates:</strong> Messages sent to inactive accounts bounce, alerting spam filters that you are using low-quality lists.</li>
+        <li><strong>Low relevance:</strong> If a prospect has recently changed roles, your pitch will be irrelevant to their new responsibilities.</li>
+        <li><strong>Wasted quotas:</strong> Your sending profiles will waste connection limits messaging profiles that are no longer active.</li>
+        <li><strong>False fit:</strong> A title may match your search while the company, team size, or business model does not.</li>
+        <li><strong>Missing timing:</strong> The account may be a good theoretical fit with no current trigger for conversation.</li>
       </ul>
       <p>
         The deeper issue is that static lists encourage volume as the default solution. If one thousand contacts produce weak results, the team buys ten thousand. That hides the real question: which accounts should we contact, why now, and what evidence supports the message?
@@ -99,7 +99,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="defining-autonomous-sourcing" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        The Architecture of an Autonomous Sourcing Layer
+        The architecture of an autonomous sourcing layer
       </h2>
       <p>
         An autonomous sourcing layer is the system between raw data and outreach. It does not replace every database. It prevents databases from being treated as final authority. Instead of downloading historical data and sending immediately, the system checks current context before a lead enters a campaign.
@@ -108,11 +108,11 @@ export default function BlogPost() {
         A modern sourcing layer has five components:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Source Inputs:</strong> Databases, LinkedIn searches, website forms, referrals, and existing CRM records.</li>
-        <li><strong>Live Context Checks:</strong> Web and profile review that confirms the company, role, and public signals are still relevant.</li>
-        <li><strong>ICP Scoring:</strong> A fit model that compares account, buyer, signal, and exclusions against your current target market.</li>
-        <li><strong>Verification Waterfalls:</strong> Checks that reduce bad contact data before any email or LinkedIn workflow begins.</li>
-        <li><strong>Campaign Routing:</strong> Rules that decide whether a lead is rejected, monitored, drafted for review, or launched into a paced campaign.</li>
+        <li><strong>Source inputs:</strong> Databases, LinkedIn searches, website forms, referrals, and existing CRM records.</li>
+        <li><strong>Live context checks:</strong> Web and profile review that confirms the company, role, and public signals are still relevant.</li>
+        <li><strong>ICP scoring:</strong> A fit model that compares account, buyer, signal, and exclusions against your current target market.</li>
+        <li><strong>Verification waterfalls:</strong> Checks that reduce bad contact data before any email or LinkedIn workflow begins.</li>
+        <li><strong>Campaign routing:</strong> Rules that decide whether a lead is rejected, monitored, drafted for review, or launched into a paced campaign.</li>
       </ul>
       <p>
         The most important part is routing. A lead should not automatically move from "found" to "messaged." It should pass through a decision layer. Some leads are rejected. Some need more evidence. Some are good-fit but low-timing and should be monitored. Only the best leads should reach the outbox.
@@ -128,7 +128,7 @@ export default function BlogPost() {
         <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
         <div className="pl-4">
           <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-            Infrastructure Rule: Verify Before Sending
+            Infrastructure rule: verify before sending
           </h4>
           <p className="text-sm text-zinc-650 leading-relaxed">
             Never route a raw list directly to a sequencer. Validate contact data, current role, account fit, exclusion rules, and message evidence before anything reaches a live campaign.
@@ -137,7 +137,7 @@ export default function BlogPost() {
       </div>
 
       <h2 id="extracting-buying-signals" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Monitoring Corporate Sites and Live Career Portals
+        Monitoring corporate sites and live career portals
       </h2>
       <p>
         Corporate websites and career portals often reveal what a database cannot: what the company is actively trying to build. Careers pages show roles, responsibilities, tools, reporting lines, and priorities. Product pages show positioning. Integration pages show workflows. Security pages can hint at the type of buyers the company serves.
@@ -153,7 +153,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="verification-waterfall-cascades" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Validating Emails and Phone Records Automatically
+        Validating emails and phone records automatically
       </h2>
       <p>
         Contact validation is still useful, especially for email-led motion. A single provider may be wrong, stale, or incomplete, so teams often use a waterfall: check one source, then another, then another, until the data is good enough or the lead is rejected.
@@ -166,7 +166,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="account-reputation-security" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Protecting Domain Health from High Bounce Rates
+        Protecting domain health from high bounce rates
       </h2>
       <p>
         Sending to stale data can hurt more than campaign performance. It can damage the channels you depend on. Email providers watch bounces, complaints, engagement, and sender behavior. LinkedIn also responds poorly to activity that looks automated, irrelevant, or excessive.
@@ -186,7 +186,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="autonomous-sourcing-sop" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: The Real-Time Lead Discovery Checklist
+        SOP: the real-time lead discovery checklist
       </h2>
       <p>
         Implement this workflow to turn static data into qualified outreach:
@@ -205,7 +205,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Shifting Sourcing from Static to Active
+        Shifting sourcing from static to active
       </h2>
       <p>
         B2B data changes too quickly for static databases to be the final source of campaign truth. They can help you start, but they cannot tell you whether a buyer is current, qualified, and worth contacting today.

@@ -17,17 +17,17 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "funnel-architecture", label: "The Architecture of a LinkedIn Outreach Funnel", level: 1 },
-  { id: "stage-1-profile-views", label: "Stage 1: Profile Views and First Impressions", level: 1 },
-  { id: "optimizing-the-profile-sections", label: "Optimizing Your Headline and About Section", level: 2 },
-  { id: "stage-2-connection-acceptance", label: "Stage 2: Connection Request Acceptance", level: 1 },
-  { id: "the-psychology-of-acceptance", label: "The Psychology of Connection Acceptance", level: 2 },
-  { id: "stage-3-reply-rates", label: "Stage 3: Message Reply Rates and Copy Rules", level: 1 },
-  { id: "stage-4-demo-booking", label: "Stage 4: Demo Booking and Handoffs", level: 2 },
-  { id: "spotting-funnel-leakage", label: "Spotting Funnel Leakage and Auditing", level: 1 },
-  { id: "actionable-leakage-patch-framework", label: "Actionable Leakage Patching Framework", level: 2 },
-  { id: "conclusion", label: "Optimizing for Revenue", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "funnel-architecture", label: "The architecture of a LinkedIn outreach funnel", level: 1 },
+  { id: "stage-1-profile-views", label: "Stage 1: profile views and first impressions", level: 1 },
+  { id: "optimizing-the-profile-sections", label: "Headline and about section", level: 2 },
+  { id: "stage-2-connection-acceptance", label: "Stage 2: connection request acceptance", level: 1 },
+  { id: "the-psychology-of-acceptance", label: "The psychology of connection acceptance", level: 2 },
+  { id: "stage-3-reply-rates", label: "Stage 3: message reply rates and copy rules", level: 1 },
+  { id: "stage-4-demo-booking", label: "Stage 4: demo booking and handoffs", level: 2 },
+  { id: "spotting-funnel-leakage", label: "Spotting funnel leakage and auditing", level: 1 },
+  { id: "actionable-leakage-patch-framework", label: "Leakage patching framework", level: 2 },
+  { id: "conclusion", label: "Optimizing for revenue", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
@@ -67,23 +67,23 @@ export default function BlogPost() {
         Mastering B2B sales requires viewing your outreach as a structured conversion funnel. Every step, from the first profile visit to the scheduled calendar invite, has its own metrics, challenges, and optimization rules. By isolating and improving each stage, you can increase your output without needing to source more leads.
       </p>
       <p>
-        Omentir helps growth teams track and optimize this funnel by providing a clean execution interface. It runs lead discovery, scores fit, schedules safe campaigns, and collects replies in an intent-sorted inbox. In this guide, we will break down the conversion metrics of a high-performing LinkedIn outreach funnel and show you how to patch leaks at every stage.
+        Omentir helps growth teams track this funnel with a clean execution interface. It runs lead discovery, scores fit, schedules safe campaigns, and collects replies in an intent-sorted inbox. The rest of this article covers conversion metrics of a LinkedIn outreach funnel and how to patch leaks at each stage.
       </p>
       <p>
         To build a predictable outbound machine, you must understand how stages compound. A small improvement at the top of the funnel can disappear if replies are weak, and a great reply rate can still fail if handoffs are sloppy. This is why strong teams optimize the whole path instead of celebrating one isolated metric.
       </p>
 
       <h2 id="stage-1-profile-views" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Stage 1: Profile Views and First Impressions
+        Stage 1: profile views and first impressions
       </h2>
       <p>
-        The top of the LinkedIn funnel begins before you ever send a message. When you target a prospect, they will almost always click on your name to inspect your personal profile. Your page serves as the landing page for your outreach: if it looks like a generic sales resume or a spam account, the prospect will immediately ignore your connection request.
+        The top of the LinkedIn funnel begins before you ever send a message. When you target a prospect, they will almost always click on your name to inspect your personal profile. Your page is the landing page for your outreach: if it looks like a generic sales resume or a spam account, the prospect will ignore your connection request.
       </p>
       <p>
         Optimizing your profile is about shifting from self-promotion to problem-solving. Your headline should not just state your job title; it must explain the specific outcome you help buyers achieve. Your about section, banner image, and featured links must provide immediate social proof and direct value.
       </p>
       <p>
-        A professional, value-first profile is the foundation of high-converting outreach. If you want to double your acceptance rates, read our comprehensive guide on{" "}
+        A professional, value-first profile is the foundation of outreach that converts. If you want to double your acceptance rates, read our guide on{" "}
         <Link href="/blogs/crafting-a-linkedin-profile-that-doubles-your-outbound-acceptances" className="text-blue-600 hover:underline">
           optimizing your LinkedIn landing page
         </Link>
@@ -91,7 +91,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="optimizing-the-profile-sections" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Optimizing Your Headline and About Section
+        Headline and about section
       </h3>
       <p>
         Your profile headline is the most visible piece of real estate. Avoid standard formulas like "Sales Director at Acme Corp." Instead, use a formula that states the benefit: "Helping B2B startups automate lead qualification without losing the personal touch." This instantly tells the visitor what you do.
@@ -101,7 +101,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="stage-2-connection-acceptance" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Stage 2: Connection Request Acceptance
+        Stage 2: connection request acceptance
       </h2>
       <p>
         Once a prospect visits your profile, they decide whether to accept your connection invite. This is the first critical gate in your outbound funnel. A low acceptance rate indicates that your target list is too broad or your introductory message feels like an immediate pitch.
@@ -130,7 +130,7 @@ export default function BlogPost() {
       </div>
 
       <h3 id="the-psychology-of-acceptance" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        The Psychology of Connection Acceptance
+        The psychology of connection acceptance
       </h3>
       <p>
         Acceptance is based on mutual relevance and trust. When a prospect receives an invitation, they ask themselves two questions: "Do I know this person?" and "Will connecting with them clutter my inbox?"
@@ -140,7 +140,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="stage-3-reply-rates" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Stage 3: Message Reply Rates and Copy Rules
+        Stage 3: message reply rates and copy rules
       </h2>
       <p>
         After a prospect accepts your connection request, you enter the messaging stage. This is where most outreach funnels break down due to copy fatigue. Sending long, generic paragraphs detailing your product features is the fastest way to get ignored or reported as spam.
@@ -160,7 +160,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="stage-4-demo-booking" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Stage 4: Demo Booking and Handoffs
+        Stage 4: demo booking and handoffs
       </h3>
       <p>
         The final stage of the outbound funnel is turning a reply into a scheduled meeting. This is often the point of highest leakage because sales representatives get impatient and drop calendar links before establishing real interest.
@@ -183,22 +183,22 @@ export default function BlogPost() {
       </p>
 
       <h2 id="spotting-funnel-leakage" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Stage 5: Spotting Funnel Leakage and Auditing
+        Stage 5: spotting funnel leakage and auditing
       </h2>
       <p>
         To maintain a healthy sales pipeline, you must audit your funnel metrics regularly. Set up a simple weekly tracking sheet that monitors the conversion rates between each stage:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Low Acceptance:</strong> Indicates that your profile may not be optimized or your target buyer list is too broad. Solution: Narrow your filters and update your profile banner.</li>
-        <li><strong>Low Reply Quality:</strong> Suggests that your message copy is too long, self-centered, or irrelevant. Solution: Shorten your messages and lead with a resource or question.</li>
-        <li><strong>Low Booking Quality:</strong> Shows that you may be rushing the scheduling step or failing to qualify interest. Solution: Use intent sorting and respond with context.</li>
+        <li><strong>Low acceptance:</strong> Indicates that your profile may not be optimized or your target buyer list is too broad. Solution: Narrow your filters and update your profile banner.</li>
+        <li><strong>Low reply quality:</strong> Suggests that your message copy is too long, self-centered, or irrelevant. Solution: Shorten your messages and lead with a resource or question.</li>
+        <li><strong>Low booking quality:</strong> Shows that you may be rushing the scheduling step or failing to qualify interest. Solution: Use intent sorting and respond with context.</li>
       </ul>
       <p>
         This continuous audit loop helps you address the root cause of pipeline drops. Instead of guessing why your campaigns are quiet, you can look at the conversion data and apply the specific fix needed.
       </p>
 
       <h3 id="actionable-leakage-patch-framework" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Actionable Leakage Patching Framework
+        Leakage patching framework
       </h3>
       <p>
         When you spot a leak, do not change every variable at once. Follow a single-variable testing framework. If your acceptance rate is low, change only your profile headline or your connection message for one week and monitor the change.
@@ -211,7 +211,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Optimizing for Revenue
+        Optimizing for revenue
       </h2>
       <p>
         A high-performing outbound engine is built on details. By optimizing your profile, connection requests, messaging cadence, and scheduling handoffs, you can build a reliable sales machine that books demos consistently.

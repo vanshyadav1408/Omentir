@@ -23,13 +23,13 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "pitch-before-prompt", label: "Pitch Before Prompt", level: 1 },
-  { id: "build-the-buyer-map", label: "Build the Buyer Map", level: 1 },
-  { id: "turn-features-into-friction", label: "Features Into Friction", level: 1 },
-  { id: "proof-without-fake-numbers", label: "Proof Without Fake Numbers", level: 1 },
-  { id: "prompt-that-produces-good-pitches", label: "A Better Pitch Prompt", level: 2 },
-  { id: "edit-the-ai-draft", label: "Edit the AI Draft", level: 1 },
-  { id: "use-the-pitch-in-outreach", label: "Use It in Outreach", level: 1 },
+  { id: "pitch-before-prompt", label: "Pitch before prompt", level: 1 },
+  { id: "build-the-buyer-map", label: "Build the buyer map", level: 1 },
+  { id: "turn-features-into-friction", label: "Features into friction", level: 1 },
+  { id: "proof-without-fake-numbers", label: "Proof without fake numbers", level: 1 },
+  { id: "prompt-that-produces-good-pitches", label: "A better pitch prompt", level: 2 },
+  { id: "edit-the-ai-draft", label: "Edit the AI draft", level: 1 },
+  { id: "use-the-pitch-in-outreach", label: "Use it in outreach", level: 1 },
   { id: "faqs", label: "FAQs", level: 1 },
 ];
 
@@ -82,7 +82,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Pitch Before Prompt
+        Pitch before prompt
       </h2>
       <p>
         Most AI pitch prompts are too lazy. "Write me a sales pitch for my SaaS" gives the model permission to summarize your product and decorate it with generic benefits. You might get something readable, but it will not create urgency.
@@ -110,10 +110,10 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Build the Buyer Map
+        Build the buyer map
       </h2>
       <p>
-        One product can require five different pitches because five buyers care about different outcomes. A founder may care about pipeline. A VP of Sales may care about rep efficiency. A RevOps lead may care about process cleanup. A CFO may care about headcount leverage.
+        One product can require five different pitches because five buyers care about different outcomes. A founder may care about pipeline. A VP of Sales may care about rep efficiency. A RevOps lead may care about process cleanup. A CFO may care about headcount cost.
       </p>
       <p>
         AI becomes useful when you make those differences explicit. Ask it to map each buyer to their likely goal, current friction, feared risk, success metric, and preferred proof.
@@ -150,7 +150,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Features Into Friction
+        Features into friction
       </h2>
       <p>
         Buyers do not wake up wanting dashboards, integrations, AI agents, enrichment, or automation. They want less manual work, fewer missed opportunities, faster decisions, cleaner handoffs, or more qualified meetings.
@@ -195,7 +195,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Proof Without Fake Numbers
+        Proof without fake numbers
       </h2>
       <p>
         AI loves confident numbers. Do not let it invent them. A fake "37 percent lift" may sound persuasive for one second, but it creates a credibility problem you cannot recover from if the buyer asks for detail.
@@ -223,7 +223,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="prompt-that-produces-good-pitches" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        A Better Pitch Prompt
+        A better pitch prompt
       </h3>
       <p>
         Once the buyer map and proof are ready, give AI a constrained prompt. The goal is not to get one magic paragraph. The goal is to generate several honest angles you can choose from.
@@ -242,7 +242,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Edit the AI Draft
+        Edit the AI draft
       </h2>
       <p>
         Treat the AI draft like a junior teammate's first pass. Your job is to remove excess confidence, vague adjectives, unsupported claims, and anything that sounds too polished for a direct message.
@@ -256,7 +256,7 @@ export default function BlogPost() {
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
         <li><strong>Cut the opener</strong> if it starts with "hope you are well" or a generic introduction.</li>
-        <li><strong>Cut the hype</strong> if the sentence uses words like revolutionary, seamless, game-changing, or best-in-class.</li>
+        <li><strong>Cut the hype</strong> if the sentence uses brochure adjectives or product-hype language.</li>
         <li><strong>Cut the pitch stack</strong> if it tries to explain three use cases at once.</li>
         <li><strong>Cut the hard CTA</strong> if the buyer has not shown interest yet.</li>
       </ul>
@@ -275,7 +275,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Use It in Outreach
+        Use it in outreach
       </h2>
       <p>
         A pitch is only one piece of the outreach system. It belongs after lead qualification and before follow-up logic. If the lead list is weak, even a strong pitch will feel random.

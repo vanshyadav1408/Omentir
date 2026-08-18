@@ -4,7 +4,7 @@ import BlogPostTemplate from "../blog-post-template";
 
 export const metadata = createPageMetadata({
   title: "Get Your First 10 B2B Customers with Zero Budget - Omentir",
-  description: "Bootstrapping a new B2B product? Learn how to find, pitch, and secure your first 10 paying customers using zero-budget manual channels.",
+  description: "How to find, pitch, and close your first 10 paying B2B customers using manual channels and no ad spend.",
   path: "/blogs/get-first-b2b-customers-zero-budget",
   keywords: [
     "first 10 B2B customers zero budget",
@@ -17,17 +17,17 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "outbound-without-capital", label: "The Bootstrap Advantage: Sourcing Customers Without Capital", level: 1 },
-  { id: "pick-one-painful-market", label: "Start With One Painful Market", level: 2 },
-  { id: "linkedin-organic-prospecting", label: "Sourcing Channel 1: High-Relevance LinkedIn Search Loops", level: 1 },
-  { id: "community-mining-signals", label: "Sourcing Channel 2: Mining Reddit and Developer Slack Channels", level: 1 },
-  { id: "referral-network-leverage", label: "Sourcing Channel 3: Leveraging Warm Introductions and Referrals", level: 2 },
-  { id: "zero-budget-copywriting", label: "Copywriting: The Conversational Value Pitch", level: 2 },
-  { id: "qualify-before-demo", label: "Qualify Before You Demo", level: 2 },
-  { id: "design-partner-strategy", label: "Nurturing Leads by Offering Design Partnerships", level: 1 },
-  { id: "zero-budget-sop-checklist", label: "SOP: The Daily 1-Hour Prospecting Checklist", level: 1 },
-  { id: "conclusion", label: "Transitioning from Bootstrapping to Scaling", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "outbound-without-capital", label: "The bootstrap advantage: sourcing customers without capital", level: 1 },
+  { id: "pick-one-painful-market", label: "Start with one painful market", level: 2 },
+  { id: "linkedin-organic-prospecting", label: "Sourcing channel 1: high-relevance LinkedIn search loops", level: 1 },
+  { id: "community-mining-signals", label: "Sourcing channel 2: Reddit and developer Slack", level: 1 },
+  { id: "referral-network-leverage", label: "Sourcing channel 3: warm introductions and referrals", level: 2 },
+  { id: "zero-budget-copywriting", label: "Copywriting: the conversational value pitch", level: 2 },
+  { id: "qualify-before-demo", label: "Qualify before you demo", level: 2 },
+  { id: "design-partner-strategy", label: "Nurturing leads by offering design partnerships", level: 1 },
+  { id: "zero-budget-sop-checklist", label: "SOP: the daily 1-hour prospecting checklist", level: 1 },
+  { id: "conclusion", label: "From bootstrapping to scaling", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
@@ -53,7 +53,7 @@ export default function BlogPost() {
   return (
     <BlogPostTemplate
       title="How to Get Your First 10 B2B Customers with Zero Budget"
-      description="Validate your B2B MVP and secure your first 10 paying customers without spending money on databases or advertising."
+      description="Validate your B2B MVP and get your first 10 paying customers without paying for databases or ads."
       slug="get-first-b2b-customers-zero-budget"
       bannerSrc="/get-first-b2b-customers-zero-budget.avif"
       bannerAlt="B2B customer acquisition and zero budget prospecting workflow diagram"
@@ -80,7 +80,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="pick-one-painful-market" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Start With One Painful Market
+        Start with one painful market
       </h2>
       <p>
         Most founders make zero-budget acquisition harder by starting too broad. They describe the product as useful for "sales teams," "founders," "agencies," or "small businesses." Those categories are too wide for manual prospecting. When you have limited time, you need a small market where the pain is visible and the buyer is reachable.
@@ -101,7 +101,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="linkedin-organic-prospecting" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Sourcing Channel 1: High-Relevance LinkedIn Search Loops
+        Sourcing channel 1: high-relevance LinkedIn search loops
       </h2>
       <p>
         LinkedIn is the most effective channel for zero-budget B2B prospecting. Senders do not need premium subscriptions to locate target accounts.
@@ -110,9 +110,9 @@ export default function BlogPost() {
         Configure your search using standard filters:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Job Title Exclusions:</strong> Filter out irrelevant roles to focus on decision makers.</li>
-        <li><strong>Recent Activity:</strong> Target profiles that have posted or commented within the last 30 days to ensure active presence.</li>
-        <li><strong>Hiring Posts:</strong> Search for posts containing "we are hiring" to identify growing businesses.</li>
+        <li><strong>Job title exclusions:</strong> Filter out irrelevant roles to focus on decision makers.</li>
+        <li><strong>Recent activity:</strong> Target profiles that have posted or commented within the last 30 days so you are writing to people who still open LinkedIn.</li>
+        <li><strong>Hiring posts:</strong> Search for posts containing "we are hiring" to find companies that are growing.</li>
       </ul>
       <p>
         Do not start by collecting hundreds of names. Start with a daily list of 10 to 20 people you would be willing to research properly. For each prospect, capture the profile link, company page, role, recent activity, visible trigger, and your reason for believing the problem is active. If you cannot fill those fields, the prospect is probably not ready for a message.
@@ -140,7 +140,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="community-mining-signals" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Sourcing Channel 2: Mining Reddit and Developer Slack Channels
+        Sourcing channel 2: Reddit and developer Slack
       </h2>
       <p>
         Online communities are excellent sources of target buyer insights. On these platforms, operators share their operational bottlenecks and request tool recommendations.
@@ -171,7 +171,7 @@ the checklist we use to decide whether a LinkedIn lead is worth contacting?`}</c
       </p>
 
       <h2 id="referral-network-leverage" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Sourcing Channel 3: Leveraging Warm Introductions and Referrals
+        Sourcing channel 3: warm introductions and referrals
       </h2>
       <p>
         Your existing network is highly valuable during early growth. Senders often hesitate to ask for introductions, missing out on warm sales conversations.
@@ -210,7 +210,7 @@ operator feedback, not a hard sell.`}</code>
       </div>
 
       <h2 id="zero-budget-copywriting" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Copywriting: The Conversational Value Pitch
+        Copywriting: the conversational value pitch
       </h2>
       <p>
         Zero-budget outreach requires high personalization. Senders using generic templates will see low response rates, wasting their daily connection limits.
@@ -245,7 +245,7 @@ Are you handling prospect research manually right now?`}</code>
       </p>
 
       <h2 id="qualify-before-demo" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Qualify Before You Demo
+        Qualify before you demo
       </h2>
       <p>
         When someone replies, do not rush straight into a product tour. Your first 10 customers should be qualified carefully because early customers shape your roadmap, support load, testimonials, and positioning. A bad-fit customer can cost more than they pay.
@@ -265,7 +265,7 @@ Are you handling prospect research manually right now?`}</code>
       </p>
 
       <h2 id="design-partner-strategy" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Nurturing Leads by Offering Design Partnerships
+        Nurturing leads by offering design partnerships
       </h2>
       <p>
         When launching an MVP, avoid hard sales pitches. Instead, invite prospects to join as design partners.
@@ -274,7 +274,7 @@ Are you handling prospect research manually right now?`}</code>
         Explain that you have built a new tool to resolve a specific issue (e.g. automating lead qualification) and want to partner with a few select teams to refine the features in exchange for discounted rates.
       </p>
       <p>
-        This positioning reduces buyer friction, helping you secure initial users quickly.
+        This positioning lowers buyer friction and helps you land initial users faster.
       </p>
       <p>
         A design partnership should still have structure. Define the price, length, support expectations, feedback cadence, and success outcome before the customer starts. Otherwise, "design partner" becomes a vague favor instead of a real commercial relationship.
@@ -287,7 +287,7 @@ Are you handling prospect research manually right now?`}</code>
       </p>
 
       <h2 id="zero-budget-sop-checklist" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: The Daily 1-Hour Prospecting Checklist
+        SOP: the daily 1-hour prospecting checklist
       </h2>
       <p>
         Implement this daily outbound routine:
@@ -299,7 +299,7 @@ Are you handling prospect research manually right now?`}</code>
         <li><strong>Minute 45-60:</strong> Route approved drafts to Omentir's paced outbox queue.</li>
       </ul>
       <p>
-        Omentir handles the delivery safety automatically, ensuring your profiles stay safe.
+        Omentir handles delivery pacing so your profiles stay safer than a burst of manual sends.
       </p>
       <p>
         Track the routine in a simple sheet or CRM. You only need a few fields at this stage: name, company, source, trigger, message sent, reply status, pain notes, qualification score, next step, and outcome. The notes are more important than the volume. After 50 good conversations or attempts, patterns will start to appear.
@@ -309,10 +309,10 @@ Are you handling prospect research manually right now?`}</code>
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Transitioning from Bootstrapping to Scaling
+        From bootstrapping to scaling
       </h2>
       <p>
-        Securing your first B2B clients does not require high software budgets. By focusing on manual channels and offering design partnerships, you can validate your product and build initial traction.
+        You can get first B2B clients without a large software budget. Manual channels and design partnerships are enough to validate the product and get early traction.
       </p>
       <p>
         Once you have repeatable signals, stronger buyer language, and a few paying design partners, you can begin automating more of the workflow. Automate the search and the first draft. Keep the "should we even send this" decision in your hands until those partners look like a pattern, not a lucky week.

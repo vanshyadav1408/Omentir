@@ -5,7 +5,7 @@ import FaqAccordion from "../../faq-accordion";
 
 export const metadata = createPageMetadata({
   title: "The Art of the LinkedIn Follow-Up: How to Re-Engage Ghosted Leads - Omentir",
-  description: "Master the psychology of follow-ups on LinkedIn. Learn how to craft value-first follow-up sequences that get replies without being annoying.",
+  description: "How to write value-first LinkedIn follow-ups that restart ghosted threads without nagging.",
   path: "/blogs/the-art-of-the-linkedin-follow-up-how-to-re-engage-ghosted-leads",
   image: {
     url: "/the-art-of-the-linkedin-follow-up-how-to-re-engage-ghosted-leads.avif",
@@ -17,12 +17,12 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems = [
-  { id: "ghosting-psychology", label: "Psychology of Ghosting", level: 1 },
-  { id: "followup-mistakes", label: "Avoid These 3 Mistakes", level: 1 },
-  { id: "followup-framework", label: "Value-First Framework", level: 1 },
-  { id: "four-followup-templates", label: "4 Actionable Templates", level: 1 },
-  { id: "sequence-timeline", label: "The Perfect Sequence Timeline", level: 1 },
-  { id: "frequently-asked-questions", label: "Follow-Up FAQs", level: 1 }
+  { id: "ghosting-psychology", label: "Psychology of ghosting", level: 1 },
+  { id: "followup-mistakes", label: "Avoid these 3 mistakes", level: 1 },
+  { id: "followup-framework", label: "Value-first framework", level: 1 },
+  { id: "four-followup-templates", label: "4 actionable templates", level: 1 },
+  { id: "sequence-timeline", label: "A practical sequence timeline", level: 1 },
+  { id: "frequently-asked-questions", label: "Follow-up FAQs", level: 1 }
 ] as const;
 
 const faqItems = [
@@ -35,7 +35,7 @@ export default function BlogPost() {
   return (
     <BlogPostTemplate
       title="The Art of the LinkedIn Follow-Up: How to Re-Engage Ghosted Leads"
-      description="Master the psychology of follow-ups on LinkedIn. Learn how to craft value-first follow-up sequences that get replies without being annoying."
+      description="How to write value-first LinkedIn follow-ups that restart ghosted threads without nagging."
       slug="the-art-of-the-linkedin-follow-up-how-to-re-engage-ghosted-leads"
       bannerSrc="/the-art-of-the-linkedin-follow-up-how-to-re-engage-ghosted-leads.avif"
       bannerAlt="The Art of the LinkedIn Follow-Up outreach concept art"
@@ -44,10 +44,10 @@ export default function BlogPost() {
     >
       <div id="introduction" className="scroll-mt-28">
         <p>
-          Getting ghosted on LinkedIn is a natural byproduct of modern B2B sales. In today's hyper-active business environment, decision makers are juggling dozens of priority projects, endless Slack channels, and a constantly updating inbox. A prospect who stops replying is rarely doing so out of malice or active dislike-usually, they simply got distracted or got pulled into an urgent internal initiative.
+          Getting ghosted on LinkedIn is a normal part of B2B sales. Decision makers are juggling projects, Slack, and a constantly updating inbox. A prospect who stops replying is rarely doing it out of malice. They got distracted, or an internal issue pulled them away.
         </p>
         <p>
-          The mistake most sales representatives and founders make is sending generic check-in messages like "Just bumping this up" or "Checking if you saw my last message." These structures offer zero value, generate friction, and force the prospect to select the archive option. To re-engage ghosted leads successfully, your follow-up must dramatically reduce the cognitive effort required to reply and give them a compelling, value-first reason to restart the conversation.
+          The mistake most sales reps and founders make is sending generic check-in messages like "Just bumping this up" or "Checking if you saw my last message." Those lines offer nothing, add friction, and make archiving the easy choice. To restart a ghosted thread, make the reply cheap: less thinking, and a concrete reason to resume.
         </p>
 
         <h2
@@ -55,7 +55,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          The Psychology of the Ghosted Lead
+          The psychology of the ghosted lead
         </h2>
         <p>
           To write an effective follow-up, you must first understand the mental state of the buyer who ghosted you. A busy decision maker receives dozens of notifications daily. If your last message required them to open a link, review a calendar, or make a complex strategic decision, they likely put it off until "later in the week." Over time, that thread sinks lower in their LinkedIn inbox as new messages pile on top.
@@ -64,7 +64,7 @@ export default function BlogPost() {
           When you send a follow-up that says "just checking in," you are essentially adding another item to their to-do list. You are asking them to do the work of reviewing your previous message, figuring out what you wanted, and drafting a thoughtful response.
         </p>
         <p>
-          A high-converting follow-up bypasses this friction by:
+          A follow-up that actually gets replies bypasses this friction by:
         </p>
         <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-850 my-4">
           <li><strong>Reducing Cognitive Load:</strong> Posing questions that can be answered with a simple "yes", "no", or a single digit.</li>
@@ -77,7 +77,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Three Destructive Follow-Up Mistakes to Avoid
+          Three destructive follow-up mistakes to avoid
         </h2>
         <p>
           Before you send another message, verify your follow-up sequence is free of these standard outbound red flags that kill relationships instantly:
@@ -95,7 +95,7 @@ export default function BlogPost() {
               <tr>
                 <th className="px-4 py-3 font-semibold text-black">Mistake Type</th>
                 <th className="px-4 py-3 font-semibold text-black">What to Avoid</th>
-                <th className="px-4 py-3 font-semibold text-black">High-Converting Alternative</th>
+                <th className="px-4 py-3 font-semibold text-black">Better alternative</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200">
@@ -107,7 +107,7 @@ export default function BlogPost() {
               <tr>
                 <td className="px-4 py-3 font-medium text-black">The Guilt Trigger</td>
                 <td className="px-4 py-3 text-zinc-650">"Checking why you haven't responded yet."</td>
-                <td className="px-4 py-3 text-zinc-650">"Assuming [Topic] is on the back burner for now-totally fine."</td>
+                <td className="px-4 py-3 text-zinc-650">"Assuming [Topic] is on the back burner for now. Totally fine."</td>
               </tr>
               <tr>
                 <td className="px-4 py-3 font-medium text-black">The Calendar Push</td>
@@ -136,7 +136,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          The Value-First Follow-Up Framework
+          The value-first follow-up framework
         </h2>
         <p>
           Every follow-up should bring new information or a fresh perspective to the table. Instead of requesting something from the prospect, present them with value. This could be a new industry case study, a relevant news article, a brief tactical idea, or a low-friction question about their current initiatives.
@@ -155,7 +155,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          4 Actionable Re-Engagement Templates
+          4 actionable re-engagement templates
         </h2>
         <p className="mb-6">
           Use these exact re-engagement frameworks to safely restart stuck conversations in your outbox:
@@ -165,7 +165,7 @@ export default function BlogPost() {
         <div className="my-6 rounded-xl border border-zinc-200 bg-[#ba38710d] p-6 relative overflow-hidden shadow-[0_4px_20px_rgba(15,23,42,0.02)]">
           <div className="absolute inset-y-0 left-0 w-1 bg-[#ba3871]" />
           <div className="pl-4">
-            <span className="text-xs font-bold text-black uppercase tracking-wider block mb-2">1. The Case Study Leverage</span>
+            <span className="text-xs font-bold text-black uppercase tracking-wider block mb-2">1. The case study follow-up</span>
             <p className="text-sm text-zinc-800 italic leading-relaxed mb-3">
               "Hi [FirstName], saw a lot of [Industry] leaders talking about [Topic] today. It reminded me of a project where we drove [Result] for [SimilarCompany]. I put the metrics in a 1-page summary. Would it be useful for your team?"
             </p>
@@ -212,7 +212,7 @@ export default function BlogPost() {
               "Hi [FirstName], assuming this isn't a priority for [CompanyName] right now. I'll stop mapping out ideas for your [Department]. If things change down the road, feel free to reach out. Keep crushed!"
             </p>
             <p className="text-xs text-zinc-500">
-              <strong>Strategy:</strong> Pulling away. This leverages the psychological principle of loss aversion. When you take the offer off the table, the prospect often responds to reclaim it.
+              <strong>Strategy:</strong> Pulling away. Loss aversion is the idea: when you take the offer off the table, the prospect sometimes replies to reclaim it.
             </p>
           </div>
         </div>
@@ -222,7 +222,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          The Perfect Sequence Timeline
+          A practical sequence timeline
         </h2>
         <p>
           Following up is a game of strategic timing. Blasting messages too quickly looks like spam; waiting too long allows the prospect's memory of your brand to cool down completely.
@@ -267,7 +267,7 @@ export default function BlogPost() {
         <div className="my-10 rounded-2xl border border-zinc-200 bg-[#f4f2ec] p-8 text-center shadow-[0_18px_60px_rgba(15,23,42,0.06)] relative overflow-hidden">
           <div className="absolute inset-x-0 top-0 h-1.5 bg-[#ba3871]" />
           <h3 style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mb-3">
-            Avoid Overlapping Follow-Ups
+            Avoid overlapping follow-ups
           </h3>
           <p className="text-sm text-zinc-650 leading-relaxed max-w-xl mx-auto mb-6">
             Use the follow-up rules above to avoid accidental pressure. Pause active follow-ups when a prospect replies, engages, or shows that the timing is not right.
@@ -277,7 +277,7 @@ export default function BlogPost() {
               href="/signup"
               className="inline-flex h-9 items-center justify-center rounded-md bg-black px-5 text-sm font-medium text-white hover:bg-zinc-800 transition-colors shadow-sm"
             >
-              Review Follow-Up Rules
+              Review follow-up rules
             </Link>
           </div>
         </div>
@@ -288,7 +288,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Follow-Up Rules by Ghosting Scenario
+          Follow-up rules by ghosting scenario
         </h2>
         <p>
           Not every ghosted lead should receive the same follow-up. The right re-engagement message depends on where the conversation stopped and how much intent the prospect already showed.
@@ -308,7 +308,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Follow-Up Copy Quality Checklist
+          Follow-up copy quality checklist
         </h2>
         <p>
           Before sending a follow-up, check whether the message gives the prospect a real reason to reply. A good follow-up references the previous context, adds one useful detail, and asks a question that can be answered quickly.</p>
@@ -324,7 +324,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          When to Stop Following Up
+          When to stop following up
         </h2>
         <p>Good follow-up also requires knowing when to stop. If a prospect has ignored multiple relevant, spaced-out messages and has shown no new trigger, continuing to push will damage the relationship. Move them into a passive nurture bucket instead of sending another direct message.</p><p>Stop active follow-up after three thoughtful attempts unless the account is strategically important or a new signal appears. A new signal could be a funding round, leadership change, hiring push, public post about the problem, or direct engagement with your content. Without a new signal, another message usually feels like pressure rather than value.</p><p>This boundary protects your reputation. Re-engagement works when the buyer feels respected. The goal is to restart a useful conversation, not to force a response from someone who has clearly chosen silence.</p>
         <h2
@@ -332,7 +332,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Frequently Asked Questions (FAQs)
+          Frequently asked questions
         </h2>
 
         <FaqAccordion items={faqItems} />

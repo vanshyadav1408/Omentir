@@ -17,19 +17,19 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "signature-of-ai-slop", label: "The Red Flags of AI-Generated Outbound Copy", level: 1 },
-  { id: "why-models-sound-fake", label: "Why Models Sound Fake by Default", level: 2 },
-  { id: "conversational-styling-rules", label: "The Grammar and Style Rules of Human Outreach", level: 1 },
-  { id: "negative-prompting-constraints", label: "Negative Prompting: Words and Transitions to Ban", level: 2 },
-  { id: "copyable-human-prompt-blueprint", label: "Copyable LLM Copywriting Prompt Blueprint", level: 2 },
-  { id: "bad-good-example", label: "Bad Output vs Better Output", level: 2 },
-  { id: "grounding-context-variables", label: "Grounding Prompts in Verified Prospect Context", level: 1 },
-  { id: "prompt-slots", label: "The Five Prompt Slots", level: 2 },
-  { id: "outbox-pacing-reputation", label: "Enforcing Human Pacing and Deliverability Safety", level: 1 },
-  { id: "human-review-rubric", label: "Human Review Rubric", level: 2 },
-  { id: "reply-led-iteration", label: "Iterate Prompts from Real Replies", level: 2 },
-  { id: "copy-audit-sop-checklist", label: "SOP: The Prompt Output Audit Checklist", level: 1 },
-  { id: "conclusion", label: "Prioritizing Relevance Over Mass Volume", level: 1 }
+  { id: "signature-of-ai-slop", label: "The red flags of AI-generated outbound copy", level: 1 },
+  { id: "why-models-sound-fake", label: "Why models sound fake by default", level: 2 },
+  { id: "conversational-styling-rules", label: "The grammar and style rules of human outreach", level: 1 },
+  { id: "negative-prompting-constraints", label: "Negative prompting: words and transitions to ban", level: 2 },
+  { id: "copyable-human-prompt-blueprint", label: "Copyable LLM copywriting prompt blueprint", level: 2 },
+  { id: "bad-good-example", label: "Bad output vs better output", level: 2 },
+  { id: "grounding-context-variables", label: "Grounding prompts in verified prospect context", level: 1 },
+  { id: "prompt-slots", label: "The five prompt slots", level: 2 },
+  { id: "outbox-pacing-reputation", label: "Enforcing human pacing and deliverability safety", level: 1 },
+  { id: "human-review-rubric", label: "Human review rubric", level: 2 },
+  { id: "reply-led-iteration", label: "Iterate prompts from real replies", level: 2 },
+  { id: "copy-audit-sop-checklist", label: "SOP: the prompt output audit checklist", level: 1 },
+  { id: "conclusion", label: "Prioritizing relevance over mass volume", level: 1 }
 ];
 
 const faqItems = [
@@ -39,7 +39,7 @@ const faqItems = [
   },
   {
     question: "What is negative prompting in sales copywriting?",
-    answer: "It is the practice of explicitly instructing the LLM to avoid specific words (like \"revolutionize\" or \"seamless\") and banning standard introductory transitions to keep copy direct."
+    answer: "It is the practice of explicitly instructing the LLM to avoid specific buzzwords (quoted in the list below) and banning standard introductory transitions to keep copy direct."
   },
   {
     question: "How does Omentir ensure outreach copy reads naturally?",
@@ -72,11 +72,11 @@ export default function BlogPost() {
         Achieving this at scale does not require manual writing. By using prompt constraints, negative lists, and styling settings, you can instruct language models to write human-sounding copy.
       </p>
       <p>
-        Omentir helps manage this copywriting flow, running your prompts against target profiles and holding drafts for review. Let's look at how to configure your prompts.
+        Omentir helps manage this copywriting flow, running your prompts against target profiles and holding drafts for review. Here is how to configure those prompts.
       </p>
 
       <h3 id="why-models-sound-fake" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Why Models Sound Fake by Default
+        Why models sound fake by default
       </h3>
       <p>
         Most language models are trained to be helpful, complete, and polished. Those instincts are useful for documentation, but bad for cold outreach. A model tries to explain the whole value proposition, soften every sentence, and end with a polished call to action.
@@ -89,7 +89,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="conversational-styling-rules" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        The Grammar and Style Rules of Human Outreach
+        The grammar and style rules of human outreach
       </h2>
       <p>
         Human sales professionals write peer-to-peer messages. They do not write formal essays with multiple paragraphs and complex structures.
@@ -114,7 +114,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="negative-prompting-constraints" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Negative Prompting: Words and Transitions to Ban
+        Negative prompting: words and transitions to ban
       </h2>
       <p>
         The most effective way to eliminate robotic phrasing is negative prompting. This involves listing specific words and patterns the LLM must reject.
@@ -123,8 +123,12 @@ export default function BlogPost() {
         Ban these buzzwords from your campaigns:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li>"Revolutionize," "supercharge," "seamless," "next-generation," or "delighted."</li>
-        <li>Introductory greetings like "I hope this finds you well" or "In today's fast-paced digital landscape."</li>
+        <li>
+          {'"Revolutionize,"'} {'"supercharge,"'} {'"seamless,"'} {'"next-generation,"'} or {'"delighted."'}
+        </li>
+        <li>
+          Introductory greetings like {'"I hope this finds you well"'} or {'"In today\'s fast-paced digital"'} {'"landscape."'}
+        </li>
         <li>Exaggerated value statements promising immediate revenue growth without proof.</li>
       </ul>
       <p>
@@ -132,7 +136,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="copyable-human-prompt-blueprint" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Copyable LLM Copywriting Prompt Blueprint
+        Copyable LLM copywriting prompt blueprint
       </h2>
       <p>
         Use the prompt template below to write direct, human-sounding B2B outreach copy:
@@ -156,7 +160,7 @@ Rules:
       </p>
 
       <h3 id="bad-good-example" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Bad Output vs Better Output
+        Bad output vs better output
       </h3>
       <p>
         The easiest way to train your prompting taste is to compare outputs. Here is the difference between AI slop and a usable first draft.
@@ -188,7 +192,7 @@ Rules:
       </div>
 
       <h2 id="grounding-context-variables" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Grounding Prompts in Verified Prospect Context
+        Grounding prompts in verified prospect context
       </h2>
       <p>
         To write relevant copy, you must ground your prompts in verified details. Senders pull triggers from websites and careers board posts, as detailed in our analysis of{" "}
@@ -205,7 +209,7 @@ Rules:
       </p>
 
       <h3 id="prompt-slots" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        The Five Prompt Slots
+        The five prompt slots
       </h3>
       <p>
         A reliable outreach prompt has five slots. Keep them explicit so the model does not invent missing context.
@@ -222,7 +226,7 @@ Rules:
       </p>
 
       <h2 id="outbox-pacing-reputation" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Enforcing Human Pacing and Deliverability Safety
+        Enforcing human pacing and deliverability safety
       </h2>
       <p>
         Writing human-sounding copy is only the first step. Senders must manage delivery pacing to protect account safety.
@@ -239,7 +243,7 @@ Rules:
       </p>
 
       <h3 id="human-review-rubric" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Human Review Rubric
+        Human review rubric
       </h3>
       <p>
         Before approving a batch, score each draft with four yes/no checks. Would I send this from my own profile? Is the referenced signal real? Is the ask easy to answer? Would the prospect understand why I chose them?
@@ -249,7 +253,7 @@ Rules:
       </p>
 
       <h3 id="reply-led-iteration" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Iterate Prompts from Real Replies
+        Iterate prompts from real replies
       </h3>
       <p>
         Prompt improvement should come from replies, not from internal opinions. After each campaign batch, read the positive replies, the objections, and the ignores. Look for language prospects use naturally. That language is usually better than whatever the model invented.
@@ -273,7 +277,7 @@ Rules:
       </p>
 
       <h2 id="copy-audit-sop-checklist" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: The Prompt Output Audit Checklist
+        SOP: the prompt output audit checklist
       </h2>
       <p>
         Audit your campaign drafts using these steps:
@@ -291,7 +295,7 @@ Rules:
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Prioritizing Relevance Over Mass Volume
+        Prioritizing relevance over mass volume
       </h2>
       <p>
         Outbound campaigns do not require you to choose between quality and scale. By configuring prompt constraints and negative lists, you can write human-sounding copy for every prospect.

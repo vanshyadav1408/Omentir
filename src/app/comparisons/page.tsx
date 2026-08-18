@@ -5,7 +5,7 @@ import { ALL_COMPARISONS } from "./comparison-data";
 export const metadata = createPageMetadata({
   title: "AI Sales Tool Alternatives - Omentir",
   description:
-    "Explore alternatives to Gojiberry, Apollo, Instantly, Smartlead, and other AI sales tools. Compare channel fit, discovery models, and when Omentir is the better buy.",
+    "Honest matchups for Gojiberry, Apollo, Instantly, Smartlead, and other AI sales tools. Channel fit, discovery models, and when Omentir is the better buy.",
   path: "/comparisons",
   keywords: [
     "AI sales tool alternatives",
@@ -22,8 +22,9 @@ export default function ComparisonsIndexPage() {
     <SeoIndexPageView
       family="comparisons"
       title="AI sales tool alternatives"
-      description="Explore Omentir as an alternative to popular AI sales and outbound tools. Compare channel fit, workflows, and tradeoffs before you choose."
+      description="Omentir versus popular AI sales and outbound tools. Channel fit, workflows, and tradeoffs before you choose."
       pages={ALL_COMPARISONS}
+      compactHero
     />
   );
 }

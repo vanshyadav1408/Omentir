@@ -4,7 +4,7 @@ import BlogPostTemplate from "../blog-post-template";
 
 export const metadata = createPageMetadata({
   title: "The Ultimate Guide to LinkedIn Account Health - Omentir",
-  description: "Keep your sales profiles safe. Discover how to manage cookies, session geolocations, API routing, and pacing limits to maintain high account health scores.",
+  description: "How to keep LinkedIn sales profiles usable: cookies, session location, API routing, pacing limits, and what to do after a restriction.",
   path: "/blogs/linkedin-account-health-safety",
   keywords: [
     "ultimate guide linkedin account health",
@@ -17,28 +17,28 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "account-health-importance", label: "The Core Pillars of LinkedIn Profile Security", level: 1 },
-  { id: "health-baseline", label: "Create an Account Health Baseline", level: 2 },
-  { id: "calculating-health-score", label: "Understanding the Platform Account Health Score", level: 1 },
-  { id: "cookie-session-management", label: "Session Security: Managing Cookies and Geolocation IPs", level: 2 },
-  { id: "secure-api-routing", label: "Secure Integration: Bypassing Risky Extensions with API Routes", level: 2 },
-  { id: "objections-and-spam-flags", label: "Copywriting: Reducing Spam Reports with Relevance", level: 1 },
-  { id: "sender-reputation-loop", label: "The Sender Reputation Feedback Loop", level: 2 },
-  { id: "health-metrics-table", label: "Account Health Metrics to Track", level: 2 },
-  { id: "handling-restrictions", label: "The Recovery Playbook: What to Do If Restricted", level: 1 },
-  { id: "restricted-restart-plan", label: "Restart Safely After a Restriction", level: 2 },
-  { id: "safety-sop-checklist", label: "SOP: The Weekly Account Health Audit Checklist", level: 1 },
-  { id: "team-operating-rules", label: "Team Operating Rules", level: 2 },
-  { id: "sender-assignment", label: "Assign the Right Sender", level: 2 },
-  { id: "monthly-cleanup", label: "Monthly Cleanup Routine", level: 2 },
-  { id: "conclusion", label: "Building a Resilient Outreach Infrastructure", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "account-health-importance", label: "What actually keeps a LinkedIn profile safe", level: 1 },
+  { id: "health-baseline", label: "Create an account health baseline", level: 2 },
+  { id: "calculating-health-score", label: "How platforms score account health", level: 1 },
+  { id: "cookie-session-management", label: "Session security: cookies and location", level: 2 },
+  { id: "secure-api-routing", label: "Skip risky extensions: use API routes", level: 2 },
+  { id: "objections-and-spam-flags", label: "Copy that cuts spam reports", level: 1 },
+  { id: "sender-reputation-loop", label: "The sender reputation feedback loop", level: 2 },
+  { id: "health-metrics-table", label: "Account health metrics to track", level: 2 },
+  { id: "handling-restrictions", label: "If you get restricted", level: 1 },
+  { id: "restricted-restart-plan", label: "Restart safely after a restriction", level: 2 },
+  { id: "safety-sop-checklist", label: "SOP: weekly account health audit", level: 1 },
+  { id: "team-operating-rules", label: "Team operating rules", level: 2 },
+  { id: "sender-assignment", label: "Assign the right sender", level: 2 },
+  { id: "monthly-cleanup", label: "Monthly cleanup routine", level: 2 },
+  { id: "conclusion", label: "Keep the sending setup boring and healthy", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
   {
     question: "What factors influence my LinkedIn account health score?",
-    answer: "Platform algorithms weight several parameters: connection acceptance rates (target above 40%), spam report ratios (must stay near zero), profile completion, and consistency of sending pacing."
+    answer: "Platforms weigh several signals: connection acceptance (aim above 40%), spam reports (keep near zero), profile completion, and whether sending pace looks consistent."
   },
   {
     question: "Why do browser extensions trigger LinkedIn account bans?",
@@ -50,7 +50,7 @@ const faqItems = [
   },
   {
     question: "What should I do if my LinkedIn account is temporarily restricted?",
-    answer: "Disconnect all outreach automation, withdraw all pending connection requests, wait for the restriction to lift naturally, and warm up the account manual for 7 days before resuming campaigns."
+    answer: "Disconnect all outreach automation, withdraw pending connection requests, wait for the restriction to lift on its own, and use the account by hand for 7 days before resuming campaigns."
   }
 ] as const;
 
@@ -58,7 +58,7 @@ export default function BlogPost() {
   return (
     <BlogPostTemplate
       title="The Ultimate Guide to LinkedIn Account Health and Safety"
-      description="Protect your valuable sales assets. Learn how platform security scoring, session persistence, API routes, and paced outboxes prevent account restrictions."
+      description="How platform scoring, session persistence, API routes, and paced sending keep LinkedIn sales profiles from getting restricted."
       slug="linkedin-account-health-safety"
       bannerSrc="/linkedin-account-health-safety.avif"
       bannerAlt="LinkedIn profile security pillars and automated outbox throttling diagram"
@@ -66,20 +66,20 @@ export default function BlogPost() {
       faqItems={faqItems}
     >
       <p id="account-health-importance" className="scroll-mt-28">
-        B2B outbound sales campaigns are only as resilient as their sending infrastructure. growth teams spend months sourcing lead lists, writing personalized prompts, and configuring multi-profile campaign loops. But if your target profiles get restricted or banned, your entire sales development pipeline stops.
+        B2B outbound only lasts as long as the sending accounts stay usable. Growth teams spend months sourcing lists, writing prompts, and wiring multi-profile campaigns. If those profiles get restricted or banned, the pipeline stops.
       </p>
       <p>
-        Social platforms have updated their security layers to filter out automated spam. Profile checks scan for repetitive action intervals, session IP mismatches, and low acceptances, locking profiles that show bot behavior.
+        Social platforms have tightened spam filters. They look for repetitive action intervals, session IP mismatches, and low acceptance. Profiles that look like bots get locked.
       </p>
       <p>
-        Bypassing these filters does not require using hidden tools. Senders must prioritize safety, implementing cookie management, secure API routes, and pacing limits.
+        You do not need a hidden tool to stay under those filters. You need cookie hygiene, API routing instead of DOM scripts, and daily limits you actually keep.
       </p>
       <p>
         Account health is not a setting. It is the history of where you logged in, how fast you sent, and whether the last fifty notes looked like one person. Treat that history as an asset.
       </p>
 
       <h3 id="health-baseline" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Create an Account Health Baseline
+        Create an account health baseline
       </h3>
       <p>
         Before connecting any outbound workflow, record the account's baseline. Count pending invites, recent accepted requests, current conversations, profile completeness, and whether the account has received recent security prompts. This gives you a reference point when performance changes.
@@ -89,10 +89,10 @@ export default function BlogPost() {
       </p>
 
       <h2 id="calculating-health-score" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Understanding the Platform Account Health Score
+        How platforms score account health
       </h2>
       <p>
-        LinkedIn's algorithms evaluate profile activity to calculate a trust score. Senders with high scores get higher weekly invite allowances.
+        LinkedIn evaluates profile activity and assigns a trust score. Accounts with higher scores usually get more weekly invite room.
       </p>
       <p>
         The platform monitors several indicators:
@@ -114,7 +114,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="cookie-session-management" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Session Security: Managing Cookies and Geolocation IPs
+        Session security: cookies and location
       </h2>
       <p>
         Session conflicts are a major trigger for security alerts. If a sales operator logs in to a profile from New York while an automation script accesses it from London minutes later, security checks will lock the profile.
@@ -123,20 +123,20 @@ export default function BlogPost() {
         To prevent these geolocation alerts, ensure your automation runs on proxy servers located in your local region.
       </p>
       <p>
-        Additionally, manage browser cookies to persist session tokens, avoiding constant re-authentication requests.
+        Also keep browser cookies so session tokens persist. Constant re-authentication looks like a new device every time.
       </p>
       <p>
         The safest operating model is one owner per profile. If three people log in from different cities, while a tool sends from a fourth location, the account starts to look abnormal. Keep access limited, document who owns the profile, and avoid casual password sharing.
       </p>
 
       <h2 id="secure-api-routing" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Secure Integration: Bypassing Risky Extensions with API Routes
+        Skip risky extensions: use API routes
       </h2>
       <p>
-        Chrome extensions are risky tools for B2B prospecting. They inject code into the page DOM, which is easily detected by platform security scripts.
+        Chrome extensions are a bad idea for B2B prospecting. They inject code into the page DOM, which platform security scripts can see.
       </p>
       <p>
-        The solution is to use secure API routing. By integrating your profiles via API connectors (like Unipile), your campaigns communicate directly with platform endpoints, bypassing detection.
+        Use API routing instead. Connect profiles through an API connector (Unipile is one example). Campaigns then talk to platform endpoints instead of clicking around in a browser.
       </p>
       <p>
         API routing is not a license to send aggressively. It simply removes one risky execution method: browser manipulation. You still need daily caps, message review, opt-out handling, and a clear stop condition when someone replies.
@@ -146,19 +146,19 @@ export default function BlogPost() {
         <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
         <div className="pl-4">
           <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-            Safety Rule: Restrict Daily Actions 💡
+            Cap daily actions
           </h4>
           <p className="text-sm text-zinc-650 leading-relaxed">
-            Never send more than 20 connection requests daily from a single profile. Pacing requests with random delays keeps your campaigns safe.
+            Never send more than 20 connection requests a day from one profile. Space them with random delays.
           </p>
         </div>
       </div>
 
       <h2 id="objections-and-spam-flags" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Copywriting: Reducing Spam Reports with Relevance
+        Copy that cuts spam reports
       </h2>
       <p>
-        Copywriting relevance directly impacts profile safety. If you send generic sales pitches to cold lists, prospects will report your messages as spam.
+        Relevance is an account-health issue. Generic pitches to cold lists get reported as spam.
       </p>
       <p>
         Use copywriting prompts grounded in website metadata and career signals, as detailed in our guide on{" "}
@@ -172,7 +172,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="sender-reputation-loop" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        The Sender Reputation Feedback Loop
+        The sender reputation feedback loop
       </h3>
       <p>
         Review account health weekly through a simple loop: audience, copy, volume, reaction. If the audience is broad, copy gets vague. If copy is vague, acceptance drops. If acceptance drops while volume rises, account risk increases.
@@ -187,7 +187,7 @@ export default function BlogPost() {
       </div>
 
       <h3 id="health-metrics-table" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Account Health Metrics to Track
+        Account health metrics to track
       </h3>
       <p>
         You do not need a complicated dashboard to protect a LinkedIn profile. Track a small set of metrics weekly and write down the decision each metric implies.
@@ -197,7 +197,7 @@ export default function BlogPost() {
           <thead className="bg-[#f4f2ec]">
             <tr>
               <th className="px-4 py-3 font-semibold text-black">Metric</th>
-              <th className="px-4 py-3 font-semibold text-black">What It Tells You</th>
+              <th className="px-4 py-3 font-semibold text-black">What it tells you</th>
               <th className="px-4 py-3 font-semibold text-black">Action</th>
             </tr>
           </thead>
@@ -225,10 +225,10 @@ export default function BlogPost() {
       </p>
 
       <h2 id="handling-restrictions" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        The Recovery Playbook: What to Do If Restricted
+        If you get restricted
       </h2>
       <p>
-        If your profile is restricted, follow these steps to recover the asset:
+        If the profile is restricted, recover it in this order:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
         <li><strong>Step 1:</strong> Disconnect all campaigns and automation scripts immediately.</li>
@@ -245,7 +245,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="restricted-restart-plan" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Restart Safely After a Restriction
+        Restart safely after a restriction
       </h3>
       <p>
         A restriction should reset the campaign plan. Do not reconnect the account and resume at the old volume the moment access returns. Spend several days using the account manually, answering existing conversations, and removing stale pending invites.
@@ -255,13 +255,13 @@ export default function BlogPost() {
       </p>
 
       <h2 id="safety-sop-checklist" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: The Weekly Account Health Audit Checklist
+        SOP: weekly account health audit
       </h2>
       <p>
-        Audit your account safety weekly using these steps:
+        Audit account safety weekly:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Step 1:</strong> Track connection acceptance rates, ensuring they remain above 40%.</li>
+        <li><strong>Step 1:</strong> Track connection acceptance rates and keep them above 40%.</li>
         <li><strong>Step 2:</strong> Withdraw pending connection requests open for more than 14 days.</li>
         <li><strong>Step 3:</strong> Verify that your automation proxies match your local operator region.</li>
         <li><strong>Step 4:</strong> Check campaign pacing and outbox delay settings in Omentir.</li>
@@ -269,11 +269,11 @@ export default function BlogPost() {
         <li><strong>Step 6:</strong> Confirm every active campaign has a human owner watching replies.</li>
       </ul>
       <p>
-        Omentir manages these campaign variables, keeping your outbound pipeline safe.
+        Omentir tracks these campaign settings so the outbound pipeline stays inside the limits you set.
       </p>
 
       <h3 id="team-operating-rules" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Team Operating Rules
+        Team operating rules
       </h3>
       <p>
         If multiple people use the same workspace, write operating rules. Who can launch a campaign? Who can raise daily limits? Who handles opt-outs? Who decides when an account pauses? Ambiguity creates risk because everyone assumes someone else is watching the sender.
@@ -283,7 +283,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="sender-assignment" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Assign the Right Sender
+        Assign the right sender
       </h3>
       <p>
         Account health is easier to protect when the sender matches the buyer. A founder profile is usually strongest for early customer discovery, design-partner outreach, and high-trust conversations. A sales profile may work better for broader prospecting once the message is proven.
@@ -299,7 +299,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="monthly-cleanup" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Monthly Cleanup Routine
+        Monthly cleanup routine
       </h3>
       <p>
         Once a month, run a deeper cleanup. Review every connected sender, archive inactive campaigns, remove old test lists, verify opt-out suppression, and check whether each sender still matches the market it is contacting.
@@ -312,13 +312,13 @@ export default function BlogPost() {
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Building a Resilient Outreach Infrastructure
+        Keep the sending setup boring and healthy
       </h2>
       <p>
-        Outbound outreach is most effective when it is relationship-focused. Senders who ignore safety boundaries will struggle with frequent restrictions and bans.
+        Outbound works when it looks like a person talking to people they have a reason to contact. Teams that ignore safety spend their weeks recovering accounts.
       </p>
       <p>
-        By managing session geolocations, API routing, and connection pacing, you protect your profile assets. Healthy outreach still depends on human judgment and consistent account hygiene. A clean integration cannot save a founder who logs in from a new country and sends 60 invites that night.
+        Manage session location, API routing, and invite pacing, and the profile stays usable. A clean integration still cannot save a founder who logs in from a new country and sends 60 invites that night. Judgment and hygiene still matter.
       </p>
     </BlogPostTemplate>
   );

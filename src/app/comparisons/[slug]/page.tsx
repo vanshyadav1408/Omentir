@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: PageProps) {
   if (!page) {
     return createPageMetadata({
       title: "AI Sales Tool Alternative - Omentir",
-      description: "Explore Omentir as an alternative for AI sales and LinkedIn outreach.",
+      description: "Omentir as an alternative for AI sales and LinkedIn outreach.",
       path: `/comparisons/${slug}`,
       noIndex: true,
     });

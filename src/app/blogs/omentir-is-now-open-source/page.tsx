@@ -18,12 +18,12 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "why", label: "Why We Did It", level: 1 },
-  { id: "whats-in-the-repo", label: "What's in the Repo", level: 1 },
-  { id: "self-hosting", label: "You Can Run It Yourself", level: 1 },
-  { id: "what-stays-private", label: "What Stays Private", level: 1 },
-  { id: "hosted-product", label: "Nothing Changes If You're a Customer", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 },
+  { id: "why", label: "Why we did it", level: 1 },
+  { id: "whats-in-the-repo", label: "What's in the repo", level: 1 },
+  { id: "self-hosting", label: "You can run it yourself", level: 1 },
+  { id: "what-stays-private", label: "What stays private", level: 1 },
+  { id: "hosted-product", label: "Nothing changes if you're a customer", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 },
 ];
 
 const faqItems = [
@@ -84,7 +84,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="mt-10 scroll-mt-28 border-b border-zinc-200 pb-2 pt-2 text-2xl font-semibold tracking-tight text-black"
       >
-        Why We Did It
+        Why we did it
       </h2>
       <p>
         One word: trust. Omentir connects to your LinkedIn account and sends
@@ -110,7 +110,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="mt-10 scroll-mt-28 border-b border-zinc-200 pb-2 pt-2 text-2xl font-semibold tracking-tight text-black"
       >
-        What&apos;s in the Repo
+        What&apos;s in the repo
       </h2>
       <p>Everything that makes Omentir work:</p>
       <ul className="list-disc space-y-2 pl-6">
@@ -131,7 +131,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="mt-10 scroll-mt-28 border-b border-zinc-200 pb-2 pt-2 text-2xl font-semibold tracking-tight text-black"
       >
-        You Can Run It Yourself
+        You can run it yourself
       </h2>
       <p>
         If you would rather run Omentir on your own infrastructure, you can.
@@ -156,7 +156,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="mt-10 scroll-mt-28 border-b border-zinc-200 pb-2 pt-2 text-2xl font-semibold tracking-tight text-black"
       >
-        What Stays Private
+        What stays private
       </h2>
       <p>
         Open source means the software is public, not the people using it.
@@ -174,7 +174,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="mt-10 scroll-mt-28 border-b border-zinc-200 pb-2 pt-2 text-2xl font-semibold tracking-tight text-black"
       >
-        Nothing Changes If You&apos;re a Customer
+        Nothing changes if you&apos;re a customer
       </h2>
       <p>
         Omentir.com keeps running exactly as before. The subscription pays for
@@ -212,7 +212,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="mt-10 scroll-mt-28 border-b border-zinc-200 pb-2 pt-2 text-2xl font-semibold tracking-tight text-black"
       >
-        Frequently Asked Questions
+        Frequently asked questions
       </h2>
       <FaqAccordion items={faqItems} />
     </BlogPostTemplate>

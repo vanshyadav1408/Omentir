@@ -17,12 +17,12 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems = [
-  { id: "scale-paradox", label: "The Personalization Scale Paradox", level: 1 },
-  { id: "intent-triggers", label: "Sourcing Real-Time Intent Triggers", level: 1 },
-  { id: "programmatic-context", label: "The Programmatic Copywriting Framework", level: 1 },
-  { id: "clean-variables", label: "Clean vs. Dirty Dynamic Variables", level: 1 },
-  { id: "case-study-scale", label: "Case Study: Scaling Outbound Safely", level: 1 },
-  { id: "faqs", label: "FAQs on Personalization & AI", level: 1 }
+  { id: "scale-paradox", label: "The personalization scale paradox", level: 1 },
+  { id: "intent-triggers", label: "Sourcing real-time intent triggers", level: 1 },
+  { id: "programmatic-context", label: "The programmatic copywriting framework", level: 1 },
+  { id: "clean-variables", label: "Clean vs dirty dynamic variables", level: 1 },
+  { id: "case-study-scale", label: "Case study: scaling outbound safely", level: 1 },
+  { id: "faqs", label: "FAQs on personalization and AI", level: 1 }
 ] as const;
 
 const faqItems = [
@@ -45,7 +45,7 @@ export default function BlogPost() {
     >
       <div id="introduction" className="scroll-mt-28">
         <p>
-          The B2B outbound landscape in 2026 is defined by a massive operational challenge: how do you scale your sales pipeline while maintaining deep, highly relevant personalization? In an era where C-suite leaders and enterprise directors receive dozens of cold messages daily, traditional high-volume blast campaigns are completely useless. Robotic, low-context pitches are blocked instantly, and accounts that run them are restricted within days.
+          The B2B outbound problem in 2026 is operational: how do you scale pipeline without dropping personalization? C-suite leaders and enterprise directors get dozens of cold messages daily, so high-volume blast campaigns barely work. Robotic, low-context pitches get blocked, and accounts that run them get restricted within days.
         </p>
         <p>
           Conversely, manual, deep-dive prospecting represents a severe bottleneck. If a sales rep spends 20 minutes researching a single prospect, cleaning their profile data, and writing a customized note, they can only contact 15 leads per day. At that pace, generating enough pipeline to support high-growth targets is impossible. To win today, sales teams must resolve this paradox by combining programmatic scraper tools, real-time intent filters, and automated context engines to write highly customized invitations and follow-ups at scale.
@@ -56,7 +56,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          The Personalization vs. Scale Paradox
+          The personalization vs scale paradox
         </h2>
         <p>
           To escape this operational trap, we must redefine what personalization actually means. In the early days of social selling, "personalizing" a message simply meant populating basic fields like `[First_Name]` and `[Company_Name]`, or referencing a superficial detail like their alma mater or location. <i>("Hey [Name], saw you went to UT Austin, hook 'em!")</i>
@@ -73,7 +73,7 @@ export default function BlogPost() {
           <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
           <div className="pl-4">
             <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-              The Relevance Rule
+              The relevance rule
             </h4>
             <p className="text-sm text-zinc-650 leading-relaxed">
               Never praise a prospect superficially. Referencing hiring campaigns, technographic stack changes, or recent industry regulatory shifts generates up to three times more positive response rates than generic flattery. Keep your outreach focused entirely on business outcomes.
@@ -86,7 +86,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Sourcing Real-Time Intent Triggers
+          Sourcing real-time intent triggers
         </h2>
         <p>
           To execute personalization programmatically, you must feed your outbound engine with high-intent social and corporate signals. Instead of blasting a static database of job titles, build dynamic lists that update automatically when prospects trigger specific operational events:
@@ -111,7 +111,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          The Programmatic Copywriting Framework
+          The programmatic copywriting framework
         </h2>
         <p>
           To scale personalized messaging safely, you must abandon single-use manual copy in favor of structured templates. By structuring your templates with dynamic context placeholders, you can compile highly customized messages programmatically:
@@ -145,7 +145,7 @@ export default function BlogPost() {
                 <td className="px-4 py-3 font-medium text-black">3. The Asset</td>
                 <td className="px-4 py-3 font-mono text-zinc-900">[Value_Asset]</td>
                 <td className="px-4 py-3">Shares a frictionless, disarming solution.</td>
-                <td className="px-4 py-3 text-zinc-800">"We put together a clean 1-page playbook showcasing how to automate list cleaning."</td>
+                <td className="px-4 py-3 text-zinc-800">"We put together a clean 1-page playbook showing how to automate list cleaning."</td>
               </tr>
               <tr>
                 <td className="px-4 py-3 font-medium text-black">4. The Close</td>
@@ -162,7 +162,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Clean vs. Dirty Dynamic Variables
+          Clean vs dirty dynamic variables
         </h2>
         <p>
           The fastest way to ruin a programmatic campaign is using uncleaned data. Scraped lists are filled with messy formatting-all-caps names, corporate suffixes (Inc., LLC), and long job titles. If you input these raw values into your templates, the prospect will instantly recognize the script:
@@ -193,10 +193,10 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Case Study: Scaling Outbound Safely to 80 Custom DMs Daily
+          Case study: scaling outbound safely to 80 custom DMs daily
         </h2>
         <p>
-          Let's examine how a B2B SaaS startup, TechStack, scaled their sales pipeline safely using Omentir's context engines. TechStack had a tiny outbound team of two reps. They were running a manual prospecting workflow, researching and sending 15 highly personalized connection requests daily.
+          TechStack, a B2B SaaS startup, scaled its sales pipeline using Omentir's context engines. The outbound team was two reps, running a manual workflow: researching and sending 15 highly personalized connection requests daily.
         </p>
         <p>
           While their connection acceptance rate was decent (40%), the low volume generated only 2 qualified demos weekly. They needed to scale their outbound output to support their aggressive growth targets, but they could not afford to hire more SDRs.
@@ -211,14 +211,14 @@ export default function BlogPost() {
           <li><strong>Step 4: Human-in-the-loop review.</strong> The sales reps reviewed and approved the drafts daily, taking only 15 minutes to verify 80 personalized messages.</li>
         </ul>
         <p>
-          The results were immediate and dramatic. TechStack scaled their daily outreach from 30 to 80 personalized direct messages daily. Their connection acceptance rate climbed to 48%, and their positive reply rate doubled. TechStack booked 8 qualified demos weekly, building a robust, predictable sales pipeline while keeping their profiles perfectly secure.
+          Results showed up quickly. TechStack scaled daily outreach from 30 to 80 personalized direct messages. Connection acceptance climbed to 48%, and the positive reply rate doubled. TechStack booked 8 qualified demos weekly, building a predictable sales pipeline while keeping profiles off restriction.
         </p>
 
         {/* Workflow checklist */}
         <div className="my-10 rounded-2xl border border-zinc-200 bg-[#f4f2ec] p-8 text-center shadow-[0_18px_60px_rgba(15,23,42,0.06)] relative overflow-hidden">
           <div className="absolute inset-x-0 top-0 h-1.5 bg-[#ba3871]" />
           <h3 style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mb-3">
-            Review Each Personalization Layer
+            Review each personalization layer
           </h3>
           <p className="text-sm text-zinc-650 leading-relaxed max-w-xl mx-auto mb-6">
             Use the personalization layers above to decide what must be human-reviewed and what can be templated. Good scale preserves judgment instead of hiding generic copy behind variables.
@@ -239,7 +239,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Personalization Levels: What to Use and When
+          Personalization levels: what to use and when
         </h2>
         <p>
           Personalization at scale does not mean writing a 300-word custom essay for every lead. It means choosing the right depth of research for the value of the account and the strength of the signal.
@@ -259,7 +259,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Quality Control Rules for Scaled Notes
+          Quality control rules for scaled notes
         </h2>
         <p>
           Every scaled note should pass a simple quality check. It must reference a real signal, connect that signal to a business problem, and make one easy ask. If the note only swaps first name and company name, it is not personalization.
@@ -272,7 +272,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Frequently Asked Questions (FAQs)
+          Frequently asked questions
         </h2>
 
         <FaqAccordion items={faqItems} />

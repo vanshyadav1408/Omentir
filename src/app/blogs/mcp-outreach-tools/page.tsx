@@ -18,17 +18,17 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "mcp-standardization", label: "How Model Context Protocol Standardizes AI Tool Access", level: 1 },
-  { id: "omentir-mcp-server", label: "The Omentir Hosted MCP Server Architecture", level: 1 },
-  { id: "configuring-clients", label: "Step-by-Step Client Setup for Cursor, Claude, and ChatGPT", level: 1 },
-  { id: "cursor-setup", label: "Integrating with the Cursor IDE Agent", level: 2 },
+  { id: "mcp-standardization", label: "How Model Context Protocol standardizes AI tool access", level: 1 },
+  { id: "omentir-mcp-server", label: "The Omentir hosted MCP server architecture", level: 1 },
+  { id: "configuring-clients", label: "Step-by-step client setup for Cursor, Claude, and ChatGPT", level: 1 },
+  { id: "cursor-setup", label: "Integrating with the Cursor IDE agent", level: 2 },
   { id: "claude-code-setup", label: "Integrating with the Claude Code CLI", level: 2 },
-  { id: "mcp-tool-catalog", label: "Deconstructing the Omentir MCP Tool Catalog", level: 1 },
-  { id: "securing-agent-tokens", label: "Workspace Security and Token Authorization Boundaries", level: 1 },
-  { id: "pacing-compliance-quotas", label: "Pacing Campaign Deliveries to Maintain Account Health", level: 1 },
-  { id: "mcp-setup-checklist", label: "SOP: The MCP Client Setup and Audit Checklist", level: 1 },
-  { id: "conclusion", label: "Empowering Your AI Agents with Context", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "mcp-tool-catalog", label: "The Omentir MCP tool catalog", level: 1 },
+  { id: "securing-agent-tokens", label: "Workspace security and token authorization boundaries", level: 1 },
+  { id: "pacing-compliance-quotas", label: "Pacing campaign deliveries to maintain account health", level: 1 },
+  { id: "mcp-setup-checklist", label: "SOP: the MCP client setup and audit checklist", level: 1 },
+  { id: "conclusion", label: "Give AI agents usable context", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
@@ -68,13 +68,13 @@ export default function BlogPost() {
         The solution to this integration bottleneck is the Model Context Protocol (<a href="https://modelcontextprotocol.io" target="_blank" rel="noopener" className="text-blue-600 hover:underline">MCP</a>). MCP is an open-source standard that defines how client applications connect to server tools. Instead of writing custom code, servers provide machine-readable schemas, allowing agents to discover and run tools automatically.
       </p>
       <p>
-        Omentir adopts this standard with a hosted MCP server. Connecting an AI agent gives it a focused, workspace-scoped surface for product context, lead-finder configuration, scored-lead retrieval, discovery activity, and existing reply conversations. Let's look at how to configure your MCP clients.
+        Omentir adopts this standard with a hosted MCP server. Connecting an AI agent gives it a focused, workspace-scoped surface for product context, lead-finder configuration, scored-lead retrieval, discovery activity, and existing reply conversations. Here is how to configure your MCP clients.
       </p>
       <p>
         The important distinction is that MCP is not another automation shortcut. It is a clean contract between the agent and the sales system. The agent can see which tools exist, what each tool expects, and what the tool returned. That structure matters because outreach work has real consequences: the wrong lead group, the wrong campaign state, or the wrong reply can affect an actual prospect conversation.
       </p>
       <p>
-        For teams that prefer standard REST integrations, the platform also provides full OpenAPI-compliant endpoints under <code>/api/agent/v1</code>. However, using the native MCP server provides the most seamless experience for modern developer environments, as detailed in our guide to{" "}
+        For teams that prefer standard REST integrations, the platform also provides full OpenAPI-compliant endpoints under <code>/api/agent/v1</code>. The native MCP server is still the cleaner path for most developer environments, as detailed in our guide to{" "}
         <Link href="/for-agents" className="text-blue-600 hover:underline">
           Omentir's agent features
         </Link>
@@ -82,7 +82,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="omentir-mcp-server" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        The Omentir Hosted MCP Server Architecture
+        The Omentir hosted MCP server architecture
       </h2>
       <p>
         The Omentir MCP server runs as a hosted endpoint. Unlike local MCP servers that require Node.js or Python packages on your computer, the hosted server manages credentials and API pathways in the cloud.
@@ -110,7 +110,7 @@ export default function BlogPost() {
       </div>
 
       <h2 id="configuring-clients" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Step-by-Step Client Setup for Cursor, Claude, and ChatGPT
+        Step-by-step client setup for Cursor, Claude, and ChatGPT
       </h2>
       <p>
         Setting up your client takes only a few minutes. The exact screen names can change as agent products evolve, but every setup needs the Omentir MCP endpoint and a Streamable HTTP client. Chat apps complete OAuth after you add the URL; header-capable clients can use a workspace token instead.
@@ -120,7 +120,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="cursor-setup" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Integrating with the Cursor IDE Agent
+        Integrating with the Cursor IDE agent
       </h3>
       <p>
         To connect <a href="https://cursor.com" target="_blank" rel="noopener" className="text-blue-600 hover:underline">Cursor</a> to Omentir, open your settings panel and navigate to the MCP server settings. Add a new server and enter the following settings:
@@ -164,7 +164,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="mcp-tool-catalog" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Deconstructing the Omentir MCP Tool Catalog
+        The Omentir MCP tool catalog
       </h2>
       <p>
         The Omentir MCP server provides 19 tools for lead discovery, workspace control, and existing conversations. These tools are grouped into five functional categories:
@@ -191,10 +191,10 @@ export default function BlogPost() {
       </p>
 
       <h2 id="securing-agent-tokens" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Workspace Security and Token Authorization Boundaries
+        Workspace security and token authorization boundaries
       </h2>
       <p>
-        Security is critical when delegating tasks to AI agents. Omentir protects your workspace by enforcing strict authorization boundaries on all agent tokens.
+        Security matters when you delegate tasks to AI agents. Omentir protects your workspace by enforcing strict authorization boundaries on all agent tokens.
       </p>
       <p>
         Each token is scoped to a single workspace. It cannot edit billing details, view other accounts, or access your raw LinkedIn credentials. You can revoke tokens anytime on the API page, disabling access immediately.
@@ -214,7 +214,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="pacing-compliance-quotas" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Pacing Campaign Deliveries to Maintain Account Health
+        Pacing campaign deliveries to maintain account health
       </h2>
       <p>
         MCP tools make it easy to ask an assistant to "create the agent and start outreach." That sentence is where accounts get hurt. The model will happily call create, then update, then create again if you did not tell it to list existing agents first.
@@ -230,7 +230,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="mcp-setup-checklist" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: The MCP Client Setup and Audit Checklist
+        SOP: the MCP client setup and audit checklist
       </h2>
       <p>
         Follow this simple SOP to configure and audit your client setups:
@@ -250,16 +250,16 @@ export default function BlogPost() {
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Empowering Your AI Agents with Context
+        Give AI agents usable context
       </h2>
       <p>
-        Connecting your AI agent to a hosted MCP server makes lead-discovery operations accessible from a chatbot while keeping access scoped and auditable. By documenting tools and securing tokens, you can build a reliable GTM workflow.
+        Connecting your AI agent to a hosted MCP server makes lead-discovery operations accessible from a chatbot while keeping access scoped and auditable. Document tools, secure tokens, and you can run a GTM workflow that stays inspectable.
       </p>
       <p>
         Use Omentir to power your integration. Connect your client via MCP, configure a precise finder, review scored leads, and retrieve exact context before deciding the next step.
       </p>
       <p>
-        The teams that get the most from MCP will not be the ones that automate the most actions. They will be the ones that give agents clean context, narrow permissions, and explicit review points. That is how you get the leverage of AI without losing control of the sales motion.
+        The teams that get the most from MCP will not be the ones that automate the most actions. They will be the ones that give agents clean context, narrow permissions, and explicit review points. That is how you get the benefit of AI without losing control of the sales motion.
       </p>
 
       <h2
@@ -267,7 +267,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Frequently Asked Questions
+        Frequently asked questions
       </h2>
       <FaqAccordion items={faqItems} />
     </BlogPostTemplate>

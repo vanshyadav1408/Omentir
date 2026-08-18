@@ -4,7 +4,7 @@ import BlogPostTemplate from "../blog-post-template";
 
 export const metadata = createPageMetadata({
   title: "11x.ai (Alice) vs. Gojiberry: Autonomous SDR Comparison - Omentir",
-  description: "An honest head-to-head comparison of 11x.ai (Alice) versus Gojiberry for B2B sales. Compare workflow automation, data discovery, safety limits, and pricing.",
+  description: "11x.ai (Alice) versus Gojiberry for B2B sales. Compare workflow, data discovery, safety limits, and pricing. Honest tradeoffs, not a mashup.",
   path: "/blogs/11x-ai-vs-gojiberry",
   keywords: [
     "11x.ai vs Gojiberry",
@@ -17,15 +17,15 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "rise-of-digital-sdr", label: "The Shift to Digital Sales Employees", level: 1 },
-  { id: "11x-alice-overview", label: "11x.ai Alice: The Multi-Channel Outbound Agent", level: 1 },
-  { id: "gojiberry-overview", label: "Gojiberry: The Autonomous Sourcing Platform", level: 1 },
-  { id: "data-discovery-and-intent", label: "Intent Signals and Real-Time Lead Discovery", level: 2 },
-  { id: "workflow-transparency-review", label: "Transparency, Control Loops, and Review Queues", level: 2 },
-  { id: "pacing-and-security-standards", label: "Pacing Quotas, Account Health, and Delivery Safety", level: 1 },
-  { id: "pricing-and-roi-analysis", label: "Pricing Comparison: Enterprise Licenses vs. Scaling Tiers", level: 1 },
-  { id: "sdr-choice-matrix", label: "Decision Rubric: Which Platform Fits Your Growth Goals?", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "rise-of-digital-sdr", label: "The shift to digital sales employees", level: 1 },
+  { id: "11x-alice-overview", label: "11x.ai Alice: the multi-channel outbound agent", level: 1 },
+  { id: "gojiberry-overview", label: "Gojiberry: the autonomous sourcing platform", level: 1 },
+  { id: "data-discovery-and-intent", label: "Intent signals and live lead discovery", level: 2 },
+  { id: "workflow-transparency-review", label: "Transparency, control loops, and review queues", level: 2 },
+  { id: "pacing-and-security-standards", label: "Pacing quotas, account health, and delivery safety", level: 1 },
+  { id: "pricing-and-roi-analysis", label: "Pricing: enterprise licenses vs scaling tiers", level: 1 },
+  { id: "sdr-choice-matrix", label: "Which platform fits your growth goals", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
@@ -51,7 +51,7 @@ export default function BlogPost() {
   return (
     <BlogPostTemplate
       title="11x.ai vs. Gojiberry: Head-to-Head Comparison of Autonomous SDRs"
-      description="Compare 11x.ai (Alice) and Gojiberry head-to-head. Analyze their workflows, data discovery, copywriting engines, safety limits, and pricing models."
+      description="Compare 11x.ai (Alice) and Gojiberry. Workflows, data discovery, copy engines, safety limits, and pricing, without averaging the two products."
       slug="11x-ai-vs-gojiberry"
       bannerSrc="/11x-ai-vs-gojiberry.avif"
       bannerAlt="11x.ai Alice versus Gojiberry autonomous SDR comparison illustration"
@@ -59,29 +59,29 @@ export default function BlogPost() {
       faqItems={faqItems}
     >
       <p id="rise-of-digital-sdr" className="scroll-mt-28">
-        B2B outbound sales has historically been defined by high administrative overhead. Sales development representatives spend up to 70% of their working hours building lists, verifying emails, writing outreach copy, and updating CRM records. This leaves minimal time for actual conversations with potential buyers.
+        B2B outbound has always carried a lot of admin. Sales development reps spend up to 70% of their hours building lists, verifying emails, writing copy, and updating CRM records. That leaves little time for actual conversations.
       </p>
       <p>
-        To solve this efficiency bottleneck, B2B companies are adopting autonomous AI agents. These digital workers manage more of the outbound process, allowing human teams to focus on judgment, relationships, and closing. Two visible platforms in this category are <a href="https://11x.ai/" target="_blank" rel="noopener" className="text-blue-600 hover:underline">11x.ai</a> (featuring Alice, its AI SDR) and <a href="https://gojiberry.ai/" target="_blank" rel="noopener" className="text-blue-600 hover:underline">Gojiberry</a>.
+        To cut that overhead, companies are buying autonomous AI agents. These digital workers handle more of the outbound process so humans can keep judgment, relationships, and closing. Two visible platforms in this category are <a href="https://11x.ai/" target="_blank" rel="noopener" className="text-blue-600 hover:underline">11x.ai</a> (Alice, its AI SDR) and <a href="https://gojiberry.ai/" target="_blank" rel="noopener" className="text-blue-600 hover:underline">Gojiberry</a>.
       </p>
       <p>
-        While both platforms aim to automate B2B prospecting, they approach the problem from different directions. 11x.ai focuses on building a fully autonomous multi-channel agent. Gojiberry focuses on real-time intent signals and automated lead qualification.
+        Both automate B2B prospecting. They do not do it the same way. 11x.ai builds a fully autonomous multi-channel agent. Gojiberry focuses on live intent signals and automated qualification.
       </p>
       <p>
-        In this deep dive, we will compare 11x.ai and Gojiberry head-to-head. We will evaluate their sourcing logic, workflow transparency, account safety engines, and pricing structures to help you choose the right platform for your growth stack.
+        This comparison covers sourcing logic, workflow transparency, account safety, and pricing so you can pick the platform that matches how your team actually works.
       </p>
       <p>
         The comparison is really about operating model. Do you want to buy an enterprise digital worker and delegate a large part of outbound? Or do you want a lighter AI agent focused on finding high-intent prospects and running a more founder-friendly workflow? The answer depends less on the logo and more on your team size, deal value, and tolerance for handing execution to software.
       </p>
 
       <h2 id="11x-alice-overview" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        11x.ai Alice: The Multi-Channel Outbound Agent
+        11x.ai Alice: the multi-channel outbound agent
       </h2>
       <p>
         11x.ai positions Alice as a digital employee that handles campaigns autonomously. Alice manages lead search, writes sequences, and handles outreach across both email and LinkedIn.
       </p>
       <p>
-        Alice's primary advantage is its multi-channel execution. Once you define your campaign rules, Alice researches prospects, drafts connection notes, and executes follow-up schedules. This end-to-end automation reduces the daily management overhead for your sales team.
+        Alice's main advantage is multi-channel execution. Once you set campaign rules, Alice researches prospects, drafts connection notes, and runs follow-up schedules. That cuts daily management for the sales team.
       </p>
       <p>
         However, Alice is best evaluated as a serious GTM implementation, not a casual subscription. 11x's public positioning is enterprise-heavy: digital workers, live demos, custom deployment, and pipeline outcomes. That can be attractive if you have a mature sales motion and enough volume to justify the setup.
@@ -91,7 +91,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="gojiberry-overview" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Gojiberry: The Autonomous Sourcing Platform
+        Gojiberry: the autonomous sourcing platform
       </h2>
       <p>
         Gojiberry focuses on the founder and small-team version of the problem: teach the agent your business, identify high-intent buyers, and contact them without forcing the team to assemble a large outbound stack.
@@ -116,13 +116,13 @@ export default function BlogPost() {
       </div>
 
       <h2 id="data-discovery-and-intent" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Intent Signals and Real-Time Lead Discovery
+        Intent signals and live lead discovery
       </h2>
       <p>
         A B2B outbound campaign is only successful if it targets the right buyers at the right time. Senders using static list exports will see low conversion rates because of outdated data.
       </p>
       <p>
-        Gojiberry excels at real-time discovery. Its web crawlers extract details directly from prospect company websites, identifying hiring trends and software stack updates. This ensures your outreach targets active projects.
+        Gojiberry is stronger at live discovery. Its crawlers pull details from company websites, including hiring trends and software stack updates, so outreach can hit active projects.
       </p>
       <p>
         11x.ai Alice is positioned around autonomous prospecting and pipeline creation. Rather than judging it only on raw sourcing, ask how it combines account research, contact discovery, personalization, and campaign execution into one workflow.
@@ -139,29 +139,29 @@ export default function BlogPost() {
       </p>
 
       <h2 id="workflow-transparency-review" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Transparency, Control Loops, and Review Queues
+        Transparency, control loops, and review queues
       </h2>
       <p>
         Delegating outreach to an AI agent requires trust. If the agent drafts messages without review, it can write generic or inaccurate copy that hurts your brand reputation.
       </p>
       <p>
-        11x.ai Alice operates with high autonomy, often running campaigns in the background with minimal human intervention. This is convenient for volume-focused teams, but presents risks for brands that require exact copy controls.
+        11x.ai Alice runs with high autonomy, often in the background with little human intervention. Convenient for volume-focused teams. Risky for brands that need exact copy control.
       </p>
       <p>
         Gojiberry provides a structured qualification interface, allowing sales operations to review lead scores and check fit details before pushing contacts to external campaigns.
       </p>
       <p>
-        Omentir prioritizes control by including a human-in-the-loop review queue. The system drafts connection notes and responses, but holds them for your approval, ensuring you retain control over every message sent.
+        Omentir includes a human-in-the-loop review queue. It drafts connection notes and replies, then holds them for your approval so you still control every send.
       </p>
       <p>
         This is the category buyers often underweight. A slick demo can make full autonomy look effortless, but the real question is what happens when the agent is wrong. Can you pause it quickly? Can you inspect drafts? Can you see why a lead qualified? Can you edit messaging before it hits LinkedIn? Can you separate draft campaigns from active ones? Those controls matter more than the phrase "AI SDR."
       </p>
       <p>
-        If your company sells into regulated industries, enterprise accounts, or founder-led networks, favor the platform that gives you the clearest review path. If your motion is high-volume and the offer is already proven, you may accept more autonomy in exchange for operational leverage.
+        If you sell into regulated industries, enterprise accounts, or founder-led networks, pick the platform with the clearest review path. If the motion is high-volume and the offer is already proven, you may trade some control for speed.
       </p>
 
       <h2 id="pacing-and-security-standards" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Pacing Quotas, Account Health, and Delivery Safety
+        Pacing quotas, account health, and delivery safety
       </h2>
       <p>
         Outbound campaigns must respect platform security limits. Sending connection requests at mechanical speeds will trigger LinkedIn's safety filters, resulting in account limits or bans.
@@ -180,7 +180,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="pricing-and-roi-analysis" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Pricing Comparison: Enterprise Licenses vs. Scaling Tiers
+        Pricing: enterprise licenses vs scaling tiers
       </h2>
       <p>
         The financial commitment for these platforms differs significantly:
@@ -201,10 +201,10 @@ export default function BlogPost() {
       </p>
 
       <h2 id="sdr-choice-matrix" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Decision Rubric: Which Platform Fits Your Growth Goals?
+        Which platform fits your growth goals
       </h2>
       <p>
-        Evaluate the following criteria before selecting your autonomous sales tool:
+        Check these before you pick an autonomous sales tool:
       </p>
       <p>
         <strong>Choose 11x.ai (Alice) if:</strong> You want an enterprise digital SDR, have the budget for annual commitments, and can support a serious implementation with clear oversight.

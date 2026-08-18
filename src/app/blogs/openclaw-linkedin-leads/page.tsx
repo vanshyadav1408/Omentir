@@ -23,13 +23,13 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "openclaw-is-the-operator", label: "OpenClaw Is the Operator", level: 1 },
-  { id: "define-the-sales-job", label: "Define the Sales Job", level: 1 },
-  { id: "connect-the-right-tools", label: "Connect the Right Tools", level: 1 },
-  { id: "lead-qualification-loop", label: "Lead Qualification Loop", level: 1 },
-  { id: "approval-gates", label: "Approval Gates", level: 2 },
-  { id: "daily-agent-routine", label: "Daily Agent Routine", level: 1 },
-  { id: "where-omentir-fits", label: "Where Omentir Fits", level: 1 },
+  { id: "openclaw-is-the-operator", label: "OpenClaw is the operator", level: 1 },
+  { id: "define-the-sales-job", label: "Define the sales job", level: 1 },
+  { id: "connect-the-right-tools", label: "Connect the right tools", level: 1 },
+  { id: "lead-qualification-loop", label: "Lead qualification loop", level: 1 },
+  { id: "approval-gates", label: "Approval gates", level: 2 },
+  { id: "daily-agent-routine", label: "Daily agent routine", level: 1 },
+  { id: "where-omentir-fits", label: "Where Omentir fits", level: 1 },
   { id: "faqs", label: "FAQs", level: 1 },
 ];
 
@@ -85,7 +85,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        OpenClaw Is the Operator
+        OpenClaw is the operator
       </h2>
       <p>
         OpenClaw describes itself as a personal AI assistant that can work from chat surfaces and connect to tools. In sales terms, that makes it a coordinator: you can ask it for an outcome, and it can gather context, call tools, and report progress back in plain language.
@@ -116,7 +116,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Define the Sales Job
+        Define the sales job
       </h2>
       <p>
         A weak agent instruction sounds like this: "Find me leads on LinkedIn." It is short, but it hides every important decision. The agent does not know which market to prioritize, what counts as urgency, which buyers are bad fits, or what you want done with the results.
@@ -145,7 +145,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Connect the Right Tools
+        Connect the right tools
       </h2>
       <p>
         OpenClaw becomes more useful when it can call tools through the{" "}
@@ -168,7 +168,7 @@ export default function BlogPost() {
         <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
         <div className="pl-4">
           <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-            Tool Access Checklist
+            Tool access checklist
           </h4>
           <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-sm text-zinc-800">
             <li>Read-only workspace context before write access.</li>
@@ -188,7 +188,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Lead Qualification Loop
+        Lead qualification loop
       </h2>
       <p>
         The agent loop should be boring and explicit. OpenClaw receives the prospecting job, pulls candidates from the connected system, scores them against your ICP, asks for missing evidence when needed, and returns a shortlist grouped by action.
@@ -227,7 +227,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="approval-gates" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Approval Gates
+        Approval gates
       </h3>
       <p>
         There are three approval gates that should exist before live outreach: approve the ICP, approve the lead list, and approve the copy. If any one of those gates is skipped, the campaign can look automated even when every individual step seems reasonable.
@@ -248,7 +248,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Daily Agent Routine
+        Daily agent routine
       </h2>
       <p>
         The advantage of an agent-led workflow is cadence. You can ask OpenClaw to run the same operating loop every morning, summarize what changed, and queue only the decisions that need you.
@@ -290,7 +290,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Where Omentir Fits
+        Where Omentir fits
       </h2>
       <p>
         OpenClaw is the operator interface. Omentir can be the sales system it operates. Through the{" "}

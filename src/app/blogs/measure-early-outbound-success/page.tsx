@@ -17,17 +17,17 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "vanity-vs-value-metrics", label: "The Trap of Outbound Vanity Metrics", level: 1 },
-  { id: "stage-of-learning", label: "Measure the Stage of Learning, Not Just Output", level: 2 },
-  { id: "core-outbound-kpis", label: "The Key Performance Indicators for Early Sales Pipelines", level: 1 },
-  { id: "opportunity-conversion-rate", label: "Opportunity Conversion Rate: Tracking Conversations to Demos", level: 2 },
-  { id: "cost-per-opportunity-math", label: "Calculating the Real Cost Per Opportunity", level: 2 },
-  { id: "pipeline-velocity-metrics", label: "Measuring Sales Velocity and Timeline Milestones", level: 2 },
-  { id: "diagnose-metric-patterns", label: "How to Diagnose Metric Patterns", level: 2 },
-  { id: "delivery-safety-limits", label: "Enforcing Outbox Pacing to Protect Campaign Deliverability", level: 1 },
-  { id: "metrics-tracking-sop", label: "SOP: The Weekly Sales Metrics Audit Checklist", level: 1 },
-  { id: "conclusion", label: "Focusing Outbound Campaigns on Revenue Fit", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "vanity-vs-value-metrics", label: "The trap of outbound vanity metrics", level: 1 },
+  { id: "stage-of-learning", label: "Measure the stage of learning, not just output", level: 2 },
+  { id: "core-outbound-kpis", label: "The key performance indicators for early sales pipelines", level: 1 },
+  { id: "opportunity-conversion-rate", label: "Opportunity conversion rate: tracking conversations to demos", level: 2 },
+  { id: "cost-per-opportunity-math", label: "Calculating the real cost per opportunity", level: 2 },
+  { id: "pipeline-velocity-metrics", label: "Measuring sales velocity and timeline milestones", level: 2 },
+  { id: "diagnose-metric-patterns", label: "How to diagnose metric patterns", level: 2 },
+  { id: "delivery-safety-limits", label: "Enforcing outbox pacing to protect campaign deliverability", level: 1 },
+  { id: "metrics-tracking-sop", label: "SOP: the weekly sales metrics audit checklist", level: 1 },
+  { id: "conclusion", label: "Focus outbound campaigns on revenue fit", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
@@ -41,7 +41,7 @@ const faqItems = [
   },
   {
     question: "How does Omentir track outbound metrics?",
-    answer: "Omentir dashboard monitors active connections, reply volumes, and response intent categories automatically, allowing you to audit campaign performance."
+    answer: "Omentir dashboard monitors active connections, reply volumes, and response intent categories automatically, so you can audit campaign performance."
   },
   {
     question: "How do I calculate Cost Per Opportunity (CPO) for automated outreach?",
@@ -61,16 +61,16 @@ export default function BlogPost() {
       faqItems={faqItems}
     >
       <p id="vanity-vs-value-metrics" className="scroll-mt-28">
-        Scaling B2B outbound campaigns requires tracking data. Sales operations teams configure dashboards to monitor a wide range of indicators, including connection requests accepted, message open rates, link clicks, and reply volumes. Senders analyze these charts daily to evaluate campaign success.
+        Scaling B2B outbound requires tracking data. Sales operations teams configure dashboards to monitor connection requests accepted, message open rates, link clicks, and reply volumes. Senders look at these charts daily to judge campaign success.
       </p>
       <p>
-        However, tracking too many numbers can hide real performance problems. Many teams optimize for vanity metrics, assuming that high connection counts or low click costs indicate a healthy sales pipeline.
+        Tracking too many numbers can hide real performance problems. Many teams optimize for vanity metrics, assuming that high connection counts or low click costs mean a healthy sales pipeline.
       </p>
       <p>
-        Vanity metrics do not pay for operations. Senders can build a list of thousands of connections, but if none of those contacts convert into active sales opportunities, the outbound campaigns are failing.
+        Vanity metrics do not pay for operations. You can build a list of thousands of connections, but if none of those contacts convert into active sales opportunities, the outbound campaigns are failing.
       </p>
       <p>
-        To build a sustainable pipeline, you must focus on a few key metrics. Senders need to track opportunity conversion rates and cost-per-opportunity to verify real demand.
+        To build a pipeline that lasts, focus on a few numbers. Track opportunity conversion rates and cost-per-opportunity to verify real demand.
       </p>
       <p>
         Early outbound dies when the only number on the board is "sends." The useful numbers are smaller, slower, and usually a little embarrassing.
@@ -83,7 +83,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="stage-of-learning" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Measure the Stage of Learning, Not Just Output
+        Measure the stage of learning, not just output
       </h2>
       <p>
         Early outbound has three learning stages. First, you test whether the audience is reachable. Second, you test whether the problem creates conversation. Third, you test whether those conversations convert into real opportunities. Teams get into trouble when they judge stage one metrics as if they prove stage three success.
@@ -105,13 +105,13 @@ export default function BlogPost() {
       </p>
 
       <h2 id="core-outbound-kpis" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        The Key Performance Indicators for Early Sales Pipelines
+        The key performance indicators for early sales pipelines
       </h2>
       <p>
         An early-stage outbound campaign should focus on pipeline metrics that validate your value proposition.
       </p>
       <p>
-        We recommend tracking three primary key performance indicators:
+        Track these three numbers:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
         <li><strong>Opportunity Conversion Rate (OCR):</strong> The percentage of active threads that convert into booked demos.</li>
@@ -133,7 +133,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="opportunity-conversion-rate" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Opportunity Conversion Rate: Tracking Conversations to Demos
+        Opportunity conversion rate: tracking conversations to demos
       </h2>
       <p>
         The Opportunity Conversion Rate measures copywriting relevance. If your reps start multiple conversation threads but fail to book demos, your value pitch is not resonating.
@@ -162,10 +162,10 @@ export default function BlogPost() {
       </p>
 
       <h2 id="cost-per-opportunity-math" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Calculating the Real Cost Per Opportunity
+        Calculating the real cost per opportunity
       </h2>
       <p>
-        Cost Per Opportunity measures campaign financial health. Outbound is highly cost-effective, but costs can rise if you purchase expensive databases.
+        Cost Per Opportunity measures campaign financial health. Outbound can be cost-effective, but costs can rise if you purchase expensive databases.
       </p>
       <p>
         Add your monthly software retainers (including Omentir's Pro plan and list verification tools) and divide by total booked opportunities:
@@ -174,7 +174,7 @@ export default function BlogPost() {
 <code>{`CPO = Total Monthly Outbound Costs / Total Booked Demos`}</code>
       </pre>
       <p>
-        Keeping CPO low ensures your B2B product validation stays budget-aligned.
+        Keeping CPO low keeps product validation affordable.
       </p>
       <p>
         Include time cost if founder time is the scarce resource. A campaign that uses cheap software but requires five hours of founder review per booked call may be more expensive than it looks. Early teams should track both cash cost and human effort so they understand whether the motion can scale.
@@ -195,7 +195,7 @@ export default function BlogPost() {
         <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
         <div className="pl-4">
           <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-            Metrics Rule: Value over Volume 💡
+            Metrics rule: value over volume
           </h4>
           <p className="text-sm text-zinc-650 leading-relaxed">
             Avoid increasing sending volume to resolve low reply rates. Increasing volume on unvalidated copy triggers spam blocks. Restrict volume and refine prompt structures to improve conversion metrics first.
@@ -204,7 +204,7 @@ export default function BlogPost() {
       </div>
 
       <h2 id="pipeline-velocity-metrics" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Measuring Sales Velocity and Timeline Milestones
+        Measuring sales velocity and timeline milestones
       </h2>
       <p>
         Sales Velocity tracks how quickly prospects move through your funnel. In early campaigns, look for threads that convert to booked calls in under 5 to 7 days.
@@ -229,7 +229,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="diagnose-metric-patterns" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        How to Diagnose Metric Patterns
+        How to diagnose metric patterns
       </h2>
       <p>
         Metrics are only useful when they change your next action. Use patterns rather than isolated numbers:
@@ -246,7 +246,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="delivery-safety-limits" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Enforcing Outbox Pacing to Protect Campaign Deliverability
+        Enforcing outbox pacing to protect campaign deliverability
       </h2>
       <p>
         Outbound campaigns must respect platform safety limits. Pacing connection requests and messages protects your profile health.
@@ -266,7 +266,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="metrics-tracking-sop" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: The Weekly Sales Metrics Audit Checklist
+        SOP: the weekly sales metrics audit checklist
       </h2>
       <p>
         Audit your outbound campaigns weekly using these steps:
@@ -290,14 +290,14 @@ export default function BlogPost() {
         The one-change rule matters. If you change the segment, message, offer, and follow-up all at once, you will not know what caused the result. Early outbound improves faster when tests are narrow enough to teach you something.
       </p>
       <p>
-        Omentir updates these metrics automatically, allowing you to manage campaigns efficiently.
+        Omentir updates these metrics automatically so you can review campaigns without extra spreadsheet work.
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Focusing Outbound Campaigns on Revenue Fit
+        Focus outbound campaigns on revenue fit
       </h2>
       <p>
-        Outbound campaigns are only as effective as your metrics tracking. By focusing on Opportunity Conversion Rate and CPO, you can optimize your sales pipeline for real validation.
+        Outbound campaigns are only as useful as the metrics you track. By focusing on Opportunity Conversion Rate and CPO, you can optimize your sales pipeline for real validation.
       </p>
       <p>
         The best early metric is the one that tells you what to do next. Reply rate without a reason is vanity. A list of "why they said no" is an operating document.

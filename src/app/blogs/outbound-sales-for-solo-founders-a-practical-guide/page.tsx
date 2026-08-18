@@ -17,13 +17,13 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems = [
-  { id: "founders-superpower", label: "Outbound as a Solo Founder's Superpower", level: 1 },
-  { id: "minimalist-stack", label: "The Minimalist Solo Sales Stack", level: 1 },
-  { id: "solo-playbook", label: "The Solo Founder's Outreach Playbook", level: 1 },
-  { id: "time-blocking", label: "The Daily 20-Minute Outbound Block", level: 1 },
-  { id: "conversion-tactics", label: "Frictionless Conversation Starters for Founders", level: 1 },
-  { id: "pitfalls", label: "Common Solo Outbound Hurdles to Avoid", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "founders-superpower", label: "Outbound as a solo founder's advantage", level: 1 },
+  { id: "minimalist-stack", label: "The minimalist solo sales stack", level: 1 },
+  { id: "solo-playbook", label: "The solo founder's outreach playbook", level: 1 },
+  { id: "time-blocking", label: "The daily 20-minute outbound block", level: 1 },
+  { id: "conversion-tactics", label: "Frictionless conversation starters for founders", level: 1 },
+  { id: "pitfalls", label: "Common solo outbound hurdles to avoid", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ] as const;
 
 const faqItems = [
@@ -57,16 +57,16 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Outbound is a Solo Founder's Superpower
+          Outbound is a solo founder's advantage
         </h2>
         <p>
           Many technical or solo founders try to outsource early-stage sales to external agencies or junior SDRs too early. This is almost always a costly mistake.
         </p>
         <p>
-          In the early days of a B2B startup, your outreach is not just about making sales transactions; it is about gathering deep qualitative market intelligence. Hired representatives speak in generic sales templates. You, as the founder, speak with peer-level authority. You understand the core product architecture, the engineering tradeoffs, and the long-term industry vision better than any third-party agency ever could.
+          In the early days of a B2B startup, your outreach is about gathering qualitative market intelligence, not only closing transactions. Hired representatives speak in generic sales templates. You, as the founder, speak with peer-level authority. You understand the core product architecture, the engineering tradeoffs, and the long-term industry vision better than any third-party agency ever could.
         </p>
         <p>
-          When an executive replies with a complex technical objection, you can pivot the conversation instantly into a product feedback session. Peer-to-peer founder outreach converts at up to three times the rate of typical sales representatives. By framing your outreach as a collaborative discussion rather than a sales pitch, you unlock massive pipeline momentum.
+          When an executive replies with a complex technical objection, you can pivot the conversation instantly into a product feedback session. Peer-to-peer founder outreach converts at up to three times the rate of typical sales representatives. Frame the outreach as a collaborative discussion rather than a sales pitch, and you can keep pipeline moving without sounding like an SDR.
         </p>
 
         {/* Premium Style Callout Box */}
@@ -77,7 +77,7 @@ export default function BlogPost() {
               The MVP Sales Stack Rule
             </h4>
             <p className="text-sm text-zinc-650 leading-relaxed">
-              As a solo operator, your time is your scarcest resource. Do not waste days configuring complex enterprise CRMs or managing messy spreadsheets. Focus purely on a minimal software stack that automates prospect discovery and schedules meetings seamlessly.
+              As a solo operator, your time is your scarcest resource. Do not waste days configuring complex enterprise CRMs or managing messy spreadsheets. Focus on a small software stack that automates prospect discovery and schedules meetings without extra busywork.
             </p>
           </div>
         </div>
@@ -87,7 +87,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          The Minimalist Solo Sales Stack
+          The minimalist solo sales stack
         </h2>
         <p>
           To maintain a highly active outreach pipeline without a dedicated sales team, build a lean, integrated software environment. Your MVP stack should consist of exactly four tools:
@@ -105,13 +105,13 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          The Solo Founder's Outreach Playbook
+          The solo founder's outreach playbook
         </h2>
         <p>
           As a solo founder, you cannot afford to manually scrape leads or copy-paste messages every morning. You must delegate the repetitive, top-of-funnel heavy lifting to intelligent background automation.
         </p>
         <p>
-          Let Omentir crawl prospect databases, analyze technographic signals, and queue personalized messaging threads safely. Your sole job is to jump into the inbox once a prospect has replied positively, guiding the warm conversation onto your calendar. By dividing the labor between automated systems and high-value founder negotiation, you can run a robust sales pipeline in under an hour a day.
+          Let Omentir crawl prospect databases, analyze technographic signals, and queue personalized messaging threads safely. Your sole job is to jump into the inbox once a prospect has replied positively, guiding the warm conversation onto your calendar. Split the labor between automated systems and founder negotiation, and you can run a sales pipeline in under an hour a day.
         </p>
 
         <h2
@@ -119,7 +119,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          The Daily 20-Minute Outbound Block
+          The daily 20-minute outbound block
         </h2>
         <p>
           To prevent sales tasks from derailing your engineering or customer support calendar, establish a highly disciplined, 20-minute time-blocking routine every morning. Turn off all Slack and development notifications and execute this exact checklist:
@@ -159,7 +159,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Frictionless Conversation Starters for Founders
+          Frictionless conversation starters for founders
         </h2>
         <p>
           Because you are the founder, you can bypass the traditional, pushy sales templates entirely. Prospects are highly receptive to sharing operational advice with founders. Use this frictionless "advice-seeking" script structure:
@@ -181,7 +181,7 @@ export default function BlogPost() {
         <div className="my-10 rounded-2xl border border-zinc-200 bg-[#f4f2ec] p-8 text-center shadow-[0_18px_60px_rgba(15,23,42,0.06)] relative overflow-hidden">
           <div className="absolute inset-x-0 top-0 h-1.5 bg-[#ba3871]" />
           <h3 style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mb-3">
-            Keep the Pipeline Simple First
+            Keep the pipeline simple first
           </h3>
           <p className="text-sm text-zinc-650 leading-relaxed max-w-xl mx-auto mb-6">
             Use the solo-founder process above to keep outreach small enough to manage personally. Early validation depends on real conversations, not just more names in a spreadsheet.
@@ -201,7 +201,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Common Solo Outbound Hurdles to Avoid
+          Common solo outbound hurdles to avoid
         </h2>
         <p>
           Solo operators are highly susceptible to burnout. To keep your pipeline healthy and consistent over the long term, stay clear of these operational mistakes:
@@ -218,7 +218,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          A 30-Day Solo Founder Outbound Plan
+          A 30-day solo founder outbound plan
         </h2>
         <p>
           Solo founders need a plan that creates learning and meetings without creating a second full-time job. Use the first 30 days to validate one narrow market, one problem, and one message before expanding volume.
@@ -238,7 +238,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Solo Founder Message Examples
+          Solo founder message examples
         </h2>
         <p>
           Founder-led outbound works because the message can sound direct and specific. You do not need corporate copy. You need a clear reason for reaching out and a low-friction next step.
@@ -257,7 +257,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          When to Stop Doing Outbound Manually
+          When to stop doing outbound manually
         </h2>
         <p>Solo founders should do outbound manually long enough to understand the market, but not so long that the work prevents them from building the product. The transition point usually appears when the founder can predict which segment responds, which pain creates replies, and which offer gets meetings.</p><p>At that stage, keep founder judgment in the system but automate the repetitive parts. Let software source accounts, summarize context, draft first messages, and organize follow-ups. The founder should still review high-value prospects, handle interested replies, and run discovery calls. This preserves the founder's learning advantage while removing the manual research load.</p><p>The goal is not to stop founder-led sales. The goal is to stop founder-led admin. Once the message works, the founder's time should move from searching and formatting to conversations and closing.</p>
         <h2
@@ -265,7 +265,7 @@ export default function BlogPost() {
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
         >
-          Frequently Asked Questions
+          Frequently asked questions
         </h2>
 
         <FaqAccordion items={faqItems} />

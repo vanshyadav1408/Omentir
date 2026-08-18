@@ -5,7 +5,7 @@ import FaqAccordion from "../../faq-accordion";
 
 export const metadata = createPageMetadata({
   title: "Sales Leads from LinkedIn: Build a B2B Sourcing Pipeline - Omentir",
-  description: "Learn how to build a high-quality B2B sales lead pipeline from LinkedIn. Master profile enrichment, intent scoring, and safe message personalization.",
+  description: "Build a B2B sales lead pipeline from LinkedIn with profile enrichment, intent scoring, and paced message personalization.",
   path: "/blogs/sales-leads-from-linkedin",
   keywords: [
     "sales leads from LinkedIn",
@@ -18,16 +18,16 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "sourcing-pipeline-challenge", label: "The Challenge of Building a LinkedIn Lead Pipeline", level: 1 },
-  { id: "targeting-active-buyers", label: "Targeting Active B2B Buyers with Advanced Filters", level: 1 },
-  { id: "enrichment-waterfalls", label: "Building Sourcing Cascades to Clean Sourced Data", level: 1 },
-  { id: "technographic-validation", label: "Validating Software Usage and Tech Stacks", level: 2 },
-  { id: "intent-scoring-rubric", label: "Applying an Intent-Based Rubric to Rank Prospects", level: 2 },
-  { id: "personalizing-outreach-copy", label: "Personalizing Message Drafts from Sourced Insights", level: 1 },
-  { id: "daily-quotas-safety", label: "Managing Campaign Volume Limits and Account Security", level: 1 },
-  { id: "pipeline-sop-checklist", label: "SOP: The LinkedIn Sourcing Pipeline Checklist", level: 1 },
-  { id: "conclusion", label: "Unlocking Predictable Outbound Growth", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "sourcing-pipeline-challenge", label: "The challenge of building a LinkedIn lead pipeline", level: 1 },
+  { id: "targeting-active-buyers", label: "Target active B2B buyers with filters", level: 1 },
+  { id: "enrichment-waterfalls", label: "Build sourcing cascades to clean sourced data", level: 1 },
+  { id: "technographic-validation", label: "Validate software usage and tech stacks", level: 2 },
+  { id: "intent-scoring-rubric", label: "Apply an intent-based rubric to rank prospects", level: 2 },
+  { id: "personalizing-outreach-copy", label: "Personalize message drafts from sourced insights", level: 1 },
+  { id: "daily-quotas-safety", label: "Manage campaign volume limits and account security", level: 1 },
+  { id: "pipeline-sop-checklist", label: "SOP: the LinkedIn sourcing pipeline checklist", level: 1 },
+  { id: "conclusion", label: "Turn LinkedIn sourcing into repeatable pipeline", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
@@ -53,7 +53,7 @@ export default function BlogPost() {
   return (
     <BlogPostTemplate
       title="Sales Leads from LinkedIn: How to Build a B2B Sourcing Pipeline"
-      description="Learn how to build a high-quality B2B sales lead pipeline from LinkedIn. Master profile enrichment, intent scoring, and safe message personalization."
+      description="Build a B2B sales lead pipeline from LinkedIn with profile enrichment, intent scoring, and paced message personalization."
       slug="sales-leads-from-linkedin"
       bannerSrc="/sales-leads-from-linkedin.avif"
       bannerAlt="Sales leads from LinkedIn and B2B enrichment pipeline illustration"
@@ -74,7 +74,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="targeting-active-buyers" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Targeting Active B2B Buyers with Advanced Filters
+        Target active B2B buyers with filters
       </h2>
       <p>
         A great lead pipeline begins before you open <a href="https://www.linkedin.com/products/linkedin-sales-navigator/" target="_blank" rel="noopener" className="text-blue-600 hover:underline">LinkedIn Sales Navigator</a>. Start by writing the account and buyer rules in plain language. Who feels the pain? Which company types can afford to solve it? Which trigger makes the timing better? Which accounts should be excluded even if the title looks right?
@@ -102,7 +102,7 @@ export default function BlogPost() {
       </div>
 
       <h2 id="enrichment-waterfalls" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Building Sourcing Cascades to Clean Sourced Data
+        Build sourcing cascades to clean sourced data
       </h2>
       <p>
         Raw LinkedIn profiles contain useful but incomplete data. A profile can show title, company, headline, and recent activity, but it may not tell you the company size, current tech stack, hiring pattern, business model, or whether the account matches your exclusions. Enrichment fills in those gaps.
@@ -115,7 +115,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="technographic-validation" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Validating Software Usage and Tech Stacks
+        Validate software usage and tech stacks
       </h3>
       <p>
         Technographic validation matters when your product depends on an existing workflow. If your offer is useful only for companies using a certain CRM, warehouse, email platform, or sales process, do not rely on a title match alone.
@@ -128,7 +128,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="intent-scoring-rubric" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Applying an Intent-Based Rubric to Rank Prospects
+        Apply an intent-based rubric to rank prospects
       </h3>
       <p>
         Once the lead is enriched, score it against your ICP. The score should combine fit and timing. Fit asks whether the company and buyer match your target. Timing asks whether there is a current reason to start a conversation.
@@ -148,7 +148,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="personalizing-outreach-copy" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Personalizing Message Drafts from Sourced Insights
+        Personalize message drafts from sourced insights
       </h2>
       <p>
         A personalized message should reference the reason the prospect was selected, not every detail you found. If the company is hiring for outbound roles, the opener can ask about making prospecting repeatable. If the buyer recently moved into a growth role, the opener can ask how they are approaching pipeline creation. If the website shows a clear integration, the opener can connect to that workflow.
@@ -168,7 +168,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="daily-quotas-safety" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Managing Campaign Volume Limits and Account Security
+        Manage campaign volume limits and account security
       </h2>
       <p>
         LinkedIn sourcing only creates revenue if the account remains healthy enough to keep working. Volume limits, timing, campaign overlap, reply handling, and sender history all matter. A great list can still cause problems if it is pushed through an aggressive delivery pattern.
@@ -188,7 +188,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="pipeline-sop-checklist" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: The LinkedIn Sourcing Pipeline Checklist
+        SOP: the LinkedIn sourcing pipeline checklist
       </h2>
       <p>
         Follow this SOP to manage your pipeline daily:
@@ -207,10 +207,10 @@ export default function BlogPost() {
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Unlocking Predictable Outbound Growth
+        Turn LinkedIn sourcing into repeatable pipeline
       </h2>
       <p>
-        Building a predictable B2B sales pipeline requires a shift from static database exports to dynamic LinkedIn sourcing. The work is not just finding more names. It is defining the ICP, collecting useful evidence, rejecting weak fits, drafting from real context, and sending at a pace that protects the account.
+        A predictable B2B sales pipeline needs a shift from static database exports to LinkedIn sourcing you can inspect. The work is not only finding more names. Define the ICP, collect useful evidence, reject weak fits, draft from real context, and send at a pace that protects the account.
       </p>
       <p>
         Omentir helps run the logistics of that motion: discovery agents, lead review, campaign creation, paced outreach, and reply organization. The better your sourcing rules, the better the whole system performs.
@@ -224,7 +224,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Frequently Asked Questions
+        Frequently asked questions
       </h2>
       <FaqAccordion items={faqItems} />
     </BlogPostTemplate>

@@ -23,13 +23,13 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "what-chatgpt-should-do", label: "What ChatGPT Should Do", level: 1 },
-  { id: "build-the-icp-brief", label: "Build the ICP Brief", level: 1 },
-  { id: "turn-linkedin-signals-into-a-list", label: "Turn Signals Into a List", level: 1 },
-  { id: "score-before-you-message", label: "Score Before You Message", level: 1 },
-  { id: "worked-example", label: "Worked Example", level: 2 },
-  { id: "safe-weekly-routine", label: "Safe Weekly Routine", level: 1 },
-  { id: "where-omentir-fits", label: "Where Omentir Fits", level: 1 },
+  { id: "what-chatgpt-should-do", label: "What ChatGPT should do", level: 1 },
+  { id: "build-the-icp-brief", label: "Build the ICP brief", level: 1 },
+  { id: "turn-linkedin-signals-into-a-list", label: "Turn signals into a list", level: 1 },
+  { id: "score-before-you-message", label: "Score before you message", level: 1 },
+  { id: "worked-example", label: "Worked example", level: 2 },
+  { id: "safe-weekly-routine", label: "Safe weekly routine", level: 1 },
+  { id: "where-omentir-fits", label: "Where Omentir fits", level: 1 },
   { id: "faqs", label: "FAQs", level: 1 },
 ];
 
@@ -90,7 +90,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        What ChatGPT Should Do
+        What ChatGPT should do
       </h2>
       <p>
         ChatGPT is good at comparing messy evidence against a written rule. It can read a profile headline, company description, hiring signal, and recent post summary, then tell you whether the account matches your ICP.
@@ -120,7 +120,7 @@ export default function BlogPost() {
         <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
         <div className="pl-4">
           <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-            The Operating Rule
+            The operating rule
           </h4>
           <p className="text-sm text-zinc-650 leading-relaxed">
             If ChatGPT cannot point to a concrete signal for why someone belongs on the list, the prospect is not qualified yet. Keep them in research, not outreach.
@@ -133,7 +133,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Build the ICP Brief
+        Build the ICP brief
       </h2>
       <p>
         Most weak AI prospecting starts with a weak ICP. "Find founders of SaaS companies" is too broad because it includes bootstrapped side projects, venture-backed infrastructure companies, agencies with software pages, and buyers with completely different budgets.
@@ -167,7 +167,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Turn LinkedIn Signals Into a List
+        Turn LinkedIn signals into a list
       </h2>
       <p>
         Start with a narrow source of leads, not the whole internet.{" "}
@@ -202,7 +202,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Score Before You Message
+        Score before you message
       </h2>
       <p>
         The scoring step prevents the most common founder mistake: treating every plausible lead as outreach-ready. Plausible means "could be relevant." Qualified means "there is visible evidence that this person owns a current problem we can help with."
@@ -215,7 +215,7 @@ export default function BlogPost() {
         <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
         <div className="pl-4">
           <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-            Lead Scoring Rubric
+            Lead scoring rubric
           </h4>
           <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-sm text-zinc-800">
             <li><strong>5:</strong> clear buyer, clear pain, clear timing signal, and a natural opening line.</li>
@@ -242,7 +242,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="worked-example" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Worked Example
+        Worked example
       </h3>
       <p>
         Imagine you sell a tool that helps B2B SaaS founders turn LinkedIn replies into booked demos. You find a founder whose company sells to operations teams, recently announced a new outbound hire, and has posted about struggling to keep pipeline consistent.
@@ -262,7 +262,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Safe Weekly Routine
+        Safe weekly routine
       </h2>
       <p>
         A good LinkedIn lead workflow should feel boring. If you are constantly chasing bigger lists, sending more invites, and rewriting prompts, you are probably optimizing for activity instead of sales conversations.
@@ -299,7 +299,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Where Omentir Fits
+        Where Omentir fits
       </h2>
       <p>
         The manual ChatGPT workflow is useful because it teaches you the shape of good lead qualification. You learn which signals matter, which titles mislead you, and which prospects produce real conversations.

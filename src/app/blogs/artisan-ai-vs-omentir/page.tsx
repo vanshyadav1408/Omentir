@@ -3,8 +3,8 @@ import { createPageMetadata } from "../../seo";
 import BlogPostTemplate from "../blog-post-template";
 
 export const metadata = createPageMetadata({
-  title: "Artisan AI (Ava) vs. Omentir: A Deep Dive into Autonomous SDRs - Omentir",
-  description: "An honest, head-to-head comparison of Artisan AI (Ava) versus Omentir for B2B sales development. Compare platform architecture, data sourcing, safety controls, and pricing.",
+  title: "Artisan AI (Ava) vs. Omentir: Autonomous SDRs compared - Omentir",
+  description: "A head-to-head of Artisan AI (Ava) versus Omentir for B2B sales development: architecture, data sourcing, safety controls, and pricing.",
   path: "/blogs/artisan-ai-vs-omentir",
   keywords: [
     "Artisan AI vs Omentir",
@@ -17,15 +17,15 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "rise-of-ai-sdr", label: "The Shift to Autonomous B2B Prospecting", level: 1 },
-  { id: "artisan-ava-overview", label: "Artisan AI Ava: The All-in-One Closed Garden", level: 1 },
-  { id: "omentir-platform-overview", label: "Omentir: The Builder-Friendly Outbound Engine", level: 1 },
-  { id: "data-sourcing-waterfalls", label: "Data Sourcing and Enrichment Waterfall Mechanics", level: 2 },
-  { id: "copywriting-and-personalization", label: "Copywriting, Context Grounding, and Template Systems", level: 2 },
-  { id: "safety-and-pacing-controls", label: "Account Health, Invite Throttling, and Unipile API", level: 1 },
-  { id: "pricing-and-roi-matrix", label: "Pricing Comparison: Enterprise Seats vs. Flexible Plans", level: 1 },
-  { id: "decision-matrix-guide", label: "Decision Rubric: Choosing the Right Agent for Your Team", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "rise-of-ai-sdr", label: "The shift to autonomous B2B prospecting", level: 1 },
+  { id: "artisan-ava-overview", label: "Artisan AI Ava: the all-in-one closed garden", level: 1 },
+  { id: "omentir-platform-overview", label: "Omentir: the builder-friendly outbound engine", level: 1 },
+  { id: "data-sourcing-waterfalls", label: "Data sourcing and enrichment waterfall mechanics", level: 2 },
+  { id: "copywriting-and-personalization", label: "Copywriting, context grounding, and template systems", level: 2 },
+  { id: "safety-and-pacing-controls", label: "Account health, invite throttling, and Unipile API", level: 1 },
+  { id: "pricing-and-roi-matrix", label: "Pricing comparison: enterprise seats vs flexible plans", level: 1 },
+  { id: "decision-matrix-guide", label: "Decision rubric: choosing the right agent for your team", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
@@ -70,7 +70,7 @@ export default function BlogPost() {
   return (
     <BlogPostTemplate
       title="Artisan AI (Ava) vs. Omentir: A Deep Dive into Autonomous SDRs"
-      description="Compare Artisan AI (Ava) and Omentir head-to-head. Analyze their approach to B2B customer discovery, lead scoring, message personalization, and delivery safety."
+      description="Compare Artisan AI (Ava) and Omentir on customer discovery, lead scoring, message personalization, and delivery safety."
       slug="artisan-ai-vs-omentir"
       bannerSrc="/artisan-ai-vs-omentir.avif"
       bannerAlt="Artisan AI Ava versus Omentir comparison dashboard illustration"
@@ -79,23 +79,23 @@ export default function BlogPost() {
       visibleFaqItems={visibleFaqItems}
     >
       <p id="rise-of-ai-sdr" className="scroll-mt-28">
-        The sales development representative role is undergoing a massive transformation. For years, B2B companies scaled outbound pipeline by hiring SDRs to manually build lists, write email sequences, and follow up with leads. Today, growth teams are replacing these manual workflows with autonomous AI agents.
+        The sales development representative role is changing. For years, B2B companies scaled outbound by hiring SDRs to build lists, write email sequences, and follow up. Growth teams are now replacing those manual workflows with autonomous AI agents.
       </p>
       <p>
-        These digital workers are not simple automation scripts. They can research prospects, evaluate Ideal Customer Profile (ICP) fit, write personalized copy, and handle replies. Two of the leading solutions in this space are <a href="https://www.artisan.co/" target="_blank" rel="noopener" className="text-blue-600 hover:underline">Artisan AI</a> (featuring Ava, their digital SDR) and Omentir.
+        These digital workers are more than simple automation scripts. They can research prospects, evaluate Ideal Customer Profile (ICP) fit, write personalized copy, and handle replies. Two of the leading solutions in this space are <a href="https://www.artisan.co/" target="_blank" rel="noopener" className="text-blue-600 hover:underline">Artisan AI</a> (featuring Ava, their digital SDR) and Omentir.
       </p>
       <p>
-        While both platforms aim to automate B2B outbound, they are built on fundamentally different philosophies. Artisan is a closed-garden application designed for business users who want an all-in-one workspace. Omentir is an open infrastructure engine built for developers and sales teams who want control over their data, prompts, and agent workflows.
+        Both platforms aim to automate B2B outbound, but they rest on different philosophies. Artisan is a closed-garden application for business users who want an all-in-one workspace. Omentir is an open infrastructure engine for developers and sales teams who want control over data, prompts, and agent workflows.
       </p>
       <p>
-        In this deep dive, we will compare their capabilities, data waterfall mechanics, account safety engines, and pricing models to help you choose the right platform for your growth stack.
+        Below we compare capabilities, data waterfall mechanics, account safety engines, and pricing so you can pick the platform that matches how you sell.
       </p>
       <p>
         The cleanest way to think about the choice is ownership. Artisan gives you a packaged AI BDR experience that tries to replace more of the outbound stack. Omentir gives you a controlled LinkedIn-first execution layer with agent access for teams that want to keep more of the workflow visible and editable.
       </p>
 
       <h2 id="artisan-ava-overview" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Artisan AI Ava: The All-in-One Closed Garden
+        Artisan AI Ava: the all-in-one closed garden
       </h2>
       <p>
         Artisan AI positions Ava as the first fully autonomous digital employee. The platform provides a complete workspace where Ava runs in the background to handle outbound sales tasks.
@@ -111,10 +111,10 @@ export default function BlogPost() {
       </p>
 
       <h2 id="omentir-platform-overview" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Omentir: The Builder-Friendly Outbound Engine
+        Omentir: the builder-friendly outbound engine
       </h2>
       <p>
-        Omentir is built on the philosophy of open integration. Rather than forcing you into a single interface, Omentir serves as the infrastructure layer for your outbound campaigns.
+        Omentir is built on open integration. Rather than forcing you into a single interface, Omentir is the infrastructure layer for your outbound campaigns.
       </p>
       <p>
         The platform connects to your personal LinkedIn account using <a href="https://www.unipile.com/" target="_blank" rel="noopener" className="text-blue-600 hover:underline">Unipile</a>. This lets Omentir support LinkedIn actions through an integration layer while still enforcing review, pacing, and quota controls inside the product.
@@ -140,7 +140,7 @@ export default function BlogPost() {
       </div>
 
       <h2 id="data-sourcing-waterfalls" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Data Sourcing and Enrichment Waterfall Mechanics
+        Data sourcing and enrichment waterfall mechanics
       </h2>
       <p>
         An autonomous SDR is only as good as the data it uses. If your agent uses outdated database entries, your campaigns will produce low engagement.
@@ -160,7 +160,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="copywriting-and-personalization" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Copywriting, Context Grounding, and Template Systems
+        Copywriting, context grounding, and template systems
       </h2>
       <p>
         Most buyers can spot AI-generated sales messages immediately. Generic openings, exaggerated benefits, and robotic phrasing drive low reply rates.
@@ -172,7 +172,7 @@ export default function BlogPost() {
         Omentir is built on prompt transparency. The system grounds its copywriting engine in your verified product profile and targets specific company pain points. You can customize the prompt instructions, define variable fallbacks, and audit test runs in a review workspace.
       </p>
       <p>
-        This control ensures your outreach reads as if it was written by an in-house sales leader. For a detailed copywriting blueprint, check out our guide to the{" "}
+        This control keeps outreach closer to how an in-house sales leader would write. For a detailed copywriting blueprint, check out our guide to the{" "}
         <Link href="/blogs/the-b2b-outreach-copywriting-framework-that-gets-replies" className="text-blue-600 hover:underline">
           B2B outreach copywriting framework
         </Link>
@@ -186,7 +186,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="safety-and-pacing-controls" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Account Health, Invite Throttling, and Unipile API
+        Account health, invite throttling, and Unipile API
       </h2>
       <p>
         LinkedIn safety is a major concern for growth teams. High message volumes and rapid invite pacing will trigger security filters, resulting in account limits or restrictions.
@@ -195,7 +195,7 @@ export default function BlogPost() {
         Artisan Ava manages outbound volume internally, but its focus is primarily on email channels.
       </p>
       <p>
-        Omentir was built with a safety-first approach to social channels. The system integrates a dedicated Throttling Engine that protects your profiles. The engine spaces out connection requests and follow-ups with random, organic delays.
+        Omentir was built with a safety-first approach to social channels. A dedicated throttling engine spaces connection requests and follow-ups with random, organic delays.
       </p>
       <p>
         The platform enforces daily quotas and human-paced queues so connection requests and follow-ups are spread out conservatively. This pacing helps protect your account while keeping the focus on qualified conversations instead of raw volume. For more safety guidance, check out our guide on{" "}
@@ -206,7 +206,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="pricing-and-roi-matrix" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Pricing Comparison: Enterprise Seats vs. Flexible Plans
+        Pricing comparison: enterprise seats vs flexible plans
       </h2>
       <p>
         The financial commitment for these platforms differs significantly.
@@ -239,7 +239,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="decision-matrix-guide" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Decision Rubric: Choosing the Right Agent for Your Team
+        Decision rubric: choosing the right agent for your team
       </h2>
       <p>
         To choose the right tool for your outbound campaigns, evaluate your team's technical capabilities and workflow requirements:
@@ -257,13 +257,10 @@ export default function BlogPost() {
         If you are choosing between the two, run the same test in both systems. Pick one ICP, one offer, one buyer signal, and one success metric. Compare lead quality, message quality, safety controls, reply handling, and how much manual correction was required. That will reveal whether you need a packaged digital BDR or a more controllable LinkedIn-first engine.
       </p>
       <p>
-        The best tool is the one your team will operate responsibly. Autonomy is valuable only when the workflow stays visible enough to improve. If you cannot see why a lead was chosen or what message will be sent, you are not really scaling sales judgment; you are outsourcing it.
+        The best tool is the one your team will operate responsibly. Autonomy is valuable only when the workflow stays visible enough to improve. If you cannot see why a lead was chosen or what message will be sent, you are not scaling sales judgment. You are outsourcing it.
       </p>
       <p>
-        That distinction should guide the buying decision.
-      </p>
-      <p>
-        Visibility is what turns automation into a system you can trust.
+        That distinction should guide the buying decision. Visibility is what turns automation into a system you can trust.
       </p>
     </BlogPostTemplate>
   );

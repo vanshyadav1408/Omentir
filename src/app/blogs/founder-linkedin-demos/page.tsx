@@ -23,13 +23,13 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "founder-demo-advantage", label: "The Founder Demo Advantage", level: 1 },
-  { id: "prepare-before-the-call", label: "Prepare Before the Call", level: 1 },
-  { id: "run-the-demo-in-layers", label: "Run the Demo in Layers", level: 1 },
-  { id: "questions-that-expose-fit", label: "Questions That Expose Fit", level: 1 },
-  { id: "show-less-product", label: "Show Less Product", level: 1 },
-  { id: "capture-signals-afterward", label: "Capture Signals Afterward", level: 1 },
-  { id: "next-step-without-pressure", label: "Next Step Without Pressure", level: 1 },
+  { id: "founder-demo-advantage", label: "The founder demo advantage", level: 1 },
+  { id: "prepare-before-the-call", label: "Prepare before the call", level: 1 },
+  { id: "run-the-demo-in-layers", label: "Run the demo in layers", level: 1 },
+  { id: "questions-that-expose-fit", label: "Questions that expose fit", level: 1 },
+  { id: "show-less-product", label: "Show less product", level: 1 },
+  { id: "capture-signals-afterward", label: "Capture signals afterward", level: 1 },
+  { id: "next-step-without-pressure", label: "Next step without pressure", level: 1 },
   { id: "faqs", label: "FAQs", level: 1 },
 ];
 
@@ -72,7 +72,7 @@ export default function BlogPost() {
         <a href="https://www.linkedin.com/" target="_blank" rel="noopener" className="text-blue-600 hover:underline">
           LinkedIn
         </a>{" "}
-        is not just a sales meeting. It is a live market interview with someone who matched your targeting, answered your outreach, and was willing to spend time on the problem you raised.
+        is a live market interview with someone who matched your targeting, answered your outreach, and was willing to spend time on the problem you raised.
       </p>
       <p>
         That makes the call more valuable than a normal product tour. You are testing positioning, urgency, workflow fit, budget awareness, buyer language, and trust. If you treat the demo like a slide presentation, you waste the most useful signal in early sales.
@@ -94,7 +94,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        The Founder Demo Advantage
+        The founder demo advantage
       </h2>
       <p>
         Founders have an advantage that hired sellers rarely have in the first months of a company: they can change the product, clarify the roadmap, and interpret buyer objections without waiting for someone else's notes. A founder can hear a prospect describe a messy process and immediately understand whether the product is wrong, the pitch is wrong, or the buyer is wrong.
@@ -123,7 +123,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Prepare Before the Call
+        Prepare before the call
       </h2>
       <p>
         Preparation should take ten minutes, not an hour. The goal is to know why this buyer was worth meeting and what you need to learn from them. If you open the call with a generic discovery script, you erase the context that made LinkedIn outreach work in the first place.
@@ -157,7 +157,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Run the Demo in Layers
+        Run the demo in layers
       </h2>
       <p>
         The easiest founder demo structure is layered. Start with context, move into discovery, show only the relevant workflow, then decide on the next step. Do not start by sharing your screen.
@@ -184,7 +184,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Questions That Expose Fit
+        Questions that expose fit
       </h2>
       <p>
         Founder demos should include questions a normal seller might be afraid to ask. You need signal more than politeness. The buyer's answers should tell you whether the pain is real, whether the workflow is owned, and whether the product has a path into the business.
@@ -229,7 +229,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Show Less Product
+        Show less product
       </h2>
       <p>
         Founders often show too much because they are proud of what they built. The buyer does not need your entire architecture. They need to see the shortest believable path from their pain to a better workflow.
@@ -253,7 +253,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Capture Signals Afterward
+        Capture signals afterward
       </h2>
       <p>
         The five minutes after the call are as important as the call itself. Write notes while the language is still fresh. Do not only record whether the call went well. Record what the buyer taught you.
@@ -277,7 +277,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Next Step Without Pressure
+        Next step without pressure
       </h2>
       <p>
         The next step should match the strength of the signal. A highly qualified buyer with active pain might deserve a pilot, pricing discussion, or technical setup call. A curious buyer might only need a follow-up resource. A poor-fit buyer should be released gracefully.

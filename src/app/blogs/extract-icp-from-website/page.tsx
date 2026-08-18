@@ -4,7 +4,7 @@ import BlogPostTemplate from "../blog-post-template";
 
 export const metadata = createPageMetadata({
   title: "How to Extract an Ideal Customer Profile (ICP) from Your Website - Omentir",
-  description: "Stop guessing your target audience. Learn how to use AI crawlers to analyze your company site, extract buyer profiles, and construct an ICP schema.",
+  description: "Use AI crawlers to read your company site, extract buyer profiles, and turn that evidence into an ICP schema you can score leads against.",
   path: "/blogs/extract-icp-from-website",
   keywords: [
     "extract ICP from website",
@@ -17,15 +17,15 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "defining-icp-manually", label: "The Challenge of Defining Your Target Buyer", level: 1 },
-  { id: "extraction-pipeline", label: "The Automated Website-to-ICP Pipeline", level: 1 },
-  { id: "landing-page-analysis", label: "Extracting Pain Points from Landing Page Copy", level: 2 },
-  { id: "testimonial-analysis", label: "Analyzing Customer Case Studies for ICP Clues", level: 2 },
-  { id: "structured-icp-schema", label: "Constructing a Machine-Readable ICP JSON Schema", level: 1 },
-  { id: "grounding-campaigns", label: "Applying the ICP Schema to Outbound Lead Scoring", level: 1 },
-  { id: "extraction-sop-checklist", label: "SOP: The 10-Minute ICP Extraction Workflow", level: 1 },
-  { id: "conclusion", label: "Basing Outreach on Real Data", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "defining-icp-manually", label: "The challenge of defining your target buyer", level: 1 },
+  { id: "extraction-pipeline", label: "The automated website-to-ICP pipeline", level: 1 },
+  { id: "landing-page-analysis", label: "Extract pain points from landing page copy", level: 2 },
+  { id: "testimonial-analysis", label: "Analyze customer case studies for ICP clues", level: 2 },
+  { id: "structured-icp-schema", label: "Construct a machine-readable ICP JSON schema", level: 1 },
+  { id: "grounding-campaigns", label: "Apply the ICP schema to outbound lead scoring", level: 1 },
+  { id: "extraction-sop-checklist", label: "SOP: the 10-minute ICP extraction workflow", level: 1 },
+  { id: "conclusion", label: "Base outreach on real data", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
@@ -39,7 +39,7 @@ const faqItems = [
   },
   {
     question: "How does Omentir use my extracted ICP details?",
-    answer: "Omentir uses your ICP schema to score lead fit during discovery, ensuring that outreach profiles are qualified before campaigns launch."
+    answer: "Omentir uses your ICP schema to score lead fit during discovery, so outreach profiles are qualified before campaigns launch."
   },
   {
     question: "Can I extract multiple ICP definitions from a single website?",
@@ -51,7 +51,7 @@ export default function BlogPost() {
   return (
     <BlogPostTemplate
       title="How to Extract an Ideal Customer Profile (ICP) from Your Website"
-      description="Learn how to use AI web crawlers to analyze your value proposition, reverse-engineer your target buyers, and construct a precise ICP schema."
+      description="Use AI web crawlers to read your value proposition, reverse-engineer target buyers, and build an ICP schema you can actually score leads against."
       slug="extract-icp-from-website"
       bannerSrc="/extract-icp-from-website.avif"
       bannerAlt="Ideal Customer Profile extraction from landing page copy diagram"
@@ -68,11 +68,11 @@ export default function BlogPost() {
         Your website is a useful starting point because it already contains your best public attempt at explaining the product. Landing pages, pricing pages, case studies, feature sections, and testimonials all reveal who you think you serve and what outcomes you promise. They are not perfect truth, but they are better evidence than a blank brainstorming doc.
       </p>
       <p>
-        The job is to extract that evidence, turn it into a structured ICP, then review it against real prospects. Omentir uses ICP settings and product context during discovery and outreach so leads can be evaluated before campaigns run. Let's look at how to build a website-to-ICP workflow that produces something useful instead of a generic persona.
+        The job is to extract that evidence, turn it into a structured ICP, then review it against real prospects. Omentir uses ICP settings and product context during discovery and outreach so leads can be evaluated before campaigns run. Here is a website-to-ICP workflow that produces something useful instead of a generic persona.
       </p>
 
       <h2 id="extraction-pipeline" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        The Automated Website-to-ICP Pipeline
+        The automated website-to-ICP pipeline
       </h2>
       <p>
         Extracting an ICP from your site requires a structured approach. If you feed raw HTML into a language model and ask for "our ICP," the output will usually be broad, flattering, and hard to use. It may say your buyer is "growth-focused teams seeking efficiency," which sounds fine and helps no one build a list.
@@ -99,13 +99,13 @@ export default function BlogPost() {
       </p>
 
       <h2 id="landing-page-analysis" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Extracting Pain Points from Landing Page Copy
+        Extract pain points from landing page copy
       </h2>
       <p>
         Your main landing page is usually the fastest way to understand the promised outcome. Headers, sub-headers, feature descriptions, objections, and calls to action all hint at the buyer you are trying to convert.
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Headers:</strong> Highlight the primary outcome your software claims to provide.</li>
+        <li><strong>Headers:</strong> Name the primary outcome your software claims to provide.</li>
         <li><strong>Feature Cards:</strong> List the specific capabilities your prospects need to achieve those outcomes.</li>
         <li><strong>Call to Action:</strong> Explains what steps buyers must take to evaluate your tool.</li>
         <li><strong>Objection Copy:</strong> Reveals the concerns your buyer is likely to have before booking a call.</li>
@@ -119,7 +119,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="testimonial-analysis" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Analyzing Customer Case Studies for ICP Clues
+        Analyze customer case studies for ICP clues
       </h2>
       <p>
         Testimonials and case studies are often stronger than homepage copy because they describe real usage. They show who got value, what problem existed before buying, and which outcome mattered enough to mention publicly.
@@ -150,7 +150,7 @@ export default function BlogPost() {
       </div>
 
       <h2 id="structured-icp-schema" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Constructing a Machine-Readable ICP JSON Schema
+        Construct a machine-readable ICP JSON schema
       </h2>
       <p>
         Once you extract your ICP variables, structure them in a machine-readable schema. The schema should be specific enough to score leads and flexible enough for a human to edit.
@@ -188,13 +188,13 @@ export default function BlogPost() {
       </p>
 
       <h2 id="grounding-campaigns" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Applying the ICP Schema to Outbound Lead Scoring
+        Apply the ICP schema to outbound lead scoring
       </h2>
       <p>
         A structured ICP schema becomes useful when it changes the way leads are scored. Instead of asking, "does this person have a sales title?" the system can ask a better set of questions: does this company match the segment, does this role own the pain, is there a visible trigger, and is there any reason to exclude the account?
       </p>
       <p>
-        Scoring should produce actions, not just numbers. High-fit leads can move to reviewed outreach. Medium-fit leads can wait for stronger signals. Low-fit leads should be rejected. If every lead eventually gets messaged, the ICP is not doing its job.
+        Scoring should produce actions, not only a number. High-fit leads can move to reviewed outreach. Medium-fit leads can wait for stronger signals. Low-fit leads should be rejected. If every lead eventually gets messaged, the ICP is not doing its job.
       </p>
       <p>
         Omentir uses product and ICP context during lead discovery and campaign creation. You can also run verification loops using custom tools. Omentir provides a hosted MCP server, detailed in our guide on{" "}
@@ -208,7 +208,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="extraction-sop-checklist" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: The 10-Minute ICP Extraction Workflow
+        SOP: the 10-minute ICP extraction workflow
       </h2>
       <p>
         Follow these steps to extract a practical ICP from your website:
@@ -227,7 +227,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Basing Outreach on Real Data
+        Base outreach on real data
       </h2>
       <p>
         Defining your target audience does not have to start from assumptions. Your website already contains clues about the buyer, pain, value proposition, and use cases your business believes in. Extracting those clues gives you a stronger first draft than a generic persona workshop.

@@ -23,13 +23,13 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "templates-need-a-signal", label: "Templates Need a Signal", level: 1 },
-  { id: "choose-the-right-template", label: "Choose the Right Template", level: 1 },
-  { id: "seven-pitch-patterns", label: "Seven Pitch Patterns", level: 1 },
-  { id: "rewrite-the-template", label: "Rewrite the Template", level: 1 },
-  { id: "quality-check", label: "Quality Check", level: 1 },
-  { id: "ai-assisted-pitching", label: "AI-Assisted Pitching", level: 1 },
-  { id: "what-to-send-next", label: "What to Send Next", level: 1 },
+  { id: "templates-need-a-signal", label: "Templates need a signal", level: 1 },
+  { id: "choose-the-right-template", label: "Choose the right template", level: 1 },
+  { id: "seven-pitch-patterns", label: "Seven pitch patterns", level: 1 },
+  { id: "rewrite-the-template", label: "Rewrite the template", level: 1 },
+  { id: "quality-check", label: "Quality check", level: 1 },
+  { id: "ai-assisted-pitching", label: "AI-assisted pitching", level: 1 },
+  { id: "what-to-send-next", label: "What to send next", level: 1 },
   { id: "faqs", label: "FAQs", level: 1 },
 ];
 
@@ -90,7 +90,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Templates Need a Signal
+        Templates need a signal
       </h2>
       <p>
         A template should never be the starting point. The starting point is the signal. Hiring, expansion, a public post, a tool change, a team announcement, or a profile detail gives the message a reason to exist.
@@ -122,7 +122,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Choose the Right Template
+        Choose the right template
       </h2>
       <p>
         The wrong template can make a strong lead feel cold. A hiring signal should not receive the same pitch as a competitor-switch signal. A founder post should not receive the same pitch as a job listing.
@@ -172,7 +172,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Seven Pitch Patterns
+        Seven pitch patterns
       </h2>
       <p>
         Use these as working patterns, not finished copy. Each one should be rewritten with a real signal, a truthful problem hypothesis, and a specific buyer.
@@ -239,7 +239,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Rewrite the Template
+        Rewrite the template
       </h2>
       <p>
         The template is only the first draft. Rewrite it until it sounds like something a real person would send from their own profile. Remove abstract claims, long setup, fake urgency, and any phrase that sounds like a landing page.
@@ -293,7 +293,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Quality Check
+        Quality check
       </h2>
       <p>
         Before sending, run the pitch through five checks. This is where most templates either become useful or become spam.
@@ -327,7 +327,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        AI-Assisted Pitching
+        AI-assisted pitching
       </h2>
       <p>
         AI can adapt these templates quickly if you give it the right inputs: the buyer signal, ICP, disqualifiers, proof, forbidden claims, and desired tone. Without those inputs, it will produce smooth but generic copy.
@@ -348,7 +348,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        What to Send Next
+        What to send next
       </h2>
       <p>
         A pitch is not the whole sequence. If the prospect replies with interest, qualify before booking. If they ask for more info, clarify what they want to evaluate. If they go quiet, follow up with one new useful angle instead of repeating the pitch.

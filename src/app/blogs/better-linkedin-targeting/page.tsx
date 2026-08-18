@@ -5,7 +5,7 @@ import FaqAccordion from "../../faq-accordion";
 
 export const metadata = createPageMetadata({
   title: "Better LinkedIn Targeting: Build Clean B2B Lists - Omentir",
-  description: "Stop wasting connection invites on low-fit prospects. Master Boolean search filters, negative exclusions, and technographic triggers on LinkedIn.",
+  description: "Stop wasting connection invites on low-fit prospects. Use Boolean search filters, negative exclusions, and technographic triggers on LinkedIn.",
   path: "/blogs/better-linkedin-targeting",
   keywords: [
     "better LinkedIn targeting",
@@ -18,16 +18,16 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "quality-targeting-necessity", label: "The Shift from High Volume to High-Quality Targeting", level: 1 },
-  { id: "mapping-icp-attributes", label: "Mapping ICP Attributes to Specific Search Parameters", level: 1 },
-  { id: "sales-navigator-boolean", label: "Mastering advanced Sales Navigator Boolean syntax", level: 1 },
-  { id: "negative-exclusions", label: "Excluding Low-Fit Leads Using Negative Filters", level: 2 },
-  { id: "technographic-hiring-triggers", label: "Technographic Data and Hiring Triggers", level: 2 },
-  { id: "automating-lists-discovery", label: "Automating Sourcing Lists via Discovery Agents", level: 1 },
-  { id: "account-pacing-safety", label: "Pacing Campaign Activity Safely to Prevent Restrictions", level: 1 },
-  { id: "sifting-sop-checklist", label: "SOP: The B2B List Qualification Audit Checklist", level: 1 },
-  { id: "conclusion", label: "Building a Predictable Foundation for Scale", level: 1 },
-  { id: "faqs", label: "Frequently Asked Questions", level: 1 }
+  { id: "quality-targeting-necessity", label: "Why targeting quality beats volume", level: 1 },
+  { id: "mapping-icp-attributes", label: "Map ICP attributes to search filters", level: 1 },
+  { id: "sales-navigator-boolean", label: "Sales Navigator Boolean syntax", level: 1 },
+  { id: "negative-exclusions", label: "Exclude low-fit leads with negative filters", level: 2 },
+  { id: "technographic-hiring-triggers", label: "Technographic data and hiring triggers", level: 2 },
+  { id: "automating-lists-discovery", label: "Keep sourcing lists current with discovery agents", level: 1 },
+  { id: "account-pacing-safety", label: "Pace campaign activity to protect the account", level: 1 },
+  { id: "sifting-sop-checklist", label: "B2B list qualification checklist", level: 1 },
+  { id: "conclusion", label: "Treat targeting as a weekly habit", level: 1 },
+  { id: "faqs", label: "Frequently asked questions", level: 1 }
 ];
 
 const faqItems = [
@@ -37,7 +37,7 @@ const faqItems = [
   },
   {
     question: "How do Boolean operators work in LinkedIn Sales Navigator?",
-    answer: "Boolean operators (AND, OR, NOT) let you combine search terms to find specific profiles. For example, using a title filter like 'VP AND (Sales OR Revenue) NOT (Advisor OR Consultant)' target active sales leaders while excluding service providers."
+    answer: "Boolean operators (AND, OR, NOT) let you combine search terms to find specific profiles. For example, a title filter like 'VP AND (Sales OR Revenue) NOT (Advisor OR Consultant)' targets active sales leaders while excluding service providers."
   },
   {
     question: "What is a technographic trigger and how do I search for it?",
@@ -53,7 +53,7 @@ export default function BlogPost() {
   return (
     <BlogPostTemplate
       title="Better LinkedIn Targeting: How to Build Clean B2B Prospect Lists"
-      description="Stop wasting connection invites on low-fit prospects. Master Boolean search filters, negative exclusions, and technographic triggers on LinkedIn."
+      description="Stop wasting connection invites on low-fit prospects. Use Boolean search filters, negative exclusions, and technographic triggers on LinkedIn."
       slug="better-linkedin-targeting"
       bannerSrc="/better-linkedin-targeting.avif"
       bannerAlt="Better LinkedIn targeting and advanced B2B search parameters dashboard illustration"
@@ -61,34 +61,34 @@ export default function BlogPost() {
       faqItems={faqItems}
     >
       <p id="quality-targeting-necessity" className="scroll-mt-28">
-        Outbound sales success is fundamentally a targeting problem. If you send a poorly written message to a highly relevant buyer who is facing the exact challenge you solve, they will still respond. But if you send a beautifully written, highly personalized pitch to a lead who has no budget, no authority, and no need for your product, they will ignore you.
+        Outbound sales success is mostly a targeting problem. A rough message to a relevant buyer who has the problem you solve can still get a reply. A carefully written pitch to someone with no budget, no authority, and no need will be ignored.
       </p>
       <p>
-        Despite this reality, most B2B sales teams run campaigns with broad targeting rules. They search for general titles like "Marketing Manager" in broad regions and export lists containing thousands of profiles. They then blast these lists with connection requests, hoping a small percentage will book a demo.
+        Most B2B teams still run campaigns with broad targeting. They search for general titles like "Marketing Manager" in broad regions and export thousands of profiles. Then they blast connection requests, hoping a small percentage will book a demo.
       </p>
       <p>
-        This high-volume approach does not work in 2026. <a href="https://www.linkedin.com" target="_blank" rel="noopener" className="text-blue-600 hover:underline">LinkedIn</a> enforces strict limits on weekly invitations, and platform security filters restrict accounts that generate high rates of ignored requests or spam flags. To grow your pipeline, you must build highly targeted lists of qualified buyers.
+        That volume approach does not work in 2026. <a href="https://www.linkedin.com" target="_blank" rel="noopener" className="text-blue-600 hover:underline">LinkedIn</a> enforces strict limits on weekly invitations, and platform security filters restrict accounts that generate high rates of ignored requests or spam flags. To grow pipeline, build lists of qualified buyers.
       </p>
       <p>
-        Omentir integrates this quality-focused filtering layer into your daily sales routine. The system runs automated discovery agents in the background, checks leads against your ICP scoring rules, and stages personalized drafts in your review queue. Let's look at how to refine your targeting pipeline.
+        Omentir puts that filtering into the daily sales routine. Discovery agents run in the background, check leads against your ICP scoring rules, and stage drafts in your review queue. Here is how to tighten the targeting pipeline.
       </p>
       <p>
         The practical goal is not to find every person who could possibly buy. The goal is to build a small list where every profile has a clear reason to be there. When the list is clean, your first line becomes easier to write, your offer feels more relevant, and your follow-up does not sound like it was sent to a spreadsheet.
       </p>
 
       <h2 id="mapping-icp-attributes" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Mapping ICP Attributes to Specific Search Parameters
+        Map ICP attributes to search filters
       </h2>
       <p>
-        To build a targeted list, you must translate your Ideal Customer Profile (ICP) into specific search filters. Do not rely on high-level categories like "Technology" or "Financial Services." These groups are too broad and include companies that operate in completely different ways.
+        To build a targeted list, translate your Ideal Customer Profile (ICP) into specific search filters. Do not rely on high-level categories like "Technology" or "Financial Services." Those groups are too broad and include companies that operate in completely different ways.
       </p>
       <p>
-        Instead, define your target segment using specific, narrow parameters:
+        Define the segment with narrow parameters instead:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Company Growth Rate:</strong> Target companies expanding their engineering or sales teams (e.g., headcount growth of 10% to 20% over 6 months).</li>
-        <li><strong>Department Size:</strong> Target organizations with departments large enough to require dedicated software, but small enough to lack complex procurement rules.</li>
-        <li><strong>Profile Activity:</strong> Exclude profiles that have not posted updates or changed roles in the last 30 days to avoid inactive accounts.</li>
+        <li><strong>Company growth rate:</strong> Target companies expanding their engineering or sales teams (e.g., headcount growth of 10% to 20% over 6 months).</li>
+        <li><strong>Department size:</strong> Target organizations with departments large enough to need dedicated software, but small enough to lack complex procurement rules.</li>
+        <li><strong>Profile activity:</strong> Exclude profiles that have not posted updates or changed roles in the last 30 days to avoid inactive accounts.</li>
       </ul>
       <p>
         A useful ICP map has four layers: account fit, role fit, timing signal, and exclusion rule. Account fit answers whether the company has the right business model, size, geography, and maturity. Role fit answers whether the person owns the problem or can introduce you to the owner. Timing signal answers why this account should care now. Exclusion rules protect the list from profiles that look close in a search result but would never become a customer.
@@ -108,7 +108,7 @@ export default function BlogPost() {
         <div className="absolute inset-y-0 left-0 w-1.5 bg-black" />
         <div className="pl-4">
           <h4 className="font-bold text-black mb-2 flex items-center gap-2">
-            Targeting Rule: Watch the Title Exclusions
+            Targeting rule: watch the title exclusions
           </h4>
           <p className="text-sm text-zinc-650 leading-relaxed">
             Always exclude titles containing words like 'Advisor', 'Consultant', 'Freelancer', or 'Intern'. These profiles are rarely active buyers and will dilute your outreach sequence.
@@ -117,10 +117,10 @@ export default function BlogPost() {
       </div>
 
       <h2 id="sales-navigator-boolean" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Mastering advanced Sales Navigator Boolean syntax
+        Sales Navigator Boolean syntax
       </h2>
       <p>
-        To narrow down broad search results, master Boolean syntax in <a href="https://www.linkedin.com/products/linkedin-sales-navigator/" target="_blank" rel="noopener" className="text-blue-600 hover:underline">LinkedIn Sales Navigator</a>. Use parentheses to group terms, quotation marks for exact phrase matches, and operators to control target results.
+        To narrow broad search results, use Boolean syntax in <a href="https://www.linkedin.com/products/linkedin-sales-navigator/" target="_blank" rel="noopener" className="text-blue-600 hover:underline">LinkedIn Sales Navigator</a>. Use parentheses to group terms, quotation marks for exact phrase matches, and operators to control results.
       </p>
       <p>
         For example, instead of searching for "Sales Director," use a structured Boolean search query in the title field:
@@ -129,7 +129,7 @@ export default function BlogPost() {
         ("Director" OR "VP" OR "Head") AND "Sales" AND NOT ("Advisor" OR "Consultant" OR "Agency" OR "Intern")
       </p>
       <p>
-        This string ensures you target active executives while excluding service providers and interns. For outreach planning blueprints, read our guide on{" "}
+        This string targets active executives while excluding service providers and interns. For outreach planning blueprints, read our guide on{" "}
         <Link href="/blogs/cold-linkedin-outreach" className="text-blue-600 hover:underline">
           cold LinkedIn outreach workflows
         </Link>
@@ -143,10 +143,10 @@ export default function BlogPost() {
       </p>
 
       <h3 id="negative-exclusions" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Excluding Low-Fit Leads Using Negative Filters
+        Exclude low-fit leads with negative filters
       </h3>
       <p>
-        Negative filters are your most powerful tool for cleaning search results. Sales Navigator lets you exclude specific industries, company headquarters, and past company names.
+        Negative filters are the most useful tool for cleaning search results. Sales Navigator lets you exclude specific industries, company headquarters, and past company names.
       </p>
       <p>
         Exclude companies that are too large (e.g., more than 5,000 employees) or too small (e.g., solo operators), unless they specifically match your product profile. This keeps your list quality high and ensures your copy remains relevant.
@@ -159,7 +159,7 @@ export default function BlogPost() {
       </p>
 
       <h3 id="technographic-hiring-triggers" className="text-lg font-bold text-zinc-900 mt-6 scroll-mt-28">
-        Technographic Data and Hiring Triggers
+        Technographic data and hiring triggers
       </h3>
       <p>
         To find buyers with immediate intent, verify technographic details and active job postings. Scan technological profiles using tools like <a href="https://www.clay.com/" target="_blank" rel="noopener" className="text-blue-600 hover:underline">Clay</a> or <a href="https://www.apollo.io/" target="_blank" rel="noopener" className="text-blue-600 hover:underline">Apollo.io</a>.
@@ -179,10 +179,10 @@ export default function BlogPost() {
       </p>
 
       <h2 id="automating-lists-discovery" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Automating Sourcing Lists via Discovery Agents
+        Keep sourcing lists current with discovery agents
       </h2>
       <p>
-        Sales reps should not spend hours every day running manual queries and building lists. Automate this sourcing process by using discovery agents.
+        Sales reps should not spend hours every day running manual queries and building lists. Automate sourcing with discovery agents.
       </p>
       <p>
         Omentir lets you save your search rules as automated templates. The system checks LinkedIn daily for matching profiles, scores them against your ICP guidelines, and places them into your lead workspace, keeping your queue populated.
@@ -198,7 +198,7 @@ export default function BlogPost() {
       </p>
 
       <h2 id="account-pacing-safety" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Pacing Campaign Activity Safely to Prevent Restrictions
+        Pace campaign activity to protect the account
       </h2>
       <p>
         Better targeting reduces waste. It does not give you a free pass to empty a new list in two days. A tighter ICP still produces a spike if you send every match the morning the list lands.
@@ -211,17 +211,17 @@ export default function BlogPost() {
       </p>
 
       <h2 id="sifting-sop-checklist" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        SOP: The B2B List Qualification Audit Checklist
+        B2B list qualification checklist
       </h2>
       <p>
-        Follow this simple SOP to audit and refine your prospect lists daily:
+        Follow this SOP to audit and refine prospect lists daily:
       </p>
       <ul style={{ listStyleType: "disc" }} className="list-disc pl-6 space-y-2 text-zinc-800">
-        <li><strong>Run Boolean String:</strong> Confirm your search titles include specific negative filters (NOT consultant/advisor).</li>
-        <li><strong>Verify Geography:</strong> Exclude companies whose headquarters are outside your target market region.</li>
-        <li><strong>Audit Enrichment:</strong> Check that technographic and software usage data points are verified.</li>
-        <li><strong>Enable draft Review:</strong> Verify that campaigns are created as drafts for human validation before sending.</li>
-        <li><strong>Enforce Daily Quota:</strong> Keep connection request volume inside conservative, human-paced limits for each active profile.</li>
+        <li><strong>Run Boolean string:</strong> Confirm your search titles include specific negative filters (NOT consultant/advisor).</li>
+        <li><strong>Verify geography:</strong> Exclude companies whose headquarters are outside your target market region.</li>
+        <li><strong>Audit enrichment:</strong> Check that technographic and software usage data points are verified.</li>
+        <li><strong>Enable draft review:</strong> Verify that campaigns are created as drafts for human validation before sending.</li>
+        <li><strong>Enforce daily quota:</strong> Keep connection request volume inside conservative, human-paced limits for each active profile.</li>
       </ul>
       <p>
         Add one more check before a lead enters a campaign: can you write one honest sentence explaining why this person is worth contacting? If the answer is only "they have the right title," the lead is not ready. If the answer includes the company, role, signal, and likely pain, the message has a chance to feel like it belongs in their inbox.
@@ -231,13 +231,13 @@ export default function BlogPost() {
       </p>
 
       <h2 id="conclusion" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">
-        Building a Predictable Foundation for Scale
+        Treat targeting as a weekly habit
       </h2>
       <p>
-        Better LinkedIn targeting is the most reliable way to increase response rates and protect your sender reputation. By mapping ICP variables to specific search strings, mastering Boolean filters, and automating discovery loops, you can build a clean, scalable sales pipeline.
+        Better LinkedIn targeting is a reliable way to raise response rates and protect sender reputation. Map ICP variables to specific search strings, use Boolean filters, and keep discovery loops running so the list stays clean.
       </p>
       <p>
-        Let Omentir handle the logistics. Ground your search queries, review your lead queue daily, and launch safe, paced sequences that turn warm LinkedIn leads into customer conversations.
+        Let Omentir handle the logistics. Ground your search queries, review the lead queue daily, and launch paced sequences that turn warm LinkedIn leads into conversations.
       </p>
       <p>
         The cleanest teams treat targeting as a weekly operating habit. They inspect search quality, tighten exclusions, document winning signals, and remove segments that produce polite but empty replies. That discipline is what makes personalization scalable. The message can only be as sharp as the list beneath it.
@@ -248,7 +248,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        Frequently Asked Questions
+        Frequently asked questions
       </h2>
       <FaqAccordion items={faqItems} />
     </BlogPostTemplate>
