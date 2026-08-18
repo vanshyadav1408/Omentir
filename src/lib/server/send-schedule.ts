@@ -2,13 +2,13 @@
 // the Actions page can promise an exact timestamp instead of the optimistic
 // "now + delay" guesses that used to churn hourly and never match reality.
 //
-// Three constraints stack, in this order of bindingness:
+// Three constraints stack for invites and follow-ups, in this order of
+// bindingness:
 //   1. The campaign's send window (business hours, extended, or 24/7) in the
 //      RECIPIENT's timezone - the window protects the lead's evening, so it is
 //      read on their clock, not the sender's (see lead-time-zone.ts). Leads we
 //      cannot place fall back to the workspace's zone.
-//   2. The per-LinkedIn-account drip: at most one action per SPACING_MINUTES,
-//      shared by invites, follow-ups and replies alike.
+//   2. The per-LinkedIn-account drip: at most one action per SPACING_MINUTES.
 //   3. The workspace's daily invite / message caps, counted over LOCAL days.
 //      These stay on the WORKSPACE clock: they protect the sending LinkedIn
 //      account, so "10 invites a day" has to mean one sender's day, not a
@@ -17,6 +17,11 @@
 // With a 9-6 window there are 108 slots a day against caps of 10 + 20, so the
 // caps bind long before the spacing does - which is why a queue of 75 leads
 // resolves to "day four, 09:20" rather than "6.5 hours from now".
+//
+// AI replies are the exception. A person is waiting, so they ignore the send
+// window, the daily message cap, and already-reserved invite/follow-up slots.
+// They wait a random 2-15 minutes after the inbound so the send is not a
+// fixed timer. claimActionSlot still serializes them against the last real send.
 
 import type { SendWindow } from "./types";
 
@@ -25,11 +30,33 @@ import type { SendWindow } from "./types";
 // the same line, which is what makes collisions possible and this planner
 // necessary.
 export const SPACING_MINUTES = 5;
+// Random pause after each inbound so consecutive AI replies are not a metronome.
+export const REPLY_DELAY_MIN_MINUTES = 2;
+export const REPLY_DELAY_MAX_MINUTES = 15;
+
+export function randomReplyDelayMs() {
+  const minMs = REPLY_DELAY_MIN_MINUTES * 60 * 1000;
+  const maxMs = REPLY_DELAY_MAX_MINUTES * 60 * 1000;
+  return minMs + Math.floor(Math.random() * (maxMs - minMs + 1));
+}
+
+export function nextAiReplyAt(fromMs = Date.now(), delayMs = randomReplyDelayMs()) {
+  return new Date(fromMs + delayMs).toISOString();
+}
+
+// Due now, or parked past the 15-minute pause by an older planner (send window,
+// packed invite queue, daily cap). A fresh arm at now+2..15 minutes is not due yet.
+export function aiReplyIsDue(nextActionAt: string, nowMs = Date.now()) {
+  const dueAt = Date.parse(nextActionAt);
+  if (!Number.isFinite(dueAt)) return true;
+  if (dueAt <= nowMs) return true;
+  return dueAt - nowMs > REPLY_DELAY_MAX_MINUTES * 60 * 1000;
+}
 
 // Reply > follow-up > invite. A reply has a human waiting and is rare, so it
-// takes the next free slot and pushes a cold invite aside; an invite has no
-// deadline and always yields. Cascading bumps terminate because invites never
-// bump back.
+// takes its earliestAt immediately and later invites in the same batch yield.
+// An invite has no deadline and always yields. Cascading bumps terminate
+// because invites never bump back.
 export const ACTION_PRIORITY = { reply: 0, message: 1, invite: 2 } as const;
 
 // Ceiling on the constraint passes one action may take. Each pass advances the
@@ -287,7 +314,7 @@ export type PlannedAction = {
   id: string;
   kind: SendActionKind;
   // Not schedulable before this: a wait step's target, an invite's ladder
-  // position, or simply "now" for a reply.
+  // position, or the random 2-15 minute pause after inbound for a reply.
   earliestAt: number;
   // The recipient's zone, which the send window is measured in. Omitted when
   // the lead's location doesn't resolve to one, in which case the window falls
@@ -374,8 +401,18 @@ export function planSendSchedule(input: SchedulePlanInput): Map<string, number> 
   const result = new Map<string, number>();
 
   for (const action of ordered) {
-    // An invite counts against the invite cap; follow-ups and replies both
-    // count as messages, matching how consumeDailyQuota already tallies them.
+    // A waiting prospect outranks the drip queue. Skip window, reserved
+    // invites, and the daily cap so the reply stays on earliestAt (the random
+    // 2-15 minute pause). Later actions in this batch still see the occupied slot.
+    if (action.kind === "reply") {
+      const slot = Math.max(action.earliestAt, input.nowMs);
+      result.set(action.id, slot);
+      insertSorted(taken, slot);
+      continue;
+    }
+
+    // An invite counts against the invite cap; follow-ups count as messages,
+    // matching how consumeDailyQuota already tallies them.
     const quotaKind = action.kind === "invite" ? "invites" : "messages";
     const limit = quotaKind === "invites" ? input.dailyInviteLimit : input.dailyMessageLimit;
     // The window is the recipient's; the quota day below stays the workspace's.

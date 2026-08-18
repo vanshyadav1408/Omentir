@@ -10,6 +10,7 @@ import { hasIntervalElapsed, isAgentDueForRun, nextDailyAgentRunAt } from "./sch
 import {
   DEFAULT_AGENT_RUN_HOUR,
   SPACING_MINUTES,
+  aiReplyIsDue,
   nextAnchoredAgentRunAt,
   nextLocalAgentRunAt,
   planSendSchedule,
@@ -2351,7 +2352,14 @@ function dueEnrollmentsFromSnapshot(
       (enrollment) =>
         DUE_ENROLLMENT_STATUSES.includes(enrollment.status) && enrollment.nextActionAt <= now,
     )
-    .sort((a, b) => a.nextActionAt.localeCompare(b.nextActionAt));
+    .sort(compareDueEnrollments);
+}
+
+function compareDueEnrollments(a: CampaignEnrollment, b: CampaignEnrollment) {
+  // A waiting prospect outranks a packed invite queue inside the due page.
+  const reply = Number(b.status === "reply_received") - Number(a.status === "reply_received");
+  if (reply !== 0) return reply;
+  return a.nextActionAt.localeCompare(b.nextActionAt);
 }
 
 // Firestore raises FAILED_PRECONDITION (code 9) when a query needs a composite
@@ -2420,8 +2428,8 @@ function roundRobinEnrollmentsByWorkspace(enrollments: CampaignEnrollment[], lim
   }
 
   const queues = Array.from(byWorkspace.values())
-    .map((queue) => queue.sort((a, b) => a.nextActionAt.localeCompare(b.nextActionAt)))
-    .sort((a, b) => a[0].nextActionAt.localeCompare(b[0].nextActionAt));
+    .map((queue) => queue.sort(compareDueEnrollments))
+    .sort((a, b) => compareDueEnrollments(a[0], b[0]));
   const result: CampaignEnrollment[] = [];
 
   while (result.length < limit && queues.length) {
@@ -2449,6 +2457,57 @@ export async function listConnectionSentEnrollments(workspaceId: string, limit?:
   if (limit != null && limit > 0) query = query.limit(limit);
   const snap = await query.get();
   return snap.docs.map((doc) => doc.data());
+}
+
+// AI replies must not wait behind a page of older due invites. A separate
+// query (status == reply_received) also pulls in enrollments the old planner
+// parked past the 15-minute pause, which `orderBy(nextActionAt).limit` would
+// otherwise keep off the due page until tomorrow morning.
+async function dueReplyEnrollmentsForWorkspace(workspaceId: string, limit: number) {
+  const nowMs = Date.now();
+  const base = collection<CampaignEnrollment>("campaignEnrollments")
+    .where("workspaceId", "==", workspaceId)
+    .where("status", "==", "reply_received");
+
+  try {
+    const snap = await base.limit(limit).get();
+    return snap.docs.map((doc) => doc.data()).filter((enrollment) => aiReplyIsDue(enrollment.nextActionAt, nowMs));
+  } catch (error) {
+    if (!isUnsupportedQueryError(error)) throw error;
+    const snap = await collection<CampaignEnrollment>("campaignEnrollments")
+      .where("workspaceId", "==", workspaceId)
+      .limit(500)
+      .get();
+    return snap.docs
+      .map((doc) => doc.data())
+      .filter(
+        (enrollment) =>
+          enrollment.status === "reply_received" && aiReplyIsDue(enrollment.nextActionAt, nowMs),
+      )
+      .slice(0, limit);
+  }
+}
+
+export async function getDueReplyEnrollments(limit = 50, workspaceIds?: string[]) {
+  const uniqueWorkspaceIds = Array.from(new Set((workspaceIds || []).filter(Boolean)));
+
+  if (uniqueWorkspaceIds.length) {
+    const perWorkspace = await Promise.all(
+      uniqueWorkspaceIds.map((workspaceId) => dueReplyEnrollmentsForWorkspace(workspaceId, limit)),
+    );
+    return roundRobinEnrollmentsByWorkspace(perWorkspace.flat(), limit);
+  }
+
+  const snap = await collection<CampaignEnrollment>("campaignEnrollments")
+    .where("status", "==", "reply_received")
+    .limit(200)
+    .get();
+  const nowMs = Date.now();
+  return snap.docs
+    .map((doc) => doc.data())
+    .filter((enrollment) => aiReplyIsDue(enrollment.nextActionAt, nowMs))
+    .sort(compareDueEnrollments)
+    .slice(0, limit);
 }
 
 export async function getDueEnrollments(limit = 50, workspaceIds?: string[]) {

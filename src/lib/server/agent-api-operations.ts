@@ -290,10 +290,11 @@ export async function getAgentWorkspaceContext(context: AgentApiContext) {
         limit: dailyMessageLimit,
         remaining: Math.max(0, dailyMessageLimit - usedToday.messages),
       },
-      // Invites, follow-ups and replies share one line per LinkedIn account.
+      // Invites and follow-ups share one line per LinkedIn account. AI replies
+      // skip the send window and that queue, then wait a random 2-15 minutes.
       spacingMinutes: SPACING_MINUTES,
       guidance:
-        "Caps reset at local midnight in timeZone. Each lead finder's send window (always, business, extended) decides the hours its outreach may go out, measured in each lead's own time zone (resolved from their profile location; timeZone is the fallback when it cannot be). Use omentir_list_scheduled_actions for the exact planned send times.",
+        "Caps reset at local midnight in timeZone. Each lead finder's send window (always, business, extended) decides the hours connection requests and follow-ups may go out, measured in each lead's own time zone (resolved from their profile location; timeZone is the fallback when it cannot be). AI replies ignore that window and wait a random 2 to 15 minutes after the inbound message. Use omentir_list_scheduled_actions for the exact planned send times of invites and follow-ups.",
     },
     setup: {
       hasProductProfile: Boolean(profile?.description?.trim()),

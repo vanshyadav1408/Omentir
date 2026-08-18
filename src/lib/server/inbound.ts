@@ -23,7 +23,7 @@ import {
 } from "./data";
 import { findNextScheduledStepIndex } from "./campaign-sequence";
 import { sendWindowTimeZoneForLead } from "./lead-time-zone";
-import { SPACING_MINUTES } from "./send-schedule";
+import { nextAiReplyAt } from "./send-schedule";
 import { classifyReplyIntent, draftCampaignMessage } from "./gemini";
 import { renderTemplate } from "./outreach-rules";
 import {
@@ -181,19 +181,18 @@ export async function draftUpcomingMessagePreview(input: {
   }
 }
 
-// Webhook-side wrapper around the send planner. Provider events land at
-// arbitrary hours, so every enrollment woken from here gets a real slot inside
-// the campaign's send window rather than "now" or "now + wait". Falls back to
-// the naive time if planning fails: a slightly-off schedule beats dropping the
-// acceptance or reply signal entirely.
+// Webhook-side wrapper around the send planner. Acceptances arrive at
+// arbitrary hours, so the first message gets a real slot inside the campaign's
+// send window rather than "now" or "now + wait". Falls back to the naive time
+// if planning fails: a slightly-off schedule beats dropping the signal.
 async function planFirstAvailableSlot(input: {
   workspaceId: string;
   campaign: Campaign | undefined;
   enrollmentId: string;
-  kind: "message" | "reply";
+  kind: "message";
   earliestAt: number;
-  // Where the lead is: an acceptance or reply arriving at any hour is planned
-  // into the next opening of THEIR window, not the workspace's.
+  // Where the lead is: an acceptance arriving at any hour is planned into the
+  // next opening of THEIR window, not the workspace's.
   leadLocation: string | undefined;
 }) {
   const fallback = new Date(input.earliestAt).toISOString();
@@ -452,22 +451,15 @@ export async function processInboundMessage(input: {
       const toStop = stoppedEnrollments.filter(
         (enrollment) => enrollment.status !== "replied" && enrollment.status !== "stopped",
       );
-      const armed = await Promise.all(
-        toArm.map(async (enrollment) => ({
-          enrollment,
-          nextActionAt: await planFirstAvailableSlot({
-            workspaceId,
-            campaign: campaigns.find((item) => item.id === enrollment.campaignId),
-            enrollmentId: enrollment.id,
-            kind: "reply",
-            // Keep automated replies human-paced even when the account has been
-            // idle. The shared account drip alone would otherwise allow a reply
-            // on the next tick, only seconds after the lead wrote.
-            earliestAt: Date.now() + SPACING_MINUTES * 60 * 1000,
-            leadLocation: lead.location,
-          }),
-        })),
-      );
+      // Do not run replies through the outreach planner. That planner's send
+      // window, daily cap, and reserved invite queue are what parked AI replies
+      // hours out. A waiting prospect gets a random 2-15 minute pause so the
+      // gap between their message and ours does not look like a fixed timer.
+      const replyAt = nextAiReplyAt();
+      const armed = toArm.map((enrollment) => ({
+        enrollment,
+        nextActionAt: replyAt,
+      }));
       await Promise.all([
         ...armed.map(({ enrollment, nextActionAt }) =>
           updateEnrollment(workspaceId, enrollment.id, {

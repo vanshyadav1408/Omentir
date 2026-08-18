@@ -8,6 +8,7 @@ import {
   getAgent,
   getDueAgents,
   getDueEnrollments,
+  getDueReplyEnrollments,
   getConversation,
   getCampaign,
   getCampaignEnrollment,
@@ -171,12 +172,11 @@ const UNCONFIRMED_PROVIDER_SEND_PREFIX = "Unconfirmed provider send";
 
 class UnconfirmedProviderSendError extends Error {}
 
-// Human-like pacing. Every outbound action - invite, follow-up, AI reply -
-// now shares one per-account drip of at most one per SPACING_MINUTES, enforced
-// across ticks and manual runs by the persistent claimActionSlot gate. Anything
-// that cannot go now is handed to the planner (send-schedule.ts), which returns
-// the real next slot inside the campaign's send window and under the local-day
-// caps, rather than a ladder that ignored both.
+// Human-like pacing. Invites and follow-ups share one per-account drip of at
+// most one per SPACING_MINUTES, enforced across ticks and manual runs by the
+// persistent claimActionSlot gate. AI replies use that same gate at send time
+// so they cannot double-send with an invite, but they are not handed back to
+// the planner: that is what parked them behind the send window and the queue.
 const PACING_MIN_PER_TICK = 1;
 const PACING_MAX_PER_TICK = 3;
 // Only used when the planner itself fails (Firestore error); a short defer so
@@ -773,35 +773,14 @@ async function runEnrollment(
       return "reply-intent-stop";
     }
 
-    // Gate before drafting, not after: a Gemini call per deferred attempt was
-    // pure waste, and the draft would be stale by the time the slot opened.
-    if (!options.ignoreSendWindow && !isWithinSendWindow(sendWindow, leadTimeZone, Date.now())) {
-      await updateCurrentEnrollment({
-        nextActionAt: await reserveSendSlot({
-          budget,
-          workspace,
-          campaign,
-          enrollmentId: enrollment.id,
-          timezone: leadTimeZone,
-          kind: "reply",
-        }),
-      });
-      return "outside-send-window";
-    }
-
+    // AI replies skip the campaign send window. A prospect who just wrote is
+    // waiting; parking until 9am is how these used to take hours. The random
+    // 2-15 minute inbound pause is what keeps the send from looking like a bot.
     const replySlotAt = await claimActionSlot(enrollment.workspaceId, account.id);
     if (replySlotAt) {
-      await updateCurrentEnrollment({
-        nextActionAt: await reserveSendSlot({
-          budget,
-          workspace,
-          campaign,
-          enrollmentId: enrollment.id,
-          timezone: leadTimeZone,
-          kind: "reply",
-          earliestAt: Date.parse(replySlotAt),
-        }),
-      });
+      // Use the drip time directly. Running it through the planner would put
+      // the reply behind the reserved invite queue and the send window again.
+      await updateCurrentEnrollment({ nextActionAt: replySlotAt });
       return "reply-spaced";
     }
 
@@ -1156,12 +1135,9 @@ async function runEnrollment(
     return "message-before-connection";
   }
 
-  // A reply is the one action that may already be overdue when it gets here,
-  // so it is planned as kind "reply" and outranks queued invites for the next
-  // free slot. It still respects the send window: an AI reply at 03:19 is the
-  // same unnatural behaviour whether or not a human triggered it.
-  const messageKind: SendActionKind =
-    enrollment.status === "reply_received" ? "reply" : "message";
+  // Sequence follow-ups still respect the send window. AI replies to a live
+  // inbound are handled in the reply_received branch above and never reach here.
+  const messageKind: SendActionKind = "message";
 
   if (!options.ignoreSendWindow && !isWithinSendWindow(sendWindow, leadTimeZone, Date.now())) {
     await updateCurrentEnrollment({
@@ -1569,10 +1545,17 @@ async function runCampaigns(mode: AutomationSafetyMode) {
     });
   }
 
-  const enrollments = await getDueEnrollments(
-    50,
-    Array.from(new Set(activeCampaigns.map((campaign) => campaign.workspaceId))),
-  );
+  const workspaceIds = Array.from(new Set(activeCampaigns.map((campaign) => campaign.workspaceId)));
+  const [replyEnrollments, enrollments] = await Promise.all([
+    getDueReplyEnrollments(50, workspaceIds),
+    getDueEnrollments(50, workspaceIds),
+  ]);
+  const seenEnrollmentIds = new Set<string>();
+  const dueEnrollments = [...replyEnrollments, ...enrollments].filter((enrollment) => {
+    if (seenEnrollmentIds.has(enrollment.id)) return false;
+    seenEnrollmentIds.add(enrollment.id);
+    return true;
+  });
   const campaignCache = new Map<string, Campaign>();
   const workspaceActiveCache = new Map<string, boolean>();
   const sourceAgentBlock = newSourceAgentBlockLookup();
@@ -1589,7 +1572,7 @@ async function runCampaigns(mode: AutomationSafetyMode) {
   };
   let actions = 0;
 
-  for (const enrollment of enrollments) {
+  for (const enrollment of dueEnrollments) {
     const campaign =
       campaignCache.get(enrollment.campaignId) ||
       (await listCampaigns(enrollment.workspaceId)).find((item) => item.id === enrollment.campaignId);
