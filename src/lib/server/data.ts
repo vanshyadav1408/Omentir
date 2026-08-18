@@ -21,8 +21,10 @@ import { remapStepIndex } from "./enrollment-remap";
 import { sendWindowTimeZoneForLead } from "./lead-time-zone";
 import { addInviteLimitSignal } from "./outreach-rules";
 import {
+  canEnrollLeadForOutreach,
   leadOutcomeNotificationLockId,
   MEETING_BOOKED_CONFIDENCE,
+  USER_STOPPED_OUTREACH_ERROR,
   type LeadOutcomeNotificationKind,
 } from "./reply-automation-policy";
 import type {
@@ -2072,7 +2074,7 @@ export async function enrollNewLeadsInCampaign(workspaceId: string, campaign: Ca
     .filter(
       ({ snap, lead }) =>
         !snap.exists &&
-        lead.outreachStatus === "new" &&
+        canEnrollLeadForOutreach(lead.outreachStatus) &&
         !isSourcedByLeadsOnlyAgent(lead, agents) &&
         !sourceAgentStopsOutreach(lead),
     );
@@ -2594,16 +2596,47 @@ export async function claimEnrollmentAction(input: {
   });
 }
 
-export async function stopLeadEnrollments(workspaceId: string, leadId: string) {
+// Stops every live sequence for this lead. Sequence-complete enrollments stay
+// stopped so a later inbound can still be answered; user-stopped ones get a
+// lastError that enrollmentBlocksAiReply recognizes, so AI does not keep talking.
+export async function stopLeadOutreach(workspaceId: string, leadId: string) {
+  const lead = await findLeadForWorkspace({ workspaceId, leadId });
+  if (!lead) throw new Error("Lead not found.");
+
   const snap = await collection<CampaignEnrollment>("campaignEnrollments")
-    .where("workspaceId", "==", workspaceId)
     .where("leadId", "==", leadId)
     .get();
-  const batch = getDb().batch();
-  for (const doc of snap.docs) {
-    batch.update(doc.ref, { status: "replied", updatedAt: nowIso() });
+  const live = snap.docs.filter((doc) => {
+    const enrollment = doc.data();
+    return (
+      enrollment.workspaceId === workspaceId &&
+      enrollment.status !== "stopped" &&
+      enrollment.status !== "replied"
+    );
+  });
+
+  const now = nowIso();
+  for (let index = 0; index < live.length; index += 450) {
+    const batch = getDb().batch();
+    live.slice(index, index + 450).forEach((doc) =>
+      batch.update(doc.ref, {
+        status: "stopped",
+        pendingAction: FieldValue.delete(),
+        pausedDeferredAt: FieldValue.delete(),
+        lastError: USER_STOPPED_OUTREACH_ERROR,
+        updatedAt: now,
+      }),
+    );
+    await batch.commit();
   }
-  await batch.commit();
+
+  // enrollNewLeadsInCampaign only picks outreachStatus === "new". Leave invited /
+  // connected / messaged as-is so agent metrics keep the stage already reached.
+  if (lead.outreachStatus === "new") {
+    await updateLead(workspaceId, lead.id, { outreachStatus: "stopped" });
+  }
+
+  return live.length;
 }
 
 // One-shot claim per (workspace, kind, day) so notifications triggered from

@@ -40,6 +40,7 @@ import {
   updateWorkspaceTimezone,
   upsertProductProfile,
   upsertLead,
+  stopLeadOutreach,
 } from "@/lib/server/data";
 import { parseLinkedInLeadCsv } from "@/lib/linkedin-csv";
 import { normalizeLinkedInProfileUrl } from "@/lib/server/firebase";
@@ -553,6 +554,19 @@ export async function runScheduledActionNowAction(formData: FormData) {
   revalidatePath("/actions");
   revalidatePath("/agents");
   return { result };
+}
+
+export async function stopLeadOutreachAction(formData: FormData) {
+  const workspace = await requireWorkspace();
+  requireActiveSubscription(workspace);
+  const leadId = String(formData.get("leadId") || "").trim();
+  if (!leadId) throw new Error("Lead id is required.");
+
+  await stopLeadOutreach(workspace.id, leadId);
+  revalidatePath("/actions");
+  revalidatePath("/agents");
+  revalidatePath("/leads");
+  revalidatePath("/dashboard");
 }
 
 export async function createAgentApiKeyAction(formData: FormData) {

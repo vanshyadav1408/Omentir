@@ -86,7 +86,11 @@ import {
   isAnonymousLinkedInProfile,
   renderTemplate,
 } from "./outreach-rules";
-import { shouldStopForReply } from "./reply-automation-policy";
+import {
+  shouldHaltOutreachSend,
+  shouldStopForReply,
+  USER_STOPPED_OUTREACH_ERROR,
+} from "./reply-automation-policy";
 import { localDayAndHour } from "./scheduling";
 import { isWithinSendWindow, SPACING_MINUTES, type SendActionKind } from "./send-schedule";
 import { hasActiveSubscription } from "./subscription";
@@ -594,6 +598,23 @@ async function runEnrollment(
   });
   if (!lead) {
     await updateCurrentEnrollment({ status: "stopped" });
+    return "stopped";
+  }
+  if (
+    shouldHaltOutreachSend({
+      enrollmentStatus: enrollment.status,
+      lastError: enrollment.lastError,
+      outreachStatus: lead.outreachStatus,
+      kind: enrollment.status === "reply_received" ? "ai_reply" : "sequence",
+    })
+  ) {
+    if (enrollment.status !== "stopped" && enrollment.status !== "replied") {
+      await updateCurrentEnrollment({
+        status: "stopped",
+        lastError: USER_STOPPED_OUTREACH_ERROR,
+        pendingAction: undefined,
+      });
+    }
     return "stopped";
   }
   if (lead.outreachStatus === "replied" && enrollment.status !== "reply_received") {
@@ -1372,6 +1393,16 @@ export async function executeScheduledActionNow(workspaceId: string, enrollmentI
 
     const lead = await findLeadForWorkspace({ workspaceId, leadId: enrollment.leadId });
     if (!lead) throw new Error("Lead not found.");
+    if (
+      shouldHaltOutreachSend({
+        enrollmentStatus: enrollment.status,
+        lastError: enrollment.lastError,
+        outreachStatus: lead.outreachStatus,
+        kind: "manual",
+      })
+    ) {
+      throw new Error("Outreach for this lead was stopped.");
+    }
     if (step.type === "message" && !canSendCampaignMessage(enrollment, lead)) {
       throw new Error("The connection must be accepted before this message can be sent.");
     }
@@ -1488,6 +1519,16 @@ async function previewEnrollment(
     leadId: enrollment.leadId,
   });
   if (!lead) return "stopped";
+  if (
+    shouldHaltOutreachSend({
+      enrollmentStatus: enrollment.status,
+      lastError: enrollment.lastError,
+      outreachStatus: lead.outreachStatus,
+      kind: enrollment.status === "reply_received" ? "ai_reply" : "sequence",
+    })
+  ) {
+    return "stopped";
+  }
   if (lead.outreachStatus === "replied" && enrollment.status !== "reply_received") {
     if (
       enrollment.status === "connection_sent" ||

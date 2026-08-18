@@ -76,11 +76,15 @@ export function shouldShareBookingLink(input: {
   );
 }
 
+export const USER_STOPPED_OUTREACH_ERROR =
+  "Outreach stopped by the user from the Actions page.";
+
 const PERMANENT_AI_REPLY_BLOCK = [
   /agent that sourced this lead was deleted/i,
   /leads-only agent/i,
   /anonymized LinkedIn Member/i,
   /recipient unreachable/i,
+  /outreach stopped by the user/i,
 ];
 
 export function enrollmentBlocksAiReply(enrollment: Pick<CampaignEnrollment, "lastError">) {
@@ -88,12 +92,39 @@ export function enrollmentBlocksAiReply(enrollment: Pick<CampaignEnrollment, "la
   return PERMANENT_AI_REPLY_BLOCK.some((pattern) => pattern.test(err));
 }
 
+export function canEnrollLeadForOutreach(outreachStatus: string | undefined) {
+  return outreachStatus === "new";
+}
+
+export function enrollmentIsTerminalForSequence(status: string | undefined) {
+  return status === "stopped" || status === "replied";
+}
+
+export type OutreachSendKind = "sequence" | "ai_reply" | "manual";
+
+// Every LinkedIn send path (tick, Run now, AI reply) consults this before a
+// provider call. The Actions-page Stop button writes status=stopped plus
+// USER_STOPPED_OUTREACH_ERROR (and outreachStatus=stopped when the lead was
+// still new), so a later refactor that drops one field still has to fail this.
+export function shouldHaltOutreachSend(input: {
+  enrollmentStatus?: string;
+  lastError?: string;
+  outreachStatus?: string;
+  kind: OutreachSendKind;
+}) {
+  if (input.outreachStatus === "stopped") return true;
+  if (input.kind === "ai_reply") return enrollmentBlocksAiReply({ lastError: input.lastError });
+  return enrollmentIsTerminalForSequence(input.enrollmentStatus);
+}
+
 export function shouldArmAiReply(input: {
   replyHandling: CampaignReplyHandling | undefined;
   enrollmentStatus: CampaignEnrollment["status"];
   previousIntent?: ReplyIntent;
   previousIntentConfidence?: number;
+  lastError?: string;
 }) {
+  if (enrollmentBlocksAiReply({ lastError: input.lastError })) return false;
   if (input.replyHandling === "handoff") return false;
 
   // connection_sent: LinkedIn often delivers the accept-and-message webhook

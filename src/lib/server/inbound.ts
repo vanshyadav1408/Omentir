@@ -237,6 +237,7 @@ export async function applyConnectionAccepted(input: {
   account?: LinkedInAccount | null;
 }) {
   const { workspaceId, lead, enrollment, campaign } = input;
+  if (enrollmentBlocksAiReply(enrollment) || lead.outreachStatus === "stopped") return;
   const currentStep = campaign?.steps[enrollment.currentStepIndex];
   // The wait step's delay is the EARLIEST the first message may go, not the
   // time it goes. Acceptances arrive whenever the lead happens to click, so
@@ -397,6 +398,7 @@ export async function processInboundMessage(input: {
       enrollmentStatus: enrollment.status,
       previousIntent,
       previousIntentConfidence,
+      lastError: enrollment.lastError,
     });
   });
   const aiReplyEnrollments = aiReplyCandidates.filter((enrollment) => {

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { runScheduledActionNowAction } from "@/app/actions";
+import { runScheduledActionNowAction, stopLeadOutreachAction } from "@/app/actions";
 import MobileHeaderPortal from "@/app/mobile-header-portal";
 import type { ScheduledAction } from "@/lib/server/scheduled-actions";
 import { useWorkspaceTimeZone } from "@/app/workspace-time-zone";
@@ -119,7 +119,7 @@ function TimelineRow({ item, timeZone }: { item: ScheduledAction["timeline"][num
   );
 }
 
-function ActionDetails({ action, siblings, onSelectSibling, timeZone, pending, confirming, feedback, onConfirm, onCancel, onRun, onClose, bare, showTimeline }: {
+function ActionDetails({ action, siblings, onSelectSibling, timeZone, pending, confirming, confirmingStop, feedback, onConfirm, onCancel, onRun, onConfirmStop, onCancelStop, onStop, onClose, bare, showTimeline }: {
   action: ScheduledAction;
   // Every action this lead has, one per campaign they are enrolled in.
   siblings: ScheduledAction[];
@@ -127,10 +127,14 @@ function ActionDetails({ action, siblings, onSelectSibling, timeZone, pending, c
   timeZone: string;
   pending: boolean;
   confirming: boolean;
+  confirmingStop: boolean;
   feedback?: { ok: boolean; text: string };
   onConfirm: () => void;
   onCancel: () => void;
   onRun: () => void;
+  onConfirmStop: () => void;
+  onCancelStop: () => void;
+  onStop: () => void;
   onClose?: () => void;
   bare?: boolean;
   showTimeline?: boolean;
@@ -220,14 +224,36 @@ function ActionDetails({ action, siblings, onSelectSibling, timeZone, pending, c
         {feedback ? <p className={`mt-4 rounded-lg px-3 py-2.5 text-xs leading-5 ${feedback.ok ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-800"}`}>{feedback.text}</p> : null}
         {action.blockedReason ? <p className="mt-4 flex gap-2 rounded-lg bg-amber-50 px-3 py-2.5 text-xs leading-5 text-amber-800"><span className="material-symbols-outlined mt-0.5 text-[15px]">lock_clock</span>{action.blockedReason}</p> : null}
 
-        {confirming ? (
+        {confirmingStop ? (
+          <div className="mt-5 rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+            <p className="text-xs font-semibold text-zinc-900">Stop outreach for {action.lead.name.split(" ")[0] || "this lead"}?</p>
+            <p className="mt-1 text-[11px] leading-4 text-zinc-500">
+              {siblings.length > 1
+                ? "Nothing else will be sent in any campaign for this person."
+                : "Nothing else will be sent to this person."}
+            </p>
+            <div className="mt-3 flex gap-2">
+              <button type="button" onClick={onStop} disabled={pending} className="h-8 rounded-md bg-zinc-900 px-3 text-xs font-semibold text-white disabled:opacity-60">
+                {pending ? "Stopping…" : "Yes, stop outreach"}
+              </button>
+              <button type="button" onClick={onCancelStop} disabled={pending} className="h-8 rounded-md border border-zinc-200 bg-white px-3 text-xs font-semibold text-zinc-700">
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : confirming ? (
           <div className="mt-5 rounded-lg border border-[#eac4d5] bg-[#fff7fa] p-3">
             <p className="text-xs font-semibold text-zinc-900">Send this live on LinkedIn now?</p>
             <p className="mt-1 text-[11px] leading-4 text-zinc-500">This skips the timer and cannot be undone.</p>
             <div className="mt-3 flex gap-2"><button type="button" onClick={onRun} disabled={pending} className="dark-keep-brand h-8 rounded-md bg-[#ba3871] px-3 text-xs font-semibold text-white disabled:opacity-60">{pending ? "Sending…" : "Yes, send now"}</button><button type="button" onClick={onCancel} disabled={pending} className="h-8 rounded-md border border-zinc-200 bg-white px-3 text-xs font-semibold text-zinc-700">Cancel</button></div>
           </div>
         ) : (
-          <button type="button" onClick={onConfirm} disabled={!action.canRunNow || pending} className="dark-keep-brand mt-5 flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#ba3871] text-sm font-semibold text-white transition hover:bg-[#a92f65] disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-500"><span className="material-symbols-outlined text-[17px]">send</span>{action.kind === "connection" ? "Send connection now" : "Send message now"}</button>
+          <div className="mt-5 flex flex-col gap-2">
+            <button type="button" onClick={onConfirm} disabled={!action.canRunNow || pending} className="dark-keep-brand flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#ba3871] text-sm font-semibold text-white transition hover:bg-[#a92f65] disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-500"><span className="material-symbols-outlined text-[17px]">send</span>{action.kind === "connection" ? "Send connection now" : "Send message now"}</button>
+            <button type="button" onClick={onConfirmStop} disabled={pending} className="flex h-10 w-full items-center justify-center rounded-lg border border-zinc-200 bg-white text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60">
+              Stop outreach
+            </button>
+          </div>
         )}
       </div>
     </aside>
@@ -244,6 +270,7 @@ export default function ActionsDashboard({ items, title, serverNow, timezone, he
   const [selectedId, setSelectedId] = useState(items.find((item) => item.lead)?.id || "");
   const [mobileDetailsOpen, setMobileDetailsOpen] = useState(false);
   const [confirmingId, setConfirmingId] = useState("");
+  const [confirmingStopLeadId, setConfirmingStopLeadId] = useState("");
   const [pendingId, setPendingId] = useState("");
   const [feedback, setFeedback] = useState<Record<string, { ok: boolean; text: string }>>({});
   const [viewMode, setViewMode] = useState<"time" | "lead">("time");
@@ -308,6 +335,7 @@ export default function ActionsDashboard({ items, title, serverNow, timezone, he
     setSelectedLeadId(action.lead?.id || "");
     setSelectedId(action.id);
     setConfirmingId("");
+    setConfirmingStopLeadId("");
     setMobileDetailsOpen(true);
   }
 
@@ -315,12 +343,14 @@ export default function ActionsDashboard({ items, title, serverNow, timezone, he
     setViewMode(mode);
     setPage(1);
     setConfirmingId("");
+    setConfirmingStopLeadId("");
   }
 
   function changeGroup(nextGroupId: string) {
     setGroupId(nextGroupId);
     setPage(1);
     setConfirmingId("");
+    setConfirmingStopLeadId("");
   }
 
   async function runNow(action: ScheduledAction) {
@@ -335,6 +365,25 @@ export default function ActionsDashboard({ items, title, serverNow, timezone, he
       router.refresh();
     } catch (error) {
       setFeedback((current) => ({ ...current, [action.id]: { ok: false, text: error instanceof Error ? error.message : "The action could not be sent." } }));
+    } finally {
+      setPendingId("");
+    }
+  }
+
+  async function stopOutreach(action: ScheduledAction) {
+    const leadId = action.lead?.id;
+    if (!leadId) return;
+    setPendingId(action.id);
+    setFeedback((current) => { const next = { ...current }; delete next[action.id]; return next; });
+    const formData = new FormData();
+    formData.set("leadId", leadId);
+    try {
+      await stopLeadOutreachAction(formData);
+      setConfirmingStopLeadId("");
+      setMobileDetailsOpen(false);
+      router.refresh();
+    } catch (error) {
+      setFeedback((current) => ({ ...current, [action.id]: { ok: false, text: error instanceof Error ? error.message : "Outreach could not be stopped." } }));
     } finally {
       setPendingId("");
     }
@@ -584,10 +633,20 @@ export default function ActionsDashboard({ items, title, serverNow, timezone, he
                   timeZone={timeZone}
                   pending={pendingId === selected.id}
                   confirming={confirmingId === selected.id}
+                  confirmingStop={confirmingStopLeadId === selected.lead?.id}
                   feedback={feedback[selected.id]}
-                  onConfirm={() => setConfirmingId(selected.id)}
+                  onConfirm={() => {
+                    setConfirmingStopLeadId("");
+                    setConfirmingId(selected.id);
+                  }}
                   onCancel={() => setConfirmingId("")}
                   onRun={() => runNow(selected)}
+                  onConfirmStop={() => {
+                    setConfirmingId("");
+                    setConfirmingStopLeadId(selected.lead?.id || "");
+                  }}
+                  onCancelStop={() => setConfirmingStopLeadId("")}
+                  onStop={() => stopOutreach(selected)}
                   showTimeline={viewMode === "lead"}
                 />
               ) : (
@@ -622,10 +681,20 @@ export default function ActionsDashboard({ items, title, serverNow, timezone, he
                 timeZone={timeZone}
                 pending={pendingId === selected.id}
                 confirming={confirmingId === selected.id}
+                confirmingStop={confirmingStopLeadId === selected.lead?.id}
                 feedback={feedback[selected.id]}
-                onConfirm={() => setConfirmingId(selected.id)}
+                onConfirm={() => {
+                  setConfirmingStopLeadId("");
+                  setConfirmingId(selected.id);
+                }}
                 onCancel={() => setConfirmingId("")}
                 onRun={() => runNow(selected)}
+                onConfirmStop={() => {
+                  setConfirmingId("");
+                  setConfirmingStopLeadId(selected.lead?.id || "");
+                }}
+                onCancelStop={() => setConfirmingStopLeadId("")}
+                onStop={() => stopOutreach(selected)}
                 onClose={() => setMobileDetailsOpen(false)}
                 showTimeline={viewMode === "lead"}
               />

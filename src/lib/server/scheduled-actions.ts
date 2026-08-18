@@ -16,6 +16,7 @@ import {
   getOutboundMessageTimesByLeadIds,
   listGroups,
 } from "./data";
+import { enrollmentIsTerminalForSequence } from "./reply-automation-policy";
 
 export type ScheduledAction = {
   id: string;
@@ -67,7 +68,6 @@ export async function listScheduledActions(
   const leadsById = new Map(leads.map((lead) => [lead.id, lead]));
   const agentsById = new Map(agents.map((agent) => [agent.id, agent]));
   const groupsById = new Map(groups.map((group) => [group.id, group]));
-  const terminalStatuses = new Set(["stopped", "replied"]);
 
   // Only enrollments that already sent a message have a send time to look up,
   // and this page auto-refreshes every minute - reading a conversation for
@@ -82,7 +82,7 @@ export async function listScheduledActions(
   const outboundMessageTimes = await getOutboundMessageTimesByLeadIds(workspaceId, messagedLeadIds);
 
   const outreach = enrollments.flatMap((enrollment): ScheduledAction[] => {
-    if (terminalStatuses.has(enrollment.status)) return [];
+    if (enrollmentIsTerminalForSequence(enrollment.status)) return [];
     if (filters.campaignId && enrollment.campaignId !== filters.campaignId) return [];
     const campaign = campaignsById.get(enrollment.campaignId);
     const lead = leadsById.get(enrollment.leadId);
