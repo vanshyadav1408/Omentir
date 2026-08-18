@@ -21,10 +21,12 @@ export const metadata = createPageMetadata({
     "social selling on X",
     "X marketing tools",
     "ClimbX",
+    "XFastest",
   ],
 });
 
 const climbXUrl = "https://climbx.so/";
+const xfastestUrl = "https://xfaste.st/";
 const xUrl = "https://x.com/";
 const xBusinessUrl = "https://business.x.com/";
 const analyticsUrl = "https://analytics.x.com/";
@@ -66,7 +68,7 @@ const faqItems = [
   {
     question: "What is the best tool for X marketing?",
     answer:
-      "There is no single best tool for every account. Use native X analytics for platform data, a scheduling tool for consistency, a measurement tool for website activity, and a listening or writing tool such as ClimbX when its workflow matches the way you work.",
+      "There is no single best tool for every account. Use native X analytics for platform data, a scheduling tool for consistency, a measurement tool for website activity, and a writing tool such as ClimbX or XFastest when the workflow matches the way you work.",
   },
   {
     question: "How do I know whether X marketing is working?",
@@ -322,8 +324,20 @@ export default function BlogPost() {
       <p>
         ClimbX is still a writing and research aid, not a substitute for your experience. Review every draft for accuracy, remove claims you cannot support, and keep the final choice of what to publish with a person. You can explore the workflow at <ExternalLink href={climbXUrl}>climbx.so</ExternalLink>.
       </p>
+      <h3 id="tool-xfastest" style={{ fontFamily: "var(--font-varta)" }} className={subSectionClassName}>
+        3. XFastest
+      </h3>
+      <p>
+        <ExternalLink href={xfastestUrl}>XFastest</ExternalLink> is a writing workspace for growing an X account. The site describes a loop: study posts that already outperform, draft in your voice, post, then open a daily list of public accounts that asked to connect. You follow those people yourself. The product does not sell followers and does not follow accounts for you.
+      </p>
+      <p>
+        Drafts try to match your writing voice and keep product facts in the copy. You approve every post before it goes out. Publishing and scheduling use official X OAuth, so the account stays under your control. The public pricing page lists $19 a month or $136.80 a year after a 3-day free trial. Check that page before you buy, because offers change.
+      </p>
+      <p>
+        Treat XFastest as a drafting and research aid, not a growth guarantee. Read every draft, cut claims you cannot support, and judge results by conversations and qualified clicks, not follower counts. The product is at <ExternalLink href={xfastestUrl}>xfaste.st</ExternalLink>.
+      </p>
       <h3 id="tool-scheduling" style={{ fontFamily: "var(--font-varta)" }} className={subSectionClassName}>
-        3. Scheduling tools
+        4. Scheduling tools
       </h3>
       <p>
         A scheduler can help you prepare posts when you have time and publish them when your audience is likely to see them. <ExternalLink href={bufferUrl}>Buffer</ExternalLink> and <ExternalLink href={typefullyUrl}>Typefully</ExternalLink> are examples of tools people use to plan and schedule social content. Use scheduling to protect your publishing rhythm, not to create a feed that never responds to current conversations.
@@ -332,7 +346,7 @@ export default function BlogPost() {
         Leave room for live replies and unexpected events. A fully queued feed can look detached when the market is discussing something your audience cares about.
       </p>
       <h3 id="tool-measurement" style={{ fontFamily: "var(--font-varta)" }} className={subSectionClassName}>
-        4. Website measurement and CRM
+        5. Website measurement and CRM
       </h3>
       <p>
         Use tagged links and <ExternalLink href={gaUrl}>Google Analytics</ExternalLink> or another analytics platform to see what happens after a click. A CRM can record the source of a conversation, the problem discussed, the next step, and the eventual result.
