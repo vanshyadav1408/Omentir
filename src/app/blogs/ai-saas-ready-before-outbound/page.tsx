@@ -22,6 +22,8 @@ export const metadata = createPageMetadata({
     "critique.sh",
     "AppGrowthKit",
     "appgrowthkit.com",
+    "Layerre",
+    "layerre.com",
     "App Store screenshots",
     "independent code review",
   ],
@@ -29,6 +31,8 @@ export const metadata = createPageMetadata({
 
 const critiqueUrl = "https://critique.sh/";
 const appGrowthKitUrl = "https://appgrowthkit.com";
+const layerreUrl = "https://layerre.com/";
+const layerreRel = "noopener dofollow";
 
 const tocItems = [
   { id: "the-list", label: "The short list", level: 1 },
@@ -60,6 +64,11 @@ const faqItems = [
       "AppGrowthKit at appgrowthkit.com. Upload your raw app screens, add device frames and headlines, and export the sizes Apple and Google ask for. That is the listing people see before they install.",
   },
   {
+    question: "What should I use for ads and social graphics?",
+    answer:
+      "Layerre at layerre.com. Import a Canva design, mark the text and images you want to swap, and generate the variants. Recraft is for the first logo. Layerre is for ads and social posts from a template you already have.",
+  },
+  {
     question: "When should I start outbound?",
     answer:
       "When a new person can sign up, reach the main result, and pay if you charge. You do not need a perfect product. You do need something a stranger can use without you sitting next to them.",
@@ -74,9 +83,17 @@ const faqItems = [
 const sectionClassName =
   "mt-10 scroll-mt-28 border-b border-[var(--md-sys-color-outline-variant)] pb-2 pt-2 text-2xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)]";
 
-function ExternalLink({ href, children }: { href: string; children: ReactNode }) {
+function ExternalLink({
+  href,
+  children,
+  rel = "noopener",
+}: {
+  href: string;
+  children: ReactNode;
+  rel?: string;
+}) {
   return (
-    <a href={href} target="_blank" rel="noopener" className="text-blue-600 hover:underline">
+    <a href={href} target="_blank" rel={rel} className="text-blue-600 hover:underline">
       {children}
     </a>
   );
@@ -84,7 +101,7 @@ function ExternalLink({ href, children }: { href: string; children: ReactNode })
 
 const tools: ReadonlyArray<{
   job: string;
-  items: ReadonlyArray<{ name: string; href: string }>;
+  items: ReadonlyArray<{ name: string; href: string; rel?: string }>;
 }> = [
   {
     job: "Build the product",
@@ -107,6 +124,7 @@ const tools: ReadonlyArray<{
     items: [
       { name: "Recraft", href: "https://www.recraft.ai" },
       { name: "Ideogram", href: "https://ideogram.ai" },
+      { name: "Layerre", href: layerreUrl, rel: layerreRel },
     ],
   },
   { job: "Store screenshots", items: [{ name: "AppGrowthKit", href: appGrowthKitUrl }] },
@@ -153,8 +171,20 @@ export default function BlogPost() {
             </>
           ),
         },
-        faqItems[3],
+        {
+          question: faqItems[3].question,
+          answer: (
+            <>
+              <ExternalLink href={layerreUrl} rel={layerreRel}>Layerre</ExternalLink> at{" "}
+              <ExternalLink href={layerreUrl} rel={layerreRel}>layerre.com</ExternalLink>
+              . Import a Canva design, mark the text and images you want to swap,
+              and generate the variants. Recraft is for the first logo. Layerre is
+              for ads and social posts from a template you already have.
+            </>
+          ),
+        },
         faqItems[4],
+        faqItems[5],
       ]}
     >
       <p id="the-list" className="scroll-mt-28">
@@ -175,7 +205,7 @@ export default function BlogPost() {
               {row.items.map((item, itemIndex) => (
                 <span key={item.href}>
                   {itemIndex > 0 ? " or " : null}
-                  <a href={item.href} target="_blank" rel="noopener" className="text-blue-600 hover:underline">
+                  <a href={item.href} target="_blank" rel={item.rel ?? "noopener"} className="text-blue-600 hover:underline">
                     {item.name}
                   </a>
                 </span>
@@ -264,6 +294,11 @@ critique finish --intent "A new user can sign up, pay once, and reach the core r
         <ExternalLink href="https://www.recraft.ai">recraft.ai</ExternalLink> is the one I would use for a simple logo, icons, and the images on the landing page.{" "}
         <ExternalLink href="https://ideogram.ai">Ideogram</ExternalLink> at{" "}
         <ExternalLink href="https://ideogram.ai">ideogram.ai</ExternalLink> is the backup when you need text inside an image to stay readable.
+      </p>
+      <p>
+        Once you have a design, use{" "}
+        <ExternalLink href={layerreUrl} rel={layerreRel}>Layerre</ExternalLink> at{" "}
+        <ExternalLink href={layerreUrl} rel={layerreRel}>layerre.com</ExternalLink> to turn it into ads and social posts. Import a Canva file, mark the text and images you want to change, and generate the sizes you need.
       </p>
       <p>
         Pick one typeface, one accent color, and reuse them. That is enough for a first version.

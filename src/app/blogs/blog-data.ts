@@ -87,7 +87,7 @@ export const ALL_BLOGS: BlogItem[] = [
     title: "AI Tools to Use Before You Start Outbound",
     description: "A simple list of AI tools to use while you build a SaaS: coding, code review, landing pages, App Store screenshots, payments, and analytics, before you start outbound.",
     publishedDate: "August 12, 2026",
-    updatedDate: "August 13, 2026",
+    updatedDate: "August 19, 2026",
     category: "Guides",
     readTime: "7 min read",
     bannerSrc: "/ai-saas-ready-before-outbound-v3.avif",
