@@ -10,7 +10,9 @@ import {
   claimLeadOutcomeNotification,
   claimReplyNotification,
   createConversationMessage,
+  findLeadForWorkspace,
   getConversation,
+  getLeadsByIds,
   getLinkedInAccountForWorkspace,
   getProductProfile,
   getWorkspace,
@@ -41,9 +43,11 @@ import {
 import {
   getLinkedInPostCreatedAt,
   getLinkedInPostText,
+  isFirstDegreeConnection,
   listLinkedInPostsForProfile,
   retrieveLinkedInProfile,
 } from "./unipile";
+import { pickLeadForProviderIdentity } from "../linkedin-identity";
 import type {
   Campaign,
   CampaignEnrollment,
@@ -296,6 +300,86 @@ export function enrollmentCanReceiveAcceptance(enrollment: CampaignEnrollment) {
   if (!enrollment.connectionSentAt) return false;
   if (enrollment.status !== "stopped" && enrollment.status !== "error") return false;
   return !enrollmentBlocksAiReply(enrollment);
+}
+
+export async function findLeadForInboundEvent(input: {
+  workspaceId: string;
+  leadId?: string;
+  linkedInUrl?: string;
+  providerProfileId?: string;
+  publicIdentifier?: string;
+  fullName?: string;
+  matchPendingAcceptance?: boolean;
+}) {
+  if (input.matchPendingAcceptance) {
+    const enrollments = await listCampaignEnrollments(input.workspaceId);
+    const pending = enrollments.filter(enrollmentCanReceiveAcceptance);
+    if (pending.length) {
+      const leads = await getLeadsByIds(
+        input.workspaceId,
+        pending.map((enrollment) => enrollment.leadId),
+      );
+      const matched = pickLeadForProviderIdentity(leads, {
+        providerProfileId: input.providerProfileId,
+        linkedInUrl: input.linkedInUrl,
+        publicIdentifier: input.publicIdentifier,
+        name: input.fullName,
+      });
+      if (matched) return matched;
+    }
+  }
+
+  return findLeadForWorkspace({
+    workspaceId: input.workspaceId,
+    leadId: input.leadId,
+    linkedInUrl: input.linkedInUrl,
+    providerProfileId: input.providerProfileId,
+    publicIdentifier: input.publicIdentifier,
+  });
+}
+
+// Own-message webhooks fire when an invite note opens a chat. Unipile says
+// that usually means they accepted, but they can also reply without accepting,
+// so confirm first-degree before unlocking campaign messages.
+export async function applyAcceptanceIfFirstDegree(input: {
+  workspaceId: string;
+  lead: Lead;
+  account?: LinkedInAccount | null;
+}) {
+  const identifier = input.lead.providerProfileId || input.lead.linkedInUrl;
+  if (!input.account || !identifier) return false;
+
+  const [enrollments, campaigns] = await Promise.all([
+    listCampaignEnrollments(input.workspaceId),
+    listCampaigns(input.workspaceId),
+  ]);
+  const pending = enrollments.filter(
+    (enrollment) =>
+      enrollment.leadId === input.lead.id && enrollmentCanReceiveAcceptance(enrollment),
+  );
+  if (!pending.length) return false;
+
+  const connected = await isFirstDegreeConnection({
+    accountId: input.account.accountId,
+    identifier,
+    ignoreViewBudget: true,
+  });
+  if (connected !== true) return false;
+
+  const campaignsById = new Map(campaigns.map((campaign) => [campaign.id, campaign]));
+  await Promise.all(
+    pending.map((enrollment) =>
+      applyConnectionAccepted({
+        workspaceId: input.workspaceId,
+        lead: input.lead,
+        enrollment,
+        campaign: campaignsById.get(enrollment.campaignId),
+        account: input.account,
+      }),
+    ),
+  );
+  await updateLead(input.workspaceId, input.lead.id, { outreachStatus: "connected" });
+  return true;
 }
 
 const LIVE_INBOUND_ENROLLMENT_STATUSES: CampaignEnrollment["status"][] = [

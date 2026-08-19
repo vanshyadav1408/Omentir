@@ -9,6 +9,10 @@ import type {
 } from "./types";
 import { consumeProfileViewBudget, listLinkedInAccounts } from "./data";
 import { searchableLocationNames } from "./geo";
+import {
+  firstDegreeFromUnipileProfile,
+  linkedInIdentityKeys,
+} from "../linkedin-identity";
 
 const UNIPILE_TIMEOUT_MS = 30_000;
 const UNIPILE_MIN_REQUEST_SPACING_MS = 250;
@@ -491,6 +495,7 @@ function getListCursor(result: unknown): string | undefined {
   const record = asRecord(result);
   if (!record) return undefined;
   if (typeof record.cursor === "string" && record.cursor) return record.cursor;
+  if (typeof record.next_cursor === "string" && record.next_cursor) return record.next_cursor;
   const paging = asRecord(record.paging);
   if (typeof paging?.cursor === "string" && paging.cursor) return paging.cursor;
   return getListCursor(record.data);
@@ -1300,12 +1305,15 @@ async function resolveLinkedInLocationIds(accountId: string, locations: string[]
 // profile URL, so a match on either field identifies the same person even
 // when the two records carry different URL formats.
 export function profileSearchKeys(
-  profile: Pick<Partial<Lead>, "providerProfileId" | "linkedInUrl">,
+  profile: Pick<Partial<Lead>, "providerProfileId" | "linkedInUrl"> & {
+    publicIdentifier?: string;
+  },
 ) {
-  const keys: string[] = [];
-  if (profile.providerProfileId) keys.push(profile.providerProfileId.toLowerCase());
-  if (profile.linkedInUrl) keys.push(linkedInIdentifier(profile.linkedInUrl).toLowerCase());
-  return keys;
+  return linkedInIdentityKeys({
+    providerProfileId: profile.providerProfileId,
+    linkedInUrl: profile.linkedInUrl,
+    publicIdentifier: profile.publicIdentifier,
+  });
 }
 
 export async function searchLinkedInProfiles(input: {
@@ -1834,11 +1842,15 @@ export async function listLinkedInPostReactions(input: {
   }));
 }
 
-// Returns true/false when Unipile reports a network distance, null when the
+// Returns true/false when Unipile reports a relationship, null when the
 // profile can't be fetched or the field is missing.
 export async function isFirstDegreeConnection(input: {
   accountId: string;
   identifier: string;
+  // Acceptance confirmation (sweep, webhook, Send now) must not lose to the
+  // daily discovery cap. Discovery still consumes the budget; these reads are
+  // a handful per account and still use the in-process spacing below.
+  ignoreViewBudget?: boolean;
 }) {
   if (!isUnipileConfigured()) return null;
 
@@ -1847,18 +1859,18 @@ export async function isFirstDegreeConnection(input: {
   const identifier = linkedInIdentifier(input.identifier);
 
   // Over budget reads as "unknown" - callers already defer and retry later.
-  if (!(await takeProfileViewBudget(input.accountId))) return null;
+  if (!input.ignoreViewBudget && !(await takeProfileViewBudget(input.accountId))) return null;
   await waitForProfileViewSlot();
 
   try {
-    const profile = await request<UnipileProfile & { network_distance?: string }>(
+    const profile = await request<
+      UnipileProfile & { network_distance?: string; is_relationship?: boolean }
+    >(
       withQuery(`/api/v1/users/${encodeURIComponent(identifier)}`, {
         account_id: input.accountId,
       }),
     );
-    const distance = (profile.network_distance || "").toUpperCase();
-    if (!distance) return null;
-    return distance === "FIRST_DEGREE" || distance === "DISTANCE_1" || distance === "FIRST";
+    return firstDegreeFromUnipileProfile(profile);
   } catch {
     return null;
   }
@@ -2331,6 +2343,60 @@ export async function listSentInvitationProviderIds(accountId: string) {
       if (!cursor || !items.length) return ids;
     }
     return null;
+  } catch {
+    return null;
+  }
+}
+
+// Most recently added first-degree connections. Used by the acceptance sweep
+// so a Steal Customers run that already spent the daily profile-view budget
+// can still mark invites accepted without 20 extra /users/{id} reads.
+export async function listRecentRelationIdentityKeys(accountId: string) {
+  if (!isUnipileConfigured()) return null;
+
+  const ids = new Set<string>();
+  let cursor: string | undefined;
+
+  try {
+    for (let page = 0; page < 2; page += 1) {
+      const result = await request<
+        UnipileListResponse<{
+          public_identifier?: string;
+          public_profile_url?: string;
+          member_id?: string;
+          member_urn?: string;
+          connection_urn?: string;
+          provider_id?: string;
+        }>
+      >(
+        withQuery("/api/v1/users/relations", {
+          account_id: accountId,
+          limit: 100,
+          cursor,
+        }),
+      );
+      const items = getListItems<{
+        public_identifier?: string;
+        public_profile_url?: string;
+        member_id?: string;
+        member_urn?: string;
+        connection_urn?: string;
+        provider_id?: string;
+      }>(result);
+      for (const item of items) {
+        for (const key of linkedInIdentityKeys({
+          providerProfileId: item.provider_id || item.member_id || item.member_urn,
+          publicIdentifier: item.public_identifier,
+          linkedInUrl: item.public_profile_url,
+        })) {
+          ids.add(key);
+        }
+        if (item.connection_urn) ids.add(item.connection_urn.toLowerCase());
+      }
+      cursor = getListCursor(result);
+      if (!cursor || !items.length) return ids;
+    }
+    return ids;
   } catch {
     return null;
   }

@@ -99,7 +99,7 @@ export async function listScheduledActions(
     const isConnection = step.type === "connect";
     const connectionAccepted = canSendCampaignMessage(enrollment, lead);
     const awaitingConnection = !isConnection && !connectionAccepted;
-    const canRunNow = !enrollment.pendingAction && (isConnection || connectionAccepted);
+    const canRunNow = !enrollment.pendingAction;
     const template = isConnection ? step.noteTemplate : step.messageTemplate;
     const rendered = template.trim() ? renderTemplate(template, lead) : null;
     // AI messages are pre-drafted the moment the connection is accepted (see

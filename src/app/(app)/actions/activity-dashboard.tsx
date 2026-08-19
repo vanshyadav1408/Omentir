@@ -68,6 +68,7 @@ function resultMessage(result: string, kind: ScheduledAction["kind"]) {
   if (result === "invite-spaced") return { ok: false, text: "Another connection request went out in the last few minutes. This one was rescheduled to keep sending human-paced." };
   if (result === "message-limit") return { ok: false, text: "Today’s message limit has been reached. The action was rescheduled." };
   if (result === "message-before-connection") return { ok: false, text: "The connection must be accepted before this message can be sent." };
+  if (result === "awaiting-connection") return { ok: false, text: "LinkedIn still shows this connection as pending. The message will send once they accept." };
   return { ok: false, text: `${kind === "connection" ? "Connection request" : "Message"} was not sent yet (${result.replaceAll("-", " ")}).` };
 }
 

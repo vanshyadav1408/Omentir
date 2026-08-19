@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import {
-  findLeadForWorkspace,
   getLinkedInAccountByAccountId,
   listCampaigns,
   listCampaignEnrollments,
@@ -9,8 +8,10 @@ import {
   updateLead,
 } from "@/lib/server/data";
 import {
+  applyAcceptanceIfFirstDegree,
   applyConnectionAccepted,
   enrollmentCanReceiveAcceptance,
+  findLeadForInboundEvent,
   processInboundMessage,
 } from "@/lib/server/inbound";
 import { passwordsMatch } from "@/lib/local-session";
@@ -192,24 +193,48 @@ export async function POST(request: NextRequest) {
     otherAttendee?.attendee_provider_id;
   const publicIdentifier = payload.user_public_identifier;
 
-  // Messages we send through Unipile come back as message webhooks too; treating
-  // them as replies would stop the campaign right after its first message.
   const ownerId = payload.account_info?.user_provider_id || payload.account_info?.user_id;
   const isOwnMessage =
     payload.is_sender === true ||
     nestedMessage?.is_sender === true ||
     Boolean(isReply && ownerId && providerId && ownerId === providerId);
-  if (isOwnMessage) {
-    return NextResponse.json({ ok: true, ignored: true });
-  }
 
-  const lead = await findLeadForWorkspace({
+  const identityProviderId = isOwnMessage
+    ? otherAttendee?.provider_id || otherAttendee?.attendee_provider_id || providerId
+    : providerId;
+  const identityProfileUrl = isOwnMessage
+    ? otherAttendee?.profile_url || otherAttendee?.attendee_profile_url || profileUrl
+    : profileUrl;
+  const identityName = isOwnMessage
+    ? otherAttendee?.name || otherAttendee?.attendee_name || payload.user_full_name
+    : payload.user_full_name || messageSender?.name || messageSender?.attendee_name;
+
+  const lead = await findLeadForInboundEvent({
     workspaceId,
     leadId: payload.lead_id,
-    linkedInUrl: profileUrl,
-    providerProfileId: providerId,
-    publicIdentifier,
+    linkedInUrl: identityProfileUrl,
+    providerProfileId: identityProviderId,
+    publicIdentifier: isOwnMessage ? undefined : publicIdentifier,
+    fullName: identityName,
+    matchPendingAcceptance: isConnectionApproved || isOwnMessage,
   });
+
+  // Messages we send through Unipile come back as message webhooks too; treating
+  // them as replies would stop the campaign right after its first message.
+  // An invite note that opens a chat is the real-time accept signal, so confirm
+  // first-degree and unlock the sequence instead of ignoring the event entirely.
+  if (isOwnMessage) {
+    if (lead && (await applyAcceptanceIfFirstDegree({ workspaceId, lead, account }))) {
+      revalidateWorkspaceDataPages();
+      await logAutomationRun({
+        workspaceId,
+        kind: "webhook",
+        status: "completed",
+        message: `Stored connection approval from ${lead.name} (invite-note chat)`,
+      });
+    }
+    return NextResponse.json({ ok: true, ignored: true });
+  }
 
   if (!lead) {
     return NextResponse.json({ error: "Lead not found for webhook." }, { status: 404 });

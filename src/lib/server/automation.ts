@@ -104,6 +104,7 @@ import {
   hasPendingSentInvitation,
   isFirstDegreeConnection,
   listRecentInboundMessages,
+  listRecentRelationIdentityKeys,
   listSentInvitationProviderIds,
   profileSearchKeys,
   searchLinkedInProfiles,
@@ -915,6 +916,7 @@ async function runEnrollment(
     const accepted = await isFirstDegreeConnection({
       accountId: account.accountId,
       identifier: lead.providerProfileId || lead.linkedInUrl,
+      ignoreViewBudget: true,
     });
 
     if (accepted === true) {
@@ -1449,7 +1451,31 @@ export async function executeScheduledActionNow(workspaceId: string, enrollmentI
       throw new Error("Outreach for this lead was stopped.");
     }
     if (step.type === "message" && !canSendCampaignMessage(enrollment, lead)) {
-      throw new Error("The connection must be accepted before this message can be sent.");
+      const account = await getLinkedInAccountForWorkspace(
+        workspaceId,
+        campaign.linkedInAccountId,
+      );
+      const identifier = lead.providerProfileId || lead.linkedInUrl;
+      const accepted =
+        account && identifier
+          ? await isFirstDegreeConnection({
+              accountId: account.accountId,
+              identifier,
+              ignoreViewBudget: true,
+            })
+          : null;
+      if (accepted !== true) {
+        throw new Error("The connection must be accepted before this message can be sent.");
+      }
+      await applyConnectionAccepted({
+        workspaceId,
+        lead,
+        enrollment,
+        campaign,
+        account,
+      });
+      await updateLead(workspaceId, lead.id, { outreachStatus: "connected" });
+      continue;
     }
     if (lead.sourceAgentId) {
       const sourceAgent = await getAgent(workspaceId, lead.sourceAgentId);
@@ -2037,6 +2063,8 @@ async function sweepAcceptedInvitations(input: {
     return { accepted: 0 };
   }
 
+  const relationIds = await listRecentRelationIdentityKeys(account.accountId);
+
   let accepted = 0;
   let checks = 0;
   for (const enrollment of enrollments) {
@@ -2044,6 +2072,27 @@ async function sweepAcceptedInvitations(input: {
     if (!lead) continue;
     const identityKeys = profileSearchKeys(lead);
     if (!identityKeys.length) continue;
+    const inRelations = Boolean(
+      relationIds && identityKeys.some((key) => relationIds.has(key.toLowerCase())),
+    );
+    if (inRelations) {
+      await applyConnectionAccepted({
+        workspaceId,
+        lead,
+        enrollment,
+        campaign: campaignsById.get(enrollment.campaignId),
+        account,
+      });
+      await updateLead(workspaceId, lead.id, { outreachStatus: "connected" });
+      accepted += 1;
+      await safeLogAutomationRun({
+        workspaceId,
+        kind: "campaign",
+        status: "completed",
+        message: `Stored connection approval from ${lead.name} (acceptance sweep).`,
+      });
+      continue;
+    }
     // Still in the sent list: the invite is pending, nothing to do.
     if (identityKeys.some((key) => pendingIds.has(key.toLowerCase()))) continue;
     if (checks >= CONNECTION_SWEEP_CHECK_LIMIT) break;
@@ -2052,6 +2101,7 @@ async function sweepAcceptedInvitations(input: {
     const isConnected = await isFirstDegreeConnection({
       accountId: account.accountId,
       identifier: lead.providerProfileId || lead.linkedInUrl,
+      ignoreViewBudget: true,
     });
     // Not first-degree (withdrawn/expired invite) or unknown: leave the
     // enrollment for its give-up date rather than guessing.
