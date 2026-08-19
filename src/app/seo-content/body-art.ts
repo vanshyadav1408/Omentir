@@ -234,7 +234,7 @@ export function bodyArtFor(family: SeoFamily, slug: string): BodyArt[] {
   if (family === "comparisons") {
     return [
       {
-        src: "/seo/comparisons/choose-body.png",
+        src: "/seo/comparisons/choose-body.avif",
         alt: "How to choose: name the job, check the channel, run a two-week test",
         caption:
           "A database, an email rotator, and a LinkedIn agent are not the same purchase. Name the job first.",
@@ -259,7 +259,7 @@ export function blogSceneFor(category: string): BodyArt | null {
   };
   if (!known[key]) return null;
   return {
-    src: `/blogs/scenes/${key}.png`,
+    src: `/blogs/scenes/${key}.avif`,
     alt: `${category} diagram for this article`,
     caption: known[key],
   };

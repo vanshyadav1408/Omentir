@@ -92,12 +92,9 @@ export default function GuidePageView({ page }: { page: GuidePage }) {
       <main className="min-h-screen bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)]">
         <MarketingHeader transparentAtTop />
         <article className="relative mx-auto w-full max-w-3xl px-4 pb-20 pt-10 sm:px-6 sm:pt-14">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--md-sys-color-on-surface-variant)]">
-            {page.kicker}
-          </p>
           <h1
             style={{ fontFamily: "var(--font-varta)" }}
-            className="mt-3 text-4xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-5xl"
+            className="text-4xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-5xl"
           >
             {page.title}
           </h1>

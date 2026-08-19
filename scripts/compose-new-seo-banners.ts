@@ -946,15 +946,15 @@ function render(job: Job) {
   const pngPath = join(dir, `${job.slug}.png`);
   const avifPath = join(dir, `${job.slug}.avif`);
   const svgPath = join(dir, `${job.slug}.svg`);
-  spawnSync("cp", [tmpPng, pngPath]);
-  const avif = spawnSync("sips", ["-s", "format", "avif", pngPath, "--out", avifPath], {
+  const avif = spawnSync("sips", ["-s", "format", "avif", tmpPng, "--out", avifPath], {
     encoding: "utf8",
   });
   if (avif.status !== 0) {
     throw new Error(`sips avif failed for ${avifPath}\n${avif.stderr}`);
   }
+  if (existsSync(pngPath)) unlinkSync(pngPath);
   if (existsSync(svgPath)) unlinkSync(svgPath);
-  console.log("wrote", `${job.family}/${job.slug}.png`, "and avif");
+  console.log("wrote", `${job.family}/${job.slug}.avif`);
 }
 
 const only = process.argv.find((arg) => arg.startsWith("--only="))?.slice(7);

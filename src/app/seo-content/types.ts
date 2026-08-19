@@ -155,16 +155,15 @@ export function getSeoPage(
 }
 
 const seoImageDimensions: Record<SeoFamily, { width: number; height: number }> = {
-  features: { width: 1600, height: 600 },
-  comparisons: { width: 1280, height: 720 },
-  integrations: { width: 1280, height: 720 },
-  "use-cases": { width: 1600, height: 600 },
-  alternatives: { width: 1600, height: 600 },
+  features: { width: 1536, height: 1024 },
+  comparisons: { width: 1536, height: 1024 },
+  integrations: { width: 1536, height: 1024 },
+  "use-cases": { width: 1536, height: 1024 },
+  alternatives: { width: 1536, height: 1024 },
 };
 
 /**
- * Hero art under public/seo. Prefer PNG for consistent browser rendering,
- * then AVIF, then SVG.
+ * Hero art under public/seo. Prefer AVIF, then SVG.
  * Returns null when no asset exists so page heroes can omit the banner.
  */
 export function seoHeroImage(
@@ -173,7 +172,6 @@ export function seoHeroImage(
 ): { src: string; alt: string; width: number; height: number } | null {
   const dir = join(process.cwd(), "public", "seo", family);
   const candidates = [
-    { rel: `/seo/${family}/${slug}.png`, abs: join(dir, `${slug}.png`) },
     { rel: `/seo/${family}/${slug}.avif`, abs: join(dir, `${slug}.avif`) },
     { rel: `/seo/${family}/${slug}.svg`, abs: join(dir, `${slug}.svg`) },
   ];

@@ -47,14 +47,13 @@ export function guideHeroImage(slug: string): {
   const dir = join(process.cwd(), "public", "seo", "guides");
   const candidates = [
     { rel: `/seo/guides/${slug}.avif`, abs: join(dir, `${slug}.avif`) },
-    { rel: `/seo/guides/${slug}.png`, abs: join(dir, `${slug}.png`) },
   ];
   const match = candidates.find((file) => existsSync(file.abs));
   if (!match) return null;
   return {
     src: match.rel,
     alt: `${slug.replace(/-/g, " ")} illustration`,
-    width: 1600,
-    height: 600,
+    width: 1536,
+    height: 1024,
   };
 }

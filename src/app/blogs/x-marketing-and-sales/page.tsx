@@ -9,8 +9,8 @@ export const metadata = createPageMetadata({
   path: "/blogs/x-marketing-and-sales",
   image: {
     url: "/blogs/x-marketing-and-sales/cover-attached.avif",
-    width: 1024,
-    height: 682,
+    width: 1536,
+    height: 1024,
     alt: "X marketing and sales workflow connecting conversations, content, and a sales funnel",
   },
   keywords: [

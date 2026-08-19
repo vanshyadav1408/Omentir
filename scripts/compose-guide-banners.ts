@@ -2,7 +2,7 @@
  * 1600x600 cream posters for /slug search guides.
  * Usage: bun scripts/compose-guide-banners.ts
  */
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, rmSync, writeFileSync, unlinkSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { ALL_GUIDES } from "../src/app/guides/guide-data";
@@ -36,7 +36,7 @@ function esc(value: string) {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-function html(title: string, lede: string, kicker: string, cluster: string) {
+function html(title: string, lede: string, cluster: string) {
   const p = ACCENT[cluster] ?? ACCENT.general;
   return `<!doctype html>
 <html>
@@ -51,8 +51,7 @@ html, body { margin:0; padding:0; width:${WIDTH}px; height:${HEIGHT}px; overflow
 .b { width:240px; height:240px; right:220px; bottom:-90px; background:${p.b}; opacity:0.55; }
 .copy { position:relative; z-index:1; max-width:920px; }
 .brand { display:flex; align-items:center; gap:10px; font-size:18px; font-weight:600; }
-.kicker { display:inline-block; margin-top:18px; padding:6px 12px; border-radius:999px; background:#fff; border:1px solid #e6e1d6; font-size:12px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#5c574e; }
-h1 { margin:16px 0 12px; font-size:52px; line-height:1.06; letter-spacing:-0.03em; font-weight:700; }
+h1 { margin:22px 0 12px; font-size:52px; line-height:1.06; letter-spacing:-0.03em; font-weight:700; }
 .lede { margin:0; max-width:22em; font-size:22px; line-height:1.4; color:#3f3c36; }
 .rule { margin-top:28px; width:72px; height:6px; border-radius:99px; background:${p.a}; }
 </style>
@@ -63,7 +62,6 @@ h1 { margin:16px 0 12px; font-size:52px; line-height:1.06; letter-spacing:-0.03e
   <div class="blob b"></div>
   <div class="copy">
     <div class="brand">${LOGO}<span>Omentir</span></div>
-    <div class="kicker">${esc(kicker)}</div>
     <h1>${esc(title)}</h1>
     <p class="lede">${esc(lede)}</p>
     <div class="rule"></div>
@@ -80,7 +78,7 @@ mkdirSync(OUT, { recursive: true });
 for (const page of jobs) {
   const htmlPath = join(TMP, `${page.slug}.html`);
   const tmpPng = join(TMP, `${page.slug}.png`);
-  writeFileSync(htmlPath, html(page.title, page.description, page.kicker, page.cluster));
+  writeFileSync(htmlPath, html(page.title, page.description, page.cluster));
   const shot = spawnSync(
     CHROME,
     [
@@ -100,13 +98,13 @@ for (const page of jobs) {
   }
   const pngPath = join(OUT, `${page.slug}.png`);
   const avifPath = join(OUT, `${page.slug}.avif`);
-  spawnSync("cp", [tmpPng, pngPath]);
-  const avif = spawnSync("sips", ["-s", "format", "avif", pngPath, "--out", avifPath], {
+  const avif = spawnSync("sips", ["-s", "format", "avif", tmpPng, "--out", avifPath], {
     encoding: "utf8",
   });
   if (avif.status !== 0) {
     throw new Error(`sips avif failed for ${avifPath}\n${avif.stderr}`);
   }
+  if (existsSync(pngPath)) unlinkSync(pngPath);
   console.log("wrote", page.slug);
 }
 rmSync(TMP, { recursive: true, force: true });
