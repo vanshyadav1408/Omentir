@@ -205,17 +205,39 @@ export function mergeActivityTotals(
 /** Fill missing calendar days between the earliest and latest activity (up to 11 days span for the chart). */
 export function toActivityChartPoints(
   totals: ActivityDayTotals[],
-  options?: { maxDays?: number },
+  options?: {
+    maxDays?: number;
+    startDateKey?: string;
+    endDateKey?: string;
+  },
 ): ActivityChartPoint[] {
   if (!totals.length) return [];
 
-  const maxDays = options?.maxDays ?? 11;
+  const maxDays = Math.max(1, options?.maxDays ?? 11);
   const sorted = [...totals].sort((a, b) => a.dateKey.localeCompare(b.dateKey));
-  const byDay = new Map(sorted.map((point) => [point.dateKey, point]));
-  const earliest = dateFromKey(sorted[0].dateKey);
-  const latest = dateFromKey(sorted[sorted.length - 1].dateKey);
+  const startBoundary = options?.startDateKey
+    ? dateFromKey(options.startDateKey)
+    : undefined;
+  const endBoundary = options?.endDateKey ? dateFromKey(options.endDateKey) : undefined;
+  const bounded = sorted.filter((point) => {
+    if (options?.startDateKey && point.dateKey < options.startDateKey) return false;
+    if (options?.endDateKey && point.dateKey > options.endDateKey) return false;
+    return true;
+  });
+  if (!bounded.length) return [];
+
+  const byDay = new Map(bounded.map((point) => [point.dateKey, point]));
+  const earliestActivity = dateFromKey(bounded[0].dateKey);
+  const latestActivity = dateFromKey(bounded[bounded.length - 1].dateKey);
+  const latest = endBoundary &&
+      endBoundary.getTime() > latestActivity.getTime()
+    ? endBoundary
+    : latestActivity;
   const start = new Date(
-    Math.max(earliest.getTime(), addDaysUtc(latest, -(maxDays - 1)).getTime()),
+    Math.max(
+      startBoundary?.getTime() ?? earliestActivity.getTime(),
+      addDaysUtc(latest, -(maxDays - 1)).getTime(),
+    ),
   );
   const points: ActivityChartPoint[] = [];
 

@@ -26,6 +26,7 @@ import {
   STAGE_MESSAGED,
   combinedOutreachStage,
 } from "@/lib/outreach-stage";
+import { toActivityDayKey } from "@/lib/activity-overview";
 import { TextField } from "@/app/ui/text-field";
 import { useWorkspaceTimeZone } from "@/app/workspace-time-zone";
 import { zonedDayKey, zonedMonthStart } from "@/lib/time-zone";
@@ -145,7 +146,7 @@ export default function DashboardView({
   const reloadLinkedInInbox = linkedInInboxResource.reload;
   const repliesLoading = linkedInInboxResource.loading || dashboardLoading;
   const [range, setRange] = useState<RangeKey>("30d");
-  const [now] = useState(() => Date.now());
+  const [now, setNow] = useState(() => Date.now());
   const timeZone = useWorkspaceTimeZone();
   const activeRange = RANGE_OPTIONS.find((option) => option.key === range) ?? RANGE_OPTIONS[1];
   const currentMonthDay = Number(zonedDayKey(now, timeZone).slice(8, 10)) || 1;
@@ -155,9 +156,12 @@ export default function DashboardView({
     }
     return zonedMonthStart(now, timeZone);
   }, [activeRange, now, timeZone]);
+  const chartStartDateKey = toActivityDayKey(new Date(rangeStart).toISOString()) || undefined;
+  const chartEndDateKey = toActivityDayKey(new Date(now).toISOString()) || undefined;
 
   useEffect(() => {
     const interval = window.setInterval(() => {
+      setNow(Date.now());
       reloadDashboard();
       reloadLinkedInInbox();
     }, 15_000);
@@ -480,6 +484,8 @@ export default function DashboardView({
                     ? currentMonthDay
                     : activeRange.days
                 }
+                startDateKey={chartStartDateKey}
+                endDateKey={chartEndDateKey}
               />
             )}
           </div>

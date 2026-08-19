@@ -1448,8 +1448,9 @@ export async function listLeadAgentRefs(
 }
 
 function looksLikeLinkedInProviderId(id: string | undefined): id is string {
-  if (!id) return false;
-  return /^(?:ACo|ACw|AE)/i.test(id) || /^urn:li:person:/i.test(id);
+  // Unipile account types do not share one stable provider-id prefix. The
+  // workspace-scoped exact query is the safety boundary.
+  return Boolean(id?.trim());
 }
 
 function linkedInPathIdentifier(value?: string) {
@@ -2801,8 +2802,43 @@ export async function createConversationMessage(input: {
     const snap = await transaction.get(ref);
 
     if (snap.exists && input.providerMessageId) {
-      const existingMessages = (snap.data() as Conversation).messages || [];
-      if (existingMessages.some((message) => message.id === input.providerMessageId)) {
+      const existingConversation = snap.data() as Conversation;
+      const existingMessages = existingConversation.messages || [];
+      const existingMessage = existingMessages.find(
+        (message) => message.id === input.providerMessageId,
+      );
+      if (existingMessage) {
+        const eventId = `message-${input.providerMessageId}`;
+        const activityEventRef = getDb()
+          .collection("activityEvents")
+          .doc(`${input.workspaceId}-${eventId}`);
+        transaction.set(
+          activityEventRef,
+          activityEventData(
+            input.workspaceId,
+            existingMessage.direction === "outbound" ? "contacted" : "replies",
+            existingMessage.createdAt,
+          ),
+          { merge: true },
+        );
+
+        // If the original booking event was lost after the conversation write,
+        // a retried webhook can recreate it without counting unrelated later
+        // messages as another booking.
+        if (existingConversation.meetingBookedAt === existingMessage.createdAt) {
+          const meetingEventRef = getDb()
+            .collection("activityEvents")
+            .doc(`${input.workspaceId}-${eventId}-meeting`);
+          transaction.set(
+            meetingEventRef,
+            activityEventData(
+              input.workspaceId,
+              "meetingsBooked",
+              existingMessage.createdAt,
+            ),
+            { merge: true },
+          );
+        }
         return false;
       }
     }
@@ -2842,7 +2878,7 @@ export async function createConversationMessage(input: {
         id,
         workspaceId: input.workspaceId,
         leadId: input.leadId,
-        campaignId: input.campaignId,
+        ...(input.campaignId === undefined ? {} : { campaignId: input.campaignId }),
         userId: input.userId,
         status: "open",
         messages: [message],
@@ -2852,23 +2888,35 @@ export async function createConversationMessage(input: {
       } satisfies Conversation);
     }
 
-    return true;
-  });
-  if (inserted) {
     const eventId = `message-${input.providerMessageId || `${input.leadId}-${timestamp}`}`;
-    await recordActivityEvent(
-      input.workspaceId,
-      eventId,
-      input.direction === "outbound" ? "contacted" : "replies",
-      timestamp,
+    const activityEventRef = getDb()
+      .collection("activityEvents")
+      .doc(`${input.workspaceId}-${eventId}`);
+    transaction.set(
+      activityEventRef,
+      activityEventData(
+        input.workspaceId,
+        input.direction === "outbound" ? "contacted" : "replies",
+        timestamp,
+      ),
+      { merge: true },
     );
     if (
       input.replyIntent === "meeting_booked" &&
       (input.replyIntentConfidence ?? 1) >= MEETING_BOOKED_CONFIDENCE
     ) {
-      await recordActivityEvent(input.workspaceId, `${eventId}-meeting`, "meetingsBooked", timestamp);
+      const meetingEventRef = getDb()
+        .collection("activityEvents")
+        .doc(`${input.workspaceId}-${eventId}-meeting`);
+      transaction.set(
+        meetingEventRef,
+        activityEventData(input.workspaceId, "meetingsBooked", timestamp),
+        { merge: true },
+      );
     }
-  }
+
+    return true;
+  });
   return inserted;
 }
 
@@ -2884,23 +2932,36 @@ export async function setConversationReplyIntent(
 ) {
   const id = `${workspaceId}-${leadId}`;
   const timestamp = nowIso();
-  await collection<Conversation>("conversations")
-    .doc(id)
-    .set(
-      {
-        replyIntent: intent.intent,
-        replyIntentReason: intent.reason,
-        replyIntentConfidence: intent.confidence,
-        replyIntentNextStepHint: intent.nextStepHint || "",
-        replyIntentAt: timestamp,
-        ...(intent.intent === "meeting_booked" &&
-        intent.confidence >= MEETING_BOOKED_CONFIDENCE
-          ? { meetingBookedAt: timestamp }
-          : {}),
-        updatedAt: timestamp,
-      },
+  const conversationRef = collection<Conversation>("conversations").doc(id);
+  const batch = getDb().batch();
+  batch.set(
+    conversationRef,
+    {
+      replyIntent: intent.intent,
+      replyIntentReason: intent.reason,
+      replyIntentConfidence: intent.confidence,
+      replyIntentNextStepHint: intent.nextStepHint || "",
+      replyIntentAt: timestamp,
+      ...(intent.intent === "meeting_booked" &&
+      intent.confidence >= MEETING_BOOKED_CONFIDENCE
+        ? { meetingBookedAt: timestamp }
+        : {}),
+      updatedAt: timestamp,
+    },
+    { merge: true },
+  );
+
+  if (intent.intent === "meeting_booked" && intent.confidence >= MEETING_BOOKED_CONFIDENCE) {
+    const activityEventRef = getDb()
+      .collection("activityEvents")
+      .doc(`${workspaceId}-conversation-${leadId}-meeting`);
+    batch.set(
+      activityEventRef,
+      activityEventData(workspaceId, "meetingsBooked", timestamp),
       { merge: true },
     );
+  }
+  await batch.commit();
 }
 
 export async function completeConversationManualFollowUp(workspaceId: string, leadId: string) {
@@ -3045,31 +3106,76 @@ export async function listAutomationRuns(workspaceId: string, limit = 100) {
 // Durable Activity Overview: per-day found/contacted/replies/bookings that outlive
 // agent and lead deletes. Docs are never deleted with agents; merge uses max()
 // so a later live recompute cannot shrink history after a delete snapshot.
+type ActivityMetric = "found" | "contacted" | "replies" | "meetingsBooked";
+
+function activityEventData(
+  workspaceId: string,
+  metric: ActivityMetric,
+  timestamp: string,
+) {
+  return {
+    workspaceId,
+    day: timestamp.slice(0, 10),
+    metric,
+    createdAt: timestamp,
+  };
+}
+
 async function recordActivityEvent(
   workspaceId: string,
   eventId: string,
-  metric: "found" | "contacted" | "replies" | "meetingsBooked",
+  metric: ActivityMetric,
   timestamp = nowIso(),
 ) {
-  const day = timestamp.slice(0, 10);
   await getDb()
     .collection("activityEvents")
     .doc(`${workspaceId}-${eventId}`)
-    .set({ workspaceId, day, metric, createdAt: timestamp }, { merge: true });
+    .set(activityEventData(workspaceId, metric, timestamp), { merge: true });
 }
 
 export async function listActivityDays(workspaceId: string, limit = 120) {
+  const activityDaysLimit = Math.max(1, Math.min(limit, 400));
   const [snap, eventSnap] = await Promise.all([
-    getDb()
-    .collection("activityDays")
-    .where("workspaceId", "==", workspaceId)
-    .limit(Math.max(1, Math.min(limit, 400)))
-    .get(),
-    getDb()
-      .collection("activityEvents")
-      .where("workspaceId", "==", workspaceId)
-      .limit(5000)
-      .get(),
+    (async () => {
+      try {
+        return await getDb()
+          .collection("activityDays")
+          .where("workspaceId", "==", workspaceId)
+          .orderBy("day", "desc")
+          .limit(activityDaysLimit)
+          .get();
+      } catch (error) {
+        console.warn(
+          "[data] ordered activity-day query failed; using capped scan:",
+          error instanceof Error ? error.message : error,
+        );
+        return getDb()
+          .collection("activityDays")
+          .where("workspaceId", "==", workspaceId)
+          .limit(activityDaysLimit)
+          .get();
+      }
+    })(),
+    (async () => {
+      try {
+        return await getDb()
+          .collection("activityEvents")
+          .where("workspaceId", "==", workspaceId)
+          .orderBy("createdAt", "desc")
+          .limit(5000)
+          .get();
+      } catch (error) {
+        console.warn(
+          "[data] ordered activity-event query failed; using capped scan:",
+          error instanceof Error ? error.message : error,
+        );
+        return getDb()
+          .collection("activityEvents")
+          .where("workspaceId", "==", workspaceId)
+          .limit(5000)
+          .get();
+      }
+    })(),
   ]);
 
   const days = snap.docs

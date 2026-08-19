@@ -2063,7 +2063,19 @@ export async function listRecentInboundMessages(input: {
     .map((message) => ({
       id: message.id,
       chatId: message.chat_id,
-      senderProviderId: message.sender_id || message.attendee_id || "",
+      senderProviderId:
+        message.sender_id ||
+        message.attendee_id ||
+        message.sender?.provider_id ||
+        message.sender?.id ||
+        message.sender?.member_id ||
+        message.sender?.urn ||
+        message.from?.provider_id ||
+        message.from?.id ||
+        message.from?.member_id ||
+        message.from?.urn ||
+        "",
+      linkedInUrl: attendeeProfileUrl(message.sender || message.from || null),
       senderName:
         message.sender_name ||
         attendeeName(message.sender) ||

@@ -504,21 +504,19 @@ export async function processInboundMessage(input: {
     input.campaignIdHint || leadEnrollments[0]?.campaignId || aiReplyEnrollments[0]?.campaignId;
   const campaign = campaigns.find((item) => item.id === campaignId);
 
-  const inserted = alreadyStored
-    ? false
-    : await createConversationMessage({
-        workspaceId,
-        leadId: lead.id,
-        campaignId,
-        userId: workspaceId,
-        senderName: input.senderName,
-        body: input.body,
-        providerMessageId: input.providerMessageId,
-        replyIntent: classification.intent,
-        replyIntentReason: classification.reason,
-        replyIntentConfidence: classification.confidence,
-        replyIntentNextStepHint: classification.nextStepHint,
-      });
+  const inserted = await createConversationMessage({
+    workspaceId,
+    leadId: lead.id,
+    campaignId,
+    userId: workspaceId,
+    senderName: input.senderName,
+    body: input.body,
+    providerMessageId: input.providerMessageId,
+    replyIntent: classification.intent,
+    replyIntentReason: classification.reason,
+    replyIntentConfidence: classification.confidence,
+    replyIntentNextStepHint: classification.nextStepHint,
+  });
 
   const conversationAfterInsert = inserted
     ? [...existingMessages, { direction: "inbound" as const }]

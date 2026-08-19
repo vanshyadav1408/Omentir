@@ -2162,9 +2162,9 @@ async function syncInboundReplies(input: {
     const lead = await findLeadForWorkspace({
       workspaceId,
       providerProfileId: message.senderProviderId,
-      linkedInUrl: message.senderProviderId
+      linkedInUrl: message.linkedInUrl || (message.senderProviderId
         ? `https://www.linkedin.com/in/${message.senderProviderId}`
-        : undefined,
+        : undefined),
     });
     if (!lead) continue;
     if (message.senderProviderId && !lead.providerProfileId) {

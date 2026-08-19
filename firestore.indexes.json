@@ -25,6 +25,22 @@
         { "fieldPath": "workspaceId", "order": "ASCENDING" },
         { "fieldPath": "nextActionAt", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "activityDays",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "workspaceId", "order": "ASCENDING" },
+        { "fieldPath": "day", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "activityEvents",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "workspaceId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": [

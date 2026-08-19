@@ -19,14 +19,17 @@ export function conversationHasMeetingBooked(conversation?: {
 
 export function conversationCategory(conversation?: {
   replyIntent?: ReplyIntent;
+  replyIntentConfidence?: number;
   replyIntentAt?: string;
+  meetingBookedAt?: string;
   manualFollowUpCompletedAt?: string;
 }): ConversationCategory | null {
-  if (!conversation?.replyIntent) return null;
+  if (!conversation) return null;
 
-  if (conversation.replyIntent === "hot" || conversation.replyIntent === "meeting_booked") {
+  if (conversationHasMeetingBooked(conversation) || conversation.replyIntent === "hot") {
     return "successful";
   }
+  if (!conversation.replyIntent) return null;
   if (conversation.replyIntent === "warm" || conversation.replyIntent === "question") {
     return "interested";
   }

@@ -58,6 +58,7 @@ type UnipileWebhook = {
         id?: string;
         text?: string;
         body?: string;
+        content?: string;
         sender?: UnipileWebhookSender;
         is_sender?: boolean;
       };
@@ -92,7 +93,9 @@ function isInboundReplyEvent(eventName: string) {
     compact === "messagereceived" ||
     compact === "newmessage" ||
     compact === "messagenew" ||
+    compact === "messagecreated" ||
     compact.includes("newmessage") ||
+    compact.includes("messagecreated") ||
     compact.includes("reply")
   );
 }
@@ -102,7 +105,7 @@ function inboundMessageBody(payload: UnipileWebhook) {
   const text =
     typeof payload.message === "string"
       ? payload.message
-      : nestedMessage?.text || nestedMessage?.body || "";
+      : nestedMessage?.text || nestedMessage?.body || nestedMessage?.content || "";
   if (text.trim()) return text;
   if (Array.isArray(payload.attachments) && payload.attachments.length > 0) {
     return "[Sent an attachment]";

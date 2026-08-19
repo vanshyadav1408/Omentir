@@ -2141,12 +2141,18 @@ function prefilterReplyIntent(latestInbound: string): ReplyIntentClassification 
   }
 
   const lower = text.toLowerCase();
-  if (
+  const explicitlyBooked =
     /\b(?:i|we)(?:'ve| have)?\s+(?:just\s+)?(?:booked|scheduled)\s+(?:a\s+)?(?:demo|meeting|call)\b/i.test(
       text,
     ) ||
-    /\b(?:call|meeting|demo)\s+(?:is|has been)\s+(?:booked|scheduled|confirmed)\b/i.test(text)
-  ) {
+    /\b(?:call|meeting|demo)\s+(?:is|has been|was)\s+(?:booked|scheduled|confirmed)\b/i.test(text) ||
+    /\b(?:calendar|calendar invite|calendar event)\b.{0,50}\b(?:accepted|confirmed|scheduled|on my calendar)\b/i.test(
+      text,
+    ) ||
+    /\b(?:i|we)(?:'ve| have)?\s+(?:put|added)\s+(?:it|that|the (?:demo|meeting|call))\s+(?:to|on|in)\s+(?:my|our)\s+calendar\b/i.test(
+      text,
+    );
+  if (explicitlyBooked) {
     return {
       intent: "meeting_booked",
       confidence: 0.95,
@@ -2208,6 +2214,13 @@ export async function classifyReplyIntent(input: {
   };
 
   try {
+    if (!getGeminiConfig()) {
+      console.error(
+        "[gemini] classifyReplyIntent unavailable: configure GEMINI_API_KEY or Vertex AI project and location.",
+      );
+      return fallback;
+    }
+
     const result = await generateJson<{
       intent: string;
       confidence: number;
@@ -2252,10 +2265,16 @@ ${input.latestInbound}`,
       0.2,
     );
 
-    const intent = enumValue(result.intent, REPLY_INTENTS, "neutral");
+    const normalizedIntent = String(result.intent || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[\s-]+/g, "_");
+    const intent = enumValue(normalizedIntent, REPLY_INTENTS, "neutral");
     const confidenceRaw = Number(result.confidence);
+    const normalizedConfidence =
+      confidenceRaw > 1 && confidenceRaw <= 100 ? confidenceRaw / 100 : confidenceRaw;
     const confidence = Number.isFinite(confidenceRaw)
-      ? Math.min(1, Math.max(0, confidenceRaw))
+      ? Math.min(1, Math.max(0, normalizedConfidence))
       : 0.5;
 
     return {
