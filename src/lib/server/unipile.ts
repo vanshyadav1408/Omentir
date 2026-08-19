@@ -23,6 +23,7 @@ const LINKEDIN_SEARCH_MIN_REQUEST_SPACING_MS = 2_000;
 const UNIPILE_RATE_LIMIT_RETRY_MS = 15_000;
 const UNIPILE_RATE_LIMIT_RETRIES = 1;
 const UNIPILE_TRANSIENT_READ_RETRY_MS = 5_000;
+const RECENT_INBOUND_MAX_PAGES = 20;
 // Free LinkedIn accounts reject notes over ~200 chars (Unipile returns
 // errors/too_many_characters). Paid accounts allow 300; 200 is safe for both.
 const LINKEDIN_CONNECTION_NOTE_LIMIT = 200;
@@ -1996,31 +1997,68 @@ export async function listLinkedInAccountAttendees(accountId: string) {
 
 // Recent messages across all of the account's chats, in one call. Used to build
 // last-message previews for the inbox list without a request per chat.
-async function listLinkedInAccountMessages(accountId: string, limit: number) {
-  if (!isUnipileConfigured()) return [] as UnipileMessage[];
+async function listLinkedInAccountMessagesPage(
+  accountId: string,
+  limit: number,
+  cursor?: string,
+) {
+  if (!isUnipileConfigured()) return { messages: [] as UnipileMessage[], cursor: undefined };
 
   try {
     const result = await request<UnipileListResponse<UnipileMessage> | UnipileMessage[]>(
-      withQuery("/api/v1/messages", { account_id: accountId, limit }),
+      withQuery("/api/v1/messages", { account_id: accountId, limit, cursor }),
     );
-    return getListItems<UnipileMessage>(result);
+    return {
+      messages: getListItems<UnipileMessage>(result),
+      cursor: getListCursor(result),
+    };
   } catch {
-    return [];
+    return null;
   }
+}
+
+async function listLinkedInAccountMessages(accountId: string, limit: number) {
+  const page = await listLinkedInAccountMessagesPage(accountId, limit);
+  return page?.messages || [];
 }
 
 // Inbound messages that arrived after `sinceMs`, newest-provider-order, for
 // the reply-sync fallback: when the messaging webhook is missed or down, this
-// is how a prospect's reply still reaches the automation. Costs one cheap
-// /messages listing - no profile views.
+// is how a prospect's reply still reaches the automation. Costs a small
+// paginated /messages listing - no profile views.
 export async function listRecentInboundMessages(input: {
   accountId: string;
   sinceMs: number;
   limit?: number;
 }) {
-  const messages = await listLinkedInAccountMessages(input.accountId, input.limit || 100);
+  const messages: UnipileMessage[] = [];
+  const pageLimit = input.limit || 100;
+  let cursor: string | undefined;
 
+  for (let page = 0; page < RECENT_INBOUND_MAX_PAGES; page += 1) {
+    const result = await listLinkedInAccountMessagesPage(input.accountId, pageLimit, cursor);
+    if (!result) return null;
+    messages.push(...result.messages);
+    if (!result.cursor || !result.messages.length) break;
+
+    // Results are newest first. Once a page reaches the sync cursor, later
+    // pages cannot contain a newer message. The hard page cap still protects
+    // the tick if a provider returns an unexpected ordering.
+    const timestamps = result.messages
+      .map((message) => Date.parse(messageTimestamp(message)))
+      .filter((timestamp) => Number.isFinite(timestamp));
+    if (timestamps.length && Math.min(...timestamps) <= input.sinceMs) break;
+    cursor = result.cursor;
+  }
+
+  const seenIds = new Set<string>();
   return messages
+    .filter((message) => {
+      if (!message.id) return true;
+      if (seenIds.has(message.id)) return false;
+      seenIds.add(message.id);
+      return true;
+    })
     .filter((message) => !message.is_sender)
     .map((message) => ({
       id: message.id,
@@ -2034,7 +2072,8 @@ export async function listRecentInboundMessages(input: {
       body: messageBody(message),
       createdAt: messageTimestamp(message),
     }))
-    .filter((message) => message.body && Date.parse(message.createdAt) > input.sinceMs);
+    .filter((message) => message.body && Date.parse(message.createdAt) > input.sinceMs)
+    .sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt));
 }
 
 export async function listLinkedInInbox(input: {
@@ -2495,21 +2534,53 @@ export async function sendLinkedInMessage(input: {
     throw new Error("LinkedIn provider id is required to send a message.");
   }
 
-  // Unipile's v1 start-chat contract is multipart form data. Append the single
-  // recipient once; repeated attendees_ids fields are only needed for groups.
-  const formData = new FormData();
-  formData.append("account_id", input.accountId);
-  formData.append("attendees_ids", providerProfileId);
-  formData.append("text", limitText(input.body, LINKEDIN_MESSAGE_LIMIT));
+  const send = async (resolvedProviderId: string) => {
+    // Unipile's v1 start-chat contract is multipart form data. Append the
+    // single recipient once; repeated attendees_ids fields are only needed for
+    // groups.
+    const formData = new FormData();
+    formData.append("account_id", input.accountId);
+    formData.append("attendees_ids", resolvedProviderId);
+    formData.append("text", limitText(input.body, LINKEDIN_MESSAGE_LIMIT));
 
-  const result = await request<{ chat_id?: string; message_id?: string; id?: string }>(
-    "/api/v1/chats",
-    {
-      method: "POST",
-      body: formData,
-    },
-  );
-  return { id: result.message_id || result.id, chatId: result.chat_id };
+    const result = await request<{ chat_id?: string; message_id?: string; id?: string }>(
+      "/api/v1/chats",
+      {
+        method: "POST",
+        body: formData,
+      },
+    );
+    return { id: result.message_id || result.id, chatId: result.chat_id };
+  };
+
+  try {
+    return await send(providerProfileId);
+  } catch (error) {
+    // Provider member ids can be account-specific. A valid id captured through
+    // another LinkedIn session may still be rejected by this campaign's
+    // account, so refresh by the public URL before giving up. Only retry an
+    // explicit provider rejection; a timeout may already have sent the message.
+    if (!(error instanceof UnipileResponseError) || !input.linkedInUrl) throw error;
+
+    let profile: Partial<Lead> | null = null;
+    try {
+      profile = await retrieveLinkedInProfile({
+        accountId: input.accountId,
+        identifier: linkedInIdentifier(input.linkedInUrl),
+      });
+    } catch {
+      throw error;
+    }
+    const resolvedProviderId = profile?.providerProfileId;
+    if (
+      !looksLikeLinkedInProviderId(resolvedProviderId) ||
+      resolvedProviderId === providerProfileId
+    ) {
+      throw error;
+    }
+
+    return send(resolvedProviderId);
+  }
 }
 
 export async function sendLinkedInChatMessage(input: {

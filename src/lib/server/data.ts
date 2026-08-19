@@ -2655,6 +2655,13 @@ export async function claimDailyNotification(workspaceId: string, kind: string, 
   });
 }
 
+export async function releaseDailyNotification(workspaceId: string, kind: string, day: string) {
+  await getDb()
+    .collection("notificationLocks")
+    .doc(`${workspaceId}-${kind}-${day}`)
+    .delete();
+}
+
 // A calendar-day lock can send twice only hours apart across midnight. This
 // stable lock enforces an actual elapsed interval. The legacy day documents
 // are read during migration so a recent digest is not duplicated on deploy.
@@ -2696,6 +2703,13 @@ export async function claimNotificationAfterInterval(
   });
 }
 
+export async function releaseNotificationAfterInterval(workspaceId: string, kind: string) {
+  await getDb()
+    .collection("notificationLocks")
+    .doc(`${workspaceId}-${kind}`)
+    .delete();
+}
+
 export async function claimReplyNotification(
   workspaceId: string,
   leadId: string,
@@ -2718,6 +2732,13 @@ export async function claimReplyNotification(
     });
     return true;
   });
+}
+
+export async function releaseReplyNotification(workspaceId: string, leadId: string) {
+  await getDb()
+    .collection("notificationLocks")
+    .doc(`${workspaceId}-${leadId}-reply`)
+    .delete();
 }
 
 // Once per lead and outcome: a hot-interest email must not consume the later
@@ -2743,6 +2764,17 @@ export async function claimLeadOutcomeNotification(
     });
     return true;
   });
+}
+
+export async function releaseLeadOutcomeNotification(
+  workspaceId: string,
+  leadId: string,
+  kind: LeadOutcomeNotificationKind,
+) {
+  await getDb()
+    .collection("notificationLocks")
+    .doc(leadOutcomeNotificationLockId(workspaceId, leadId, kind))
+    .delete();
 }
 
 export async function createConversationMessage(input: {
@@ -3276,6 +3308,13 @@ export async function claimSystemTask(taskId: string, intervalMs: number) {
     transaction.set(ref, { taskId, lastRunAt: now, updatedAt: nowIso() });
     return { previousRunAt: lastRunAt };
   });
+}
+
+export async function releaseSystemTask(taskId: string) {
+  await getDb()
+    .collection("automationLocks")
+    .doc(`task-${cleanId(taskId)}`)
+    .delete();
 }
 
 // Persistent per-account action drip: at most one outbound action per account

@@ -231,6 +231,22 @@ function withAutoFooterText(body: string) {
   return `${body}\n\n${AUTO_GENERATED_FOOTER}`;
 }
 
+export function emailWasSkipped(result: unknown): result is { skipped: true } {
+  return (
+    typeof result === "object" &&
+    result !== null &&
+    "skipped" in result &&
+    (result as { skipped?: unknown }).skipped === true
+  );
+}
+
+function ensureResendAccepted<T extends { error?: { message?: string } | null }>(result: T) {
+  if (result.error) {
+    throw new Error(result.error.message || "The email provider rejected the message.");
+  }
+  return result;
+}
+
 function emailShell(title: string, bodyHtml: string) {
   return `<!doctype html>
 <html lang="en">
@@ -323,16 +339,18 @@ export async function sendReplyNotification(input: {
     ].join("\n"),
   );
 
-  return resend.emails.send(
-    {
-      from: transactionalFrom(),
-      to: input.to,
-      subject: `${input.leadName} replied on LinkedIn`,
-      html,
-      text,
-      tags: [{ name: "kind", value: "lead_reply" }],
-    },
-    input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : undefined,
+  return ensureResendAccepted(
+    await resend.emails.send(
+      {
+        from: transactionalFrom(),
+        to: input.to,
+        subject: `${input.leadName} replied on LinkedIn`,
+        html,
+        text,
+        tags: [{ name: "kind", value: "lead_reply" }],
+      },
+      input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : undefined,
+    ),
   );
 }
 
@@ -434,16 +452,18 @@ export async function sendDailyDigestEmail(input: {
   const { stats } = input;
   const email = buildDailyDigestEmail({ stats, notes: input.notes });
 
-  return resend.emails.send(
-    {
-      from: transactionalFrom(),
-      to: input.to,
-      subject: `Omentir daily update: ${stats.newLeads} new leads, ${stats.invitesSent} invites, ${stats.repliesReceived} replies`,
-      html: email.html,
-      text: email.text,
-      tags: [{ name: "kind", value: "daily_digest" }],
-    },
-    input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : undefined,
+  return ensureResendAccepted(
+    await resend.emails.send(
+      {
+        from: transactionalFrom(),
+        to: input.to,
+        subject: `Omentir daily update: ${stats.newLeads} new leads, ${stats.invitesSent} invites, ${stats.repliesReceived} replies`,
+        html: email.html,
+        text: email.text,
+        tags: [{ name: "kind", value: "daily_digest" }],
+      },
+      input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : undefined,
+    ),
   );
 }
 
@@ -463,29 +483,31 @@ export async function sendInvitePauseNotification(input: {
 
   const accountLabel = input.accountName?.trim();
 
-  return resend.emails.send(
-    {
-      from: transactionalFrom(),
-      to: input.to,
-      subject: accountLabel
-        ? `${accountLabel}: invitation attempts paused temporarily`
-        : "LinkedIn invitation attempts paused temporarily",
-      text: withAutoFooterText(
-        [
-          accountLabel
-            ? `LinkedIn rejected several connection attempts from ${accountLabel}.`
-            : "LinkedIn rejected several connection attempts from your account.",
-          "",
-          `Omentir paused new invites for this account and will test again around ${input.resumeAtText}. Messages to existing connections and other LinkedIn accounts are unaffected.`,
-          "",
-          "No action needed.",
-          "",
-          `Dashboard: ${dashboardUrl()}`,
-        ].join("\n"),
-      ),
-      tags: [{ name: "kind", value: "invite_pause_notification" }],
-    },
-    input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : undefined,
+  return ensureResendAccepted(
+    await resend.emails.send(
+      {
+        from: transactionalFrom(),
+        to: input.to,
+        subject: accountLabel
+          ? `${accountLabel}: invitation attempts paused temporarily`
+          : "LinkedIn invitation attempts paused temporarily",
+        text: withAutoFooterText(
+          [
+            accountLabel
+              ? `LinkedIn rejected several connection attempts from ${accountLabel}.`
+              : "LinkedIn rejected several connection attempts from your account.",
+            "",
+            `Omentir paused new invites for this account and will test again around ${input.resumeAtText}. Messages to existing connections and other LinkedIn accounts are unaffected.`,
+            "",
+            "No action needed.",
+            "",
+            `Dashboard: ${dashboardUrl()}`,
+          ].join("\n"),
+        ),
+        tags: [{ name: "kind", value: "invite_pause_notification" }],
+      },
+      input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : undefined,
+    ),
   );
 }
 
@@ -576,16 +598,18 @@ export async function sendInterestedLeadNotification(input: InterestedLeadEmailI
 
   const email = buildInterestedLeadEmail(input);
 
-  return resend.emails.send(
-    {
-      from: transactionalFrom(),
-      to: input.to,
-      subject: email.subject,
-      html: email.html,
-      text: email.text,
-      tags: [{ name: "kind", value: "interested_lead" }],
-    },
-    input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : undefined,
+  return ensureResendAccepted(
+    await resend.emails.send(
+      {
+        from: transactionalFrom(),
+        to: input.to,
+        subject: email.subject,
+        html: email.html,
+        text: email.text,
+        tags: [{ name: "kind", value: "interested_lead" }],
+      },
+      input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : undefined,
+    ),
   );
 }
 

@@ -20,6 +20,8 @@ import {
   listCampaigns,
   logAutomationRun,
   planActionSlots,
+  releaseLeadOutcomeNotification,
+  releaseReplyNotification,
   updateEnrollment,
   updateLead,
 } from "./data";
@@ -37,6 +39,7 @@ import {
 } from "./reply-automation-policy";
 import { hasActiveSubscription } from "./subscription";
 import {
+  emailWasSkipped,
   sendInterestedLeadNotification,
   sendReplyNotification,
 } from "./email";
@@ -575,10 +578,6 @@ export async function processInboundMessage(input: {
     await updateLead(workspaceId, lead.id, { outreachStatus: "replied" });
   }
 
-  if (!inserted) {
-    return { duplicate: true };
-  }
-
   const isHotInterest = isHotReply(classification.intent, classification.confidence);
   const meetingBooked = isMeetingBooked(classification.intent, classification.confidence);
 
@@ -621,7 +620,7 @@ export async function processInboundMessage(input: {
       )
     ) {
       try {
-        await sendInterestedLeadNotification({
+        const result = await sendInterestedLeadNotification({
           to: email,
           lead: {
             name: lead.name,
@@ -645,6 +644,9 @@ export async function processInboundMessage(input: {
             ? `interest-${workspaceId}-${lead.id}-${input.providerMessageId}`
             : `interest-${workspaceId}-${lead.id}`,
         });
+        if (emailWasSkipped(result)) {
+          throw new Error("Email delivery is not configured.");
+        }
         await logAutomationRun({
           workspaceId,
           kind: "webhook",
@@ -652,34 +654,55 @@ export async function processInboundMessage(input: {
           message: `${meetingBooked ? "Meeting booked" : "Interest detected"}: ${lead.name} (${classification.intent}, ${classification.confidence.toFixed(2)}), ${classification.reason}`,
         });
       } catch (error) {
+        await releaseLeadOutcomeNotification(
+          workspaceId,
+          lead.id,
+          meetingBooked ? "meeting" : "interest",
+        ).catch((releaseError) => {
+          console.error("[inbound] failed to release outcome notification claim:", releaseError);
+        });
         console.error("[inbound] failed to send interested-lead notification:", error);
       }
     }
   } else if (email && notifyOnPlainReply && (await claimReplyNotification(workspaceId, lead.id))) {
     // Non-hot replies: lightweight "someone replied" email. Hot leads get the
     // rich interest email instead so the user is not double-notified.
-    await sendReplyNotification({
-      to: email,
-      leadName: input.senderName,
-      campaignName: campaign?.name,
-      body: input.body,
-      handoff: handoffEnrollments.length > 0,
-      idempotencyKey: input.providerMessageId
-        ? `reply-${workspaceId}-${lead.id}-${input.providerMessageId}`
-        : undefined,
+    try {
+      const result = await sendReplyNotification({
+        to: email,
+        leadName: input.senderName,
+        campaignName: campaign?.name,
+        body: input.body,
+        handoff: handoffEnrollments.length > 0,
+        idempotencyKey: input.providerMessageId
+          ? `reply-${workspaceId}-${lead.id}-${input.providerMessageId}`
+          : undefined,
+      });
+      if (emailWasSkipped(result)) {
+        throw new Error("Email delivery is not configured.");
+      }
+    } catch (error) {
+      await releaseReplyNotification(workspaceId, lead.id).catch((releaseError) => {
+        console.error("[inbound] failed to release reply notification claim:", releaseError);
+      });
+      console.error("[inbound] failed to send reply notification:", error);
+    }
+  }
+
+  if (inserted) {
+    await logAutomationRun({
+      workspaceId,
+      kind: "webhook",
+      status: "completed",
+      message: `Stored reply from ${input.senderName} (intent: ${classification.intent}, confidence: ${classification.confidence.toFixed(2)})`,
     });
   }
 
-  await logAutomationRun({
-    workspaceId,
-    kind: "webhook",
-    status: "completed",
-    message: `Stored reply from ${input.senderName} (intent: ${classification.intent}, confidence: ${classification.confidence.toFixed(2)})`,
-  });
-
-  return {
-    duplicate: false,
-    intent: classification.intent,
-    confidence: classification.confidence,
-  };
+  return inserted
+    ? {
+        duplicate: false as const,
+        intent: classification.intent,
+        confidence: classification.confidence,
+      }
+    : { duplicate: true as const };
 }

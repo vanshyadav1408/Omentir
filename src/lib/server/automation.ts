@@ -18,6 +18,9 @@ import {
   getWorkspace,
   claimDailyNotification,
   claimNotificationAfterInterval,
+  releaseDailyNotification,
+  releaseNotificationAfterInterval,
+  releaseSystemTask,
   claimEnrollmentAction,
   claimActionSlot,
   claimSystemTask,
@@ -98,7 +101,11 @@ import { localDayAndHour } from "./scheduling";
 import { isWithinSendWindow, SPACING_MINUTES, type SendActionKind } from "./send-schedule";
 import { hasActiveSubscription } from "./subscription";
 import { getAppBaseUrl } from "./runtime-config";
-import { sendDailyDigestEmail, sendInvitePauseNotification } from "./email";
+import {
+  emailWasSkipped,
+  sendDailyDigestEmail,
+  sendInvitePauseNotification,
+} from "./email";
 import {
   ensureUnipileWebhooks,
   hasPendingSentInvitation,
@@ -2050,7 +2057,7 @@ async function sweepAcceptedInvitations(input: {
   const enrollments = (await listConnectionSentEnrollments(workspaceId)).filter((enrollment) =>
     campaignsById.has(enrollment.campaignId),
   );
-  if (!enrollments.length) return { accepted: 0 };
+  if (!enrollments.length) return { accepted: 0, unavailable: false };
 
   const pendingIds = await listSentInvitationProviderIds(account.accountId);
   if (!pendingIds) {
@@ -2060,7 +2067,7 @@ async function sweepAcceptedInvitations(input: {
       status: "error",
       message: `Acceptance sweep for ${account.displayName || account.id} skipped: sent-invitations list unavailable.`,
     });
-    return { accepted: 0 };
+    return { accepted: 0, unavailable: true };
   }
 
   const relationIds = await listRecentRelationIdentityKeys(account.accountId);
@@ -2124,7 +2131,7 @@ async function sweepAcceptedInvitations(input: {
     });
   }
 
-  return { accepted };
+  return { accepted, unavailable: false };
 }
 
 // Reply-sync fallback for one account: pull recent inbound provider messages
@@ -2143,6 +2150,9 @@ async function syncInboundReplies(input: {
     sinceMs,
     limit: REPLY_SYNC_MESSAGE_LIMIT,
   });
+  if (!messages) {
+    throw new Error("Could not read recent LinkedIn messages for reply sync.");
+  }
 
   let stored = 0;
   for (const message of messages) {
@@ -2221,10 +2231,17 @@ async function runProviderSyncs(mode: AutomationSafetyMode) {
 
   for (const entry of accounts.values()) {
     try {
-      if (await claimSystemTask(`connection-sweep-${entry.account.id}`, CONNECTION_SWEEP_INTERVAL_MS)) {
+      const sweepTaskId = `connection-sweep-${entry.account.id}`;
+      if (await claimSystemTask(sweepTaskId, CONNECTION_SWEEP_INTERVAL_MS)) {
         const sweep = await sweepAcceptedInvitations(entry);
-        result.sweptAccounts += 1;
-        result.acceptedViaSweep += sweep.accepted;
+        if (sweep.unavailable) {
+          await releaseSystemTask(sweepTaskId).catch((releaseError) => {
+            console.error("[automation] failed to release acceptance-sweep claim:", releaseError);
+          });
+        } else {
+          result.sweptAccounts += 1;
+          result.acceptedViaSweep += sweep.accepted;
+        }
       }
     } catch (error) {
       await safeLogAutomationRun({
@@ -2236,16 +2253,21 @@ async function runProviderSyncs(mode: AutomationSafetyMode) {
     }
 
     try {
-      const syncClaim = await claimSystemTask(
-        `reply-sync-${entry.account.id}`,
-        REPLY_SYNC_INTERVAL_MS,
-      );
+      const syncTaskId = `reply-sync-${entry.account.id}`;
+      const syncClaim = await claimSystemTask(syncTaskId, REPLY_SYNC_INTERVAL_MS);
       if (syncClaim) {
-        result.syncedReplies += await syncInboundReplies({
-          workspaceId: entry.workspaceId,
-          account: entry.account,
-          previousRunAt: syncClaim.previousRunAt,
-        });
+        try {
+          result.syncedReplies += await syncInboundReplies({
+            workspaceId: entry.workspaceId,
+            account: entry.account,
+            previousRunAt: syncClaim.previousRunAt,
+          });
+        } catch (error) {
+          await releaseSystemTask(syncTaskId).catch((releaseError) => {
+            console.error("[automation] failed to release reply-sync claim:", releaseError);
+          });
+          throw error;
+        }
       }
     } catch (error) {
       await safeLogAutomationRun({
@@ -2280,6 +2302,9 @@ async function notifyInvitePause(
   linkedInAccountId: string,
   accountName?: string,
 ) {
+  let claimed = false;
+  let notificationKind = "";
+  let notificationDay = "";
   try {
     const workspace = await getWorkspace(workspaceId);
     const email = workspace.notificationEmail;
@@ -2288,8 +2313,10 @@ async function notifyInvitePause(
 
     const timezone = workspace.timezone || "UTC";
     const { day } = localDayAndHour(timezone);
-    const notificationKind = `invite-pause-${linkedInAccountId}`;
-    if (!(await claimDailyNotification(workspaceId, notificationKind, day))) return;
+    notificationKind = `invite-pause-${linkedInAccountId}`;
+    notificationDay = day;
+    claimed = await claimDailyNotification(workspaceId, notificationKind, day);
+    if (!claimed) return;
 
     const resumeAtText = new Intl.DateTimeFormat("en-US", {
       timeZone: timezone,
@@ -2298,12 +2325,15 @@ async function notifyInvitePause(
       hour: "numeric",
       minute: "2-digit",
     }).format(new Date(cooldownUntil));
-    await sendInvitePauseNotification({
+    const result = await sendInvitePauseNotification({
       to: email,
       resumeAtText,
       accountName,
       idempotencyKey: `${notificationKind}-${workspaceId}-${day}`,
     });
+    if (emailWasSkipped(result)) {
+      throw new Error("Email delivery is not configured.");
+    }
     await safeLogAutomationRun({
       workspaceId,
       kind: "digest",
@@ -2311,6 +2341,16 @@ async function notifyInvitePause(
       message: `Sent temporary invite-pause notification to ${email}${accountName ? ` (${accountName})` : ""}.`,
     });
   } catch (error) {
+    if (claimed && notificationKind && notificationDay) {
+      await releaseDailyNotification(workspaceId, notificationKind, notificationDay).catch(
+        (releaseError) => {
+          console.error(
+            "[automation] failed to release invite-pause notification claim:",
+            releaseError,
+          );
+        },
+      );
+    }
     console.error("[automation] failed to send invite-pause notification:", error);
   }
 }
@@ -2343,30 +2383,35 @@ async function sendDailyDigests(mode: AutomationSafetyMode) {
   const workspaces = await listWorkspaces();
 
   for (const workspace of workspaces) {
+    let claimed = false;
+    let notificationDay = "";
     try {
       const email = workspace.notificationEmail;
       if (!email || !hasActiveSubscription(workspace)) continue;
 
       const { day, hour } = localDayAndHour(workspace.timezone);
+      notificationDay = day;
       if (hour < DIGEST_LOCAL_HOUR || hour > DIGEST_LAST_CATCH_UP_HOUR) continue;
       // Dry-run must not consume the day claim, or the real tick stays silent.
       if (mode.dryRun) continue;
-      if (
-        !(await claimNotificationAfterInterval(
-          workspace.id,
-          "digest",
-          day,
-          DIGEST_MIN_INTERVAL_MS,
-        ))
-      ) continue;
+      claimed = await claimNotificationAfterInterval(
+        workspace.id,
+        "digest",
+        day,
+        DIGEST_MIN_INTERVAL_MS,
+      );
+      if (!claimed) continue;
 
       const stats = await collectDigestStats(workspace.id);
-      await sendDailyDigestEmail({
+      const result = await sendDailyDigestEmail({
         to: email,
         day,
         stats,
         idempotencyKey: `digest-${workspace.id}-${day}`,
       });
+      if (emailWasSkipped(result)) {
+        throw new Error("Email delivery is not configured.");
+      }
       sent += 1;
       await safeLogAutomationRun({
         workspaceId: workspace.id,
@@ -2375,6 +2420,11 @@ async function sendDailyDigests(mode: AutomationSafetyMode) {
         message: `Sent daily digest for ${day} to ${email}.`,
       });
     } catch (error) {
+      if (claimed && notificationDay) {
+        await releaseNotificationAfterInterval(workspace.id, "digest").catch((releaseError) => {
+          console.error("[automation] failed to release digest notification claim:", releaseError);
+        });
+      }
       await safeLogAutomationRun({
         workspaceId: workspace.id,
         kind: "digest",
