@@ -12,7 +12,7 @@ export const metadata = createPageMetadata({
     url: "/ai-saas-ready-before-outbound-v3.avif",
     width: 1774,
     height: 887,
-    alt: "Minimal dark editorial cover reading Before You Scale Outbound",
+    alt: "Centered editorial banner for AI tools to use before starting outbound",
   },
   keywords: [
     "AI tools for SaaS",

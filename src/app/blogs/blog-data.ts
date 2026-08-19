@@ -91,7 +91,7 @@ export const ALL_BLOGS: BlogItem[] = [
     category: "Guides",
     readTime: "7 min read",
     bannerSrc: "/ai-saas-ready-before-outbound-v3.avif",
-    bannerAlt: "Minimal dark editorial cover reading Before You Scale Outbound",
+    bannerAlt: "Centered editorial banner for AI tools to use before starting outbound",
   },
   {
     slug: "omentir-is-now-open-source",
