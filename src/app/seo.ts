@@ -18,7 +18,7 @@ export const defaultOgImage = {
   url: "/omentir-og.png",
   width: 1200,
   height: 630,
-  alt: brandTagline,
+  alt: "Omentir will find you customers or you pay nothing.",
   type: "image/png",
 };
 
