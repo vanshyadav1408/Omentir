@@ -75,8 +75,8 @@ export default function BlogPost() {
       </p>
       <p>
         For teams that prefer standard REST integrations, the platform also provides full OpenAPI-compliant endpoints under <code>/api/agent/v1</code>. The native MCP server is still the cleaner path for most developer environments, as detailed in our guide to{" "}
-        <Link href="/for-agents" className="text-blue-600 hover:underline">
-          Omentir's agent features
+        <Link href="/integrations/mcp" className="text-blue-600 hover:underline">
+          Omentir's MCP integration
         </Link>
         .
       </p>

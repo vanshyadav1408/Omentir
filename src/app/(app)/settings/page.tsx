@@ -1,9 +1,10 @@
-import { auth } from "@/lib/server/auth";
+import { auth, currentUser } from "@/lib/server/auth";
 import { redirect } from "next/navigation";
 import SettingsView from "./settings-view";
 import {
   disconnectLinkedInAccountAction,
   saveSettingsAction,
+  uploadProfileImageAction,
 } from "@/app/actions";
 import { getWorkspace } from "@/lib/server/data";
 import { hasActiveSubscription } from "@/lib/server/subscription";
@@ -26,6 +27,17 @@ type SessionClaimsProfile = {
   picture?: string;
 };
 
+function googleImageUrl(user: {
+  imageUrl?: string | null;
+  externalAccounts?: Array<{ provider: string; imageUrl?: string | null }>;
+} | null) {
+  const accounts = user?.externalAccounts || [];
+  const google = accounts.find(
+    (account) => account.provider === "google" || account.provider === "oauth_google",
+  );
+  return google?.imageUrl || user?.imageUrl || "";
+}
+
 export default async function SettingsPage() {
   const { userId, sessionClaims } = await auth();
   if (!userId) {
@@ -33,14 +45,25 @@ export default async function SettingsPage() {
     throw new Error("Unauthorized");
   }
 
-  const workspace = await getWorkspace(userId);
+  const [workspace, user] = await Promise.all([getWorkspace(userId), currentUser()]);
   if (!hasActiveSubscription(workspace)) {
     redirect("/upgrade");
   }
   const profile = (sessionClaims || {}) as SessionClaimsProfile;
-  const userName = profile.full_name || profile.name || profile.first_name || "User";
-  const userEmail = profile.email || workspace.notificationEmail || "not set";
-  const imageUrl = profile.image_url || profile.picture;
+  const userName =
+    user?.fullName ||
+    user?.firstName ||
+    profile.full_name ||
+    profile.name ||
+    profile.first_name ||
+    "User";
+  const userEmail =
+    user?.primaryEmailAddress?.emailAddress ||
+    profile.email ||
+    workspace.notificationEmail ||
+    "not set";
+  const imageUrl =
+    workspace.ownerImageUrl || googleImageUrl(user) || profile.image_url || profile.picture || "";
 
   return (
     <SettingsView
@@ -48,6 +71,7 @@ export default async function SettingsPage() {
       linkedInAccounts={[]}
       user={{ name: userName, email: userEmail, imageUrl }}
       saveAction={saveSettingsAction}
+      uploadImageAction={uploadProfileImageAction}
       disconnectAction={disconnectLinkedInAccountAction}
       localMode={isLocalMode()}
       notificationsEnabled={

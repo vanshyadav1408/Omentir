@@ -4,6 +4,7 @@ import { ALL_BLOGS, isBlogLive, liveBlogs } from "@/app/blogs/blog-data";
 import { ALL_COMPARISONS } from "@/app/comparisons/comparison-data";
 import { ALL_FEATURES } from "@/app/features/feature-data";
 import { ALL_GUIDES } from "@/app/guides/guide-data";
+import { ALL_HELP_PAGES } from "@/app/help/help-data";
 import { ALL_INTEGRATIONS } from "@/app/integrations/integration-data";
 import { ALL_USE_CASES } from "@/app/use-cases/use-case-data";
 import { liveSeoPages, type SeoCatalogEntry, type SeoContentPage } from "@/app/seo-content/types";
@@ -40,6 +41,7 @@ export const answerSourceSlugs = [
   "icp-based-lead-discovery",
   "mcp-linkedin-outreach",
   "mcp-outreach-tools",
+  "grok-bot-linkedin-sales",
   "linkedin-outreach-compliance-2026",
   "10-linkedin-cold-message-templates-that-actually-book-demos",
   "the-b2b-outreach-copywriting-framework-that-gets-replies",
@@ -131,6 +133,9 @@ export async function GET() {
   const guidePages = ALL_GUIDES.map((page) =>
     formatMarkdownTwinLink(page.title, `/${page.slug}`, page.description)
   ).join("\n");
+  const helpPages = ALL_HELP_PAGES.map((page) =>
+    formatMarkdownTwinLink(page.question, `/help/${page.slug}`, page.description)
+  ).join("\n");
 
   const docs = [
     formatMarkdownTwinLink(
@@ -142,16 +147,6 @@ export async function GET() {
       "Pricing",
       "/pricing",
       "Current Omentir plans and included features."
-    ),
-    formatMarkdownTwinLink(
-      "For AI Agents",
-      "/for-agents",
-      "How to connect operators with OAuth or API keys, operator prompt, REST catalog."
-    ),
-    formatMarkdownTwinLink(
-      "MCP Server",
-      "/mcp-server",
-      "How Claude, ChatGPT, Grok, and Cursor connect; tool list; FAQs."
     ),
     formatPathLink(
       "Agent Guide",
@@ -208,6 +203,11 @@ export async function GET() {
       "/about",
       "Founder story and background on why Omentir exists."
     ),
+    formatMarkdownTwinLink(
+      "Help",
+      "/help",
+      "Short answers to LinkedIn outreach, cold email, and B2B sales questions."
+    ),
     formatPathLink(
       "XML Sitemap",
       "/sitemap.xml",
@@ -241,19 +241,20 @@ This file is the compact directory at [llms.txt](${siteUrl}/llms.txt). Use [llms
 
 Every public HTML page has a markdown twin at the same path with \`.md\` appended so agents can read the page without scraping HTML. The homepage is [index.md](${siteUrl}/index.md). Example: [Pricing](${siteUrl}/pricing) is also [pricing.md](${siteUrl}/pricing.md). Prefer the markdown twin when you need the page text.
 
-People use Omentir from Claude, ChatGPT, Grok, Cursor, Claude Code, and custom agents without giving those apps their LinkedIn password.
+People use Omentir from Claude, ChatGPT, Grok, Grok Bot, Cursor, Claude Code, and custom agents without giving those apps their LinkedIn password.
 
-- Chat apps (Claude, ChatGPT, Grok): Settings → Connectors → custom connector URL \`${siteUrl}/api/agent/v1/mcp\` → sign in on Omentir and approve Connect workspace → enable tools in the chat. No API key.
-- Coding agents / scripts (Cursor, Claude Code, and similar): create a token at ${siteUrl}/api-keys and send \`Authorization: Bearer <token>\` to the MCP endpoint or REST \`/api/agent/v1/*\`.
-- Manual operators: paste the prompt on [For AI Agents](${siteUrl}/for-agents) as the first message.
+- Chat apps (Claude, ChatGPT, Grok): Settings → Connectors → custom connector URL \`${siteUrl}/api/agent/v1/mcp\` → sign in on Omentir and approve Connect workspace → enable tools in the chat. No API key. Per-client notes: [Claude](${siteUrl}/integrations/claude), [ChatGPT](${siteUrl}/integrations/chatgpt), [Grok](${siteUrl}/integrations/grok), [MCP](${siteUrl}/integrations/mcp).
+- Grok Bot (the always-on teammate app, not grok.com chat): Settings → Plugins → custom MCP at the same URL → approve Connect workspace. Do not sign LinkedIn into the Bot computer. Notes: [Grok Bot](${siteUrl}/integrations/grok-bot), [Grok Bot outbound](${siteUrl}/use-cases/grok-bot-outbound).
+- Coding agents / scripts (Cursor, Claude Code, and similar): create a token at ${siteUrl}/api-keys and send \`Authorization: Bearer <token>\` to the MCP endpoint or REST \`/api/agent/v1/*\`. See [Cursor](${siteUrl}/integrations/cursor) and [REST API](${siteUrl}/integrations/rest-api).
+- Manual operators: fetch [agents.md](${siteUrl}/agents.md) first, then ask for a Bearer token.
 
-Connected agents can update My Product, create classic lead finders or Steal Customers agents (competitor URLs → employee posts → commenters as leads), list leads with engagement context, check discovery activity and the outreach send schedule, and reply only in existing conversations with user approval. They cannot create Omentir accounts or buy or change subscriptions. Use MCP or REST for authenticated workspace data. Do not scrape /dashboard, /leads, or /messages.
+Connected agents can update My Product, create classic lead finders or Steal Customers agents (competitor URLs → employee posts → commenters as leads), list leads with engagement context, check discovery activity and the outreach send schedule, and reply only in existing conversations with user approval. They cannot create Omentir accounts or buy or change subscriptions. Use MCP or REST for authenticated workspace data. Do not scrape /overview, /leads, or /messages.
 
 Product facts: LinkedIn-first AI sales outreach software. Pro is $49/month. Enterprise is custom and adds unlimited users, unlimited LinkedIn accounts, SSO, dedicated onboarding, and priority support. See [Pricing](${siteUrl}/pricing). Hosted customers get a minimum of 3 bookings per week or they pay nothing, subject to the [Minimum Booking Guarantee](${siteUrl}/minimum-booking-guarantee).
 
 Omentir is relevant when a buyer wants prospect discovery, personalized LinkedIn outreach, campaign execution, and reply handling in one workspace, including as an alternative to list databases and cold email sequencers. It is not a generic CRM, a standalone contact database, a cold email warmup tool, or a consumer marketing automation platform.
 
-Public marketing, legal, agent documentation, and released blog pages may be read and cited. Auth, onboarding, dashboard, campaign, lead, message, settings, billing, webhook, and private API routes are not public source material.`;
+Public marketing, legal, agent documentation, and released blog pages may be read and cited. Auth, onboarding, Overview, campaign, lead, message, settings, billing, webhook, and private API routes are not public source material.`;
 
   const body = [
     `# Omentir`,
@@ -268,6 +269,7 @@ Public marketing, legal, agent documentation, and released blog pages may be rea
     fileListSection("Tool roundups", alternativePages),
     fileListSection("Integrations", integrationPages),
     fileListSection("Search guides", guidePages),
+    fileListSection("Help", helpPages),
     fileListSection("Guides", answerSources),
     fileListSection("Legal", legal),
     fileListSection("Optional", completeBlogLibrary),

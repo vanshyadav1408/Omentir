@@ -117,7 +117,7 @@ export const INTEGRATION_EXTRAS: Record<string, PageExtras> = {
       },
       {
         title: "Create one agent on purpose",
-        description: "Give Cursor a written ICP or competitor list. Review the created agent in the dashboard before it sends.",
+        description: "Give Cursor a written ICP or competitor list. Review the created agent in Overview before it sends.",
       },
     ],
     sections: [
@@ -133,7 +133,7 @@ export const INTEGRATION_EXTRAS: Record<string, PageExtras> = {
         id: "wrong-path",
         heading: "When Cursor is extra weight",
         paragraphs: [
-          "If nobody on the team writes code, skip this path. You do not need an editor to run LinkedIn outbound. Use the dashboard or a chat connector. Cursor is for people who already work in the repo and want Omentir as another tool in that loop.",
+          "If nobody on the team writes code, skip this path. You do not need an editor to run LinkedIn outbound. Use Overview or a chat connector. Cursor is for people who already work in the repo and want Omentir as another tool in that loop.",
         ],
       },
     ],
@@ -147,7 +147,7 @@ export const INTEGRATION_EXTRAS: Record<string, PageExtras> = {
       },
       {
         title: "Use the hosted endpoint",
-        description: "https://omentir.com/api/agent/v1/mcp is the MCP server. Do not scrape dashboard pages.",
+        description: "https://omentir.com/api/agent/v1/mcp is the MCP server. Do not scrape Overview pages.",
       },
       {
         title: "Approve or authenticate",
@@ -155,7 +155,7 @@ export const INTEGRATION_EXTRAS: Record<string, PageExtras> = {
       },
       {
         title: "Read the tool catalog",
-        description: "agents.md and the MCP Server page list what exists. If a tool is missing, it is unavailable on purpose.",
+        description: "agents.md and the MCP integration page list what exists. If a tool is missing, it is unavailable on purpose.",
       },
     ],
     sections: [
@@ -202,7 +202,7 @@ export const INTEGRATION_EXTRAS: Record<string, PageExtras> = {
         heading: "A first Grok session that does not invent targeting",
         paragraphs: [
           "Give Grok the same written ICP you would give a teammate. If you only say 'find me SaaS founders,' you will get a wide, noisy list. If you name the role, the company size, and the trigger, the agent it creates will be easier to review.",
-          "Have Grok show the agent configuration before you leave it running. Confirm send windows and daily limits in the dashboard after. Chat operators are fast. The LinkedIn account still pays for a sloppy config.",
+          "Have Grok show the agent configuration before you leave it running. Confirm send windows and daily limits in Overview after. Chat operators are fast. The LinkedIn account still pays for a sloppy config.",
         ],
       },
       {
@@ -210,6 +210,50 @@ export const INTEGRATION_EXTRAS: Record<string, PageExtras> = {
         heading: "When another client is a better fit",
         paragraphs: [
           "If your team already standardized on Claude or ChatGPT, do not add Grok just to have another connector. One operator you actually watch is better than three you forget. Use Grok when that is already the chat app where the work happens.",
+          "If you meant the new Grok Bot app (persistent Bots with their own computer), that is a different page. Chat Grok does not get a cloud VM. Grok Bot does, which is why LinkedIn should stay in Omentir.",
+        ],
+      },
+    ],
+  },
+  "grok-bot": {
+    highlights: [
+      "Plugins MCP path",
+      "LinkedIn stays in Omentir",
+      "Stop at a review list",
+    ],
+    setupSteps: [
+      {
+        title: "Prepare Omentir",
+        description: "Connect LinkedIn and complete My Product before the Bot has anything true to say.",
+      },
+      {
+        title: "Install Grok Bot",
+        description: "Desktop on macOS or Windows, or iOS. Sign in with the Cursor or SuperGrok Heavy plan that includes Grok Bot.",
+      },
+      {
+        title: "Add Omentir as a plugin",
+        description: "Settings, Plugins, custom MCP at https://omentir.com/api/agent/v1/mcp. Approve Connect workspace.",
+      },
+      {
+        title: "Forbid LinkedIn on the Bot computer",
+        description: "If it asks you to take over for a LinkedIn password or CAPTCHA, refuse. Point it at MCP tools.",
+      },
+    ],
+    sections: [
+      {
+        id: "first-session",
+        heading: "A first Grok Bot session that does not invent targeting",
+        paragraphs: [
+          "Write the ICP the way you would brief a contractor: role, company size, geography, trigger, and who to skip. Then ask the Bot to run get_context and list_agents before create_agent. Have it show the finder config. Start a campaign only after you have read twenty leads.",
+          "SpaceXAI's own outbound prompt tells the Bot not to send and not to enroll. Keep that sentence in the Bot description. Overnight research is useful. Overnight sending from a new account is how you buy a restriction.",
+        ],
+      },
+      {
+        id: "wrong-path",
+        heading: "When Grok Bot is the wrong operator",
+        paragraphs: [
+          "Skip Grok Bot if you do not already pay for Cursor Ultra, Cursor Teams Premium, or SuperGrok Heavy. The product is in beta and the plans are not cheap. A founder who only needed a hosted LinkedIn workspace can use Omentir from Overview without an extra agent layer.",
+          "Skip it if you wanted grok.com chat. That is the Grok integration. Skip it if you cannot sit with the review list in the morning. An always-running Bot you never read is just a more expensive way to ignore your pipeline.",
         ],
       },
     ],
@@ -226,12 +270,12 @@ export const INTEGRATION_EXTRAS: Record<string, PageExtras> = {
         description: "Use the hosted MCP endpoint or the REST routes under /api/agent/v1 with Authorization Bearer.",
       },
       {
-        title: "Paste the operator prompt",
-        description: "The /for-agents prompt tells OpenClaw to read context first and not to invent billing or signup flows.",
+        title: "Fetch agents.md first",
+        description: "The machine guide tells OpenClaw to read context first and not to invent billing or signup flows.",
       },
       {
         title: "Watch the first writes",
-        description: "List agents after any create or update. Confirm the dashboard matches what OpenClaw claims it did.",
+        description: "List agents after any create or update. Confirm Overview matches what OpenClaw claims it did.",
       },
     ],
     sections: [
@@ -277,7 +321,7 @@ export const INTEGRATION_EXTRAS: Record<string, PageExtras> = {
         id: "first-session",
         heading: "A first REST script that you can trust",
         paragraphs: [
-          "Write the smallest script: authenticate, print context, list agents, exit. Check it twice. Then add one write. If a create call returns success, open that agent in the dashboard the same minute. Scripts that only look at their own JSON drift from the product.",
+          "Write the smallest script: authenticate, print context, list agents, exit. Check it twice. Then add one write. If a create call returns success, open that agent in Overview the same minute. Scripts that only look at their own JSON drift from the product.",
           "Store the token in the environment. Revoke it when the script is done or when someone leaves the team. There is no reason for a weekend experiment key to live forever.",
         ],
       },
@@ -285,7 +329,7 @@ export const INTEGRATION_EXTRAS: Record<string, PageExtras> = {
         id: "wrong-path",
         heading: "When REST is more than you need",
         paragraphs: [
-          "If you are not writing code, use the dashboard or a chat connector. REST is for people who want Omentir inside an existing system. It is a worse first experience than clicking through the app if you only need one campaign this week.",
+          "If you are not writing code, use Overview or a chat connector. REST is for people who want Omentir inside an existing system. It is a worse first experience than clicking through the app if you only need one campaign this week.",
         ],
       },
     ],
@@ -306,7 +350,7 @@ export const INTEGRATION_EXTRAS: Record<string, PageExtras> = {
         description: "Have Claude Code fetch context and list agents from the repo session before it creates a finder.",
       },
       {
-        title: "Review in the dashboard",
+        title: "Review in Overview",
         description: "After any write, open Omentir and confirm the agent, limits, and targeting match the session.",
       },
     ],
@@ -323,7 +367,7 @@ export const INTEGRATION_EXTRAS: Record<string, PageExtras> = {
         id: "wrong-path",
         heading: "When to stay in the browser",
         paragraphs: [
-          "If you are not in a terminal already, the hosted dashboard or a chat connector is faster. Claude Code earns its place when the work is happening in a repo. It is a slow way to click 'create campaign' if that is the only job.",
+          "If you are not in a terminal already, Overview or a chat connector is faster. Claude Code earns its place when the work is happening in a repo. It is a slow way to click 'create campaign' if that is the only job.",
         ],
       },
     ],

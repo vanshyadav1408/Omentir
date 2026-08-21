@@ -33,7 +33,7 @@ export function protectedResourceMetadata() {
     authorization_servers: [base],
     scopes_supported: [OAUTH_SCOPE],
     bearer_methods_supported: ["header"],
-    resource_documentation: `${base}/mcp-server`,
+    resource_documentation: `${base}/integrations/mcp`,
   };
 }
 
@@ -52,7 +52,7 @@ export function authorizationServerMetadata() {
     code_challenge_methods_supported: ["S256"],
     token_endpoint_auth_methods_supported: ["none"],
     scopes_supported: [OAUTH_SCOPE],
-    service_documentation: `${base}/mcp-server`,
+    service_documentation: `${base}/integrations/mcp`,
   };
 }
 

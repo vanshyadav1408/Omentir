@@ -227,7 +227,7 @@ export default function BlogPost() {
 }`}</code>
       </pre>
       <p>
-        By routing the action through Omentir, developers ensure their custom agents obey safety guardrails automatically, preventing them from exceeding LinkedIn's daily quotas. Read more about developing agentic workflows on our <a href="/for-agents" className="text-blue-600 hover:underline">For Agents</a> overview.
+        By routing the action through Omentir, developers ensure their custom agents obey safety guardrails automatically, preventing them from exceeding LinkedIn's daily quotas. Read more about developing agentic workflows on our <a href="/features/agent-api-and-mcp" className="text-blue-600 hover:underline">Agent API and MCP</a> overview.
       </p>
 
       <h2 id="metrics-to-track" style={{ fontFamily: "var(--font-varta)" }} className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28">

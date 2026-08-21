@@ -11,26 +11,25 @@ import { FaceoffCards, VerdictBanner } from "./layouts";
 import {
   ArticleSection,
   CtaBlock,
+  familyCrumbs,
   FaqBlock,
-  HeroActions,
   pageJsonLd,
   RelatedLinks,
   SectionProse,
-  SeoArticle,
   SeoBanner,
-  SeoHero,
+  SeoDocLayout,
   SeoPageChrome,
 } from "./shared";
 import { ProductHomeLink } from "./product-links";
 import { seoHeroImage, type SeoContentPage } from "./types";
 
 export default function ComparisonPageView({ page }: { page: SeoContentPage }) {
-  const primary = page.primaryCta ?? { label: "Try Omentir", href: "/signup" };
-  const secondary = page.secondaryCta ?? { label: "Pricing", href: "/pricing" };
   const competitor = comparisonBrandFromSlug(page.slug);
   const banner = seoHeroImage("comparisons", page.slug);
   const bannerNode = banner ? (
-    <SeoBanner src={banner.src} alt={banner.alt} width={banner.width} height={banner.height} />
+    <div className="mt-8">
+      <SeoBanner src={banner.src} alt={banner.alt} width={banner.width} height={banner.height} />
+    </div>
   ) : null;
 
   const faceoff = page.layout === "faceoff" && page.comparisonTable;
@@ -84,27 +83,19 @@ export default function ComparisonPageView({ page }: { page: SeoContentPage }) {
       jsonLdId={`seo-comparisons-${page.slug}-jsonld`}
       jsonLd={pageJsonLd("comparisons", page)}
     >
-      <SeoHero
+      <SeoDocLayout
+        as="article"
+        crumbs={familyCrumbs("comparisons", page.slug)}
         title={page.title}
-        description={page.description}
-        fullHeight
-        crumbs={[
-          { label: "Home", href: "/" },
-          { label: "Alternatives", href: "/comparisons" },
-          { label: page.title },
-        ]}
-        actions={<HeroActions primary={primary} secondary={secondary} />}
-        media={bannerNode}
-      />
-      <SeoArticle>
-        {banner ? <div className="lg:hidden">{bannerNode}</div> : null}
+        afterTitle={bannerNode}
+      >
         <VerdictBanner page={page} />
 
         {faceoff && table ? (
           <section aria-label="Three-way comparison">
             <h2
               style={{ fontFamily: "var(--font-varta)" }}
-              className="border-b border-[var(--md-sys-color-outline-variant)] pb-2 text-2xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)]"
+              className="border-b border-[var(--md-sys-color-outline-variant)] pb-2 text-xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)]"
             >
               {table.headers.join(", ").replace(/, ([^,]*)$/, ", and $1")}
             </h2>
@@ -119,7 +110,7 @@ export default function ComparisonPageView({ page }: { page: SeoContentPage }) {
           <section aria-label="Comparison table">
             <h2
               style={{ fontFamily: "var(--font-varta)" }}
-              className="border-b border-[var(--md-sys-color-outline-variant)] pb-2 text-2xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)]"
+              className="border-b border-[var(--md-sys-color-outline-variant)] pb-2 text-xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)]"
             >
               {table.headers[0]} and{" "}
               <ProductHomeLink name={table.headers[1]}>{table.headers[1]}</ProductHomeLink>
@@ -205,16 +196,17 @@ export default function ComparisonPageView({ page }: { page: SeoContentPage }) {
 
         <SectionProse page={page} skipIds={skipIds} />
         {page.relatedLinks ? <RelatedLinks links={page.relatedLinks} /> : null}
-        <FaqBlock page={page} />
+        <FaqBlock page={page} branded />
         <CtaBlock
           page={page}
+          boxed
           title={page.ctaTitle ?? "Test Omentir on one ICP"}
           body={
             page.ctaBody ??
             "Run one segment for two weeks. Measure replies and meetings, not vanity sends."
           }
         />
-      </SeoArticle>
+      </SeoDocLayout>
     </SeoPageChrome>
   );
 }

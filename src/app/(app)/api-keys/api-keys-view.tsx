@@ -110,7 +110,7 @@ const CONNECT_METHODS: ConnectMethod[] = [
     icon: "smart_toy",
     title: "OpenClaw, Hermes & autonomous agents",
     blurb:
-      "Hand your agent a ready-made operator prompt, then give it the key when it asks - it manages lead discovery from chat.",
+      "Hand your agent the agents.md guide, then give it the key when it asks. It manages lead discovery from chat.",
     details: [
       "Use this when an autonomous agent is coordinating the workflow instead of a built-in MCP connector.",
       "The agent should read /agents.md and /api/agent/v1/openapi.json before calling workspace tools.",
@@ -118,8 +118,8 @@ const CONNECT_METHODS: ConnectMethod[] = [
     ],
     steps: [
       {
-        text: "Copy the operator prompt from the For Agents guide and paste it as your agent's first message.",
-        code: `${siteUrl}/for-agents`,
+        text: "Give the agent the machine guide as its first instruction. It should read that page, then ask for your token.",
+        code: `${siteUrl}/agents.md`,
       },
       {
         text: "The agent reads agents.md, then stops and asks for your Omentir token. Paste a key you created above; do not give it your Omentir password.",
@@ -177,14 +177,14 @@ const CONNECT_METHODS: ConnectMethod[] = [
 
 const DOCS = [
   {
-    title: "Agent quickstart",
-    description: "Connect Claude, ChatGPT, or any MCP agent in three steps.",
-    href: "/for-agents",
+    title: "Agent API and MCP",
+    description: "Connect Claude, ChatGPT, or any MCP agent without sharing your LinkedIn password.",
+    href: "/features/agent-api-and-mcp",
   },
   {
-    title: "MCP server",
-    description: "The hosted MCP endpoint and every tool it exposes.",
-    href: "/mcp-server",
+    title: "MCP integration",
+    description: "The hosted MCP endpoint, who connects how, and tool groups.",
+    href: "/integrations/mcp",
   },
   {
     title: "agents.md",
@@ -242,10 +242,9 @@ function KeysLockOverlay() {
         </p>
         <Link
           href="/upgrade"
-          style={{ fontFamily: "var(--font-varta)", background: "#ba3871" }}
-          className="mt-4 inline-flex h-10 cursor-pointer items-center justify-center rounded-md px-5 text-[14px] font-semibold text-white shadow-[0_8px_24px_rgba(186,56,113,0.3)] transition hover:brightness-[0.98]"
+          className="m3-btn m3-btn-filled mt-4 h-10 px-4 text-sm"
         >
-          <span className="translate-y-px">Upgrade plan</span>
+          Upgrade plan
         </Link>
       </div>
     </div>
@@ -347,7 +346,7 @@ export default function ApiKeysView({
       <div className="app-x hidden shrink-0 pt-6 md:block">
         <h1
           style={{ fontFamily: "var(--font-varta)" }}
-          className="text-2xl font-medium leading-none tracking-tight text-zinc-800 sm:text-3xl"
+          className="text-2xl font-semibold leading-none tracking-tight text-[var(--md-sys-color-on-surface)]"
         >
           API
         </h1>
@@ -378,19 +377,9 @@ export default function ApiKeysView({
                     type="button"
                     onClick={handleCreateKey}
                     disabled={pending}
-                    style={{ fontFamily: "var(--font-varta)", background: "#ba3871" }}
-                    className="flex h-14 cursor-pointer items-center justify-center rounded-md px-4 text-[14px] font-semibold text-white shadow-[0_8px_24px_rgba(186,56,113,0.3)] transition hover:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-60 md:hidden"
+                    className="m3-btn m3-btn-filled m3-btn-field disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    <span className="translate-y-px">Create</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleCreateKey}
-                    disabled={pending}
-                    style={{ fontFamily: "var(--font-varta)", background: "#ba3871" }}
-                    className="hidden h-14 cursor-pointer items-center justify-center gap-2 rounded-md px-3.5 text-[14px] font-semibold text-white shadow-[0_8px_24px_rgba(186,56,113,0.3)] transition hover:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-60 md:flex"
-                  >
-                    <span className="translate-y-px">Create key</span>
+                    Create
                   </button>
                 </div>
 

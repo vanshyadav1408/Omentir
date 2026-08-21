@@ -11,5 +11,5 @@ export default async function DeprecatedNewUserExperiencePage() {
     throw new Error("Unauthorized");
   }
 
-  redirect("/setup");
+  redirect("/overview");
 }

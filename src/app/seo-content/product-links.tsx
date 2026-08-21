@@ -33,6 +33,11 @@ export const PRODUCT_HOMEPAGES: readonly ProductEntry[] = [
     names: ["Cursor", "cursor.com"],
   },
   {
+    id: "grok-bot",
+    href: "https://x.ai/bot",
+    names: ["Grok Bot"],
+  },
+  {
     id: "grok",
     href: "https://grok.com",
     names: ["Grok", "grok.com"],

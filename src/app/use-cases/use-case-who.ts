@@ -18,6 +18,9 @@ const WHO: Record<string, UseCaseWho> = {
   "open-source-ai-sdr": {
     who: "Buyers who will read the repo or self-host",
   },
+  "grok-bot-outbound": {
+    who: "People who already have Grok Bot and want LinkedIn sales without a cloud browser driving the account",
+  },
 };
 
 export function whoForUseCase(slug: string): UseCaseWho {

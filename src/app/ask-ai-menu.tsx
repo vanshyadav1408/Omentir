@@ -142,7 +142,7 @@ export function AskAiSection() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label={`Ask ${bot.name} about Omentir`}
-              className="m3-btn m3-btn-outlined h-12 w-full gap-1.5 rounded-full bg-[var(--md-sys-color-surface)] px-3 text-sm font-medium md:h-14 md:text-base"
+              className="m3-btn m3-btn-outlined h-12 w-full gap-1.5 bg-[var(--md-sys-color-surface)] px-3 text-sm font-medium md:h-14 md:text-base"
             >
               Ask
               <span className="flex items-center gap-1">
@@ -168,7 +168,7 @@ export function AskAiMenu() {
       <button
         type="button"
         aria-haspopup="true"
-        className="m3-state-layer flex cursor-pointer items-center gap-1 rounded-full px-3 py-2 transition-colors hover:text-[var(--md-sys-color-on-surface)]"
+        className="m3-state-layer flex cursor-pointer items-center gap-1 rounded-md px-3 py-2 transition-colors hover:text-[var(--md-sys-color-on-surface)]"
       >
         Ask AI
         <svg

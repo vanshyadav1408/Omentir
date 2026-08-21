@@ -309,8 +309,8 @@ export default function BlogPost() {
       </p>
       <p>
         If you want your AI agent to run the motion, Omentir also exposes an agent-ready workflow through{" "}
-        <Link href="/for-agents" className="text-blue-600 hover:underline">
-          its hosted MCP and agent API setup
+        <Link href="/integrations/chatgpt" className="text-blue-600 hover:underline">
+          the ChatGPT MCP integration
         </Link>
         . External agents can configure lead finders, search and rank scored prospects, retrieve exact lead context, inspect activity, and work with existing reply conversations.
       </p>

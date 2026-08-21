@@ -30,13 +30,13 @@ export default function Error({
       <section className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center px-4 pb-14 text-center sm:px-8">
         <p
           style={{ fontFamily: "var(--font-varta)" }}
-          className="text-gradient-brand text-[4rem] font-semibold leading-none tracking-tight sm:text-[5rem]"
+          className="text-gradient-brand text-[3rem] font-semibold leading-none tracking-tight sm:text-[4rem]"
         >
           Oops
         </p>
         <h1
           style={{ fontFamily: "var(--font-varta)" }}
-          className="mt-4 text-3xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-4xl"
+          className="mt-2 text-2xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-3xl"
         >
           Something went wrong.
         </h1>
@@ -44,15 +44,15 @@ export default function Error({
           We hit an unexpected error loading this page. You can try again, or head
           back home.
         </p>
-        <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row">
+        <div className="m3-btn-pair mt-6 flex flex-col items-center gap-2 sm:flex-row">
           <button
             type="button"
             onClick={() => window.location.reload()}
-            className="m3-btn m3-btn-filled h-12 cursor-pointer px-8 text-base"
+            className="m3-btn m3-btn-filled cursor-pointer"
           >
             Try again
           </button>
-          <Link href="/" className="m3-btn m3-btn-outlined h-12 px-8 text-base">
+          <Link href="/" className="m3-btn m3-btn-outlined">
             Back to home
           </Link>
         </div>

@@ -503,7 +503,7 @@ export default function MessagesView({
       {/* Header */}
       <div className="contents md:flex md:shrink-0 md:items-center md:justify-between md:gap-3 md:pt-6">
         <div className="hidden min-w-0 md:block">
-          <h1 className="text-2xl font-semibold leading-none tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-3xl">
+          <h1 className="text-2xl font-semibold leading-none tracking-tight text-[var(--md-sys-color-on-surface)]">
             Messages
           </h1>
         </div>
@@ -518,7 +518,7 @@ export default function MessagesView({
               onChange={(event) => setSearch(event.target.value)}
               leadingIcon={
                 <svg
-                  className="h-4 w-4"
+                  className="h-3.5 w-3.5"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -544,7 +544,7 @@ export default function MessagesView({
             onChange={(event) => setSearch(event.target.value)}
             leadingIcon={
               <svg
-                className="h-4 w-4"
+                className="h-3.5 w-3.5"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -595,7 +595,7 @@ export default function MessagesView({
       </div>
 
       {/* Body card */}
-      <section className="m3-card m3-card-elevated m3-card-lg m3-lateral-viewport flex min-h-0 flex-1 overflow-y-auto lg:overflow-hidden">
+      <section className="m3-card m3-card-elevated m3-card-lg flex min-h-0 flex-1 overflow-y-auto lg:overflow-hidden">
         {isInitialLoading ? (
           <MessagesInboxSkeleton />
         ) : threads.length === 0 ? (
@@ -611,10 +611,8 @@ export default function MessagesView({
           </ContentReveal>
         ) : (
           <ContentReveal className="grid min-h-full flex-1 grid-cols-1 lg:min-h-0 lg:grid-cols-[320px_1fr]">
-            {/* Inbox list — Pattern C lateral on peer tab switch */}
             <aside
-              key={tab}
-              className={`m3-lateral-panel ${
+              className={`${
                 isMobileConversationOpen ? "hidden lg:flex" : "flex"
               } h-full min-h-0 flex-col border-b border-zinc-200 lg:h-auto lg:border-b-0 lg:border-r`}
             >
@@ -972,7 +970,7 @@ function Composer({
           ))}
         </div>
       ) : null}
-      <div className="flex min-h-12 items-end gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 shadow-[0_8px_24px_rgba(15,23,42,0.04)] transition-colors focus-within:border-zinc-900">
+      <div className="flex min-h-8 items-center gap-2 rounded-lg border border-zinc-200 bg-white px-2.5 shadow-[0_8px_24px_rgba(15,23,42,0.04)] transition-colors focus-within:border-zinc-900">
         <input
           ref={fileInputRef}
           type="file"
@@ -1009,7 +1007,7 @@ function Composer({
           disabled={isSending}
           placeholder={`Reply to ${selected.profileName}...`}
           rows={1}
-          className="max-h-28 min-h-8 min-w-0 flex-1 resize-none border-0 bg-transparent py-1 pl-2 text-[13px] leading-5 text-zinc-900 shadow-none outline-none placeholder:text-zinc-400 disabled:text-zinc-400"
+          className="max-h-28 min-h-8 min-w-0 flex-1 resize-none border-0 bg-transparent py-[6px] pl-2 text-[13px] leading-5 text-zinc-900 shadow-none outline-none placeholder:text-zinc-400 disabled:text-zinc-400"
           onKeyDown={(event) => {
             if (event.key === "Enter" && !event.shiftKey) {
               event.preventDefault();

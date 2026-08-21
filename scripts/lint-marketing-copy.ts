@@ -23,6 +23,7 @@ const STRICT_ROOTS = [
   "src/app/use-cases",
   "src/app/integrations",
   "src/app/guides",
+  "src/app/help",
   "src/app/surveys",
   "src/app/page.tsx",
   "src/lib/public-page-markdown.ts",
@@ -32,6 +33,11 @@ const STRICT_FILES = [
   "src/app/marketing-shell.tsx",
   "src/app/marketing-mobile-nav.tsx",
   "src/app/feature-menu.tsx",
+  "src/app/hero-copy.tsx",
+  "src/app/hero-cta-controls.tsx",
+  "src/app/hero-product-stage.tsx",
+  "src/app/home-capability-slides.tsx",
+  "src/app/home-product-mock.tsx",
 ];
 
 const BLOG_ROOT = "src/app/blogs";
@@ -111,7 +117,7 @@ function collectFiles(): Array<{ path: string; strict: boolean }> {
     const found: string[] = [];
     walk(full, found);
     for (const file of found) {
-      if (file.endsWith("-data.ts") || root.includes("guides")) {
+      if (file.endsWith("-data.ts") || root.includes("guides") || root.includes("help")) {
         files.push({ path: file, strict: true });
       }
     }

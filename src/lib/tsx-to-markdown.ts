@@ -7,6 +7,12 @@
 
 const VOID_TAGS = new Set(["br", "hr", "img", "image", "input", "meta", "link"]);
 
+function isVoidJsxTag(name: string) {
+  // HTML <link> is void. Next.js <Link> is not.
+  if (name.toLowerCase() === "link") return name === "link";
+  return VOID_TAGS.has(name.toLowerCase());
+}
+
 const SKIP_TAGS = new Set([
   "jsonld",
   "svg",
@@ -16,7 +22,6 @@ const SKIP_TAGS = new Set([
   "g",
   "style",
   "script",
-  "herogridbackdrop",
   "marketingheader",
   "marketingfooter",
   "reveal",
@@ -433,7 +438,7 @@ function readJsxNode(source: string, start: number): JsxNode | null {
   const afterName = start + 1 + name.length;
   const { attrs, end: attrsEnd } = readAttrs(source, afterName);
   const at = skipWhitespace(source, attrsEnd);
-  if (source.startsWith("/>", at) || VOID_TAGS.has(name.toLowerCase())) {
+  if (source.startsWith("/>", at) || isVoidJsxTag(name)) {
     const close = source.startsWith("/>", at) ? at + 2 : source.indexOf(">", at) + 1;
     const end = close > start ? close : start + 1;
     return { kind: "element", name, attrs, children: "", selfClosing: true, end };
@@ -492,9 +497,11 @@ function resolveHref(raw: string, scope: TsxScope, hrefFor: (href: string) => st
   const trimmed = raw.trim();
   const quoted = readQuoted(trimmed, 0);
   if (quoted) return hrefFor(quoted.value);
+  // Literal URLs and paths must not go through parseJsValue: `https://x.ai/bot`
+  // parses as the identifier `https` because `//` starts a comment.
+  if (/^https?:\/\//.test(trimmed) || trimmed.startsWith("/")) return hrefFor(trimmed);
   const fromScope = valueToPlain(lookupPath(scope, trimmed));
   if (fromScope) return hrefFor(fromScope);
-  if (/^https?:\/\//.test(trimmed) || trimmed.startsWith("/")) return hrefFor(trimmed);
   return hrefFor(trimmed.replace(/^['"`]|['"`]$/g, ""));
 }
 

@@ -1,20 +1,20 @@
 import Link from "next/link";
 import LogoMark from "./logo-mark";
 
-// Branded top header for the onboarding / auth pages. Matches marketing
-// header metrics; surface + on-surface tokens keep light and dark aligned.
+// Same mark, type, and left edge as MarketingHeader. Auth stays on black, so
+// the wordmark is white instead of the landing on-surface token.
 export default function OnboardingHeader() {
   return (
-    <div className="fixed inset-x-0 top-0 z-50 w-full bg-[var(--md-sys-color-surface-container)]/90 backdrop-blur-xl">
-      <header className="mx-auto flex h-16 w-full min-w-0 max-w-7xl items-center px-4 py-2 md:px-8">
+    <header className="pointer-events-none absolute inset-x-0 top-0 z-50 h-16">
+      <div className="omentir-primary-width pointer-events-auto flex h-16 min-w-0 items-center">
         <Link
           href="/"
-          className="flex min-w-0 shrink-0 select-none items-center gap-1.5 text-base font-medium tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-lg"
+          className="flex min-w-0 shrink-0 select-none items-center gap-1.5 text-[20px] font-medium leading-none tracking-tight text-white md:gap-2 md:text-[24px]"
         >
-          <LogoMark className="h-8 w-8 text-[var(--md-sys-color-on-surface)]" />
-          Omentir
+          <LogoMark className="h-6 w-6 md:h-7 md:w-7" />
+          <span className="truncate">Omentir</span>
         </Link>
-      </header>
-    </div>
+      </div>
+    </header>
   );
 }

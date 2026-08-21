@@ -171,7 +171,7 @@ export default async function NewAgentPage({
     getProductProfile(workspace.id),
   ]);
   if (!linkedInAccounts.length) {
-    redirect("/connect");
+    redirect("/overview");
   }
 
   let agent = requestedAgent;

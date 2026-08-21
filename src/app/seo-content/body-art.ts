@@ -3,57 +3,72 @@ import type { SeoFamily } from "./types";
 
 const FEATURE_ART: Record<string, BodyArt> = {
   "steal-customers": {
-    src: "/seo/features/steal-customers-article.avif",
+    src: "/seo/features/steal-customers.avif",
     alt: "Steal Customers path: competitor pages, comments from the last week, then scored leads",
     caption:
       "Employees are the source. The lead is the person who commented. Outreach can name the real post.",
   },
   "ai-linkedin-outreach": {
-    src: "/seo/features/ai-linkedin-outreach-article.avif",
+    src: "/seo/features/ai-linkedin-outreach.avif",
     alt: "Outreach steps: one lead group, review drafts, send in local-time windows, collect replies",
     caption:
       "One group, one promise. Review the first drafts. Campaigns stop when someone replies.",
   },
   "lead-finders": {
-    src: "/seo/features/lead-finders-article.avif",
+    src: "/seo/features/lead-finders.avif",
     alt: "Lead finder steps from writing the buyer to an ongoing LinkedIn list",
     caption:
       "Write the buyer in plain language, then turn titles and industries into a list you will actually message.",
   },
   "unified-inbox": {
-    src: "/seo/features/unified-inbox-article.avif",
+    src: "/seo/features/unified-inbox.avif",
     alt: "Unified inbox: every agent reply in one place",
     caption: "Replies belong in one inbox. The next sentence continues theirs, not a new pitch.",
   },
   "agent-api-and-mcp": {
-    src: "/seo/features/agent-api-and-mcp-article.avif",
+    src: "/seo/features/agent-api-and-mcp.avif",
     alt: "Agent API and MCP: your operator talks to Omentir, LinkedIn stays here",
     caption: "Your agent talks to Omentir over MCP or REST. LinkedIn stays on the Omentir side.",
   },
   "my-product": {
-    src: "/seo/features/my-product-article.avif",
+    src: "/seo/features/my-product.avif",
     alt: "My Product brief: who it is for, the result, what you will not claim",
     caption: "My Product is the brief every draft reads. If this page is vague, every note will be too.",
   },
   "campaigns-and-send-windows": {
-    src: "/seo/features/campaigns-and-send-windows-article.avif",
+    src: "/seo/features/campaigns-and-send-windows.avif",
     alt: "Send windows as a calendar of working hours, not a blast button",
     caption: "Pick hours a human in that timezone would type. Leave gaps. No 40-send burst at 9:01.",
   },
   "linkedin-account-safety": {
-    src: "/seo/features/linkedin-account-safety-article.avif",
+    src: "/seo/features/linkedin-account-safety.avif",
     alt: "Account safety: warm first, watch accepts, pause on a lock",
     caption: "A week of ignores is a targeting problem, not a reason to send more.",
   },
   "lead-groups-and-scoring": {
-    src: "/seo/features/lead-groups-and-scoring-article.avif",
+    src: "/seo/features/lead-groups-and-scoring.avif",
     alt: "Lead groups and scores deciding who is worth a note this week",
     caption: "One ICP per group. Only the keep pile gets a note this week.",
   },
   "open-source-self-hosting": {
-    src: "/seo/features/open-source-self-hosting-article.avif",
+    src: "/seo/features/open-source-self-hosting.avif",
     alt: "Self-hosting: same product on your machine",
     caption: "Self-host when you want the same motion on your own machine, not a different product.",
+  },
+  "demo-booking": {
+    src: "/seo/features/demo-booking.avif",
+    alt: "Turn replies into demos: a reply, a calendar slot, then a booked meeting",
+    caption: "The calendar link goes out after they show interest. You still take the meeting.",
+  },
+  "linkedin-warmup": {
+    src: "/seo/features/linkedin-warmup.avif",
+    alt: "LinkedIn warmup as a five-week ramp, not a day-one blast",
+    caption: "Daily caps stay on. You still look like a person for the first weeks.",
+  },
+  "reply-drafts": {
+    src: "/seo/features/reply-drafts.avif",
+    alt: "A reply draft with approve, pause, and send",
+    caption: "The next sentence is a draft until you say it can send.",
   },
 };
 
@@ -171,6 +186,14 @@ const INTEGRATION_FLOW: Record<string, { title: string; steps: Array<{ label: st
       { label: "Connect MCP", detail: "Grok holds the conversation. Omentir holds LinkedIn." },
       { label: "Ask for a status", detail: "Agents, groups, and unread replies first." },
       { label: "Then a small write", detail: "One group, one draft set, then you read it." },
+    ],
+  },
+  "grok-bot": {
+    title: "Grok Bot talking to Omentir",
+    steps: [
+      { label: "Add the MCP plugin", detail: "The Bot holds the overnight job. Omentir holds LinkedIn." },
+      { label: "Research, then stop", detail: "Scored list and drafts. No send from the Bot computer." },
+      { label: "You approve in Omentir", detail: "Campaigns, limits, and replies stay in the workspace." },
     ],
   },
   openclaw: {

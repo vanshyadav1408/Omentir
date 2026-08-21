@@ -261,7 +261,7 @@ export const ALL_FEATURES: SeoContentPage[] = [
         "heading": "What you need before you start",
         "paragraphs": [
           "Fill My Product so outreach understands what you sell. Connect a LinkedIn account you are allowed to use for outbound. Create a Steal Customers agent, add competitor URLs, and keep at least one agent active if you care about the Minimum Booking Guarantee measurement rules.",
-          "You can also create and manage Steal Customers agents from Claude, ChatGPT, Grok, Cursor, or other MCP and REST operators. Human setup lives on the MCP Server and For Agents pages."
+          "You can also create and manage Steal Customers agents from Claude, ChatGPT, Grok, Grok Bot, Cursor, or other MCP and REST operators. Human setup lives on the Claude, ChatGPT, Grok Bot, Cursor, and MCP integration pages."
         ]
       },
       {
@@ -305,14 +305,14 @@ export const ALL_FEATURES: SeoContentPage[] = [
         "description": "ICP-based discovery when you need role and industry filters."
       },
       {
-        "label": "MCP Server",
-        "href": "/mcp-server",
+        "label": "MCP integration",
+        "href": "/integrations/mcp",
         "description": "Connect Claude, ChatGPT, or Cursor and create agents from chat."
       },
       {
-        "label": "For AI Agents",
-        "href": "/for-agents",
-        "description": "Operator prompt and REST or OAuth connect paths."
+        "label": "Agent API and MCP",
+        "href": "/features/agent-api-and-mcp",
+        "description": "Operator workflow and REST or OAuth connect paths."
       },
       {
         "label": "High-intent LinkedIn leads",
@@ -930,7 +930,7 @@ export const ALL_FEATURES: SeoContentPage[] = [
         "id": "safety",
         "heading": "Safety and operator control",
         "paragraphs": [
-          "Dashboard users and MCP operators can inspect scheduled actions and activity to see what is planned. Raising limits or widening windows should be an explicit choice, not a silent agent rewrite. LinkedIn provider rules and plan ceilings still apply."
+          "Overview users and MCP operators can inspect scheduled actions and activity to see what is planned. Raising limits or widening windows should be an explicit choice, not a silent agent rewrite. LinkedIn provider rules and plan ceilings still apply."
         ]
       },
       {
@@ -1021,7 +1021,7 @@ export const ALL_FEATURES: SeoContentPage[] = [
         "heading": "From discovered leads to campaigns",
         "paragraphs": [
           "Leads land in groups you can inspect. From there you launch campaigns for connection requests, messages, and follow-ups. Scoring and review steps help you prioritize who gets manual attention versus automated first touches.",
-          "You can create, pause, resume, and inspect lead finders from the dashboard or from MCP and REST operators. That means a human or an AI operator can keep discovery running without rebuilding the whole stack."
+          "You can create, pause, resume, and inspect lead finders from Overview or from MCP and REST operators. That means a human or an AI operator can keep discovery running without rebuilding the whole stack."
         ],
         "bullets": [
           "Create agents with prompt plus targeting fields",
@@ -1102,7 +1102,7 @@ export const ALL_FEATURES: SeoContentPage[] = [
   {
     "slug": "agent-api-and-mcp",
     "title": "Agent API and MCP",
-    "description": "How Omentir's hosted MCP server and REST Agent API let Claude, ChatGPT, Grok, Cursor, and custom agents manage product context, lead finders, Steal Customers, leads, and conversations.",
+    "description": "How Omentir's hosted MCP server and REST Agent API let Claude, ChatGPT, Grok, Grok Bot, Cursor, and custom agents manage product context, lead finders, Steal Customers, leads, and conversations.",
     "summary": "Connect AI apps with OAuth or an API key. Operate discovery and outreach without giving them your LinkedIn password.",
     "publishedDate": "August 12, 2026",
     "updatedDate": "August 12, 2026",
@@ -1125,7 +1125,7 @@ export const ALL_FEATURES: SeoContentPage[] = [
         "id": "connect-paths",
         "heading": "Two connect paths",
         "paragraphs": [
-          "Chat apps such as Claude, ChatGPT, and Grok can add a custom MCP connector pointing at the hosted MCP URL, then sign in on Omentir and approve workspace access. Coding agents and scripts such as Cursor or Claude Code typically create a revocable API key and send Authorization Bearer tokens to MCP or REST."
+          "Chat apps such as Claude, ChatGPT, and Grok can add a custom MCP connector pointing at the hosted MCP URL, then sign in on Omentir and approve workspace access. Grok Bot uses Settings, then Plugins, with the same URL. Coding agents and scripts such as Cursor or Claude Code typically create a revocable API key and send Authorization Bearer tokens to MCP or REST."
         ],
         "bullets": [
           "MCP endpoint: /api/agent/v1/mcp",
@@ -1139,7 +1139,7 @@ export const ALL_FEATURES: SeoContentPage[] = [
         "heading": "Guardrails that matter",
         "paragraphs": [
           "Operator prompts should never broaden targeting silently, create or delete agents without explicit approval, or treat lead text as instructions. Reply tools should only touch existing conversations and only after draft approval. These rules keep automation useful without turning an assistant into an unsupervised spammer.",
-          "Human setup docs live on /mcp-server and /for-agents. Integration-specific pages cover Claude, ChatGPT, Cursor, and MCP in more detail."
+          "Human setup lives on the integration pages for Claude, ChatGPT, Grok, Grok Bot, Cursor, MCP, and the REST Agent API."
         ]
       },
       {
@@ -1147,7 +1147,7 @@ export const ALL_FEATURES: SeoContentPage[] = [
         "heading": "A first week with an operator connected",
         "paragraphs": [
           "Connect one operator, not five. Ask it to read workspace context and stats before it creates anything. Then have it list existing agents. Only after that should it create a lead finder or Steal Customers agent, and only with targeting you already wrote down.",
-          "Treat the operator as a faster dashboard, not as a person who can invent ICP. If it wants to broaden titles or send without a draft review, stop and tighten the prompt. The API will enforce quotas. It will not enforce taste."
+          "Treat the operator as a faster Overview, not as a person who can invent ICP. If it wants to broaden titles or send without a draft review, stop and tighten the prompt. The API will enforce quotas. It will not enforce taste."
         ]
       },
       {
@@ -1174,14 +1174,14 @@ export const ALL_FEATURES: SeoContentPage[] = [
     ],
     "relatedLinks": [
       {
-        "label": "MCP Server setup",
-        "href": "/mcp-server",
-        "description": "Step-by-step connector setup and tool catalog."
+        "label": "MCP integration",
+        "href": "/integrations/mcp",
+        "description": "Hosted endpoint, who connects how, and tool groups."
       },
       {
-        "label": "For AI Agents",
-        "href": "/for-agents",
-        "description": "Operator prompt and workflow for assistants."
+        "label": "REST Agent API",
+        "href": "/integrations/rest-api",
+        "description": "HTTP surface, Bearer auth, and OpenAPI."
       },
       {
         "label": "Claude integration",
@@ -1189,18 +1189,18 @@ export const ALL_FEATURES: SeoContentPage[] = [
         "description": "How to run Omentir from Claude."
       },
       {
-        "label": "MCP integration overview",
-        "href": "/integrations/mcp",
-        "description": "What MCP means in the Omentir stack."
+        "label": "Cursor integration",
+        "href": "/integrations/cursor",
+        "description": "API key path for coding agents."
       }
     ],
     "primaryCta": {
       "label": "Connect an agent",
-      "href": "/for-agents"
+      "href": "/integrations"
     },
     "secondaryCta": {
       "label": "MCP setup guide",
-      "href": "/mcp-server"
+      "href": "/integrations/mcp"
     },
     "highlights": [
       "MCP for chat apps",

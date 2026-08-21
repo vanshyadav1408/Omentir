@@ -36,6 +36,7 @@ import {
   updateCampaign,
   updateWorkspaceOnboarding,
   updateWorkspaceNotificationEmail,
+  updateWorkspaceOwnerImage,
   updateWorkspaceSettings,
   updateWorkspaceTimezone,
   upsertProductProfile,
@@ -47,6 +48,7 @@ import { normalizeLinkedInProfileUrl } from "@/lib/server/firebase";
 import { normalizeSchedulingLink, resolveBookingLink } from "@/lib/scheduling-link";
 import { sendContactFormEmail, sendNewSignupNotification } from "@/lib/server/email";
 import { executeScheduledActionNow } from "@/lib/server/automation";
+import { listScheduledActions } from "@/lib/server/scheduled-actions";
 import { analyzeWebsiteOrSearch, draftAgentSetupWithGemini } from "@/lib/server/gemini";
 import { requireActiveSubscription } from "@/lib/server/subscription";
 import { deleteLinkedInAccount, sendLinkedInChatMessage } from "@/lib/server/unipile";
@@ -114,7 +116,7 @@ function numberFromForm(
 }
 
 function revalidateWorkspaceDataPages() {
-  revalidatePath("/dashboard");
+  revalidatePath("/overview");
   revalidatePath("/agents");
   revalidatePath("/campaigns");
 }
@@ -339,7 +341,7 @@ export async function analyzeWebsiteAction(formData: FormData) {
   }
 
   revalidatePath("/my-product");
-  revalidatePath("/dashboard");
+  revalidatePath("/overview");
 }
 
 export async function completeOnboardingQuestionsAction(formData: FormData) {
@@ -481,18 +483,18 @@ export async function saveProductProfileAction(formData: FormData) {
   }
 
   revalidatePath("/my-product");
-  revalidatePath("/dashboard");
+  revalidatePath("/overview");
   revalidatePath("/agents");
 }
 
-// Used by the dashboard "Set deal size" modal to set the average ticket size in
+// Used by the Overview "Set deal size" modal to set the average ticket size in
 // isolation without touching the rest of the product profile.
 export async function setAverageTicketSizeAction(formData: FormData) {
   const workspace = await requireWorkspace();
   const value = numberFromForm(formData, "averageTicketSize", undefined);
   if (value === undefined) return;
   await setAverageTicketSize(workspace.id, value);
-  revalidatePath("/dashboard");
+  revalidatePath("/overview");
   revalidatePath("/my-product");
 }
 
@@ -532,6 +534,47 @@ export async function saveSettingsAction(formData: FormData) {
   revalidatePath("/settings");
   // Times on every other page are rendered in this zone too.
   revalidatePath("/actions");
+  revalidatePath("/leads");
+}
+
+const PROFILE_IMAGE_MAX_BYTES = 2 * 1024 * 1024;
+const LOCAL_PROFILE_IMAGE_MAX_CHARS = 900_000;
+
+export async function uploadProfileImageAction(formData: FormData) {
+  const workspace = await requireWorkspace();
+  const file = formData.get("image");
+  const blob =
+    file instanceof Blob
+      ? file
+      : file && typeof file === "object" && "arrayBuffer" in file && "size" in file
+        ? (file as Blob)
+        : null;
+  if (!blob || blob.size === 0) {
+    throw new Error("Choose an image to upload.");
+  }
+  if (blob.size > PROFILE_IMAGE_MAX_BYTES) {
+    throw new Error("Image must be under 2 MB.");
+  }
+  if (blob.type && !blob.type.startsWith("image/")) {
+    throw new Error("Use a PNG, JPEG, GIF, or WebP image.");
+  }
+
+  if (isLocalMode()) {
+    const buffer = Buffer.from(await blob.arrayBuffer());
+    const mime = blob.type || "image/jpeg";
+    const dataUrl = `data:${mime};base64,${buffer.toString("base64")}`;
+    if (dataUrl.length > LOCAL_PROFILE_IMAGE_MAX_CHARS) {
+      throw new Error("Image is too large. Try a smaller photo.");
+    }
+    await updateWorkspaceOwnerImage(workspace.id, dataUrl);
+  } else {
+    const { userId } = await auth();
+    if (!userId) throw new Error("Unauthorized");
+    const { clerkClient } = await import("@clerk/nextjs/server");
+    const clerk = await clerkClient();
+    await clerk.users.updateUserProfileImage(userId, { file: blob });
+  }
+  revalidatePath("/settings");
 }
 
 // Called once by the app shell for workspaces that have never had a zone
@@ -542,6 +585,7 @@ export async function saveWorkspaceTimeZoneAction(timezone: string) {
   if (workspace.timezone) return;
   await updateWorkspaceTimezone(workspace.id, String(timezone || "").trim());
   revalidatePath("/actions");
+  revalidatePath("/leads");
 }
 
 export async function runScheduledActionNowAction(formData: FormData) {
@@ -553,7 +597,14 @@ export async function runScheduledActionNowAction(formData: FormData) {
   const result = await executeScheduledActionNow(workspace.id, enrollmentId);
   revalidatePath("/actions");
   revalidatePath("/agents");
+  revalidatePath("/leads");
   return { result };
+}
+
+export async function listScheduledActionsAction() {
+  const workspace = await requireWorkspace();
+  requireActiveSubscription(workspace);
+  return listScheduledActions(workspace.id);
 }
 
 export async function stopLeadOutreachAction(formData: FormData) {
@@ -566,7 +617,7 @@ export async function stopLeadOutreachAction(formData: FormData) {
   revalidatePath("/actions");
   revalidatePath("/agents");
   revalidatePath("/leads");
-  revalidatePath("/dashboard");
+  revalidatePath("/overview");
 }
 
 export async function createAgentApiKeyAction(formData: FormData) {
@@ -603,7 +654,7 @@ export async function disconnectLinkedInAccountAction(formData?: FormData) {
   await disconnectLinkedInAccount(workspace.id, account.id);
   revalidatePath("/settings");
   revalidatePath("/connect");
-  revalidatePath("/dashboard");
+  revalidatePath("/overview");
 }
 
 function parseAgentMode(rawMode: string): "prompt" | "filters" | "signals" | "outreach" | "steal_customers" {
@@ -840,24 +891,6 @@ export async function draftAgentSetupAction() {
   const profile = await getProductProfile(workspace.id);
 
   return draftAgentSetupWithGemini(profile);
-}
-
-export async function getSetupProductProfileAction() {
-  const workspace = await requireWorkspace();
-  const profile = await getProductProfile(workspace.id);
-
-  return profile
-    ? {
-        companyName: profile.companyName || "",
-        description: profile.description || "",
-        industry: profile.industry || "",
-        companySize: profile.companySize || "",
-        painPointsText: profile.painPointsText || "",
-        websiteUrl: profile.websiteUrl || "",
-        pricingDetails: profile.pricingDetails || "",
-        schedulingLink: profile.schedulingLink || "",
-      }
-    : null;
 }
 
 export async function createAgentAndDiscoverLeadsAction(formData: FormData) {

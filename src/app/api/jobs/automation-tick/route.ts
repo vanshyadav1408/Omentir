@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const result = await runAutomationTick({ dryRun, scheduled });
-    revalidatePath("/dashboard");
+    revalidatePath("/overview");
     revalidatePath("/agents");
     revalidatePath("/campaigns");
     revalidatePath("/leads");

@@ -1,7 +1,7 @@
 import { authOrSignedOut } from "@/lib/server/clerk-session";
 import { redirect } from "next/navigation";
 import AuthChoice from "../auth-choice";
-import OnboardingHeader from "../onboarding-header";
+import AuthShell, { AuthLegalFooter } from "../auth-shell";
 import { createPageMetadata } from "../seo";
 import { isLocalMode, isLocalPasswordRequired } from "@/lib/runtime-mode";
 import { safeReturnPath } from "@/lib/safe-return-path";
@@ -20,20 +20,21 @@ export default async function LoginPage({
   searchParams: Promise<{ next?: string }>;
 }) {
   const { userId } = await authOrSignedOut();
-  if (userId) redirect("/dashboard");
+  if (userId) redirect("/overview");
   if (isLocalMode()) {
     const { next } = await searchParams;
     return (
-      <LocalLoginForm
-        returnTo={safeReturnPath(next)}
-        passwordRequired={isLocalPasswordRequired()}
-      />
+      <AuthShell footer={<AuthLegalFooter mode="login" />}>
+        <LocalLoginForm
+          returnTo={safeReturnPath(next)}
+          passwordRequired={isLocalPasswordRequired()}
+        />
+      </AuthShell>
     );
   }
   return (
-    <>
-      <OnboardingHeader />
+    <AuthShell footer={<AuthLegalFooter mode="login" />}>
       <AuthChoice primary="login" />
-    </>
+    </AuthShell>
   );
 }

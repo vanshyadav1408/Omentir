@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import JsonLd from "../json-ld";
-import { MarketingPage } from "../marketing-shell";
+import { MarketingArticle } from "../marketing-shell";
 import {
   createBreadcrumbJsonLd,
   createPageMetadata,
@@ -244,44 +244,39 @@ export default function MinimumBookingGuaranteePage() {
   return (
     <>
       <JsonLd id="minimum-booking-guarantee-jsonld" data={jsonLd} />
-      <MarketingPage
-        eyebrow="Policy"
+      <MarketingArticle
+        path="minimum-booking-guarantee"
         title="Minimum Booking Guarantee"
         description="The eligibility, warm-up, weekly measurement, and refund terms behind Omentir's booking guarantee."
-        contentClassName="max-w-4xl"
+        updated="August 9, 2026"
       >
-        <article className="rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container)] p-5 sm:p-8">
-          <div className="rounded-xl border border-[#ba3871] bg-[color-mix(in_srgb,#ba3871_12%,var(--md-sys-color-surface-container-high))] p-5">
-            <p className="text-lg font-bold tracking-tight text-[var(--md-sys-color-on-surface)]">
-              {minimumBookingGuaranteeStatement}
-            </p>
-            <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)]">
-              <li>The two-week warm-up period must be complete.</li>
-              <li>At least one agent must remain active for the full week.</li>
-              <li>If there are fewer than three qualifying bookings, you may apply for a full refund.</li>
-            </ul>
-          </div>
+        <p className="text-base font-semibold leading-7 text-[var(--md-sys-color-on-surface)]">
+          {minimumBookingGuaranteeStatement}
+        </p>
+        <ul className="mt-4 list-disc space-y-2 pl-5 text-base font-medium leading-7 text-[var(--md-sys-color-on-surface)]">
+          <li>The two-week warm-up period must be complete.</li>
+          <li>At least one agent must remain active for the full week.</li>
+          <li>If there are fewer than three qualifying bookings, you may apply for a full refund.</li>
+        </ul>
 
-          <p className="mt-6 text-sm text-[var(--md-sys-color-on-surface-variant)]">
-            Last updated: August 9, 2026
-          </p>
-
-          <div className="mt-8 space-y-9">
-            {policySections.map((section) => (
-              <section key={section.title}>
-                <h2 className="text-xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-2xl">
-                  {section.title}
-                </h2>
-                <div className="mt-3 space-y-4 text-base leading-7 text-[var(--md-sys-color-on-surface-variant)]">
-                  {section.paragraphs.map((paragraph, index) => (
-                    <p key={index}>{paragraph}</p>
-                  ))}
-                </div>
-              </section>
-            ))}
-          </div>
-        </article>
-      </MarketingPage>
+        <div className="mt-12 space-y-10">
+          {policySections.map((section) => (
+            <section key={section.title}>
+              <h2
+                style={{ fontFamily: "var(--font-varta)" }}
+                className="text-xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)]"
+              >
+                {section.title}
+              </h2>
+              <div className="mt-4 space-y-5 text-base font-medium leading-8 text-[var(--md-sys-color-on-surface)]">
+                {section.paragraphs.map((paragraph, index) => (
+                  <p key={index}>{paragraph}</p>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      </MarketingArticle>
     </>
   );
 }

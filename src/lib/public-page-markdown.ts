@@ -6,6 +6,8 @@ import { ALL_COMPARISONS } from "@/app/comparisons/comparison-data";
 import { ALL_FEATURES } from "@/app/features/feature-data";
 import { FEATURE_NAV_ITEMS } from "@/app/feature-nav";
 import { ALL_GUIDES } from "@/app/guides/guide-data";
+import { ALL_HELP_PAGES } from "@/app/help/help-data";
+import { HELP_CLUSTER_LABELS, type HelpPage } from "@/app/help/types";
 import { guideMedia } from "@/app/guides/guide-media";
 import type { GuidePage } from "@/app/guides/types";
 import { ALL_INTEGRATIONS } from "@/app/integrations/integration-data";
@@ -33,8 +35,7 @@ const MARKETING_PAGES = [
   { htmlPath: "/", title: "Home" },
   { htmlPath: "/about", title: "About" },
   { htmlPath: "/pricing", title: "Pricing" },
-  { htmlPath: "/for-agents", title: "For AI Agents" },
-  { htmlPath: "/mcp-server", title: "MCP Server" },
+  { htmlPath: "/help", title: "LinkedIn outreach help" },
   { htmlPath: "/minimum-booking-guarantee", title: "Minimum Booking Guarantee" },
   { htmlPath: "/privacy-policy", title: "Privacy Policy" },
   { htmlPath: "/terms-of-service", title: "Terms of Service" },
@@ -233,6 +234,32 @@ export function seoPageToMarkdown(basePath: string, page: SeoContentPage) {
   );
 }
 
+export function helpPageToMarkdown(page: HelpPage) {
+  const htmlPath = `/help/${page.slug}`;
+  const related = page.related.length
+    ? `## Related\n\n${linkList(
+        page.related.map((link) => ({
+          title: link.label,
+          href: link.href,
+        }))
+      )}`
+    : "";
+  const faqs = page.faqItems.length
+    ? `## Frequently asked questions\n\n${page.faqItems
+        .map((item) => `**${item.question}**\n\n${item.answer}`)
+        .join("\n\n")}`
+    : "";
+  return collapseMarkdown(
+    [
+      pageHeader(page.question, page.description, htmlPath),
+      page.paragraphs.join("\n\n"),
+      related,
+      faqs,
+      tryOmentirLine(),
+    ].join("\n\n")
+  );
+}
+
 export function guidePageToMarkdown(page: GuidePage) {
   const htmlPath = `/${page.slug}`;
   const media = guideMedia(page.slug);
@@ -296,7 +323,14 @@ export function guidePageToMarkdown(page: GuidePage) {
 }
 
 function familyIndexMarkdown(
-  htmlPath: "/features" | "/comparisons" | "/integrations" | "/blogs" | "/use-cases" | "/alternatives",
+  htmlPath:
+    | "/features"
+    | "/comparisons"
+    | "/integrations"
+    | "/blogs"
+    | "/use-cases"
+    | "/alternatives"
+    | "/help",
   title: string,
   description: string,
   items: ReadonlyArray<{ title: string; href: string; note: string }>
@@ -307,81 +341,35 @@ function familyIndexMarkdown(
 }
 
 function homeMarkdown() {
+  // Home hero is site-surface copy + CTAs, then a framed product preview
+  // in primary width. Headline comes from hero-copy.tsx. Capability slides
+  // live in home-capability-slides.tsx.
   const source = readAppFile("page.tsx");
   const hero = readAppFile("hero-copy.tsx");
-  const scope = extractTsxScope(source);
-  const steps = objectRows(scope.get("steps")).map((step, index) => {
-    const number = objectString(step.number) || `${index + 1}.`;
-    return `${number} **${objectString(step.title)}.** ${objectString(step.description)}`;
+  const capabilities = extractTsxScope(readAppFile("home-capability-slides.tsx"));
+  const slideRows = objectRows(capabilities.get("homeSlides")).map((slide) => {
+    const body = objectString(slide.body);
+    return body
+      ? `- **${objectString(slide.title)}**: ${body}`
+      : `- **${objectString(slide.title)}**`;
   });
-  const features = objectRows(scope.get("features")).map((feature) => {
-    const href = objectString(feature.href);
-    const label = objectString(feature.linkLabel);
-    const link = href ? ` [${label || href}](${internalMarkdownHref(href)})` : "";
-    return `- **${objectString(feature.title)}.** ${objectString(feature.description)}${link}`;
-  });
-  const audiences = objectRows(scope.get("audiences")).map((audience) => {
-    const href = objectString(audience.href);
-    const label = objectString(audience.linkLabel);
-    const link = href ? ` [${label || href}](${internalMarkdownHref(href)})` : "";
-    return `- **${objectString(audience.title)}.** ${objectString(audience.description)}${link}`;
-  });
-  const columns = Array.isArray(scope.get("comparisonColumns"))
-    ? (scope.get("comparisonColumns") as TsxValue[]).map((item) => objectString(item))
-    : [];
-  const comparisonRows = objectRows(scope.get("comparisonRows"));
-  const comparison = columns.length
-    ? [
-        `| Dimension | ${columns.join(" | ")} |`,
-        `| --- | ${columns.map(() => "---").join(" | ")} |`,
-        ...comparisonRows.map((row) => {
-          const cells = Array.isArray(row.cells)
-            ? row.cells.map((cell) => objectString(cell))
-            : [];
-          return `| ${objectString(row.dimension)} | ${cells.join(" | ")} |`;
-        }),
-      ].join("\n")
-    : "";
   const heroTitle =
-    /You get[\s\S]*?pay nothing\./.exec(hero)?.[0]
+    /Omentir[\s\S]*?or you pay nothing\./.exec(hero)?.[0]
       ?.replace(/\{["']\s*["']\}/g, " ")
       .replace(/<[^>]+>/g, "")
       .replace(/\s+/g, " ")
       .trim() ?? brandTagline;
-  const heroLede =
-    /Omentir automates LinkedIn outreach[\s\S]*?converts\./.exec(hero)?.[0]
-      ?.replace(/\s+/g, " ")
-      .trim() ?? defaultDescription;
-  const story = sourceFileToMarkdown(source, internalMarkdownHref);
-  const storyStart = story.indexOf("After my 15 weeks");
-  const storyText =
-    storyStart >= 0
-      ? story
-          .slice(storyStart)
-          .split("## ")[0]
-          ?.replace(/\n##[^\n]*$/g, "")
-          .trim()
-      : "";
 
   return collapseMarkdown(
     [
-      pageHeader(heroTitle, heroLede, "/"),
+      pageHeader(heroTitle, defaultDescription, "/"),
       `Omentir is AI sales outreach software for B2B founders, SDRs, solo operators, and small sales teams. ${defaultDescription}`,
-      `## How it works`,
-      steps.join("\n"),
-      `## Who it is for`,
-      audiences.join("\n"),
-      `## How Omentir compares`,
-      comparison,
-      `[See all alternatives](${internalMarkdownHref("/comparisons")}) · [Category roundups](${internalMarkdownHref("/alternatives")})`,
-      `## Product capabilities`,
-      features.join("\n"),
+      ...(slideRows.length ? [`## Features`, slideRows.join("\n")] : []),
       `[See all features](${internalMarkdownHref("/features")}) · [Use cases](${internalMarkdownHref("/use-cases")})`,
-      `## Features`,
+      `## All features`,
       linkList(
         FEATURE_NAV_ITEMS.map((item) => ({ title: item.label, href: item.href }))
       ),
-      storyText ? `## Founder story\n\n${storyText}` : "",
       faqItemsFromSource(source),
       tryOmentirLine(),
     ].join("\n\n")
@@ -399,7 +387,7 @@ function pricingMarkdown() {
   return collapseMarkdown(
     [
       pageHeader(
-        "Simple pricing for every size of business.",
+        "Pricing",
         "Start with everything you need for $49/month. Minimum 3 bookings per week or you pay nothing. Enterprise adds unlimited users, unlimited LinkedIn accounts, SSO, dedicated onboarding, and priority support.",
         "/pricing"
       ),
@@ -419,89 +407,6 @@ function aboutMarkdown() {
       "Omentir helps founders, SDRs, and small sales teams find potential buyers, organize them into groups, and run LinkedIn campaigns from their own account.",
       "/about"
     )}\n\n${body}`
-  );
-}
-
-function listValueRows(source: string, name: string) {
-  return objectRows(extractTsxScope(source).get(name));
-}
-
-function forAgentsMarkdown() {
-  const source = readAppFile("for-agents", "page.tsx");
-  const scope = extractTsxScope(source);
-  const steps = listValueRows(source, "connectSteps")
-    .map((step, index) => {
-      const number = objectString(step.number) || `${index + 1}.`;
-      return `${number} **${objectString(step.title)}.** ${objectString(step.description)}`;
-    })
-    .join("\n");
-  const tools = listValueRows(source, "toolGroups")
-    .map((group) => {
-      const rows = objectRows(group.tools)
-        .map((tool) => `- \`${objectString(tool.name)}\`: ${objectString(tool.description)}`)
-        .join("\n");
-      return `### ${objectString(group.group)}\n\n${rows}`;
-    })
-    .join("\n\n");
-  const rest = listValueRows(source, "restEndpoints")
-    .map(
-      (endpoint) =>
-        `- \`${objectString(endpoint.method)} /api/agent/v1${objectString(endpoint.path)}\`: ${objectString(endpoint.description)}`
-    )
-    .join("\n");
-  const prompt = objectString(scope.get("operatorPrompt"));
-  return collapseMarkdown(
-    [
-      pageHeader(
-        "For AI Agents",
-        "Connect Claude, ChatGPT, Grok, Cursor, or any MCP or REST agent to Omentir. Create classic lead finders or Steal Customers agents and inspect LinkedIn leads from chat.",
-        "/for-agents"
-      ),
-      `## Connect`,
-      steps,
-      prompt ? `## Operator prompt\n\n\`\`\`text\n${prompt}\n\`\`\`` : "",
-      `## MCP tools`,
-      tools,
-      `## REST`,
-      rest,
-      faqItemsFromSource(source),
-    ].join("\n\n")
-  );
-}
-
-function mcpServerMarkdown() {
-  const source = readAppFile("mcp-server", "page.tsx");
-  const steps = listValueRows(source, "setupSteps")
-    .map((step, index) => {
-      const number = objectString(step.number) || `${index + 1}.`;
-      const extra = objectString(step.copyUrl)
-        ? ` Connector URL: \`${objectString(step.copyUrl)}\`.`
-        : "";
-      return `${number} **${objectString(step.title)}.** ${objectString(step.description)}${extra}`;
-    })
-    .join("\n");
-  const tools = listValueRows(source, "toolGroups")
-    .map((group) => {
-      const rows = objectRows(group.tools)
-        .map((tool) => `- \`${objectString(tool.name)}\`: ${objectString(tool.description)}`)
-        .join("\n");
-      return `### ${objectString(group.group)}\n\n${rows}`;
-    })
-    .join("\n\n");
-  return collapseMarkdown(
-    [
-      pageHeader(
-        "MCP Server",
-        "Connect Claude, ChatGPT, Grok, Cursor, Claude Code, OpenClaw, or your own assistant to the Omentir MCP server for LinkedIn lead discovery by tool call.",
-        "/mcp-server"
-      ),
-      `MCP endpoint: \`${siteUrl}/api/agent/v1/mcp\``,
-      `## Setup`,
-      steps,
-      `## Tools`,
-      tools,
-      faqItemsFromSource(source),
-    ].join("\n\n")
   );
 }
 
@@ -590,8 +495,8 @@ function guaranteeMarkdown() {
 function blogIndexMarkdown() {
   return familyIndexMarkdown(
     "/blogs",
-    "The Omentir Library",
-    "Tactical, zero-fluff guides and frameworks designed for solo founders, B2B sales teams, and modern growth operators to turn LinkedIn outreach into booked demos.",
+    "LinkedIn outreach blogs",
+    "Guides, templates, and playbooks for LinkedIn outreach, outbound sequences, and booking demos.",
     liveBlogs()
       .sort(
         (a, b) =>
@@ -683,6 +588,13 @@ export function listPublicMarkdownPages(): PublicMarkdownPage[] {
       kind: "seo",
     });
   }
+  for (const page of ALL_HELP_PAGES) {
+    pages.push({
+      htmlPath: `/help/${page.slug}`,
+      markdownPath: `/help/${page.slug}.md`,
+      kind: "seo",
+    });
+  }
   return pages;
 }
 
@@ -690,8 +602,6 @@ export function renderPublicMarkdown(htmlPath: string): string | null {
   if (htmlPath === "/") return homeMarkdown();
   if (htmlPath === "/pricing") return pricingMarkdown();
   if (htmlPath === "/about") return aboutMarkdown();
-  if (htmlPath === "/for-agents") return forAgentsMarkdown();
-  if (htmlPath === "/mcp-server") return mcpServerMarkdown();
   if (htmlPath === "/privacy-policy") {
     return legalMarkdown(
       "/privacy-policy",
@@ -774,6 +684,18 @@ export function renderPublicMarkdown(htmlPath: string): string | null {
       }))
     );
   }
+  if (htmlPath === "/help") {
+    return familyIndexMarkdown(
+      "/help",
+      "LinkedIn outreach help",
+      "Short answers to the LinkedIn outreach, cold messaging, cold email, and B2B sales questions people actually ask.",
+      ALL_HELP_PAGES.map((page) => ({
+        title: page.question,
+        href: `/help/${page.slug}`,
+        note: `${HELP_CLUSTER_LABELS[page.cluster]}. ${page.description}`,
+      }))
+    );
+  }
 
   const blogMatch = htmlPath.match(/^\/blogs\/([^/]+)$/);
   if (blogMatch) {
@@ -805,6 +727,12 @@ export function renderPublicMarkdown(htmlPath: string): string | null {
   if (alternative) {
     const page = ALL_ALTERNATIVES.find((item) => item.slug === alternative[1]);
     return page ? seoPageToMarkdown("/alternatives", page) : null;
+  }
+
+  const helpMatch = htmlPath.match(/^\/help\/([^/]+)$/);
+  if (helpMatch) {
+    const page = ALL_HELP_PAGES.find((item) => item.slug === helpMatch[1]);
+    return page ? helpPageToMarkdown(page) : null;
   }
 
   if (htmlPath.split("/").length === 2 && htmlPath !== "/") {

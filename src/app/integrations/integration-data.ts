@@ -27,7 +27,7 @@ const INTEGRATION_PAGES: SeoContentPage[] = [
         heading: "What Claude can do with Omentir",
         paragraphs: [
           "After Claude is connected to the Omentir MCP server, it can use Omentir tools to read workspace readiness, update My Product, create classic lead finders or Steal Customers agents, list leads with engagement context, check activity and the planned send schedule, and work with existing conversations under draft approval rules.",
-          "Claude does not receive your LinkedIn password. It operates through Omentir's workspace tools, with the same daily safety limits and campaign rules as the dashboard.",
+          "Claude does not receive your LinkedIn password. It operates through Omentir's workspace tools, with the same daily safety limits and campaign rules as Overview.",
         ],
       },
       {
@@ -40,7 +40,7 @@ const INTEGRATION_PAGES: SeoContentPage[] = [
           "MCP URL: https://omentir.com/api/agent/v1/mcp",
           "No API key required for the chat connector path",
           "Approve workspace access on Omentir before tools work",
-          "Optional: paste the operator prompt from /for-agents as the first message",
+          "Optional: point the agent at https://omentir.com/agents.md as the first instruction",
         ],
       },
       {
@@ -72,19 +72,14 @@ const INTEGRATION_PAGES: SeoContentPage[] = [
       {
         question: "Where is the full tool list?",
         answer:
-          "See the MCP Server page for the human-readable tool catalog, and agents.md for the machine guide.",
+          "See the MCP integration page for the tool groups, and agents.md for the machine guide.",
       },
     ],
     relatedLinks: [
       {
-        label: "MCP Server",
-        href: "/mcp-server",
-        description: "Full connector setup and tool groups.",
-      },
-      {
-        label: "For AI Agents",
-        href: "/for-agents",
-        description: "Operator prompt and workflow.",
+        label: "MCP integration",
+        href: "/integrations/mcp",
+        description: "Hosted endpoint and tool groups.",
       },
       {
         label: "Agent API and MCP feature",
@@ -97,8 +92,8 @@ const INTEGRATION_PAGES: SeoContentPage[] = [
         description: "Same MCP idea for ChatGPT.",
       },
     ],
-    primaryCta: { label: "Read MCP setup", href: "/mcp-server" },
-    secondaryCta: { label: "Operator prompt", href: "/for-agents" },
+    primaryCta: { label: "Get started", href: "/signup" },
+    secondaryCta: { label: "MCP overview", href: "/integrations/mcp" },
   },
   {
     slug: "chatgpt",
@@ -165,14 +160,14 @@ const INTEGRATION_PAGES: SeoContentPage[] = [
       {
         question: "Where do I learn the tool names?",
         answer:
-          "The MCP Server page lists tool groups. agents.md is the machine-readable guide to paste or fetch for operators.",
+          "The MCP integration page lists tool groups. agents.md is the machine-readable guide to paste or fetch for operators.",
       },
     ],
     relatedLinks: [
       {
-        label: "MCP Server",
-        href: "/mcp-server",
-        description: "Human setup and FAQs.",
+        label: "MCP integration",
+        href: "/integrations/mcp",
+        description: "Human setup and tool groups.",
       },
       {
         label: "Claude integration",
@@ -180,9 +175,9 @@ const INTEGRATION_PAGES: SeoContentPage[] = [
         description: "Same pattern for Claude.",
       },
       {
-        label: "For AI Agents",
-        href: "/for-agents",
-        description: "Shared operator prompt.",
+        label: "Agent API and MCP",
+        href: "/features/agent-api-and-mcp",
+        description: "Product overview of operator access.",
       },
       {
         label: "MCP LinkedIn outreach blog",
@@ -190,7 +185,7 @@ const INTEGRATION_PAGES: SeoContentPage[] = [
         description: "Longer narrative on MCP outbound.",
       },
     ],
-    primaryCta: { label: "Connect ChatGPT", href: "/mcp-server" },
+    primaryCta: { label: "Get started", href: "/signup" },
     secondaryCta: { label: "See pricing", href: "/pricing" },
   },
   {
@@ -263,14 +258,14 @@ const INTEGRATION_PAGES: SeoContentPage[] = [
     ],
     relatedLinks: [
       {
-        label: "For AI Agents",
-        href: "/for-agents",
-        description: "Operator prompt and connect overview.",
+        label: "REST API",
+        href: "/integrations/rest-api",
+        description: "HTTP surface and OpenAPI.",
       },
       {
-        label: "MCP Server",
-        href: "/mcp-server",
-        description: "Tool catalog and human setup.",
+        label: "MCP integration",
+        href: "/integrations/mcp",
+        description: "Tool groups and connect paths.",
       },
       {
         label: "Agent API feature page",
@@ -283,7 +278,7 @@ const INTEGRATION_PAGES: SeoContentPage[] = [
         description: "Narrative on agent-operated outreach.",
       },
     ],
-    primaryCta: { label: "Get started", href: "/for-agents" },
+    primaryCta: { label: "Get started", href: "/signup" },
     secondaryCta: { label: "OpenAPI schema", href: "/api/agent/v1/openapi.json" },
   },
   {
@@ -314,7 +309,7 @@ const INTEGRATION_PAGES: SeoContentPage[] = [
         id: "who-connects",
         heading: "Who connects how",
         paragraphs: [
-          "Claude, ChatGPT, and Grok typically use a custom connector URL plus workspace approval. Cursor, Claude Code, and scripts typically use a Bearer API key. Both paths hit the same product capabilities, subject to plan and safety limits.",
+          "Claude, ChatGPT, and Grok typically use a custom connector URL plus workspace approval. Grok Bot uses Settings, then Plugins, with the same URL. Cursor, Claude Code, and scripts typically use a Bearer API key. Both paths hit the same product capabilities, subject to plan and safety limits.",
         ],
       },
       {
@@ -346,15 +341,10 @@ const INTEGRATION_PAGES: SeoContentPage[] = [
       {
         question: "Where should humans start?",
         answer:
-          "Start on /mcp-server for setup screenshots and FAQs, then /for-agents for the operator prompt.",
+          "Pick the integration page for your client under /integrations. Chat apps use a connector URL. Coding agents use an API key. Fetch /agents.md before creating anything.",
       },
     ],
     relatedLinks: [
-      {
-        label: "MCP Server page",
-        href: "/mcp-server",
-        description: "Primary human setup guide.",
-      },
       {
         label: "Claude",
         href: "/integrations/claude",
@@ -366,12 +356,22 @@ const INTEGRATION_PAGES: SeoContentPage[] = [
         description: "ChatGPT-specific connect notes.",
       },
       {
+        label: "Grok Bot",
+        href: "/integrations/grok-bot",
+        description: "Always-on teammate. Plugins MCP. Keep LinkedIn off the Bot computer.",
+      },
+      {
         label: "Cursor",
         href: "/integrations/cursor",
         description: "API key path for coding agents.",
       },
+      {
+        label: "REST API",
+        href: "/integrations/rest-api",
+        description: "HTTP surface and OpenAPI.",
+      },
     ],
-    primaryCta: { label: "Set up MCP", href: "/mcp-server" },
+    primaryCta: { label: "Get started", href: "/signup" },
     secondaryCta: { label: "Agent guide", href: "/agents.md" },
   },
   {
@@ -408,7 +408,7 @@ const INTEGRATION_PAGES: SeoContentPage[] = [
           "MCP URL: https://omentir.com/api/agent/v1/mcp",
           "No API key required for the chat connector path",
           "List agents before create_agent to avoid duplicates",
-          "Optional operator prompt from /for-agents as the first message",
+          "Optional: point the agent at https://omentir.com/agents.md as the first instruction",
         ],
       },
       {
@@ -440,13 +440,13 @@ const INTEGRATION_PAGES: SeoContentPage[] = [
       {
         question: "Where is the full tool list?",
         answer:
-          "See /mcp-server for humans and /agents.md for machine-readable guidance.",
+          "See the MCP integration page for humans and /agents.md for machine-readable guidance.",
       },
     ],
     relatedLinks: [
       {
-        label: "MCP Server",
-        href: "/mcp-server",
+        label: "MCP integration",
+        href: "/integrations/mcp",
         description: "Human setup and tool groups.",
       },
       {
@@ -455,13 +455,128 @@ const INTEGRATION_PAGES: SeoContentPage[] = [
         description: "Same connector pattern on Claude.",
       },
       {
-        label: "For AI Agents",
-        href: "/for-agents",
-        description: "Shared operator prompt.",
+        label: "Agent API and MCP",
+        href: "/features/agent-api-and-mcp",
+        description: "Product overview of operator access.",
+      },
+      {
+        label: "Grok Bot integration",
+        href: "/integrations/grok-bot",
+        description: "The always-on teammate, not grok.com chat.",
       },
     ],
-    primaryCta: { label: "MCP setup", href: "/mcp-server" },
-    secondaryCta: { label: "Operator prompt", href: "/for-agents" },
+    primaryCta: { label: "Get started", href: "/signup" },
+    secondaryCta: { label: "MCP overview", href: "/integrations/mcp" },
+  },
+  {
+    slug: "grok-bot",
+    title: "Grok Bot integration",
+    description:
+      "Connect Grok Bot to Omentir over MCP so the new always-on agent can research accounts and run LinkedIn discovery without logging into LinkedIn on its cloud computer.",
+    summary:
+      "Point Grok Bot at Omentir's MCP server. Keep LinkedIn inside Omentir. Stop the Bot at a review list.",
+    publishedDate: "August 20, 2026",
+    updatedDate: "August 20, 2026",
+    keywords: [
+      "Omentir Grok Bot",
+      "Grok Bot LinkedIn outreach",
+      "Grok Bot MCP sales",
+      "Grok Bot integration Omentir",
+    ],
+    sections: [
+      {
+        id: "not-grok-chat",
+        heading: "This is Grok Bot, not grok.com chat",
+        paragraphs: [
+          "Grok Bot is SpaceXAI's early-beta teammate product, launched August 11, 2026. Each Bot runs on a persistent cloud computer with a browser, filesystem, and terminal. You message it like a coworker. It keeps working after you close the laptop.",
+          "That is a different product from Grok chat on grok.com. Chat Grok uses a custom MCP connector in Settings. Grok Bot uses Settings, then Plugins, and it can also drive websites by clicking them. The second path is the one that gets LinkedIn accounts into trouble.",
+        ],
+      },
+      {
+        id: "job-split",
+        heading: "What Grok Bot should do in this stack",
+        paragraphs: [
+          "Grok Bot is good at overnight research, scoring a CRM view against a written ICP, and drafting notes in a voice you already approved. SpaceXAI's own sales-outbound example stops at a review list. Do not send. Do not enroll anyone.",
+          "Omentir is the LinkedIn workspace: My Product, lead finders, Steal Customers, paced campaigns, and reply drafts. Grok Bot calls those tools over MCP. It does not become a second LinkedIn client.",
+        ],
+      },
+      {
+        id: "setup",
+        heading: "How to connect",
+        paragraphs: [
+          "Finish Omentir first: account, LinkedIn connection, My Product. Install the Grok Bot desktop app (macOS or Windows) or the iOS app. You need SuperGrok Heavy, Cursor Ultra, or Cursor Teams Premium. In Grok Bot, open Settings, then Plugins, and add the Omentir MCP URL. Sign in on Omentir when the browser asks, and approve Connect workspace.",
+          "Grok Bot shares MCP authentication with Cursor. If your team uses an MCP allowlist, add https://omentir.com/api/agent/v1/mcp there. If the plugin UI wants a header instead of a sign-in, create a revocable key on the API page and send Authorization Bearer. Do not paste that key into a group chat with other Bots.",
+        ],
+        bullets: [
+          "MCP URL: https://omentir.com/api/agent/v1/mcp",
+          "Prefer plugin sign-in over pasting a token",
+          "Optional first instruction: https://omentir.com/agents.md",
+          "Linux desktop is not currently a Grok Bot app. Use macOS, Windows, or iOS.",
+        ],
+      },
+      {
+        id: "first-sales-job",
+        heading: "A first sales job that stops at review",
+        paragraphs: [
+          "Give the Bot one written ICP, one source (a CRM view or an Omentir lead group), and a hard stop: return a scored list and drafts. Do not send. Then open Omentir, check the agent config, and start a small campaign with conservative daily limits.",
+          "If you only say \"go find me pipeline,\" the Bot will invent targeting. If you name the role, company size, geography, and the trigger, the list is something you can actually read in the morning.",
+        ],
+      },
+      {
+        id: "do-not-drive-linkedin",
+        heading: "Do not let the cloud browser drive LinkedIn",
+        paragraphs: [
+          "Grok Bot can sign into sites that have no MCP. That is useful for an internal dashboard. It is a bad idea for LinkedIn. A cloud VM clicking Connect and typing DMs is the pattern LinkedIn already treats as automation. You also shared that login with every other Bot on the same computer.",
+          "Keep LinkedIn signed in only inside Omentir. If the Bot asks you to take over the computer for a LinkedIn password, two-factor code, or CAPTCHA, refuse and point it back at the MCP tools.",
+        ],
+      },
+    ],
+    faqItems: [
+      {
+        question: "Is Grok Bot the same as the Grok connector?",
+        answer:
+          "No. The Grok integration page is grok.com chat. This page is the Grok Bot app: persistent Bots, a shared cloud computer, and Plugins for MCP.",
+      },
+      {
+        question: "Can Grok Bot create Steal Customers agents?",
+        answer:
+          "Yes, after My Product is complete and LinkedIn is connected in Omentir. Pass competitor LinkedIn company URLs and optional founder or employee profile URLs. Do not ask it to invent sources.",
+      },
+      {
+        question: "Does Grok Bot need an Omentir API key?",
+        answer:
+          "Not if the plugin can complete Omentir workspace approval in the browser. Use a Bearer key only when the client has no sign-in path and you can store the token outside the prompt.",
+      },
+      {
+        question: "Who can use Grok Bot today?",
+        answer:
+          "SpaceXAI lists SuperGrok Heavy, Cursor Ultra, and Cursor Teams Premium. Enterprise access is a waitlist. Grok Bot is still in beta.",
+      },
+    ],
+    relatedLinks: [
+      {
+        label: "Grok chat integration",
+        href: "/integrations/grok",
+        description: "The grok.com connector, not the Bot app.",
+      },
+      {
+        label: "MCP integration",
+        href: "/integrations/mcp",
+        description: "Tool groups and both auth paths.",
+      },
+      {
+        label: "Get LinkedIn sales with Grok Bot",
+        href: "/use-cases/grok-bot-outbound",
+        description: "The weekly motion after you connect.",
+      },
+      {
+        label: "Grok Bot for LinkedIn outreach",
+        href: "/blogs/grok-bot-linkedin-sales",
+        description: "Longer walkthrough of the split.",
+      },
+    ],
+    primaryCta: { label: "Get started", href: "/signup" },
+    secondaryCta: { label: "MCP overview", href: "/integrations/mcp" },
   },
   {
     slug: "openclaw",
@@ -528,14 +643,14 @@ const INTEGRATION_PAGES: SeoContentPage[] = [
       {
         question: "Related reading?",
         answer:
-          "See OpenClaw LinkedIn leads and OpenClaw outreach flows on the blog, plus /for-agents for the operator prompt.",
+          "See OpenClaw LinkedIn leads and OpenClaw outreach flows on the blog, plus /agents.md for the operator guide.",
       },
     ],
     relatedLinks: [
       {
-        label: "For AI Agents",
-        href: "/for-agents",
-        description: "Operator prompt and connect overview.",
+        label: "Agent API and MCP",
+        href: "/features/agent-api-and-mcp",
+        description: "Product overview of operator access.",
       },
       {
         label: "OpenClaw LinkedIn leads",
@@ -553,7 +668,7 @@ const INTEGRATION_PAGES: SeoContentPage[] = [
         description: "HTTP surface details.",
       },
     ],
-    primaryCta: { label: "Agent setup", href: "/for-agents" },
+    primaryCta: { label: "Get started", href: "/signup" },
     secondaryCta: { label: "OpenAPI", href: "/api/agent/v1/openapi.json" },
   },
   {
@@ -596,7 +711,7 @@ const INTEGRATION_PAGES: SeoContentPage[] = [
         bullets: [
           "Base path: /api/agent/v1",
           "Machine guide: /agents.md",
-          "Human MCP story: /mcp-server",
+          "Human MCP story: /integrations/mcp",
           "Capability map: /agent.json",
         ],
       },
@@ -604,7 +719,7 @@ const INTEGRATION_PAGES: SeoContentPage[] = [
         id: "not-for",
         heading: "What not to build",
         paragraphs: [
-          "Do not use the API to create Omentir accounts or buy subscriptions. Do not scrape the dashboard HTML for data the API already returns. Do not store LinkedIn passwords in your integration. Omentir holds the LinkedIn connection.",
+          "Do not use the API to create Omentir accounts or buy subscriptions. Do not scrape Overview HTML for data the API already returns. Do not store LinkedIn passwords in your integration. Omentir holds the LinkedIn connection.",
         ],
       },
     ],
@@ -647,7 +762,7 @@ const INTEGRATION_PAGES: SeoContentPage[] = [
         description: "Narrative on API-led outreach.",
       },
     ],
-    primaryCta: { label: "Read for-agents", href: "/for-agents" },
+    primaryCta: { label: "MCP integration", href: "/integrations/mcp" },
     secondaryCta: { label: "OpenAPI", href: "/api/agent/v1/openapi.json" },
   },
   {
@@ -715,7 +830,7 @@ const INTEGRATION_PAGES: SeoContentPage[] = [
       {
         question: "Where is the operator prompt?",
         answer:
-          "https://omentir.com/for-agents contains a paste-ready operator prompt you can adapt for Claude Code instructions.",
+          "https://omentir.com/agents.md is the operator guide. Adapt it for Claude Code instructions.",
       },
     ],
     relatedLinks: [
@@ -735,13 +850,13 @@ const INTEGRATION_PAGES: SeoContentPage[] = [
         description: "Connector path for Claude chat apps.",
       },
       {
-        label: "MCP Server",
-        href: "/mcp-server",
-        description: "Tool catalog and human FAQs.",
+        label: "MCP integration",
+        href: "/integrations/mcp",
+        description: "Tool groups and connect paths.",
       },
     ],
-    primaryCta: { label: "For AI Agents", href: "/for-agents" },
-    secondaryCta: { label: "MCP setup", href: "/mcp-server" },
+    primaryCta: { label: "Get started", href: "/signup" },
+    secondaryCta: { label: "MCP overview", href: "/integrations/mcp" },
   },
 ];
 

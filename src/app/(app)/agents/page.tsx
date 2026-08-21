@@ -6,6 +6,7 @@ import {
   getWorkspace,
 } from "@/lib/server/data";
 import { hasActiveSubscription } from "@/lib/server/subscription";
+import { requireWorkspaceSetup } from "@/lib/server/workspace-setup";
 import { isAtPlanLimit } from "@/lib/agent-limit";
 import { planLimits, serializablePlanLimit } from "@/lib/plan-limits";
 import AgentsView from "./agents-view";
@@ -37,10 +38,7 @@ export default async function AgentsPage() {
   if (!hasActiveSubscription(workspace)) {
     redirect("/upgrade");
   }
-  if (!linkedInAccounts.length) {
-    redirect("/connect");
-  }
-
+  await requireWorkspaceSetup(userId);
   const agentLimit = planLimits(workspace.billing?.plan).agents;
 
   return (
@@ -49,7 +47,7 @@ export default async function AgentsPage() {
       groups={[]}
       leads={[]}
       enrollments={[]}
-      linkedInConnected={true}
+      linkedInConnected={linkedInAccounts.length > 0}
       agentLimit={serializablePlanLimit(agentLimit)}
       atAgentLimit={isAtPlanLimit(agents.length, agentLimit)}
     />

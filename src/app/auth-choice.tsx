@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
-import LogoMark from "./logo-mark";
-import { TextField } from "./ui/text-field";
+import { AuthField, AuthHeading, AUTH_TAGLINE, AuthSwitchLine, GoogleMark } from "./auth-ui";
 
 /**
  * Clerk bot-protection host. Only mount after hydration so clerk-js does not
@@ -223,6 +222,7 @@ export default function AuthChoice({
     useState<ClerkSignInCodeStrategy>("email_code");
   const [formMode, setFormMode] = useState<FormMode>("default");
   const [resetEmail, setResetEmail] = useState("");
+  const [stage, setStage] = useState<"identity" | "password">("identity");
 
   const isSignup = primary === "signup";
   const postSignupUrl =
@@ -252,7 +252,7 @@ export default function AuthChoice({
       await clerk.client.signIn.authenticateWithRedirect({
         strategy: "oauth_google",
         redirectUrl: "/sso-callback",
-        redirectUrlComplete: "/dashboard",
+        redirectUrlComplete: "/overview",
       });
     } catch (err) {
       setError(getErrorMessage(err));
@@ -323,7 +323,7 @@ export default function AuthChoice({
     let result = initialResult;
 
     if (isCompleteSignIn(result)) {
-      await activateSession(clerk, result.createdSessionId, "/dashboard");
+      await activateSession(clerk, result.createdSessionId, "/overview");
       return true;
     }
 
@@ -337,7 +337,7 @@ export default function AuthChoice({
           password,
         });
         if (isCompleteSignIn(result)) {
-          await activateSession(clerk, result.createdSessionId, "/dashboard");
+          await activateSession(clerk, result.createdSessionId, "/overview");
           return true;
         }
       }
@@ -473,7 +473,7 @@ export default function AuthChoice({
           : await clerk.client.signUp.attemptEmailAddressVerification({ code });
 
       if (result.status === "complete" && result.createdSessionId) {
-        const redirectUrl = verifyMode === "signup" ? postSignupUrl : "/dashboard";
+        const redirectUrl = verifyMode === "signup" ? postSignupUrl : "/overview";
         await activateSession(clerk, result.createdSessionId, redirectUrl);
         return;
       }
@@ -555,7 +555,7 @@ export default function AuthChoice({
       });
 
       if (result.status === "complete" && result.createdSessionId) {
-        await activateSession(clerk, result.createdSessionId, "/dashboard");
+        await activateSession(clerk, result.createdSessionId, "/overview");
         return;
       }
 
@@ -568,259 +568,207 @@ export default function AuthChoice({
   };
 
   const disabled = loading;
+  const submitClass = `auth-btn ${isSignup ? "auth-btn-signup" : ""}`;
+  const heading =
+    formMode === "reset-request" || formMode === "reset-verify"
+      ? "Reset your password"
+      : verifyingEmail
+        ? "Check your email"
+        : "Welcome to Omentir";
+  const subtitle =
+    formMode === "reset-request"
+      ? "Enter the email on your account."
+      : formMode === "reset-verify"
+        ? info || "Enter the code from your inbox, then choose a new password."
+        : verifyingEmail
+          ? verifyMode === "signup" || signInCodeStrategy === "email_code"
+            ? "We sent a verification code to your inbox."
+            : "Enter the verification code to finish signing in."
+          : AUTH_TAGLINE;
 
-  const fieldSurface = "var(--md-sys-color-surface)";
-  const textMuted = "text-sm text-[var(--md-sys-color-on-surface-variant)]";
-  const textLink =
-    "text-sm font-medium text-[var(--md-sys-color-on-surface-variant)] transition-colors hover:text-[var(--md-sys-color-on-surface)]";
-  const primarySubmit =
-    "m3-btn m3-btn-filled mx-auto flex h-12 w-full cursor-pointer items-center justify-center px-4 text-sm font-semibold leading-none disabled:cursor-not-allowed disabled:opacity-60";
-  const errorText = "text-sm text-[var(--md-sys-color-error)]";
+  const goToPassword = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError("");
+    setStage("password");
+  };
+
+  const backToIdentity = () => {
+    setStage("identity");
+    setError("");
+  };
+
+  const backToLogin = () => {
+    setFormMode("default");
+    setStage("identity");
+    setError("");
+    setInfo("");
+  };
 
   return (
-    <main className="relative min-h-screen bg-[var(--md-sys-color-surface)] px-5 text-[var(--md-sys-color-on-surface)]">
-      <div className="mx-auto flex min-h-screen w-full max-w-sm flex-col justify-center pb-10 pt-24">
-        <div className="mx-auto mb-8 flex w-fit items-center gap-2 text-base font-normal text-[var(--md-sys-color-on-surface)]">
-          <span>{isSignup ? "Welcome to" : "Welcome back to"}</span>
-          <Link
-            href="/"
-            className="flex select-none items-center gap-1.5 font-medium text-[var(--md-sys-color-on-surface)]"
-          >
-            <LogoMark className="h-7 w-7 text-[var(--md-sys-color-on-surface)]" />
-            <span className="leading-none">Omentir</span>
-          </Link>
-        </div>
+    <div className="w-full">
+      <AuthHeading title={heading} subtitle={subtitle} />
 
-        {formMode === "default" ? (
-        <>
+      {formMode === "default" && stage === "identity" && !verifyingEmail ? (
         <button
           type="button"
           onClick={handleGoogle}
-          className="m3-btn m3-btn-outlined mx-auto h-12 w-full gap-2.5 text-sm font-semibold"
+          disabled={disabled}
+          className="auth-social mb-6 gap-2.5"
         >
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 48 48"
-            className="h-[18px] w-[18px] shrink-0"
-          >
-            <path
-              fill="#4285F4"
-              d="M47.532 24.552c0-1.636-.146-3.21-.418-4.722H24.48v8.94h12.93c-.557 3-2.252 5.541-4.798 7.243v6.022h7.762c4.541-4.184 7.158-10.341 7.158-17.483z"
-            />
-            <path
-              fill="#34A853"
-              d="M24.48 48c6.48 0 11.916-2.146 15.888-5.823l-7.762-6.022c-2.155 1.443-4.91 2.298-8.126 2.298-6.252 0-11.546-4.218-13.434-9.892H3.018v6.218C6.974 42.572 15.072 48 24.48 48z"
-            />
-            <path
-              fill="#FBBC05"
-              d="M11.046 28.561c-.48-1.443-.754-2.984-.754-4.561s.274-3.118.754-4.561v-6.218H3.018A23.94 23.94 0 0 0 .48 24c0 3.873.929 7.535 2.538 10.779l8.028-6.218z"
-            />
-            <path
-              fill="#EA4335"
-              d="M24.48 9.547c3.524 0 6.687 1.213 9.176 3.594l6.882-6.882C36.39 2.382 30.954 0 24.48 0 15.072 0 6.974 5.428 3.018 13.221l8.028 6.218c1.888-5.674 7.182-9.892 13.434-9.892z"
-            />
-          </svg>
+          <GoogleMark />
           Continue with Google
         </button>
+      ) : null}
 
-        <div className="my-8 flex items-center gap-4">
-          <span className="h-px flex-1 bg-[var(--md-sys-color-outline-variant)]" />
-          <span className="text-xs font-medium uppercase tracking-[0.14em] text-[var(--md-sys-color-on-surface-variant)]">
-            Or continue with email
-          </span>
-          <span className="h-px flex-1 bg-[var(--md-sys-color-outline-variant)]" />
-        </div>
-        </>
-        ) : null}
+      {formMode === "reset-request" ? (
+        <form onSubmit={handleResetRequest} className="grid gap-4">
+          <AuthField
+            label="Email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            placeholder="Your email address"
+            required
+            defaultValue={resetEmail}
+          />
+          {error ? <p className="auth-error">{error}</p> : null}
+          <button type="submit" disabled={disabled} className="auth-btn">
+            {loading ? "Please wait..." : "Send reset code"}
+          </button>
+          <button type="button" onClick={backToLogin} className="auth-link justify-self-start text-[13px]">
+            Back to login
+          </button>
+        </form>
+      ) : formMode === "reset-verify" ? (
+        <form onSubmit={handleResetVerify} className="grid gap-4">
+          <AuthField
+            label="Verification code"
+            name="code"
+            type="text"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            placeholder="Enter code"
+            required
+          />
+          <AuthField
+            label="New password"
+            name="password"
+            type="password"
+            autoComplete="new-password"
+            placeholder="Min 8 characters"
+            required
+          />
+          {error ? <p className="auth-error">{error}</p> : null}
+          <button type="submit" disabled={disabled} className="auth-btn">
+            {loading ? "Please wait..." : "Reset password"}
+          </button>
+          <button type="button" onClick={backToLogin} className="auth-link justify-self-start text-[13px]">
+            Back to login
+          </button>
+        </form>
+      ) : verifyingEmail ? (
+        <form onSubmit={handleVerifyEmail} className="grid gap-4">
+          <AuthField
+            label="Verification code"
+            name="code"
+            type="text"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            placeholder="Enter code"
+            required
+          />
+          {error ? <p className="auth-error">{error}</p> : null}
+          <button type="submit" disabled={disabled} className={submitClass}>
+            {loading ? "Please wait..." : "Verify code"}
+          </button>
+        </form>
+      ) : (
+        <form
+          onSubmit={stage === "identity" ? goToPassword : isSignup ? handleSignup : handleLogin}
+          className="grid gap-4"
+        >
+          {isSignup ? (
+            <div className={`grid grid-cols-2 gap-3 ${stage === "password" ? "hidden" : ""}`}>
+              <AuthField
+                label="First name"
+                name="firstName"
+                type="text"
+                autoComplete="given-name"
+                placeholder="Your first name"
+                required
+              />
+              <AuthField
+                label="Last name"
+                name="lastName"
+                type="text"
+                autoComplete="family-name"
+                placeholder="Your last name"
+              />
+            </div>
+          ) : null}
 
-        {formMode === "reset-request" ? (
-          <form onSubmit={handleResetRequest} className="grid gap-5">
-            <TextField
-              className="mx-auto w-full"
-              variant="outlined"
-              label="Email address"
-              name="email"
-              type="email"
-              autoComplete="email"
-              placeholder="name@example.com"
-              required
-              defaultValue={resetEmail}
-              labelSurface={fieldSurface}
-            />
+          <AuthField
+            label="Email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            placeholder="Your email address"
+            required
+          />
 
-            {error ? <p className={errorText}>{error}</p> : null}
-
-            <button type="submit" disabled={disabled} className={primarySubmit}>
-              {loading ? "Please wait..." : "Send reset code"}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setFormMode("default");
-                setError("");
-                setInfo("");
-              }}
-              className={`mx-auto ${textLink}`}
-            >
-              Back to login
-            </button>
-          </form>
-        ) : formMode === "reset-verify" ? (
-          <form onSubmit={handleResetVerify} className="grid gap-5">
-            {info ? <p className={textMuted}>{info}</p> : null}
-
-            <TextField
-              className="mx-auto w-full"
-              variant="outlined"
-              label="Verification code"
-              name="code"
-              type="text"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              placeholder="Enter code"
-              required
-              labelSurface={fieldSurface}
-            />
-
-            <TextField
-              className="mx-auto w-full"
-              variant="outlined"
-              label="New password"
-              name="password"
-              type="password"
-              autoComplete="new-password"
-              placeholder="Min 8 characters"
-              required
-              labelSurface={fieldSurface}
-            />
-
-            {error ? <p className={errorText}>{error}</p> : null}
-
-            <button type="submit" disabled={disabled} className={primarySubmit}>
-              {loading ? "Please wait..." : "Reset password"}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setFormMode("default");
-                setError("");
-                setInfo("");
-              }}
-              className={`mx-auto ${textLink}`}
-            >
-              Back to login
-            </button>
-          </form>
-        ) : verifyingEmail ? (
-          <form onSubmit={handleVerifyEmail} className="grid gap-5">
-              <div className="mx-auto grid w-full gap-1.5">
-                {verifyMode === "signup" || signInCodeStrategy === "email_code" ? (
-                  <p className="text-xs text-[var(--md-sys-color-on-surface-variant)]">
-                    Check your email inbox for the verification code.
-                  </p>
-                ) : null}
-                <TextField
-                  variant="outlined"
-                  label="Verification code"
-                  name="code"
-                  type="text"
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  placeholder="Enter code"
-                  required
-                  labelSurface={fieldSurface}
-                />
-              </div>
-
-            {error ? <p className={errorText}>{error}</p> : null}
-
-            <button type="submit" disabled={disabled} className={primarySubmit}>
-              {loading ? "Please wait..." : "Verify code"}
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={isSignup ? handleSignup : handleLogin} className="grid gap-5">
-            {isSignup ? (
-              <div className="mx-auto grid w-full gap-3 sm:grid-cols-2">
-                <TextField
-                  variant="outlined"
-                  label="First Name"
-                  name="firstName"
-                  type="text"
-                  autoComplete="given-name"
-                  placeholder="John"
-                  required
-                  labelSurface={fieldSurface}
-                />
-                <TextField
-                  variant="outlined"
-                  label="Last Name"
-                  name="lastName"
-                  type="text"
-                  autoComplete="family-name"
-                  placeholder="Doe"
-                  labelSurface={fieldSurface}
-                />
-              </div>
-            ) : null}
-
-            <TextField
-              className="mx-auto w-full"
-              variant="outlined"
-              label="Email address"
-              name="email"
-              type="email"
-              autoComplete="email"
-              placeholder="name@example.com"
-              required
-              labelSurface={fieldSurface}
-            />
-
-            <div className="mx-auto grid w-full gap-1.5">
-              <TextField
-                variant="outlined"
-                label={isSignup ? "Create Password" : "Password"}
+          {stage === "password" ? (
+            <div className="grid gap-1.5">
+              <AuthField
+                label="Password"
                 name="password"
                 type="password"
                 autoComplete={isSignup ? "new-password" : "current-password"}
-                placeholder={isSignup ? "Min 8 characters" : "Password"}
+                placeholder={isSignup ? "Min 8 characters" : "Your password"}
                 required
-                labelSurface={fieldSurface}
+                autoFocus
               />
               {!isSignup ? (
                 <button
                   type="button"
                   onClick={handleForgotPassword}
-                  className={`justify-self-end text-xs font-medium ${textLink}`}
+                  className="auth-link justify-self-end text-xs"
                 >
                   Forgot password?
                 </button>
               ) : null}
             </div>
+          ) : null}
 
-            {error ? <p className={errorText}>{error}</p> : null}
+          {error ? <p className="auth-error">{error}</p> : null}
 
-            {/* Inside the form that calls signIn/signUp.create (Clerk bot protection). */}
-            <ClerkCaptcha />
+          <ClerkCaptcha />
 
-            <button type="submit" disabled={disabled} className={primarySubmit}>
-              {loading ? "Please wait..." : isSignup ? "Create Account" : "Login"}
+          <button type="submit" disabled={disabled} className={submitClass}>
+            {loading
+              ? "Please wait..."
+              : stage === "identity"
+                ? isSignup
+                  ? "Continue"
+                  : "Continue with email"
+                : "Continue"}
+          </button>
+
+          {stage === "password" ? (
+            <button type="button" onClick={backToIdentity} className="auth-link justify-self-start text-[13px]">
+              Back
             </button>
-          </form>
-        )}
+          ) : null}
+        </form>
+      )}
 
-        <p className="mt-8 text-center text-base text-[var(--md-sys-color-on-surface-variant)]">
-          {isSignup ? "Already have an account?" : "Need an account?"}{" "}
-          <Link
-            href={isSignup ? "/login" : "/signup"}
-            className="font-semibold text-[var(--md-sys-color-primary)] transition-colors hover:opacity-90"
-          >
-            {isSignup ? "Login" : "Sign Up"}
+      {formMode === "default" && !verifyingEmail ? (
+        <AuthSwitchLine>
+          {isSignup ? "Already have an account? " : "Don't have an account? "}
+          <Link href={isSignup ? "/login" : "/signup"} className="auth-link">
+            {isSignup ? "Sign in" : "Sign up"}
           </Link>
-        </p>
-      </div>
-    </main>
+        </AuthSwitchLine>
+      ) : null}
+    </div>
   );
 }

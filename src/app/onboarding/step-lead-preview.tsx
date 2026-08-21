@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import AiLoadingOverlay from "../ai-loading-overlay";
 import { completeSelfHostedOnboardingAction } from "../actions";
+import { AuthHeading } from "../auth-ui";
 
 type PreviewLead = {
   name: string;
@@ -47,11 +48,7 @@ function initials(name: string) {
     .join("");
 }
 
-// Contact / Why this lead / Fit. Mirrors the /leads column recipe, minus the
-// checkbox and Imported columns which have no meaning during onboarding.
-const TABLE_COLUMNS = "grid-cols-[minmax(220px,1.1fr)_minmax(260px,1.6fr)_64px]";
-
-/** "Co-Founder & CEO @Surfe (Paris, France)" — one line, parts dropped when absent. */
+/** "Co-Founder & CEO @Surfe (Paris, France)" — parts dropped when absent. */
 function roleLine(lead: PreviewLead) {
   const role = [lead.title, lead.company ? `@${lead.company}` : ""].filter(Boolean).join(" ");
   if (!lead.location) return role || "-";
@@ -61,7 +58,7 @@ function roleLine(lead: PreviewLead) {
 function LeadIdentity({ lead }: { lead: PreviewLead }) {
   return (
     <div className="flex min-w-0 items-center gap-3">
-      <span className="relative grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full bg-[#ba3871] text-[12px] font-semibold text-white">
+      <span className="relative grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full bg-[#2a2a2a] text-[12px] font-semibold text-white">
         {initials(lead.name)}
         {lead.avatarUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -80,15 +77,13 @@ function LeadIdentity({ lead }: { lead: PreviewLead }) {
           href={lead.linkedInUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex min-w-0 items-center gap-1.5 text-[#0a66c2] hover:underline"
+          className="flex min-w-0 items-center gap-1.5 text-white hover:underline"
         >
           <span className="truncate text-[13px] font-semibold leading-none">{lead.name}</span>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/linkedin-in-mark.svg" alt="LinkedIn profile" className="h-3 w-3 shrink-0" />
         </a>
-        <p className="mt-1 truncate text-[11px] font-medium text-zinc-600" title={roleLine(lead)}>
-          {roleLine(lead)}
-        </p>
+        <p className="auth-muted mt-1 text-[12px] leading-4">{roleLine(lead)}</p>
       </div>
     </div>
   );
@@ -147,7 +142,7 @@ function InlineSpinner() {
 function FitScore({ score }: { score: number }) {
   return (
     <span
-      className="text-lg font-semibold leading-none tabular-nums text-[var(--md-sys-color-on-surface)]"
+      className="shrink-0 text-[15px] font-semibold leading-none tabular-nums text-white"
       aria-label={`Fit score ${score}`}
     >
       {score}
@@ -268,9 +263,10 @@ export default function StepLeadPreview({
   // The server already caps the list at PREVIEW_LEAD_COUNT, so there is no
   // second limit to keep in sync here.
   const visibleLeads = state.status === "ready" ? state.leads : [];
+  const wide = state.status === "ready";
 
   return (
-    <div className="w-full max-w-4xl text-left">
+    <div className={wide ? "w-full text-left" : "mx-auto w-full max-w-[360px] text-left"}>
       <AiLoadingOverlay
         open={state.status === "loading"}
         title="Finding potential customers"
@@ -278,132 +274,69 @@ export default function StepLeadPreview({
         transparent={false}
       />
 
-      <div className="text-center">
-        <h1
-          style={{ fontFamily: "var(--font-varta)" }}
-          className="text-4xl font-semibold tracking-tight sm:text-5xl"
-        >
-          Let&apos;s find a few of your buyers
-        </h1>
-        <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-zinc-600">
-          {state.status === "idle"
-            ? "We'll show you a few real profiles that match what you sell, just so you know what kind of leads Omentir will find and message."
-            : "Here's who we found. These are real profiles, just so you know what kind of leads Omentir will find and message."}
-        </p>
-      </div>
+      <AuthHeading
+        className="text-center"
+        title="Find example leads"
+        subtitle={
+          state.status === "ready"
+            ? "Check if these jobs and companies look right."
+            : "A few people whose jobs match what you sell."
+        }
+      />
 
       {state.status === "idle" ? (
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+        <div>
           <button
             type="button"
             onClick={() => setRunToken((token) => token + 1)}
-            className="inline-flex h-10 cursor-pointer items-center rounded-md bg-[#ba3871] px-5 pt-[3px] text-sm font-semibold text-white transition hover:brightness-[0.98]"
+            className="auth-btn mx-auto max-w-[280px]"
           >
             Find example leads
           </button>
-          <AdvanceAction
-            {...advance}
-            label="Skip"
-            className="inline-flex h-10 cursor-pointer items-center rounded-md px-5 pt-[3px] text-sm font-semibold text-[var(--md-sys-color-on-surface-variant)] underline underline-offset-4 transition hover:text-[var(--md-sys-color-on-surface)]"
-          />
+          <p className="mt-6 text-center text-[13px]">
+            <AdvanceAction {...advance} label="Skip" className="auth-link underline underline-offset-4" />
+          </p>
         </div>
       ) : null}
 
       {state.status === "ready" ? (
-        <section className="m3-card m3-card-elevated mt-8 w-full overflow-hidden">
-          <header className="flex items-center justify-between bg-[var(--md-sys-color-surface-container)] px-4 py-3 text-left">
-            <div>
-              <h2 className="text-sm font-semibold text-[var(--md-sys-color-on-surface)]">
-                Best matches
-              </h2>
-              {state.status === "ready" && state.upgrading ? (
-                <p className="mt-1 flex items-center gap-2 text-xs text-[var(--md-sys-color-on-surface-variant)]">
-                  <InlineSpinner />
-                  Checking the web for people who hold these jobs right now
-                </p>
-              ) : (
-                <p className="mt-1 text-xs text-[var(--md-sys-color-on-surface-variant)]">
-                  Example profiles selected for you
-                </p>
-              )}
-            </div>
-            <span className="shrink-0 rounded-full bg-[var(--md-sys-color-primary-container)] px-3 py-1 text-xs font-semibold text-[var(--md-sys-color-on-primary-container)]">
-              {visibleLeads.length} leads
-            </span>
-          </header>
-
-          {/* Same grid table as /leads (m3-table-grid-*), trimmed to the three
-              columns this step has data for. */}
-          <div
-            className={`m3-table-grid-header hidden shrink-0 ${TABLE_COLUMNS} items-center gap-3 md:grid`}
-          >
-            <span>Contact</span>
-            <span>Why this lead</span>
-            <span className="m3-table-num">Fit</span>
-          </div>
-
-          <div className="m3-table-grid hidden md:block">
+        <>
+          {state.upgrading ? (
+            <p className="mb-4 flex items-center gap-2 text-xs text-[#8f8f8f]">
+              <InlineSpinner />
+              Checking the web for people who hold these jobs right now
+            </p>
+          ) : null}
+          <div className="divide-y divide-[#2e2e2e] overflow-hidden rounded-lg border border-[#2e2e2e]">
             {visibleLeads.map((lead) => (
-              <div
-                key={`${lead.name}-${lead.company}`}
-                className={`m3-table-grid-row grid ${TABLE_COLUMNS} items-center gap-3 text-left`}
-              >
-                <LeadIdentity lead={lead} />
-                <p className="line-clamp-2 min-w-0 text-[12px] font-medium leading-5 text-zinc-800">
-                  {lead.reason}
-                </p>
-                <div className="m3-table-num flex justify-end">
-                  <FitScore score={lead.fitScore || 0} />
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Below md the three columns can't hold their minimums, so each lead
-              stacks instead of forcing a horizontal scroll. */}
-          <div className="divide-y divide-[var(--md-sys-color-outline-variant)] md:hidden">
-            {visibleLeads.map((lead) => (
-              <div key={`${lead.name}-${lead.company}`} className="p-4 text-left">
+              <div key={`${lead.name}-${lead.company}`} className="p-4">
                 <div className="flex items-start justify-between gap-3">
                   <LeadIdentity lead={lead} />
                   <FitScore score={lead.fitScore || 0} />
                 </div>
-                <p className="mt-2 text-[12px] font-medium leading-5 text-zinc-800">
-                  {lead.reason}
-                </p>
+                <p className="mt-2 text-[13px] leading-5 text-[#c8c8c8]">{lead.reason}</p>
               </div>
             ))}
           </div>
-        </section>
-      ) : null}
-
-      {/* Full width, not a narrower centered column: Continue has to land on the
-          table's right edge, so it shares the table's container width. */}
-      {state.status === "ready" ? (
-        <div className="mt-6 flex w-full justify-end">
-          <AdvanceAction
-            {...advance}
-            label="Continue"
-            className="inline-flex h-10 cursor-pointer items-center rounded-md bg-[#ba3871] px-5 pt-[3px] text-sm font-semibold text-white transition hover:brightness-[0.98]"
-          />
-        </div>
+          <AdvanceAction {...advance} label="Continue" className="auth-btn mt-6" />
+        </>
       ) : null}
 
       {state.status === "error" ? (
-        <div className="mt-8 rounded-xl bg-[var(--md-sys-color-error-container)] p-5 text-center text-sm text-[var(--md-sys-color-on-error-container)]">
+        <div className="rounded-lg border border-[#3a2222] bg-[#1a1010] p-4 text-center text-sm text-[#e8b4b4]">
           <p>{state.message}</p>
-          <div className="mt-4 flex items-center justify-center gap-3">
+          <div className="mt-4 grid gap-3">
             <button
               type="button"
               onClick={() => setRunToken((token) => token + 1)}
-              className="inline-flex h-10 cursor-pointer items-center rounded-md bg-[var(--md-sys-color-primary)] px-5 font-semibold text-[var(--md-sys-color-on-primary)]"
+              className="auth-btn"
             >
               Try again
             </button>
             <AdvanceAction
               {...advance}
               label="Continue anyway"
-              className="inline-flex h-10 cursor-pointer items-center rounded-md px-5 font-semibold text-[var(--md-sys-color-on-error-container)] underline underline-offset-4"
+              className="auth-link mx-auto text-[13px] underline underline-offset-4"
             />
           </div>
         </div>

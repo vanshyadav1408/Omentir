@@ -57,7 +57,7 @@ function MobileMenuSheet({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[200] flex flex-col bg-[var(--md-sys-color-surface)]"
+      className="app-compact fixed inset-0 z-[200] flex flex-col bg-[var(--md-sys-color-surface)]"
       role="dialog"
       aria-modal="true"
       aria-label="Menu"
@@ -178,28 +178,28 @@ function MobileMenuSheet({
           ) : null}
         </nav>
 
-        <div className="mt-auto flex w-full flex-col gap-3 pt-10">
+        <div className="m3-btn-pair m3-btn-pair--xl mt-auto flex w-full flex-col gap-3 pt-10">
           {isSignedIn ? (
             <Link
-              href="/dashboard"
+              href="/overview"
               onClick={onClose}
-              className="m3-btn m3-btn-filled-secondary h-14 w-full text-base font-semibold"
+              className="m3-btn m3-btn-filled-secondary"
             >
-              Dashboard
+              Overview
             </Link>
           ) : (
             <>
               <Link
                 href="/login"
                 onClick={onClose}
-                className="m3-btn m3-btn-outlined h-14 w-full text-base font-semibold"
+                className="m3-btn m3-btn-outlined"
               >
                 Sign in
               </Link>
               <Link
                 href="/signup"
                 onClick={onClose}
-                className="m3-btn m3-btn-filled-secondary h-14 w-full text-base font-semibold"
+                className="m3-btn m3-btn-filled"
               >
                 Get started
               </Link>

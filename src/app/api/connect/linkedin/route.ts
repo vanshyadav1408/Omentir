@@ -14,9 +14,9 @@ export async function GET(request: NextRequest) {
   }
 
   // Existing users reconnect via flow=reconnect so Unipile returns to the
-  // standalone reconnect pages instead of the new-user onboarding success step.
+  // standalone reconnect pages. New connects return to Overview.
   const isReconnect = request.nextUrl.searchParams.get("flow") === "reconnect";
-  const failurePath = isReconnect ? "/reconnect?error=1" : "/connect?error=1";
+  const failurePath = isReconnect ? "/reconnect?error=1" : "/overview?linkedin=error";
 
   try {
     const callbackToken = await createLinkedInConnectToken(userId);

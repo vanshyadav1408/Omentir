@@ -9,7 +9,7 @@ export default function FeatureMenu() {
       <button
         type="button"
         aria-haspopup="true"
-        className="m3-state-layer flex cursor-pointer items-center gap-1 rounded-full px-3 py-2 transition-colors hover:text-[var(--md-sys-color-on-surface)]"
+        className="m3-state-layer flex cursor-pointer items-center gap-1 rounded-md px-3 py-2 transition-colors hover:text-[var(--md-sys-color-on-surface)]"
       >
         Features
         <svg

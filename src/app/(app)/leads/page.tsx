@@ -2,6 +2,7 @@ import { auth } from "@/lib/server/auth";
 import { redirect } from "next/navigation";
 import { getWorkspace } from "@/lib/server/data";
 import { hasActiveSubscription } from "@/lib/server/subscription";
+import { requireWorkspaceSetup } from "@/lib/server/workspace-setup";
 import LeadsView from "./leads-view";
 import { createPageMetadata } from "@/app/seo";
 
@@ -26,6 +27,7 @@ export default async function LeadsPage() {
   if (!hasActiveSubscription(workspace)) {
     redirect("/upgrade");
   }
+  await requireWorkspaceSetup(userId);
 
   return <LeadsContent />;
 }

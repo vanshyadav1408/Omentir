@@ -1,9 +1,15 @@
 import { Children, isValidElement, type ReactNode } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import FaqAccordion from "../faq-accordion";
 import JsonLd from "../json-ld";
-import { HeroGridBackdrop, MarketingHeader, MarketingFooter } from "../marketing-shell";
-import BlogPostGrid from "./blog-post-grid";
+import {
+  ArticleCrumbs,
+  articlePathCrumbs,
+  HeroGridBackdrop,
+  MarketingHeader,
+  MarketingFooter,
+} from "../marketing-shell";
 import { createBlogJsonLd, createBreadcrumbJsonLd, createFAQJsonLd, normalizeDate, siteUrl } from "../seo";
 import { ALL_BLOGS, isBlogLive } from "./blog-data";
 
@@ -105,144 +111,122 @@ export default function BlogPostTemplate({
   ];
 
   return (
-    <main className="blog-post-page relative isolate min-h-screen bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)]">
+    <>
       <JsonLd id={`blog-jsonld-${slug}`} data={jsonLd} />
-      {/* Shared Global Marketing Header */}
-      <MarketingHeader transparentAtTop />
+      <main className="blog-post-page min-h-screen overflow-x-hidden bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)]">
+        <MarketingHeader transparentAtTop />
+        <div className="relative">
+          <HeroGridBackdrop height="h-[60vh]" />
+          <article className="omentir-secondary-width relative z-10 min-w-0 pb-16 pt-28 md:pb-24 md:pt-32">
+            <ArticleCrumbs crumbs={articlePathCrumbs("blogs", slug)} />
 
-      {/* Dedicated Premium Hero Section */}
-      <section className="relative z-0 w-full border-b border-[var(--md-sys-color-outline-variant)]">
-        {/* Diamond grid, contained by the hero so it fades out at the divider
-            rather than running down the article. */}
-        <HeroGridBackdrop height="h-full" />
-        <div
-          className="grid min-h-[50vh] w-full sm:min-h-[55vh] lg:min-h-[60vh]"
-          style={{ gridTemplate: '"hero" 1fr / 1fr' }}
-        >
-          {/* Foreground content - vertically centered but left-aligned block */}
-          <div
-            className="relative z-10 flex min-w-0 flex-col justify-center pb-12 pt-28 sm:pb-16 sm:pt-36 lg:pt-40"
-            style={{ gridArea: "hero" }}
-          >
-            <div className="mx-auto flex w-full max-w-6xl flex-col items-start px-4 text-left sm:px-8">
-              {/* Breadcrumbs inside the Hero */}
-              <nav className="mb-6 flex items-center gap-2 text-xs font-semibold text-[var(--md-sys-color-on-surface-variant)]">
-                <Link
-                  href="/"
-                  className="flex items-center transition-colors hover:text-[var(--md-sys-color-on-surface)]"
-                  aria-label="Home"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                    className="h-4 w-4"
-                    aria-hidden="true"
-                  >
-                    <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
-                  </svg>
-                </Link>
-                <span className="font-normal text-[var(--md-sys-color-outline)]" aria-hidden="true">
-                  /
-                </span>
-                <Link
-                  href="/blogs"
-                  className="transition-colors hover:text-[var(--md-sys-color-on-surface)]"
-                >
-                  Blogs
-                </Link>
-                <span className="font-normal text-[var(--md-sys-color-outline)]" aria-hidden="true">
-                  /
-                </span>
-                <span className="line-clamp-1 text-[var(--md-sys-color-on-surface)]">{canonicalTitle}</span>
-              </nav>
-
-              <h1
-                style={{ fontFamily: "var(--font-varta)" }}
-                className="mb-6 max-w-4xl text-[2rem] font-semibold leading-[1.12] tracking-tight text-[var(--md-sys-color-on-surface)] min-[380px]:text-[2.25rem] sm:text-5xl sm:leading-tight lg:text-6xl lg:leading-tight"
-              >
-                {canonicalTitle}
-              </h1>
-              <p className="max-w-2xl text-base leading-8 text-[var(--md-sys-color-on-surface-variant)] sm:text-lg">
-                {canonicalDescription}
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Main Blog Wrapper for Body Content */}
-      <div className="relative z-0 mx-auto max-w-6xl px-4 pb-16 pt-12 sm:px-8 sm:pb-24 sm:pt-16">
-        {/* Interactive Blog Content & Dynamic Sidebar Navigation */}
-        <BlogPostGrid
-          author={author}
-          publishedDate={publishedDate}
-          publishedDateTime={normalizeDate(publishedDate)}
-          updatedDate={updatedDate}
-          updatedDateTime={normalizeDate(updatedDate)}
-          bannerSrc={canonicalBannerSrc}
-          bannerAlt={canonicalBannerAlt}
-          bannerAspectRatio={bannerAspectRatio}
-          slug={slug}
-          category={category}
-          title={canonicalTitle}
-          tocItems={tocItems}
-        >
-          <>
-            {children}
-            {faqItems.length > 0 && !hasVisibleFaqs ? (
-              <>
-                <h2
-                  id={faqSectionId}
-                  style={{ fontFamily: "var(--font-varta)" }}
-                  className="mt-10 scroll-mt-28 border-b border-[var(--md-sys-color-outline-variant)] pb-2 pt-2 text-2xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)]"
-                >
-                  Frequently Asked Questions
-                </h2>
-                <FaqAccordion items={renderedFaqItems} />
-              </>
-            ) : null}
-          </>
-        </BlogPostGrid>
-      </div>
-
-      {relatedBlogs.length > 0 ? (
-        <section className="relative z-0 mx-auto max-w-6xl px-4 pb-16 sm:px-8 sm:pb-24">
-          <div className="border-t border-[var(--md-sys-color-outline-variant)] pt-14 sm:pt-16">
-            <h2
+            <h1
               style={{ fontFamily: "var(--font-varta)" }}
-              className="text-2xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)]"
+              className="max-w-2xl text-2xl font-semibold leading-snug tracking-tight text-[var(--md-sys-color-on-surface)] md:text-3xl md:leading-snug"
             >
-              Related articles
-            </h2>
-            <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              {relatedBlogs.map((blog) => (
-                <Link
-                  key={blog.slug}
-                  href={`/blogs/${blog.slug}`}
-                  className="rounded-xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container)] p-5 shadow-[var(--md-sys-card-elevation-rest)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--md-sys-color-primary)] hover:shadow-[var(--md-sys-card-elevation-hover)]"
-                >
-                  <div className="text-xs font-semibold text-[var(--md-sys-color-on-surface-variant)]">
-                    {blog.category} <span aria-hidden="true">&bull;</span> {blog.readTime}
-                  </div>
-                  <h3
-                    style={{ fontFamily: "var(--font-varta)" }}
-                    className="mt-3 text-base font-semibold leading-snug text-[var(--md-sys-color-on-surface)]"
-                  >
-                    {blog.title}
-                  </h3>
-                  <p className="mt-2 line-clamp-3 text-xs leading-6 text-[var(--md-sys-color-on-surface-variant)]">
-                    {blog.description}
-                  </p>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
-      ) : null}
+              {canonicalTitle}
+            </h1>
 
-      {/* Shared Global Marketing Footer */}
-      <MarketingFooter />
-    </main>
+            <div className="mt-6 flex items-center gap-3">
+              <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-low)]">
+                <Image
+                  src={author.avatarUrl}
+                  alt={author.name}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+              <div>
+                <div className="text-sm font-semibold text-[var(--md-sys-color-on-surface)]">
+                  {author.name}
+                </div>
+                <div className="text-xs text-[var(--md-sys-color-on-surface-variant)]">
+                  Published <time dateTime={normalizeDate(publishedDate)}>{publishedDate}</time>
+                  {updatedDate !== publishedDate ? (
+                    <>
+                      {" "}
+                      <span aria-hidden="true">&bull;</span> Updated{" "}
+                      <time dateTime={normalizeDate(updatedDate)}>{updatedDate}</time>
+                    </>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+
+            <div
+              className={`relative z-0 mt-8 w-full overflow-hidden rounded-xl bg-[var(--md-sys-color-surface-container-low)] ${
+                bannerAspectRatio === "3/2" ? "aspect-[3/2]" : "aspect-[2/1]"
+              }`}
+            >
+              <Image
+                src={canonicalBannerSrc}
+                alt={canonicalBannerAlt}
+                fill
+                className="object-cover"
+                priority
+                sizes="(max-width: 768px) 100vw, 768px"
+              />
+            </div>
+
+            <div className="blog-article prose prose-zinc mt-12 max-w-none space-y-6 text-base font-medium leading-8 text-[var(--md-sys-color-on-surface)] md:mt-16">
+              {children}
+            </div>
+
+            {faqItems.length > 0 && !hasVisibleFaqs ? (
+              <section id={faqSectionId} className="mt-16 md:mt-20">
+                <h2
+                  style={{ fontFamily: "var(--font-varta)" }}
+                  className="text-[1.75rem] font-semibold leading-tight tracking-tight text-[var(--md-sys-color-on-surface)] md:text-3xl"
+                >
+                  Frequently asked <span className="text-gradient-brand">questions</span>
+                </h2>
+                <div className="mt-6 md:mt-8">
+                  <FaqAccordion items={renderedFaqItems} />
+                </div>
+              </section>
+            ) : null}
+
+            {relatedBlogs.length > 0 ? (
+              <section id="related" className="mt-16 md:mt-20">
+                <h2
+                  style={{ fontFamily: "var(--font-varta)" }}
+                  className="border-b border-[var(--md-sys-color-outline-variant)] pb-2 text-xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)]"
+                >
+                  Related articles
+                </h2>
+                <ul className="divide-y divide-[var(--md-sys-color-outline-variant)] border-b border-[var(--md-sys-color-outline-variant)]">
+                  {relatedBlogs.map((blog) => (
+                    <li key={blog.slug}>
+                      <Link href={`/blogs/${blog.slug}`} className="group block py-4">
+                        <span className="font-semibold text-[var(--md-sys-color-on-surface)] transition-colors group-hover:text-[var(--md-sys-color-primary)]">
+                          {blog.title}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
+
+            <div className="mt-16 rounded-3xl border-2 border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface-container)] px-6 py-8 text-center md:mt-20 md:px-10 md:py-10">
+              <p className="text-lg font-semibold tracking-tight text-[var(--md-sys-color-on-surface)]">
+                Run the outreach from your own LinkedIn account
+              </p>
+              <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)]">
+                Omentir finds ICP-fit buyers, drafts connection notes and messages, and keeps
+                replies in one inbox. You still choose the daily send limits.
+              </p>
+              <Link
+                href="/signup"
+                className="m3-btn m3-btn-filled-secondary mt-6 inline-flex h-11 cursor-pointer px-6 text-sm"
+              >
+                Try Omentir
+              </Link>
+            </div>
+          </article>
+        </div>
+        <MarketingFooter />
+      </main>
+    </>
   );
 }

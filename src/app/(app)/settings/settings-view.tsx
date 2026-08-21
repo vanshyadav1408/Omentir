@@ -8,7 +8,7 @@ import MobileHeaderPortal from "@/app/mobile-header-portal";
 import { useSidebarResource } from "@/app/use-sidebar-resource";
 import SignOutButton from "./sign-out-button";
 import { SelectField } from "@/app/ui/select";
-import { M3NotchedOutline, TextField } from "@/app/ui/text-field";
+import { TextField } from "@/app/ui/text-field";
 import { useWorkspaceTimeZone } from "@/app/workspace-time-zone";
 import { formatZonedDate } from "@/lib/time-zone";
 import { commercialPlanLimits, formatPlanLimit } from "@/lib/plan-limits";
@@ -18,6 +18,7 @@ type SettingsViewProps = {
   linkedInAccounts: LinkedInAccount[];
   user: { name: string; email: string; imageUrl?: string };
   saveAction: (formData: FormData) => void | Promise<void>;
+  uploadImageAction: (formData: FormData) => void | Promise<void>;
   disconnectAction: (formData: FormData) => void | Promise<void>;
   localMode?: boolean;
   notificationsEnabled?: boolean;
@@ -77,6 +78,25 @@ function timezoneOption(timezone?: string) {
 function timezoneName(option: string) {
   return option.split(") ").at(-1)?.trim() || "UTC";
 }
+
+async function resizeProfileImage(file: File): Promise<File> {
+  const bitmap = await createImageBitmap(file);
+  const size = 256;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return file;
+  const scale = Math.max(size / bitmap.width, size / bitmap.height);
+  const width = bitmap.width * scale;
+  const height = bitmap.height * scale;
+  ctx.drawImage(bitmap, (size - width) / 2, (size - height) / 2, width, height);
+  const blob = await new Promise<Blob | null>((resolve) => {
+    canvas.toBlob(resolve, "image/jpeg", 0.88);
+  });
+  if (!blob) return file;
+  return new File([blob], "avatar.jpg", { type: "image/jpeg" });
+}
 const DATE_FORMATS = [
   "May 12, 2025 (MMM D, YYYY)",
   "12 May 2025 (D MMM YYYY)",
@@ -126,8 +146,8 @@ function SearchableSelectField({
   const ref = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
-  const floated = open || Boolean(value);
   const fieldLabel = label || placeholder || "Select";
+  const hasLabel = Boolean(label);
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
@@ -168,29 +188,30 @@ function SearchableSelectField({
 
   return (
     <div
-      className="m3-text-field m3-text-field--outlined relative"
+      className={`m3-text-field m3-text-field--outlined relative ${hasLabel ? "" : "m3-text-field--no-label"}`}
       data-focused={open ? "true" : "false"}
-      data-floated={floated ? "true" : "false"}
       data-error="false"
       data-disabled="false"
       ref={ref}
     >
+      {hasLabel ? <span className="m3-text-field__label">{fieldLabel}</span> : null}
       <div className="m3-text-field__body">
-        <span className="m3-text-field__label pointer-events-none" aria-hidden="true">
-          {fieldLabel}
-        </span>
         <div className="m3-text-field__shell">
           <button
             type="button"
             onClick={() => setOpen((current) => !current)}
-            className={`m3-text-field__input flex w-full items-center justify-between gap-2 !h-[var(--md-sys-text-field-height)] !border-0 !bg-transparent !shadow-none text-left focus:outline-none ${
-              value ? "text-[var(--md-sys-color-field-text)]" : "text-transparent"
-            }`}
+            className="m3-text-field__input flex w-full items-center justify-between gap-2 !h-[var(--md-sys-text-field-height)] !border-0 !bg-transparent !shadow-none text-left focus:outline-none"
             aria-haspopup="listbox"
             aria-expanded={open}
           >
-            <span className="min-w-0 truncate text-[16px] leading-6">
-              {value || "\u00a0"}
+            <span
+              className={`min-w-0 truncate text-[14px] leading-5 ${
+                value
+                  ? "text-[var(--md-sys-color-field-text)]"
+                  : "text-[var(--md-sys-color-text-disabled)]"
+              }`}
+            >
+              {value || placeholder || "Select"}
             </span>
             <span
               className={`material-symbols-outlined text-[20px] font-light leading-none text-[var(--md-sys-color-on-surface-variant)] transition-transform ${
@@ -202,7 +223,6 @@ function SearchableSelectField({
             </span>
           </button>
         </div>
-        <M3NotchedOutline label={fieldLabel} />
       </div>
       {open ? (
         <div className="m3-menu m3-menu-enter m3-menu--origin-top absolute z-50 mt-1 w-full !max-h-none overflow-hidden">
@@ -210,7 +230,8 @@ function SearchableSelectField({
             <TextField
               ref={inputRef}
               variant="filled"
-              label={placeholder || "Search timezone, city, or region..."}
+              placeholder={placeholder || "Search timezone, city, or region..."}
+              aria-label={placeholder || "Search timezone, city, or region..."}
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               trailingIcon={
@@ -298,7 +319,7 @@ function NumberField({
       label={label}
       trailingIcon={
         suffix ? (
-          <span className="text-[13px] font-medium text-[var(--md-sys-color-on-surface-variant)]">
+          <span className="whitespace-nowrap text-[13px] font-medium text-[var(--md-sys-color-on-surface-variant)]">
             {suffix}
           </span>
         ) : null
@@ -354,12 +375,16 @@ export default function SettingsView({
   linkedInAccounts,
   user,
   saveAction,
+  uploadImageAction,
   disconnectAction,
   localMode = false,
   notificationsEnabled = true,
 }: SettingsViewProps) {
   const [tab, setTab] = useState<Tab>("Profile");
   const [pending, startTransition] = useTransition();
+  const [uploadingPhoto, startUpload] = useTransition();
+  const [photoError, setPhotoError] = useState("");
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const linkedInAccountsResource = useSidebarResource(
     "linkedinAccounts",
     linkedInAccounts,
@@ -422,6 +447,27 @@ export default function SettingsView({
     startTransition(() => saveAction(formData));
   }
 
+  async function handlePhotoChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    setPhotoError("");
+    try {
+      const image = await resizeProfileImage(file);
+      const formData = new FormData();
+      formData.set("image", image);
+      startUpload(async () => {
+        try {
+          await uploadImageAction(formData);
+        } catch (err) {
+          setPhotoError(err instanceof Error ? err.message : "Could not update the photo.");
+        }
+      });
+    } catch {
+      setPhotoError("Could not read that image. Try another file.");
+    }
+  }
+
   const billing = billingPill(workspace.billing?.status);
   const userInitials = user.name
     .split(" ")
@@ -445,7 +491,7 @@ export default function SettingsView({
             form="settings-save-form"
             disabled={pending}
             style={{ fontFamily: "var(--font-varta)" }}
-            className="pointer-events-auto inline-flex h-8 cursor-pointer items-center justify-center rounded-full bg-[var(--md-sys-color-primary)] px-3 text-xs font-semibold text-[var(--md-sys-color-on-primary)] transition hover:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+            className="pointer-events-auto m3-btn m3-btn-filled h-8 px-2.5 text-xs disabled:cursor-not-allowed disabled:opacity-60"
           >
             <span className="translate-y-px">{pending ? "Saving..." : "Save"}</span>
           </button>
@@ -455,16 +501,16 @@ export default function SettingsView({
       {/* Header — primary action matches Leads "Add leads" */}
       <div className="app-x hidden shrink-0 items-center justify-between gap-3 pt-6 md:flex">
         <div className="min-w-0">
-          <h1 className="text-2xl font-semibold leading-none tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-3xl">
+          <h1 className="text-2xl font-semibold leading-none tracking-tight text-[var(--md-sys-color-on-surface)]">
             Settings
           </h1>
         </div>
         <button
           type="submit"
           disabled={pending}
-          className="m3-btn m3-btn-filled h-10 shrink-0 gap-1.5 px-4 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+          className="m3-btn m3-btn-filled h-8 shrink-0 gap-1 px-2.5 text-xs disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <polyline points="20 6 9 17 4 12" />
           </svg>
           {pending ? "Saving..." : "Save settings"}
@@ -505,24 +551,73 @@ export default function SettingsView({
                   description="Your personal information and workspace preferences."
                 />
 
-                <div className="m3-card m3-card-outlined flex min-w-0 items-center gap-4 p-4">
-                  {user.imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={user.imageUrl}
-                      alt=""
-                      className="h-14 w-14 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="grid h-14 w-14 place-items-center rounded-full bg-[#ba3871] text-[16px] font-bold text-white">
-                      {userInitials}
-                    </div>
-                  )}
+                <div className="m3-card m3-card-outlined flex min-w-0 items-center gap-3 p-3">
+                  <input
+                    ref={photoInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/gif"
+                    className="hidden"
+                    onChange={handlePhotoChange}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => photoInputRef.current?.click()}
+                    disabled={uploadingPhoto}
+                    aria-label={
+                      uploadingPhoto
+                        ? "Uploading photo"
+                        : user.imageUrl
+                          ? "Change photo"
+                          : "Upload photo"
+                    }
+                    className="group relative grid h-8 w-8 shrink-0 cursor-pointer place-items-center overflow-hidden rounded-full disabled:cursor-not-allowed"
+                  >
+                    {user.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={user.imageUrl}
+                        alt=""
+                        className="h-8 w-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <span className="grid h-8 w-8 place-items-center rounded-full bg-[#ba3871] text-[10px] font-medium text-white">
+                        {userInitials}
+                      </span>
+                    )}
+                    <span
+                      className={`absolute inset-0 grid place-items-center bg-black/55 text-white transition-opacity ${
+                        uploadingPhoto
+                          ? "opacity-100"
+                          : "opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100"
+                      }`}
+                    >
+                      {uploadingPhoto ? (
+                        <span className="h-3 w-3 animate-spin rounded-full border border-white/30 border-t-white" />
+                      ) : (
+                        <svg
+                          className="h-3.5 w-3.5"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
+                        >
+                          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                          <circle cx="12" cy="13" r="4" />
+                        </svg>
+                      )}
+                    </span>
+                  </button>
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-[14px] font-semibold text-zinc-950">
                       {user.name}
                     </div>
                     <div className="truncate text-[13px] font-medium text-zinc-700">{user.email}</div>
+                    {photoError ? (
+                      <p className="mt-1 text-[11px] font-medium text-red-600">{photoError}</p>
+                    ) : null}
                   </div>
                 </div>
 
@@ -667,13 +762,13 @@ export default function SettingsView({
                 <ContentReveal className="space-y-3">
                   {loadedLinkedInAccounts.length ? (
                     loadedLinkedInAccounts.map((account, index) => (
-                      <div key={account.id} className="flex flex-col items-start gap-4 rounded-md border border-zinc-200 bg-white p-4 sm:flex-row sm:items-center">
-                        <div className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-full bg-[#0a66c2]">
+                      <div key={account.id} className="flex flex-col items-start gap-3 rounded-md border border-zinc-200 bg-white p-3 sm:flex-row sm:items-center">
+                        <div className="grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-full bg-[#0a66c2]">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={account.avatarUrl || "/linkedin-logo.png"}
                             alt={account.avatarUrl ? `${account.displayName} profile` : "LinkedIn"}
-                            className={account.avatarUrl ? "h-full w-full object-cover" : "h-5 w-auto object-contain brightness-0 invert"}
+                            className={account.avatarUrl ? "h-full w-full object-cover" : "h-3.5 w-auto object-contain brightness-0 invert"}
                           />
                         </div>
                         <div className="min-w-0 flex-1">
@@ -724,10 +819,10 @@ export default function SettingsView({
                       </div>
                     ))
                   ) : (
-                    <div className="flex flex-col items-start gap-4 rounded-md border border-zinc-200 bg-white p-4 sm:flex-row sm:items-center">
-                      <div className="grid h-12 w-12 shrink-0 place-items-center rounded-md bg-[#0a66c2]">
+                    <div className="flex flex-col items-start gap-3 rounded-md border border-zinc-200 bg-white p-3 sm:flex-row sm:items-center">
+                      <div className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-[#0a66c2]">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src="/linkedin-logo.png" alt="LinkedIn" className="h-5 w-auto object-contain brightness-0 invert" />
+                        <img src="/linkedin-logo.png" alt="LinkedIn" className="h-3.5 w-auto object-contain brightness-0 invert" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="text-[14px] font-semibold text-zinc-950">Not connected</div>
@@ -817,7 +912,7 @@ export default function SettingsView({
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{ fontFamily: "var(--font-varta)" }}
-                      className="flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-md bg-[#ba3871] px-4 text-[13px] font-semibold text-white shadow-[0_8px_24px_rgba(186,56,113,0.3)] transition hover:brightness-[0.98]"
+                      className="flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-md bg-[#ba3871] px-4 text-[13px] font-semibold text-white shadow-[0_8px_24px_rgba(255,255,255,0.12)] transition hover:brightness-[0.98]"
                     >
                       <span className="leading-none">Manage plan</span>
                       <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">

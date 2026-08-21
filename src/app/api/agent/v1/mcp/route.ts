@@ -171,7 +171,7 @@ async function handlePost(request: NextRequest) {
         version: "1.4.0",
         description:
           "Configure classic lead finders and Steal Customers agents, monitor discovery and outreach, inspect leads (including post+comment engagementContext), and work with existing Omentir conversations.",
-        websiteUrl: `${getAppBaseUrl()}/mcp-server`,
+        websiteUrl: `${getAppBaseUrl()}/integrations/mcp`,
       },
       instructions:
         "Call omentir_get_context first (time zone + remaining send allowance). Call omentir_get_product_profile and ensure My Product is set before Steal Customers. List agents before create. Classic lead finders need mode signals/filters/prompt plus prompt and filters. Steal Customers: mode steal_customers, groupName, signalSources.competitorUrls and/or founderUrls (company pages and optional founder/employee profiles); no ICP; AI outreach attaches automatically; discovery finds competitor employees, scans their posts and company posts, and promotes commenters who look like buyers. Lead discovery is asynchronous: use list_activity before treating empty leads as final. Use list_leads/get_lead for engagementContext. Use list_scheduled_actions for exact outreach send times.",

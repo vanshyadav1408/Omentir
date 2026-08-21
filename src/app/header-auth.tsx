@@ -9,10 +9,10 @@ export default function HeaderAuth() {
   if (isSignedIn) {
     return (
       <Link
-        href="/dashboard"
+        href="/overview"
         className="m3-btn m3-btn-filled-secondary h-9 cursor-pointer px-4 text-sm"
       >
-        Dashboard
+        Overview
       </Link>
     );
   }

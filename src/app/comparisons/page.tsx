@@ -24,7 +24,6 @@ export default function ComparisonsIndexPage() {
       title="AI sales tool alternatives"
       description="Omentir versus popular AI sales and outbound tools. Channel fit, workflows, and tradeoffs before you choose."
       pages={ALL_COMPARISONS}
-      compactHero
     />
   );
 }

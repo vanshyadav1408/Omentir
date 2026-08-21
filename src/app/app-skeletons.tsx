@@ -68,60 +68,45 @@ export function OutreachListSkeleton({ label }: { label: string }) {
   );
 }
 
-// Matches the leads table body: stacked cards on mobile, the five-column
-// grid (checkbox / lead / signal / score / added) on desktop.
+// Matches the leads split: contact list on the left, outreach preview on the right.
 export function LeadsTableSkeleton() {
   return (
-    <div className="flex min-h-0 flex-1 flex-col" aria-label="Loading leads" role="status">
-      {/* Mobile card list */}
-      <div className="m3-table-grid min-h-0 flex-1 overflow-hidden md:hidden">
-        {[0, 1, 2, 3, 4].map((row) => (
-          <div key={row} className="m3-table-grid-row !h-auto min-h-[52px] p-4">
-            <div className="flex items-start gap-3">
-              <Skeleton className="mt-3 h-3.5 w-3.5" />
-              <Skeleton className="h-10 w-10 shrink-0 rounded-full" />
-              <div className="min-w-0 flex-1">
-                <Skeleton className="h-3.5 w-32" />
-                <Skeleton className="mt-2 h-3 w-24" />
-                <Skeleton className="mt-1.5 h-3 w-20" />
-              </div>
-              <div className="shrink-0">
-                <Skeleton className="h-4 w-12" />
-                <Skeleton className="mt-1.5 h-3 w-10" />
+    <div
+      className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[minmax(22rem,2fr)_minmax(0,3fr)]"
+      aria-label="Loading leads"
+      role="status"
+    >
+      <div className="flex min-h-0 flex-col md:border-r md:border-zinc-200">
+        <div className="m3-table-grid-header hidden shrink-0 grid-cols-[40px_minmax(0,1fr)] items-center gap-3 md:grid">
+          <Skeleton className="h-3.5 w-3.5" />
+          <Skeleton className="h-3 w-16" />
+        </div>
+        <div className="m3-table-grid min-h-0 flex-1 overflow-hidden">
+          {[0, 1, 2, 3, 4, 5, 6].map((row) => (
+            <div key={row} className="m3-table-grid-row grid grid-cols-[40px_minmax(0,1fr)] items-center gap-3">
+              <Skeleton className="h-3.5 w-3.5" />
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-10 w-10 shrink-0 rounded-full" />
+                <div className="min-w-0 flex-1">
+                  <Skeleton className="h-3.5 w-32" />
+                  <Skeleton className="mt-2 h-3 w-48 max-w-full" />
+                </div>
               </div>
             </div>
-            <Skeleton className="mt-3 h-10 w-full" />
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
-      {/* Desktop table — M3 header 56px / rows 52px */}
-      <div className="m3-table-grid-header hidden shrink-0 grid-cols-[40px_minmax(300px,1.45fr)_minmax(340px,2fr)_120px_120px] items-center gap-3 md:grid">
-        {[0, 1, 2, 3, 4].map((item) => (
-          <Skeleton key={item} className="h-3 w-20 max-w-full" />
-        ))}
-      </div>
-      <div className="m3-table-grid hidden min-h-0 flex-1 overflow-hidden md:block">
-        {[0, 1, 2, 3, 4, 5].map((row) => (
-          <div
-            key={row}
-            className="m3-table-grid-row grid grid-cols-[40px_minmax(300px,1.45fr)_minmax(340px,2fr)_120px_120px] items-center gap-3"
-          >
-            <Skeleton className="h-4 w-4" />
-            <div className="flex items-center gap-3">
-              <Skeleton className="h-10 w-10 rounded-full" />
-              <div>
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="mt-2 h-3 w-48" />
-              </div>
-            </div>
-            <div>
-              <Skeleton className="h-4 w-72 max-w-full" />
-              <Skeleton className="mt-2 h-3 w-40" />
-            </div>
-            <Skeleton className="m3-table-num h-4 w-16" />
-            <Skeleton className="m3-table-num h-4 w-16" />
+      <div className="hidden bg-[var(--md-sys-color-surface-container)] p-5 md:block">
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-11 w-11 rounded-full" />
+          <div>
+            <Skeleton className="h-4 w-40" />
+            <Skeleton className="mt-2 h-3 w-56" />
           </div>
-        ))}
+        </div>
+        <Skeleton className="mt-6 h-3 w-20" />
+        <Skeleton className="mt-3 h-16 w-full" />
+        <Skeleton className="mt-6 h-24 w-full" />
       </div>
     </div>
   );
@@ -223,8 +208,8 @@ export function ApiKeyRowsSkeleton() {
 export function LinkedInAccountsSkeleton() {
   return (
     <div className="space-y-3" aria-label="Loading connected accounts" role="status">
-      <div className="flex flex-col items-start gap-4 rounded-md border border-zinc-200 bg-white p-4 sm:flex-row sm:items-center">
-        <Skeleton className="h-12 w-12 shrink-0 rounded-full" />
+      <div className="flex flex-col items-start gap-3 rounded-md border border-zinc-200 bg-white p-3 sm:flex-row sm:items-center">
+        <Skeleton className="h-8 w-8 shrink-0 rounded-full" />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <Skeleton className="h-4 w-40" />

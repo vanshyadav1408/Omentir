@@ -53,6 +53,7 @@ import {
   STAGE_CONTACTED,
   STAGE_MESSAGED,
   STAGE_REPLIED,
+  countAcceptedConnections,
   combinedOutreachStage,
 } from "@/lib/outreach-stage";
 
@@ -350,7 +351,7 @@ export async function getAgentWorkspaceContext(context: AgentApiContext) {
 }
 
 // Headline numbers shown on the Omentir dashboard, computed with the exact
-// same rules as dashboard-view.tsx so the API and the UI never disagree.
+// same rules as overview-view.tsx so the API and the UI never disagree.
 // Unlike the dashboard, these are all-time totals (the API has no range picker).
 export async function getWorkspaceStatsResource(context: AgentApiContext) {
   const workspaceId = context.workspace.id;
@@ -364,6 +365,7 @@ export async function getWorkspaceStatsResource(context: AgentApiContext) {
 
   const totalLeads = leads.length;
   const hotOpportunities = sumAgentLeadTotals(agents, groups, leads);
+  const acceptedConnections = countAcceptedConnections(leads, enrollments);
   const leadStatusById = new Map(leads.map((lead) => [lead.id, lead.outreachStatus]));
   const stageOf = (enrollment: (typeof enrollments)[number]) =>
     combinedOutreachStage(enrollment.status, leadStatusById.get(enrollment.leadId));
@@ -378,12 +380,13 @@ export async function getWorkspaceStatsResource(context: AgentApiContext) {
   ).length;
   const averageTicketSize = profile?.averageTicketSize;
   const pipelineGenerated =
-    averageTicketSize !== undefined ? hotOpportunities * averageTicketSize : null;
+    averageTicketSize !== undefined ? acceptedConnections * averageTicketSize : null;
 
   return {
     stats: {
       totalLeads,
       hotOpportunities,
+      acceptedConnections,
       invitationsSent,
       messagesSent,
       repliesReceived,

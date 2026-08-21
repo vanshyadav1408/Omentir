@@ -27,8 +27,8 @@ export default function GlobalError({
           justifyContent: "center",
           fontFamily:
             'var(--font-google-sans), Roboto, "Helvetica Neue", Arial, sans-serif',
-          background: "#fbfaf6",
-          color: "#171717",
+          background: "#08080a",
+          color: "rgba(255, 255, 255, 0.92)",
           padding: "24px",
           textAlign: "center",
         }}
@@ -39,7 +39,7 @@ export default function GlobalError({
             fontSize: "3.5rem",
             fontWeight: 600,
             letterSpacing: "-0.03em",
-            color: "#ba3871",
+            color: "#ffffff",
             lineHeight: 1,
           }}
         >
@@ -61,7 +61,7 @@ export default function GlobalError({
             maxWidth: "28rem",
             fontSize: "1rem",
             lineHeight: 1.6,
-            color: "#52525b",
+            color: "rgba(255, 255, 255, 0.62)",
           }}
         >
           We hit an unexpected error. Try reloading the page.
@@ -75,8 +75,8 @@ export default function GlobalError({
             padding: "0 32px",
             border: "none",
             borderRadius: "100px",
-            background: "#ba3871",
-            color: "#fff",
+            background: "#ffffff",
+            color: "#000000",
             fontSize: "1rem",
             fontWeight: 600,
             cursor: "pointer",

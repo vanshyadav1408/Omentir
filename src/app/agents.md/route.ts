@@ -21,7 +21,7 @@ Start with ${siteUrl}/agent.json when you need a compact, machine-readable map o
 
 Public pages: ${siteUrl}/llms.txt (directory) and ${siteUrl}/llms-full.txt (longer page text for features, use cases, alternatives, roundups, and integrations). Every public HTML page has a markdown twin at the same path with .md appended (homepage: ${siteUrl}/index.md).
 
-For workspace work, use MCP or REST instead of scraping authenticated dashboard pages. The API mirrors the dashboard's safe operational surfaces: Dashboard (omentir_get_stats), Actions (omentir_list_scheduled_actions), Activity (omentir_list_activity), Agents (omentir_list_agents / omentir_create_agent / omentir_update_agent), Leads (omentir_list_leads / omentir_get_lead), Messages (omentir_list_conversations / omentir_reply_to_lead), My Product (omentir_get_product_profile / omentir_update_product_profile), and Settings (omentir_get_context / omentir_update_settings).
+For workspace work, use MCP or REST instead of scraping authenticated Overview pages. The API mirrors Overview's safe operational surfaces: Overview (omentir_get_stats), Actions (omentir_list_scheduled_actions), Activity (omentir_list_activity), Agents (omentir_list_agents / omentir_create_agent / omentir_update_agent), Leads (omentir_list_leads / omentir_get_lead), Messages (omentir_list_conversations / omentir_reply_to_lead), My Product (omentir_get_product_profile / omentir_update_product_profile), and Settings (omentir_get_context / omentir_update_settings).
 
 Never create an Omentir account or buy or change a subscription. These flows are deliberately unavailable to agents.
 
@@ -31,16 +31,16 @@ Users connect once in Omentir (LinkedIn + plan), then attach their chat app or c
 
 ### Path A: Chat apps with a connector URL (OAuth, no API key)
 
-Works with **Claude**, **ChatGPT**, **Grok**, and other clients that support custom MCP connectors.
+Works with **Claude**, **ChatGPT**, **Grok**, **Grok Bot**, and other clients that support custom MCP connectors.
 
 1. User connects LinkedIn in Omentir and fills **My Product**.
-2. In the chat app: Settings → Connectors (or equivalent) → add custom connector.
+2. In the chat app: Settings → Connectors (or equivalent) → add custom connector. In **Grok Bot**: Settings → Plugins → add the MCP URL.
 3. Connector URL: \`${siteUrl}/api/agent/v1/mcp\`
 4. The app sends the user to Omentir to sign in and approve **Connect workspace**.
 5. User enables Omentir tools **in that conversation** (many apps require a separate toggle).
 6. User asks the assistant to list agents, update the product profile, create a classic lead finder, or create a **Steal Customers** agent.
 
-No API key is pasted into the chat app. The 401 challenge advertises protected-resource metadata; the client registers via dynamic client registration and completes authorization-code + PKCE (S256). Human setup: \`${siteUrl}/mcp-server\`.
+No API key is pasted into the chat app. The 401 challenge advertises protected-resource metadata; the client registers via dynamic client registration and completes authorization-code + PKCE (S256). Human setup: \`${siteUrl}/integrations/mcp\`. Claude: \`${siteUrl}/integrations/claude\`. ChatGPT: \`${siteUrl}/integrations/chatgpt\`. Grok chat: \`${siteUrl}/integrations/grok\`. Grok Bot (Plugins, not grok.com chat; do not sign LinkedIn into the Bot computer): \`${siteUrl}/integrations/grok-bot\`.
 
 ### Path B: API key for header-capable clients
 
@@ -60,7 +60,7 @@ Tokens are never accepted in URLs. Store them in the client's secret store, neve
 
 ### Path C: Operator prompt (manual agents)
 
-For agents that can call HTTP tools with a Bearer token but need instructions first, users paste the prompt on \`${siteUrl}/for-agents\` as the first message. That prompt tells the agent to read this guide, ask for the token, then run \`get_context\` / \`get_stats\`.
+For agents that can call HTTP tools with a Bearer token but need instructions first, tell them to fetch this guide first. Then they should ask for the token and run \`get_context\` / \`get_stats\`.
 
 ### What connected AI apps can do
 

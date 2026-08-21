@@ -1,5 +1,5 @@
 import JsonLd from "../json-ld";
-import { MarketingPage } from "../marketing-shell";
+import { MarketingArticle } from "../marketing-shell";
 import {
   createBreadcrumbJsonLd,
   createPageMetadata,
@@ -76,27 +76,28 @@ export default function PrivacyPolicyPage() {
   return (
     <>
       <JsonLd id="privacy-policy-jsonld" data={jsonLd} />
-      <MarketingPage
-        eyebrow="Legal"
+      <MarketingArticle
+        path="privacy-policy"
         title="Privacy Policy"
         description="How Omentir collects, uses, and protects information while operating the product."
+        updated="May 4, 2026"
       >
-        <div className="rounded-xl border border-[#ba3871] bg-white p-6">
-          <p className="text-sm text-zinc-500">Last updated: May 4, 2026</p>
-          <div className="mt-8 space-y-7">
-            {sections.map((section) => (
-              <section key={section.title}>
-                <h2 className="text-xl font-semibold tracking-tight text-zinc-950">
-                  {section.title}
-                </h2>
-                <p className="mt-3 text-base leading-7 text-zinc-700">
-                  {section.body}
-                </p>
-              </section>
-            ))}
-          </div>
+        <div className="space-y-10">
+          {sections.map((section) => (
+            <section key={section.title}>
+              <h2
+                style={{ fontFamily: "var(--font-varta)" }}
+                className="text-xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)]"
+              >
+                {section.title}
+              </h2>
+              <p className="mt-4 text-base font-medium leading-8 text-[var(--md-sys-color-on-surface)]">
+                {section.body}
+              </p>
+            </section>
+          ))}
         </div>
-      </MarketingPage>
+      </MarketingArticle>
     </>
   );
 }

@@ -1,7 +1,6 @@
 import { auth, currentUser } from "@/lib/server/auth";
 import { NextResponse } from "next/server";
 import {
-  getLinkedInAccount,
   getWorkspace,
   logAutomationRun,
   updateWorkspaceBilling,
@@ -71,11 +70,9 @@ export async function GET() {
     }
   }
 
-  const linkedInAccount = active ? await getLinkedInAccount(workspace.id) : null;
-
   return NextResponse.json({
     active,
     status: workspace.billing?.status ?? null,
-    nextPath: active ? (linkedInAccount ? "/dashboard" : "/onboarding") : null,
+    nextPath: active ? "/overview" : null,
   });
 }

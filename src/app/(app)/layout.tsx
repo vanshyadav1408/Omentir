@@ -6,6 +6,8 @@ import AppPageTransition from "@/app/app-page-transition";
 import AppDataPrefetch from "@/app/(app)/app-data-prefetch";
 import { WorkspaceTimeZoneProvider } from "@/app/workspace-time-zone";
 import { getWorkspace } from "@/lib/server/data";
+import { hasActiveSubscription } from "@/lib/server/subscription";
+import { getWorkspaceSetup } from "@/lib/server/workspace-setup";
 import { isLocalMode } from "@/lib/runtime-mode";
 
 export const metadata: Metadata = {
@@ -22,23 +24,29 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     await auth.protect({ unauthenticatedUrl: "/login" });
   }
 
-  // Read for the timezone. The API nav item now shows on every plan - plans
-  // without API access land on the page with the keys section locked behind an
-  // upgrade prompt, which only works if they can reach it from the sidebar.
+  // Timezone for the workspace clock. The API nav item now shows on every
+  // plan; plans without API access land on the page with the keys section
+  // locked behind an upgrade prompt.
   let timeZone: string | undefined;
+  let setupDone = false;
   if (userId) {
     try {
-      const workspace = await getWorkspace(userId);
+      const [workspace, setup] = await Promise.all([
+        getWorkspace(userId),
+        getWorkspaceSetup(userId),
+      ]);
       timeZone = workspace.timezone;
+      setupDone = setup.setupDone && hasActiveSubscription(workspace);
     } catch {
       timeZone = undefined;
+      setupDone = false;
     }
   }
 
   return (
     <WorkspaceTimeZoneProvider timeZone={timeZone}>
-      <div className="dashboard-shell flex h-screen max-w-full overflow-hidden overflow-x-hidden bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)]">
-        <Sidebar localMode={isLocalMode()} showApi />
+      <div className="dashboard-shell app-compact flex h-screen max-w-full overflow-hidden overflow-x-hidden bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)]">
+        <Sidebar localMode={isLocalMode()} showApi setupDone={setupDone} />
         <main className="h-screen w-full min-w-0 flex-1 overflow-hidden">
           {/* Mobile: 56px compact app bar; navigation stays in the drawer. */}
           <section className="flex h-full w-full flex-col pt-14 md:pt-0">

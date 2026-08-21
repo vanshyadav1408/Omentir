@@ -12,9 +12,12 @@ import {
 import FaqAccordion from "../faq-accordion";
 import JsonLd from "../json-ld";
 import {
+  ArticleCrumbs,
+  articlePathCrumbs,
   HeroGridBackdrop,
   MarketingFooter,
   MarketingHeader,
+  type ArticleCrumb,
 } from "../marketing-shell";
 
 export const familyLabels: Record<SeoFamily, string> = {
@@ -32,6 +35,11 @@ export const familyPaths: Record<SeoFamily, string> = {
   "use-cases": "/use-cases",
   alternatives: "/alternatives",
 };
+
+export function familyCrumbs(family: SeoFamily, slug?: string) {
+  const section = familyPaths[family].slice(1);
+  return slug ? articlePathCrumbs(section, slug) : articlePathCrumbs(section);
+}
 
 export function pageJsonLd(family: SeoFamily, page: SeoContentPage) {
   const path = `${familyPaths[family]}/${page.slug}`;
@@ -77,31 +85,72 @@ export function SeoPageChrome({
 
 function SeoHeroCrumbs({
   crumbs,
+  className = "mb-6",
 }: {
-  crumbs: ReadonlyArray<{ label: string; href?: string }>;
+  crumbs: ReadonlyArray<ArticleCrumb>;
+  className?: string;
+}) {
+  return <ArticleCrumbs crumbs={crumbs} className={className} />;
+}
+
+export function SeoDocLayout({
+  as: Tag = "div",
+  crumbs,
+  title,
+  description,
+  afterTitle,
+  children,
+}: {
+  as?: "div" | "article";
+  crumbs: ReadonlyArray<ArticleCrumb>;
+  title: string;
+  description?: string;
+  afterTitle?: ReactNode;
+  children: ReactNode;
 }) {
   return (
-    <nav
-      aria-label="Breadcrumb"
-      className="mb-6 flex flex-wrap items-center gap-2 text-xs font-semibold text-[var(--md-sys-color-on-surface-variant)]"
-    >
-      {crumbs.map((crumb, index) => (
-        <span key={`${crumb.label}-${index}`} className="flex items-center gap-2">
-          {index > 0 ? (
-            <span className="font-normal text-[var(--md-sys-color-outline)]" aria-hidden="true">
-              /
-            </span>
-          ) : null}
-          {crumb.href ? (
-            <Link href={crumb.href} className="transition-colors hover:text-[var(--md-sys-color-on-surface)]">
-              {crumb.label}
-            </Link>
-          ) : (
-            <span className="text-[var(--md-sys-color-on-surface)]">{crumb.label}</span>
-          )}
-        </span>
+    <div className="relative">
+      <HeroGridBackdrop height="h-[60vh]" />
+      <Tag className="omentir-secondary-width relative z-10 min-w-0 pb-16 pt-28 md:pb-24 md:pt-32">
+        <SeoHeroCrumbs crumbs={crumbs} className="mb-8" />
+        <h1
+          style={{ fontFamily: "var(--font-varta)" }}
+          className="max-w-2xl text-2xl font-semibold leading-snug tracking-tight text-[var(--md-sys-color-on-surface)] md:text-3xl md:leading-snug"
+        >
+          {title}
+        </h1>
+        {afterTitle}
+        {description ? (
+          <p className="mt-12 max-w-2xl text-base font-medium leading-8 text-[var(--md-sys-color-on-surface)] md:mt-16">
+            {description}
+          </p>
+        ) : null}
+        <div className={description ? "mt-16 space-y-14 md:mt-20" : "mt-12 space-y-12 md:mt-16"}>
+          {children}
+        </div>
+      </Tag>
+    </div>
+  );
+}
+
+export function SeoTitleList({
+  items,
+}: {
+  items: ReadonlyArray<{ href: string; label: string }>;
+}) {
+  return (
+    <ul className="divide-y divide-[var(--md-sys-color-outline-variant)] border-b border-[var(--md-sys-color-outline-variant)]">
+      {items.map((item) => (
+        <li key={item.href}>
+          <Link
+            href={item.href}
+            className="group block py-4 text-[var(--md-sys-color-on-surface)] transition-colors hover:text-[var(--md-sys-color-primary)]"
+          >
+            {item.label}
+          </Link>
+        </li>
       ))}
-    </nav>
+    </ul>
   );
 }
 
@@ -118,7 +167,7 @@ export function SeoHero({
   title: string;
   description?: string;
   actions?: ReactNode;
-  crumbs?: ReadonlyArray<{ label: string; href?: string }>;
+  crumbs?: ReadonlyArray<ArticleCrumb>;
   /** Optional hero media. Laptop and up place it on the right. */
   media?: ReactNode;
   /** Full-viewport marketing hero. Comparison and integration pages use this. */
@@ -158,7 +207,7 @@ export function SeoHero({
               </p>
             ) : null}
             {actions ? (
-              <div className="mt-8 flex w-full flex-col gap-3 sm:w-auto sm:flex-row">{actions}</div>
+              <div className="m3-btn-pair mt-8 flex w-full flex-col gap-3 sm:w-auto sm:flex-row">{actions}</div>
             ) : null}
           </div>
           {media ? <div className="hidden min-w-0 lg:mt-16 lg:block">{media}</div> : null}
@@ -192,7 +241,7 @@ export function SeoHero({
               </p>
             ) : null}
             {actions ? (
-              <div className="mt-8 flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+              <div className="m3-btn-pair mt-8 flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
                 {actions}
               </div>
             ) : null}
@@ -319,7 +368,7 @@ export function RelatedLinks({ links }: { links: SeoRelatedLink[] }) {
     <section id="related">
       <h2
         style={{ fontFamily: "var(--font-varta)" }}
-        className="border-b border-[var(--md-sys-color-outline-variant)] pb-2 text-2xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)]"
+        className="border-b border-[var(--md-sys-color-outline-variant)] pb-2 text-xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)]"
       >
         Related
       </h2>
@@ -343,17 +392,33 @@ export function RelatedLinks({ links }: { links: SeoRelatedLink[] }) {
   );
 }
 
-export function FaqBlock({ page }: { page: SeoContentPage }) {
+export function FaqBlock({
+  page,
+  branded = false,
+}: {
+  page: SeoContentPage;
+  branded?: boolean;
+}) {
   if (page.faqItems.length === 0) return null;
   return (
     <section id="faq">
       <h2
         style={{ fontFamily: "var(--font-varta)" }}
-        className="border-b border-[var(--md-sys-color-outline-variant)] pb-2 text-2xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)]"
+        className={
+          branded
+            ? "text-[1.75rem] font-semibold leading-tight tracking-tight text-[var(--md-sys-color-on-surface)] md:text-3xl"
+            : "border-b border-[var(--md-sys-color-outline-variant)] pb-2 text-2xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)]"
+        }
       >
-        Frequently asked questions
+        {branded ? (
+          <>
+            Frequently asked <span className="text-gradient-brand">questions</span>
+          </>
+        ) : (
+          "Frequently asked questions"
+        )}
       </h2>
-      <div className="mt-2">
+      <div className={branded ? "mt-6 md:mt-8" : "mt-2"}>
         <FaqAccordion
           items={page.faqItems.map((item) => {
             const seen = new Set<string>();
@@ -434,13 +499,44 @@ export function CtaBlock({
   page,
   title,
   body,
+  boxed = false,
 }: {
   page: SeoContentPage;
   title: string;
   body: string;
+  boxed?: boolean;
 }) {
   const primary = page.primaryCta ?? { label: "Start with Omentir", href: "/signup" };
   const secondary = page.secondaryCta ?? { label: "See pricing", href: "/pricing" };
+  if (boxed) {
+    return (
+      <section
+        aria-label="Get started"
+        className="rounded-3xl border-2 border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface-container)] px-6 py-8 text-center md:px-10 md:py-10"
+      >
+        <p className="text-lg font-semibold tracking-tight text-[var(--md-sys-color-on-surface)]">
+          {title}
+        </p>
+        <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)]">
+          {body}
+        </p>
+        <div className="m3-btn-pair mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <Link
+            href={primary.href}
+            className="m3-btn m3-btn-filled m3-btn--hero w-full cursor-pointer sm:w-auto"
+          >
+            {primary.label}
+          </Link>
+          <Link
+            href={secondary.href}
+            className="m3-btn m3-btn-outlined m3-btn--hero w-full sm:w-auto"
+          >
+            {secondary.label}
+          </Link>
+        </div>
+      </section>
+    );
+  }
   return (
     <section
       aria-label="Get started"
@@ -455,13 +551,13 @@ export function CtaBlock({
       <p className="mt-3 max-w-xl text-base leading-7 text-[var(--md-sys-color-on-surface-variant)]">
         {body}
       </p>
-      <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-        <Link href={primary.href} className="m3-btn m3-btn-filled w-full sm:w-auto">
+      <div className="m3-btn-pair mt-6 flex flex-col gap-3 sm:flex-row">
+        <Link href={primary.href} className="m3-btn m3-btn-filled m3-btn--hero w-full sm:w-auto">
           {primary.label}
         </Link>
         <Link
           href={secondary.href}
-          className="m3-btn m3-btn-outlined h-12 w-full px-6 text-sm font-semibold sm:w-auto"
+          className="m3-btn m3-btn-outlined m3-btn--hero w-full sm:w-auto"
         >
           {secondary.label}
         </Link>

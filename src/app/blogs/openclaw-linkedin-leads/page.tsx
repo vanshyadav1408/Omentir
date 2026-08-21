@@ -294,8 +294,8 @@ export default function BlogPost() {
       </h2>
       <p>
         OpenClaw is the operator interface. Omentir can be the sales system it operates. Through the{" "}
-        <Link href="/for-agents" className="text-blue-600 hover:underline">
-          Omentir agent workflow
+        <Link href="/integrations/openclaw" className="text-blue-600 hover:underline">
+          OpenClaw integration
         </Link>
         , an AI agent can read workspace context, configure ICP discovery agents, search and rank discovered leads, retrieve exact lead records, inspect activity, and work with existing reply conversations.
       </p>

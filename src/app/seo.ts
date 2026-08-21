@@ -396,17 +396,17 @@ export function createBlogJsonLd({
 }
 
 export function createBlogCollectionJsonLd() {
-  // Only released posts: the ItemList is a claim about what the library
-  // currently contains, so it has to match what /blogs actually shows.
+  // Only released posts: the ItemList is a claim about what /blogs
+  // currently contains, so it has to match what the index actually shows.
   const publishedBlogs = liveBlogs();
 
   return {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
     "@id": `${siteUrl}/blogs#collection`,
-    name: "The Omentir Library",
+    name: "LinkedIn outreach blogs",
     description:
-      "Tactical B2B outreach guides, LinkedIn sales playbooks, AI SDR comparisons, and outbound automation resources from Omentir.",
+      "Guides, templates, and playbooks for LinkedIn outreach, outbound sequences, and booking demos.",
     url: `${siteUrl}/blogs`,
     inLanguage: "en-US",
     isPartOf: {

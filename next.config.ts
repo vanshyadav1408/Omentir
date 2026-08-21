@@ -12,6 +12,7 @@ const privateIndexingRoutes = [
   "/connect/:path*",
   "/contact/:path*",
   "/dashboard/:path*",
+  "/overview/:path*",
   "/leads/:path*",
   "/login/:path*",
   "/logout/:path*",
@@ -60,6 +61,14 @@ const nextConfig: NextConfig = {
       { source: "/.well-known/oauth-protected-resource/:path*", destination: "/api/oauth/metadata/protected-resource" },
       { source: "/.well-known/oauth-authorization-server", destination: "/api/oauth/metadata/authorization-server" },
       { source: "/.well-known/oauth-authorization-server/:path*", destination: "/api/oauth/metadata/authorization-server" },
+    ];
+  },
+  async redirects() {
+    return [
+      { source: "/dashboard", destination: "/overview", permanent: true },
+      { source: "/dashboard/:path*", destination: "/overview/:path*", permanent: true },
+      { source: "/for-agents", destination: "/features/agent-api-and-mcp", permanent: true },
+      { source: "/mcp-server", destination: "/integrations/mcp", permanent: true },
     ];
   },
   async headers() {

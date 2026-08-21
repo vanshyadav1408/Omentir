@@ -22,7 +22,7 @@ export const dynamic = "force-dynamic";
 
 function revalidateWorkspaceDataPages() {
   revalidatePath("/actions");
-  revalidatePath("/dashboard");
+    revalidatePath("/overview");
   revalidatePath("/agents");
   revalidatePath("/campaigns");
   revalidatePath("/leads");

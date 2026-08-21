@@ -52,6 +52,10 @@ const jobs: Job[] = [
     idea: "A night-blue accent circle for a chat client, a cream workspace node, a navy network node, connected in a straight row.",
   },
   {
+    out: "public/seo/integrations/grok-bot-body.png",
+    idea: "A persistent computer rectangle on the left, a workspace node in the middle, a professional-network node on the right. Labels if any: Bot, Omentir, LinkedIn. The computer does not touch the network node directly.",
+  },
+  {
     out: "public/seo/integrations/openclaw-body.png",
     idea: "Three small nodes feeding into one conductor node, then one line out to a network node. Orchestrator, not a mascot.",
   },

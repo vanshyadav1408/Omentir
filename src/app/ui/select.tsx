@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { M3NotchedOutline } from "./text-field";
 
 export type SelectOption = {
   value: string;
@@ -108,27 +107,23 @@ export function SelectField({
   const selectedLabel =
     normalizedOptions.find((o) => o.value === selected)?.label ?? selected;
   const selectedOption = normalizedOptions.find((o) => o.value === selected);
-
-  const floated = isOpen || Boolean(selected);
-  const fieldLabel = label || placeholder_;
+  const hasLabel = Boolean(label);
   const originClass =
     menuPlacement === "top" ? "m3-menu--origin-bottom" : "m3-menu--origin-top";
 
   return (
     <div
-      className={`m3-text-field m3-text-field--outlined ${className || ""}`}
+      className={`m3-text-field m3-text-field--outlined ${hasLabel ? "" : "m3-text-field--no-label"} ${className || ""}`}
       data-focused={isOpen ? "true" : "false"}
-      data-floated={floated ? "true" : "false"}
       data-error="false"
       data-disabled="false"
       ref={ref}
     >
+      {hasLabel ? (
+        <span className="m3-text-field__label">{label}</span>
+      ) : null}
       <div className="m3-text-field__body">
-        <span className="m3-text-field__label pointer-events-none" aria-hidden="true">
-          {fieldLabel}
-        </span>
         <div className="m3-text-field__shell">
-          {/* Hidden input for form submissions */}
           {name ? (
             <input
               type="text"
@@ -143,9 +138,7 @@ export function SelectField({
           <button
             type="button"
             onClick={() => setIsOpen((v) => !v)}
-            className={`m3-text-field__input flex w-full items-center justify-between gap-2 !h-[var(--md-sys-text-field-height)] !border-0 !bg-transparent !shadow-none text-left focus:outline-none ${
-              selected ? "text-[var(--md-sys-color-field-text)]" : "text-transparent"
-            }`}
+            className="m3-text-field__input flex w-full items-center justify-between gap-2 !h-[var(--md-sys-text-field-height)] !border-0 !bg-transparent !shadow-none text-left focus:outline-none"
             aria-haspopup="listbox"
             aria-expanded={isOpen}
           >
@@ -154,8 +147,14 @@ export function SelectField({
                 <OptionAvatar option={selectedOption} />
               ) : null}
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-[16px] leading-6">
-                  {selected ? selectedLabel : "\u00a0"}
+                <span
+                  className={`block truncate text-[14px] leading-5 ${
+                    selected
+                      ? "text-[var(--md-sys-color-field-text)]"
+                      : "text-[var(--md-sys-color-text-disabled)]"
+                  }`}
+                >
+                  {selected ? selectedLabel : placeholder_}
                 </span>
                 {selectedOption?.description ? (
                   <span className="mt-0.5 block truncate text-[11px] font-medium leading-4 text-[var(--md-sys-color-on-surface-variant)]">
@@ -167,8 +166,8 @@ export function SelectField({
             <svg
               className={`shrink-0 text-[var(--md-sys-color-on-surface-variant)] transition-transform ${isOpen ? "rotate-180" : ""}`}
               xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
+              width="16"
+              height="16"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -181,7 +180,6 @@ export function SelectField({
             </svg>
           </button>
         </div>
-        <M3NotchedOutline label={fieldLabel} />
       </div>
 
       {isOpen ? (

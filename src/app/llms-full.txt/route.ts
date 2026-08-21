@@ -4,10 +4,11 @@ import { liveBlogs } from "@/app/blogs/blog-data";
 import { ALL_COMPARISONS } from "@/app/comparisons/comparison-data";
 import { ALL_FEATURES } from "@/app/features/feature-data";
 import { ALL_GUIDES } from "@/app/guides/guide-data";
+import { ALL_HELP_PAGES } from "@/app/help/help-data";
 import { ALL_INTEGRATIONS } from "@/app/integrations/integration-data";
 import { ALL_USE_CASES } from "@/app/use-cases/use-case-data";
 import { liveSeoPages } from "@/app/seo-content/types";
-import { guidePageToMarkdown, seoPageToMarkdown } from "@/lib/public-page-markdown";
+import { guidePageToMarkdown, helpPageToMarkdown, seoPageToMarkdown } from "@/lib/public-page-markdown";
 import { defaultDescription, siteUrl } from "@/app/seo";
 
 export const revalidate = 86400;
@@ -49,6 +50,7 @@ ${blog.description}`
     .map((page) => seoPageToMarkdown("/integrations", page))
     .join("\n\n");
   const guides = ALL_GUIDES.map((page) => guidePageToMarkdown(page)).join("\n\n");
+  const help = ALL_HELP_PAGES.map((page) => helpPageToMarkdown(page)).join("\n\n");
 
   const body = `# Omentir
 
@@ -63,10 +65,10 @@ The product is open source under the MIT license: https://github.com/vanshyadav1
 ## How agents should use this site
 
 - Public marketing, legal, and blog pages may be read and cited.
-- Authenticated workspace data must go through MCP (${siteUrl}/api/agent/v1/mcp) or REST (${siteUrl}/api/agent/v1/*), never by scraping /dashboard, /leads, or /messages.
+- Authenticated workspace data must go through MCP (${siteUrl}/api/agent/v1/mcp) or REST (${siteUrl}/api/agent/v1/*), never by scraping /overview, /leads, or /messages.
 - Compact capability map: ${siteUrl}/agent.json
-- Human MCP setup: ${siteUrl}/mcp-server
-- Operator prompt: ${siteUrl}/for-agents
+- Human MCP setup: ${siteUrl}/integrations/mcp
+- Per-client setup: ${siteUrl}/integrations
 - Tool and guardrail guide: ${siteUrl}/agents.md
 - OpenAPI: ${siteUrl}/api/agent/v1/openapi.json
 - Canonical URL list: ${siteUrl}/sitemap.xml
@@ -106,6 +108,10 @@ ${integrations}
 ## Search guides
 
 ${guides}
+
+## Help
+
+${help}
 
 ## Blog library
 

@@ -44,7 +44,7 @@ export default async function GithubStarButton() {
           ? "Omentir on GitHub"
           : `Star Omentir on GitHub. ${stars} ${stars === 1 ? "star" : "stars"}.`
       }
-      className="m3-state-layer inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full border border-[var(--md-sys-color-outline-variant)] px-2.5 py-1.5 text-xs font-medium leading-none text-black transition-colors dark:text-[var(--md-sys-color-on-surface-variant)] dark:hover:text-[var(--md-sys-color-on-surface)] md:gap-2 md:px-3 md:py-2 md:text-sm"
+      className="m3-state-layer inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md border border-[var(--md-sys-color-outline-variant)] px-2.5 py-1.5 text-xs font-medium leading-none text-black transition-colors dark:text-[var(--md-sys-color-on-surface-variant)] dark:hover:text-[var(--md-sys-color-on-surface)] md:gap-2 md:px-3 md:py-2 md:text-sm"
     >
       <svg
         viewBox="0 0 16 16"

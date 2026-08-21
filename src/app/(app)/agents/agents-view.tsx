@@ -315,7 +315,7 @@ export default function AgentsView({
 
   const createAgentIcon = (
     <svg
-      className="h-4 w-4"
+      className="h-3.5 w-3.5"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -330,7 +330,7 @@ export default function AgentsView({
   );
 
   const mobileHeaderFabClass =
-    "inline-flex h-8 cursor-pointer items-center justify-center gap-1 rounded-full bg-[var(--md-sys-color-primary)] px-3 text-xs font-semibold text-[var(--md-sys-color-on-primary)] transition hover:brightness-[0.98]";
+    "m3-btn m3-btn-filled h-8 cursor-pointer px-2.5 text-xs";
 
   return (
     // Scroll lives on a full-width pane so the scrollbar sits at the right
@@ -367,7 +367,7 @@ export default function AgentsView({
       {/* Header — match Leads page metrics */}
       <div className="app-x hidden shrink-0 items-center justify-between gap-3 pt-6 md:flex">
         <div className="min-w-0">
-          <h1 className="text-2xl font-semibold leading-none tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-3xl">
+          <h1 className="text-2xl font-semibold leading-none tracking-tight text-[var(--md-sys-color-on-surface)]">
             AI Agents
           </h1>
         </div>
@@ -375,13 +375,13 @@ export default function AgentsView({
         {effectiveAtAgentLimit ? (
           <Link
             href="/agents/new"
-            className="m3-btn m3-btn-filled h-10 shrink-0 gap-1.5 px-4 text-sm"
+            className="m3-btn m3-btn-filled h-8 shrink-0 gap-1 px-2.5 text-xs"
           >
             {createAgentIcon}
             Create an agent
           </Link>
         ) : (
-          <NewAgentButton className="m3-btn m3-btn-filled h-10 shrink-0 cursor-pointer gap-1.5 px-4 text-sm">
+          <NewAgentButton className="m3-btn m3-btn-filled h-8 shrink-0 cursor-pointer gap-1 px-2.5 text-xs">
             {createAgentIcon}
             Create an agent
           </NewAgentButton>
@@ -411,9 +411,8 @@ export default function AgentsView({
               </div>
             </div>
             <Link
-              href="/connect"
-              style={{ fontFamily: "var(--font-varta)" }}
-              className="inline-flex h-9 w-full items-center justify-center gap-1 rounded-md bg-white/80 px-3 text-xs font-semibold text-zinc-950 transition hover:bg-white sm:w-auto"
+              href="/api/connect/linkedin"
+              className="m3-btn m3-btn-filled h-8 w-full px-2.5 text-xs sm:w-auto"
             >
               Connect LinkedIn
               <span aria-hidden>→</span>
@@ -427,7 +426,7 @@ export default function AgentsView({
             <span className="material-symbols-outlined text-3xl text-zinc-400">smart_toy</span>
             <h2 className="mt-3 text-sm font-semibold text-zinc-900">No agents yet</h2>
             <p className="mt-1 text-xs text-zinc-500">Create one to start finding leads.</p>
-            <NewAgentButton className="m3-btn m3-btn-filled mt-5 hidden h-10 shrink-0 cursor-pointer gap-1.5 px-4 text-sm md:inline-flex">
+            <NewAgentButton className="m3-btn m3-btn-filled mt-5 hidden h-8 shrink-0 cursor-pointer gap-1 px-2.5 text-xs md:inline-flex">
               {createAgentIcon}
               Create an agent
             </NewAgentButton>
@@ -470,15 +469,9 @@ export default function AgentsView({
                         aria-pressed={isActive}
                         disabled={togglePending}
                         onClick={() => toggleAgent(agent)}
-                        className={`relative h-4 w-8 shrink-0 rounded-full transition ${
-                          isActive ? "bg-emerald-500" : "bg-zinc-200"
-                        } ${togglePending ? "cursor-default opacity-60" : "cursor-pointer"}`}
+                        className="m3-switch rounded-full"
                       >
-                        <span
-                          className={`absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full bg-white shadow transition-[left] ${
-                            isActive ? "left-[14px]" : "left-0.5"
-                          }`}
-                        />
+                        <span className="m3-switch__thumb" />
                       </button>
 
                       <details className="relative">
@@ -587,24 +580,21 @@ export default function AgentsView({
                         </>
                       ) : null}
                     </p>
-                    <div className="flex w-full gap-2 sm:w-auto">
+                    <div className="flex w-full items-stretch gap-2 sm:w-auto">
                       <Link
                         href={`/agents/${agent.id}`}
-                        style={{ fontFamily: "var(--font-varta)" }}
-                        className="inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-md border border-zinc-200 bg-white px-4 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-50 sm:flex-none"
+                        className="m3-btn m3-btn-outlined box-border h-7 flex-1 px-2.5 text-xs leading-none sm:flex-none"
                       >
-                        <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                           <path d="M3 12h4l2-7 4 14 2-7h6" />
                         </svg>
-                        <span className="translate-y-px">View</span>
+                        View
                       </Link>
                       <Link
                         href={`/agents/new?id=${agent.id}`}
-                        style={{ fontFamily: "var(--font-varta)" }}
-                        className={`inline-flex h-9 w-full items-center justify-center gap-1 rounded-md ${PINK_BG} px-4 text-xs font-semibold text-white shadow-[0_1px_2px_rgba(15,23,42,0.06)] transition hover:brightness-[0.98] sm:w-auto`}
+                        className="m3-btn m3-btn-filled box-border h-7 flex-1 px-2.5 text-xs leading-none sm:flex-none"
                       >
-                        <span className="translate-y-px">Edit</span>
-                        <span aria-hidden className="translate-y-[1px]">›</span>
+                        Edit
                       </Link>
                     </div>
                   </div>

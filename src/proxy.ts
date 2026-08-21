@@ -7,7 +7,7 @@ import { isClerkSessionKeyMismatch } from "./lib/clerk-errors";
 import { isPublicMarketingPath, markdownRewritePath } from "./lib/public-marketing-path";
 
 const isProtectedRoute = createRouteMatcher([
-  "/dashboard(.*)", "/actions(.*)", "/activity(.*)", "/agents(.*)",
+  "/dashboard(.*)", "/overview(.*)", "/actions(.*)", "/activity(.*)", "/agents(.*)",
   "/api-keys(.*)", "/campaigns(.*)", "/contact(.*)", "/messages(.*)",
   "/leads(.*)", "/my-product(.*)", "/new-user-experience(.*)",
   "/onboarding(.*)", "/setup(.*)", "/settings(.*)",
@@ -15,10 +15,6 @@ const isProtectedRoute = createRouteMatcher([
 
 const CLERK_COOKIE_PREFIXES = ["__clerk", "clerk_", "__client"];
 const CLERK_COOKIE_NAMES = new Set(["__session"]);
-
-function isDevelopmentOnboardingReview(req: NextRequest) {
-  return process.env.NODE_ENV !== "production" && req.nextUrl.pathname === "/onboarding" && req.nextUrl.searchParams.get("review") === "1";
-}
 
 function clearClerkCookies(response: NextResponse, req: NextRequest) {
   for (const cookie of req.cookies.getAll()) {
@@ -35,7 +31,7 @@ const hostedMiddleware = clerkMiddleware(async (auth, req) => {
     if (req.method === "POST" && (req.nextUrl.pathname.startsWith("/login") || req.nextUrl.pathname.startsWith("/signup"))) {
       return NextResponse.redirect(req.nextUrl.clone(), { status: 303 });
     }
-    if (isProtectedRoute(req) && !isDevelopmentOnboardingReview(req)) {
+    if (isProtectedRoute(req)) {
       await auth.protect({ unauthenticatedUrl: new URL("/login", req.url).toString() });
     }
   } catch (error) {
@@ -47,6 +43,13 @@ const hostedMiddleware = clerkMiddleware(async (auth, req) => {
     throw error;
   }
 });
+
+const RETIRED_PUBLIC_REDIRECTS: Record<string, string> = {
+  "/for-agents": "/features/agent-api-and-mcp",
+  "/mcp-server": "/integrations/mcp",
+  "/for-agents.md": "/features/agent-api-and-mcp.md",
+  "/mcp-server.md": "/integrations/mcp.md",
+};
 
 const localPublicPaths = new Set(["/login", "/logout", "/api/health", "/api/local-auth/login"]);
 const localServicePrefixes = [
@@ -70,7 +73,7 @@ const localServicePrefixes = [
 
 async function localMiddleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
-  if (path === "/") return NextResponse.redirect(new URL("/dashboard", request.url));
+  if (path === "/") return NextResponse.redirect(new URL("/overview", request.url));
   if (localPublicPaths.has(path) || localServicePrefixes.some((prefix) => path.startsWith(prefix))) {
     return NextResponse.next();
   }
@@ -106,18 +109,25 @@ async function localMiddleware(request: NextRequest) {
 export default function proxy(request: NextRequest, event: NextFetchEvent) {
   if (isLocalMode()) return localMiddleware(request);
 
+  const retiredDestination = RETIRED_PUBLIC_REDIRECTS[request.nextUrl.pathname];
+  if (retiredDestination) {
+    const destination = request.nextUrl.clone();
+    destination.pathname = retiredDestination;
+    return NextResponse.redirect(destination, 308);
+  }
+
   // Public marketing pages are static and do not need server-side session
   // state. Keeping them outside Clerk middleware lets the CDN cache crawlable
   // HTML instead of marking every anonymous response private and no-cache.
   // `{path}.md` is the markdown twin used by AI agents; rewrite it to the
-  // baked renderer without sending `/dashboard.md` through auth.
+  // baked renderer without sending `/overview.md` through auth.
   const markdownDestination = markdownRewritePath(request.nextUrl.pathname);
   if (markdownDestination) {
     const destination = request.nextUrl.clone();
     destination.pathname = markdownDestination;
     return NextResponse.rewrite(destination);
   }
-  // `/dashboard.md` would otherwise match Clerk's `/dashboard(.*)` matcher.
+  // `/overview.md` would otherwise match Clerk's `/overview(.*)` matcher.
   // Private markdown twins do not exist; return 404 instead of a login wall.
   if (
     request.nextUrl.pathname.endsWith(".md") &&

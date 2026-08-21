@@ -3,42 +3,11 @@ import type { ReactNode } from "react";
 export default function HeroCopy({ children }: { children: ReactNode }) {
   return (
     <>
-      <style>
-        {`
-          .hero-guarantee {
-            color: var(--md-sys-color-primary);
-          }
-          .hero-guarantee-title {
-            font-size: clamp(1.3rem, 6.7vw, 2.15rem);
-            line-height: 1.15;
-          }
-          @media (min-width: 768px) {
-            .hero-guarantee-title {
-              font-size: 2.9rem;
-            }
-            .hero-guarantee-title > span:first-child {
-              white-space: nowrap;
-            }
-          }
-          @media (min-width: 1024px) {
-            .hero-guarantee-title {
-              font-size: 3.75rem;
-            }
-          }
-        `}
-      </style>
-      <h1 className="hero-display-sentence hero-guarantee-title hero-enter w-full max-w-4xl text-[var(--md-sys-color-on-surface)]">
-        <span className="block whitespace-nowrap">
-          You get <span className="hero-guarantee">min. 3 bookings</span>{" "}
-        </span>
-        <span className="block whitespace-nowrap">
-          <span className="hero-guarantee">per week</span> or you pay nothing.
-        </span>
+      <h1 className="hero-home-title hero-enter w-full text-[var(--md-sys-color-on-surface)]">
+        Omentir will find your customers
+        <br />
+        or you pay nothing.
       </h1>
-      <p className="hero-lede hero-enter hero-enter-delay-1 mt-[1.2rem] max-w-2xl text-xs leading-5 text-[var(--md-sys-color-on-surface-variant)] md:mt-6 md:text-sm">
-        Omentir helps solo founders, agencies, and sales teams find likely buyers,
-        send relevant LinkedIn outreach, and turn interested replies into meetings.
-      </p>
       {children}
     </>
   );

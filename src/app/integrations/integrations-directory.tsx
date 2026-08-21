@@ -7,6 +7,7 @@ import {
   MarketingTr,
 } from "../marketing-table";
 import type { SeoCatalogEntry } from "../seo-content/types";
+import { SeoTitleList } from "../seo-content/shared";
 import { integrationConnect } from "./integration-connect";
 import IntegrationLogo, { integrationName } from "./integration-logo";
 
@@ -18,35 +19,24 @@ export default function IntegrationsDirectory({
   return (
     <div className="space-y-14">
       <section aria-label="Integration list">
-        <ul>
-          {pages.map((page) => (
-            <li key={page.slug}>
-              <Link
-                href={`/integrations/${page.slug}`}
-                className="group flex items-start gap-4 py-5 sm:py-6"
-              >
-                <IntegrationLogo slug={page.slug} />
-                <div className="min-w-0">
-                  <h2
-                    style={{ fontFamily: "var(--font-varta)" }}
-                    className="text-xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] transition-colors group-hover:text-[var(--md-sys-color-primary)]"
-                  >
-                    {page.title}
-                  </h2>
-                  <p className="mt-1 max-w-3xl text-sm leading-7 text-[var(--md-sys-color-on-surface-variant)] sm:text-base">
-                    {page.summary}
-                  </p>
-                </div>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <h2
+          style={{ fontFamily: "var(--font-varta)" }}
+          className="border-b border-[var(--md-sys-color-outline-variant)] pb-2 text-xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)]"
+        >
+          Integrations
+        </h2>
+        <SeoTitleList
+          items={pages.map((page) => ({
+            href: `/integrations/${page.slug}`,
+            label: page.title,
+          }))}
+        />
       </section>
 
       <section aria-label="Connect matrix">
         <h2
           style={{ fontFamily: "var(--font-varta)" }}
-          className="border-b border-[var(--md-sys-color-outline-variant)] pb-2 text-2xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)]"
+          className="border-b border-[var(--md-sys-color-outline-variant)] pb-2 text-xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)]"
         >
           Connect paths
         </h2>

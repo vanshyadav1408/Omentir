@@ -2,7 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { Group, LeadPreview } from "@/lib/server/types";
-import { deleteGroupAction } from "@/app/actions";
+import {
+  deleteGroupAction,
+  listScheduledActionsAction,
+  runScheduledActionNowAction,
+  stopLeadOutreachAction,
+} from "@/app/actions";
 import { TextField } from "@/app/ui/text-field";
 import { useSidebarResource } from "@/app/use-sidebar-resource";
 import { ContentReveal, LeadsTableSkeleton, Skeleton } from "@/app/app-skeletons";
@@ -16,6 +21,8 @@ import {
 import MobileHeaderPortal from "@/app/mobile-header-portal";
 import { useWorkspaceTimeZone } from "@/app/workspace-time-zone";
 import { zonedDayKey } from "@/lib/time-zone";
+import type { ScheduledAction } from "@/lib/server/scheduled-actions";
+import { ActionDetails, resultMessage } from "@/app/(app)/actions/action-details";
 
 type LeadsViewProps = {
   groups: Group[];
@@ -31,29 +38,6 @@ function initials(name: string) {
     .toUpperCase();
 }
 
-function timeAgo(iso?: string) {
-  if (!iso) return "-";
-  const diff = Date.now() - new Date(iso).getTime();
-  const m = Math.floor(diff / 60000);
-  if (m < 1) return "just now";
-  if (m < 60) return `${m}m ago`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
-  const d = Math.floor(h / 24);
-  return `${d}d ago`;
-}
-
-function FitScore({ score }: { score: number }) {
-  return (
-    <span
-      className="text-[14px] font-semibold leading-none tabular-nums text-zinc-950"
-      aria-label={`Fit score ${score}`}
-    >
-      {score}
-    </span>
-  );
-}
-
 function LinkedInProfileLink({ href }: { href: string }) {
   return (
     <a
@@ -61,22 +45,12 @@ function LinkedInProfileLink({ href }: { href: string }) {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Open LinkedIn profile"
+      onClick={(event) => event.stopPropagation()}
       className="inline-grid h-[10px] w-[10px] shrink-0 -translate-y-[2px] place-items-center rounded-[2px] transition-opacity hover:opacity-80"
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/linkedin-in-mark.svg" alt="" className="h-full w-full object-contain" />
     </a>
-  );
-}
-
-function SortIcon() {
-  return (
-    <svg className="ml-1 inline h-3 w-3 text-zinc-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="7 4 7 20" />
-      <polyline points="3 8 7 4 11 8" />
-      <polyline points="17 20 17 4" />
-      <polyline points="13 16 17 20 21 16" />
-    </svg>
   );
 }
 
@@ -91,6 +65,97 @@ const OUTREACH_STATUS_LABELS: Record<LeadPreview["outreachStatus"], string> = {
   declined: "Declined",
   stopped: "Stopped",
 };
+
+function outreachEmptyCopy(status: LeadPreview["outreachStatus"]) {
+  if (status === "replied") return "They replied. Continue the thread in Messages.";
+  if (status === "stopped") return "Outreach is stopped.";
+  if (status === "declined") return "They declined the invite.";
+  if (status === "messaged") return "No more sends are scheduled.";
+  if (status === "invited") return "Connection request sent. No follow-up is scheduled.";
+  if (status === "connected") return "Connected. No message is scheduled.";
+  return "No outreach is scheduled yet.";
+}
+
+function LeadContact({ lead }: { lead: LeadPreview }) {
+  return (
+    <div className="flex min-w-0 items-center gap-3">
+      {lead.avatarUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={lead.avatarUrl} alt="" className="h-10 w-10 shrink-0 rounded-full object-cover" />
+      ) : (
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#ba3871] text-[12px] font-semibold text-white">
+          {initials(lead.name)}
+        </span>
+      )}
+      <div className="min-w-0">
+        <div className="flex min-w-0 items-end gap-0.5">
+          {lead.linkedInUrl ? (
+            <a
+              href={lead.linkedInUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(event) => event.stopPropagation()}
+              className="truncate text-[13px] font-semibold leading-none text-[#0a66c2] hover:underline"
+            >
+              {lead.name}
+            </a>
+          ) : (
+            <span className="truncate text-[13px] font-semibold leading-none text-zinc-950">{lead.name}</span>
+          )}
+          {lead.linkedInUrl ? <LinkedInProfileLink href={lead.linkedInUrl} /> : null}
+        </div>
+        <div className="mt-1 truncate text-[12px] font-medium text-zinc-800">{lead.title || "-"}</div>
+      </div>
+    </div>
+  );
+}
+
+function LeadSignal({
+  lead,
+  groupName,
+}: {
+  lead: LeadPreview;
+  groupName?: string;
+}) {
+  const signalKeyword = lead.signalText || (groupName ? `"${groupName.toLowerCase()}"` : "");
+  return (
+    <div className="min-w-0 text-[12px] font-medium text-zinc-800">
+      <div>
+        {lead.leadReason || "Engaged with a LinkedIn post"}
+        {lead.signalUrl || lead.engagementContext?.postUrl ? (
+          <>
+            {" · "}
+            <a
+              href={lead.signalUrl || lead.engagementContext?.postUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(event) => event.stopPropagation()}
+              className="text-[#0a66c2] underline"
+            >
+              View post
+            </a>
+          </>
+        ) : null}
+      </div>
+      {lead.engagementContext?.postText ? (
+        <div className="line-clamp-2 text-[11px] font-medium text-zinc-700">
+          <span className="font-bold text-zinc-800">Post:</span>{" "}
+          {lead.engagementContext.postText}
+        </div>
+      ) : null}
+      {lead.engagementContext?.commentText ? (
+        <div className="line-clamp-2 text-[11px] font-medium text-zinc-700">
+          <span className="font-bold text-zinc-800">Their comment:</span>{" "}
+          {lead.engagementContext.commentText}
+        </div>
+      ) : !lead.engagementContext?.postText && signalKeyword ? (
+        <div className="line-clamp-2 whitespace-pre-wrap text-[11px] font-medium text-zinc-700">
+          <span className="font-bold text-zinc-800">Signal:</span> {signalKeyword}
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 function csvCell(value: string) {
   // Prefix cells that Excel/Sheets would evaluate as formulas.
@@ -150,8 +215,6 @@ function downloadCsv(filename: string, csv: string) {
 }
 
 const PER_PAGE_OPTIONS = [25, 50, 100];
-const TABLE_COLUMNS =
-  "grid-cols-[40px_minmax(300px,1.45fr)_minmax(340px,2fr)_120px_120px]";
 const selectLeadsData = (data: Record<string, unknown>) => ({
   groups: data.groups as Group[] || [],
   leads: data.leads as LeadPreview[] || [],
@@ -171,7 +234,6 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
   const [perPage, setPerPage] = useState<number>(100);
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [sortByScore, setSortByScore] = useState<"none" | "asc" | "desc">("desc");
   const [mobileGroupMenu, setMobileGroupMenu] = useState<Group | null>(null);
   const [desktopGroupMenu, setDesktopGroupMenu] = useState<{
     groupId: string;
@@ -181,8 +243,110 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
   const [deleteGroup, setDeleteGroup] = useState<Group | null>(null);
   const [exportGroup, setExportGroup] = useState<Group | null>(null);
   const [deletedGroupIds, setDeletedGroupIds] = useState<Set<string>>(new Set());
+  const [openLeadId, setOpenLeadId] = useState("");
+  const [openActionId, setOpenActionId] = useState("");
+  const [scheduledActions, setScheduledActions] = useState<ScheduledAction[] | undefined>(undefined);
+  const [scheduledLoading, setScheduledLoading] = useState(false);
+  const [scheduledError, setScheduledError] = useState("");
+  const [confirmingId, setConfirmingId] = useState("");
+  const [confirmingStopLeadId, setConfirmingStopLeadId] = useState("");
+  const [pendingId, setPendingId] = useState("");
+  const [feedback, setFeedback] = useState<Record<string, { ok: boolean; text: string }>>({});
+  const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false);
   const { showError, showAgentStarted } = useToast();
-  useBodyScrollLock(Boolean(mobileGroupMenu || deleteGroup || exportGroup));
+  useBodyScrollLock(Boolean(mobileGroupMenu || deleteGroup || exportGroup || mobilePreviewOpen));
+
+  const actionsForOpenLead = useMemo(
+    () => (scheduledActions || []).filter((action) => action.lead?.id === openLeadId).sort((a, b) => a.at.localeCompare(b.at)),
+    [scheduledActions, openLeadId],
+  );
+  const openAction = actionsForOpenLead.find((action) => action.id === openActionId) || actionsForOpenLead[0];
+
+  async function loadScheduledActions() {
+    setScheduledLoading(true);
+    setScheduledError("");
+    try {
+      const items = await listScheduledActionsAction();
+      setScheduledActions(items);
+      return items;
+    } catch (error) {
+      setScheduledError(userFacingError(error, "Outreach details could not be loaded."));
+      return [];
+    } finally {
+      setScheduledLoading(false);
+    }
+  }
+
+  function selectLead(leadId: string) {
+    setConfirmingId("");
+    setConfirmingStopLeadId("");
+    setOpenLeadId(leadId);
+    setOpenActionId("");
+    if (typeof window !== "undefined" && window.matchMedia("(max-width: 767.98px)").matches) {
+      setMobilePreviewOpen(true);
+    }
+    if (scheduledActions === undefined && !scheduledLoading) {
+      void loadScheduledActions();
+    }
+  }
+
+  async function runNow(action: ScheduledAction) {
+    setPendingId(action.id);
+    setFeedback((current) => {
+      const next = { ...current };
+      delete next[action.id];
+      return next;
+    });
+    const formData = new FormData();
+    formData.set("enrollmentId", action.id);
+    try {
+      const { result } = await runScheduledActionNowAction(formData);
+      setFeedback((current) => ({ ...current, [action.id]: resultMessage(result, action.kind) }));
+      setConfirmingId("");
+      await loadScheduledActions();
+      leadsResource.reload();
+    } catch (error) {
+      setFeedback((current) => ({
+        ...current,
+        [action.id]: { ok: false, text: error instanceof Error ? error.message : "The action could not be sent." },
+      }));
+    } finally {
+      setPendingId("");
+    }
+  }
+
+  async function stopOutreach(action: ScheduledAction) {
+    const leadId = action.lead?.id;
+    if (!leadId) return;
+    setPendingId(action.id);
+    setFeedback((current) => {
+      const next = { ...current };
+      delete next[action.id];
+      return next;
+    });
+    const formData = new FormData();
+    formData.set("leadId", leadId);
+    try {
+      await stopLeadOutreachAction(formData);
+      setConfirmingStopLeadId("");
+      await loadScheduledActions();
+      leadsResource.reload();
+    } catch (error) {
+      setFeedback((current) => ({
+        ...current,
+        [action.id]: { ok: false, text: error instanceof Error ? error.message : "Outreach could not be stopped." },
+      }));
+    } finally {
+      setPendingId("");
+    }
+  }
+
+  useEffect(() => {
+    if (isInitialLoading) return;
+    if (scheduledActions === undefined && !scheduledLoading) {
+      void loadScheduledActions();
+    }
+  }, [isInitialLoading]);
 
   // Leads-only agents land here after launch. Show the same started card.
   useEffect(() => {
@@ -215,13 +379,9 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
           lead.title.toLowerCase().includes(q),
       );
     }
-    if (sortByScore === "desc") {
-      next = [...next].sort((a, b) => (b.fitScore || 0) - (a.fitScore || 0));
-    } else if (sortByScore === "asc") {
-      next = [...next].sort((a, b) => (a.fitScore || 0) - (b.fitScore || 0));
-    }
+    next = [...next].sort((a, b) => (b.fitScore || 0) - (a.fitScore || 0));
     return next;
-  }, [loadedLeads, loadedGroups, deletedGroupIds, search, selectedGroupId, sortByScore]);
+  }, [loadedLeads, loadedGroups, deletedGroupIds, search, selectedGroupId]);
 
   const total = filtered.length;
   const totalPages = Math.max(1, Math.ceil(total / perPage));
@@ -229,6 +389,96 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
   const start = (currentPage - 1) * perPage;
   const end = Math.min(start + perPage, total);
   const pageRows = filtered.slice(start, end);
+  const openLead = pageRows.find((lead) => lead.id === openLeadId) ?? null;
+  const pageLeadKey = pageRows.map((lead) => lead.id).join(",");
+
+  useEffect(() => {
+    if (!pageLeadKey) {
+      setOpenLeadId("");
+      setOpenActionId("");
+      return;
+    }
+    const ids = pageLeadKey.split(",");
+    setOpenLeadId((current) => (ids.includes(current) ? current : ids[0]));
+  }, [pageLeadKey]);
+
+  function outreachPreview(onClose?: () => void) {
+    if (!openLead) {
+      return (
+        <div className="grid h-full place-items-center p-6 text-center">
+          <p className="text-xs text-zinc-500">Select a lead to preview outreach.</p>
+        </div>
+      );
+    }
+    const group = loadedGroups.find((item) => openLead.groupIds.includes(item.id));
+    if (scheduledLoading && scheduledActions === undefined) {
+      return (
+        <div className="grid h-full place-items-center p-6 text-center">
+          <p className="text-xs text-zinc-500">Loading outreach…</p>
+        </div>
+      );
+    }
+    if (scheduledError) {
+      return (
+        <div className="grid h-full place-items-center p-6 text-center">
+          <p className="text-xs text-amber-800">{scheduledError}</p>
+        </div>
+      );
+    }
+    if (openAction) {
+      return (
+        <ActionDetails
+          bare
+          hideCompany
+          showTimeline
+          action={openAction}
+          siblings={actionsForOpenLead}
+          onSelectSibling={(action) => setOpenActionId(action.id)}
+          timeZone={timeZone}
+          pending={pendingId === openAction.id}
+          confirming={confirmingId === openAction.id}
+          confirmingStop={confirmingStopLeadId === openAction.lead?.id}
+          feedback={feedback[openAction.id]}
+          onConfirm={() => {
+            setConfirmingStopLeadId("");
+            setConfirmingId(openAction.id);
+          }}
+          onCancel={() => setConfirmingId("")}
+          onRun={() => runNow(openAction)}
+          onConfirmStop={() => {
+            setConfirmingId("");
+            setConfirmingStopLeadId(openAction.lead?.id || "");
+          }}
+          onCancelStop={() => setConfirmingStopLeadId("")}
+          onStop={() => stopOutreach(openAction)}
+          onClose={onClose}
+          intro={<LeadSignal lead={openLead} groupName={group?.name} />}
+        />
+      );
+    }
+    return (
+      <div className="relative grid h-full place-items-center p-6 text-center">
+        {onClose ? (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close outreach preview"
+            className="absolute right-3 top-3 grid h-8 w-8 cursor-pointer place-items-center text-zinc-500 hover:text-zinc-900"
+          >
+            <span className="material-symbols-outlined ms-size-20" aria-hidden="true">close</span>
+          </button>
+        ) : null}
+        <div>
+          <span className="material-symbols-outlined text-3xl text-white" aria-hidden="true">
+            chat_bubble
+          </span>
+          <p className="mt-4 text-sm font-medium text-zinc-500">
+            {outreachEmptyCopy(openLead.outreachStatus)}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   function toggleSelected(id: string) {
     const next = new Set(selected);
@@ -307,13 +557,13 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
       {/* Header */}
       <div className="hidden shrink-0 items-center justify-between gap-3 pt-6 md:flex">
         <div className="min-w-0">
-          <h1 className="text-2xl font-semibold leading-none tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-3xl">
+          <h1 className="text-2xl font-semibold leading-none tracking-tight text-[var(--md-sys-color-on-surface)]">
             Leads
           </h1>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <NewAgentButton className="m3-btn m3-btn-filled h-10 shrink-0 cursor-pointer gap-1.5 px-4 text-sm">
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <NewAgentButton className="m3-btn m3-btn-filled h-8 shrink-0 cursor-pointer gap-1 px-2.5 text-xs">
+            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
               <polyline points="7 10 12 15 17 10" />
               <line x1="12" y1="15" x2="12" y2="3" />
@@ -331,7 +581,7 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
               setPage(1);
             }}
             leadingIcon={
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <circle cx="11" cy="11" r="8" />
                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
               </svg>
@@ -355,7 +605,7 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
                 setPage(1);
               }}
               leadingIcon={
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <circle cx="11" cy="11" r="8" />
                   <line x1="21" y1="21" x2="16.65" y2="16.65" />
                 </svg>
@@ -468,319 +718,143 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
         {isInitialLoading ? (
           <LeadsTableSkeleton />
         ) : (
-          <ContentReveal key={selectedGroupId} className="m3-lateral-panel flex min-h-0 flex-1 flex-col">
-        <div className="min-h-0 flex-1 overflow-y-auto md:hidden">
-          {pageRows.length === 0 ? (
-            <div className="grid h-full place-items-center p-6 text-center text-[12px] font-medium text-zinc-700">
-              {search ? (
-                "No leads match your search."
-              ) : (
-                <div>
-                  <span className="material-symbols-outlined text-3xl text-zinc-400">person_search</span>
-                  <h2 className="mt-3 text-sm font-semibold text-zinc-900">No leads yet</h2>
-                  <p className="mt-1 text-xs font-normal text-zinc-500">Leads your agents find will appear here.</p>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="m3-table-grid">
-              {pageRows.map((lead) => {
-                const group = loadedGroups.find((g) => lead.groupIds.includes(g.id));
-                const isSelected = selected.has(lead.id);
-                const signalKeyword =
-                  lead.signalText ||
-                  (group ? `"${group.name.toLowerCase()}"` : "");
+          <ContentReveal key={selectedGroupId} className="m3-lateral-panel grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[minmax(22rem,2fr)_minmax(0,3fr)]">
+            <div className="flex min-h-0 min-w-0 flex-col md:border-r md:border-zinc-200">
+              <div className="m3-table-grid-header hidden shrink-0 grid-cols-[40px_minmax(0,1fr)] items-center gap-3 md:grid">
+                <span>
+                  <input
+                    type="checkbox"
+                    checked={pageRows.length > 0 && selected.size === pageRows.length}
+                    onChange={toggleAll}
+                    className="h-3.5 w-3.5 cursor-pointer accent-[#e85e6b]"
+                  />
+                </span>
+                <span>Contact</span>
+              </div>
 
-                return (
-                  <article
-                    key={lead.id}
-                    className={`m3-table-grid-row !h-auto min-h-[52px] p-4 ${isSelected ? "bg-[#fff5f6]/50" : ""}`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => toggleSelected(lead.id)}
-                        className="mt-3 h-3.5 w-3.5 shrink-0 cursor-pointer accent-[#e85e6b]"
-                      />
-                      {lead.avatarUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={lead.avatarUrl} alt="" className="h-10 w-10 shrink-0 rounded-full object-cover" />
-                      ) : (
-                        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#ba3871] text-[12px] font-semibold text-white">
-                          {initials(lead.name)}
-                        </span>
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <div className="flex min-w-0 items-end gap-0.5">
-                          {lead.linkedInUrl ? (
-                            <a
-                              href={lead.linkedInUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="truncate text-[13px] font-semibold leading-none text-[#0a66c2] hover:underline"
-                            >
-                              {lead.name}
-                            </a>
-                          ) : (
-                            <span className="truncate text-[13px] font-semibold leading-none text-zinc-950">{lead.name}</span>
-                          )}
-                          {lead.linkedInUrl ? <LinkedInProfileLink href={lead.linkedInUrl} /> : null}
-                        </div>
-                        <div className="mt-1 truncate text-[12px] font-medium text-zinc-800">{lead.title || "-"}</div>
-                        {lead.company ? (
-                          <div className="truncate text-[11px] font-medium text-zinc-600">@{lead.company}</div>
-                        ) : null}
-                      </div>
-                      <div className="shrink-0 text-right">
-                        <FitScore score={lead.fitScore || 0} />
-                        <div className="mt-1 text-[11px] font-medium text-zinc-600">{timeAgo(lead.createdAt)}</div>
-                      </div>
-                    </div>
-                    <div className="mt-3 rounded-md bg-zinc-50 px-3 py-2 text-[12px] font-medium text-zinc-800">
-                      <div>
-                        {lead.leadReason || "Engaged with a LinkedIn post"}
-                        {lead.signalUrl || lead.engagementContext?.postUrl ? (
-                          <>
-                            {" · "}
-                            <a
-                              href={lead.signalUrl || lead.engagementContext?.postUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-[#0a66c2] underline"
-                            >
-                              View post
-                            </a>
-                          </>
-                        ) : null}
-                      </div>
-                      {lead.engagementContext?.postText ? (
-                        <div className="mt-1 line-clamp-2 text-[11px] font-medium text-zinc-700">
-                          <span className="font-bold text-zinc-800">Post:</span>{" "}
-                          {lead.engagementContext.postText}
-                        </div>
-                      ) : null}
-                      {lead.engagementContext?.commentText ? (
-                        <div className="mt-1 text-[11px] font-medium text-zinc-700">
-                          <span className="font-bold text-zinc-800">Their comment:</span>{" "}
-                          {lead.engagementContext.commentText}
-                        </div>
-                      ) : !lead.engagementContext?.postText && signalKeyword ? (
-                        <div className="mt-1 whitespace-pre-wrap text-[11px] font-medium text-zinc-700">
-                          <span className="font-bold text-zinc-800">Signal:</span> {signalKeyword}
-                        </div>
-                      ) : null}
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Table header — M3 56px, medium emphasis, horizontal rule only */}
-        <div className={`m3-table-grid-header hidden shrink-0 ${TABLE_COLUMNS} items-center gap-3 md:grid`}>
-          <span>
-            <input
-              type="checkbox"
-              checked={pageRows.length > 0 && selected.size === pageRows.length}
-              onChange={toggleAll}
-              className="h-3.5 w-3.5 cursor-pointer accent-[#e85e6b]"
-            />
-          </span>
-          <span>Contact</span>
-          <span className="justify-self-start">Signal</span>
-          <button
-            type="button"
-            onClick={() => setSortByScore((current) => (current === "desc" ? "asc" : "desc"))}
-            className="m3-table-num flex cursor-pointer items-center justify-end text-[12px] font-semibold uppercase tracking-wide text-[var(--md-sys-color-text-medium)] hover:text-zinc-900"
-          >
-            AI Score
-            <SortIcon />
-          </button>
-          <span className="m3-table-num">Imported</span>
-        </div>
-
-        {/* Table rows — M3 52px body, hover overlay, tabular nums for metrics */}
-        <div className="m3-table-grid hidden min-h-0 flex-1 overflow-y-auto md:block">
-          {pageRows.length === 0 ? (
-            <div className="grid h-full place-items-center p-10 text-center text-[12px] font-medium text-zinc-700">
-              {search ? (
-                "No leads match your search."
-              ) : (
-                <div>
-                  <span className="material-symbols-outlined text-3xl text-zinc-400">person_search</span>
-                  <h2 className="mt-3 text-sm font-semibold text-zinc-900">No leads yet</h2>
-                  <p className="mt-1 text-xs font-normal text-zinc-500">Leads your agents find will appear here.</p>
-                </div>
-              )}
-            </div>
-          ) : (
-            pageRows.map((lead) => {
-              const group = loadedGroups.find((g) => lead.groupIds.includes(g.id));
-              const isSelected = selected.has(lead.id);
-              const signalKeyword =
-                lead.signalText ||
-                (group ? `"${group.name.toLowerCase()}"` : "");
-
-              return (
-                <div
-                  key={lead.id}
-                  className={`m3-table-grid-row grid ${TABLE_COLUMNS} items-center gap-3 ${
-                    isSelected ? "bg-[#fff5f6]/40" : ""
-                  }`}
-                >
-                  <span>
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onChange={() => toggleSelected(lead.id)}
-                      className="h-3.5 w-3.5 cursor-pointer accent-[#e85e6b]"
-                    />
-                  </span>
-
-                  {/* Contact */}
-                  <div className="flex min-w-0 items-center gap-3 text-[14px]">
-                    {lead.avatarUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={lead.avatarUrl} alt="" className="h-10 w-10 shrink-0 rounded-full object-cover" />
+              <div className="m3-table-grid min-h-0 flex-1 overflow-y-auto">
+                {pageRows.length === 0 ? (
+                  <div className="grid h-full place-items-center p-6 text-center text-[12px] font-medium text-zinc-700 md:p-10">
+                    {search ? (
+                      "No leads match your search."
                     ) : (
-                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#ba3871] text-[12px] font-semibold text-white">
-                        {initials(lead.name)}
-                      </span>
+                      <div>
+                        <span className="material-symbols-outlined text-3xl text-zinc-400">person_search</span>
+                        <h2 className="mt-3 text-sm font-semibold text-zinc-900">No leads yet</h2>
+                        <p className="mt-1 text-xs font-normal text-zinc-500">Leads your agents find will appear here.</p>
+                      </div>
                     )}
-                    <div className="min-w-0">
-                      <div className="flex items-end gap-0.5">
-                        {lead.linkedInUrl ? (
-                          <a
-                            href={lead.linkedInUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="truncate text-[13px] font-semibold leading-none text-[#0a66c2] hover:underline"
-                          >
-                            {lead.name}
-                          </a>
-                        ) : (
-                          <span className="truncate text-[13px] font-semibold leading-none text-zinc-950">{lead.name}</span>
-                        )}
-                        {lead.linkedInUrl ? <LinkedInProfileLink href={lead.linkedInUrl} /> : null}
-                      </div>
-                      <div className="truncate text-[12px] font-medium text-zinc-800">{lead.title || "-"}</div>
-                      {lead.company ? (
-                        <div className="truncate text-[11px] font-medium text-zinc-600">@{lead.company}</div>
-                      ) : null}
-                    </div>
                   </div>
-
-                  {/* Signal */}
-                  <div className="min-w-0 justify-self-start text-[12px] font-medium text-zinc-800">
-                    <div>
-                      {lead.leadReason || "Engaged with a LinkedIn post"}
-                      {lead.signalUrl || lead.engagementContext?.postUrl ? (
-                        <>
-                          {" · "}
-                          <a
-                            href={lead.signalUrl || lead.engagementContext?.postUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-[#0a66c2] underline"
-                          >
-                            View post
-                          </a>
-                        </>
-                      ) : null}
-                    </div>
-                    {lead.engagementContext?.postText ? (
-                      <div className="line-clamp-2 text-[11px] font-medium text-zinc-700">
-                        <span className="font-bold text-zinc-800">Post:</span>{" "}
-                        {lead.engagementContext.postText}
+                ) : (
+                  pageRows.map((lead) => {
+                    const isChecked = selected.has(lead.id);
+                    const isOpen = openLeadId === lead.id;
+                    return (
+                      <div
+                        key={lead.id}
+                        aria-selected={isOpen}
+                        onClick={() => selectLead(lead.id)}
+                        className={`m3-table-grid-row grid cursor-pointer grid-cols-[40px_minmax(0,1fr)] items-center gap-3 ${
+                          isOpen ? "bg-[#fff7fa]" : isChecked ? "bg-[#fff5f6]/40" : ""
+                        }`}
+                      >
+                        <span>
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onClick={(event) => event.stopPropagation()}
+                            onChange={() => toggleSelected(lead.id)}
+                            className="h-3.5 w-3.5 cursor-pointer accent-[#e85e6b]"
+                          />
+                        </span>
+                        <div className="min-w-0 py-1">
+                          <LeadContact lead={lead} />
+                        </div>
                       </div>
-                    ) : null}
-                    {lead.engagementContext?.commentText ? (
-                      <div className="line-clamp-2 text-[11px] font-medium text-zinc-700">
-                        <span className="font-bold text-zinc-800">Their comment:</span>{" "}
-                        {lead.engagementContext.commentText}
-                      </div>
-                    ) : !lead.engagementContext?.postText && signalKeyword ? (
-                      <div className="line-clamp-2 whitespace-pre-wrap text-[11px] font-medium text-zinc-700">
-                        <span className="font-bold text-zinc-800">Signal:</span> {signalKeyword}
-                      </div>
-                    ) : null}
-                  </div>
+                    );
+                  })
+                )}
+              </div>
 
-                  {/* AI Score — numerical column */}
-                  <div className="m3-table-num flex justify-end">
-                    <FitScore score={lead.fitScore || 0} />
-                  </div>
-
-                  {/* Imported — numerical/time column */}
-                  <div className="m3-table-num text-[14px] font-normal text-zinc-700">
-                    {timeAgo(lead.createdAt)}
+              <div className="flex h-10 shrink-0 items-center justify-between gap-2 border-t border-[var(--md-sys-color-outline-variant)] px-3 text-[11px]">
+                <span className="min-w-0 truncate font-medium text-[var(--md-sys-color-on-surface-variant)]">
+                  {total === 0 ? "0 results" : `${start + 1}–${end} of ${total}`}
+                </span>
+                <div className="flex shrink-0 items-center gap-2">
+                  <label className="flex items-center gap-1.5 font-medium text-[var(--md-sys-color-on-surface-variant)]">
+                    <span className="hidden sm:inline">Rows</span>
+                    <select
+                      value={String(perPage)}
+                      onChange={(event) => {
+                        setPerPage(Number(event.target.value));
+                        setPage(1);
+                      }}
+                      className="h-7 cursor-pointer rounded-md border border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface-container)] px-1.5 text-[11px] font-semibold text-[var(--md-sys-color-on-surface)] outline-none focus:border-[var(--md-sys-color-primary)]"
+                      aria-label="Rows per page"
+                    >
+                      {PER_PAGE_OPTIONS.map((option) => (
+                        <option key={option} value={String(option)}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <div className="flex items-center gap-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setPage((current) => Math.max(1, current - 1))}
+                      disabled={currentPage === 1}
+                      className="grid h-7 w-7 cursor-pointer place-items-center rounded-md border border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface-container)] text-[var(--md-sys-color-on-surface-variant)] transition-colors hover:bg-[var(--md-sys-state-hover)] disabled:cursor-not-allowed disabled:opacity-40"
+                      aria-label="Previous page"
+                    >
+                      <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="15 18 9 12 15 6" />
+                      </svg>
+                    </button>
+                    <span className="grid h-7 min-w-7 place-items-center rounded-md bg-[var(--md-sys-color-primary-container)] px-1.5 text-[11px] font-bold text-[var(--md-sys-color-on-primary-container)]">
+                      {currentPage}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+                      disabled={currentPage === totalPages}
+                      className="grid h-7 w-7 cursor-pointer place-items-center rounded-md border border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface-container)] text-[var(--md-sys-color-on-surface-variant)] transition-colors hover:bg-[var(--md-sys-state-hover)] disabled:cursor-not-allowed disabled:opacity-40"
+                      aria-label="Next page"
+                    >
+                      <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="9 18 15 12 9 6" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
-              );
-            })
-          )}
-        </div>
-
-        {/* Pagination footer — compact single row */}
-        <div className="flex h-10 shrink-0 items-center justify-between gap-2 border-t border-[var(--md-sys-color-outline-variant)] px-3 text-[11px]">
-          <span className="min-w-0 truncate font-medium text-[var(--md-sys-color-on-surface-variant)]">
-            {total === 0 ? "0 results" : `${start + 1}–${end} of ${total}`}
-          </span>
-          <div className="flex shrink-0 items-center gap-2">
-            <label className="flex items-center gap-1.5 font-medium text-[var(--md-sys-color-on-surface-variant)]">
-              <span className="hidden sm:inline">Rows</span>
-              <select
-                value={String(perPage)}
-                onChange={(event) => {
-                  setPerPage(Number(event.target.value));
-                  setPage(1);
-                }}
-                className="h-7 cursor-pointer rounded-md border border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface-container)] px-1.5 text-[11px] font-semibold text-[var(--md-sys-color-on-surface)] outline-none focus:border-[var(--md-sys-color-primary)]"
-                aria-label="Rows per page"
-              >
-                {PER_PAGE_OPTIONS.map((option) => (
-                  <option key={option} value={String(option)}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <div className="flex items-center gap-0.5">
-              <button
-                type="button"
-                onClick={() => setPage((current) => Math.max(1, current - 1))}
-                disabled={currentPage === 1}
-                className="grid h-7 w-7 cursor-pointer place-items-center rounded-md border border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface-container)] text-[var(--md-sys-color-on-surface-variant)] transition-colors hover:bg-[var(--md-sys-state-hover)] disabled:cursor-not-allowed disabled:opacity-40"
-                aria-label="Previous page"
-              >
-                <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="15 18 9 12 15 6" />
-                </svg>
-              </button>
-              <span className="grid h-7 min-w-7 place-items-center rounded-md bg-[var(--md-sys-color-primary-container)] px-1.5 text-[11px] font-bold text-[var(--md-sys-color-on-primary-container)]">
-                {currentPage}
-              </span>
-              <button
-                type="button"
-                onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
-                disabled={currentPage === totalPages}
-                className="grid h-7 w-7 cursor-pointer place-items-center rounded-md border border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface-container)] text-[var(--md-sys-color-on-surface-variant)] transition-colors hover:bg-[var(--md-sys-state-hover)] disabled:cursor-not-allowed disabled:opacity-40"
-                aria-label="Next page"
-              >
-                <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
-              </button>
+              </div>
             </div>
-          </div>
-        </div>
+
+            <div className="hidden min-h-0 min-w-0 bg-[var(--md-sys-color-surface-container)] md:flex md:flex-col">
+              {outreachPreview()}
+            </div>
           </ContentReveal>
         )}
       </section>
       </div>
+
+      {mobilePreviewOpen && openLead ? (
+        <div
+          className="m3-modal-scrim actions-mobile-dialog-scrim z-[120] md:!hidden"
+          role="presentation"
+          onClick={() => setMobilePreviewOpen(false)}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Outreach for ${openLead.name}`}
+            className="m3-modal-surface actions-mobile-sheet flex w-full flex-col overflow-hidden bg-[var(--md-sys-color-surface-container)]"
+            onClick={(event) => event.stopPropagation()}
+          >
+            {outreachPreview(() => setMobilePreviewOpen(false))}
+          </section>
+        </div>
+      ) : null}
 
       {mobileGroupMenu ? (
         <div

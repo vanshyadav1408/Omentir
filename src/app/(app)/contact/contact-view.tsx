@@ -112,7 +112,7 @@ export default function ContactView({
       <div className="flex h-full min-h-0 min-w-0 flex-col gap-3 md:ml-4 md:mr-0.5">
         <div className="app-x hidden shrink-0 items-center justify-between gap-3 pt-6 md:flex">
           <div className="min-w-0">
-            <h1 className="text-2xl font-semibold leading-none tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-3xl">
+            <h1 className="text-2xl font-semibold leading-none tracking-tight text-[var(--md-sys-color-on-surface)]">
               Contact
             </h1>
           </div>
@@ -142,27 +142,18 @@ export default function ContactView({
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col gap-3 md:ml-4 md:mr-0.5">
-      {/* Mobile header action — same slot as My Product "Save changes" */}
-      <a
-        href={supportMailto}
-        style={{ fontFamily: "var(--font-varta)" }}
-        className="m3-mobile-header-action fixed right-2 z-[91] inline-flex h-10 cursor-pointer items-center justify-center rounded-full bg-[var(--md-sys-color-primary)] px-4 text-xs font-semibold text-[var(--md-sys-color-on-primary)] transition hover:brightness-[0.98] md:hidden"
-      >
-        <span className="translate-y-px">Feedback</span>
-      </a>
-
       {/* Header — same dimensions as My Product; Feedback opens email */}
       <div className="app-x hidden shrink-0 items-center justify-between gap-3 pt-6 md:flex">
         <div className="min-w-0">
-          <h1 className="text-2xl font-semibold leading-none tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-3xl">
+          <h1 className="text-2xl font-semibold leading-none tracking-tight text-[var(--md-sys-color-on-surface)]">
             Contact
           </h1>
         </div>
         <a
           href={supportMailto}
-          className="m3-btn m3-btn-filled h-10 shrink-0 gap-1.5 px-4 text-sm"
+          className="m3-btn m3-btn-filled h-8 shrink-0 gap-1 px-2.5 text-xs"
         >
-          <span className="material-symbols-outlined text-[18px]" aria-hidden="true">
+          <span className="material-symbols-outlined text-[16px]" aria-hidden="true">
             mail
           </span>
           Feedback
@@ -227,7 +218,7 @@ export default function ContactView({
                   <button
                     type="submit"
                     disabled={pending}
-                    className="inline-flex h-12 min-w-[120px] items-center justify-center rounded-full bg-[var(--md-sys-color-primary)] px-6 text-sm font-semibold text-[var(--md-sys-color-on-primary)] transition-[filter,opacity] duration-150 hover:brightness-[0.96] disabled:cursor-not-allowed disabled:opacity-60"
+                    className="m3-btn m3-btn-filled h-10 px-4 text-sm disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {pending ? "Sending…" : "Send"}
                   </button>

@@ -34,6 +34,7 @@ export const SITE_SHOTS: Record<string, SiteShot> = {
     label: "Claude Code",
   },
   grok: { href: "https://grok.com", src: "/site-shots/grok.avif", label: "Grok" },
+  "grok-bot": { href: "https://x.ai/bot", src: "/site-shots/grok.avif", label: "Grok Bot" },
   openclaw: { href: "https://openclaw.ai", src: "/site-shots/openclaw.avif", label: "OpenClaw" },
 };
 

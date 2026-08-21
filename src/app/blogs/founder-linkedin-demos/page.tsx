@@ -239,7 +239,7 @@ export default function BlogPost() {
       </p>
       <p>
         In Omentir's case, a tight demo would focus on the buyer's actual outbound bottleneck. If the prospect struggles with finding ICP-fit buyers, show lead discovery and scoring. If they struggle with messy replies, show the intent-sorted inbox. If they are evaluating agent workflows, show the{" "}
-        <Link href="/for-agents" className="text-blue-600 hover:underline">
+        <Link href="/features/agent-api-and-mcp" className="text-blue-600 hover:underline">
           agent API and hosted MCP path
         </Link>{" "}
         without pretending every viewer needs it.

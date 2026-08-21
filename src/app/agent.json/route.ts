@@ -40,6 +40,7 @@ export async function GET() {
           "category roundup pages",
           "integration pages",
           "legal pages",
+          "help pages",
           "agent documentation",
           "markdown twins of those pages",
         ],
@@ -47,7 +48,7 @@ export async function GET() {
       workspace: {
         authentication: "OAuth MCP connection or a workspace-scoped Bearer token.",
         readPages: [
-          { path: "/dashboard", use: "omentir_get_stats" },
+          { path: "/overview", use: "omentir_get_stats" },
           { path: "/actions", use: "omentir_list_scheduled_actions" },
           { path: "/activity", use: "omentir_list_activity" },
           { path: "/agents", use: "omentir_list_agents" },
@@ -61,7 +62,7 @@ export async function GET() {
     },
     actions: {
       available: [
-        "read workspace context, dashboard metrics, and connected LinkedIn accounts",
+        "read workspace context, Overview metrics, and connected LinkedIn accounts",
         "read and update My Product",
         "create, update, pause, resume, and delete lead-finding agents",
         "read lead groups, qualified leads, discovery activity, and scheduled outreach",

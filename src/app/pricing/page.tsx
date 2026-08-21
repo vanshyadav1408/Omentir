@@ -1,7 +1,8 @@
-import FaqAccordion from "../faq-accordion";
+import CustomerLogoWall from "../customer-logo-wall";
+import FaqSplitSection from "../faq-split-section";
 import JsonLd from "../json-ld";
-import { MarketingPage } from "../marketing-shell";
-import Link from "next/link";
+import MarketingClosingCta from "../marketing-closing-cta";
+import { HeroGridBackdrop, MarketingFooter, MarketingHeader } from "../marketing-shell";
 import PlanAwarePricingCards from "../plan-aware-pricing-cards";
 import {
   createBreadcrumbJsonLd,
@@ -70,56 +71,35 @@ export default function PricingPage() {
   return (
     <>
       <JsonLd id="pricing-jsonld" data={jsonLd} />
-      <MarketingPage
-        eyebrow="Pricing"
-        title="Simple pricing for every size of business."
-        description={
-          <>
-            Start with everything you need for $49/month. Minimum 3 bookings per
-            week or you pay nothing. For unlimited users, unlimited LinkedIn
-            accounts, SSO, dedicated
-            onboarding, and priority support, talk to our Enterprise team.
-          </>
-        }
-        centeredHeader
-        heroFullHeight
-        contentClassName="max-w-7xl"
-        heroActions={
-          <div className="flex w-full flex-col items-center justify-center gap-3 sm:w-auto sm:flex-row">
-            <Link
-              href="/"
-              className="m3-btn m3-btn-filled m3-btn--hero w-full sm:w-auto"
-            >
-              Explore
-            </Link>
-            <Link
-              href="#faq"
-              className="m3-btn m3-btn-outlined m3-btn--hero w-full bg-white/90 sm:w-auto"
-            >
-              FAQs
-            </Link>
-          </div>
-        }
-      >
-        <PlanAwarePricingCards className="mx-auto max-w-4xl" />
+      <main className="min-h-screen overflow-x-hidden bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)]">
+        <MarketingHeader transparentAtTop />
+        <div className="relative">
+          <HeroGridBackdrop height="h-[90vh]" />
 
-        <p className="mx-auto mt-12 max-w-2xl text-center text-sm font-normal leading-6 text-zinc-500">
-          LinkedIn provider, billing, and infrastructure limits may apply. Users
-          control sending limits from Settings.
-        </p>
+          <section className="omentir-primary-width relative z-10 min-w-0 pt-28 md:pt-36">
+            <h1 className="hero-display text-center text-[var(--md-sys-color-on-surface)]">
+              Pricing
+            </h1>
+            <PlanAwarePricingCards className="mx-auto mt-12 max-w-4xl md:mt-16" />
+            <p className="mx-auto mt-8 max-w-2xl text-center text-sm font-normal leading-6 text-zinc-500 md:mt-10">
+              LinkedIn provider, billing, and infrastructure limits may apply. Users
+              control sending limits from Settings.
+            </p>
+          </section>
 
-        <section id="faq" className="mx-auto mt-20 max-w-3xl scroll-mt-24 sm:mt-24">
-          <h2
-            style={{ fontFamily: "var(--font-google-sans)" }}
-            className="border-b border-[var(--md-sys-color-outline-variant)] pb-2 text-2xl font-bold tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-3xl"
-          >
-            Frequently Asked Questions
-          </h2>
-          <div className="mt-2">
-            <FaqAccordion items={faqItems} />
+          <div className="relative z-10 pt-16 md:pt-24">
+            <CustomerLogoWall headingId="pricing-customer-logo-wall" />
           </div>
-        </section>
-      </MarketingPage>
+
+          <FaqSplitSection
+            items={faqItems}
+            className="relative z-10 mt-16 md:mt-24"
+          />
+
+          <MarketingClosingCta className="relative z-10 mx-auto w-full max-w-4xl min-w-0 px-4 py-24 text-center md:px-8 md:py-32" />
+        </div>
+        <MarketingFooter />
+      </main>
     </>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type {
   ActivityDay,
   CampaignEnrollmentPreview,
@@ -29,21 +29,21 @@ type AnalysisChartProps = {
   endDateKey?: string;
 };
 
-/** Categorical scale: distinct series with solid contrast on light/dark surfaces. */
+/** Muted gem tones so stacked areas read on a near-black canvas. */
 const series = [
-  { key: "found", label: "Leads found", color: "#0d9488" },
-  { key: "contacted", label: "People contacted", color: "#7c3aed" },
-  { key: "replies", label: "Replies received", color: "#ba3871" },
-  { key: "meetingsBooked", label: "Meetings booked", color: "#ea580c" },
+  { key: "found", label: "Leads found", color: "#3f8f6b" },
+  { key: "contacted", label: "People contacted", color: "#5b7cbf" },
+  { key: "replies", label: "Replies received", color: "#8b6bb5" },
+  { key: "meetingsBooked", label: "Meetings booked", color: "#c4a35a" },
 ] as const;
 
 const chart = {
   left: 40,
-  right: 700,
+  right: 1080,
   top: 16,
   bottom: 200,
   height: 232,
-  width: 720,
+  width: 1120,
 };
 
 function buildChartData({
@@ -96,20 +96,29 @@ function shouldShowXLabel(index: number, total: number) {
 
 export default function AnalysisChart(props: AnalysisChartProps) {
   const chartData = useMemo(() => buildChartData(props), [props]);
-  const gradientId = useId().replace(/:/g, "");
   const wrapRef = useRef<HTMLDivElement>(null);
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
 
-  const maxObserved = Math.max(
-    0,
-    ...chartData.flatMap((item) => [
-      item.found,
-      item.contacted,
-      item.replies,
-      item.meetingsBooked,
-    ]),
-  );
+  const stacked = useMemo(() => {
+    return chartData.map((item) => {
+      let y = 0;
+      const layers: Record<(typeof series)[number]["key"], { y0: number; y1: number }> = {
+        found: { y0: 0, y1: 0 },
+        contacted: { y0: 0, y1: 0 },
+        replies: { y0: 0, y1: 0 },
+        meetingsBooked: { y0: 0, y1: 0 },
+      };
+      for (const itemSeries of series) {
+        const y0 = y;
+        y += item[itemSeries.key];
+        layers[itemSeries.key] = { y0, y1: y };
+      }
+      return layers;
+    });
+  }, [chartData]);
+
+  const maxObserved = Math.max(0, ...stacked.map((item) => item.meetingsBooked.y1));
   const scaleMax = getScaleMax(maxObserved);
   const hoverPoint =
     hoverIndex != null ? chartData[Math.min(hoverIndex, chartData.length - 1)] : null;
@@ -123,23 +132,18 @@ export default function AnalysisChart(props: AnalysisChartProps) {
     return chart.bottom - (value / scaleMax) * (chart.bottom - chart.top);
   }
 
-  function buildLinePath(key: (typeof series)[number]["key"]) {
-    return chartData
-      .map((item, index) => `${index === 0 ? "M" : "L"} ${getX(index)} ${getY(item[key])}`)
+  function buildBand(key: (typeof series)[number]["key"]) {
+    if (chartData.length === 0) return "";
+    const top = chartData
+      .map((_, index) => `${index === 0 ? "M" : "L"} ${getX(index)} ${getY(stacked[index][key].y1)}`)
       .join(" ");
+    const bottom = chartData
+      .map((_, index) => chartData.length - 1 - index)
+      .map((index) => `L ${getX(index)} ${getY(stacked[index][key].y0)}`)
+      .join(" ");
+    return `${top} ${bottom} Z`;
   }
 
-  function buildAreaPath() {
-    const line = buildLinePath("found");
-    return `${line} L ${getX(chartData.length - 1)} ${chart.bottom} L ${getX(0)} ${chart.bottom} Z`;
-  }
-
-  const linePaths = {
-    found: buildLinePath("found"),
-    contacted: buildLinePath("contacted"),
-    replies: buildLinePath("replies"),
-    meetingsBooked: buildLinePath("meetingsBooked"),
-  };
   /* Hard zero baseline + 4 interval grid (horizontal only). */
   const gridValues = [0, scaleMax / 4, scaleMax / 2, (scaleMax * 3) / 4, scaleMax];
 
@@ -153,25 +157,26 @@ export default function AnalysisChart(props: AnalysisChartProps) {
     });
   }
 
-  return (
-    <div className="analysis-chart rounded-xl bg-[var(--md-sys-color-surface-container-low)] p-4 sm:p-5">
-      <div className="mb-4 flex flex-wrap items-center gap-4">
-        {series.map((item) => (
-          <div
-            key={item.key}
-            className="flex items-center gap-2 text-[12px] font-normal text-[var(--md-sys-color-text-medium)]"
-            style={{ fontFamily: "var(--font-roboto), var(--font-google-sans), sans-serif" }}
-          >
-            <span
-              className="h-2.5 w-2.5 shrink-0 rounded-full"
-              style={{ backgroundColor: item.color }}
-              aria-hidden
-            />
-            {item.label}
-          </div>
-        ))}
-      </div>
+  const legend = (
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+      {series.map((item) => (
+        <div
+          key={item.key}
+          className="flex items-center gap-1.5 text-[11px] font-normal text-[var(--md-sys-color-text-medium)]"
+        >
+          <span
+            className="h-2 w-2 shrink-0 rounded-[2px]"
+            style={{ backgroundColor: item.color }}
+            aria-hidden
+          />
+          {item.label}
+        </div>
+      ))}
+    </div>
+  );
 
+  return (
+    <div className="analysis-chart">
       {chartData.length ? (
         <div ref={wrapRef} className="relative min-w-0">
           <svg
@@ -181,14 +186,6 @@ export default function AnalysisChart(props: AnalysisChartProps) {
             className="h-56 w-full sm:h-64"
             onMouseLeave={() => setHoverIndex(null)}
           >
-            <defs>
-              <linearGradient id={gradientId} x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stopColor="#0d9488" stopOpacity="0.16" />
-                <stop offset="100%" stopColor="#0d9488" stopOpacity="0" />
-              </linearGradient>
-            </defs>
-
-            {/* Horizontal gridlines only — faint, zero baseline included */}
             {gridValues.map((value) => {
               const y = getY(value);
               return (
@@ -215,35 +212,16 @@ export default function AnalysisChart(props: AnalysisChartProps) {
               );
             })}
 
-            {chartData.length > 1 ? (
-              <path
-                d={buildAreaPath()}
-                fill={`url(#${gradientId})`}
-                className="analysis-chart__area"
-                style={{
-                  opacity: hoverIndex != null ? 0.4 : 1,
-                  transition: "opacity 150ms cubic-bezier(0.2, 0, 0, 1)",
-                }}
-              />
-            ) : null}
-
             {series.map((item) => (
               <path
                 key={item.key}
-                d={linePaths[item.key]}
-                fill="none"
-                stroke={item.color}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2.5"
-                style={{
-                  opacity: hoverIndex != null ? 0.4 : 1,
-                  transition: "opacity 150ms cubic-bezier(0.2, 0, 0, 1)",
-                }}
+                d={buildBand(item.key)}
+                fill={item.color}
+                fillOpacity={0.82}
+                stroke="none"
               />
             ))}
 
-            {/* Hover focus column + points (focused series stay full opacity) */}
             {hoverIndex != null && hoverPoint ? (
               <line
                 x1={getX(hoverIndex)}
@@ -257,7 +235,6 @@ export default function AnalysisChart(props: AnalysisChartProps) {
 
             {chartData.map((item, index) => {
               const x = getX(index);
-              const active = index === hoverIndex;
               const showLabel = shouldShowXLabel(index, chartData.length);
 
               return (
@@ -272,23 +249,6 @@ export default function AnalysisChart(props: AnalysisChartProps) {
                     onMouseEnter={(e) => updateHover(index, e.clientX, e.clientY)}
                     onMouseMove={(e) => updateHover(index, e.clientX, e.clientY)}
                   />
-                  {series.map((seriesItem) => (
-                    <circle
-                      key={seriesItem.key}
-                      cx={x}
-                      cy={getY(item[seriesItem.key])}
-                      r={active ? 5.5 : 3.5}
-                      className="analysis-chart__point-fill"
-                      stroke={seriesItem.color}
-                      strokeWidth={active ? 2.5 : 2}
-                      style={{
-                        opacity: hoverIndex != null && !active ? 0.4 : 1,
-                        transition:
-                          "r 150ms cubic-bezier(0.2, 0, 0, 1), opacity 150ms cubic-bezier(0.2, 0, 0, 1)",
-                        pointerEvents: "none",
-                      }}
-                    />
-                  ))}
                   {showLabel ? (
                     <text
                       x={x}
@@ -328,7 +288,7 @@ export default function AnalysisChart(props: AnalysisChartProps) {
                   >
                     <span className="flex items-center gap-1.5 text-[var(--md-sys-color-text-medium)]">
                       <span
-                        className="h-2 w-2 shrink-0 rounded-full"
+                        className="h-2 w-2 shrink-0 rounded-[2px]"
                         style={{ backgroundColor: item.color }}
                         aria-hidden
                       />
@@ -344,17 +304,18 @@ export default function AnalysisChart(props: AnalysisChartProps) {
           ) : null}
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center rounded-xl bg-[var(--md-sys-color-surface-container)] px-6 py-10 text-center">
+        <div className="flex flex-col items-center justify-center px-6 py-10 text-center">
           <span className="material-symbols-outlined text-3xl text-[var(--md-sys-color-text-medium)]">monitoring</span>
           <p className="mt-3 text-sm font-semibold text-[var(--md-sys-color-text-high)]">
             No activity yet
           </p>
           <p className="mt-1 max-w-sm text-xs font-normal leading-5 text-[var(--md-sys-color-text-medium)]">
-            Real leads found, people contacted, replies received, and meetings booked
-            will appear here after Omentir starts working.
+            Leads found, people contacted, replies received, and meetings booked
+            show up here once outreach starts.
           </p>
         </div>
       )}
+      <div className="mt-4">{legend}</div>
     </div>
   );
 }

@@ -1,47 +1,40 @@
 import Link from "next/link";
-import OnboardingHeader from "../onboarding-header";
+import AuthShell from "../auth-shell";
 import PricingCards from "../pricing-cards";
 
-// Plan page for already-subscribed users. Unsubscribed users never see this:
-// /upgrade sends them to the onboarding paywall step instead.
+// Plan page for subscribed users changing plans, and for onboarded users whose
+// subscription is missing or expired. People still in onboarding never reach
+// this view: /upgrade sends them to the paywall step.
 export default function UpgradeView({
   currentPlan,
+  subscribeCta,
 }: {
   currentPlan?: "solo" | "lifetime" | "enterprise";
+  subscribeCta?: string;
 }) {
   return (
-    <main className="flex min-h-screen flex-col overflow-x-hidden bg-[var(--md-sys-color-surface)] px-4 pb-10 pt-14 text-[var(--md-sys-color-on-surface)] sm:px-5">
-      <OnboardingHeader />
+    <AuthShell wide>
+      <div className="mx-auto max-w-2xl text-center">
+        <h1 className="text-2xl font-medium tracking-tight text-white">
+          {currentPlan ? "Upgrade your plan" : "Choose a plan"}
+        </h1>
+        <p className="auth-muted mt-1.5 text-[15px] leading-6">
+          Pick the plan that fits your sender setup. Your workspace, agents, and
+          leads stay exactly as they are.
+        </p>
+      </div>
 
-      <section className="mx-auto flex w-full max-w-7xl flex-1 flex-col items-center justify-center py-10">
-        <div className="mx-auto max-w-2xl text-center">
-          <h1
-            style={{ fontFamily: "var(--font-varta)" }}
-            className="text-4xl font-semibold tracking-tight sm:text-5xl"
-          >
-            Upgrade your plan
-          </h1>
-          <p className="mt-4 text-base leading-7 text-zinc-600">
-            Pick the plan that fits your sender setup. Your workspace, agents, and
-            leads stay exactly as they are.
-          </p>
-        </div>
+      <div className="w-full text-left">
+        <PricingCards
+          currentPlan={currentPlan}
+          subscribeCta={subscribeCta}
+          className="mx-auto mt-10 w-full pb-12 sm:pb-[3.75rem]"
+        />
+      </div>
 
-        <div className="w-full text-left">
-          <PricingCards
-            currentPlan={currentPlan}
-            className="mx-auto mt-10 w-full max-w-4xl pb-12 sm:pb-[3.75rem]"
-          />
-        </div>
-
-        <Link
-          href="/dashboard"
-          style={{ fontFamily: "var(--font-varta)" }}
-          className="text-sm font-semibold text-zinc-700 underline underline-offset-2 hover:text-zinc-950"
-        >
-          Back to dashboard
-        </Link>
-      </section>
-    </main>
+      <Link href="/overview" className="auth-link mx-auto mt-2 text-sm">
+        Back to overview
+      </Link>
+    </AuthShell>
   );
 }

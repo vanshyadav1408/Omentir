@@ -303,11 +303,11 @@ export default function BlogPost() {
         </li>
         <li>
           <strong>Model Context Protocol (MCP):</strong> An open standard introduced by Anthropic that decouples skill providers (MCP servers) from agent runtimes (MCP clients). With MCP, an agent can connect to any local or remote skill server over standard JSON-RPC without custom glue code. Learn more about configuring dedicated endpoints in our{" "}
-          <Link href="/mcp-server" className="text-blue-600 hover:underline">
+          <Link href="/integrations/mcp" className="text-blue-600 hover:underline">
             MCP server documentation
           </Link>{" "}
           and{" "}
-          <Link href="/for-agents" className="text-blue-600 hover:underline">
+          <Link href="/features/agent-api-and-mcp" className="text-blue-600 hover:underline">
             agent integration guide
           </Link>
           .

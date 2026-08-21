@@ -1,11 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useAuth, useClerk } from "@clerk/nextjs";
 import { useEffect, useRef, useState } from "react";
+import { AuthHeading } from "../auth-ui";
 
 /**
- * OAuth return URL. Handle the redirect with the Clerk JS API only — no
- * prebuilt UI host — so Turbopack / slow networks never hit the
+ * OAuth return URL. Handle the redirect with the Clerk JS API only, no
+ * prebuilt UI host, so Turbopack / slow networks never hit the
  * "[Clerk UI] Component renderer did not mount within 10s" path that
  * AuthenticateWithRedirectCallback can still touch when captcha/tasks load.
  */
@@ -21,7 +23,7 @@ export default function SsoCallbackPage() {
 
     void clerk
       .handleRedirectCallback({
-        signInFallbackRedirectUrl: "/dashboard",
+        signInFallbackRedirectUrl: "/overview",
         signUpFallbackRedirectUrl: "/onboarding",
       })
       .catch((err: unknown) => {
@@ -32,20 +34,17 @@ export default function SsoCallbackPage() {
   }, [isLoaded, clerk]);
 
   return (
-    <main className="grid min-h-screen place-items-center bg-[var(--md-sys-color-surface)] px-4 text-center text-[var(--md-sys-color-on-surface-variant)]">
+    <div className="w-full">
       {error ? (
-        <div className="grid max-w-sm gap-3">
-          <p className="text-sm font-medium text-[var(--md-sys-color-error)]">{error}</p>
-          <a
-            href="/login"
-            className="text-sm font-semibold text-[var(--md-sys-color-primary)] hover:opacity-90"
-          >
+        <>
+          <AuthHeading title="Could not complete sign-in" subtitle={error} />
+          <Link href="/login" className="auth-btn">
             Back to login
-          </a>
-        </div>
+          </Link>
+        </>
       ) : (
-        <p className="text-sm font-medium">Completing sign-in…</p>
+        <AuthHeading title="Welcome to Omentir" subtitle="Completing sign-in..." />
       )}
-    </main>
+    </div>
   );
 }

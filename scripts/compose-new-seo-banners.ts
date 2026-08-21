@@ -610,6 +610,24 @@ function artFor(slug: string, p: Palette): string {
           <h3>MCP and REST included</h3>
           <p>Claude, Cursor, or a script. LinkedIn stays inside Omentir.</p>
         </div>`;
+    case "grok-bot-outbound":
+      return `
+        <div class="row">
+          <div class="card solid" style="background:${p.a}">
+            <div class="ico">${ico("window", p.a)}</div>
+            <h3>Grok Bot</h3>
+            <p>Overnight research. Drafts only.</p>
+          </div>
+          <div class="card" style="background:${p.b}">
+            <div class="ico">${ico("send", p.a)}</div>
+            <h3>Omentir</h3>
+            <p>LinkedIn, caps, inbox</p>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Stop at the review list</h3>
+          <p>The Bot does not sign into LinkedIn. You still take the meeting.</p>
+        </div>`;
     case "linkedin-automation":
       return `
         <div class="tiles">
@@ -739,6 +757,7 @@ function paletteFor(slug: string): Palette {
     "replace-first-sdr": PALETTES.terracotta,
     "prospect-commenters": PALETTES.rose,
     "open-source-ai-sdr": PALETTES.navy,
+    "grok-bot-outbound": PALETTES.navy,
     "linkedin-automation": PALETTES.blue,
     "ai-sdr": PALETTES.purple,
     "b2b-databases": PALETTES.terracotta,

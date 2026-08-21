@@ -49,11 +49,11 @@ export default function SubscriptionSuccessRedirect() {
 
   return (
     <div className="mt-6 space-y-3">
-      <p className="text-sm font-medium text-zinc-700">
+      <p className="text-sm font-medium text-white">
         Checking your subscription...
       </p>
       {seconds === 0 ? (
-        <p className="text-xs leading-5 text-zinc-500">
+        <p className="text-xs leading-5 text-[#737373]">
           This is taking longer than usual. Keep this page open while billing
           finishes syncing.
         </p>

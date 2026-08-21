@@ -44,6 +44,28 @@ export function combinedOutreachStage(enrollmentStatus?: string, outreachStatus?
   return Math.max(enrollmentStage(enrollmentStatus), leadStage(outreachStatus));
 }
 
+// Count unique people who reached the accepted stage, even when a lead has
+// more than one enrollment in the workspace.
+export function countAcceptedConnections(
+  leads: Array<{ id: string; outreachStatus?: string }>,
+  enrollments: Array<{ leadId: string; status?: string }>,
+) {
+  const stageByLead = new Map<string, number>();
+  for (const lead of leads) {
+    stageByLead.set(lead.id, leadStage(lead.outreachStatus));
+  }
+  for (const enrollment of enrollments) {
+    stageByLead.set(
+      enrollment.leadId,
+      Math.max(
+        stageByLead.get(enrollment.leadId) ?? 0,
+        enrollmentStage(enrollment.status),
+      ),
+    );
+  }
+  return [...stageByLead.values()].filter((stage) => stage >= STAGE_ACCEPTED).length;
+}
+
 // A finished or failed enrollment collapses to stopped/error, which scores 0.
 // connectionSentAt is the durable proof an invite went out, so those leads
 // still count as contacted on the Agents page.

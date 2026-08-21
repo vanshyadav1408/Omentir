@@ -12,16 +12,16 @@ import { LINKEDIN_INBOX_RESOURCE } from "@/app/sidebar-early-fetch";
 //   /leads      groups, leadPreviews
 //   /agents     agents, groups, leadAgentRefs*, enrollmentPreviews, linkedinConnected
 //   /messages   conversations, leadPreviews, linkedinInbox
-//   /dashboard  agents, groups, leadDashboardPreviews*, enrollmentPreviews,
+//   /overview  agents, groups, leadDashboardPreviews*, enrollmentPreviews,
 //               conversations, linkedinInbox
 //   /settings   linkedinAccounts
 //   /api-keys   agentApiKeys
 //
 // (*) satisfied by a cached leadPreviews, so the one lead query below warms the
-// lead reads on all three of Leads, Agents and Dashboard.
+// lead reads on all three of Leads, Agents and Overview.
 //
-// /actions and /campaigns are deliberately absent: the first renders entirely on
-// the server and the second redirects to /agents.
+// /campaigns is deliberately absent: it redirects to /agents. Outreach details
+// now live on /leads rather than a separate Actions page.
 const PAGE_RESOURCES = [
   "groups,leadPreviews",
   "agents,enrollmentPreviews",

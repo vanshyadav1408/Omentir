@@ -200,7 +200,7 @@ export default function BlogPost() {
           View on GitHub
         </a>
         <Link
-          href="/dashboard"
+          href="/overview"
           className="inline-flex h-11 items-center justify-center rounded-md border border-[var(--md-sys-color-outline)] px-5 text-sm font-semibold text-[var(--md-sys-color-on-surface)] no-underline transition hover:bg-[var(--md-sys-state-hover)]"
         >
           Use the hosted product

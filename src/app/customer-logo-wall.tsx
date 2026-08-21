@@ -1,14 +1,13 @@
 import Image from "next/image";
 
 /**
- * Customer logos for the landing "used by" wall.
+ * Customer logos for the landing "used by" strip.
  * Files: public/customer-logos/
  *
- * Visual treatment: one quiet horizontal row, monochrome by default so mixed
- * brand colors do not clash on the dark canvas, full color on hover.
- *
- * Sizing: base graphic height is +20% over the previous h-8/md:h-9.
- * VibeDream gets an extra +20% on top of that (thin mark).
+ * Visual treatment: each mark sits on a dark olive tile with a near-black
+ * border. Light treatment so mixed assets read on that fill.
+ * OutreachPanda and Dibe Agency get slight optical-size tweaks
+ * (thin / small / stacked marks).
  */
 const CUSTOMERS = [
   {
@@ -17,7 +16,6 @@ const CUSTOMERS = [
     src: "/customer-logos/outreachpanda.svg",
     width: 40,
     height: 40,
-    // Slightly small mark — +7% over the shared base height.
     size: "panda" as const,
   },
   {
@@ -63,36 +61,24 @@ const CUSTOMERS = [
     height: 36,
   },
   {
-    name: "VibeDream",
-    href: "https://vibedream.ai",
-    src: "/customer-logos/vibedream.png",
-    width: 40,
-    height: 40,
-    // Thin mark — +20% before the shared +20% bump → 1.44× original.
-    size: "vibe" as const,
-  },
-  {
     name: "Dibe Agency",
     href: "https://dibe.agency",
     src: "/customer-logos/dibe-agency.png",
-    width: 40,
-    height: 40,
+    width: 208,
+    height: 166,
+    size: "dibe" as const,
   },
 ] as const;
 
-/** Base +20% wall size; optional per-brand tweaks. */
 const LOGO_SIZE = {
-  base: { box: "h-[2.4rem] md:h-[2.7rem]", img: "h-[2.4rem] md:h-[2.7rem]" },
-  // OutreachPanda +7% over base.
-  panda: { box: "h-[2.57rem] md:h-[2.89rem]", img: "h-[2.57rem] md:h-[2.89rem]" },
-  // VibeDream +20% over base (thin mark).
-  vibe: { box: "h-[2.88rem] md:h-[3.24rem]", img: "h-[2.88rem] md:h-[3.24rem]" },
+  base: "h-8 md:h-9",
+  panda: "h-9 md:h-10",
+  dibe: "h-10 md:h-11",
 } as const;
 
 function LogoLink({ customer }: { customer: (typeof CUSTOMERS)[number] }) {
   const sizeKey =
     "size" in customer && customer.size ? customer.size : ("base" as const);
-  const size = LOGO_SIZE[sizeKey];
 
   return (
     <a
@@ -100,7 +86,7 @@ function LogoLink({ customer }: { customer: (typeof CUSTOMERS)[number] }) {
       target="_blank"
       rel="noopener noreferrer"
       aria-label={`Visit ${customer.name}`}
-      className={`customer-logo-item inline-flex ${size.box} shrink-0 items-center justify-center outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--md-sys-color-primary)]`}
+      className="customer-logo-item inline-flex items-center justify-center outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--md-sys-color-primary)] md:min-w-0"
     >
       <Image
         src={customer.src}
@@ -109,8 +95,8 @@ function LogoLink({ customer }: { customer: (typeof CUSTOMERS)[number] }) {
         height={customer.height}
         unoptimized
         draggable={false}
-        className={`customer-logo-img block ${size.img} w-auto max-w-none object-contain object-center`}
-        style={{ width: "auto", maxWidth: "none" }}
+        className={`customer-logo-img block ${LOGO_SIZE[sizeKey]} w-auto object-contain object-center`}
+        style={{ width: "auto", maxWidth: "100%" }}
       />
     </a>
   );
@@ -124,33 +110,20 @@ export default function CustomerLogoWall({
   return (
     <section
       aria-labelledby={headingId}
-      className="w-full min-w-0 py-8 md:py-12"
+      className="w-full min-w-0 py-10 md:py-14"
     >
-      <p
-        id={headingId}
-        className="px-4 text-center text-[0.7rem] font-medium uppercase tracking-[0.2em] text-[var(--md-sys-color-on-surface-variant)] md:text-xs"
-      >
-        Teams using Omentir
-      </p>
+      <div className="omentir-primary-width">
+        <p
+          id={headingId}
+          className="text-sm font-normal text-[var(--md-sys-color-on-surface-variant)]"
+        >
+          Teams using Omentir
+        </p>
 
-      {/* Inset on larger screens so the strip does not run edge-to-edge. */}
-      <div className="mx-auto mt-6 w-full max-w-4xl px-6 md:mt-8 md:max-w-5xl md:px-10 lg:max-w-5xl lg:px-16">
-        <div className="customer-logo-marquee relative">
-          <div className="customer-logo-marquee-track flex w-max flex-nowrap items-center">
-            {[0, 1].map((copyIndex) => (
-              <div
-                key={copyIndex}
-                className="flex shrink-0 items-center gap-14 pl-4 pr-14 md:gap-20 md:pl-6 md:pr-20"
-              >
-                {CUSTOMERS.map((customer) => (
-                  <LogoLink
-                    key={`${customer.name}-${copyIndex}`}
-                    customer={customer}
-                  />
-                ))}
-              </div>
-            ))}
-          </div>
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3 md:mt-10 md:flex-nowrap md:justify-between md:gap-2">
+          {CUSTOMERS.map((customer) => (
+            <LogoLink key={customer.name} customer={customer} />
+          ))}
         </div>
       </div>
     </section>

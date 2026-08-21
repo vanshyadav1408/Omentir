@@ -6,7 +6,7 @@ import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import AiLoadingOverlay from "./ai-loading-overlay";
 import { continueWithProductProfileAction } from "./actions";
-import { TextAreaField, TextField } from "./ui/text-field";
+import { AuthField, AuthTextArea } from "./auth-ui";
 
 type WebsiteAnalysis = {
   websiteUrl: string;
@@ -183,79 +183,58 @@ export default function WebsiteFetchPanel({
       />
       <form
         onSubmit={(event) => void handleFetch(event)}
-        className="mx-auto flex w-full items-end justify-center gap-2"
-        style={{ width: "calc(100% - 16px)" }}
+        className="flex w-full items-end gap-2"
       >
         <div className="min-w-0 flex-1">
-          <TextField
+          <AuthField
             name="websiteUrl"
             type="text"
             inputMode="url"
             autoCapitalize="none"
             autoCorrect="off"
             spellCheck={false}
-            label="Website link"
+            label="Website"
             placeholder="https://yourcompany.com"
             value={websiteUrl}
-            onChange={(event) => setWebsiteUrl(event.target.value)}
+            onChange={(event) => setWebsiteUrl(event.currentTarget.value)}
             required
-            variant="outlined"
           />
         </div>
         <button
           type="submit"
           disabled={isWorking || !websiteUrl.trim()}
-          className="m3-btn m3-btn-filled inline-flex h-14 shrink-0 cursor-pointer items-center justify-center gap-1 px-5 text-sm font-medium leading-none disabled:cursor-not-allowed disabled:opacity-60"
+          className="auth-btn auth-btn-fit shrink-0"
         >
-          {state.status === "fetching" ? (
-            "fetching..."
-          ) : state.status === "writing" ? (
-            "writing..."
-          ) : (
-            <span className="inline-flex items-center justify-center gap-1">
-              <span>Fetch</span>
-              <svg
-                aria-hidden="true"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-[13px] w-[13px]"
-              >
-                <line x1="5" y1="12" x2="19" y2="12" />
-                <polyline points="12 5 19 12 12 19" />
-              </svg>
-            </span>
-          )}
+          {state.status === "fetching"
+            ? "Fetching..."
+            : state.status === "writing"
+              ? "Writing..."
+              : "Fetch"}
         </button>
       </form>
 
       {showForm ? (
-        <section className="mt-8 w-full text-left">
-          <h2 className="text-xl font-semibold tracking-tight">Product Overview</h2>
-
+        <section className="mt-8 w-full">
           <form
             {...(isSignedIn
               ? { action: continueWithProductProfileAction }
               : { onSubmit: handleSignedOutContinue })}
-            className="mt-3 flex flex-col gap-3"
+            className="flex flex-col gap-4"
           >
             <input type="hidden" name="websiteUrl" value={formWebsiteUrl} />
             {readyData ? (
               <input type="hidden" name="pricingDetails" value={readyData.pricingDetails} />
             ) : null}
 
-            <TextAreaField
+            <AuthTextArea
               ref={overviewRef}
               name="description"
-              label="Product Overview"
+              label="Product overview"
               value={productDraft.productOverview}
               onChange={(event) =>
                 setProductDraft((current) => ({
                   ...current,
-                  productOverview: event.target.value,
+                  productOverview: event.currentTarget.value,
                 }))
               }
               rows={3}
@@ -271,30 +250,21 @@ export default function WebsiteFetchPanel({
               label={isSignedIn ? "Find leads" : "Continue"}
               pendingLabel={isSignedIn ? "Finding leads..." : "Continuing..."}
               isPending={isNavigating}
-              className={`inline-flex h-10 cursor-pointer items-center rounded-md bg-[#ba3871] px-5 pt-[3px] text-sm font-semibold text-white transition hover:brightness-[0.98] ${
-                isSignedIn ? "self-end" : "self-start"
-              }`}
+              className="auth-btn"
             />
           </form>
         </section>
       ) : null}
 
       {state.status === "error" ? (
-        <section className="mt-5 w-full rounded-xl border border-[#ba3871] bg-white p-5 shadow-[0_18px_70px_rgba(15,23,42,0.06)]">
-          <p className="text-sm leading-7 text-red-600">{state.message}</p>
+        <section className="mt-5 w-full">
+          <p className="auth-error text-sm leading-6">{state.message}</p>
           <button
             type="button"
             onClick={handleManual}
-            className="mt-4 inline-flex h-10 cursor-pointer items-center justify-center gap-1.5 rounded-md bg-[#ba3871] px-4 text-sm font-semibold leading-none text-white transition hover:brightness-[0.98]"
+            className="auth-btn mt-4"
           >
-            <span className="translate-y-[1.5px]">Type manually</span>
-            <span
-              aria-hidden="true"
-              className="material-symbols-outlined"
-              style={{ fontSize: "18px", lineHeight: 1 }}
-            >
-              chat_paste_go
-            </span>
+            Type manually
           </button>
         </section>
       ) : null}

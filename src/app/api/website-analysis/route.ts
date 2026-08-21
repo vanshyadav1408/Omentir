@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
     });
 
     revalidatePath("/my-product");
-    revalidatePath("/dashboard");
+    revalidatePath("/overview");
 
     return NextResponse.json({
       productOverview: analysis.productOverview,

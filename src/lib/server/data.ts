@@ -489,6 +489,17 @@ export async function updateWorkspaceNotificationEmail(workspaceId: string, emai
   );
 }
 
+export async function updateWorkspaceOwnerImage(workspaceId: string, imageUrl: string) {
+  await ensureWorkspace(workspaceId);
+  await collection<Workspace>("workspaces").doc(workspaceId).set(
+    {
+      ownerImageUrl: imageUrl,
+      updatedAt: nowIso(),
+    },
+    { merge: true },
+  );
+}
+
 export async function updateWorkspaceBilling(
   workspaceId: string,
   billing: Omit<WorkspaceBilling, "updatedAt">,

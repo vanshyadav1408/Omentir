@@ -194,7 +194,7 @@ export const ALL_COMPARISONS: SeoContentPage[] = [
   {
     "slug": "omentir-vs-11x",
     "title": "11x AI Alternatives",
-    "description": "An 11x AI alternative for a founder-scale LinkedIn workspace, not an enterprise digital worker. Alice is a staffing story. Omentir is a dashboard a reviewer can read.",
+    "description": "An 11x AI alternative for a founder-scale LinkedIn workspace, not an enterprise digital worker. Alice is a staffing story. Omentir is Overview, which a reviewer can read.",
     "summary": "Enterprise digital workers versus a founder-scale LinkedIn workspace. Size, override rights, and proof of value, not logo heat.",
     "publishedDate": "August 12, 2026",
     "updatedDate": "August 13, 2026",
@@ -228,7 +228,7 @@ export const ALL_COMPARISONS: SeoContentPage[] = [
         {
           "dimension": "Who may change targeting",
           "cells": [
-            "Anyone with the dashboard, or an operator with a token you can revoke",
+            "Anyone with Overview, or an operator with a token you can revoke",
             "Ask who can override the worker mid-flight. Write the answer down in the trial"
           ]
         },
@@ -337,7 +337,7 @@ export const ALL_COMPARISONS: SeoContentPage[] = [
         {
           "dimension": "The surface you live in",
           "cells": [
-            "Omentir dashboard: finders, campaigns, inbox",
+            "Omentir Overview: finders, campaigns, inbox",
             "A LinkedIn or CRM sidebar that returns a phone or email. Confirm the extension on lusha.com"
           ]
         },
@@ -1582,7 +1582,7 @@ export const ALL_COMPARISONS: SeoContentPage[] = [
         {
           "dimension": "How you stop a bad motion",
           "cells": [
-            "Pause the campaign or the agent in the dashboard the same minute",
+            "Pause the campaign or the agent in Overview the same minute",
             "Depends on their controls. Ask how fast a human can halt sends"
           ]
         },
@@ -1613,7 +1613,7 @@ export const ALL_COMPARISONS: SeoContentPage[] = [
       },
       {
         "id": "ava-vs-pause-in-dashboard",
-        "heading": "Ava versus an agent you pause in a dashboard",
+        "heading": "Ava versus an agent you pause in Overview",
         "paragraphs": [
           "In Omentir, a bad ICP is a finder you edit. A bad sentence is a campaign you pause. A competitor source that attracts vendors is a Steal Customers URL you delete. Those are boring controls. They are the difference between 'autonomous' and 'unsupervised.'",
           "Ask Artisan to walk a failed send in the demo: who was contacted, why, what the copy was, how you prevent the next fifty. If that walk-through is vague, the packaging is the product and the control is not."

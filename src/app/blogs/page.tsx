@@ -1,19 +1,29 @@
 import JsonLd from "../json-ld";
-import { HeroGridBackdrop, MarketingHeader, MarketingFooter } from "../marketing-shell";
+import {
+  ArticleCrumbs,
+  articlePathCrumbs,
+  HeroGridBackdrop,
+  MarketingHeader,
+  MarketingFooter,
+} from "../marketing-shell";
 import BlogsList from "./blogs-list";
 import { CATEGORIES, liveBlogs } from "./blog-data";
 import { createBlogCollectionJsonLd, createPageMetadata } from "../seo";
 
+const title = "LinkedIn outreach blogs";
+const description =
+  "Guides, templates, and playbooks for LinkedIn outreach, outbound sequences, and booking demos.";
+
 export const metadata = createPageMetadata({
-  title: "Blogs - Omentir",
-  description: "Guides, templates, and playbooks for LinkedIn outreach, outbound sequences, and booking demos.",
+  title,
+  description,
   path: "/blogs",
   keywords: [
     "B2B sales blog",
     "LinkedIn outreach templates",
     "outbound sales guide",
     "sales sequence case study",
-    "lead generation tactics"
+    "lead generation tactics",
   ],
 });
 
@@ -21,49 +31,30 @@ export default function BlogsIndexPage() {
   const jsonLd = createBlogCollectionJsonLd();
 
   return (
-    <main className="min-h-screen bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)]">
+    <>
       <JsonLd id="blogs-jsonld" data={jsonLd} />
+      <main className="min-h-screen overflow-x-hidden bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)]">
+        <MarketingHeader transparentAtTop />
+        <div className="relative">
+          <HeroGridBackdrop height="h-[60vh]" />
+          <div className="omentir-secondary-width relative z-10 min-w-0 pb-16 pt-28 md:pb-24 md:pt-32">
+            <ArticleCrumbs crumbs={articlePathCrumbs("blogs")} />
 
-      {/* Global Omentir Navigation */}
-      <MarketingHeader transparentAtTop />
+            <h1
+              style={{ fontFamily: "var(--font-varta)" }}
+              className="text-2xl font-semibold leading-snug tracking-tight text-[var(--md-sys-color-on-surface)] md:text-3xl"
+            >
+              {title}
+            </h1>
+            <p className="mt-12 max-w-2xl text-base font-medium leading-8 text-[var(--md-sys-color-on-surface)] md:mt-16">
+              {description}
+            </p>
 
-      {/* Hero Section */}
-      <section className="relative w-full border-b border-[var(--md-sys-color-outline-variant)]">
-        {/* Diamond grid, contained by the hero so it fades out at the divider. */}
-        <HeroGridBackdrop height="h-full" />
-        <div
-          className="grid min-h-[45vh] w-full sm:min-h-[50vh] lg:min-h-[55vh]"
-          style={{ gridTemplate: '"hero" 1fr / 1fr' }}
-        >
-          {/* Foreground content */}
-          <div
-            className="relative z-10 flex min-w-0 flex-col justify-center pb-12 pt-28 sm:pb-16 sm:pt-36 lg:pt-40"
-            style={{ gridArea: "hero" }}
-          >
-            <div className="mx-auto flex w-full max-w-6xl flex-col items-start px-4 text-left sm:px-8">
-
-              <h1
-                style={{ fontFamily: "var(--font-varta)" }}
-                className="animate-fade-in mb-6 max-w-4xl text-[2.25rem] font-semibold leading-[1.1] tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-5xl sm:leading-tight lg:text-6xl lg:leading-tight"
-              >
-                The Omentir Library
-              </h1>
-
-              <p className="max-w-2xl text-base leading-8 text-[var(--md-sys-color-on-surface-variant)] sm:text-lg">
-                Guides and templates for solo founders, B2B sales teams, and growth operators who use LinkedIn to book demos.
-              </p>
-            </div>
+            <BlogsList blogs={liveBlogs()} categories={CATEGORIES} />
           </div>
         </div>
-      </section>
-
-      {/* Main Content Area */}
-      <section className="mx-auto max-w-6xl px-4 pb-10 pt-16 sm:px-8 sm:pb-14">
-        <BlogsList blogs={liveBlogs()} categories={CATEGORIES} />
-      </section>
-
-      {/* Global Omentir Footer */}
-      <MarketingFooter />
-    </main>
+        <MarketingFooter />
+      </main>
+    </>
   );
 }

@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: PageProps) {
           url: image.src,
           width: image.width,
           height: image.height,
-          alt: image.alt,
+          alt: page.title,
         }
       : undefined,
   });

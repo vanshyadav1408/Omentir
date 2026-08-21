@@ -14,8 +14,8 @@ export function BodyFigure({ art }: { art: BodyArt }) {
       <Image
         src={art.src}
         alt={art.alt}
-        width={art.width ?? 1600}
-        height={art.height ?? 900}
+        width={art.width ?? 1536}
+        height={art.height ?? 1024}
         className="h-auto w-full"
         sizes="(min-width: 1024px) 720px, calc(100vw - 32px)"
       />

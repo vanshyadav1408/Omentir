@@ -355,7 +355,7 @@ const agentMcpToolDefinitions = [
   },
   {
     name: "omentir_get_stats",
-    description: "Read the dashboard headline metrics: total leads, hot opportunities, invitations sent, messages sent, replies received, and pipeline generated.",
+    description: "Read the Overview headline metrics: total leads, hot opportunities, accepted connections, invitations sent, messages sent, replies received, and pipeline generated.",
     inputSchema: agentToolInputSchemas.omentir_get_stats,
   },
   {

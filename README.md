@@ -10,7 +10,7 @@ Use the managed product at [omentir.com](https://omentir.com), or self-host the 
 
 **One codebase:** hosted cloud and self-host share this repo. `RUN_LOCALLY=TRUE` switches auth, billing, marketing, and hosted-only mail off. Public brand contacts for omentir.com stay in source on purpose (see `src/lib/hosted-identity.ts`); they are not used for self-hosted operation.
 
-### Connect from other AI apps (Claude, ChatGPT, Grok, Cursor, …)
+### Connect from other AI apps (Claude, ChatGPT, Grok, Grok Bot, Cursor, …)
 
 People use Omentir from chat and coding agents without sharing LinkedIn passwords:
 
@@ -18,11 +18,12 @@ People use Omentir from chat and coding agents without sharing LinkedIn password
 2. **Chat apps (Claude, ChatGPT, Grok):** Settings → Connectors → add  
    `https://omentir.com/api/agent/v1/mcp` → sign in and approve **Connect workspace** → enable tools in the chat.  
    No API key.
-3. **Cursor / Claude Code / scripts:** create a key on the [API page](https://omentir.com/api-keys) and send  
+3. **Grok Bot** (the always-on teammate app, not grok.com chat): Settings → Plugins → same MCP URL → approve Connect workspace. Do not sign LinkedIn into the Bot computer. [Grok Bot integration](https://omentir.com/integrations/grok-bot).
+4. **Cursor / Claude Code / scripts:** create a key on the [API page](https://omentir.com/api-keys) and send  
    `Authorization: Bearer <token>` to the MCP endpoint or REST `/api/agent/v1/*`.
-4. Ask the assistant to create a classic lead finder or a **Steal Customers** agent (`mode: steal_customers` + competitor company URLs).
+5. Ask the assistant to create a classic lead finder or a **Steal Customers** agent (`mode: steal_customers` + competitor company URLs).
 
-Docs: [MCP Server](https://omentir.com/mcp-server) (humans), [For AI Agents](https://omentir.com/for-agents) (operator prompt), [agents.md](https://omentir.com/agents.md) (machine guide), [OpenAPI](https://omentir.com/api/agent/v1/openapi.json).
+Docs: [MCP integration](https://omentir.com/integrations/mcp), [Agent API](https://omentir.com/features/agent-api-and-mcp), [agents.md](https://omentir.com/agents.md) (machine guide), [OpenAPI](https://omentir.com/api/agent/v1/openapi.json).
 
 ---
 
@@ -108,7 +109,7 @@ Self-host mode uses a **single workspace** and a signed, HTTP-only session cooki
 |---|---|
 | `LOCAL_APP_PASSWORD` set (12+ characters, high entropy) | Login form requires that password. **This is the default expectation.** |
 | `LOCAL_APP_PASSWORD` blank and `LOCAL_ALLOW_OPEN_ACCESS` unset/false | **Startup fails.** Blank password is no longer enough to run an unprotected instance. |
-| `LOCAL_ALLOW_OPEN_ACCESS=true` and blank password | Explicit opt-in: welcome screen with a “Continue to dashboard” button (no password). Use only on a trusted machine / private network. |
+| `LOCAL_ALLOW_OPEN_ACCESS=true` and blank password | Explicit opt-in: welcome screen with a “Continue to overview” button (no password). Use only on a trusted machine / private network. |
 | `LOCAL_ALLOW_OPEN_ACCESS=true` and password set | Password is still required (open-access flag does not weaken a configured password). |
 | `LOCAL_SESSION_SECRET` | Required always. Minimum 32 characters, high entropy. Used to HMAC-sign session tokens. Changing it invalidates all existing sessions. |
 

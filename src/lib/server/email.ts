@@ -44,8 +44,7 @@ function escapeHtml(value: string) {
 
 /**
  * The Omentir spoke mark from src/app/logo-mark.tsx, rasterized to
- * public/omentir-mark-email.png (near-white, because the email carries the
- * product's dark canvas).
+ * public/omentir-mark-email.png in a light color for the product's dark canvas.
  *
  * It rides along as an inline CID attachment rather than a hosted <img src>,
  * for two reasons that both have to hold or the mark is invisible: clients
@@ -69,24 +68,28 @@ function logoAttachment() {
 
 function logoImg(inline: boolean) {
   const src = inline ? `cid:${LOGO_CID}` : escapeHtml(appUrl(`/${LOGO_FILE}`));
-  return `<img src="${src}" width="30" height="30" alt="Omentir" style="display:block;width:30px;height:30px;border:0;outline:none;text-decoration:none;">`;
+  return `<img src="${src}" width="20" height="20" alt="Omentir" style="display:block;width:20px;height:20px;border:0;outline:none;text-decoration:none;">`;
 }
 
 /**
- * Welcome-email palette. Mirrors the product tokens in globals.css — dark is
- * the only theme there, so the email that introduces the product should not
- * open as a white page. Hex only: color-mix()/rgba() do not survive email
- * clients, so these are the flattened values of the CSS custom properties.
+ * Email palette. It follows the product's dark, monochrome theme. Hex only:
+ * color-mix()/rgba() do not survive email clients, so these are the flattened
+ * values of the CSS custom properties.
  */
 const MAIL = {
   canvas: "#08080a", // --google-bg
+  surface: "#121314", // --google-surface
+  surfaceLow: "#0d0e0f", // --google-surface-low
+  surfaceHigh: "#191a1c", // --google-surface-high
   border: "#2a2c2e", // --google-border
   text: "#ebedef", // --google-text-primary, flattened onto the canvas
   textMuted: "#b4b7ba", // --google-text-secondary, flattened
   textFaint: "#7c7f83",
+  primary: "#ffffff", // --google-primary
+  onPrimary: "#000000", // --google-on-primary
 } as const;
 
-// Google Sans ships to browsers, not mail clients — Roboto then the system
+// Google Sans ships to browsers, not mail clients. Roboto then the system
 // grotesques is the closest stack that actually resolves in an inbox.
 const MAIL_FONT = "Roboto,'Helvetica Neue',Helvetica,Arial,sans-serif";
 
@@ -98,12 +101,12 @@ const MAIL_FONT = "Roboto,'Helvetica Neue',Helvetica,Arial,sans-serif";
 function stepRowHtml(step: { n: string; text: string; sub?: string }, isLast: boolean) {
   const pad = isLast ? "0" : "12px";
   const subHtml = step.sub
-    ? `<div style="font-size:15px;line-height:1.6;color:${MAIL.textMuted};padding:2px 0 0;">${step.sub}</div>`
+    ? `<div style="font-size:13px;line-height:1.5;color:${MAIL.textMuted};padding:2px 0 0;">${step.sub}</div>`
     : "";
   return `<tr>
-                  <td width="26" valign="top" style="width:26px;padding:0 0 ${pad};font-family:${MAIL_FONT};font-size:15px;line-height:1.6;color:${MAIL.textMuted};">${step.n})</td>
+                  <td width="22" valign="top" style="width:22px;padding:0 0 ${pad};font-family:${MAIL_FONT};font-size:14px;line-height:1.5;color:${MAIL.textMuted};">${step.n})</td>
                   <td valign="top" style="padding:0 0 ${pad};font-family:${MAIL_FONT};">
-                    <div style="font-size:15px;line-height:1.6;color:${MAIL.text};">${step.text}</div>
+                    <div style="font-size:14px;line-height:1.5;color:${MAIL.text};">${step.text}</div>
                     ${subHtml}
                   </td>
                 </tr>`;
@@ -111,20 +114,20 @@ function stepRowHtml(step: { n: string; text: string; sub?: string }, isLast: bo
 
 function buildSignupWelcomeEmail(input: { greeting: string; unsubscribeUrl?: string }) {
   const attachment = logoAttachment();
-  const dashboardUrl = appUrl("/dashboard");
+  const overviewUrl = appUrl("/overview");
   const escapedGreeting = escapeHtml(input.greeting);
-  const escapedDashboardUrl = escapeHtml(dashboardUrl);
+  const escapedOverviewUrl = escapeHtml(overviewUrl);
   const unsubscribeHtml = input.unsubscribeUrl
     ? ` &nbsp;·&nbsp; <a href="${escapeHtml(input.unsubscribeUrl)}" style="color:${MAIL.textFaint};text-decoration:underline;">Unsubscribe</a>`
     : "";
 
   const steps = [
-    { n: "i", text: "Connect your LinkedIn account." },
-    { n: "ii", text: "Define your ideal customer." },
+    { n: "1", text: "Connect your LinkedIn account." },
+    { n: "2", text: "Define your ideal customer." },
     {
-      n: "iii",
-      text: "Setup outreach.",
-      sub: "Pick AI or manually setup workflow messages.",
+      n: "3",
+      text: "Set up outreach.",
+      sub: "Use AI or write the workflow messages yourself.",
     },
   ];
 
@@ -139,19 +142,19 @@ function buildSignupWelcomeEmail(input: { greeting: string; unsubscribeUrl?: str
   </head>
   <body style="margin:0;padding:0;background:${MAIL.canvas};color:${MAIL.text};font-family:${MAIL_FONT};-webkit-font-smoothing:antialiased;">
     <div style="display:none;max-height:0;overflow:hidden;color:transparent;opacity:0;">
-      Connect your LinkedIn account, define your ideal customer, setup outreach. That's it.
+      Connect LinkedIn, define your ideal customer, and set up outreach.
     </div>
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="${MAIL.canvas}" style="background-color:${MAIL.canvas};">
       <tr>
-        <td align="center" style="padding:40px 24px 44px;">
-          <table role="presentation" width="520" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:520px;">
+        <td align="center" style="padding:24px 16px 32px;">
+          <table role="presentation" width="520" cellspacing="0" cellpadding="0" border="0" bgcolor="${MAIL.surface}" style="width:100%;max-width:520px;background-color:${MAIL.surface};border:1px solid ${MAIL.border};border-radius:10px;overflow:hidden;">
 
             <tr>
-              <td style="padding:0 0 28px;">
+              <td style="padding:22px 22px 18px;">
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0">
                   <tr>
                     <td valign="middle" style="padding:0 9px 0 0;">${logoImg(Boolean(attachment))}</td>
-                    <td valign="middle" style="font-family:${MAIL_FONT};font-size:20px;line-height:1;font-weight:600;letter-spacing:-0.01em;color:${MAIL.text};">Omentir</td>
+                    <td valign="middle" style="font-family:${MAIL_FONT};font-size:18px;line-height:20px;font-weight:600;letter-spacing:-0.01em;color:${MAIL.text};">Omentir</td>
                   </tr>
                 </table>
               </td>
@@ -160,30 +163,28 @@ function buildSignupWelcomeEmail(input: { greeting: string; unsubscribeUrl?: str
             <tr>
               <td>
 
-                <p style="margin:0 0 14px;font-family:${MAIL_FONT};font-size:15px;line-height:1.6;color:${MAIL.textMuted};">${escapedGreeting}</p>
-                <p style="margin:0 0 26px;font-family:${MAIL_FONT};font-size:16px;line-height:1.6;color:${MAIL.text};">We welcome you at Omentir. We convert LinkedIn users to your customers.</p>
-                <p style="margin:0 0 16px;font-family:${MAIL_FONT};font-size:15px;line-height:1.6;color:${MAIL.text};">It's very simple to use:</p>
+                <p style="margin:0 0 12px;padding:0 22px;font-family:${MAIL_FONT};font-size:14px;line-height:1.5;color:${MAIL.textMuted};">${escapedGreeting}</p>
+                <p style="margin:0 0 20px;padding:0 22px;font-family:${MAIL_FONT};font-size:15px;line-height:1.5;color:${MAIL.text};">Omentir helps turn LinkedIn conversations into customers.</p>
+                <p style="margin:0 0 14px;padding:0 22px;font-family:${MAIL_FONT};font-size:14px;line-height:1.5;color:${MAIL.text};">Start in three steps:</p>
 
-                <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 22px;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 22px 20px;">
                 ${steps.map((step, i) => stepRowHtml(step, i === steps.length - 1)).join("\n                ")}
                 </table>
 
-                <p style="margin:0 0 28px;font-family:${MAIL_FONT};font-size:15px;line-height:1.6;color:${MAIL.text};">That's it.</p>
-
-                <p style="margin:0;font-family:${MAIL_FONT};font-size:15px;line-height:1.6;"><a href="${escapedDashboardUrl}" style="color:${MAIL.text};font-weight:600;text-decoration:underline;text-decoration-color:${MAIL.text};">Open Omentir</a></p>
+                <p style="margin:0;padding:0 22px;font-family:${MAIL_FONT};font-size:14px;line-height:1.5;"><a href="${escapedOverviewUrl}" style="color:${MAIL.text};font-weight:600;text-decoration:underline;text-decoration-color:${MAIL.text};">Open Omentir</a></p>
 
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:32px 0 0;">
                   <tr><td height="1" bgcolor="${MAIL.border}" style="height:1px;line-height:1px;font-size:0;background-color:${MAIL.border};">&nbsp;</td></tr>
                 </table>
 
-                <p style="margin:26px 0 0;font-family:${MAIL_FONT};font-size:15px;line-height:1.6;color:${MAIL.textMuted};">If you have any query, just reply to this email.</p>
-                <p style="margin:18px 0 0;font-family:${MAIL_FONT};font-size:15px;line-height:1.7;color:${MAIL.text};">Regards,<br>Vansh<br><span style="color:${MAIL.textFaint};">Omentir</span></p>
+                <p style="margin:22px 22px 0;font-family:${MAIL_FONT};font-size:14px;line-height:1.5;color:${MAIL.textMuted};">Questions? Reply to this email.</p>
+                <p style="margin:14px 22px 0;font-family:${MAIL_FONT};font-size:14px;line-height:1.5;color:${MAIL.text};">Vansh<br><span style="color:${MAIL.textFaint};">Omentir</span></p>
 
               </td>
             </tr>
 
             <tr>
-              <td style="padding:34px 0 0;font-family:${MAIL_FONT};font-size:12px;line-height:1.6;color:${MAIL.textFaint};">
+              <td style="padding:20px 22px 22px;font-family:${MAIL_FONT};font-size:12px;line-height:1.5;color:${MAIL.textFaint};">
                 <a href="${escapeHtml(appUrl("/"))}" style="color:${MAIL.textFaint};text-decoration:underline;">omentir.com</a>${unsubscribeHtml}
               </td>
             </tr>
@@ -198,19 +199,16 @@ function buildSignupWelcomeEmail(input: { greeting: string; unsubscribeUrl?: str
   const text = [
     input.greeting,
     "",
-    "We welcome you at Omentir. We convert LinkedIn users to your customers.",
+    "Omentir helps turn LinkedIn conversations into customers.",
     "",
-    "It's very simple to use:",
+    "Start in three steps:",
     "",
     ...steps.map((step) => `${step.n}) ${step.text}${step.sub ? ` ${step.sub}` : ""}`),
     "",
-    "That's it.",
+    `Open Omentir: ${overviewUrl}`,
     "",
-    `Open Omentir: ${dashboardUrl}`,
+    "Questions? Reply to this email.",
     "",
-    "If you have any query, just reply to this email.",
-    "",
-    "Regards,",
     "Vansh",
     "Omentir",
     ...(input.unsubscribeUrl ? ["", `Unsubscribe: ${input.unsubscribeUrl}`] : []),
@@ -219,12 +217,12 @@ function buildSignupWelcomeEmail(input: { greeting: string; unsubscribeUrl?: str
   return { html, text, attachments: attachment ? [attachment] : undefined };
 }
 
-const dashboardUrl = () => appUrl("/dashboard");
+const overviewUrl = () => appUrl("/overview");
 const messagesUrl = () => appUrl("/messages");
-const AUTO_GENERATED_FOOTER = "This email is generated automatically with Omentir.";
+const AUTO_GENERATED_FOOTER = "Automated message from Omentir.";
 
 function autoFooterHtml() {
-  return `<p style="margin:20px 0 0;font-size:12px;line-height:1.5;color:#888888;">${escapeHtml(AUTO_GENERATED_FOOTER)}</p>`;
+  return `<p style="margin:16px 0 0;font-family:${MAIL_FONT};font-size:11px;line-height:1.5;color:${MAIL.textFaint};">${escapeHtml(AUTO_GENERATED_FOOTER)}</p>`;
 }
 
 function withAutoFooterText(body: string) {
@@ -247,19 +245,31 @@ function ensureResendAccepted<T extends { error?: { message?: string } | null }>
   return result;
 }
 
-function emailShell(title: string, bodyHtml: string) {
+function emailShell(title: string, bodyHtml: string, attachment: ReturnType<typeof logoAttachment>) {
   return `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <meta name="supported-color-schemes" content="dark">
     <title>${escapeHtml(title)}</title>
   </head>
-  <body style="margin:0;background:#f5f6f7;color:#111111;font-family:Arial,Helvetica,sans-serif;">
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f5f6f7;padding:24px 0;">
+  <body style="margin:0;background:${MAIL.canvas};color:${MAIL.text};font-family:${MAIL_FONT};-webkit-font-smoothing:antialiased;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" bgcolor="${MAIL.canvas}" style="background:${MAIL.canvas};padding:24px 16px;">
       <tr>
         <td align="center">
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:600px;background:#ffffff;border:1px solid #dddddd;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" bgcolor="${MAIL.surface}" style="max-width:560px;background:${MAIL.surface};border:1px solid ${MAIL.border};border-radius:10px;overflow:hidden;">
+            <tr>
+              <td style="padding:20px 22px 0;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                  <tr>
+                    <td valign="middle" style="padding:0 8px 0 0;">${logoImg(Boolean(attachment))}</td>
+                    <td valign="middle" style="font-family:${MAIL_FONT};font-size:18px;line-height:20px;font-weight:600;letter-spacing:-0.01em;color:${MAIL.text};">Omentir</td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
             ${bodyHtml}
           </table>
         </td>
@@ -274,8 +284,8 @@ function detailRowsHtml(rows: Array<[string, string]>) {
     .map(
       ([label, value]) => `
         <tr>
-          <td style="width:180px;padding:10px 12px;border-bottom:1px solid #eeeeee;color:#555555;font-size:13px;vertical-align:top;">${escapeHtml(label)}</td>
-          <td style="padding:10px 12px;border-bottom:1px solid #eeeeee;color:#111111;font-size:13px;line-height:1.5;vertical-align:top;">${escapeHtml(value || "—")}</td>
+          <td style="width:132px;padding:8px 0;border-bottom:1px solid ${MAIL.border};color:${MAIL.textMuted};font-family:${MAIL_FONT};font-size:12px;line-height:1.4;vertical-align:top;">${escapeHtml(label)}</td>
+          <td style="padding:8px 0 8px 12px;border-bottom:1px solid ${MAIL.border};color:${MAIL.text};font-family:${MAIL_FONT};font-size:13px;line-height:1.45;vertical-align:top;word-break:break-word;">${escapeHtml(value || "Not provided")}</td>
         </tr>`,
     )
     .join("");
@@ -296,35 +306,37 @@ export async function sendReplyNotification(input: {
 
   const inCampaign = input.campaignName ? ` in ${input.campaignName}` : "";
   const closing = input.handoff
-    ? "Your outreach hands off on reply, so automation has stopped for this lead - the next message is yours to write."
+    ? "This campaign stopped after a reply. The next message is yours."
     : "Open Omentir to respond.";
+  const attachment = logoAttachment();
 
   const html = emailShell(
     `${input.leadName} replied on LinkedIn`,
     `
             <tr>
-              <td style="padding:28px 28px 8px;">
-                <p style="margin:0 0 6px;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#ba3871;">New reply</p>
-                <h1 style="margin:0;color:#111111;font-size:22px;line-height:1.25;font-weight:700;">${escapeHtml(input.leadName)} replied on LinkedIn</h1>
-                <p style="margin:10px 0 0;font-size:14px;line-height:1.55;color:#444444;">Here is what they sent${escapeHtml(inCampaign)}.</p>
+              <td style="padding:20px 22px 6px;">
+                <p style="margin:0 0 6px;font-family:${MAIL_FONT};font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:${MAIL.textFaint};">Reply received</p>
+                <h1 style="margin:0;font-family:${MAIL_FONT};color:${MAIL.text};font-size:20px;line-height:1.25;font-weight:600;">${escapeHtml(input.leadName)} replied on LinkedIn</h1>
+                <p style="margin:8px 0 0;font-family:${MAIL_FONT};font-size:13px;line-height:1.5;color:${MAIL.textMuted};">Their latest message${escapeHtml(inCampaign)}:</p>
               </td>
             </tr>
             <tr>
-              <td style="padding:16px 28px 4px;">
-                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-left:3px solid #ba3871;background:#f9f9fa;">
+              <td style="padding:12px 22px 4px;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" bgcolor="${MAIL.surfaceHigh}" style="border-left:2px solid ${MAIL.primary};background:${MAIL.surfaceHigh};">
                   <tr>
-                    <td style="padding:16px 18px;color:#111111;font-size:15px;line-height:1.6;font-style:italic;">&ldquo;${escapeHtml(input.body)}&rdquo;</td>
+                    <td style="padding:13px 15px;color:${MAIL.text};font-family:${MAIL_FONT};font-size:14px;line-height:1.5;font-style:italic;">&ldquo;${escapeHtml(input.body)}&rdquo;</td>
                   </tr>
                 </table>
-                <p style="margin:12px 0 0;font-size:13px;line-height:1.55;color:#555555;">${escapeHtml(closing)}</p>
+                <p style="margin:10px 0 0;font-family:${MAIL_FONT};font-size:12px;line-height:1.5;color:${MAIL.textMuted};">${escapeHtml(closing)}</p>
               </td>
             </tr>
             <tr>
-              <td style="padding:20px 28px 28px;">
-                <a href="${messagesUrl()}" style="display:inline-block;border-radius:6px;background:#000000;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;padding:12px 18px;">View conversation</a>
+              <td style="padding:16px 22px 22px;">
+                <a href="${messagesUrl()}" style="display:inline-block;border:1px solid ${MAIL.primary};border-radius:6px;background:${MAIL.primary};color:${MAIL.onPrimary};font-family:${MAIL_FONT};font-size:13px;font-weight:600;text-decoration:none;padding:10px 14px;">Open conversation</a>
                 ${autoFooterHtml()}
               </td>
             </tr>`,
+    attachment,
   );
 
   const text = withAutoFooterText(
@@ -335,7 +347,7 @@ export async function sendReplyNotification(input: {
       "",
       closing,
       "",
-      `View conversation: ${messagesUrl()}`,
+      `Open conversation: ${messagesUrl()}`,
     ].join("\n"),
   );
 
@@ -347,6 +359,7 @@ export async function sendReplyNotification(input: {
         subject: `${input.leadName} replied on LinkedIn`,
         html,
         text,
+        ...(attachment ? { attachments: [attachment] } : {}),
         tags: [{ name: "kind", value: "lead_reply" }],
       },
       input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : undefined,
@@ -355,7 +368,7 @@ export async function sendReplyNotification(input: {
 }
 
 // -----------------------------------------------------------------------------
-// 1. Daily digest — last 24 hours summary (HTML table)
+// 1. Daily digest: last 24 hours summary (HTML table)
 // -----------------------------------------------------------------------------
 
 export type DailyDigestStats = {
@@ -383,33 +396,34 @@ function buildDailyDigestEmail(input: {
     ? input.notes
         .map(
           (note) =>
-            `<p style="margin:12px 0 0;font-size:13px;line-height:1.5;color:#555555;">Note: ${escapeHtml(note)}</p>`,
+            `<p style="margin:10px 0 0;font-family:${MAIL_FONT};font-size:12px;line-height:1.5;color:${MAIL.textMuted};">Note: ${escapeHtml(note)}</p>`,
         )
         .join("")
     : "";
+  const attachment = logoAttachment();
 
   const html = emailShell(
     "Omentir daily update",
     `
             <tr>
-              <td style="padding:28px 28px 8px;">
-                <h1 style="margin:0;color:#111111;font-size:22px;line-height:1.25;font-weight:700;">Your last 24 hours</h1>
-                <p style="margin:10px 0 0;font-size:14px;line-height:1.55;color:#444444;">Here is what Omentir did for you.</p>
+              <td style="padding:20px 22px 6px;">
+                <h1 style="margin:0;font-family:${MAIL_FONT};color:${MAIL.text};font-size:20px;line-height:1.25;font-weight:600;">Last 24 hours</h1>
+                <p style="margin:8px 0 0;font-family:${MAIL_FONT};font-size:13px;line-height:1.5;color:${MAIL.textMuted};">Activity from your Omentir workspace.</p>
               </td>
             </tr>
             <tr>
-              <td style="padding:16px 28px 8px;">
-                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #eeeeee;border-radius:6px;border-collapse:collapse;">
+              <td style="padding:12px 22px 6px;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" bgcolor="${MAIL.surfaceLow}" style="border:1px solid ${MAIL.border};border-radius:6px;border-collapse:collapse;background:${MAIL.surfaceLow};">
                   <tr>
-                    <th align="left" style="padding:10px 12px;background:#f7f7f7;border-bottom:1px solid #eeeeee;color:#555555;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.03em;">Metric</th>
-                    <th align="right" style="padding:10px 12px;background:#f7f7f7;border-bottom:1px solid #eeeeee;color:#555555;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.03em;">Count</th>
+                    <th align="left" style="padding:9px 10px;background:${MAIL.surfaceHigh};border-bottom:1px solid ${MAIL.border};color:${MAIL.textMuted};font-family:${MAIL_FONT};font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.03em;">Metric</th>
+                    <th align="right" style="padding:9px 10px;background:${MAIL.surfaceHigh};border-bottom:1px solid ${MAIL.border};color:${MAIL.textMuted};font-family:${MAIL_FONT};font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.03em;">Count</th>
                   </tr>
                   ${rows
                     .map(
                       ([label, value], index) => `
                   <tr>
-                    <td style="padding:12px;border-bottom:${index === rows.length - 1 ? "0" : "1px solid #eeeeee"};color:#111111;font-size:14px;">${escapeHtml(label)}</td>
-                    <td align="right" style="padding:12px;border-bottom:${index === rows.length - 1 ? "0" : "1px solid #eeeeee"};color:#111111;font-size:14px;font-weight:600;">${escapeHtml(value)}</td>
+                    <td style="padding:10px;border-bottom:${index === rows.length - 1 ? "0" : `1px solid ${MAIL.border}`};color:${MAIL.text};font-family:${MAIL_FONT};font-size:13px;">${escapeHtml(label)}</td>
+                    <td align="right" style="padding:10px;border-bottom:${index === rows.length - 1 ? "0" : `1px solid ${MAIL.border}`};color:${MAIL.text};font-family:${MAIL_FONT};font-size:13px;font-weight:600;">${escapeHtml(value)}</td>
                   </tr>`,
                     )
                     .join("")}
@@ -418,25 +432,26 @@ function buildDailyDigestEmail(input: {
               </td>
             </tr>
             <tr>
-              <td style="padding:20px 28px 28px;">
-                <a href="${dashboardUrl()}" style="display:inline-block;border-radius:6px;background:#000000;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;padding:12px 18px;">Open Dashboard</a>
+              <td style="padding:16px 22px 22px;">
+                <a href="${overviewUrl()}" style="display:inline-block;border:1px solid ${MAIL.primary};border-radius:6px;background:${MAIL.primary};color:${MAIL.onPrimary};font-family:${MAIL_FONT};font-size:13px;font-weight:600;text-decoration:none;padding:10px 14px;">Open overview</a>
                 ${autoFooterHtml()}
               </td>
             </tr>`,
+    attachment,
   );
 
   const text = withAutoFooterText(
     [
-      "Your last 24 hours on Omentir",
+      "Last 24 hours on Omentir",
       "",
       ...rows.map(([label, value]) => `${label}: ${value}`),
       ...(input.notes?.length ? ["", ...input.notes.map((note) => `Note: ${note}`)] : []),
       "",
-      `Open Dashboard: ${dashboardUrl()}`,
+      `Open overview: ${overviewUrl()}`,
     ].join("\n"),
   );
 
-  return { html, text };
+  return { html, text, attachments: attachment ? [attachment] : undefined };
 }
 
 export async function sendDailyDigestEmail(input: {
@@ -457,9 +472,10 @@ export async function sendDailyDigestEmail(input: {
       {
         from: transactionalFrom(),
         to: input.to,
-        subject: `Omentir daily update: ${stats.newLeads} new leads, ${stats.invitesSent} invites, ${stats.repliesReceived} replies`,
+        subject: `Omentir: ${stats.newLeads} new leads, ${stats.repliesReceived} replies`,
         html: email.html,
         text: email.text,
+        ...(email.attachments ? { attachments: email.attachments } : {}),
         tags: [{ name: "kind", value: "daily_digest" }],
       },
       input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : undefined,
@@ -468,7 +484,7 @@ export async function sendDailyDigestEmail(input: {
 }
 
 // -----------------------------------------------------------------------------
-// 2. Temporary LinkedIn invitation pause — simple plain text
+// 2. Temporary LinkedIn invitation pause: simple notification
 // -----------------------------------------------------------------------------
 
 export async function sendInvitePauseNotification(input: {
@@ -482,6 +498,45 @@ export async function sendInvitePauseNotification(input: {
   if (!resend) return { skipped: true };
 
   const accountLabel = input.accountName?.trim();
+  const attachment = logoAttachment();
+  const opening = accountLabel
+    ? `LinkedIn rejected several connection attempts from ${accountLabel}.`
+    : "LinkedIn rejected several connection attempts from your account.";
+  const pauseDetails = `Omentir paused new invites for this account and will test again around ${input.resumeAtText}. Messages to existing connections and other LinkedIn accounts are unaffected.`;
+  const text = withAutoFooterText(
+    [
+      opening,
+      "",
+      pauseDetails,
+      "",
+      "No action needed.",
+      "",
+      `Overview: ${overviewUrl()}`,
+    ].join("\n"),
+  );
+  const html = emailShell(
+    "LinkedIn invites paused",
+    `
+            <tr>
+              <td style="padding:20px 22px 6px;">
+                <h1 style="margin:0;font-family:${MAIL_FONT};color:${MAIL.text};font-size:20px;line-height:1.25;font-weight:600;">Invites paused</h1>
+                <p style="margin:8px 0 0;font-family:${MAIL_FONT};font-size:13px;line-height:1.5;color:${MAIL.textMuted};">${escapeHtml(opening)}</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:12px 22px 4px;">
+                <p style="margin:0;font-family:${MAIL_FONT};font-size:14px;line-height:1.5;color:${MAIL.text};">${escapeHtml(pauseDetails)}</p>
+                <p style="margin:10px 0 0;font-family:${MAIL_FONT};font-size:12px;line-height:1.5;color:${MAIL.textMuted};">No action needed.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:16px 22px 22px;">
+                <a href="${overviewUrl()}" style="display:inline-block;border:1px solid ${MAIL.primary};border-radius:6px;background:${MAIL.primary};color:${MAIL.onPrimary};font-family:${MAIL_FONT};font-size:13px;font-weight:600;text-decoration:none;padding:10px 14px;">Open overview</a>
+                ${autoFooterHtml()}
+              </td>
+            </tr>`,
+    attachment,
+  );
 
   return ensureResendAccepted(
     await resend.emails.send(
@@ -489,21 +544,11 @@ export async function sendInvitePauseNotification(input: {
         from: transactionalFrom(),
         to: input.to,
         subject: accountLabel
-          ? `${accountLabel}: invitation attempts paused temporarily`
-          : "LinkedIn invitation attempts paused temporarily",
-        text: withAutoFooterText(
-          [
-            accountLabel
-              ? `LinkedIn rejected several connection attempts from ${accountLabel}.`
-              : "LinkedIn rejected several connection attempts from your account.",
-            "",
-            `Omentir paused new invites for this account and will test again around ${input.resumeAtText}. Messages to existing connections and other LinkedIn accounts are unaffected.`,
-            "",
-            "No action needed.",
-            "",
-            `Dashboard: ${dashboardUrl()}`,
-          ].join("\n"),
-        ),
+          ? `${accountLabel}: LinkedIn invites paused`
+          : "LinkedIn invites paused",
+        html,
+        text,
+        ...(attachment ? { attachments: [attachment] } : {}),
         tags: [{ name: "kind", value: "invite_pause_notification" }],
       },
       input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : undefined,
@@ -512,7 +557,7 @@ export async function sendInvitePauseNotification(input: {
 }
 
 // -----------------------------------------------------------------------------
-// 3. Interested lead — full lead details when a prospect shows interest
+// 3. Interested lead: full lead details when a prospect shows interest
 // -----------------------------------------------------------------------------
 
 export type InterestedLeadEmailInput = {
@@ -544,52 +589,59 @@ function buildInterestedLeadEmail(input: Omit<InterestedLeadEmailInput, "to" | "
   const leadName = lead.name || "A lead";
 
   const rows: Array<[string, string]> = [
-    ["Name", lead.name || "—"],
-    ["Position", lead.title || "—"],
-    ["Company", lead.company || "—"],
-    ["Location", lead.location || "—"],
-    ["LinkedIn", lead.linkedInUrl || "—"],
+    ["Name", lead.name || "Not provided"],
+    ["Position", lead.title || "Not provided"],
+    ["Company", lead.company || "Not provided"],
+    ["Location", lead.location || "Not provided"],
+    ["LinkedIn", lead.linkedInUrl || "Not provided"],
     ...(input.linkedInAccountName?.trim()
       ? ([["Account", input.linkedInAccountName.trim()]] as Array<[string, string]>)
       : []),
-    ["Last message", input.interestSignal || "—"],
+    ["Last message", input.interestSignal || "Not provided"],
   ];
+  const attachment = logoAttachment();
 
   const html = emailShell(
     `${leadName} seems interested`,
     `
             <tr>
-              <td style="padding:28px 28px 8px;">
-                <p style="margin:0 0 6px;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#ba3871;">Interest detected</p>
-                <h1 style="margin:0;color:#111111;font-size:22px;line-height:1.25;font-weight:700;">${escapeHtml(leadName)} seems interested</h1>
+              <td style="padding:20px 22px 6px;">
+                <p style="margin:0 0 6px;font-family:${MAIL_FONT};font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:${MAIL.textFaint};">Interest detected</p>
+                <h1 style="margin:0;font-family:${MAIL_FONT};color:${MAIL.text};font-size:20px;line-height:1.25;font-weight:600;">${escapeHtml(leadName)} seems interested</h1>
               </td>
             </tr>
             <tr>
-              <td style="padding:16px 28px 8px;">
-                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-top:1px solid #eeeeee;">
+              <td style="padding:12px 22px 6px;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-top:1px solid ${MAIL.border};">
                   ${detailRowsHtml(rows)}
                 </table>
               </td>
             </tr>
             <tr>
-              <td style="padding:20px 28px 28px;">
-                <a href="${messagesUrl()}" style="display:inline-block;border-radius:6px;background:#000000;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;padding:12px 18px;">Open Messages</a>
+              <td style="padding:16px 22px 22px;">
+                <a href="${messagesUrl()}" style="display:inline-block;border:1px solid ${MAIL.primary};border-radius:6px;background:${MAIL.primary};color:${MAIL.onPrimary};font-family:${MAIL_FONT};font-size:13px;font-weight:600;text-decoration:none;padding:10px 14px;">Open messages</a>
                 ${autoFooterHtml()}
               </td>
             </tr>`,
+    attachment,
   );
 
   const text = withAutoFooterText(
     [
       `${leadName} seems interested`,
       "",
-      ...rows.map(([label, value]) => `${label}: ${value || "—"}`),
+      ...rows.map(([label, value]) => `${label}: ${value || "Not provided"}`),
       "",
-      `Open Messages: ${messagesUrl()}`,
+      `Open messages: ${messagesUrl()}`,
     ].join("\n"),
   );
 
-  return { html, text, subject: `${leadName} seems interested in your product` };
+  return {
+    html,
+    text,
+    subject: `${leadName} seems interested in your product`,
+    attachments: attachment ? [attachment] : undefined,
+  };
 }
 
 export async function sendInterestedLeadNotification(input: InterestedLeadEmailInput) {
@@ -606,6 +658,7 @@ export async function sendInterestedLeadNotification(input: InterestedLeadEmailI
         subject: email.subject,
         html: email.html,
         text: email.text,
+        ...(email.attachments ? { attachments: email.attachments } : {}),
         tags: [{ name: "kind", value: "interested_lead" }],
       },
       input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : undefined,
@@ -636,10 +689,10 @@ function buildNewSignupNotificationEmail(input: NewSignupNotificationInput) {
   const rows = [
     ["Name", input.name],
     ["Email", input.email],
-    ["Fetched Website", input.websiteUrl || "N/A"],
+    ["Fetched website", input.websiteUrl || "Not provided"],
     ["Location", input.location],
-    ["IP Address", input.ipAddress],
-    ["Device Type", input.deviceType],
+    ["IP address", input.ipAddress],
+    ["Device type", input.deviceType],
     ["OS", input.os],
     ["Browser", input.browser],
     ["Signup time (UTC)", input.signedUpAtUtc],
@@ -653,50 +706,44 @@ function buildNewSignupNotificationEmail(input: NewSignupNotificationInput) {
     .map(
       ([label, value]) => `
         <tr>
-          <td style="width:210px;padding:10px 12px;border-bottom:1px solid #eeeeee;color:#555555;font-size:13px;vertical-align:top;">${escapeHtml(label)}</td>
-          <td style="padding:10px 12px;border-bottom:1px solid #eeeeee;color:#111111;font-size:13px;line-height:1.5;vertical-align:top;">${escapeHtml(value || "Unknown")}</td>
+          <td style="width:170px;padding:8px 0;border-bottom:1px solid ${MAIL.border};color:${MAIL.textMuted};font-family:${MAIL_FONT};font-size:12px;line-height:1.4;vertical-align:top;">${escapeHtml(label)}</td>
+          <td style="padding:8px 0 8px 12px;border-bottom:1px solid ${MAIL.border};color:${MAIL.text};font-family:${MAIL_FONT};font-size:13px;line-height:1.45;vertical-align:top;word-break:break-word;">${escapeHtml(value || "Not provided")}</td>
         </tr>`,
     )
     .join("");
+  const attachment = logoAttachment();
 
-  const html = `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Omentir New Signup</title>
-  </head>
-  <body style="margin:0;background:#f5f6f7;color:#111111;font-family:Arial,Helvetica,sans-serif;">
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f5f6f7;padding:24px 0;">
-      <tr>
-        <td align="center">
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:#ffffff;border:1px solid #dddddd;">
+  const html = emailShell(
+    "New Omentir signup",
+    `
             <tr>
-              <td style="padding:28px 28px 12px;">
-                <h1 style="margin:0;color:#111111;font-size:24px;line-height:1.2;font-weight:700;">New Signup</h1>
+              <td style="padding:20px 22px 6px;">
+                <h1 style="margin:0;font-family:${MAIL_FONT};color:${MAIL.text};font-size:20px;line-height:1.25;font-weight:600;">New signup</h1>
+                <p style="margin:8px 0 0;font-family:${MAIL_FONT};font-size:13px;line-height:1.5;color:${MAIL.textMuted};">A new user joined Omentir.</p>
               </td>
             </tr>
             <tr>
-              <td style="padding:8px 28px 28px;">
-                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-top:1px solid #eeeeee;">
+              <td style="padding:12px 22px 6px;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-top:1px solid ${MAIL.border};">
                   ${htmlRows}
                 </table>
               </td>
             </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-  </body>
-</html>`;
+            <tr>
+              <td style="padding:16px 22px 22px;">
+                ${autoFooterHtml()}
+              </td>
+            </tr>`,
+    attachment,
+  );
 
   const text = [
-    "New Signup",
+    "New signup",
     "",
-    ...rows.flatMap(([label, value]) => [`${label}: ${value || "Unknown"}`]),
+    ...rows.flatMap(([label, value]) => [`${label}: ${value || "Not provided"}`]),
   ].join("\n");
 
-  return { html, text };
+  return { html, text, attachments: attachment ? [attachment] : undefined };
 }
 
 export async function sendNewSignupNotification(input: NewSignupNotificationInput) {
@@ -710,9 +757,10 @@ export async function sendNewSignupNotification(input: NewSignupNotificationInpu
     {
       from: hostedNewSignupFrom(),
       to: hostedNewSignupTo(),
-      subject: "Omentir New Signup",
+      subject: "New Omentir signup",
       html: email.html,
       text: email.text,
+      ...(email.attachments ? { attachments: email.attachments } : {}),
       tags: [
         { name: "kind", value: "new_signup_notification" },
         { name: "user_id", value: input.userId.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 256) },
@@ -728,6 +776,7 @@ export async function scheduleSignupWelcomeEmail(input: {
   userId: string;
   eventId?: string | null;
   unsubscribeUrl?: string;
+  sendImmediately?: boolean;
 }) {
   if (!hostedEmailEnabled()) return { skipped: true, reason: "hosted_only" };
   const resend = getResend();
@@ -735,7 +784,9 @@ export async function scheduleSignupWelcomeEmail(input: {
 
   const firstName = input.firstName?.trim();
   const greeting = firstName ? `Hi ${firstName},` : "Hi,";
-  const scheduledAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+  const scheduledAt = input.sendImmediately
+    ? undefined
+    : new Date(Date.now() + 10 * 60 * 1000).toISOString();
   const email = buildSignupWelcomeEmail({ greeting, unsubscribeUrl: input.unsubscribeUrl });
 
   return resend.emails.send(
@@ -743,7 +794,7 @@ export async function scheduleSignupWelcomeEmail(input: {
       from: hostedWelcomeFrom(),
       to: input.to,
       subject: "Welcome to Omentir",
-      scheduledAt,
+      ...(scheduledAt ? { scheduledAt } : {}),
       html: email.html,
       text: email.text,
       ...(email.attachments ? { attachments: email.attachments } : {}),
@@ -767,7 +818,7 @@ export async function scheduleSignupWelcomeEmail(input: {
 /**
  * In-app Contact form. Subject = title, body = message only.
  * Reply-To is the customer's account email so you can answer in one click.
- * Hosted-only — self-hosted installs do not send to Omentir inboxes.
+ * Hosted-only: self-hosted installs do not send to Omentir inboxes.
  */
 export async function sendContactFormEmail(input: {
   title: string;
@@ -795,12 +846,42 @@ export async function sendContactFormEmail(input: {
     throw new Error("Enter a valid contact email.");
   }
 
-  // Body is intentionally only the customer message — no labels or metadata.
+  // Body is intentionally only the customer message, with no labels or metadata.
   const text = query;
+  const attachment = logoAttachment();
   const html = `<!doctype html>
 <html lang="en">
-  <body style="margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;color:#111;font-size:14px;line-height:1.6;">
-    <p style="margin:0;white-space:pre-wrap;">${escapeHtml(query)}</p>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <meta name="supported-color-schemes" content="dark">
+    <title>${escapeHtml(title)}</title>
+  </head>
+  <body style="margin:0;background:${MAIL.canvas};color:${MAIL.text};font-family:${MAIL_FONT};-webkit-font-smoothing:antialiased;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" bgcolor="${MAIL.canvas}" style="background:${MAIL.canvas};padding:24px 16px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" bgcolor="${MAIL.surface}" style="max-width:560px;background:${MAIL.surface};border:1px solid ${MAIL.border};border-radius:10px;overflow:hidden;">
+            <tr>
+              <td style="padding:20px 22px 0;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                  <tr>
+                    <td valign="middle" style="padding:0 8px 0 0;">${logoImg(Boolean(attachment))}</td>
+                    <td valign="middle" style="font-family:${MAIL_FONT};font-size:18px;line-height:20px;font-weight:600;letter-spacing:-0.01em;color:${MAIL.text};">Omentir</td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:20px 22px 22px;font-family:${MAIL_FONT};font-size:14px;line-height:1.5;color:${MAIL.text};">
+                <p style="margin:0;white-space:pre-wrap;">${escapeHtml(query)}</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
   </body>
 </html>`;
 
@@ -811,6 +892,7 @@ export async function sendContactFormEmail(input: {
     subject: title,
     text,
     html,
+    ...(attachment ? { attachments: [attachment] } : {}),
     tags: [{ name: "kind", value: "contact_form" }],
   });
 }

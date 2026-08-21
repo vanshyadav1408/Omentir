@@ -11,6 +11,11 @@ const INTEGRATION_LOGOS: Record<
     name: "Grok",
     preserveColor: true,
   },
+  "grok-bot": {
+    src: "/integration-logos/grok.svg",
+    name: "Grok Bot",
+    preserveColor: true,
+  },
   openclaw: {
     src: "/integration-logos/openclaw.svg",
     name: "OpenClaw",

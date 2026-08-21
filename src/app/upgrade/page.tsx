@@ -22,23 +22,24 @@ export default async function UpgradePage() {
 
   const workspace = await getWorkspace(userId);
 
-  // Subscription gates all over the app point here. Users without an active
-  // subscription belong on the onboarding paywall step, as before; subscribed
-  // users get a real plan page instead of bouncing off onboarding into the
-  // dashboard.
-  if (!hasActiveSubscription(workspace)) {
+  // People still in onboarding belong on the paywall step. After onboarding,
+  // missing or expired subscriptions stay on this page so View plans and the
+  // other billing gates can subscribe or change plans without leaving setup.
+  if (!hasActiveSubscription(workspace) && !workspace.onboarding) {
     redirect("/onboarding");
   }
 
   const plan = workspace.billing?.plan;
+  const subscribed = hasActiveSubscription(workspace);
   // Legacy Startup and bypassed workspaces have no matching card.
   return (
     <UpgradeView
       currentPlan={
-        plan === "solo" || plan === "lifetime" || plan === "enterprise"
+        subscribed && (plan === "solo" || plan === "lifetime" || plan === "enterprise")
           ? plan
           : undefined
       }
+      subscribeCta={subscribed ? undefined : "Subscribe"}
     />
   );
 }

@@ -23,7 +23,6 @@ export default function IntegrationsIndexPage() {
       title="Omentir integrations"
       description="Concrete connect paths for the AI apps and protocols people actually use to operate Omentir."
       pages={ALL_INTEGRATIONS}
-      compactHero
     />
   );
 }

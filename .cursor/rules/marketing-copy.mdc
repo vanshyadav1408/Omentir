@@ -1,6 +1,6 @@
 ---
 description: Human, non-AI marketing copy (omentir-marketing-copy skill)
-globs: src/app/**/*-data.ts,src/app/guides/**,src/app/blogs/**,src/app/page.tsx,src/app/marketing-*.tsx,src/app/feature-*.tsx,src/lib/public-page-markdown.ts
+globs: src/app/**/*-data.ts,src/app/guides/**,src/app/help/**,src/app/blogs/**,src/app/page.tsx,src/app/home-capability-slides.tsx,src/app/home-product-mock.tsx,src/app/hero-product-stage.tsx,src/app/marketing-*.tsx,src/app/feature-*.tsx,src/lib/public-page-markdown.ts
 alwaysApply: false
 ---
 

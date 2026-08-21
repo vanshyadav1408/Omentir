@@ -1,3 +1,4 @@
+import { AuthHeading } from "../auth-ui";
 import SubscriptionSuccessRedirect from "./subscription-success-redirect";
 
 // Subscription-confirmed view, wired into the /onboarding flow. Reached when
@@ -5,18 +6,11 @@ import SubscriptionSuccessRedirect from "./subscription-success-redirect";
 // to /onboarding?status=subscription-confirmed.
 export default function StepSubscriptionConfirmed() {
   return (
-    <div className="w-full max-w-sm text-center">
-      <h1
-        style={{ fontFamily: "var(--font-varta)" }}
-        className="text-4xl font-semibold tracking-tight"
-      >
-        Subscription confirmed
-      </h1>
-      <p className="mt-4 text-sm leading-6 text-zinc-600">
-        Your subscription is being activated. We&apos;ll take you to the next
-        setup step automatically.
-      </p>
-
+    <div className="w-full">
+      <AuthHeading
+        title="Subscription confirmed"
+        subtitle="Your subscription is being activated. We'll take you to the next setup step automatically."
+      />
       <SubscriptionSuccessRedirect />
     </div>
   );

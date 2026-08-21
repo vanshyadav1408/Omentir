@@ -45,17 +45,11 @@ export default function NotFound() {
           The page you are looking for does not exist, may have moved, or the link
           was mistyped. Let&apos;s get you back to finding customers.
         </p>
-        <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row">
-          <Link
-            href="/"
-            className="m3-btn m3-btn-filled h-12 px-8 text-base"
-          >
+        <div className="m3-btn-pair m3-btn-pair--lg mt-10 flex flex-col items-center gap-3 sm:flex-row">
+          <Link href="/" className="m3-btn m3-btn-filled">
             Back to home
           </Link>
-          <Link
-            href="/blogs"
-            className="inline-flex h-12 items-center justify-center rounded-md border border-zinc-300 bg-white/90 px-8 text-base font-medium text-zinc-950 transition-colors hover:border-zinc-900"
-          >
+          <Link href="/blogs" className="m3-btn m3-btn-outlined">
             Read the blog
           </Link>
         </div>

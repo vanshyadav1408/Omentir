@@ -2,7 +2,7 @@
  * Same-origin relative path for post-login redirects.
  * Rejects protocol-relative (//evil.com), backslash tricks, and absolute URLs.
  */
-export function safeReturnPath(value: string | null | undefined, fallback = "/dashboard"): string {
+export function safeReturnPath(value: string | null | undefined, fallback = "/overview"): string {
   if (!value) return fallback;
   const trimmed = value.trim();
   if (!trimmed.startsWith("/")) return fallback;

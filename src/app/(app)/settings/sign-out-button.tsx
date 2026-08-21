@@ -54,7 +54,7 @@ export default function SignOutButton({ localMode = false }: { localMode?: boole
     open && mounted
       ? createPortal(
           <div
-            className="m3-dialog-scrim z-[220]"
+            className="app-compact m3-dialog-scrim z-[220]"
             role="presentation"
             onClick={close}
           >
@@ -119,7 +119,7 @@ export default function SignOutButton({ localMode = false }: { localMode?: boole
             setError("");
             setOpen(true);
           }}
-          className="inline-flex h-11 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-[var(--md-sys-color-error)] bg-transparent px-5 text-sm font-semibold text-[var(--md-sys-color-error)] transition hover:bg-[var(--md-sys-color-error-container)] hover:text-[var(--md-sys-color-on-error-container)]"
+          className="inline-flex h-10 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-[var(--md-sys-color-error)] bg-transparent px-4 text-sm font-semibold text-[var(--md-sys-color-error)] transition hover:bg-[var(--md-sys-color-error-container)] hover:text-[var(--md-sys-color-on-error-container)]"
         >
           <span className="material-symbols-outlined text-[18px] leading-none" aria-hidden="true">
             logout

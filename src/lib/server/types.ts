@@ -40,6 +40,8 @@ export type Workspace = {
   // IANA timezone (e.g. "America/New_York") used for local-time features like
   // the daily digest send hour. Unset means UTC.
   timezone?: string;
+  // Self-hosted only. Hosted profile photos live on the Clerk user.
+  ownerImageUrl?: string;
   billing?: WorkspaceBilling;
   onboarding?: WorkspaceOnboarding;
   createdAt: string;

@@ -367,7 +367,7 @@ export const ALL_USE_CASES: SeoContentPage[] = [
         "id": "not-a-wrapper",
         "heading": "Open source is not a ChatGPT wrapper",
         "paragraphs": [
-          "The application includes lead discovery, campaign pacing, reply handling, and the agent API. A prompt file in a repo is not the same object. If you wanted a skill that tells ChatGPT to 'go sell,' look at For Agents for how a real operator is supposed to behave, then decide."
+          "The application includes lead discovery, campaign pacing, reply handling, and the agent API. A prompt file in a repo is not the same object. If you wanted a skill that tells ChatGPT to 'go sell,' look at Agent API and MCP for how a real operator is supposed to behave, then decide."
         ]
       },
       {
@@ -407,6 +407,95 @@ export const ALL_USE_CASES: SeoContentPage[] = [
     ],
     "ctaTitle": "Read the repo or start hosted",
     "ctaBody": "Both are the same product. Choose the operations model, not a different sales motion."
+  },
+  {
+    "slug": "grok-bot-outbound",
+    "title": "Get LinkedIn sales with Grok Bot",
+    "description": "Use Grok Bot as the overnight researcher and Omentir as the LinkedIn send path. Drafts wait for you. The cloud browser does not drive the account.",
+    "summary": "Grok Bot finds and drafts. Omentir sends. You still take the meeting.",
+    "publishedDate": "August 20, 2026",
+    "updatedDate": "August 20, 2026",
+    "layout": "timeline",
+    "keywords": [
+      "Grok Bot for LinkedIn outreach",
+      "Grok Bot outbound",
+      "Grok Bot Omentir integration"
+    ],
+    "highlights": [
+      "Overnight research",
+      "Review list, then send",
+      "No LinkedIn login on the Bot"
+    ],
+    "verdict": "Grok Bot can keep working after you close the laptop. That is useful for research and drafts. It is a problem if the Bot logs into LinkedIn and clicks Connect. Put LinkedIn in Omentir. Put the Bot on MCP.",
+    "phases": [
+      {
+        "title": "Finish both products before you invent a workflow",
+        "detail": "Omentir: LinkedIn connected, My Product written in two sentences a stranger would understand. Grok Bot: app installed, one named Bot whose job is outbound, not a catch-all assistant. If either side is empty, the overnight run will guess."
+      },
+      {
+        "title": "Connect MCP and write the stop rule",
+        "detail": "Add https://omentir.com/api/agent/v1/mcp in Grok Bot Plugins. Approve the workspace. Put this in the Bot description: research and draft only; never send; never enroll; never sign into LinkedIn. SpaceXAI's own sales-outbound example already stops at a review list. Keep that sentence."
+      },
+      {
+        "title": "One narrow overnight job",
+        "detail": "One ICP, one source, a number you can read in the morning (twenty to forty people, not four hundred). Ask for fit notes, a skip reason, and a draft that cites a real signal. In Omentir, list agents before you let it create a finder. Read the first batch yourself."
+      },
+      {
+        "title": "Send from Omentir, own the inbox",
+        "detail": "Start a small campaign with conservative daily limits and send windows in the prospect's timezone. Approve reply drafts. Measure meetings, not how many notes the Bot wrote while you slept. If ignores pile up, change the promise before you raise volume."
+      }
+    ],
+    "sections": [
+      {
+        "id": "why-split-the-work",
+        "heading": "Why the Bot should not own LinkedIn",
+        "paragraphs": [
+          "Grok Bot's pitch is that it can sign into the tools you already use, including sites with no MCP. For a CRM or an analytics dashboard, that can be fine. For LinkedIn, a cloud VM sharing logins across every Bot on the account is the fingerprint LinkedIn already looks for.",
+          "Omentir already has the paced send path, the review queue, and the daily caps. Grok Bot's job is to keep filling that queue with people you would actually message, then stop."
+        ]
+      },
+      {
+        "id": "what-gets-you-meetings",
+        "heading": "What actually turns this into sales",
+        "paragraphs": [
+          "Meetings come from a tight ICP, a note that names a real trigger, and a human who answers when someone writes back. The Bot does not attend the demo. If you cannot spend fifteen minutes on the review list and the inbox, you bought a research toy, not a sales motion.",
+          "Grok Bot is still in beta and sits on expensive Cursor or SuperGrok plans. If you do not already have it, start in Omentir Overview. Add the Bot later if you want overnight research on top."
+        ]
+      }
+    ],
+    "faqItems": [
+      {
+        "question": "Can Grok Bot send the LinkedIn messages?",
+        "answer": "It can call Omentir tools that enqueue outreach under your campaign and safety settings. It should not send from the LinkedIn website on its own computer. Keep send behind your review."
+      },
+      {
+        "question": "Do I need Salesforce or another CRM first?",
+        "answer": "No. A written ICP plus an Omentir lead finder is enough. A CRM view is useful if you already live there. Do not wait on a CRM cleanup to start one segment."
+      },
+      {
+        "question": "Is this the grok.com chat connector?",
+        "answer": "No. That is the Grok integration. This use case is the Grok Bot app."
+      }
+    ],
+    "relatedLinks": [
+      {
+        "label": "Grok Bot integration",
+        "href": "/integrations/grok-bot",
+        "description": "Plugins, MCP URL, and what not to sign into."
+      },
+      {
+        "label": "Outbound for founders",
+        "href": "/use-cases/outbound-for-founders",
+        "description": "The motion if you are still the closer."
+      },
+      {
+        "label": "Grok Bot for LinkedIn outreach",
+        "href": "/blogs/grok-bot-linkedin-sales",
+        "description": "Longer walkthrough of the split."
+      }
+    ],
+    "ctaTitle": "Connect the Bot to a workspace that already has a buyer written down",
+    "ctaBody": "If My Product is still a homepage paragraph, fix that before the overnight run."
   }
 ];
 

@@ -7,51 +7,48 @@ import LogoMark from "./logo-mark";
 import { useHydrated } from "./use-hydrated";
 
 const primaryNav = [
-  { href: "/dashboard", label: "Dashboard", icon: "apps" },
-  { href: "/actions", label: "Actions", icon: "event_upcoming" },
+  { href: "/overview", label: "Overview", icon: "apps" },
   { href: "/agents", label: "AI Agents", icon: "model_training" },
   { href: "/messages", label: "Messages", icon: "inbox" },
   { href: "/leads", label: "Leads", icon: "identity_platform" },
 ];
 const STORAGE_KEY = "omentir-sidebar-collapsed";
 
-/* 48px touch target; 24px icons. Active = primary-container (T90) + on-primary-container (T10). */
+/* 32px row; outline icons. Selected + hover share a 6px charcoal plate. */
 const navBase =
-  "flex min-h-12 items-center gap-3 rounded-full px-3 py-2 text-sm font-medium transition-[background-color,color] duration-200 ease-[cubic-bezier(0.2,0,0,1)]";
+  "flex min-h-8 items-center gap-2.5 rounded-md px-2 py-1.5 text-[13px] font-normal transition-colors duration-150";
 const navActive =
-  "bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)]";
+  "bg-[var(--md-sys-nav-item-active)] text-[var(--md-sys-color-on-surface)]";
 const navIdle =
-  "text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-state-hover)] hover:text-[var(--md-sys-color-on-surface)]";
+  "text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-nav-item-active)] hover:text-[var(--md-sys-color-on-surface)]";
 
 const desktopNavBase =
-  "flex min-h-12 items-center rounded-full py-2 text-sm font-medium transition-[background-color,color,padding,gap] duration-200 ease-[cubic-bezier(0.2,0,0,1)]";
+  "flex min-h-8 items-center rounded-md py-1.5 text-[13px] font-normal transition-[background-color,color,padding,gap] duration-150";
+
+const collapseBtnClass =
+  "flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent p-0 text-[var(--md-sys-color-on-surface-variant)]";
 
 function navClassName(active: boolean) {
   return `${navBase} ${active ? navActive : navIdle}`;
 }
 
-function desktopNavClassName(active: boolean, collapsed: boolean, compactPx = false) {
+function desktopNavClassName(active: boolean, collapsed: boolean) {
   const layout = collapsed
-    ? compactPx
-      ? "justify-center gap-0 px-2"
-      : "justify-center gap-0 px-2"
-    : "gap-3 px-3";
+    ? "h-8 w-8 shrink-0 justify-center gap-0 self-center overflow-hidden p-0"
+    : "gap-2.5 px-2";
   return `${desktopNavBase} ${layout} ${active ? navActive : navIdle}`;
 }
 
-function NavIcon({ name, active }: { name: string; active: boolean }) {
+function NavIcon({ name }: { name: string }) {
   return (
-    <span
-      className={`material-symbols-outlined leading-none ${active ? "ms-filled" : ""}`}
-      aria-hidden="true"
-    >
+    <span className="material-symbols-outlined ms-size-20 leading-none" aria-hidden="true">
       {name}
     </span>
   );
 }
 
 function isHrefActive(pathname: string, href: string) {
-  if (href === "/dashboard") return pathname === "/dashboard";
+  if (href === "/overview") return pathname === "/overview";
   return pathname.startsWith(href);
 }
 
@@ -64,7 +61,7 @@ function SidebarLabel({
 }) {
   return (
     <span
-      className={`min-w-0 translate-y-[1px] whitespace-nowrap transition-[max-width,opacity,transform] duration-300 ease-out ${collapsed
+      className={`min-w-0 translate-y-[0.5px] whitespace-nowrap transition-[max-width,opacity,transform] duration-300 ease-out ${collapsed
           ? "max-w-0 -translate-x-2 overflow-hidden opacity-0"
           : "max-w-40 opacity-100"
         }`}
@@ -75,7 +72,7 @@ function SidebarLabel({
 }
 
 function getPageTitle(pathname: string) {
-  if (pathname === "/dashboard") return "Dashboard";
+  if (pathname === "/overview") return "Overview";
   if (pathname.startsWith("/actions")) return "Actions";
   if (pathname.startsWith("/agents/new")) return "New Agent";
   if (pathname.startsWith("/agents")) return "AI Agents";
@@ -91,13 +88,21 @@ function getPageTitle(pathname: string) {
   return "Omentir";
 }
 
+function itemHref(href: string, setupDone: boolean) {
+  if (setupDone || href === "/overview") return href;
+  return "/overview";
+}
+
 export default function Sidebar({
   localMode = false,
   showApi = false,
+  setupDone = true,
 }: {
   localMode?: boolean;
   /** Startup+ only. Hidden for Basic so the nav matches plan benefits. */
   showApi?: boolean;
+  /** When false, top nav (except Overview) and API send the user back to setup. */
+  setupDone?: boolean;
 }) {
   const pathname = usePathname() ?? "";
   const [collapsed, setCollapsed] = useState(false);
@@ -140,24 +145,27 @@ export default function Sidebar({
   const linkActive = (href: string) => hydrated && isHrefActive(pathname, href);
 
   const renderNavLink = (item: (typeof primaryNav)[number], onClick?: () => void) => {
-    const active = linkActive(item.href);
+    const href = itemHref(item.href, setupDone);
+    const active = setupDone
+      ? linkActive(item.href)
+      : item.href === "/overview" && linkActive("/overview");
     return (
       <Link
         key={item.href}
-        href={item.href}
+        href={href}
         onClick={onClick}
         title={isCollapsed ? item.label : undefined}
         aria-current={active ? "page" : undefined}
         className={navClassName(active)}
       >
-        <NavIcon name={item.icon} active={active} />
-        <span className="translate-y-[1px]">{item.label}</span>
+        <NavIcon name={item.icon} />
+        <span>{item.label}</span>
       </Link>
     );
   };
 
   const productActive = linkActive("/my-product");
-  const apiActive = linkActive("/api-keys");
+  const apiActive = setupDone && linkActive("/api-keys");
   const settingsActive = linkActive("/settings");
   const contactActive = linkActive("/contact");
 
@@ -165,42 +173,42 @@ export default function Sidebar({
     <>
       {!localMode && showApi ? (
         <Link
-          href="/api-keys"
+          href={itemHref("/api-keys", setupDone)}
           onClick={onClick}
           aria-current={apiActive ? "page" : undefined}
-          className={`mb-1 ${navClassName(apiActive)}`}
+          className={`mb-0.5 ${navClassName(apiActive)}`}
         >
-          <NavIcon name="key" active={apiActive} />
-          <span className="translate-y-[1px]">API</span>
+          <NavIcon name="key" />
+          <span>API</span>
         </Link>
       ) : null}
       <Link
         href="/my-product"
         onClick={onClick}
         aria-current={productActive ? "page" : undefined}
-        className={`mb-1 ${navClassName(productActive)}`}
+        className={`mb-0.5 ${navClassName(productActive)}`}
       >
-        <NavIcon name="package_2" active={productActive} />
-        <span className="translate-y-[1px]">My Product</span>
+        <NavIcon name="package_2" />
+        <span>My Product</span>
       </Link>
       <Link
         href="/settings"
         onClick={onClick}
         aria-current={settingsActive ? "page" : undefined}
-        className={`mb-1 ${navClassName(settingsActive)}`}
+        className={`mb-0.5 ${navClassName(settingsActive)}`}
       >
-        <NavIcon name="settings" active={settingsActive} />
-        <span className="translate-y-[1px]">Settings</span>
+        <NavIcon name="settings" />
+        <span>Settings</span>
       </Link>
       {!localMode ? (
         <Link
           href="/contact"
           onClick={onClick}
           aria-current={contactActive ? "page" : undefined}
-          className={`mb-1 ${navClassName(contactActive)}`}
+          className={`mb-0.5 ${navClassName(contactActive)}`}
         >
-          <NavIcon name="support_agent" active={contactActive} />
-          <span className="translate-y-[1px]">Contact</span>
+          <NavIcon name="support_agent" />
+          <span>Contact</span>
         </Link>
       ) : null}
     </>
@@ -209,7 +217,7 @@ export default function Sidebar({
   return (
     <>
       {/* Mobile top app bar: 56px compact; no bottom border — surface contrast only */}
-      <div className="fixed inset-x-0 top-0 z-[90] flex h-14 items-center bg-[var(--md-sys-color-surface-container)] px-2 md:hidden">
+      <div className="fixed inset-x-0 top-0 z-[90] flex h-14 items-center bg-[var(--md-sys-color-surface)] px-2 md:hidden">
         <div className="flex items-center gap-1">
           <button
             type="button"
@@ -222,7 +230,7 @@ export default function Sidebar({
               menu
             </span>
           </button>
-          <span className="text-[22px] font-medium leading-none tracking-tight text-[var(--md-sys-color-on-surface)]">
+          <span className="text-[15px] font-medium leading-none tracking-tight text-[var(--md-sys-color-on-surface)]">
             {pageTitle}
           </span>
         </div>
@@ -240,28 +248,28 @@ export default function Sidebar({
         inert={!mobileOpen ? true : undefined}
       />
 
-      {/* Mobile modal drawer: 80% width, 28px rounded leading edge */}
+      {/* Mobile modal drawer */}
       <aside
-        className={`m3-drawer fixed inset-y-0 left-0 z-[100] flex w-[80%] max-w-[360px] flex-col rounded-r-[28px] bg-[var(--md-sys-color-surface-container)] shadow-[var(--md-sys-elevation-3)] md:hidden ${
+        className={`m3-drawer fixed inset-y-0 left-0 z-[100] flex w-[80%] max-w-[320px] flex-col bg-[var(--md-sys-color-surface)] md:hidden ${
           mobileOpen ? "m3-drawer--open" : "m3-drawer--closed"
         }`}
         aria-hidden={!mobileOpen}
         inert={!mobileOpen ? true : undefined}
       >
-        <div className="flex h-14 shrink-0 items-center justify-between px-4">
+        <div className="flex h-12 shrink-0 items-center px-2">
           <Link
-            href="/dashboard"
+            href="/overview"
             onClick={() => setMobileOpen(false)}
-            className="flex items-center gap-2 text-[22px] font-medium text-[var(--md-sys-color-on-surface)]"
+            className="flex min-w-0 flex-1 items-center gap-2.5 px-2 text-[13px] font-medium text-[var(--md-sys-color-on-surface)]"
           >
-            <LogoMark className="h-8 w-8" />
+            <LogoMark className="h-5 w-5 shrink-0" />
             <span className="select-none">Omentir</span>
           </Link>
           <button
             type="button"
             onClick={() => setMobileOpen(false)}
             aria-label="Close menu"
-            className="ms-icon-button cursor-pointer rounded-full text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-state-hover)]"
+            className={collapseBtnClass}
           >
             <span className="material-symbols-outlined ms-size-20" aria-hidden="true">
               chevron_left
@@ -269,62 +277,66 @@ export default function Sidebar({
           </button>
         </div>
 
-        <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 pb-4 pt-2">
+        <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 pb-3 pt-1">
           {primaryNav.map((item) => renderNavLink(item, () => setMobileOpen(false)))}
         </nav>
 
-        {/* Secondary nav: 12px nest indent vs primary list */}
-        <div className="shrink-0 px-3 pb-4 pl-6 pt-3">
+        <div className="shrink-0 px-2 pb-3 pt-2">
           {bottomLinks(() => setMobileOpen(false))}
         </div>
       </aside>
 
       {/* Desktop sidebar - collapsible; no edge border — surface contrast only */}
       <aside
-        className={`sticky top-0 hidden h-screen shrink-0 flex-col overflow-hidden bg-[var(--md-sys-color-surface-container)] transition-[width] duration-300 ease-[cubic-bezier(0.2,0,0,1)] md:flex ${isCollapsed ? "w-16" : "w-60"
+        className={`sticky top-0 hidden h-screen shrink-0 flex-col overflow-hidden bg-[var(--md-sys-color-surface)] transition-[width] duration-300 ease-[cubic-bezier(0.2,0,0,1)] md:flex ${isCollapsed ? "w-[3.25rem]" : "w-48"
           }`}
       >
         <div
-          className={`relative flex h-16 shrink-0 items-center transition-[padding] duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${isCollapsed ? "justify-center px-2" : "px-4"
-            }`}
+          className={`flex h-12 shrink-0 items-center ${
+            isCollapsed ? "justify-center px-1.5" : "px-2"
+          }`}
         >
-          <Link
-            href="/dashboard"
-            className={`flex min-w-0 items-center gap-2 overflow-hidden text-[22px] font-medium text-[var(--md-sys-color-on-surface)] transition-[opacity,width] duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${isCollapsed ? "pointer-events-none w-0 opacity-0" : "w-full opacity-100"
-              }`}
-          >
-            <LogoMark className="h-8 w-8" />
-            <span className="select-none whitespace-nowrap">Omentir</span>
-          </Link>
+          {isCollapsed ? null : (
+            <Link
+              href="/overview"
+              className="flex min-w-0 flex-1 items-center gap-2.5 overflow-hidden px-2 text-[13px] font-medium text-[var(--md-sys-color-on-surface)]"
+            >
+              <LogoMark className="h-5 w-5 shrink-0" />
+              <span className="select-none whitespace-nowrap">Omentir</span>
+            </Link>
+          )}
           <button
             type="button"
             onClick={toggle}
             aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className={`ms-icon-button shrink-0 cursor-pointer rounded-full text-[var(--md-sys-color-on-surface-variant)] transition-transform duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:bg-[var(--md-sys-state-hover)] hover:text-[var(--md-sys-color-on-surface)] ${
+            className={`${collapseBtnClass} transition-transform duration-200 ease-[cubic-bezier(0.2,0,0,1)] ${
               isCollapsed ? "rotate-180" : "rotate-0"
             }`}
           >
-            <span className="material-symbols-outlined" aria-hidden="true">
+            <span className="material-symbols-outlined ms-size-20" aria-hidden="true">
               chevron_left
             </span>
           </button>
         </div>
 
         <nav
-          className={`flex flex-1 flex-col gap-1 overflow-y-auto pb-4 pt-2 transition-[padding] duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${isCollapsed ? "px-2" : "px-3"
+          className={`flex flex-1 flex-col gap-0.5 overflow-y-auto pb-3 pt-1 transition-[padding] duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${isCollapsed ? "px-1.5" : "px-2"
             }`}
         >
           {primaryNav.map((item) => {
-            const active = linkActive(item.href);
+            const href = itemHref(item.href, setupDone);
+            const active = setupDone
+              ? linkActive(item.href)
+              : item.href === "/overview" && linkActive("/overview");
             return (
               <Link
                 key={item.href}
-                href={item.href}
+                href={href}
                 title={isCollapsed ? item.label : undefined}
                 aria-current={active ? "page" : undefined}
                 className={desktopNavClassName(active, isCollapsed)}
               >
-                <NavIcon name={item.icon} active={active} />
+                <NavIcon name={item.icon} />
                 <SidebarLabel collapsed={isCollapsed}>{item.label}</SidebarLabel>
               </Link>
             );
@@ -332,17 +344,17 @@ export default function Sidebar({
         </nav>
 
         <div
-          className={`shrink-0 pb-4 pt-2 transition-[padding] duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${isCollapsed ? "px-2" : "px-3 pl-6"
+          className={`shrink-0 pb-3 pt-1 transition-[padding] duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${isCollapsed ? "px-1.5" : "px-2"
             }`}
         >
           {!localMode && showApi ? (
             <Link
-              href="/api-keys"
+              href={itemHref("/api-keys", setupDone)}
               title={isCollapsed ? "API" : undefined}
               aria-current={apiActive ? "page" : undefined}
-              className={`mb-1 ${desktopNavClassName(apiActive, isCollapsed, true)}`}
+              className={`mb-0.5 ${desktopNavClassName(apiActive, isCollapsed)}`}
             >
-              <NavIcon name="key" active={apiActive} />
+              <NavIcon name="key" />
               <SidebarLabel collapsed={isCollapsed}>API</SidebarLabel>
             </Link>
           ) : null}
@@ -350,18 +362,18 @@ export default function Sidebar({
             href="/my-product"
             title={isCollapsed ? "My Product" : undefined}
             aria-current={productActive ? "page" : undefined}
-            className={`mb-1 ${desktopNavClassName(productActive, isCollapsed, true)}`}
+            className={`mb-0.5 ${desktopNavClassName(productActive, isCollapsed)}`}
           >
-            <NavIcon name="package_2" active={productActive} />
+            <NavIcon name="package_2" />
             <SidebarLabel collapsed={isCollapsed}>My Product</SidebarLabel>
           </Link>
           <Link
             href="/settings"
             title={isCollapsed ? "Settings" : undefined}
             aria-current={settingsActive ? "page" : undefined}
-            className={`mb-1 ${desktopNavClassName(settingsActive, isCollapsed, true)}`}
+            className={`mb-0.5 ${desktopNavClassName(settingsActive, isCollapsed)}`}
           >
-            <NavIcon name="settings" active={settingsActive} />
+            <NavIcon name="settings" />
             <SidebarLabel collapsed={isCollapsed}>Settings</SidebarLabel>
           </Link>
           {!localMode ? (
@@ -369,9 +381,9 @@ export default function Sidebar({
               href="/contact"
               title={isCollapsed ? "Contact" : undefined}
               aria-current={contactActive ? "page" : undefined}
-              className={`mb-1 ${desktopNavClassName(contactActive, isCollapsed, true)}`}
+              className={`mb-0.5 ${desktopNavClassName(contactActive, isCollapsed)}`}
             >
-              <NavIcon name="support_agent" active={contactActive} />
+              <NavIcon name="support_agent" />
               <SidebarLabel collapsed={isCollapsed}>Contact</SidebarLabel>
             </Link>
           ) : null}

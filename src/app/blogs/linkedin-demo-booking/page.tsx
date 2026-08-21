@@ -221,8 +221,8 @@ export default function BlogPost() {
       </p>
       <p>
         If you use Omentir, the same principle applies to agent-led outreach. Let the system help discover ICP-fit leads, draft the outreach, and surface high-intent replies in one inbox, but keep the calendar handoff controlled by the human who will own the sales conversation. The hosted agent workflow is useful because it reduces lost replies, not because it should pressure every reply into a meeting. You can see the agent-facing workflow on{" "}
-        <Link href="/for-agents" className="text-blue-600 hover:underline">
-          Omentir for agents
+        <Link href="/features/agent-api-and-mcp" className="text-blue-600 hover:underline">
+          Agent API and MCP
         </Link>
         .
       </p>

@@ -50,6 +50,18 @@ export function liveBlogs(now?: Date): BlogItem[] {
 
 export const ALL_BLOGS: BlogItem[] = [
   {
+    slug: "grok-bot-linkedin-sales",
+    title: "Grok Bot for LinkedIn outreach",
+    description:
+      "Grok Bot can research accounts and draft LinkedIn notes overnight. Hook it to Omentir so the send path stays paced, and keep the cloud browser off LinkedIn.",
+    publishedDate: "August 20, 2026",
+    updatedDate: "August 20, 2026",
+    category: "Automation",
+    readTime: "10 min read",
+    bannerSrc: "/grok-bot-linkedin-sales.avif",
+    bannerAlt: "Editorial banner for Grok Bot for LinkedIn outreach",
+  },
+  {
     slug: "x-marketing-and-sales",
     title: "X Marketing and Sales: A Practical Guide to Winning Customers on Twitter",
     description: "Learn how to market and sell on X with a clear profile, useful content, thoughtful replies, honest DMs, and a practical tool stack.",
@@ -1532,4 +1544,4 @@ export const ALL_BLOGS: BlogItem[] = [
   },
 ];
 
-export const CATEGORIES = ["All", "Updates", "Playbooks", "Outreach", "Guides", "Case Studies", "Copywriting", "Automation", "Comparisons"];
+export const CATEGORIES = ["Updates", "Playbooks", "Outreach", "Guides", "Case Studies", "Copywriting", "Automation", "Comparisons"];

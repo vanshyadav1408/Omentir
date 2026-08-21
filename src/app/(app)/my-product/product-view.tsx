@@ -140,7 +140,7 @@ function ListField({
             type="button"
             onClick={() => onChange(values.filter((_, i) => i !== idx))}
             aria-label="Remove"
-            className="grid h-14 w-14 shrink-0 cursor-pointer place-items-center rounded-md text-[#e85e6b] hover:bg-[#fff5f6]"
+            className="grid h-10 w-10 shrink-0 cursor-pointer place-items-center rounded-md text-[#e85e6b] hover:bg-[#fff5f6]"
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="3 6 5 6 21 6" />
@@ -168,7 +168,7 @@ function ListField({
           type="button"
           onClick={add}
           disabled={!draft.trim()}
-          className="h-14 shrink-0 cursor-pointer rounded-md bg-zinc-100 px-4 text-[14px] font-semibold text-zinc-700 transition-colors hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-60"
+          className="h-10 shrink-0 cursor-pointer rounded-md bg-zinc-100 px-4 text-[14px] font-semibold text-zinc-700 transition-colors hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-60"
         >
           Add
         </button>
@@ -254,7 +254,7 @@ export default function ProductView({ profile, saveAction, analyzeAction }: Prod
             form="product-save-form"
             disabled={pending}
             style={{ fontFamily: "var(--font-varta)" }}
-            className="pointer-events-auto inline-flex h-8 cursor-pointer items-center justify-center rounded-full bg-[var(--md-sys-color-primary)] px-3 text-xs font-semibold text-[var(--md-sys-color-on-primary)] transition hover:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+            className="pointer-events-auto m3-btn m3-btn-filled h-8 px-2.5 text-xs disabled:cursor-not-allowed disabled:opacity-60"
           >
             <span className="translate-y-px">{pending ? "Saving..." : "Save"}</span>
           </button>
@@ -264,16 +264,16 @@ export default function ProductView({ profile, saveAction, analyzeAction }: Prod
       {/* Header — primary action matches Leads "Add leads" */}
       <div className="app-x hidden shrink-0 items-center justify-between gap-3 pt-6 md:flex">
         <div className="min-w-0">
-          <h1 className="text-2xl font-semibold leading-none tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-3xl">
+          <h1 className="text-2xl font-semibold leading-none tracking-tight text-[var(--md-sys-color-on-surface)]">
             My Product
           </h1>
         </div>
         <button
           type="submit"
           disabled={pending}
-          className="m3-btn m3-btn-filled h-10 shrink-0 gap-1.5 px-4 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+          className="m3-btn m3-btn-filled h-8 shrink-0 gap-1 px-2.5 text-xs disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <polyline points="20 6 9 17 4 12" />
           </svg>
           {pending ? "Saving..." : "Save changes"}
@@ -311,7 +311,7 @@ export default function ProductView({ profile, saveAction, analyzeAction }: Prod
                 />
               </div>
               <div>
-                <div className="flex flex-row items-start gap-2">
+                <div className="flex flex-row items-end gap-2">
                   <div className="min-w-0 flex-1">
                     <TextInput
                       name="websiteUrl"
@@ -321,12 +321,11 @@ export default function ProductView({ profile, saveAction, analyzeAction }: Prod
                       placeholder="acme.com"
                     />
                   </div>
-                  {/* mt-2 = outlined field top pad so button lines up with the 56px shell */}
                   <button
                     type="button"
                     onClick={handleAnalyze}
                     disabled={analyzing || !websiteUrl.trim()}
-                    className="m3-btn m3-btn-filled mt-2 h-14 shrink-0 px-4 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+                    className="m3-btn m3-btn-filled m3-btn-field shrink-0 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {analyzing ? "Analysing..." : "AI Analyse"}
                   </button>
@@ -411,7 +410,7 @@ export default function ProductView({ profile, saveAction, analyzeAction }: Prod
               </p>
             </div>
 
-            <div className="mt-8">
+            <div className="mt-8" id="demo-booking">
               <TextInput
                 name="schedulingLink"
                 type="url"
@@ -421,8 +420,9 @@ export default function ProductView({ profile, saveAction, analyzeAction }: Prod
                 placeholder="https://cal.com/your-name/intro"
               />
               <p className="mt-1.5 text-[12px] font-medium text-zinc-600">
-                Calendly or Cal.com. Agents that continue until a demo is booked use this
-                link by default. You can override it per agent during setup.
+                Paste any meeting scheduler URL. Agents that continue until a demo is
+                booked use this link by default. You can override it per agent during
+                setup.
               </p>
             </div>
 

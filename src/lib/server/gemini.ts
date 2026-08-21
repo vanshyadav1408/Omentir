@@ -7,6 +7,7 @@ import {
   containsPricingDetails,
   shouldShareBookingLink,
 } from "./reply-automation-policy";
+import { hasCalendarBookingEvidence } from "@/lib/conversation-category";
 import { fetchWebsitePages, WebsiteUnreachableError } from "./website";
 import type {
   Agent,
@@ -2129,13 +2130,29 @@ const REPLY_INTENTS = [
 
 // Cheap pre-filter before spending a Gemini call - OOO / hard opt-out patterns
 // are common and unambiguous.
-function prefilterReplyIntent(latestInbound: string): ReplyIntentClassification | null {
+function prefilterReplyIntent(
+  latestInbound: string,
+  conversation: ConversationMessage[] = [],
+): ReplyIntentClassification | null {
   const text = latestInbound.trim();
   if (!text) {
     return {
       intent: "neutral",
       confidence: 1,
       reason: "Empty message",
+      nextStepHint: "",
+    };
+  }
+
+  if (
+    hasCalendarBookingEvidence({
+      messages: [...conversation, { direction: "inbound", body: text }],
+    })
+  ) {
+    return {
+      intent: "meeting_booked",
+      confidence: 0.9,
+      reason: "The prospect shared a calendar event link after asking to book",
       nextStepHint: "",
     };
   }
@@ -2193,7 +2210,7 @@ export async function classifyReplyIntent(input: {
   conversation: ConversationMessage[];
   latestInbound: string;
 }): Promise<ReplyIntentClassification> {
-  const prefiltered = prefilterReplyIntent(input.latestInbound);
+  const prefiltered = prefilterReplyIntent(input.latestInbound, input.conversation);
   if (prefiltered) return prefiltered;
 
   const leadFirstName = input.lead.name.split(" ")[0] || "Lead";

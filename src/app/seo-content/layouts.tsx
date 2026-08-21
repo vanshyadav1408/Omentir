@@ -30,23 +30,36 @@ export function VerdictBanner({ page }: { page: SeoContentPage }) {
 export function TimelineWeeks({ phases }: { phases: SeoPhase[] }) {
   if (phases.length === 0) return null;
   return (
-    <ol className="relative space-y-0 border-l border-[var(--md-sys-color-outline-variant)] pl-6 sm:pl-8">
-      {phases.map((phase, index) => (
-        <li key={phase.title} className="relative pb-10 last:pb-0">
-          <span className="absolute -left-[1.85rem] top-0 grid h-7 w-7 place-items-center rounded-full bg-[var(--md-sys-color-primary)] text-xs font-semibold text-[var(--md-sys-color-on-primary)] sm:-left-[2.35rem]">
-            {index + 1}
-          </span>
-          <p
-            style={{ fontFamily: "var(--font-varta)" }}
-            className="text-xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)]"
-          >
-            {phase.title}
-          </p>
-          <p className="mt-2 text-base leading-8 text-[var(--md-sys-color-on-surface-variant)]">
-            {linkifyProducts(phase.detail)}
-          </p>
-        </li>
-      ))}
+    <ol>
+      {phases.map((phase, index) => {
+        const last = index === phases.length - 1;
+        return (
+          <li key={phase.title} className="flex gap-4 sm:gap-6">
+            <div className="flex w-7 shrink-0 flex-col items-center">
+              <span className="relative z-10 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[var(--md-sys-color-primary)] text-xs font-semibold text-[var(--md-sys-color-on-primary)]">
+                {index + 1}
+              </span>
+              {last ? null : (
+                <span
+                  className="w-0.5 min-h-4 flex-1 bg-[var(--md-sys-color-primary)]"
+                  aria-hidden="true"
+                />
+              )}
+            </div>
+            <div className={last ? undefined : "pb-10"}>
+              <p
+                style={{ fontFamily: "var(--font-varta)" }}
+                className="text-xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)]"
+              >
+                {phase.title}
+              </p>
+              <p className="mt-2 text-base leading-8 text-[var(--md-sys-color-on-surface-variant)]">
+                {linkifyProducts(phase.detail)}
+              </p>
+            </div>
+          </li>
+        );
+      })}
     </ol>
   );
 }

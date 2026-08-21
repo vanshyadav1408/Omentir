@@ -1,12 +1,12 @@
 import { authOrSignedOut } from "@/lib/server/clerk-session";
 import { redirect } from "next/navigation";
 import AuthChoice from "../auth-choice";
-import OnboardingHeader from "../onboarding-header";
+import AuthShell, { AuthLegalFooter } from "../auth-shell";
 import { createPageMetadata } from "../seo";
 
 export const metadata = createPageMetadata({
   title: "Sign Up - Omentir",
-  description: "Create an Omentir account to start finding customers with AI-powered LinkedIn outreach.",
+  description: "Create an Omentir account to start finding customers with LinkedIn outreach.",
   path: "/signup",
   noIndex: true,
 });
@@ -28,13 +28,12 @@ export default async function SignupPage({
   }
 
   return (
-    <>
-      <OnboardingHeader />
+    <AuthShell footer={<AuthLegalFooter mode="signup" />}>
       <AuthChoice
         primary="signup"
         initialWebsite={website || ""}
         signupReturnUrl={postSignupUrl}
       />
-    </>
+    </AuthShell>
   );
 }

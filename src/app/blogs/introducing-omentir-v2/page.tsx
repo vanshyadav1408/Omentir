@@ -289,8 +289,8 @@ export default function BlogPost() {
       </p>
       <p>
         For setup details, read the{" "}
-        <Link href="/mcp-server" className="text-blue-600 hover:underline">
-          Omentir MCP server guide
+        <Link href="/integrations/mcp" className="text-blue-600 hover:underline">
+          Omentir MCP integration guide
         </Link>
         .
       </p>
@@ -339,10 +339,10 @@ export default function BlogPost() {
       </p>
       <div className="my-10 flex flex-wrap gap-3">
         <Link
-          href="/dashboard"
+          href="/overview"
           className="v2-dashboard-button inline-flex h-11 items-center justify-center rounded-md bg-black px-5 text-sm font-semibold text-white transition hover:bg-zinc-800"
         >
-          Dashboard
+          Overview
         </Link>
         <Link
           href="/pricing"
@@ -351,7 +351,7 @@ export default function BlogPost() {
           Pricing
         </Link>
         <Link
-          href="/mcp-server"
+          href="/integrations/mcp"
           className="inline-flex h-11 items-center justify-center rounded-md border border-zinc-300 px-5 text-sm font-semibold text-zinc-800 transition hover:border-black hover:text-black"
         >
           MCP Agents

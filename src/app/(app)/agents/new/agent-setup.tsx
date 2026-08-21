@@ -622,12 +622,12 @@ function CompanyEditModal({
                 placeholder="acme.com"
                 error={analyzeError || undefined}
               />
-              {/* mt-2 = outlined field top pad so button lines up with the 56px shell */}
+              {/* mt-2 = outlined field top pad so button lines up with the 40px shell */}
               <button
                 type="button"
                 onClick={onAnalyze}
                 disabled={isWorking || !values.websiteUrl.trim()}
-                className="m3-btn m3-btn-filled mt-2 h-14 shrink-0 px-4 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+                className="m3-btn m3-btn-filled mt-2 h-10 shrink-0 px-4 text-sm disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {analyzing ? "Analysing..." : "AI Analyse"}
               </button>
@@ -778,13 +778,17 @@ export default function AgentSetup({
   );
   const [replyHandling, setReplyHandling] = useState<
     "handoff" | "ai_until_interest" | "ai_until_booked"
-  >(
-    initialReplyHandling === "handoff"
-      ? "handoff"
-      : initialReplyHandling === "ai_until_booked"
-        ? "ai_until_booked"
-        : "ai_until_interest",
-  );
+  >(() => {
+    if (initialReplyHandling === "handoff") return "handoff";
+    if (initialReplyHandling === "ai_until_booked") return "ai_until_booked";
+    if (initialReplyHandling === "ai_until_interest" || initialReplyHandling === "ai") {
+      return "ai_until_interest";
+    }
+    // New agents run AI outreach until a meeting is booked. Existing agents
+    // with no stored value keep the old implicit default so a save does not
+    // change how they already behave.
+    return initialAgent ? "ai_until_interest" : "ai_until_booked";
+  });
   const [bookingLink, setBookingLink] = useState(
     initialBookingLink || profile?.schedulingLink || "",
   );
@@ -792,7 +796,9 @@ export default function AgentSetup({
   // user writes every message, so the AI must not answer for them). This only
   // decides whether that hand-off arrives as an email.
   const [notifyOnReply, setNotifyOnReply] = useState(true);
-  const [campaignGoal, setCampaignGoal] = useState<"warm" | "demo">("warm");
+  const [campaignGoal, setCampaignGoal] = useState<"warm" | "demo">(
+    initialAgent ? "warm" : "demo",
+  );
   const [messageTone, setMessageTone] = useState<"professional" | "conversational" | "direct">(
     "professional",
   );
@@ -1223,7 +1229,7 @@ export default function AgentSetup({
               onClick={applyDraft}
               disabled={drafting}
               style={{ fontFamily: "var(--font-varta)" }}
-              className="inline-flex h-9 shrink-0 cursor-pointer items-center justify-center gap-1.5 self-start rounded-md bg-[#ba3871] px-3 text-[13px] font-semibold leading-none text-white shadow-[0_10px_25px_rgba(186,56,113,0.28)] transition hover:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:self-center"
+              className="inline-flex h-9 shrink-0 cursor-pointer items-center justify-center gap-1.5 self-start rounded-md bg-[#ba3871] px-3 text-[13px] font-semibold leading-none text-white shadow-[0_10px_25px_rgba(255,255,255,0.12)] transition hover:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:self-center"
             >
               <span className="translate-y-px">{drafting ? "Filling..." : "Fill with AI"}</span>
             </button>
@@ -1636,10 +1642,7 @@ export default function AgentSetup({
                   : "border-zinc-200 bg-white hover:bg-zinc-50")
               }
             >
-              <span
-                style={{ fontFamily: "var(--font-varta)" }}
-                className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-[#ba3871] px-2.5 py-0.5 text-[11px] font-semibold text-white"
-              >
+              <span className="recommended-badge absolute -top-2.5 left-1/2 -translate-x-1/2">
                 Recommended
               </span>
               <div style={{ fontFamily: "var(--font-varta)" }} className="text-[15px] font-semibold text-zinc-950">
@@ -1771,6 +1774,7 @@ export default function AgentSetup({
                   id: "ai_until_booked",
                   title: "Continue until booked",
                   desc: "Omentir answers questions, shares your scheduling link once qualified interest is detected, and stops after the lead confirms a meeting.",
+                  recommended: true,
                 },
               ] as const
             ).map((option) => {
@@ -1796,11 +1800,16 @@ export default function AgentSetup({
                     {active ? <span className="h-2.5 w-2.5 rounded-full bg-[#e85e6b]" /> : null}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span
-                      style={{ fontFamily: "var(--font-varta)" }}
-                      className="block text-[14px] font-semibold text-zinc-950"
-                    >
-                      {option.title}
+                    <span className="flex items-center gap-2">
+                      <span
+                        style={{ fontFamily: "var(--font-varta)" }}
+                        className="text-[14px] font-semibold text-zinc-950"
+                      >
+                        {option.title}
+                      </span>
+                      {"recommended" in option && option.recommended ? (
+                        <span className="recommended-badge">Recommended</span>
+                      ) : null}
                     </span>
                     <span className="mt-0.5 block text-[13px] font-medium text-zinc-700">
                       {option.desc}
@@ -2497,7 +2506,7 @@ export default function AgentSetup({
                 form="agent-setup-form"
                 disabled={pending || discovering}
                 style={{ fontFamily: "var(--font-varta)" }}
-                className="pointer-events-auto inline-flex h-8 cursor-pointer items-center justify-center rounded-full bg-[var(--md-sys-color-primary)] px-3.5 text-xs font-semibold text-[var(--md-sys-color-on-primary)] transition hover:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+                className="pointer-events-auto m3-btn m3-btn-filled h-8 px-2.5 text-xs disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <span className="translate-y-px leading-none">{mobileContinueLabel}</span>
               </button>
@@ -2509,7 +2518,7 @@ export default function AgentSetup({
             <div className="min-w-0">
               <h1
                 style={{ fontFamily: "var(--font-varta)" }}
-                className="flex min-w-0 items-center gap-2 text-2xl font-semibold leading-none tracking-tight text-zinc-950 sm:text-3xl"
+                className="flex min-w-0 items-center gap-2 text-2xl font-semibold leading-none tracking-tight text-[var(--md-sys-color-on-surface)]"
               >
                 <span
                   className="material-symbols-outlined shrink-0 text-[20px]! font-light leading-none text-zinc-500"
@@ -2546,7 +2555,7 @@ export default function AgentSetup({
                 type="submit"
                 disabled={pending || discovering}
                 style={{ fontFamily: "var(--font-varta)" }}
-                className="inline-flex h-8 cursor-pointer items-center justify-center gap-1.5 rounded-md bg-[#ba3871] px-4 text-[13px] font-semibold text-white shadow-[0_12px_35px_rgba(186,56,113,0.35)] transition hover:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex h-8 cursor-pointer items-center justify-center gap-1.5 rounded-md bg-[#ba3871] px-4 text-[13px] font-semibold text-white shadow-[0_12px_35px_rgba(255,255,255,0.12)] transition hover:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <span className="translate-y-px leading-none">{discovering
                   ? leadsOnly
@@ -2660,7 +2669,7 @@ export default function AgentSetup({
               type="submit"
               disabled={pending || discovering}
               style={{ fontFamily: "var(--font-varta)" }}
-              className="inline-flex h-10 cursor-pointer items-center justify-center gap-1 rounded-md bg-[#ba3871] px-5 text-[13px] font-semibold leading-none text-white shadow-[0_12px_35px_rgba(186,56,113,0.35)] transition hover:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-10 cursor-pointer items-center justify-center gap-1 rounded-md bg-[#ba3871] px-5 text-[13px] font-semibold leading-none text-white shadow-[0_12px_35px_rgba(255,255,255,0.12)] transition hover:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
             >
               <span className="translate-y-px leading-none">{discovering
                 ? leadsOnly

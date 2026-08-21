@@ -22,7 +22,6 @@ export default function UseCasesIndexPage() {
       title="LinkedIn outbound use cases"
       description="Concrete jobs Omentir is built for. Each page is one motion, not a keyword variant."
       pages={ALL_USE_CASES}
-      compactHero
     />
   );
 }

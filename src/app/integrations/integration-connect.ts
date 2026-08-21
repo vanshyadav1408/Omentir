@@ -30,6 +30,11 @@ const CONNECT: Record<string, IntegrationConnect> = {
     auth: "Workspace approval",
     bestFor: "Chat operator",
   },
+  "grok-bot": {
+    surface: "MCP",
+    auth: "Plugin sign-in or API key",
+    bestFor: "Overnight sales operator",
+  },
   openclaw: {
     surface: "MCP or REST",
     auth: "API key",

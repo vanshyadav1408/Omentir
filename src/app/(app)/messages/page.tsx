@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import MessagesView from "./messages-view";
 import { getWorkspace, listLinkedInAccounts } from "@/lib/server/data";
 import { hasActiveSubscription } from "@/lib/server/subscription";
+import { requireWorkspaceSetup } from "@/lib/server/workspace-setup";
 import { createPageMetadata } from "@/app/seo";
 
 export const metadata = createPageMetadata({
@@ -37,8 +38,9 @@ export default async function MessagesPage() {
   if (!hasActiveSubscription(workspace)) {
     redirect("/upgrade");
   }
+  await requireWorkspaceSetup(userId);
   if (!linkedInAccounts.length) {
-    redirect("/connect");
+    redirect("/overview");
   }
 
   return <MessagesContent />;

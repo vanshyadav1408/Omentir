@@ -9,5 +9,5 @@ export default function MobileHeaderPortal({ children }: { children: ReactNode }
 
   if (!hydrated) return null;
 
-  return createPortal(children, document.body);
+  return createPortal(<div className="app-compact">{children}</div>, document.body);
 }

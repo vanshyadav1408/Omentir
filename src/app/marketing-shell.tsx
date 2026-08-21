@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Suspense } from "react";
+import { Suspense, type ReactNode } from "react";
 import { hostedContactEmail, hostedGithubRepo } from "@/lib/hosted-identity";
 import { AskAiMenu } from "./ask-ai-menu";
 import FeatureMenu from "./feature-menu";
@@ -13,14 +13,14 @@ import { brandTagline } from "./seo";
 export function MarketingHeader({ transparentAtTop = false }: { transparentAtTop?: boolean }) {
   return (
     <MarketingHeaderFrame transparentAtTop={transparentAtTop}>
-      {/* 16px gutters on mobile (Google M3); 32px from md up.
+      {/* Width + gutters from .omentir-primary-width.
           Desktop: logo | nav centered in full header | actions */}
-      <header className="relative mx-auto flex h-16 w-full max-w-7xl min-w-0 items-center gap-2 px-4 md:gap-4 md:px-8">
+      <header className="omentir-primary-width relative flex h-16 min-w-0 items-center gap-2 md:gap-4">
         <Link
           href="/"
-          className="flex min-w-0 shrink-0 select-none items-center gap-1.5 text-lg font-medium leading-none tracking-tight text-[var(--md-sys-color-on-surface)] md:gap-2 md:text-[22px]"
+          className="flex min-w-0 shrink-0 select-none items-center gap-1.5 text-[20px] font-medium leading-none tracking-tight text-[var(--md-sys-color-on-surface)] md:gap-2 md:text-[24px]"
         >
-          <LogoMark className="h-8 w-8 md:h-9 md:w-9" />
+          <LogoMark className="h-6 w-6 md:h-7 md:w-7" />
           <span className="truncate">Omentir</span>
         </Link>
 
@@ -32,8 +32,8 @@ export function MarketingHeader({ transparentAtTop = false }: { transparentAtTop
 
         <nav className="hidden min-w-0 flex-1 items-center justify-center gap-1 text-sm font-medium text-[var(--md-sys-color-on-surface-variant)] md:flex lg:absolute lg:left-1/2 lg:flex-none lg:-translate-x-1/2">
           <FeatureMenu />
-          <Link href="/integrations" className="m3-state-layer rounded-full px-3 py-2 transition-colors hover:text-[var(--md-sys-color-on-surface)]">Integrations</Link>
-          <Link href="/pricing" className="m3-state-layer rounded-full px-3 py-2 transition-colors hover:text-[var(--md-sys-color-on-surface)]">Pricing</Link>
+          <Link href="/integrations" className="m3-state-layer rounded-md px-3 py-2 transition-colors hover:text-[var(--md-sys-color-on-surface)]">Integrations</Link>
+          <Link href="/pricing" className="m3-state-layer rounded-md px-3 py-2 transition-colors hover:text-[var(--md-sys-color-on-surface)]">Pricing</Link>
           <AskAiMenu />
         </nav>
 
@@ -63,7 +63,7 @@ function GithubStarButtonFallback() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Omentir on GitHub"
-      className="m3-state-layer inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full border border-[var(--md-sys-color-outline-variant)] px-2.5 py-1.5 text-xs font-medium leading-none text-black transition-colors dark:text-[var(--md-sys-color-on-surface-variant)] dark:hover:text-[var(--md-sys-color-on-surface)] md:gap-2 md:px-3 md:py-2 md:text-sm"
+      className="m3-state-layer inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md border border-[var(--md-sys-color-outline-variant)] px-2.5 py-1.5 text-xs font-medium leading-none text-black transition-colors dark:text-[var(--md-sys-color-on-surface-variant)] dark:hover:text-[var(--md-sys-color-on-surface)] md:gap-2 md:px-3 md:py-2 md:text-sm"
     >
       <svg
         viewBox="0 0 16 16"
@@ -116,10 +116,9 @@ const footerColumns: Array<[string, ...Array<[label: string, href: string]>]> = 
     "Product",
     ["Features", "/features"],
     ["Pricing", "/pricing"],
-    ["For Agents", "/for-agents"],
-    ["MCP Server", "/mcp-server"],
     ["Use cases", "/use-cases"],
     ["Founder outbound", "/use-cases/outbound-for-founders"],
+    ["Grok Bot outbound", "/use-cases/grok-bot-outbound"],
     ["Book LinkedIn demos", "/use-cases/book-linkedin-demos"],
     ["Blogs", "/blogs"],
     ["Open Source", "/blogs/omentir-is-now-open-source"],
@@ -127,6 +126,7 @@ const footerColumns: Array<[string, ...Array<[label: string, href: string]>]> = 
   [
     "Company",
     ["About", "/about"],
+    ["Help", "/help"],
     ["Minimum Booking Guarantee", "/minimum-booking-guarantee"],
     ["Privacy Policy", "/privacy-policy"],
     ["Terms of Service", "/terms-of-service"],
@@ -138,6 +138,7 @@ const footerColumns: Array<[string, ...Array<[label: string, href: string]>]> = 
     ["Cursor", "/integrations/cursor"],
     ["MCP", "/integrations/mcp"],
     ["Grok", "/integrations/grok"],
+    ["Grok Bot", "/integrations/grok-bot"],
     ["OpenClaw", "/integrations/openclaw"],
     ["REST API", "/integrations/rest-api"],
     ["Claude Code", "/integrations/claude-code"],
@@ -215,8 +216,8 @@ function FooterSocialIcon({ label }: { label: string }) {
 export function MarketingFooter() {
   // Always the same near-black “light-theme” footer in light and dark site themes.
   return (
-    <footer className="marketing-footer overflow-hidden border-t border-white/20 bg-[#111111] px-4 pb-0 pt-14 text-white md:px-8">
-      <div className="mx-auto flex max-w-7xl flex-col gap-10 md:flex-row md:items-start md:gap-12 lg:gap-16">
+    <footer className="marketing-footer overflow-hidden border-t border-white/20 bg-[#111111] pb-0 pt-14 text-white">
+      <div className="omentir-primary-width flex flex-col gap-10 md:flex-row md:items-start md:gap-12 lg:gap-16">
         <div className="min-w-0 md:w-56 md:shrink-0 lg:w-64">
           <div className="flex select-none items-center gap-3 text-xl font-normal text-white md:text-2xl">
             <LogoMark className="h-9 w-9 text-white md:h-10 md:w-10" />
@@ -242,7 +243,7 @@ export function MarketingFooter() {
             ))}
           </div>
         </div>
-        <div className="grid min-w-0 flex-1 grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="hidden min-w-0 flex-1 grid-cols-1 gap-8 md:grid md:grid-cols-2 lg:grid-cols-4">
           {footerColumns.map(([heading, ...links]) => (
             <div key={heading} className="min-w-0">
               <h3 className="mb-4 text-sm font-semibold text-white">{heading}</h3>
@@ -261,7 +262,7 @@ export function MarketingFooter() {
       </div>
       <div
         aria-hidden="true"
-        className="mx-auto mt-10 h-[18vw] max-h-52 max-w-7xl select-none overflow-hidden sm:h-[16vw]"
+        className="omentir-primary-width mt-10 h-[18vw] max-h-52 select-none overflow-hidden sm:h-[16vw]"
       >
         <div className="bg-[linear-gradient(180deg,#8f8f8f_0%,#d6d6d6_45%,#ffffff_100%)] bg-clip-text text-center text-[23vw] font-semibold leading-[0.78] tracking-tight text-transparent sm:text-[21vw] lg:text-[17rem]">
           Omentir
@@ -356,6 +357,117 @@ export function MarketingPage({
           </section>
         </div>
       )}
+      <MarketingFooter />
+    </main>
+  );
+}
+
+export type ArticleCrumb = { label: string; href?: string };
+
+/** Visible path crumbs. Labels stay lowercase: home / help / slug. */
+export function articlePathCrumbs(...parts: string[]): ArticleCrumb[] {
+  const crumbs: ArticleCrumb[] = [{ label: "home", href: "/" }];
+  let acc = "";
+  parts.forEach((part, index) => {
+    acc += `/${part}`;
+    crumbs.push(index === parts.length - 1 ? { label: part } : { label: part, href: acc });
+  });
+  return crumbs;
+}
+
+export function ArticleCrumbs({
+  crumbs,
+  className = "mb-8",
+}: {
+  crumbs: ReadonlyArray<ArticleCrumb>;
+  className?: string;
+}) {
+  return (
+    <nav
+      aria-label="Breadcrumb"
+      className={`flex flex-wrap items-center gap-2 text-xs font-semibold lowercase text-[var(--md-sys-color-on-surface-variant)] ${className}`}
+    >
+      {crumbs.map((crumb, index) => (
+        <span key={`${crumb.label}-${index}`} className="flex items-center gap-2">
+          {index > 0 ? (
+            <span className="font-normal text-[var(--md-sys-color-outline)]" aria-hidden="true">
+              /
+            </span>
+          ) : null}
+          {crumb.href ? (
+            <Link href={crumb.href} className="transition-colors hover:text-[var(--md-sys-color-on-surface)]">
+              {crumb.label}
+            </Link>
+          ) : (
+            <span className="text-[var(--md-sys-color-on-surface)]">{crumb.label}</span>
+          )}
+        </span>
+      ))}
+    </nav>
+  );
+}
+
+/** Narrow article chrome shared with /help pages. */
+export function MarketingArticle({
+  title,
+  path,
+  crumbs,
+  description,
+  updated,
+  children,
+}: {
+  title: string;
+  path: string;
+  crumbs?: ReadonlyArray<ArticleCrumb>;
+  description?: ReactNode;
+  updated?: string;
+  children: ReactNode;
+}) {
+  const trail = crumbs ?? articlePathCrumbs(path);
+  return (
+    <main className="min-h-screen overflow-x-hidden bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)]">
+      <MarketingHeader transparentAtTop />
+      <div className="relative">
+        <HeroGridBackdrop height="h-[60vh]" />
+        <article className="omentir-secondary-width relative z-10 min-w-0 pb-16 pt-28 md:pb-24 md:pt-32">
+          <ArticleCrumbs crumbs={trail} />
+
+          <h1
+            style={{ fontFamily: "var(--font-varta)" }}
+            className="max-w-2xl text-2xl font-semibold leading-snug tracking-tight text-[var(--md-sys-color-on-surface)] md:text-3xl md:leading-snug"
+          >
+            {title}
+          </h1>
+          {description ? (
+            <p className="mt-5 max-w-2xl text-base leading-8 text-[var(--md-sys-color-on-surface-variant)]">
+              {description}
+            </p>
+          ) : null}
+          {updated ? (
+            <p className="mt-4 text-sm text-[var(--md-sys-color-on-surface-variant)]">
+              Last updated: {updated}
+            </p>
+          ) : null}
+
+          <div className="mt-12 md:mt-16">{children}</div>
+
+          <div className="mt-16 rounded-3xl border-2 border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface-container)] px-6 py-8 text-center md:mt-20 md:px-10 md:py-10">
+            <p className="text-lg font-semibold tracking-tight text-[var(--md-sys-color-on-surface)]">
+              Run the outreach from your own LinkedIn account
+            </p>
+            <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)]">
+              Omentir finds ICP-fit buyers, drafts connection notes and messages, and keeps
+              replies in one inbox. You still choose the daily send limits.
+            </p>
+            <Link
+              href="/signup"
+              className="m3-btn m3-btn-filled-secondary mt-6 inline-flex h-11 cursor-pointer px-6 text-sm"
+            >
+              Try Omentir
+            </Link>
+          </div>
+        </article>
+      </div>
       <MarketingFooter />
     </main>
   );

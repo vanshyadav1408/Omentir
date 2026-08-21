@@ -54,7 +54,7 @@ export default function NewAgentButton({
     open && hydrated
       ? createPortal(
           <div
-            className="m3-modal-scrim new-agent-choice-mobile-scrim z-[200]"
+            className="app-compact m3-modal-scrim new-agent-choice-mobile-scrim z-[200]"
             role="presentation"
             onClick={() => setOpen(false)}
           >
@@ -107,8 +107,9 @@ export default function NewAgentButton({
                     send
                   </span>
                   <span className="min-w-0">
-                    <span className="block text-sm font-semibold text-[var(--md-sys-color-on-surface)]">
+                    <span className="flex items-center gap-2 text-sm font-semibold text-[var(--md-sys-color-on-surface)]">
                       Leads + outreach
+                      <span className="recommended-badge">Recommended</span>
                     </span>
                     <span className="mt-0.5 hidden text-xs leading-5 text-[var(--md-sys-color-on-surface-variant)] md:block">
                       Also runs your LinkedIn connect and message sequence on the leads

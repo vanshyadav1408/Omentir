@@ -1,3 +1,4 @@
+import AuthShell, { AuthLegalFooter } from "../auth-shell";
 import { createPageMetadata } from "../seo";
 
 export const metadata = createPageMetadata({
@@ -12,5 +13,9 @@ export default function SsoCallbackLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  return (
+    <AuthShell footer={<AuthLegalFooter mode="login" />}>
+      {children}
+    </AuthShell>
+  );
 }

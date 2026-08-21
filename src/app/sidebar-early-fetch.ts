@@ -5,7 +5,7 @@
  * The root layout renders the script below once, in <head>; useSidebarResource
  * then adopts the in-flight promise on mount rather than issuing its own
  * request. On a cold load that removes the whole download+hydrate gap from the
- * critical path, which on the dashboard is the difference between the skeleton
+ * critical path, which on Overview is the difference between the skeleton
  * clearing when the data lands and clearing a second or more after that.
  *
  * Only full page loads are covered, which is why the script picks its resources
@@ -24,7 +24,7 @@ const EARLY_FETCH_KEY = "__omentirSidebarEarlyFetch";
 
 type EarlyFetchStore = Record<string, Promise<Record<string, unknown> | null>>;
 
-/** Resource strings shared by the dashboard page (script) and its view (hook). */
+/** Resource strings shared by the Overview page (script) and its view (hook). */
 export const DASHBOARD_RESOURCE =
   "agents,groups,leadDashboardPreviews,enrollmentPreviews,conversations,activityDays";
 export const LINKEDIN_INBOX_RESOURCE = "linkedinInbox";
@@ -39,7 +39,7 @@ export const LINKEDIN_INBOX_RESOURCE = "linkedinInbox";
  * app-data-prefetch.
  */
 export const EARLY_FETCH_ROUTES: Record<string, string[]> = {
-  "/dashboard": [DASHBOARD_RESOURCE, LINKEDIN_INBOX_RESOURCE],
+  "/overview": [DASHBOARD_RESOURCE, LINKEDIN_INBOX_RESOURCE],
 };
 
 export function buildEarlyFetchScript(routes: Record<string, string[]> = EARLY_FETCH_ROUTES): string {

@@ -139,7 +139,7 @@ export default async function RootLayout({
             re-created. See sidebar-early-fetch. */}
         <script dangerouslySetInnerHTML={{ __html: buildEarlyFetchScript() }} />
       </head>
-      <body className="flex min-h-screen flex-col">
+      <body className="app-compact flex min-h-screen flex-col">
         {/* ClerkProvider inside body avoids Next 16 / Turbopack races where the
             provider wraps <html> before hydration and Clerk UI chunks stall.
             prefetchUI={false}: this app uses custom login/signup (window.Clerk /
@@ -150,7 +150,7 @@ export default async function RootLayout({
         {localMode ? application : <ClerkProvider
           signInUrl="/login"
           signUpUrl="/signup"
-          signInFallbackRedirectUrl="/dashboard"
+          signInFallbackRedirectUrl="/overview"
           signUpFallbackRedirectUrl="/onboarding"
           afterSignOutUrl="/"
           prefetchUI={false}

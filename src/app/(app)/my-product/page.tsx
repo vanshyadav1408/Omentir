@@ -1,8 +1,6 @@
 import { auth } from "@/lib/server/auth";
-import { redirect } from "next/navigation";
 import { analyzeWebsiteAction, saveProductProfileAction } from "@/app/actions";
-import { getProductProfile, getWorkspace } from "@/lib/server/data";
-import { hasActiveSubscription } from "@/lib/server/subscription";
+import { getProductProfile } from "@/lib/server/data";
 import ProductView from "./product-view";
 import { createPageMetadata } from "@/app/seo";
 
@@ -19,14 +17,7 @@ export default async function MyProductPage() {
     await auth.protect();
     throw new Error("Unauthorized");
   }
-  // Workspace docs are keyed by owner userId, so both reads run in parallel.
-  const [workspace, profile] = await Promise.all([
-    getWorkspace(userId),
-    getProductProfile(userId),
-  ]);
-  if (!hasActiveSubscription(workspace)) {
-    redirect("/upgrade");
-  }
+  const profile = await getProductProfile(userId);
 
   return (
     <ProductView

@@ -4,6 +4,7 @@ import { ALL_BLOGS, isBlogLive, liveBlogs } from "./blogs/blog-data";
 import { ALL_COMPARISONS } from "./comparisons/comparison-data";
 import { ALL_FEATURES } from "./features/feature-data";
 import { ALL_GUIDES } from "./guides/guide-data";
+import { ALL_HELP_PAGES } from "./help/help-data";
 import { ALL_INTEGRATIONS } from "./integrations/integration-data";
 import { ALL_USE_CASES } from "./use-cases/use-case-data";
 import { liveSeoPages } from "./seo-content/types";
@@ -31,9 +32,8 @@ const publicRoutes = [
   { path: "/integrations", changeFrequency: "monthly", priority: 0.85 },
   { path: "/pricing", changeFrequency: "monthly", priority: 0.8, lastModified: "2026-08-12" },
   { path: "/minimum-booking-guarantee", changeFrequency: "monthly", priority: 0.5, lastModified: "2026-08-09" },
-  { path: "/for-agents", changeFrequency: "monthly", priority: 0.8, lastModified: "2026-08-14" },
-  { path: "/mcp-server", changeFrequency: "monthly", priority: 0.8, lastModified: "2026-08-14" },
   { path: "/about", changeFrequency: "monthly", priority: 0.7, lastModified: "2026-07-17" },
+  { path: "/help", changeFrequency: "weekly", priority: 0.7, lastModified: "2026-08-19" },
   { path: "/llms.txt", changeFrequency: "weekly", priority: 0.4 },
   { path: "/llms-full.txt", changeFrequency: "weekly", priority: 0.4 },
   { path: "/agents.md", changeFrequency: "monthly", priority: 0.4, lastModified: "2026-08-14" },
@@ -106,6 +106,7 @@ const highIntentBlogSlugs = new Set([
   "agent-led-sales-outreach",
   "b2b-lead-gen-with-ai",
   "chatgpt-linkedin-leads",
+  "grok-bot-linkedin-sales",
   "cold-linkedin-outreach",
   "high-intent-linkedin-leads",
   "icp-based-lead-discovery",
@@ -134,6 +135,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const integrationsIndexDate = latestSeoFamilyDate(ALL_INTEGRATIONS);
   const useCasesIndexDate = latestSeoFamilyDate(ALL_USE_CASES);
   const alternativesIndexDate = latestSeoFamilyDate(ALL_ALTERNATIVES);
+  const helpIndexDate = ALL_HELP_PAGES.reduce((newest, page) => {
+    const date = new Date(`${page.updatedDate || page.publishedDate} UTC`);
+    return date > newest ? date : newest;
+  }, new Date(0));
   const llmsIndexDate = [
     blogsIndexDate,
     featuresIndexDate,
@@ -141,6 +146,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     integrationsIndexDate,
     useCasesIndexDate,
     alternativesIndexDate,
+    helpIndexDate,
   ].reduce((newest, date) => (date > newest ? date : newest), new Date(0));
 
   const derivedIndexDates: Record<string, Date> = {
@@ -152,6 +158,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/integrations": integrationsIndexDate,
     "/use-cases": useCasesIndexDate,
     "/alternatives": alternativesIndexDate,
+    "/help": helpIndexDate,
   };
 
   const mainRoutes = publicRoutes.map((route) => ({
@@ -188,6 +195,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7,
   }));
 
+  const helpRoutes = ALL_HELP_PAGES.map((page) => ({
+    url: absoluteUrl(`/help/${page.slug}`),
+    lastModified: new Date(`${page.updatedDate || page.publishedDate} UTC`),
+    changeFrequency: "monthly" as const,
+    priority: 0.65,
+  }));
+
   const htmlRoutes = [
     ...mainRoutes,
     ...blogRoutes,
@@ -197,6 +211,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...useCaseRoutes,
     ...alternativeRoutes,
     ...guideRoutes,
+    ...helpRoutes,
   ];
 
   // Markdown twins are how AI agents read the same public pages without

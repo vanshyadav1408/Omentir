@@ -23,7 +23,6 @@ export default function FeaturesIndexPage() {
       title="Omentir features"
       description="Each page covers one product job with setup steps, honest tradeoffs, and when to use something else."
       pages={ALL_FEATURES}
-      compactHero
     />
   );
 }

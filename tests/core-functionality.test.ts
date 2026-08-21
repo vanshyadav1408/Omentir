@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { combinedOutreachStage, enrollmentProgressStage, STAGE_ACCEPTED, STAGE_CONTACTED, STAGE_MESSAGED, STAGE_REPLIED } from "../src/lib/outreach-stage";
+import { combinedOutreachStage, countAcceptedConnections, enrollmentProgressStage, STAGE_ACCEPTED, STAGE_CONTACTED, STAGE_MESSAGED, STAGE_REPLIED } from "../src/lib/outreach-stage";
 import { buildActivityTotalsFromLive, toActivityChartPoints } from "../src/lib/activity-overview";
 import { shouldKeepStealComment } from "../src/lib/competitor-engagement";
 import { conversationCategory } from "../src/lib/conversation-category";
@@ -21,6 +21,25 @@ describe("enrollmentProgressStage", () => {
     expect(enrollmentProgressStage("error", "2026-08-02T12:00:00.000Z")).toBe(STAGE_CONTACTED);
     expect(enrollmentProgressStage("stopped")).toBe(0);
     expect(enrollmentProgressStage("message_sent", "2026-08-02T12:00:00.000Z")).toBe(STAGE_MESSAGED);
+  });
+});
+
+describe("countAcceptedConnections", () => {
+  test("counts unique people whose outreach reached accepted, including repeat enrollments", () => {
+    expect(
+      countAcceptedConnections(
+        [
+          { id: "lead-1", outreachStatus: "invited" },
+          { id: "lead-2", outreachStatus: "connected" },
+          { id: "lead-3", outreachStatus: "invited" },
+        ],
+        [
+          { leadId: "lead-1", status: "connected" },
+          { leadId: "lead-1", status: "stopped" },
+          { leadId: "lead-3", status: "connection_sent" },
+        ],
+      ),
+    ).toBe(2);
   });
 });
 
@@ -75,6 +94,31 @@ describe("buildActivityTotalsFromLive", () => {
     expect(points.find((point) => point.dateKey === "2026-08-04")?.meetingsBooked || 0).toBe(0);
   });
 
+  test("counts a calendar event link after an inbound booking request", () => {
+    const points = buildActivityTotalsFromLive({
+      leads: [],
+      enrollments: [],
+      conversations: [
+        {
+          replyIntent: "hot",
+          messages: [
+            {
+              direction: "inbound",
+              body: "bro just book meeting my calander",
+              createdAt: "2026-08-21T02:45:53.994Z",
+            },
+            {
+              direction: "inbound",
+              body: "https://calendar.app.google/PdMuZPkN1jjutn9eA",
+              createdAt: "2026-08-21T02:46:36.871Z",
+            },
+          ],
+        },
+      ],
+    });
+    expect(points.find((point) => point.dateKey === "2026-08-21")?.meetingsBooked).toBe(1);
+  });
+
 });
 
 describe("reply intent classification", () => {
@@ -84,6 +128,25 @@ describe("reply intent classification", () => {
       productProfile: null,
       conversation: [],
       latestInbound: "I added the demo to my calendar for Thursday.",
+    });
+    expect(classification.intent).toBe("meeting_booked");
+    expect(classification.confidence).toBeGreaterThanOrEqual(0.9);
+  });
+
+  test("recognizes a calendar event link after a booking request", async () => {
+    const classification = await classifyReplyIntent({
+      lead: { name: "Alex" } as Lead,
+      productProfile: null,
+      conversation: [
+        {
+          id: "message-1",
+          direction: "inbound",
+          senderName: "Alex",
+          body: "Please book a meeting on my calendar.",
+          createdAt: "2026-08-21T02:45:53.994Z",
+        },
+      ],
+      latestInbound: "https://calendar.app.google/PdMuZPkN1jjutn9eA",
     });
     expect(classification.intent).toBe("meeting_booked");
     expect(classification.confidence).toBeGreaterThanOrEqual(0.9);
@@ -143,6 +206,24 @@ describe("conversationCategory", () => {
         replyIntentConfidence: 0.4,
         replyIntentAt: "2026-08-05T00:00:00.000Z",
         meetingBookedAt: "2026-08-04T00:00:00.000Z",
+      }),
+    ).toBe("successful");
+  });
+
+  test("treats a calendar event link after a booking request as successful", () => {
+    expect(
+      conversationCategory({
+        replyIntent: "neutral",
+        messages: [
+          {
+            direction: "inbound",
+            body: "Please book a meeting on my calendar.",
+          },
+          {
+            direction: "inbound",
+            body: "https://calendar.app.google/PdMuZPkN1jjutn9eA",
+          },
+        ],
       }),
     ).toBe("successful");
   });

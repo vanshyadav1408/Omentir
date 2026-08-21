@@ -1,0 +1,28 @@
+---
+description: Canonical olive Continue button from signup
+globs: src/app/globals.css,src/app/auth-*.tsx,src/app/signup/**,src/app/login/**,src/app/onboarding/**,src/app/local-login-form.tsx,src/app/website-fetch-panel.tsx,src/app/sso-callback/**
+alwaysApply: false
+---
+
+# Auth Continue button
+
+Signup Continue is the canonical filled CTA. Keep this olive and this geometry. Do not restyle it to white, pink, a bright green, or a pill.
+
+## Tokens (`:root` in `src/app/globals.css`)
+
+- Fill: `--auth-cta-bg` `#2a3224`
+- Border: `--auth-cta-border` `#3a4332`
+- Hover fill: `--auth-cta-hover` `#333b2c`
+- Label: `--auth-cta-fg` `#ffffff`
+
+`.auth-btn-signup` reads these tokens. Dark remaps must not override them.
+
+## Geometry (`.auth-btn` / `.auth-btn-signup`)
+
+- Height 40px, full width unless `.auth-btn-fit`
+- Radius 8px, not pill
+- 14px / 500 / white
+- 1px solid border, no shadow, no gradient, no scale
+- Hover only lightens the fill
+
+Use `className="auth-btn"` (add `auth-btn-signup` on signup submits). Do not replace with `m3-btn`.
