@@ -28,11 +28,11 @@ export const metadata = createPageMetadata({
 });
 
 const tocItems: { id: string; label: string; level: 1 | 2 }[] = [
-  { id: "run-as-many-agents", label: "How to run multiple Omentir agents", level: 1 },
-  { id: "experiment-with-icp-profiles", label: "How to test different ICP profiles", level: 1 },
-  { id: "use-ai-messaging-settings", label: "How to set Omentir AI messaging", level: 1 },
-  { id: "run-with-ai-tools", label: "How to connect Claude, ChatGPT, or Grok Bot", level: 1 },
-  { id: "faqs", label: "Frequently asked questions", level: 1 },
+  { id: "run-as-many-agents", label: "Run as many agents as you have hypotheses", level: 1 },
+  { id: "experiment-with-icp-profiles", label: "Experiment with different ICP profiles", level: 1 },
+  { id: "use-ai-messaging-settings", label: "Use the AI messaging settings", level: 1 },
+  { id: "run-with-ai-tools", label: "Run Omentir from Claude, ChatGPT, or Grok Bot", level: 1 },
+  { id: "faqs", label: "FAQs", level: 1 },
 ];
 
 const faqItems = [
@@ -88,7 +88,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        How to run multiple Omentir agents
+        Run as many agents as you have hypotheses
       </h2>
       <p>
         One Omentir agent aimed at "founders, VPs, and ops leads in SaaS" produces a mixed LinkedIn queue you cannot learn from. Create a separate agent for each bet, for example, Series A founders who just hired an SDR, or heads of growth at 20 to 80 person B2B tools. Each agent keeps its own titles, locations, prompt, and lead group. For the first setup, see{" "}
@@ -106,7 +106,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        How to test different ICP profiles
+        Experiment with different ICP profiles
       </h2>
       <p>
         Write the{" "}
@@ -124,7 +124,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        How to set Omentir AI messaging
+        Use the AI messaging settings
       </h2>
       <p>
         Do not leave the Omentir AI messaging defaults if they do not match how you talk. Campaign goal is either start conversations or book demos. Tone is professional, conversational, or direct. When a lead replies you can stop immediately, let AI continue until interest, or continue until a meeting is booked. That last option needs a calendar link.
@@ -138,7 +138,7 @@ export default function BlogPost() {
         style={{ fontFamily: "var(--font-varta)" }}
         className="text-2xl font-semibold tracking-tight text-black mt-10 pt-2 border-b border-zinc-200 pb-2 scroll-mt-28"
       >
-        How to connect Claude, ChatGPT, or Grok Bot
+        Run Omentir from Claude, ChatGPT, or Grok Bot
       </h2>
       <p>
         Omentir has an{" "}
