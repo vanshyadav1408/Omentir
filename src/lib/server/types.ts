@@ -525,6 +525,7 @@ export type LinkedInInboxThread = {
   profileHeadline?: string;
   profileUrl?: string;
   avatarUrl?: string;
+  attendeeProviderId?: string;
   unread: boolean;
   updatedAt: string;
   messages: LinkedInInboxMessage[];

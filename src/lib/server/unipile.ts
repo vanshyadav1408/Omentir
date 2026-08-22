@@ -13,6 +13,7 @@ import {
   firstDegreeFromUnipileProfile,
   linkedInIdentityKeys,
 } from "../linkedin-identity";
+import { dedupeLinkedInInboxThreads } from "../inbox-threads";
 
 const UNIPILE_TIMEOUT_MS = 30_000;
 const UNIPILE_MIN_REQUEST_SPACING_MS = 250;
@@ -2117,7 +2118,13 @@ export async function listLinkedInInbox(input: {
       ? Promise.resolve([] as UnipileMessage[])
       : listLinkedInAccountMessages(input.accountId, Math.min(chatLimit * 6, 250)),
   ]);
-  const chats = getListItems(result).filter((chat) => chat.id);
+  const chats: UnipileChat[] = [];
+  const seenChatIds = new Set<string>();
+  for (const chat of getListItems(result)) {
+    if (!chat.id || seenChatIds.has(chat.id)) continue;
+    seenChatIds.add(chat.id);
+    chats.push(chat);
+  }
   const attendeeByProviderId = new Map<string, UnipileChatAttendee>();
   for (const attendee of bulkAttendees) {
     if (attendee.provider_id) attendeeByProviderId.set(attendee.provider_id, attendee);
@@ -2141,7 +2148,7 @@ export async function listLinkedInInbox(input: {
   // never one view per chat per page visit.
   const enrichmentBudget = { left: INBOX_ENRICHMENT_LIMIT };
 
-  return Promise.all(
+  const threads = await Promise.all(
     chats.map(async (chat): Promise<LinkedInInboxThread> => {
       const chatId = chat.id || "";
       if (!includeMessageHistory) {
@@ -2180,6 +2187,8 @@ export async function listLinkedInInbox(input: {
           profileHeadline: attendeeHeadline(baseAttendee),
           profileUrl: attendeeProfileUrl(baseAttendee),
           avatarUrl: attendeeAvatarUrl(baseAttendee),
+          attendeeProviderId:
+            chat.attendee_provider_id || attendeeProviderIdentifier(baseAttendee),
           unread: Boolean(chat.unread || Number(chat.unread_count || 0) > 0 || chat.read === false),
           updatedAt: lastMessageAt,
           messages,
@@ -2258,6 +2267,8 @@ export async function listLinkedInInbox(input: {
         profileHeadline,
         profileUrl,
         avatarUrl,
+        attendeeProviderId:
+          chatAttendeeProviderIdentifier(chat) || attendeeProviderIdentifier(primaryAttendee),
         unread: Boolean(chat.unread || Number(chat.unread_count || 0) > 0 || chat.read === false),
         updatedAt:
           chat.last_message_at ||
@@ -2271,6 +2282,7 @@ export async function listLinkedInInbox(input: {
       };
     }),
   );
+  return dedupeLinkedInInboxThreads(threads);
 }
 
 export function normalizeLinkedInActor(profile: UnipileProfile | null | undefined) {

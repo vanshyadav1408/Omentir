@@ -258,9 +258,15 @@ export async function GET(request: Request) {
       listLinkedInAccounts(userId),
     ]);
     if (!subscribed) return subscriptionRequired();
+    const seenAccountIds = new Set<string>();
+    const uniqueAccounts = accounts.filter((account) => {
+      if (seenAccountIds.has(account.accountId)) return false;
+      seenAccountIds.add(account.accountId);
+      return true;
+    });
     const errors: string[] = [];
     const inboxes = await Promise.all(
-      accounts.map(async (account) => {
+      uniqueAccounts.map(async (account) => {
         try {
           return await listLinkedInInbox({
             accountId: account.accountId,
@@ -278,7 +284,7 @@ export async function GET(request: Request) {
       threads: inboxes
         .flat()
         .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()),
-      senderAccounts: accounts.map((account) => ({
+      senderAccounts: uniqueAccounts.map((account) => ({
         accountId: account.accountId,
         displayName: account.displayName,
         avatarUrl: account.avatarUrl,

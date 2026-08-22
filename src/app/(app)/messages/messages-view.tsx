@@ -28,6 +28,11 @@ import {
   conversationHasMeetingBooked,
   type ConversationCategory,
 } from "@/lib/conversation-category";
+import { pickLeadForProviderIdentity } from "@/lib/linkedin-identity";
+import {
+  dedupeLinkedInInboxThreads,
+  storedConversationIsLiveMirror,
+} from "@/lib/inbox-threads";
 
 type InboxThread =
   | {
@@ -64,23 +69,6 @@ type InboxThread =
 
 type LocalMessage = LinkedInInboxMessage & { local: true };
 
-function linkedInProfileKey(value?: string) {
-  if (!value) return "";
-  try {
-    const url = new URL(/^https?:\/\//i.test(value) ? value : `https://${value}`);
-    const hostname = url.hostname.toLowerCase();
-    if (hostname !== "linkedin.com" && !hostname.endsWith(".linkedin.com")) return "";
-    const parts = url.pathname.split("/").filter(Boolean);
-    const profileIndex = parts.findIndex((part) =>
-      ["in", "pub"].includes(part.toLowerCase()),
-    );
-    if (profileIndex < 0 || !parts[profileIndex + 1]) return "";
-    return parts.slice(profileIndex).join("/").toLowerCase();
-  } catch {
-    return "";
-  }
-}
-
 function mergeWithLocalMessages<T extends ConversationMessage | LinkedInInboxMessage>(
   messages: T[],
   localMessages: LocalMessage[],
@@ -104,25 +92,14 @@ function buildThreads(
   hydratedMessages: Record<string, LinkedInInboxMessage[]> = {},
   localMessages: Record<string, LocalMessage[]> = {},
 ): InboxThread[] {
-  // Firestore conversations mirror provider chats. Suppress that mirror only
-  // when both sides identify the same LinkedIn profile, never by name alone.
-  const liveProfileKeys = new Set(
-    linkedInThreads
-      .map((thread) => linkedInProfileKey(thread.profileUrl))
-      .filter(Boolean),
-  );
-  const live: InboxThread[] = linkedInThreads.map((thread) => {
-    const profileKey = linkedInProfileKey(thread.profileUrl);
-    const identityLead = profileKey
-      ? leads.find((item) => linkedInProfileKey(item.linkedInUrl) === profileKey)
-      : undefined;
+  const uniqueLive = dedupeLinkedInInboxThreads(linkedInThreads);
+  const live: InboxThread[] = uniqueLive.map((thread) => {
     const id = `linkedin:${thread.id}`;
-    const lead = identityLead || leads.find(
-      (item) =>
-        item.name &&
-        thread.profileName &&
-        item.name.trim().toLowerCase() === thread.profileName.trim().toLowerCase(),
-    );
+    const lead = pickLeadForProviderIdentity(leads, {
+      providerProfileId: thread.attendeeProviderId,
+      linkedInUrl: thread.profileUrl,
+      name: thread.profileName,
+    }) || undefined;
     const leadHeadline = [lead?.title, lead?.company].filter(Boolean).join(" at ");
     const messages = hydratedMessages[id] || thread.messages;
     return {
@@ -142,14 +119,14 @@ function buildThreads(
       chatId: thread.id,
       accountId: thread.accountId,
       lead,
-      conversation: identityLead
-        ? conversations.find((conversation) => conversation.leadId === identityLead.id)
+      conversation: lead
+        ? conversations.find((conversation) => conversation.leadId === lead.id)
         : undefined,
     };
   });
   const stored: InboxThread[] = conversations.flatMap((thread) => {
     const lead = leads.find((item) => item.id === thread.leadId);
-    if (liveProfileKeys.has(linkedInProfileKey(lead?.linkedInUrl))) return [];
+    if (storedConversationIsLiveMirror(uniqueLive, lead, thread.messages)) return [];
     const last = thread.messages[thread.messages.length - 1];
     return [{
       id: `stored:${thread.id}`,
