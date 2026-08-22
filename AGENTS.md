@@ -77,3 +77,20 @@ Use no em dash ever.
 4. Run `bun run lint:copy` and fix all violations before finishing.
 
 Nested `src/AGENTS.md` applies when working under `src/`. Do not ship marketing copy without this pass.
+
+## Cursor Cloud specific instructions
+
+Omentir is a single Next.js 16 app (App Router) run with Bun 1.3.14. It is not a monorepo. The startup update script installs Bun (if missing) and runs `bun install --frozen-lockfile`. Bun lives at `~/.bun/bin` and is on PATH via `~/.bashrc`; if a command reports `bun: command not found`, use the full path `~/.bun/bin/bun`.
+
+Standard commands (see `package.json` and `README.md` "Development"):
+- Tests: `bun test --conditions=react-server tests/` (Bun test, no secrets needed).
+- Typecheck: `bunx tsc --noEmit`.
+- Build: `bun run build` (production-style, no secrets needed).
+- Dev server: `bun run dev` on port 3000.
+- CI-gated copy checks: `bun run lint:copy` and `bun run verify:pages`.
+
+Non-obvious caveats:
+- `bun run dev` and `bun start` validate ALL runtime env at boot via `src/instrumentation.ts` -> `validateRuntimeConfig()` (`src/lib/server/runtime-config.ts`). In self-host mode (`RUN_LOCALLY=TRUE`) the server will NOT boot without `LOCAL_SESSION_SECRET`, `LOCAL_APP_PASSWORD`, `FIREBASE_PROJECT_ID`, a `FIREBASE_SERVICE_ACCOUNT_KEY` whose `project_id` matches, `UNIPILE_DSN`/`UNIPILE_API_KEY`/`UNIPILE_WEBHOOK_SECRET`, and either `GEMINI_API_KEY` or `GOOGLE_CLOUD_PROJECT`+`GOOGLE_CLOUD_LOCATION`. Set `AUTOMATION_DISABLED=true` to skip the `CRON_SECRET` requirement. `build`, `test`, and `tsc` do NOT need any of this.
+- Boot validation only checks format (valid JSON, entropy, no placeholders), not connectivity. You can boot dev with structurally-valid dummy secrets (`.env` is gitignored). The login flow then works fully, but any page that reads data (e.g. `/overview`) returns HTTP 500 with a Firestore `16 UNAUTHENTICATED` error until REAL Firebase/Unipile/Gemini credentials are supplied. That 500 after login is the external-service wall, not an app bug.
+- Full `bun run lint` (the ESLint half) currently reports pre-existing errors in the repo and is intentionally NOT run in CI. CI (`.github/workflows/ci.yml`) runs `tsc --noEmit`, `lint:copy`, `verify:pages`, and `build`. Do not "fix" those lint errors as part of unrelated work.
+- Self-host auth uses a signed `omentir_local_session` cookie (not Clerk). `POST /api/local-auth/login` requires the request `Origin` to equal `APP_BASE_URL`, so API-based login tests must send that header. In local mode marketing pages return 404; only `/login`, `/logout`, `/api/health`, and a few webhook/service prefixes are public before auth.
