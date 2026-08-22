@@ -67,8 +67,17 @@ export const metadata: Metadata = {
     description: defaultDescription,
     images: [defaultOgImage.url],
   },
+  // Google Search reads rel=icon on the homepage. Files live in public/ at
+  // stable paths. Do not put favicon.ico or icon.png in src/app/: Next hashes
+  // those to /favicon.ico?<hash> and tags them sizes=48x48, which is below
+  // Google's recommended size and changes URL on rebuilds.
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/icon.png", type: "image/png", sizes: "192x192" },
+      { url: "/favicon.ico", type: "image/x-icon" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
   },
 };
 
