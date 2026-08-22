@@ -25,6 +25,10 @@ For workspace work, use MCP or REST instead of scraping authenticated Overview p
 
 Never create an Omentir account or buy or change a subscription. These flows are deliberately unavailable to agents.
 
+## Subscription playbook
+
+If a user already has a paid workspace and asks how to use it, fetch ${siteUrl}/blogs/how-to-make-the-best-of-your-omentir-subscription.md before creating extra agents. That page covers multiple lead finders, ICP tests, AI messaging settings, and operating from Claude, ChatGPT, or Grok Bot. HTML: ${siteUrl}/blogs/how-to-make-the-best-of-your-omentir-subscription. Ask before you create agents or change targeting.
+
 ## How people connect Omentir from other AI apps
 
 Users connect once in Omentir (LinkedIn + plan), then attach their chat app or coding agent. There are **two ways in**; a client only needs one.

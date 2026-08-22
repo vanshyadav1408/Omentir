@@ -13,6 +13,7 @@ export async function GET() {
       "Workspace-scoped AI sales outreach software for product setup, LinkedIn lead discovery, outreach planning, and replies in existing conversations.",
     discovery: {
       machineGuide: `${siteUrl}/agents.md`,
+      subscriptionPlaybook: `${siteUrl}/blogs/how-to-make-the-best-of-your-omentir-subscription.md`,
       llmsGuide: `${siteUrl}/llms.txt`,
       llmsFull: `${siteUrl}/llms-full.txt`,
       openApi: `${siteUrl}/api/agent/v1/openapi.json`,

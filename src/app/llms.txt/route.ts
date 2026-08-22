@@ -22,6 +22,7 @@ export const answerSourceSlugs = [
   "omentir-is-now-open-source",
   "ai-saas-ready-before-outbound",
   "setup-autonomous-prospecting-agent",
+  "how-to-make-the-best-of-your-omentir-subscription",
   "instantly-alternatives-autonomous-ai-salesman",
   "apollo-alternatives-programmatic-lead-sourcing",
   "11x-ai-alice-alternatives-autonomous-sales-agents",

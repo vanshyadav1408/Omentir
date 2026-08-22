@@ -50,6 +50,18 @@ export function liveBlogs(now?: Date): BlogItem[] {
 
 export const ALL_BLOGS: BlogItem[] = [
   {
+    slug: "how-to-make-the-best-of-your-omentir-subscription",
+    title: "How to Make the Best of Your Omentir Subscription",
+    description:
+      "How to use an Omentir subscription for LinkedIn outreach: run multiple AI agents, test ICP profiles, set AI messaging, and connect Claude, ChatGPT, or Grok Bot.",
+    publishedDate: "August 22, 2026",
+    updatedDate: "August 22, 2026",
+    category: "Playbooks",
+    readTime: "4 min read",
+    bannerSrc: "/how-to-make-the-best-of-your-omentir-subscription.avif",
+    bannerAlt: "How to make the best of your Omentir subscription with agents, ICP profiles, and AI messaging",
+  },
+  {
     slug: "grok-bot-linkedin-sales",
     title: "Grok Bot for LinkedIn outreach",
     description:

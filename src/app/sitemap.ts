@@ -36,8 +36,8 @@ const publicRoutes = [
   { path: "/help", changeFrequency: "weekly", priority: 0.7, lastModified: "2026-08-19" },
   { path: "/llms.txt", changeFrequency: "weekly", priority: 0.4 },
   { path: "/llms-full.txt", changeFrequency: "weekly", priority: 0.4 },
-  { path: "/agents.md", changeFrequency: "monthly", priority: 0.4, lastModified: "2026-08-14" },
-  { path: "/agent.json", changeFrequency: "monthly", priority: 0.4, lastModified: "2026-08-14" },
+  { path: "/agents.md", changeFrequency: "monthly", priority: 0.4, lastModified: "2026-08-22" },
+  { path: "/agent.json", changeFrequency: "monthly", priority: 0.4, lastModified: "2026-08-22" },
   { path: "/privacy-policy", changeFrequency: "yearly", priority: 0.3, lastModified: "2026-07-06" },
   { path: "/terms-of-service", changeFrequency: "yearly", priority: 0.3, lastModified: "2026-08-09" },
 ] as const satisfies ReadonlyArray<{
