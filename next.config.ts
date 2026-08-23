@@ -123,6 +123,10 @@ const nextConfig: NextConfig = {
         source: "/fonts/:path*",
         headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
       },
+      // Do not attach X-Robots-Tag here for `*.md`. Next header sources are
+      // easy to over-match, and a leaked noindex on HTML would drop Google
+      // listings we already have. Markdown twins set noindex on their own
+      // route. HTML pages keep index,follow from createPageMetadata.
       ...privateIndexingRoutes.map((source) => ({
         source,
         headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],

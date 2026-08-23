@@ -1,4 +1,5 @@
 import type { SeoContentPage, SeoSection, SeoSetupStep } from "./types";
+import { GROK_BOT_FIRST_JOB_PROMPT } from "../grok-bot-setup";
 
 type PageExtras = {
   highlights?: string[];
@@ -245,8 +246,9 @@ export const INTEGRATION_EXTRAS: Record<string, PageExtras> = {
         heading: "A first Grok Bot session that does not invent targeting",
         paragraphs: [
           "Write the ICP the way you would brief a contractor: role, company size, geography, trigger, and who to skip. Then ask the Bot to run get_context and list_agents before create_agent. Have it show the finder config. Start a campaign only after you have read twenty leads.",
-          "SpaceXAI's own outbound prompt tells the Bot not to send and not to enroll. Keep that sentence in the Bot description. Overnight research is useful. Overnight sending from a new account is how you buy a restriction.",
+          "SpaceXAI's own outbound prompt tells the Bot not to send and not to enroll. Keep that sentence in the Bot description. Overnight research is useful. Overnight sending from a new account is how you buy a restriction. Paste this, replace the brackets, keep the last two sentences.",
         ],
+        code: GROK_BOT_FIRST_JOB_PROMPT,
       },
       {
         id: "wrong-path",

@@ -3,14 +3,16 @@ import FaqAccordion, { type FaqItem } from "./faq-accordion";
 export default function FaqSplitSection({
   items,
   className,
+  widthClass = "omentir-primary-width",
 }: {
   items: readonly FaqItem[];
   className?: string;
+  widthClass?: string;
 }) {
   return (
     <section
       id="faq"
-      className={`omentir-primary-width min-w-0 scroll-mt-24 ${className ?? ""}`}
+      className={`${widthClass} min-w-0 scroll-mt-24 ${className ?? ""}`}
     >
       <div className="grid gap-10 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] lg:items-start lg:gap-24 xl:gap-32">
         <h2 className="faq-section-heading">Frequently asked questions</h2>

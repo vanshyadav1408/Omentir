@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { siteUrl } from "@/app/seo";
 import {
   listPublicMarkdownPages,
   renderPublicMarkdown,
@@ -29,7 +30,14 @@ export async function GET(
     });
   }
 
+  const canonical = htmlPath === "/" ? siteUrl : `${siteUrl}${htmlPath}`;
   return new NextResponse(`${body}\n`, {
-    headers: { "content-type": "text/markdown; charset=utf-8" },
+    headers: {
+      "content-type": "text/markdown; charset=utf-8",
+      // Agent alternate only. HTML at `canonical` stays indexable for Google.
+      // This header is scoped to the markdown route, not to HTML pages.
+      "X-Robots-Tag": "noindex, follow",
+      Link: `<${canonical}>; rel="canonical"`,
+    },
   });
 }

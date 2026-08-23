@@ -138,6 +138,7 @@ export default function SeoIndexPageView({
           crumbs={familyCrumbs(family)}
           title={title}
           description={description}
+          path={familyPaths[family]}
         >
           {directory}
         </SeoDocLayout>

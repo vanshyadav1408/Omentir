@@ -15,6 +15,10 @@ import { integrationConnect } from "@/app/integrations/integration-connect";
 import { ALL_USE_CASES } from "@/app/use-cases/use-case-data";
 import { pricingPlans } from "@/app/pricing-plans";
 import { brandTagline, defaultDescription, siteUrl } from "@/app/seo";
+import {
+  GROK_BOT_COLD_DM_PROMPT,
+  GROK_BOT_FIRST_JOB_PROMPT,
+} from "@/app/grok-bot-setup";
 import { liveSeoPages, type SeoContentPage } from "@/app/seo-content/types";
 import {
   collapseMarkdown,
@@ -154,7 +158,10 @@ export function seoPageToMarkdown(basePath: string, page: SeoContentPage) {
       const bullets = section.bullets?.length
         ? "\n\n" + section.bullets.map((item) => `- ${item}`).join("\n")
         : "";
-      return `## ${section.heading}\n\n${body}${bullets}`;
+      const code = section.code
+        ? `\n\n\`\`\`\n${section.code}\n\`\`\``
+        : "";
+      return `## ${section.heading}\n\n${body}${bullets}${code}`;
     })
     .join("\n\n");
   const highlights = page.highlights?.length
@@ -249,10 +256,14 @@ export function helpPageToMarkdown(page: HelpPage) {
         .map((item) => `**${item.question}**\n\n${item.answer}`)
         .join("\n\n")}`
     : "";
+  const prompt = page.prompt
+    ? `## Paste this into Grok Bot\n\n\`\`\`\n${page.prompt}\n\`\`\``
+    : "";
   return collapseMarkdown(
     [
       pageHeader(page.question, page.description, htmlPath),
       page.paragraphs.join("\n\n"),
+      prompt,
       related,
       faqs,
       tryOmentirLine(),
@@ -292,8 +303,11 @@ export function guidePageToMarkdown(page: GuidePage) {
       const bullets = section.bullets?.length
         ? "\n\n" + section.bullets.map((item) => `- ${item}`).join("\n")
         : "";
+      const code = section.code
+        ? `\n\n\`\`\`\n${section.code}\n\`\`\``
+        : "";
       const extras = insertMarkdown(index);
-      return `## ${section.heading}\n\n${body}${bullets}${extras ? `\n\n${extras}` : ""}`;
+      return `## ${section.heading}\n\n${body}${bullets}${code}${extras ? `\n\n${extras}` : ""}`;
     })
     .join("\n\n");
   const related = page.related?.length
@@ -512,12 +526,23 @@ function blogIndexMarkdown() {
   );
 }
 
+function grokBotPromptFromSource(source: string) {
+  if (source.includes("GROK_BOT_COLD_DM_PROMPT")) return GROK_BOT_COLD_DM_PROMPT;
+  if (source.includes("GROK_BOT_FIRST_JOB_PROMPT")) return GROK_BOT_FIRST_JOB_PROMPT;
+  return null;
+}
+
 function blogMarkdown(blog: BlogItem) {
   const source = readAppFile("blogs", blog.slug, "page.tsx");
   const body = sourceFileToMarkdown(source, internalMarkdownHref, "BlogPostTemplate");
   const faqs = body.includes("## Frequently asked questions")
     ? ""
     : faqItemsFromSource(source);
+  const prompt = grokBotPromptFromSource(source);
+  const promptBlock =
+    prompt && !body.includes(prompt)
+      ? `## Paste this into Grok Bot\n\n\`\`\`\n${prompt}\n\`\`\``
+      : "";
   return collapseMarkdown(
     [
       pageHeader(blog.title, blog.description, `/blogs/${blog.slug}`),
@@ -526,6 +551,7 @@ function blogMarkdown(blog: BlogItem) {
       `- Updated: ${blog.updatedDate}`,
       `- Read time: ${blog.readTime}`,
       body,
+      promptBlock,
       faqs,
       tryOmentirLine(),
     ].join("\n\n")

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { PromptCopyBox } from "../grok-bot-setup-block";
 import { linkifyProducts } from "./product-links";
 import type { SeoContentPage, SeoFamily, SeoRelatedLink } from "./types";
 import {
@@ -93,6 +94,26 @@ function SeoHeroCrumbs({
   return <ArticleCrumbs crumbs={crumbs} className={className} />;
 }
 
+export function MarkdownTwinLink({
+  path,
+  title,
+}: {
+  path: string;
+  title: string;
+}) {
+  return (
+    <p className="mt-10 text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)]">
+      Prefer markdown?{" "}
+      <a
+        href={`${path}.md`}
+        className="font-medium text-[var(--md-sys-color-primary)] underline-offset-4 hover:underline"
+      >
+        {title}.md
+      </a>
+    </p>
+  );
+}
+
 export function SeoDocLayout({
   as: Tag = "div",
   crumbs,
@@ -100,6 +121,8 @@ export function SeoDocLayout({
   description,
   afterTitle,
   children,
+  path,
+  width = "secondary",
 }: {
   as?: "div" | "article";
   crumbs: ReadonlyArray<ArticleCrumb>;
@@ -107,11 +130,19 @@ export function SeoDocLayout({
   description?: string;
   afterTitle?: ReactNode;
   children: ReactNode;
+  path?: string;
+  width?: "primary" | "moderate" | "secondary";
 }) {
+  const widthClass =
+    width === "primary"
+      ? "omentir-primary-width"
+      : width === "moderate"
+        ? "omentir-moderate-width"
+        : "omentir-secondary-width";
   return (
     <div className="relative">
       <HeroGridBackdrop height="h-[60vh]" />
-      <Tag className="omentir-secondary-width relative z-10 min-w-0 pb-16 pt-28 md:pb-24 md:pt-32">
+      <Tag className={`${widthClass} relative z-10 min-w-0 pb-16 pt-28 md:pb-24 md:pt-32`}>
         <SeoHeroCrumbs crumbs={crumbs} className="mb-8" />
         <h1
           style={{ fontFamily: "var(--font-varta)" }}
@@ -128,6 +159,7 @@ export function SeoDocLayout({
         <div className={description ? "mt-16 space-y-14 md:mt-20" : "mt-12 space-y-12 md:mt-16"}>
           {children}
         </div>
+        {path ? <MarkdownTwinLink path={path} title={title} /> : null}
       </Tag>
     </div>
   );
@@ -451,6 +483,7 @@ export function SectionProse({
             heading={section.heading}
             paragraphs={section.paragraphs}
             bullets={section.bullets}
+            code={section.code}
           />
         ))}
     </>
@@ -462,11 +495,13 @@ export function ArticleSection({
   heading,
   paragraphs,
   bullets,
+  code,
 }: {
   id: string;
   heading: string;
   paragraphs: string[];
   bullets?: string[];
+  code?: string;
 }) {
   const seen = new Set<string>();
   return (
@@ -490,6 +525,7 @@ export function ArticleSection({
             ))}
           </ul>
         ) : null}
+        {code ? <PromptCopyBox prompt={code} /> : null}
       </div>
     </section>
   );

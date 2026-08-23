@@ -27,6 +27,8 @@ export type HelpPageDraft = {
   publishedDate: string;
   updatedDate: string;
   paragraphs: string[];
+  /** Paste-ready Grok Bot (or similar) job spec shown after the answer. */
+  prompt?: string;
   faqItems: HelpFaq[];
   relatedSlugs: string[];
 };

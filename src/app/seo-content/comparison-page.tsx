@@ -88,6 +88,7 @@ export default function ComparisonPageView({ page }: { page: SeoContentPage }) {
         crumbs={familyCrumbs("comparisons", page.slug)}
         title={page.title}
         afterTitle={bannerNode}
+        path={`/comparisons/${page.slug}`}
       >
         <VerdictBanner page={page} />
 

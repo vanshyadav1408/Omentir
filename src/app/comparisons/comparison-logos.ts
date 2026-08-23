@@ -122,6 +122,32 @@ export const COMPARISON_BRANDS: Record<string, ComparisonBrand> = {
     src: "/comparison-logos/aisdr.png",
     bleed: true,
   },
+  "grok-bot": {
+    id: "grok-bot",
+    name: "Grok Bot",
+    src: "/integration-logos/grok-bot.svg",
+    bleed: true,
+  },
+  grok: {
+    id: "grok",
+    name: "Grok",
+    src: "/integration-logos/grok.svg",
+  },
+  chatgpt: {
+    id: "chatgpt",
+    name: "ChatGPT",
+    src: "/integration-logos/chatgpt.svg",
+  },
+  claude: {
+    id: "claude",
+    name: "Claude",
+    src: "/integration-logos/claude.svg",
+  },
+  cursor: {
+    id: "cursor",
+    name: "Cursor",
+    src: "/integration-logos/cursor.svg",
+  },
 };
 
 export function comparisonBrandFromSlug(slug: string): ComparisonBrand | undefined {

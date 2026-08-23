@@ -15,6 +15,8 @@ import {
   createWebPageJsonLd,
   siteUrl,
 } from "../seo";
+import GrokBotSetupBlock from "../grok-bot-setup-block";
+import { MarkdownTwinLink } from "../seo-content/shared";
 import { type HelpPage } from "./types";
 
 function renderInline(text: string): ReactNode[] {
@@ -90,6 +92,18 @@ export default function HelpArticle({ page }: { page: HelpPage }) {
               ))}
             </div>
 
+            {page.prompt ? (
+              <section id="paste-prompt" className="mt-12 md:mt-16">
+                <h2
+                  style={{ fontFamily: "var(--font-varta)" }}
+                  className="border-b border-[var(--md-sys-color-outline-variant)] pb-2 text-xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)]"
+                >
+                  Paste this into Grok Bot
+                </h2>
+                <GrokBotSetupBlock prompt={page.prompt} />
+              </section>
+            ) : null}
+
             {page.faqItems.length > 0 ? (
               <section id="faq" className="mt-16 md:mt-20">
                 <h2
@@ -130,6 +144,8 @@ export default function HelpArticle({ page }: { page: HelpPage }) {
                 </ul>
               </section>
             ) : null}
+
+            <MarkdownTwinLink path={path} title={page.question} />
 
             <div className="mt-16 rounded-3xl border-2 border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface-container)] px-6 py-8 text-center md:mt-20 md:px-10 md:py-10">
               <p className="text-lg font-semibold tracking-tight text-[var(--md-sys-color-on-surface)]">

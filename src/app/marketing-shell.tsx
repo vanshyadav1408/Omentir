@@ -119,6 +119,7 @@ const footerColumns: Array<[string, ...Array<[label: string, href: string]>]> = 
     ["Use cases", "/use-cases"],
     ["Founder outbound", "/use-cases/outbound-for-founders"],
     ["Grok Bot outbound", "/use-cases/grok-bot-outbound"],
+    ["Grok Bot cold messaging", "/use-cases/grok-bot-cold-messaging"],
     ["Book LinkedIn demos", "/use-cases/book-linkedin-demos"],
     ["Blogs", "/blogs"],
     ["Open Source", "/blogs/omentir-is-now-open-source"],
@@ -159,6 +160,7 @@ const footerColumns: Array<[string, ...Array<[label: string, href: string]>]> = 
     ["Lemlist Alternatives", "/comparisons/omentir-vs-lemlist"],
     ["Sales Navigator Alternatives", "/comparisons/omentir-vs-sales-navigator"],
     ["Category roundups", "/alternatives"],
+    ["Grok Bot Alternatives", "/alternatives/grok-bot"],
   ],
 ];
 

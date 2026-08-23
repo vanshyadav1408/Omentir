@@ -12,6 +12,7 @@ const EXACT_PUBLIC_PATHS = new Set([
   "/features",
   "/help",
   "/index.md",
+  "/indexnow-key.txt",
   "/integrations",
   "/llms.txt",
   "/llms-full.txt",

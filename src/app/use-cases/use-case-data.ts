@@ -1,4 +1,5 @@
 import type { SeoContentPage } from "../seo-content/types";
+import { GROK_BOT_COLD_DM_PROMPT, GROK_BOT_FIRST_JOB_PROMPT } from "../grok-bot-setup";
 
 /**
  * Use-case pages. One motion per slug.
@@ -417,7 +418,7 @@ export const ALL_USE_CASES: SeoContentPage[] = [
     "updatedDate": "August 20, 2026",
     "layout": "timeline",
     "keywords": [
-      "Grok Bot for LinkedIn outreach",
+      "Grok Bot LinkedIn sales",
       "Grok Bot outbound",
       "Grok Bot Omentir integration"
     ],
@@ -453,6 +454,14 @@ export const ALL_USE_CASES: SeoContentPage[] = [
           "Grok Bot's pitch is that it can sign into the tools you already use, including sites with no MCP. For a CRM or an analytics dashboard, that can be fine. For LinkedIn, a cloud VM sharing logins across every Bot on the account is the fingerprint LinkedIn already looks for.",
           "Omentir already has the paced send path, the review queue, and the daily caps. Grok Bot's job is to keep filling that queue with people you would actually message, then stop."
         ]
+      },
+      {
+        "id": "first-job-prompt",
+        "heading": "Paste this into Grok Bot tonight",
+        "paragraphs": [
+          "Finish Omentir first. Add the MCP plugin. Put the stop rule in the Bot description: research and draft only. Never send. Never enroll. Never sign into LinkedIn. Then paste this. Replace the brackets. Keep the last two sentences."
+        ],
+        "code": GROK_BOT_FIRST_JOB_PROMPT
       },
       {
         "id": "what-gets-you-meetings",
@@ -492,10 +501,118 @@ export const ALL_USE_CASES: SeoContentPage[] = [
         "label": "Grok Bot for LinkedIn outreach",
         "href": "/blogs/grok-bot-linkedin-sales",
         "description": "Longer walkthrough of the split."
+      },
+      {
+        "label": "Automate cold LinkedIn messages with Grok Bot",
+        "href": "/use-cases/grok-bot-cold-messaging",
+        "description": "The cold DM job, not the whole outbound loop."
+      },
+      {
+        "label": "Grok Bot alternatives",
+        "href": "/alternatives/grok-bot",
+        "description": "If you do not already pay for the Bot plan."
       }
     ],
     "ctaTitle": "Connect the Bot to a workspace that already has a buyer written down",
     "ctaBody": "If My Product is still a homepage paragraph, fix that before the overnight run."
+  },
+  {
+    "slug": "grok-bot-cold-messaging",
+    "title": "Automate cold LinkedIn messages with Grok Bot",
+    "description": "Grok Bot drafts the first LinkedIn notes overnight. Omentir sends them with caps. You edit the list in the morning and answer when someone writes back.",
+    "summary": "Automate the pile of first touches. Keep the live reply, and the LinkedIn login, off the Bot.",
+    "publishedDate": "August 23, 2026",
+    "updatedDate": "August 23, 2026",
+    "layout": "timeline",
+    "keywords": [
+      "automate cold messaging with Grok Bot",
+      "Grok Bot cold LinkedIn messages",
+      "Grok Bot cold outreach",
+      "Grok Bot LinkedIn DMs"
+    ],
+    "highlights": [
+      "Drafts overnight",
+      "Send from Omentir",
+      "Person on replies"
+    ],
+    "verdict": "Cold messaging is a connection note, a first DM after they accept, and one follow-up if they stay quiet. Grok Bot can fill that pile. It should not type in LinkedIn, and it should not argue in your inbox while you sleep.",
+    "phases": [
+      {
+        "title": "Write the promise before you automate the note",
+        "detail": "My Product in two sentences a stranger would understand: who feels the pain, what result you produce, what you will not claim. A vague brief produces notes you will not send from your own name. Grok Bot will not fix that overnight."
+      },
+      {
+        "title": "Overnight: one ICP, drafts that cite a real trigger",
+        "detail": "Connect MCP in Grok Bot Plugins. Stop rule in the Bot description: research and draft only; never send; never enroll; never sign into LinkedIn. Ask for twenty to forty people, fit notes, and a two-sentence after-accept DM. Invite notes stay short or blank."
+      },
+      {
+        "title": "Morning: cut junk, keep notes you would send from your phone",
+        "detail": "Reject agencies posing as SaaS, students, the wrong country. Edit a few drafts out loud. Start a small Omentir campaign with conservative daily limits and send windows in the prospect's timezone. Volume is not the goal."
+      },
+      {
+        "title": "Daytime: replies pause the sequence",
+        "detail": "The unified inbox collects answers. Approve or rewrite the next sentence. Book the call yourself. A Bot that cannot see the thread will double-send. If ignores pile up, change the promise before you raise caps."
+      }
+    ],
+    "sections": [
+      {
+        "id": "what-you-are-automating",
+        "heading": "Automate the pile, not the conversation",
+        "paragraphs": [
+          "People who search this want the afternoon of first touches to happen without sitting in LinkedIn. That is a real job. The failure is a cloud browser grinding Connect while you sleep. Grok Bot's computer is shared across your Bots. A LinkedIn login there is shared too.",
+          "Omentir already has the paced send path. The Bot's job is to keep filling the queue with people you would actually message, then stop. SpaceXAI's own sales-outbound example already says do not send and do not enroll anyone."
+        ]
+      },
+      {
+        "id": "first-job-prompt",
+        "heading": "Paste this into Grok Bot tonight",
+        "paragraphs": [
+          "Finish Omentir first. Add the MCP plugin. Stop rule in the Bot description. Then paste this. Replace the brackets. Keep the last two sentences. Invite notes stay short or blank. The draft here is the after-accept DM."
+        ],
+        "code": GROK_BOT_COLD_DM_PROMPT
+      },
+      {
+        "id": "when-to-skip",
+        "heading": "When cold messaging should stay manual",
+        "paragraphs": [
+          "A new or recently recovered LinkedIn account. A week you cannot sit with the list. A product story you cannot write in two sentences. Grok Bot is still in beta and sits on expensive Cursor or SuperGrok plans. If you do not already have it, start in Overview.",
+          "If email is the only channel that works, solve email. Omentir will not rotate domains. The Bot can draft an email. It should not pretend a LinkedIn workspace is a mailbox rotator."
+        ]
+      }
+    ],
+    "faqItems": [
+      {
+        "question": "Can Grok Bot send the cold DM automatically?",
+        "answer": "It can enqueue outreach through Omentir under your campaign and safety settings. It should not type the DM on linkedin.com. Keep send behind your review."
+      },
+      {
+        "question": "Should every invite include a note?",
+        "answer": "A specific one-liner can help. A pitch in the invite box often hurts. Blank is better than a fake paragraph."
+      },
+      {
+        "question": "Is this the same as get LinkedIn sales with Grok Bot?",
+        "answer": "That page is the overall outbound split. This page is the cold message job: invite note, first DM, follow-up. Same operator, narrower box."
+      }
+    ],
+    "relatedLinks": [
+      {
+        "label": "Automate cold messaging with Grok Bot",
+        "href": "/blogs/automate-cold-messaging-with-grok-bot",
+        "description": "The longer how-to for the three boxes and the prompt."
+      },
+      {
+        "label": "Get LinkedIn sales with Grok Bot",
+        "href": "/use-cases/grok-bot-outbound",
+        "description": "The weekly researcher loop, not only the DM."
+      },
+      {
+        "label": "How do I automate cold messaging with Grok Bot?",
+        "href": "/help/how-do-i-automate-cold-messaging-with-grok-bot",
+        "description": "Short help version of this motion."
+      }
+    ],
+    "ctaTitle": "Connect the Bot only after the first note is something you would send",
+    "ctaBody": "If you would not put the draft on your own phone, do not let a campaign send it."
   }
 ];
 

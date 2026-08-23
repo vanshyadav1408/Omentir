@@ -34,6 +34,7 @@ export default function UseCasePageView({ page }: { page: SeoContentPage }) {
         crumbs={familyCrumbs("use-cases", page.slug)}
         title={page.title}
         afterTitle={bannerNode}
+        path={`/use-cases/${page.slug}`}
       >
         {page.highlights ? <HighlightStrip items={page.highlights} /> : null}
         <VerdictBanner page={page} />

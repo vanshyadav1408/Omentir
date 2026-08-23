@@ -50,6 +50,42 @@ export function liveBlogs(now?: Date): BlogItem[] {
 
 export const ALL_BLOGS: BlogItem[] = [
   {
+    slug: "automate-cold-messaging-with-grok-bot",
+    title: "Automate cold messaging with Grok Bot",
+    description:
+      "Use Grok Bot overnight for research and first-touch drafts. Send cold LinkedIn notes from Omentir with caps. Keep the Bot off LinkedIn, and keep a person on real replies.",
+    publishedDate: "August 23, 2026",
+    updatedDate: "August 23, 2026",
+    category: "Automation",
+    readTime: "9 min read",
+    bannerSrc: "/automate-cold-messaging-with-grok-bot-v2.avif",
+    bannerAlt: "Editorial banner for automating cold messaging with Grok Bot",
+  },
+  {
+    slug: "grok-bot-for-sales",
+    title: "Grok Bot for sales",
+    description:
+      "What Grok Bot can own in a sales motion: overnight research, scoring, and first-touch drafts. What it cannot own: LinkedIn clicks, the live reply, and the demo. Put send in Omentir.",
+    publishedDate: "August 23, 2026",
+    updatedDate: "August 23, 2026",
+    category: "Playbooks",
+    readTime: "8 min read",
+    bannerSrc: "/grok-bot-for-sales.avif",
+    bannerAlt: "Editorial banner for Grok Bot for sales",
+  },
+  {
+    slug: "grok-bot-vs-chatgpt-for-outbound",
+    title: "Grok Bot vs ChatGPT for outbound",
+    description:
+      "Grok Bot keeps working overnight on a shared cloud computer. ChatGPT is a session you watch. Both can talk to Omentir over MCP. Neither should log into LinkedIn. Pick the operator you will actually read.",
+    publishedDate: "August 23, 2026",
+    updatedDate: "August 23, 2026",
+    category: "Comparisons",
+    readTime: "8 min read",
+    bannerSrc: "/grok-bot-vs-chatgpt-for-outbound.avif",
+    bannerAlt: "Editorial banner for Grok Bot versus ChatGPT for outbound",
+  },
+  {
     slug: "how-to-make-the-best-of-your-omentir-subscription",
     title: "How to Make the Best of Your Omentir Subscription",
     description:
@@ -67,7 +103,7 @@ export const ALL_BLOGS: BlogItem[] = [
     description:
       "Grok Bot can research accounts and draft LinkedIn notes overnight. Hook it to Omentir so the send path stays paced, and keep the cloud browser off LinkedIn.",
     publishedDate: "August 20, 2026",
-    updatedDate: "August 20, 2026",
+    updatedDate: "August 23, 2026",
     category: "Automation",
     readTime: "10 min read",
     bannerSrc: "/grok-bot-linkedin-sales.avif",

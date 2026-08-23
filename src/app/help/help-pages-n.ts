@@ -1,4 +1,5 @@
 import type { HelpPageDraft } from "./types";
+import { GROK_BOT_FIRST_JOB_PROMPT } from "../grok-bot-setup";
 
 const DATE = "August 19, 2026";
 
@@ -503,6 +504,7 @@ export const HELP_PAGES_N: HelpPageDraft[] = [
       "When the Bot asks you to take over the computer for a LinkedIn password, passkey, two-factor code, or CAPTCHA, refuse. LinkedIn stays inside Omentir. Every Bot on your account shares that cloud computer, so a LinkedIn session there is shared too.",
       "Ask the Bot for Omentir context and a list of agents before you let it create anything. Setup details: [Grok Bot integration](/integrations/grok-bot).",
     ],
+    prompt: GROK_BOT_FIRST_JOB_PROMPT,
     faqItems: [
       {
         question: "Is this the same as adding Grok in grok.com Settings?",
@@ -527,8 +529,8 @@ export const HELP_PAGES_N: HelpPageDraft[] = [
     ],
     relatedSlugs: [
       "can-i-use-grok-bot-for-linkedin-outreach",
-      "is-linkedin-automation-allowed",
-      "how-to-prevent-linkedin-from-looking-like-a-bot",
+      "how-do-i-automate-cold-messaging-with-grok-bot",
+      "what-is-the-difference-between-grok-bot-and-grok-com",
     ],
   },
   {
@@ -537,8 +539,8 @@ export const HELP_PAGES_N: HelpPageDraft[] = [
     description:
       "Yes as an operator that researches and drafts through Omentir. No as a cloud browser that logs into LinkedIn and clicks Connect while you sleep.",
     keywords: [
+      "Can I use Grok Bot for LinkedIn outreach",
       "Grok Bot LinkedIn outreach",
-      "Grok Bot for LinkedIn outreach",
       "Grok Bot cold LinkedIn",
     ],
     cluster: "targeting",
@@ -551,6 +553,7 @@ export const HELP_PAGES_N: HelpPageDraft[] = [
       "Give the Bot a written ICP, a stop rule, and one source. \"Find me pipeline\" produces a wide, noisy list. After the drafts look like you, start a small Omentir campaign. If accepts drop, tighten targeting. Do not raise volume.",
       "Grok Bot is in beta and sits on paid Cursor or SuperGrok plans. If you do not already have it, run outbound from Omentir Overview. The Bot is an extra operator, not a requirement. Longer walkthrough: [Grok Bot for LinkedIn outreach](/blogs/grok-bot-linkedin-sales).",
     ],
+    prompt: GROK_BOT_FIRST_JOB_PROMPT,
     faqItems: [
       {
         question: "Can it send without me?",
@@ -575,8 +578,8 @@ export const HELP_PAGES_N: HelpPageDraft[] = [
     ],
     relatedSlugs: [
       "how-do-i-connect-grok-bot-to-omentir",
-      "can-i-use-chatgpt-to-write-linkedin-messages",
-      "is-linkedin-automation-allowed",
+      "can-grok-bot-send-linkedin-messages-automatically",
+      "can-grok-bot-replace-a-sales-development-rep",
     ],
   },
 ];

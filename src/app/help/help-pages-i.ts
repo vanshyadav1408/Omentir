@@ -143,7 +143,7 @@ export const HELP_PAGES_I: HelpPageDraft[] = [
     ],
     relatedSlugs: [
       "how-to-personalize-linkedin-outreach",
-      "how-to-write-a-linkedin-connection-request",
+      "can-i-use-grok-bot-for-linkedin-outreach",
       "how-to-prevent-linkedin-from-looking-like-a-bot",
     ],
   },

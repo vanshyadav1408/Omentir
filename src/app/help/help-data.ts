@@ -12,6 +12,7 @@ import { HELP_PAGES_K } from "./help-pages-k";
 import { HELP_PAGES_L } from "./help-pages-l";
 import { HELP_PAGES_M } from "./help-pages-m";
 import { HELP_PAGES_N } from "./help-pages-n";
+import { HELP_PAGES_O } from "./help-pages-o";
 import {
   HELP_CLUSTER_ORDER,
   type HelpCluster,
@@ -34,6 +35,7 @@ const drafts: HelpPageDraft[] = [
   ...HELP_PAGES_L,
   ...HELP_PAGES_M,
   ...HELP_PAGES_N,
+  ...HELP_PAGES_O,
 ];
 
 const bySlug = new Map(drafts.map((page) => [page.slug, page]));
@@ -56,14 +58,15 @@ function withRelated(pages: HelpPageDraft[]): HelpPage[] {
       publishedDate: page.publishedDate,
       updatedDate: page.updatedDate,
       paragraphs: page.paragraphs,
+      prompt: page.prompt,
       faqItems: page.faqItems,
       related,
     };
   });
 }
 
-if (drafts.length !== 142) {
-  throw new Error(`Expected 142 help pages, got ${drafts.length}`);
+if (drafts.length !== 147) {
+  throw new Error(`Expected 147 help pages, got ${drafts.length}`);
 }
 if (bySlug.size !== drafts.length) {
   throw new Error("Duplicate help slugs");

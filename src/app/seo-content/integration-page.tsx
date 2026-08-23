@@ -34,6 +34,7 @@ export default function IntegrationPageView({ page }: { page: SeoContentPage }) 
           crumbs={familyCrumbs("integrations", page.slug)}
           title={page.title}
           afterTitle={bannerNode}
+          path={`/integrations/${page.slug}`}
         >
           <section>
             <h2

@@ -30,7 +30,7 @@ export async function GET() {
         markdownPattern:
           "Append .md to any public content URL. The homepage is /index.md.",
         coverage:
-          "Every released public content route is listed in both indexes, and each has a markdown twin at the same path with .md appended.",
+          "sitemap.xml lists canonical HTML and machine indexes. Each of those HTML pages also has a markdown twin at the same path with .md appended. Twins are for agents, not for search sitemaps.",
         includes: [
           "landing page",
           "marketing pages",

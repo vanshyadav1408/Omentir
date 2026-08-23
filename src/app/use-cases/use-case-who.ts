@@ -21,6 +21,9 @@ const WHO: Record<string, UseCaseWho> = {
   "grok-bot-outbound": {
     who: "People who already have Grok Bot and want LinkedIn sales without a cloud browser driving the account",
   },
+  "grok-bot-cold-messaging": {
+    who: "People who want Grok Bot to draft cold LinkedIn notes overnight without sending them unsupervised",
+  },
 };
 
 export function whoForUseCase(slug: string): UseCaseWho {

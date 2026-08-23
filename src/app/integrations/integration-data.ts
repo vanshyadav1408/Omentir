@@ -574,6 +574,16 @@ const INTEGRATION_PAGES: SeoContentPage[] = [
         href: "/blogs/grok-bot-linkedin-sales",
         description: "Longer walkthrough of the split.",
       },
+      {
+        label: "Automate cold messaging with Grok Bot",
+        href: "/blogs/automate-cold-messaging-with-grok-bot",
+        description: "The cold note, the DM, and the stop rule.",
+      },
+      {
+        label: "Grok Bot alternatives",
+        href: "/alternatives/grok-bot",
+        description: "ChatGPT, Claude, Cursor, or Overview without a Bot.",
+      },
     ],
     primaryCta: { label: "Get started", href: "/signup" },
     secondaryCta: { label: "MCP overview", href: "/integrations/mcp" },

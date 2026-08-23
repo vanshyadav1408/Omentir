@@ -23,6 +23,10 @@ const PICK: Record<string, AlternativePick> = {
     openIf:
       "Instantly or Smartlead covers email, and LinkedIn is the missing channel.",
   },
+  "grok-bot": {
+    openIf:
+      "You have Grok Bot, or you are shopping overnight research without letting a cloud browser drive LinkedIn.",
+  },
 };
 
 export function alternativePick(slug: string): AlternativePick {

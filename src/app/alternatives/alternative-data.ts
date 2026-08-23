@@ -1,4 +1,5 @@
 import type { SeoContentPage } from "../seo-content/types";
+import { GROK_BOT_FIRST_JOB_PROMPT } from "../grok-bot-setup";
 
 /**
  * Category roundups. Not swapped-name clones.
@@ -409,6 +410,123 @@ export const ALL_ALTERNATIVES: SeoContentPage[] = [
     ],
     "ctaTitle": "If the mailbox is fine and the calendar is empty, change channel",
     "ctaBody": "Run LinkedIn on one ICP. Do not buy another warmup pool to avoid writing a specific note."
+  },
+  {
+    "slug": "grok-bot",
+    "title": "Grok Bot alternatives for LinkedIn sales",
+    "description": "Grok Bot is an overnight operator with a cloud computer. Claude, ChatGPT, Cursor, grok.com chat, and Omentir Overview can do parts of that job. None of them should click Connect on LinkedIn.",
+    "summary": "Overnight Bot versus a session you watch versus a workspace with no extra agent.",
+    "publishedDate": "August 23, 2026",
+    "updatedDate": "August 23, 2026",
+    "layout": "roundup",
+    "keywords": [
+      "Grok Bot alternatives",
+      "Grok Bot alternatives for sales",
+      "Grok Bot vs ChatGPT LinkedIn",
+      "alternatives to Grok Bot outbound"
+    ],
+    "verdict": "Keep Grok Bot if you already pay for the plan and you want a review list by morning. Use ChatGPT or Claude if you will sit with a session. Use Omentir Overview if you did not need another operator. Put LinkedIn in Omentir either way.",
+    "roundupItems": [
+      {
+        "name": "Grok Bot",
+        "bestFor": "People who already have SuperGrok Heavy, Cursor Ultra, or Cursor Teams Premium and want overnight research plus drafts.",
+        "watchFor": "Beta product. Shared cloud computer. Do not sign LinkedIn into that computer. Confirm current access on x.ai/bot.",
+        "href": "/integrations/grok-bot"
+      },
+      {
+        "name": "Grok",
+        "bestFor": "A grok.com chat session with an MCP connector, closer to ChatGPT than to the Bot app.",
+        "watchFor": "Work stops when you close the tab. This is not Grok Bot. Use the Grok integration page.",
+        "href": "/integrations/grok"
+      },
+      {
+        "name": "ChatGPT",
+        "bestFor": "Founders who already live in ChatGPT and want to tighten an ICP, inspect a batch, and rewrite a weak note in one sitting.",
+        "watchFor": "No unattended overnight run. Generic drafts if you skip a real trigger. See the ChatGPT integration.",
+        "href": "/integrations/chatgpt"
+      },
+      {
+        "name": "Claude",
+        "bestFor": "The same conversational MCP path as ChatGPT, if Claude is already where the work happens.",
+        "watchFor": "Do not add Claude plus ChatGPT plus Grok Bot on week one. One operator you watch beats three you forget.",
+        "href": "/integrations/claude"
+      },
+      {
+        "name": "Cursor",
+        "bestFor": "Coding agents and scripts that call Omentir with a Bearer token, including people who already have Cursor Ultra for Grok Bot.",
+        "watchFor": "A repo agent is extra surface if you only needed Overview. Grok Bot shares MCP auth with Cursor, so the allowlist has to include the Omentir URL.",
+        "href": "/integrations/cursor"
+      },
+      {
+        "name": "Omentir",
+        "bestFor": "LinkedIn discovery, drafts, campaigns, and inbox with no extra agent layer. Start here if you do not already pay for Grok Bot.",
+        "watchFor": "Not a cloud browser. Not email warmup. You still read the first batch and take the meeting."
+      }
+    ],
+    "sections": [
+      {
+        "id": "the-job",
+        "heading": "Name the job before you shop the Bot",
+        "paragraphs": [
+          "People search Grok Bot alternatives for two different reasons. Some want overnight research without SuperGrok Heavy. Some tried computer use on LinkedIn and got scared. Those are different purchases. The first group needs a session operator or Overview. The second group needs a paced send path, which Omentir already is.",
+          "Grok Bot is not a packaged SDR. Claude and ChatGPT are not overnight VMs. Cursor is a coding agent that can call the same tools. Putting all of them on a feature grid produces a page that could swap logos. This roundup exists so you stop doing that."
+        ]
+      },
+      {
+        "id": "linkedin-split",
+        "heading": "LinkedIn does not belong on the Bot computer",
+        "paragraphs": [
+          "Every row above can talk to Omentir over MCP or REST. None of them should hold a LinkedIn password. Grok Bot's extra risk is the shared cloud computer. ChatGPT and Claude do not get that VM. That is why the Bot can look more powerful and still be the wrong LinkedIn client.",
+          "If you already have Grok Bot, keep it on research and drafts. Connect Plugins to https://omentir.com/api/agent/v1/mcp. Stop at a review list. The weekly motion is get LinkedIn sales with Grok Bot."
+        ]
+      },
+      {
+        "id": "first-job-prompt",
+        "heading": "If you already have Grok Bot, paste this",
+        "paragraphs": [
+          "Finish Omentir first. Add the MCP plugin. Put the stop rule in the Bot description: research and draft only. Never send. Never enroll. Never sign into LinkedIn. Then paste this. Replace the brackets. Keep the last two sentences."
+        ],
+        "code": GROK_BOT_FIRST_JOB_PROMPT
+      }
+    ],
+    "faqItems": [
+      {
+        "question": "Is Omentir a Grok Bot alternative?",
+        "answer": "Omentir is the LinkedIn workspace. Grok Bot is an operator you can put on top. If you do not have the Bot plan, Overview is the alternative to buying one. If you have the Bot, Omentir is still the send path, not a replacement for the overnight job."
+      },
+      {
+        "question": "Can ChatGPT do overnight outbound like Grok Bot?",
+        "answer": "Not as an unattended computer. Close the tab and the work stops. For a review list by morning, you want Grok Bot or you run the batch yourself in a session."
+      },
+      {
+        "question": "Where is OpenClaw?",
+        "answer": "A local runtime you have to operate. Useful if you already run it. Extra surface if you only needed a hosted workspace. See the OpenClaw integration, not this roundup."
+      }
+    ],
+    "relatedLinks": [
+      {
+        "label": "Grok Bot for LinkedIn outreach",
+        "href": "/blogs/grok-bot-linkedin-sales",
+        "description": "Overnight research, paced send, and why the Bot stays off LinkedIn."
+      },
+      {
+        "label": "Grok Bot vs ChatGPT for outbound",
+        "href": "/blogs/grok-bot-vs-chatgpt-for-outbound",
+        "description": "Session versus overnight, same send path."
+      },
+      {
+        "label": "Grok Bot integration",
+        "href": "/integrations/grok-bot",
+        "description": "Plugins, MCP URL, and what not to sign into."
+      },
+      {
+        "label": "Get LinkedIn sales with Grok Bot",
+        "href": "/use-cases/grok-bot-outbound",
+        "description": "The weekly motion if you already have the Bot."
+      }
+    ],
+    "ctaTitle": "If you do not already pay for Grok Bot, do not buy it to send LinkedIn notes",
+    "ctaBody": "Run one Omentir finder from Overview. Add an operator later if you want overnight research on top."
   }
 ];
 

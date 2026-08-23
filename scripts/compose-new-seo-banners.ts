@@ -628,6 +628,42 @@ function artFor(slug: string, p: Palette): string {
           <h3>Stop at the review list</h3>
           <p>The Bot does not sign into LinkedIn. You still take the meeting.</p>
         </div>`;
+    case "grok-bot-cold-messaging":
+      return `
+        <div class="row">
+          <div class="card solid" style="background:${p.a}">
+            <div class="ico">${ico("chat", p.a)}</div>
+            <h3>First DM</h3>
+            <p>Two sentences. Real trigger.</p>
+          </div>
+          <div class="card" style="background:${p.b}">
+            <div class="ico">${ico("send", p.a)}</div>
+            <h3>Omentir send</h3>
+            <p>Caps. You still read it.</p>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Replies pause the sequence</h3>
+          <p>The Bot drafts overnight. It does not argue in the inbox.</p>
+        </div>`;
+    case "grok-bot":
+      return `
+        <div class="row">
+          <div class="card solid" style="background:${p.a}">
+            <div class="ico">${ico("window", p.a)}</div>
+            <h3>Grok Bot</h3>
+            <p>Overnight, if you already pay</p>
+          </div>
+          <div class="card" style="background:${p.b}">
+            <div class="ico">${ico("chat", p.a)}</div>
+            <h3>ChatGPT / Claude</h3>
+            <p>A session you sit with</p>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Omentir Overview</h3>
+          <p>The workspace if you did not need another operator.</p>
+        </div>`;
     case "linkedin-automation":
       return `
         <div class="tiles">
@@ -758,6 +794,8 @@ function paletteFor(slug: string): Palette {
     "prospect-commenters": PALETTES.rose,
     "open-source-ai-sdr": PALETTES.navy,
     "grok-bot-outbound": PALETTES.navy,
+    "grok-bot-cold-messaging": PALETTES.gold,
+    "grok-bot": PALETTES.purple,
     "linkedin-automation": PALETTES.blue,
     "ai-sdr": PALETTES.purple,
     "b2b-databases": PALETTES.terracotta,

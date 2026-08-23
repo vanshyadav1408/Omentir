@@ -25,7 +25,7 @@ export default function robots(): MetadataRoute.Robots {
           "/agents.md",
           "/api/agent/v1/openapi.json",
         ],
-        disallow: ["/api/", "/surveys/"],
+        disallow: ["/api/", "/surveys/", "/page-markdown", "/page-markdown/"],
       },
       {
         userAgent: [
@@ -55,6 +55,7 @@ export default function robots(): MetadataRoute.Robots {
       },
     ],
     sitemap: `${siteUrl}/sitemap.xml`,
-    host: siteUrl,
+    // Bing reads Host as a hostname. Google ignores this line.
+    host: new URL(siteUrl).host,
   };
 }

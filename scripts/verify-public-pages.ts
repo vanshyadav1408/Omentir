@@ -48,20 +48,20 @@ if (htmlMissingFromSitemap.length) {
   );
 }
 
-const mdMissingFromSitemap = pages
+const twinsInSitemap = pages
   .map((page) => page.markdownPath)
-  .filter((path) => !sitemapPaths.has(path));
+  .filter((path) => sitemapPaths.has(path));
 
-if (mdMissingFromSitemap.length) {
+if (twinsInSitemap.length) {
   fail(
-    `Sitemap is missing ${mdMissingFromSitemap.length} markdown twin(s):\n${mdMissingFromSitemap
+    `Sitemap lists ${twinsInSitemap.length} markdown twin(s). Those URLs are duplicates of HTML pages. Bing Webmaster often leaves the whole host unindexed when a sitemap is half copies.\n${twinsInSitemap
       .slice(0, 10)
       .map((path) => `  - ${path}`)
       .join("\n")}`
   );
 }
 
-const htmlWithoutTwin = [...sitemapPaths]
+const htmlMissingTwinRender = [...sitemapPaths]
   .filter(
     (path) =>
       !path.endsWith(".md") &&
@@ -70,18 +70,22 @@ const htmlWithoutTwin = [...sitemapPaths]
   )
   .filter((path) => {
     const twin = markdownPathFromHtmlPath(path);
-    return twin ? !sitemapPaths.has(twin) : false;
+    return twin ? !renderPublicMarkdown(path) : false;
   });
 
-if (htmlWithoutTwin.length) {
+if (htmlMissingTwinRender.length) {
   fail(
-    `Sitemap HTML entries without markdown twins:\n${htmlWithoutTwin
+    `Sitemap HTML entries whose markdown twin does not render:\n${htmlMissingTwinRender
       .slice(0, 10)
       .map((path) => `  - ${path}`)
       .join("\n")}`
   );
 }
 
+if (!sitemapPaths.has("/agents.md")) {
+  fail("Sitemap is missing /agents.md (the machine guide, not an HTML twin).");
+}
+
 console.log(
-  `Verified ${pages.length} public pages (${pages.length} HTML + ${pages.length} markdown twins + ${SITEMAP_MD_ONLY.size} md-only + ${SITEMAP_NO_MD_TWIN.size} machine indexes).`
+  `Verified ${pages.length} public pages (${pages.length} HTML in sitemap, markdown twins omitted from sitemap, ${SITEMAP_MD_ONLY.size} md-only + ${SITEMAP_NO_MD_TWIN.size} machine indexes).`
 );

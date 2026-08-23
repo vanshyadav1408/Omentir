@@ -304,9 +304,12 @@
   /* Marketing content widths.
      Primary: header / logo-wall / footer band. Same box as MarketingHeader,
      logo left edge to Get started right edge (Tailwind 7xl + page pad).
-     Secondary: reading column on blogs, features, guides, help, and SEO
+     Moderate: alternate landing pages (Grok Bot guides). Between primary
+     and the reading column (Tailwind 5xl + the same page pad).
+     Secondary: reading column on blogs, features, help, and SEO
      article shells (Tailwind 3xl + the same page pad). */
   --omentir-primary-max-width: 80rem;
+  --omentir-moderate-max-width: 64rem;
   --omentir-secondary-max-width: 48rem;
   --omentir-page-pad-x: 16px;
   --omentir-page-pad-x-md: 32px;
@@ -332,6 +335,7 @@
 }
 
 .omentir-primary-width,
+.omentir-moderate-width,
 .omentir-secondary-width {
   box-sizing: border-box;
   width: 100%;
@@ -343,12 +347,17 @@
   max-width: var(--omentir-primary-max-width);
 }
 
+.omentir-moderate-width {
+  max-width: var(--omentir-moderate-max-width);
+}
+
 .omentir-secondary-width {
   max-width: var(--omentir-secondary-max-width);
 }
 
 @media (min-width: 768px) {
   .omentir-primary-width,
+  .omentir-moderate-width,
   .omentir-secondary-width {
     padding-inline: var(--omentir-page-pad-x-md);
   }
@@ -2700,6 +2709,10 @@ html[data-theme="dark"] .hero-grid-bg {
   padding: 1.25rem;
 }
 
+.home-slide.is-job {
+  min-height: 18rem;
+}
+
 @media (min-width: 900px) {
   .home-slide {
     grid-template-columns: minmax(13rem, 0.9fr) auto minmax(0, 2.2fr);
@@ -2707,6 +2720,10 @@ html[data-theme="dark"] .hero-grid-bg {
     gap: 0;
     min-height: min(44rem, 82vh);
     padding: 0;
+  }
+
+  .home-slide.is-job {
+    min-height: 22rem;
   }
 
   .home-slide.is-flip {
@@ -2734,6 +2751,11 @@ html[data-theme="dark"] .hero-grid-bg {
   text-align: center;
 }
 
+.home-slide-copy.is-start {
+  align-items: flex-start;
+  text-align: left;
+}
+
 @media (min-width: 900px) {
   .home-slide-copy {
     padding: 2rem 1.75rem;
@@ -2757,6 +2779,10 @@ html[data-theme="dark"] .hero-grid-bg {
   color: #c2d0aa;
 }
 
+.home-slide-copy.is-start h3 {
+  max-width: 20rem;
+}
+
 @media (min-width: 768px) {
   .home-slide-copy h3 {
     font-size: 1.7rem;
@@ -2769,6 +2795,10 @@ html[data-theme="dark"] .hero-grid-bg {
   font-size: 13.5px;
   line-height: 1.55;
   color: #9aaa86;
+}
+
+.home-slide-copy.is-start .home-slide-body {
+  max-width: 42ch;
 }
 
 @media (min-width: 768px) {
@@ -2848,6 +2878,48 @@ html[data-theme="dark"] .hero-grid-bg {
 
   .home-slide.is-flip .home-slide-draw {
     padding: 2.75rem;
+  }
+}
+
+.home-slide.is-job .home-slide-copy {
+  gap: 0.4rem;
+}
+
+.home-slide.is-job .home-slide-draw {
+  min-height: 0;
+  align-items: center;
+}
+
+.job-slide-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+  max-width: 38rem;
+}
+
+.job-slide-panel h4 {
+  font-size: 1.45rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.25;
+  color: #c2d0aa;
+}
+
+.job-slide-panel p {
+  margin-top: 0.9rem;
+  font-size: 1.02rem;
+  line-height: 1.55;
+  color: #9aaa86;
+}
+
+@media (min-width: 768px) {
+  .job-slide-panel h4 {
+    font-size: 1.85rem;
+  }
+
+  .job-slide-panel p {
+    font-size: 1.08rem;
   }
 }
 

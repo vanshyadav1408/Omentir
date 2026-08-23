@@ -30,6 +30,8 @@ export type SeoSection = {
   heading: string;
   paragraphs: string[];
   bullets?: string[];
+  /** Paste-ready prompt or other monospaced job spec. */
+  code?: string;
 };
 
 export type SeoComparisonRow = {

@@ -12,7 +12,7 @@ const INTEGRATION_LOGOS: Record<
     preserveColor: true,
   },
   "grok-bot": {
-    src: "/integration-logos/grok.svg",
+    src: "/integration-logos/grok-bot.svg",
     name: "Grok Bot",
     preserveColor: true,
   },

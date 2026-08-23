@@ -12,6 +12,7 @@ import {
 } from "../marketing-shell";
 import { createBlogJsonLd, createBreadcrumbJsonLd, createFAQJsonLd, normalizeDate, siteUrl } from "../seo";
 import { ALL_BLOGS, isBlogLive } from "./blog-data";
+import { MarkdownTwinLink } from "../seo-content/shared";
 
 export interface TocItem {
   id: string;
@@ -207,6 +208,8 @@ export default function BlogPostTemplate({
                 </ul>
               </section>
             ) : null}
+
+            <MarkdownTwinLink path={`/blogs/${slug}`} title={canonicalTitle} />
 
             <div className="mt-16 rounded-3xl border-2 border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface-container)] px-6 py-8 text-center md:mt-20 md:px-10 md:py-10">
               <p className="text-lg font-semibold tracking-tight text-[var(--md-sys-color-on-surface)]">

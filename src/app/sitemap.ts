@@ -8,7 +8,6 @@ import { ALL_HELP_PAGES } from "./help/help-data";
 import { ALL_INTEGRATIONS } from "./integrations/integration-data";
 import { ALL_USE_CASES } from "./use-cases/use-case-data";
 import { liveSeoPages } from "./seo-content/types";
-import { markdownPathFromHtmlPath } from "@/lib/public-page-markdown";
 import { siteUrl } from "./seo";
 
 // Blog visibility and modification dates come from blog-data. Rebuild daily so
@@ -33,7 +32,7 @@ const publicRoutes = [
   { path: "/pricing", changeFrequency: "monthly", priority: 0.8, lastModified: "2026-08-12" },
   { path: "/minimum-booking-guarantee", changeFrequency: "monthly", priority: 0.5, lastModified: "2026-08-09" },
   { path: "/about", changeFrequency: "monthly", priority: 0.7, lastModified: "2026-07-17" },
-  { path: "/help", changeFrequency: "weekly", priority: 0.7, lastModified: "2026-08-19" },
+  { path: "/help", changeFrequency: "weekly", priority: 0.7, lastModified: "2026-08-23" },
   { path: "/llms.txt", changeFrequency: "weekly", priority: 0.4 },
   { path: "/llms-full.txt", changeFrequency: "weekly", priority: 0.4 },
   { path: "/agents.md", changeFrequency: "monthly", priority: 0.4, lastModified: "2026-08-22" },
@@ -107,6 +106,9 @@ const highIntentBlogSlugs = new Set([
   "b2b-lead-gen-with-ai",
   "chatgpt-linkedin-leads",
   "grok-bot-linkedin-sales",
+  "automate-cold-messaging-with-grok-bot",
+  "grok-bot-for-sales",
+  "grok-bot-vs-chatgpt-for-outbound",
   "cold-linkedin-outreach",
   "high-intent-linkedin-leads",
   "icp-based-lead-discovery",
@@ -202,7 +204,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.65,
   }));
 
-  const htmlRoutes = [
+  // Canonical HTML and machine indexes only. Google and Bing both treat a
+  // sitemap as the list of URLs to index. Markdown twins stay at `.md` URLs
+  // for agents, with a canonical back to the HTML page. Listing those twins
+  // here would ask both engines to index duplicate URLs. That wastes Google
+  // crawl budget and is the pattern Bing often parks as discovered-not-indexed.
+  return [
     ...mainRoutes,
     ...blogRoutes,
     ...featureRoutes,
@@ -213,22 +220,4 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...guideRoutes,
     ...helpRoutes,
   ];
-
-  // Markdown twins are how AI agents read the same public pages without
-  // scraping HTML. Same lastmod as the HTML source: the text is derived.
-  const markdownRoutes = htmlRoutes.flatMap((route) => {
-    const path = new URL(route.url).pathname;
-    const markdownPath = markdownPathFromHtmlPath(path === "/" ? "/" : path);
-    if (!markdownPath) return [];
-    return [
-      {
-        url: absoluteUrl(markdownPath),
-        lastModified: route.lastModified,
-        changeFrequency: route.changeFrequency,
-        priority: Math.max(0.2, Number((route.priority * 0.5).toFixed(2))),
-      },
-    ];
-  });
-
-  return [...htmlRoutes, ...markdownRoutes];
 }

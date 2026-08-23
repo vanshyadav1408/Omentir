@@ -261,7 +261,7 @@ export const HELP_PAGES_E: HelpPageDraft[] = [
       "The market is full of tools that do it anyway, through the browser or through a cloud session. Enforcement is uneven, which is why the tools stay in business. A restriction, a checkpoint, or a permanent lock does not come with an appeals team that cares about your pipeline. If the profile is your name, the cost is personal.",
       "Safer-looking habits: visible daily caps, delays between actions, send windows, a ramp on new accounts, and a human reading replies. Those reduce the most obvious bot fingerprints. They do not make unofficial automation \"allowed.\" Anyone who promises your account cannot be restricted is selling you a story.",
       "Chrome extensions that click the LinkedIn DOM and scrapers that dump search results are the noisier architectures. Cloud sequencers move the session off your laptop and introduce a different fingerprint. Official partner APIs are a different legal object. Ask which one you are buying.",
-      "Omentir sends from your connected account with invite and message limits you can tighten. We are not official LinkedIn. We will not tell you that automation is blessed. If you want the longer version, read [what automation for LinkedIn actually means](/automation-for-linkedin) and [LinkedIn outreach compliance](/blogs/linkedin-outreach-compliance-2026).",
+      "Omentir sends from your connected account with invite and message limits you can tighten. We are not official LinkedIn. We will not tell you that automation is blessed. If you want the longer version, read [LinkedIn outreach compliance](/blogs/linkedin-outreach-compliance-2026).",
     ],
     faqItems: [
       {
@@ -272,7 +272,7 @@ export const HELP_PAGES_E: HelpPageDraft[] = [
       {
         question: "Are official LinkedIn APIs an option for DMs?",
         answer:
-          "Not for bulk personal invites and DMs. See LinkedIn's developer docs and our [LinkedIn API](/linkedin-api) guide before you budget an engineering sprint around outreach.",
+          "Not for bulk personal invites and DMs. See LinkedIn's developer docs before you budget an engineering sprint around outreach.",
       },
       {
         question: "Can I automate likes and views as warmup?",

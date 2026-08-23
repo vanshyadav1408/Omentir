@@ -43,6 +43,9 @@ export const answerSourceSlugs = [
   "mcp-linkedin-outreach",
   "mcp-outreach-tools",
   "grok-bot-linkedin-sales",
+  "automate-cold-messaging-with-grok-bot",
+  "grok-bot-for-sales",
+  "grok-bot-vs-chatgpt-for-outbound",
   "linkedin-outreach-compliance-2026",
   "10-linkedin-cold-message-templates-that-actually-book-demos",
   "the-b2b-outreach-copywriting-framework-that-gets-replies",
@@ -245,7 +248,7 @@ Every public HTML page has a markdown twin at the same path with \`.md\` appende
 People use Omentir from Claude, ChatGPT, Grok, Grok Bot, Cursor, Claude Code, and custom agents without giving those apps their LinkedIn password.
 
 - Chat apps (Claude, ChatGPT, Grok): Settings → Connectors → custom connector URL \`${siteUrl}/api/agent/v1/mcp\` → sign in on Omentir and approve Connect workspace → enable tools in the chat. No API key. Per-client notes: [Claude](${siteUrl}/integrations/claude), [ChatGPT](${siteUrl}/integrations/chatgpt), [Grok](${siteUrl}/integrations/grok), [MCP](${siteUrl}/integrations/mcp).
-- Grok Bot (the always-on teammate app, not grok.com chat): Settings → Plugins → custom MCP at the same URL → approve Connect workspace. Do not sign LinkedIn into the Bot computer. Notes: [Grok Bot](${siteUrl}/integrations/grok-bot), [Grok Bot outbound](${siteUrl}/use-cases/grok-bot-outbound).
+- Grok Bot (the always-on teammate app, not grok.com chat): Settings → Plugins → custom MCP at the same URL → approve Connect workspace. Do not sign LinkedIn into the Bot computer. Start with [Grok Bot for LinkedIn outreach](${siteUrl}/blogs/grok-bot-linkedin-sales.md). Notes: [Grok Bot](${siteUrl}/integrations/grok-bot.md), [Grok Bot outbound](${siteUrl}/use-cases/grok-bot-outbound.md), [Grok Bot cold messaging](${siteUrl}/use-cases/grok-bot-cold-messaging.md), [Grok Bot alternatives](${siteUrl}/alternatives/grok-bot.md).
 - Coding agents / scripts (Cursor, Claude Code, and similar): create a token at ${siteUrl}/api-keys and send \`Authorization: Bearer <token>\` to the MCP endpoint or REST \`/api/agent/v1/*\`. See [Cursor](${siteUrl}/integrations/cursor) and [REST API](${siteUrl}/integrations/rest-api).
 - Manual operators: fetch [agents.md](${siteUrl}/agents.md) first, then ask for a Bearer token.
 

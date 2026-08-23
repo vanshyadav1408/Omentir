@@ -31,6 +31,7 @@ export default function FeaturePageView({ page }: { page: SeoContentPage }) {
         crumbs={familyCrumbs("features", page.slug)}
         title={page.title}
         afterTitle={bannerNode}
+        path={`/features/${page.slug}`}
       >
         {page.layout && page.highlights ? <HighlightStrip items={page.highlights} /> : null}
         {page.thread ? <ThreadPreview lines={page.thread} /> : null}

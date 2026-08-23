@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { PromptCopyBox } from "../../grok-bot-setup-block";
+import { GROK_BOT_FIRST_JOB_PROMPT } from "../../grok-bot-setup";
 import { createPageMetadata } from "../../seo";
 import BlogPostTemplate from "../blog-post-template";
 import FaqAccordion from "../../faq-accordion";
@@ -213,11 +215,7 @@ export default function BlogPost() {
       <p>
         Give it a job spec, not a vibe. Replace the brackets. Keep the last two sentences.
       </p>
-      <div className="my-6 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
-        <p className="font-mono text-sm leading-7 text-zinc-800">
-          You operate Omentir over MCP. My product helps [buyer] get [result]. Best-fit accounts are [company type, size, region]. Strong signals: [signal]. Skip [bad fit]. Use get_context, then list_agents. If no finder matches this ICP, show me a create_agent config and wait. Pull up to 30 leads. For each: fit 1-5, evidence, risk, and a two-sentence draft that cites a real signal. Do not send. Do not enroll. Do not sign into LinkedIn. Return a review list by morning.
-        </p>
-      </div>
+      <PromptCopyBox prompt={GROK_BOT_FIRST_JOB_PROMPT} />
       <p>
         Thirty is enough to judge the ICP. Four hundred is a pile you will skim and then resent. If the Bot wants to broaden titles because the first list was thin, that is a targeting problem. Fix My Product. Do not reward it with a wider net.
       </p>
@@ -296,6 +294,10 @@ export default function BlogPost() {
         . The Grok Bot version of that motion is{" "}
         <Link href="/use-cases/grok-bot-outbound" className="text-blue-600 hover:underline">
           get LinkedIn sales with Grok Bot
+        </Link>
+        . If the job is the cold note itself, use{" "}
+        <Link href="/blogs/automate-cold-messaging-with-grok-bot" className="text-blue-600 hover:underline">
+          automate cold messaging with Grok Bot
         </Link>
         .
       </p>
