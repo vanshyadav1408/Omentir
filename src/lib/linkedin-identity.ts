@@ -12,7 +12,19 @@ export type LinkedInIdentity = {
 
 function addKey(keys: Set<string>, value?: string) {
   const normalized = value?.trim().toLowerCase();
-  if (normalized) keys.add(normalized);
+  if (!normalized) return;
+  keys.add(normalized);
+
+  // Unipile relations return URNs; stored leads usually have the bare ACo/ACw id.
+  const urn = normalized.match(/^urn:li:(?:person|member|fsd_profile):(.+)$/);
+  if (urn?.[1]) keys.add(urn[1]);
+
+  // Sales Navigator URLs look like ACwAAAxxx,NAME_SEARCH,xyz. The prefix is
+  // the member id that Classic records and webhooks actually share.
+  const comma = normalized.indexOf(",");
+  if (comma > 0 && /^(?:aco|acw|ae)/.test(normalized)) {
+    keys.add(normalized.slice(0, comma));
+  }
 }
 
 export function linkedInPathIdentifier(value?: string) {
@@ -35,6 +47,25 @@ export function linkedInIdentityKeys(identity: LinkedInIdentity) {
   addKey(keys, identity.publicIdentifier);
   addKey(keys, linkedInPathIdentifier(identity.linkedInUrl));
   return [...keys];
+}
+
+// Relations / webhooks and stored leads often disagree on Classic vs Sales
+// Navigator ids. Walk the provider records and take each pending lead at most
+// once, using the same identity+unique-name join as inbound webhooks.
+export function matchLeadsToProviderIdentities<T extends LinkedInIdentity>(
+  leads: T[],
+  identities: LinkedInIdentity[],
+): T[] {
+  const unmatched = [...leads];
+  const matched: T[] = [];
+  for (const identity of identities) {
+    const lead = pickLeadForProviderIdentity(unmatched, identity);
+    if (!lead) continue;
+    matched.push(lead);
+    const index = unmatched.indexOf(lead);
+    if (index >= 0) unmatched.splice(index, 1);
+  }
+  return matched;
 }
 
 export function normalizePersonName(name?: string) {

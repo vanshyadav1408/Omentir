@@ -132,6 +132,18 @@ export const COUNTRY_ALIASES: Record<string, string[]> = {
   ],
 };
 
+// All 27 EU members. Countries without a COUNTRY_ALIASES entry still match on
+// their own name via the aliasesForTarget fallback, and still resolve in
+// LinkedIn's location lookup, so people search stays scoped instead of running
+// unscoped ("no location ids resolved for [European Union]").
+const EU_COUNTRIES = [
+  "ireland", "germany", "france", "netherlands", "spain", "italy", "sweden",
+  "denmark", "finland", "poland", "portugal", "belgium", "austria",
+  "czech republic", "romania", "greece", "hungary", "bulgaria", "croatia",
+  "slovakia", "slovenia", "lithuania", "latvia", "estonia", "luxembourg",
+  "malta", "cyprus",
+];
+
 // Multi-country regions users pick from LOCATION_SUGGESTIONS. Each expands to
 // the union of member-country alias lists so "North America" keeps US + Canada
 // leads without requiring every state to be listed twice here.
@@ -147,6 +159,8 @@ const REGION_COUNTRIES: Record<string, string[]> = {
     "italy", "switzerland", "portugal", "belgium", "austria",
   ],
   "eastern europe": ["poland"],
+  "european union": EU_COUNTRIES,
+  eu: EU_COUNTRIES,
   nordics: ["sweden", "norway", "denmark", "finland"],
   benelux: ["belgium", "netherlands"],
   dach: ["germany", "austria", "switzerland"],

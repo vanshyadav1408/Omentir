@@ -78,6 +78,8 @@ type UnipileWebhook = {
   lead_id?: string;
   campaign_id?: string;
   user_email?: string;
+  // v2 nests the relation or message object here.
+  payload?: UnipileWebhook;
 };
 
 function compactEventName(eventName: string) {
@@ -98,6 +100,36 @@ function isInboundReplyEvent(eventName: string) {
     compact.includes("messagecreated") ||
     compact.includes("reply")
   );
+}
+
+function asWebhookRecord(value: unknown): UnipileWebhook | null {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as UnipileWebhook)
+    : null;
+}
+
+// v1 delivers user_* and message fields at the root. v2 nests the relation or
+// message under `payload`. Missing identity fields here is what made accepted
+// connections and replies look like they never happened in the dashboard.
+function flattenUnipileWebhook(raw: UnipileWebhook): UnipileWebhook {
+  const nested = asWebhookRecord(raw.payload);
+  if (!nested) return raw;
+  return {
+    ...nested,
+    ...raw,
+    event: raw.event || raw.type || nested.event || nested.type,
+    account_id: raw.account_id || nested.account_id,
+    message_id: raw.message_id || nested.message_id,
+    message: raw.message || nested.message,
+    sender: raw.sender || nested.sender,
+    attendees: raw.attendees || nested.attendees,
+    profile_url: raw.profile_url || nested.profile_url,
+    provider_id: raw.provider_id || nested.provider_id,
+    user_provider_id: raw.user_provider_id || nested.user_provider_id,
+    user_public_identifier: raw.user_public_identifier || nested.user_public_identifier,
+    user_profile_url: raw.user_profile_url || nested.user_profile_url,
+    user_full_name: raw.user_full_name || nested.user_full_name,
+  };
 }
 
 function inboundMessageBody(payload: UnipileWebhook) {
@@ -138,6 +170,7 @@ export async function POST(request: NextRequest) {
     throw error;
   }
   if (!payload) return NextResponse.json({ error: "Invalid payload." }, { status: 400 });
+  payload = flattenUnipileWebhook(payload);
   const eventName = payload.event || payload.type || "";
   const normalizedEventName = eventName.toLowerCase();
   const isReply = isInboundReplyEvent(eventName);
@@ -219,7 +252,7 @@ export async function POST(request: NextRequest) {
     providerProfileId: identityProviderId,
     publicIdentifier: isOwnMessage ? undefined : publicIdentifier,
     fullName: identityName,
-    matchPendingAcceptance: isConnectionApproved || isOwnMessage,
+    matchPendingAcceptance: isConnectionApproved || isOwnMessage || isReply,
   });
 
   // Messages we send through Unipile come back as message webhooks too; treating

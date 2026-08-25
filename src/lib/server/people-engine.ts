@@ -10,7 +10,7 @@ import {
   upsertLeadSignal,
 } from "./data";
 import { cleanId, normalizeLinkedInProfileUrl, nowIso } from "./firebase";
-import { agentTargetLocations, matchesTargetLocation } from "./geo";
+import { agentTargetLocations, matchesTargetLocation, searchableLocationNames } from "./geo";
 import { isAnonymousLinkedInProfile } from "./outreach-rules";
 import {
   balanceTitleSeniority,
@@ -83,10 +83,6 @@ const DEFAULT_DAILY_QUALIFIED_LEAD_CAP = 75;
 // dailyLeadLimit because most enrichments fail region/score gates before a
 // lead is saved.
 const DEFAULT_MAX_ENRICHMENTS_PER_RUN = 500;
-// Cold people search does not carry an activity timestamp. Check recent posts
-// before spending a profile view, but keep the daily read volume bounded.
-const DEFAULT_MAX_ACTIVITY_CHECKS_PER_RUN = 250;
-const ACTIVITY_POST_LIMIT = 3;
 const PEOPLE_ENGINE_RUN_MS = 15 * 60 * 1000;
 const STOP_BUFFER_MS = 15 * 1000;
 // Competitor/founder pages: pull enough recent posts that product launches and
@@ -163,8 +159,7 @@ export function isStealCustomersAgent(
 
 export function agentUsesPeopleEngine(agent: Agent) {
   // Current agents already use signals mode. Older prompt/filter agents must
-  // use the same qualified and activity-verified path, or they can still save
-  // inactive people through the legacy search loop in automation.ts.
+  // use the same qualified path instead of the legacy search loop.
   return agent.mode !== "outreach";
 }
 
@@ -224,7 +219,7 @@ function getSourceKeywords(
     ...criteria.roleVocabulary.slice(0, 6),
     // Standalone signal phrases last (lowest priority for people search).
     ...(agent.signalSources?.keywords || []).slice(0, 4),
-  ]).slice(0, 20);
+  ]).slice(0, 40);
 }
 
 function getSearchTitles(agent: Agent, profile: ProductProfile | null, criteria: SearchCriteria) {
@@ -264,12 +259,15 @@ async function searchPeopleForAgentQuery(input: {
   // independent query across the requested countries instead. The query is
   // stable, so the same role stays in its assigned market while the rotated
   // source queue covers the rest over subsequent runs.
+  // Expand regions first: "European Union" is not a LinkedIn location id, and
+  // stuffing all 27 members into one search returns empty on Classic.
+  const searchLocations = searchableLocationNames(input.targetLocations);
   const locationBatches =
-    input.targetLocations.length > 0
+    searchLocations.length > 0
       ? [[
           selectDailyTargetLocation(
             input.title || input.keyword || "people",
-            input.targetLocations,
+            searchLocations,
           )!,
         ]]
       : [[] as string[]];
@@ -1042,88 +1040,6 @@ export async function enrichLinkedInLead(account: LinkedInAccount, lead: Partial
   return lead;
 }
 
-type ActivityVerification =
-  | {
-      status: "active";
-      evidence: LinkedInActivityEvidence;
-      recentPosts: string[];
-    }
-  | { status: "inactive"; recentPosts: [] }
-  | { status: "unknown"; recentPosts: [] };
-
-function activityIdentifierFromLead(lead: Partial<Lead>) {
-  // The posts route documents the provider-internal id as its primary key.
-  // Fall back to the public slug for older leads that do not have one yet.
-  return lead.providerProfileId || getPublicIdentifier(lead.linkedInUrl) || "";
-}
-
-function formatRecentActivityPosts(
-  posts: Awaited<ReturnType<typeof listLinkedInPostsForProfile>>,
-  nowMs: number,
-) {
-  return posts
-    .filter((post) =>
-      recentLinkedInActivityFromPosts(
-        [{ createdAt: getLinkedInPostCreatedAtRaw(post) }],
-        nowMs,
-      ),
-    )
-    .map((post) => {
-      const text = getLinkedInPostText(post).replace(/\s+/g, " ").trim().slice(0, 600);
-      const createdAt = getLinkedInPostCreatedAtRaw(post);
-      return text && createdAt ? `${createdAt.slice(0, 10)} | ${text}` : "";
-    })
-    .filter(Boolean);
-}
-
-async function verifyRecentLinkedInActivity(input: {
-  account: LinkedInAccount;
-  lead: Partial<Lead>;
-  signals: ObservedSignal[];
-  nowMs: number;
-}): Promise<ActivityVerification> {
-  const signalEvidence = recentLinkedInActivityFromSignals(input.signals, input.nowMs);
-  if (signalEvidence) {
-    return { status: "active", evidence: signalEvidence, recentPosts: [] };
-  }
-
-  const identifier = activityIdentifierFromLead(input.lead);
-  if (!identifier) return { status: "unknown", recentPosts: [] };
-
-  const workspaceAccounts = await listLinkedInAccounts(input.account.workspaceId);
-  const activityAccounts = [
-    input.account,
-    ...workspaceAccounts.filter((candidate) => candidate.id !== input.account.id),
-  ];
-
-  for (const activityAccount of activityAccounts) {
-    try {
-      const posts = await listLinkedInPostsForProfile({
-        accountId: activityAccount.accountId,
-        identifier,
-        limit: ACTIVITY_POST_LIMIT,
-      });
-      const postEvidence = recentLinkedInActivityFromPosts(
-        posts.map((post) => ({ createdAt: getLinkedInPostCreatedAtRaw(post) })),
-        input.nowMs,
-      );
-      if (!postEvidence) continue;
-      return {
-        status: "active",
-        evidence: postEvidence,
-        recentPosts: formatRecentActivityPosts(posts, input.nowMs),
-      };
-    } catch (error) {
-      console.error(
-        `[people-engine] activity check failed through ${activityAccount.id}:`,
-        error instanceof Error ? error.message : error,
-      );
-    }
-  }
-
-  return { status: "unknown", recentPosts: [] };
-}
-
 function applyLinkedInActivity(
   lead: Partial<Lead>,
   evidence: LinkedInActivityEvidence,
@@ -1354,11 +1270,16 @@ export async function runPeopleEngineForAgent(input: {
   // the target list ("Dispatcher" against "Logistics Coordinator") is still
   // recognized as someone who performs the work.
   const roleVocabulary = criteria.roleVocabulary;
-  // Keep one run below the LinkedIn Classic-search burst limit. Full source
-  // lists are still retained and rotated via peopleEngineCursor, so narrow
-  // criteria are covered over time without sacrificing the strongest
-  // title-first searches in the current run.
-  const sourceLimit = input.initialLeadTarget ? 6 : 8;
+  // Healthy Classic searches can fill the pool in two queries, but restricted
+  // accounts sometimes return only three profiles and no pagination cursor.
+  // Let those runs refill from more rotated sources, while stopping as soon as
+  // there are enough candidates to use the bounded profile-view budget.
+  const sourceLimit = 16;
+  const qualifiedLeadTarget = Math.min(
+    input.initialLeadTarget ?? dailyLeadLimit,
+    dailyLeadLimit,
+  );
+  const candidatePoolTarget = Math.max(qualifiedLeadTarget * 3, 24);
   const sourceQueue: PeopleEngineSource[] = stealOnly
     ? buildPeopleEngineSourceQueue({
         competitorUrls: sources.competitorUrls,
@@ -1439,7 +1360,7 @@ export async function runPeopleEngineForAgent(input: {
 
   let peopleSearchHits = 0;
   for (const { source, nextSource } of sourceRun) {
-    if (!hasRunTime(deadline)) break;
+    if (!hasRunTime(deadline) || candidates.size >= candidatePoolTarget) break;
 
     if (nextSource) {
       // false = agent doc gone (deleted mid-run). Stop discovery: further
@@ -1599,10 +1520,7 @@ export async function runPeopleEngineForAgent(input: {
   let titleFiltered = 0;
   let enrichments = 0;
   let activeCandidates = 0;
-  let inactiveCandidates = 0;
   let activityUnverifiable = 0;
-  let activityChecks = 0;
-  let activityBudgetSkipped = 0;
   let timeBudgetExpired = false;
 
   const qualifyExistingLead = async (
@@ -1799,32 +1717,19 @@ export async function runPeopleEngineForAgent(input: {
       preEnrichedGroundedIdentity = true;
     }
 
-    const signalActivity = recentLinkedInActivityFromSignals(candidate.signals);
-    if (!signalActivity && activityChecks >= DEFAULT_MAX_ACTIVITY_CHECKS_PER_RUN) {
-      activityBudgetSkipped += 1;
-      continue;
-    }
-    if (!signalActivity) activityChecks += 1;
-    const activity = await verifyRecentLinkedInActivity({
-      account: input.account,
-      lead: candidate.lead,
-      signals: candidate.signals,
-      nowMs: Date.now(),
-    });
-    if (activity.status === "inactive") {
-      inactiveCandidates += 1;
-      continue;
-    }
-    if (activity.status === "unknown") {
+    // Recent engagement remains valuable evidence and is persisted when the
+    // source supplies it. Cold people-search results must not be discarded
+    // merely because the profile has no public post in the last 30 days:
+    // posting is optional on LinkedIn and the posts endpoint frequently cannot
+    // verify it. Title, location, provider identity, enrichment, and fit scoring
+    // remain the qualification gates below.
+    const activity = recentLinkedInActivityFromSignals(candidate.signals);
+    if (activity) {
+      activeCandidates += 1;
+      candidate.lead = applyLinkedInActivity(candidate.lead, activity, []);
+    } else {
       activityUnverifiable += 1;
-      continue;
     }
-    activeCandidates += 1;
-    candidate.lead = applyLinkedInActivity(
-      candidate.lead,
-      activity.evidence,
-      activity.recentPosts,
-    );
 
     const existingLead = findKnownLead(
       existingLeadsById,
@@ -1843,12 +1748,6 @@ export async function runPeopleEngineForAgent(input: {
         );
         existingRejected += 1;
         continue;
-      }
-      if (
-        input.initialLeadTarget &&
-        leadsAdded + existingQualifiedLeads >= input.initialLeadTarget
-      ) {
-        break;
       }
       continue;
     }
@@ -1872,11 +1771,9 @@ export async function runPeopleEngineForAgent(input: {
         continue;
       }
     }
-    enrichedLead = applyLinkedInActivity(
-      enrichedLead,
-      activity.evidence,
-      activity.recentPosts,
-    );
+    if (activity) {
+      enrichedLead = applyLinkedInActivity(enrichedLead, activity, []);
+    }
 
     // Grounded web search can verify role and employer context, but a model can
     // still return a plausible-looking LinkedIn slug. Require Unipile to resolve
@@ -1940,12 +1837,6 @@ export async function runPeopleEngineForAgent(input: {
         firstSignal,
         persistedSignals,
       );
-      if (
-        input.initialLeadTarget &&
-        leadsAdded + existingQualifiedLeads >= input.initialLeadTarget
-      ) {
-        break;
-      }
       continue;
     }
 
@@ -2030,10 +1921,7 @@ export async function runPeopleEngineForAgent(input: {
       ),
     );
     leadsAdded += 1;
-    if (
-      input.initialLeadTarget &&
-      leadsAdded + existingQualifiedLeads >= input.initialLeadTarget
-    ) {
+    if (input.initialLeadTarget && leadsAdded >= input.initialLeadTarget) {
       break;
     }
   }
@@ -2053,11 +1941,8 @@ export async function runPeopleEngineForAgent(input: {
       `, skipped post noise: ${skippedPostNoise}` +
       `, title filtered: ${titleFiltered}` +
       `, anonymous/unresolved: ${anonymousDropped}` +
-      `, active in last 30 days: ${activeCandidates}` +
-      `, inactive: ${inactiveCandidates}` +
-      `, activity unverifiable: ${activityUnverifiable}` +
-      `, activity post checks: ${activityChecks}` +
-      `, activity check budget skipped: ${activityBudgetSkipped}` +
+      `, recent activity confirmed: ${activeCandidates}` +
+      `, recent activity not observed: ${activityUnverifiable}` +
       `${timeBudgetExpired ? ", stopped at time budget" : ""}).`,
   }).catch((error) => {
     console.error("[people-engine] failed to log run summary:", error);
@@ -2072,10 +1957,7 @@ export async function runPeopleEngineForAgent(input: {
     lowScoreCandidates,
     outOfRegionCandidates,
     activeCandidates,
-    inactiveCandidates,
     activityUnverifiable,
-    activityChecks,
-    activityBudgetSkipped,
     timeBudgetExpired,
   };
 }

@@ -963,12 +963,16 @@ async function updateAgentDoc(agentId: string, patch: Record<string, unknown>): 
   }
 }
 
-export async function markAgentRun(agent: Agent, ok: boolean) {
+export async function markAgentRun(
+  agent: Agent,
+  ok: boolean,
+  options?: { nextRunAt?: string },
+) {
   return updateAgentDoc(agent.id, {
     status: ok ? "active" : "error",
     lastRunAt: nowIso(),
     runStartedAt: FieldValue.delete(),
-    nextRunAt: await nextAgentSlot(agent),
+    nextRunAt: options?.nextRunAt || (await nextAgentSlot(agent)),
     updatedAt: nowIso(),
   });
 }
@@ -1730,6 +1734,17 @@ export async function getCampaign(workspaceId: string, campaignId: string) {
 export async function getActiveCampaigns(limit?: number) {
   let query: FirebaseFirestore.Query<Campaign> = collection<Campaign>("campaigns")
     .where("status", "==", "active")
+  if (limit != null && limit > 0) query = query.limit(limit);
+  const snap = await query.get();
+  return snap.docs.map((doc) => doc.data());
+}
+
+// Provider sync (acceptances, replies) must keep dashboard state honest even
+// when a campaign is paused. Pausing stops new sends; it must not freeze
+// LinkedIn activity that already happened.
+export async function getCampaignsForProviderSync(limit?: number) {
+  let query: FirebaseFirestore.Query<Campaign> = collection<Campaign>("campaigns")
+    .where("status", "in", ["active", "paused"]);
   if (limit != null && limit > 0) query = query.limit(limit);
   const snap = await query.get();
   return snap.docs.map((doc) => doc.data());
@@ -3336,6 +3351,57 @@ export async function getDailyQuotaUsage(workspaceId: string, timezone: string |
       messages: Number(data.messages || 0),
     },
   };
+}
+
+// The daily discovered-lead target is per agent, not per workspace: a
+// workspace running three agents should get three agents' worth of leads, and
+// one agent's early-morning run must not starve the others. Keyed like the
+// per-account profile-view budget (`account-...` docs) in the same collection.
+export async function getDailyLeadDiscoveryUsage(
+  agentId: string,
+  timezone: string | undefined,
+) {
+  const day = quotaDayKey(timezone);
+  const snap = await getDb().collection("usageDays").doc(`agent-${agentId}-${day}`).get();
+  const data = snap.data() || {};
+  return {
+    day,
+    discoveredLeads: Math.max(0, Number(data.discoveredLeads || 0)),
+    attempts: Math.max(0, Number(data.leadDiscoveryAttempts || 0)),
+  };
+}
+
+export async function recordDailyLeadDiscoveryRun(
+  workspaceId: string,
+  agentId: string,
+  timezone: string | undefined,
+  leadsAdded: number,
+) {
+  const day = quotaDayKey(timezone);
+  const ref = getDb().collection("usageDays").doc(`agent-${agentId}-${day}`);
+
+  return getDb().runTransaction(async (transaction) => {
+    const snap = await transaction.get(ref);
+    const data = snap.exists ? snap.data() || {} : {};
+    const discoveredLeads =
+      Math.max(0, Number(data.discoveredLeads || 0)) + Math.max(0, leadsAdded);
+    const attempts = Math.max(0, Number(data.leadDiscoveryAttempts || 0)) + 1;
+
+    transaction.set(
+      ref,
+      {
+        workspaceId,
+        agentId,
+        day,
+        discoveredLeads,
+        leadDiscoveryAttempts: attempts,
+        updatedAt: nowIso(),
+      },
+      { merge: true },
+    );
+
+    return { day, discoveredLeads, attempts };
+  });
 }
 
 // Reserves one unit of today's quota. Call this only after the LinkedIn send

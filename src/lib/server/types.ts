@@ -256,8 +256,7 @@ export type Lead = {
   signalObservedAt?: string;
   leadReason?: string;
   engagementContext?: LeadEngagementContext;
-  // Discovery persists only people with provider-verifiable LinkedIn activity
-  // inside the current recency window. These fields keep that evidence
+  // When discovery has direct recent activity evidence, these fields keep it
   // auditable without misusing signalObservedAt, which may only be search time.
   linkedinActivityAt?: string;
   linkedinActivitySource?: "post" | "comment" | "reaction";

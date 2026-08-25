@@ -108,3 +108,53 @@ jobs:
               exit 1
             fi
           done
+
+      - name: Notify IndexNow
+        continue-on-error: true
+        run: |
+          python3 - <<'PY'
+          import json
+          import urllib.request
+          import xml.etree.ElementTree as ET
+
+          def fetch(url, data=None, headers=None, timeout=60):
+              request = urllib.request.Request(url, data=data, headers=headers or {})
+              with urllib.request.urlopen(request, timeout=timeout) as response:
+                  return response.status, response.read()
+
+          key = fetch("https://omentir.com/indexnow-key.txt")[1].decode().strip()
+          spec_path = f"https://omentir.com/{key}.txt"
+          spec_body = fetch(spec_path)[1].decode().strip()
+          if spec_body != key:
+              raise SystemExit(f"IndexNow spec path {spec_path} did not return the key")
+
+          xml = fetch("https://omentir.com/sitemap.xml")[1]
+          ns = {"sm": "http://www.sitemaps.org/schemas/sitemap/0.9"}
+          urls = []
+          for loc in ET.fromstring(xml).findall(".//sm:loc", ns):
+              url = (loc.text or "").strip()
+              path = url[len("https://omentir.com"):] if url.startswith("https://omentir.com") else url
+              if url and not path.endswith((".md", ".txt", ".json")):
+                  urls.append(url)
+          if not urls:
+              raise SystemExit("sitemap.xml contained no HTML URLs")
+
+          payload = json.dumps({
+              "host": "omentir.com",
+              "key": key,
+              "keyLocation": spec_path,
+              "urlList": urls,
+          }).encode()
+          headers = {"content-type": "application/json; charset=utf-8"}
+          ok = False
+          for endpoint in ("https://api.indexnow.org/indexnow", "https://www.bing.com/indexnow"):
+              try:
+                  status, body = fetch(endpoint, data=payload, headers=headers)
+                  print(f"{endpoint} -> {status} {body[:200]!r}")
+                  ok = ok or status in (200, 202)
+              except Exception as error:
+                  print(f"{endpoint} failed: {error}")
+          if not ok:
+              raise SystemExit("IndexNow rejected the post-deploy ping")
+          print(f"IndexNow accepted {len(urls)} HTML URLs")
+          PY

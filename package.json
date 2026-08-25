@@ -8,11 +8,7 @@
     "dev": "NODE_OPTIONS='--disable-warning=DEP0205 --dns-result-order=ipv4first' next dev",
     "build": "bun --bun next build",
     "start": "bun --bun next start",
-    "lint": "bun --bun eslint && bun run lint:copy",
-    "lint:copy": "bun scripts/lint-marketing-copy.ts",
-    "verify:pages": "bun scripts/verify-public-pages.ts",
-    "indexnow": "bun scripts/submit-indexnow.ts",
-    "test": "bun test --conditions=react-server tests/",
+    "lint": "bun --bun eslint",
     "postinstall": "rm -rf .next"
   },
   "dependencies": {

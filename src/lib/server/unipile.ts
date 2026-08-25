@@ -12,6 +12,7 @@ import { searchableLocationNames } from "./geo";
 import {
   firstDegreeFromUnipileProfile,
   linkedInIdentityKeys,
+  type LinkedInIdentity,
 } from "../linkedin-identity";
 import { dedupeLinkedInInboxThreads } from "../inbox-threads";
 
@@ -493,7 +494,7 @@ function getListItems<T>(result: unknown): T[] {
   return [];
 }
 
-function getListCursor(result: unknown): string | undefined {
+export function getListCursor(result: unknown): string | undefined {
   const record = asRecord(result);
   if (!record) return undefined;
   if (typeof record.cursor === "string" && record.cursor) return record.cursor;
@@ -1065,6 +1066,7 @@ async function searchLinkedIn<T>(input: {
 
   const maxPages = input.maxPages ?? 8;
   const items: T[] = [];
+  const seenCursors = new Set<string>();
   let cursor: string | undefined;
 
   // Unipile reads limit from the query string and pages with a cursor; a
@@ -1099,8 +1101,9 @@ async function searchLinkedIn<T>(input: {
     if (!pageItems.length) break;
     items.push(...(input.take ? pageItems.filter(input.take) : pageItems));
 
-    const nextCursor = result.cursor || result.paging?.cursor;
-    if (!nextCursor) break;
+    const nextCursor = getListCursor(result);
+    if (!nextCursor || seenCursors.has(nextCursor)) break;
+    seenCursors.add(nextCursor);
     cursor = nextCursor;
   }
 
@@ -1361,23 +1364,24 @@ export async function searchLinkedInProfiles(input: {
   // Constrain the search itself to the target locations. LinkedIn ignores
   // keywords like "Australia" and returns network-biased (local) results;
   // only the location parameter actually scopes results to the country.
+  const searchLocations = searchableLocationNames(input.criteria.locations);
   let locationIds: string[] = [];
   for (const accountId of searchAccountIds) {
     locationIds = await resolveLinkedInLocationIds(
       accountId,
-      searchableLocationNames(input.criteria.locations),
+      searchLocations,
     );
-    if (locationIds.length || !input.criteria.locations.length) break;
+    if (locationIds.length || !searchLocations.length) break;
   }
 
   // When no requested location resolves to a LinkedIn id the search silently
   // goes global, and network-biased results then waste enrichment budget on
   // out-of-region people that all get rejected downstream.
-  if (input.criteria.locations.length && !locationIds.length) {
+  if (searchLocations.length && !locationIds.length) {
     console.error(
       `[unipile] no location ids resolved for ${JSON.stringify(
-        input.criteria.locations,
-      )} - people search for agent ${input.agent.id} is running unscoped.`,
+        searchLocations,
+      )} (from ${JSON.stringify(input.criteria.locations)}) - people search for agent ${input.agent.id} is running unscoped.`,
     );
   }
 
@@ -2376,6 +2380,30 @@ export function looksLikeLinkedInProviderId(id: string | undefined): id is strin
 // enrollments against it in a single pass. Returns null when the list could
 // not be fetched completely (provider error, or more pages than the cap) -
 // callers must treat that as "unknown", never as "nothing pending".
+function addInvitationIdentityKeys(
+  ids: Set<string>,
+  item: {
+    invited_user_id?: string;
+    invited_user_public_id?: string;
+    user?: {
+      id?: string;
+      provider_id?: string;
+      public_identifier?: string;
+      profile_url?: string;
+    };
+  },
+) {
+  const nested = item.user;
+  for (const key of linkedInIdentityKeys({
+    providerProfileId:
+      item.invited_user_id || nested?.provider_id || nested?.id,
+    publicIdentifier: item.invited_user_public_id || nested?.public_identifier,
+    linkedInUrl: nested?.profile_url,
+  })) {
+    ids.add(key);
+  }
+}
+
 export async function listSentInvitationProviderIds(accountId: string) {
   if (!isUnipileConfigured()) return null;
 
@@ -2387,7 +2415,16 @@ export async function listSentInvitationProviderIds(accountId: string) {
     // invite rate; beyond that, give up rather than page forever.
     for (let page = 0; page < 10; page += 1) {
       const result = await request<
-        UnipileListResponse<{ invited_user_id?: string; invited_user_public_id?: string }>
+        UnipileListResponse<{
+          invited_user_id?: string;
+          invited_user_public_id?: string;
+          user?: {
+            id?: string;
+            provider_id?: string;
+            public_identifier?: string;
+            profile_url?: string;
+          };
+        }>
       >(
         withQuery("/api/v1/users/invite/sent", {
           account_id: accountId,
@@ -2395,13 +2432,17 @@ export async function listSentInvitationProviderIds(accountId: string) {
           cursor,
         }),
       );
-      const items = getListItems<{ invited_user_id?: string; invited_user_public_id?: string }>(
-        result,
-      );
-      for (const item of items) {
-        if (item.invited_user_id) ids.add(item.invited_user_id.toLowerCase());
-        if (item.invited_user_public_id) ids.add(item.invited_user_public_id.toLowerCase());
-      }
+      const items = getListItems<{
+        invited_user_id?: string;
+        invited_user_public_id?: string;
+        user?: {
+          id?: string;
+          provider_id?: string;
+          public_identifier?: string;
+          profile_url?: string;
+        };
+      }>(result);
+      for (const item of items) addInvitationIdentityKeys(ids, item);
       cursor = getListCursor(result);
       if (!cursor || !items.length) return ids;
     }
@@ -2411,55 +2452,54 @@ export async function listSentInvitationProviderIds(accountId: string) {
   }
 }
 
+type UnipileRelation = {
+  first_name?: string;
+  last_name?: string;
+  name?: string;
+  public_identifier?: string;
+  public_profile_url?: string;
+  member_id?: string;
+  member_urn?: string;
+  connection_urn?: string;
+  provider_id?: string;
+};
+
+function relationToIdentity(item: UnipileRelation): LinkedInIdentity {
+  return {
+    providerProfileId: item.provider_id || item.member_id || item.member_urn,
+    publicIdentifier: item.public_identifier,
+    linkedInUrl: item.public_profile_url,
+    name:
+      item.name ||
+      [item.first_name, item.last_name].filter(Boolean).join(" ") ||
+      undefined,
+  };
+}
+
 // Most recently added first-degree connections. Used by the acceptance sweep
 // so a Steal Customers run that already spent the daily profile-view budget
 // can still mark invites accepted without 20 extra /users/{id} reads.
-export async function listRecentRelationIdentityKeys(accountId: string) {
+export async function listRecentRelations(accountId: string) {
   if (!isUnipileConfigured()) return null;
 
-  const ids = new Set<string>();
+  const relations: LinkedInIdentity[] = [];
   let cursor: string | undefined;
 
   try {
-    for (let page = 0; page < 2; page += 1) {
-      const result = await request<
-        UnipileListResponse<{
-          public_identifier?: string;
-          public_profile_url?: string;
-          member_id?: string;
-          member_urn?: string;
-          connection_urn?: string;
-          provider_id?: string;
-        }>
-      >(
+    for (let page = 0; page < 5; page += 1) {
+      const result = await request<UnipileListResponse<UnipileRelation>>(
         withQuery("/api/v1/users/relations", {
           account_id: accountId,
           limit: 100,
           cursor,
         }),
       );
-      const items = getListItems<{
-        public_identifier?: string;
-        public_profile_url?: string;
-        member_id?: string;
-        member_urn?: string;
-        connection_urn?: string;
-        provider_id?: string;
-      }>(result);
-      for (const item of items) {
-        for (const key of linkedInIdentityKeys({
-          providerProfileId: item.provider_id || item.member_id || item.member_urn,
-          publicIdentifier: item.public_identifier,
-          linkedInUrl: item.public_profile_url,
-        })) {
-          ids.add(key);
-        }
-        if (item.connection_urn) ids.add(item.connection_urn.toLowerCase());
-      }
+      const items = getListItems<UnipileRelation>(result);
+      for (const item of items) relations.push(relationToIdentity(item));
       cursor = getListCursor(result);
-      if (!cursor || !items.length) return ids;
+      if (!cursor || !items.length) return relations;
     }
-    return ids;
+    return relations;
   } catch {
     return null;
   }

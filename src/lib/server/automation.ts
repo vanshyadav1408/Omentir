@@ -5,6 +5,7 @@ import {
   releaseTickLock,
   renewTickLock,
   getActiveCampaigns,
+  getCampaignsForProviderSync,
   getAgent,
   getDueAgents,
   getDueEnrollments,
@@ -12,6 +13,7 @@ import {
   getConversation,
   getCampaign,
   getCampaignEnrollment,
+  getDailyLeadDiscoveryUsage,
   findLeadForWorkspace,
   getLinkedInAccountForWorkspace,
   getProductProfile,
@@ -46,6 +48,7 @@ import {
   markAgentRun,
   markAgentStarted,
   prepareEnrollmentActionNow,
+  recordDailyLeadDiscoveryRun,
   recordInviteLimitSignal,
   setInviteCooldown,
   updateEnrollment,
@@ -64,10 +67,11 @@ import {
 import {
   applyConnectionAccepted,
   draftUpcomingMessagePreview,
-  enrollmentCanReceiveAcceptance,
+  findLeadForInboundEvent,
   processInboundMessage,
   refreshLeadProfileForDrafting,
 } from "./inbound";
+import { matchLeadsToProviderIdentities } from "../linkedin-identity";
 import { agentTargetLocations, matchesTargetLocation } from "./geo";
 import { sendWindowTimeZoneForLead } from "./lead-time-zone";
 import {
@@ -111,7 +115,7 @@ import {
   hasPendingSentInvitation,
   isFirstDegreeConnection,
   listRecentInboundMessages,
-  listRecentRelationIdentityKeys,
+  listRecentRelations,
   listSentInvitationProviderIds,
   profileSearchKeys,
   searchLinkedInProfiles,
@@ -128,7 +132,12 @@ import type {
   Workspace,
 } from "./types";
 
+// Per agent per local day. A short run does not end the day: the agent gets
+// up to MAX_DAILY_DISCOVERY_ATTEMPTS runs (30 minutes apart) until it reaches
+// the target, tracked in its own usageDays doc.
 const DEFAULT_DAILY_DISCOVERED_LEAD_LIMIT = 75;
+const MAX_DAILY_DISCOVERY_ATTEMPTS = 4;
+const DISCOVERY_REFILL_MINUTES = 30;
 // Standard (non-signal) agents pull broad keyword matches, so a real fit check
 // must gate what gets saved - otherwise irrelevant leads enter campaigns and
 // get contacted. Mirrors the signal engine's QUALIFIED_SCORE_THRESHOLD (65).
@@ -147,14 +156,12 @@ const TICK_LOCK_RENEW_INTERVAL_MS = 5 * 60 * 1000;
 // 1.75 minutes tolerates scheduler jitter while keeping the intended ~2-minute
 // tick cadence instead of multiplying it by the instance count.
 const TICK_SCHEDULE_MIN_INTERVAL_MS = 1.75 * 60 * 1000;
-// Webhooks (new_relation) are the primary acceptance signal; the per-account
-// sweep below is the fallback. Pending invites therefore carry NO individual
-// recheck schedule - each one used to wake daily (or 4x daily once the
-// profile-view budget ran out) and a steady pool of a few hundred pending
-// invites per account consumed nearly the whole due-enrollment window. The
-// sweep compares all of them against one sent-invitations listing instead:
-// a few API calls, zero profile views for the still-pending majority.
-const CONNECTION_SWEEP_INTERVAL_MS = 12 * 60 * 60 * 1000;
+// Unipile's new_relation webhook can lag up to 8 hours and does not fire in
+// real time for bare invites. AI outreach sends those, so the dashboard's
+// acceptance path is this per-account sweep against relations + sent invites,
+// not a rare fallback. Pending invites carry no individual recheck schedule:
+// a pool of a few hundred used to consume the due-enrollment window.
+const CONNECTION_SWEEP_INTERVAL_MS = 2 * 60 * 60 * 1000;
 // Invites that vanished from the sent list get one live profile check each to
 // confirm acceptance; bounded per sweep so a burst can never drain the
 // account's daily profile-view budget.
@@ -447,17 +454,47 @@ async function runAgents(mode: AutomationSafetyMode) {
       if (!(await markAgentStarted(agent))) continue;
 
       if (agentUsesPeopleEngine(agent)) {
+        const usage = await getDailyLeadDiscoveryUsage(
+          agent.id,
+          workspace.timezone,
+        );
+        const planDailyLimit = planLimits(workspace.billing?.plan).dailyDiscoveredLeads;
+        const dailyTarget = Math.min(
+          DEFAULT_DAILY_DISCOVERED_LEAD_LIMIT,
+          planDailyLimit,
+        );
+        const remainingTarget = Math.max(0, dailyTarget - usage.discoveredLeads);
+
+        if (!remainingTarget) {
+          await markAgentRun(agent, true);
+          continue;
+        }
+
         const result = await runPeopleEngineForAgent({
           agent,
           account,
           profile,
-          dailyLeadLimit: planLimits(workspace.billing?.plan).dailyDiscoveredLeads,
+          initialLeadTarget: remainingTarget,
+          dailyLeadLimit: remainingTarget,
         });
         signalAgents += 1;
         signalsObserved += result.signalsObserved;
         leadsAdded += result.leadsAdded;
         if (result.timeBudgetExpired) timeBudgetExpiredRuns += 1;
-        await markAgentRun(agent, true);
+        const updatedUsage = await recordDailyLeadDiscoveryRun(
+          agent.workspaceId,
+          agent.id,
+          workspace.timezone,
+          result.leadsAdded,
+        );
+        const shouldRefill =
+          updatedUsage.discoveredLeads < dailyTarget &&
+          updatedUsage.attempts < MAX_DAILY_DISCOVERY_ATTEMPTS;
+        await markAgentRun(
+          agent,
+          true,
+          shouldRefill ? { nextRunAt: addMinutes(DISCOVERY_REFILL_MINUTES) } : undefined,
+        );
         continue;
       }
 
@@ -2045,9 +2082,12 @@ async function registerUnipileWebhooks() {
 }
 
 // Batched acceptance detection for one account: compare every pending invite
-// against a single sent-invitations listing. Invites still in the list are
-// pending - no per-lead work at all. Invites that vanished are either accepted
-// or withdrawn; only those few get a live profile check to confirm.
+// against recent first-degree relations (identity + unique name) and the
+// sent-invitations listing. Unipile's new_relation webhook can lag up to 8
+// hours and AI outreach sends bare invites, so this is the path that keeps
+// the dashboard honest. Invites still in the sent list are pending. Invites
+// that vanished are either accepted or withdrawn; only those few get a live
+// profile check to confirm.
 async function sweepAcceptedInvitations(input: {
   workspaceId: string;
   account: LinkedInAccount;
@@ -2059,30 +2099,37 @@ async function sweepAcceptedInvitations(input: {
   );
   if (!enrollments.length) return { accepted: 0, unavailable: false };
 
+  const pendingLeads = (
+    await Promise.all(
+      enrollments.map((enrollment) =>
+        findLeadForWorkspace({ workspaceId, leadId: enrollment.leadId }),
+      ),
+    )
+  ).filter((lead): lead is NonNullable<typeof lead> => Boolean(lead));
+
+  const relations = await listRecentRelations(account.accountId);
   const pendingIds = await listSentInvitationProviderIds(account.accountId);
-  if (!pendingIds) {
+  if (!relations && !pendingIds) {
     await safeLogAutomationRun({
       workspaceId,
       kind: "campaign",
       status: "error",
-      message: `Acceptance sweep for ${account.displayName || account.id} skipped: sent-invitations list unavailable.`,
+      message: `Acceptance sweep for ${account.displayName || account.id} skipped: LinkedIn relation and sent-invitation lists unavailable.`,
     });
     return { accepted: 0, unavailable: true };
   }
 
-  const relationIds = await listRecentRelationIdentityKeys(account.accountId);
+  const acceptedLeadIds = new Set(
+    matchLeadsToProviderIdentities(pendingLeads, relations || []).map((lead) => lead.id),
+  );
 
   let accepted = 0;
   let checks = 0;
   for (const enrollment of enrollments) {
-    const lead = await findLeadForWorkspace({ workspaceId, leadId: enrollment.leadId });
+    const lead = pendingLeads.find((item) => item.id === enrollment.leadId);
     if (!lead) continue;
-    const identityKeys = profileSearchKeys(lead);
-    if (!identityKeys.length) continue;
-    const inRelations = Boolean(
-      relationIds && identityKeys.some((key) => relationIds.has(key.toLowerCase())),
-    );
-    if (inRelations) {
+
+    if (acceptedLeadIds.has(lead.id)) {
       await applyConnectionAccepted({
         workspaceId,
         lead,
@@ -2100,8 +2147,14 @@ async function sweepAcceptedInvitations(input: {
       });
       continue;
     }
+
+    const identityKeys = profileSearchKeys(lead);
+    if (!identityKeys.length) continue;
     // Still in the sent list: the invite is pending, nothing to do.
-    if (identityKeys.some((key) => pendingIds.has(key.toLowerCase()))) continue;
+    if (pendingIds && identityKeys.some((key) => pendingIds.has(key.toLowerCase()))) continue;
+    // Without the sent list we cannot tell pending from vanished; wait for
+    // the next relations page or webhook rather than guessing with profile views.
+    if (!pendingIds) continue;
     if (checks >= CONNECTION_SWEEP_CHECK_LIMIT) break;
     checks += 1;
 
@@ -2158,13 +2211,18 @@ async function syncInboundReplies(input: {
   for (const message of messages) {
     // Without a stable provider id the dedupe cannot hold; skip rather than
     // risk double-processing the same reply on every sync pass.
-    if (!message.id || !message.senderProviderId) continue;
-    const lead = await findLeadForWorkspace({
+    if (!message.id) continue;
+    if (!message.senderProviderId && !message.linkedInUrl && !message.senderName) continue;
+    const lead = await findLeadForInboundEvent({
       workspaceId,
-      providerProfileId: message.senderProviderId,
-      linkedInUrl: message.linkedInUrl || (message.senderProviderId
-        ? `https://www.linkedin.com/in/${message.senderProviderId}`
-        : undefined),
+      providerProfileId: message.senderProviderId || undefined,
+      linkedInUrl:
+        message.linkedInUrl ||
+        (message.senderProviderId
+          ? `https://www.linkedin.com/in/${message.senderProviderId}`
+          : undefined),
+      fullName: message.senderName,
+      matchPendingAcceptance: true,
     });
     if (!lead) continue;
     if (message.senderProviderId && !lead.providerProfileId) {
@@ -2202,7 +2260,7 @@ async function runProviderSyncs(mode: AutomationSafetyMode) {
 
   await registerUnipileWebhooks();
 
-  const campaigns = await getActiveCampaigns();
+  const campaigns = await getCampaignsForProviderSync();
   const accounts = new Map<
     string,
     { workspaceId: string; account: LinkedInAccount; campaignsById: Map<string, Campaign> }

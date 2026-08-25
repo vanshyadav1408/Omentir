@@ -28,6 +28,27 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/api/", "/surveys/", "/page-markdown", "/page-markdown/"],
       },
       {
+        // Bingbot matches this group and ignores the * group. If we Allow
+        // /*.md$ here, Bing spends crawl budget on 300+ noindex copies and
+        // often parks the host as discovered-not-indexed. Google still uses *.
+        userAgent: ["bingbot", "msnbot", "BingPreview"],
+        allow: [
+          "/",
+          "/use-cases/",
+          "/alternatives/",
+          "/features/",
+          "/comparisons/",
+          "/integrations/",
+          "/blogs/",
+          "/help/",
+          "/agent.json",
+          "/llms.txt",
+          "/llms-full.txt",
+          "/api/agent/v1/openapi.json",
+        ],
+        disallow: ["/api/", "/surveys/", "/page-markdown", "/page-markdown/", "/*.md$"],
+      },
+      {
         userAgent: [
           "GPTBot",
           "ChatGPT-User",

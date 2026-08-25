@@ -305,6 +305,25 @@ export function enrollmentCanReceiveAcceptance(enrollment: CampaignEnrollment) {
   return !enrollmentBlocksAiReply(enrollment);
 }
 
+const LIVE_INBOUND_ENROLLMENT_STATUSES: CampaignEnrollment["status"][] = [
+  "connection_sent",
+  "connected",
+  "message_sent",
+  "reply_received",
+  "replied",
+  "error",
+  "stopped",
+];
+
+const INBOUND_IDENTITY_MATCH_STATUSES: CampaignEnrollment["status"][] = [
+  "connection_sent",
+  "connected",
+  "message_sent",
+  "reply_received",
+  "replied",
+  "error",
+];
+
 export async function findLeadForInboundEvent(input: {
   workspaceId: string;
   leadId?: string;
@@ -314,22 +333,30 @@ export async function findLeadForInboundEvent(input: {
   fullName?: string;
   matchPendingAcceptance?: boolean;
 }) {
-  if (input.matchPendingAcceptance) {
-    const enrollments = await listCampaignEnrollments(input.workspaceId);
-    const pending = enrollments.filter(enrollmentCanReceiveAcceptance);
-    if (pending.length) {
-      const leads = await getLeadsByIds(
-        input.workspaceId,
-        pending.map((enrollment) => enrollment.leadId),
-      );
-      const matched = pickLeadForProviderIdentity(leads, {
-        providerProfileId: input.providerProfileId,
-        linkedInUrl: input.linkedInUrl,
-        publicIdentifier: input.publicIdentifier,
-        name: input.fullName,
-      });
-      if (matched) return matched;
+  const enrollments = await listCampaignEnrollments(input.workspaceId);
+  const candidateIds = new Set<string>();
+  for (const enrollment of enrollments) {
+    if (
+      INBOUND_IDENTITY_MATCH_STATUSES.includes(enrollment.status) &&
+      !enrollmentBlocksAiReply(enrollment)
+    ) {
+      candidateIds.add(enrollment.leadId);
+      continue;
     }
+    if (input.matchPendingAcceptance && enrollmentCanReceiveAcceptance(enrollment)) {
+      candidateIds.add(enrollment.leadId);
+    }
+  }
+
+  if (candidateIds.size) {
+    const leads = await getLeadsByIds(input.workspaceId, [...candidateIds]);
+    const matched = pickLeadForProviderIdentity(leads, {
+      providerProfileId: input.providerProfileId,
+      linkedInUrl: input.linkedInUrl,
+      publicIdentifier: input.publicIdentifier,
+      name: input.fullName,
+    });
+    if (matched) return matched;
   }
 
   return findLeadForWorkspace({
@@ -385,16 +412,6 @@ export async function applyAcceptanceIfFirstDegree(input: {
   return true;
 }
 
-const LIVE_INBOUND_ENROLLMENT_STATUSES: CampaignEnrollment["status"][] = [
-  "connection_sent",
-  "connected",
-  "message_sent",
-  "reply_received",
-  "replied",
-  "error",
-  "stopped",
-];
-
 function leadEnrollmentsForInbound(
   enrollments: CampaignEnrollment[],
   leadId: string,
@@ -437,6 +454,18 @@ export async function processInboundMessage(input: {
   // look like a duplicate and the lead would never get a reply.
   if (!input.body.trim()) {
     return { duplicate: true };
+  }
+
+  // A real inbound DM is the strongest live signal that the chat is open.
+  // Confirm first-degree and unlock the sequence before classifying, or the
+  // leads page keeps showing "connection request still pending" after they
+  // already wrote back.
+  if (input.account) {
+    await applyAcceptanceIfFirstDegree({
+      workspaceId,
+      lead,
+      account: input.account,
+    });
   }
 
   const [enrollments, campaigns, existingConversation, productProfile] = await Promise.all([

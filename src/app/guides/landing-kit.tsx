@@ -59,6 +59,47 @@ export function LandingSection({
   );
 }
 
+export type RunbookStep = {
+  title: string;
+  body: ReactNode;
+};
+
+export function Runbook({
+  title,
+  steps,
+}: {
+  title: string;
+  steps: readonly RunbookStep[];
+}) {
+  return (
+    <LandingSection title={title}>
+      <ol className="divide-y divide-[var(--md-sys-color-outline-variant)] border-y border-[var(--md-sys-color-outline-variant)]">
+        {steps.map((step, index) => (
+          <li
+            key={step.title}
+            className="grid gap-3 py-5 sm:grid-cols-[4rem_minmax(0,1fr)] sm:gap-6"
+          >
+            <span className="pt-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--md-sys-color-on-surface-variant)]">
+              {String(index + 1).padStart(2, "0")}
+            </span>
+            <div>
+              <h3
+                style={{ fontFamily: "var(--font-varta)" }}
+                className="text-lg font-semibold tracking-tight text-[var(--md-sys-color-on-surface)]"
+              >
+                {step.title}
+              </h3>
+              <p className="mt-2 max-w-2xl text-base leading-8 text-[var(--md-sys-color-on-surface-variant)]">
+                {step.body}
+              </p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </LandingSection>
+  );
+}
+
 export function SurfaceCard({
   className,
   children,

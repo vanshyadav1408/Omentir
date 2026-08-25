@@ -129,10 +129,16 @@ export function canSendCampaignMessage(
   enrollment: Pick<CampaignEnrollment, "status">,
   lead: Pick<Lead, "outreachStatus">,
 ) {
+  // A LinkedIn reply means the conversation is already open. Leaving replied
+  // out of this list is what made the leads page keep saying the invite was
+  // still pending after they wrote back.
   return (
     enrollment.status === "connected" ||
     enrollment.status === "message_sent" ||
+    enrollment.status === "reply_received" ||
+    enrollment.status === "replied" ||
     lead.outreachStatus === "connected" ||
-    lead.outreachStatus === "messaged"
+    lead.outreachStatus === "messaged" ||
+    lead.outreachStatus === "replied"
   );
 }
