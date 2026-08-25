@@ -18,11 +18,18 @@ disabledRules = ["linkedin-client-id"]
 # vendored and build output that a git-aware scan would skip via .gitignore.
 # `private-infra/` never ships in the public snapshot but is excluded here so a
 # working-tree scan of the private repo does not report on deploy tooling.
+#
+# `src/lib/indexnow.ts` holds the IndexNow ownership proof. That value is public
+# by design: Bing fetches /indexnow-key.txt to confirm the submitter owns the
+# host. The default generic-api-key rule matches it because the identifier
+# contains KEY and the value is 32 hex chars with enough entropy. It is not a
+# credential and must stay in the repo so the site can serve it.
 [allowlist]
 paths = [
   '''(^|/)node_modules/''',
   '''(^|/)\.next/''',
   '''(^|/)private-infra/''',
+  '''(^|/)src/lib/indexnow\.ts$''',
 ]
 
 # Public provider identifiers are not authorization secrets, but Omentir does
