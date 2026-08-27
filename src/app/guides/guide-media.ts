@@ -55,6 +55,24 @@ export const GUIDE_MEDIA: Record<string, GuideEnrichment> = {
       },
     ],
   },
+  "grok-bot-lead-generation": {
+    inserts: [
+      {
+        afterIndex: 0,
+        visual: "find-send-scrape",
+        caption: "Find and score in Omentir. Do not scrape LinkedIn from the Bot computer.",
+      },
+    ],
+  },
+  "grok-bot-follow-up-messages": {
+    inserts: [
+      {
+        afterIndex: 0,
+        visual: "drip-steps",
+        caption: "One or two follow-ups after silence. A new trigger each time. Then stop.",
+      },
+    ],
+  },
 };
 
 export function guideMedia(slug: string): GuideEnrichment {

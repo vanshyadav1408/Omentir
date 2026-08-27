@@ -33,6 +33,11 @@ export const SITE_SHOTS: Record<string, SiteShot> = {
     src: "/blogs/ai-saas-ready-before-outbound/claude-code.avif",
     label: "Claude Code",
   },
+  codex: {
+    href: "https://developers.openai.com/codex",
+    src: "/blogs/ai-saas-ready-before-outbound/chatgpt.avif",
+    label: "Codex",
+  },
   grok: { href: "https://grok.com", src: "/site-shots/grok.avif", label: "Grok" },
   "grok-bot": { href: "https://x.ai/bot", src: "/site-shots/grok.avif", label: "Grok Bot" },
   openclaw: { href: "https://openclaw.ai", src: "/site-shots/openclaw.avif", label: "OpenClaw" },

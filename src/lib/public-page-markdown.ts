@@ -14,10 +14,30 @@ import { ALL_INTEGRATIONS } from "@/app/integrations/integration-data";
 import { integrationConnect } from "@/app/integrations/integration-connect";
 import { ALL_USE_CASES } from "@/app/use-cases/use-case-data";
 import { pricingPlans } from "@/app/pricing-plans";
+import { ALL_TOOLS, TOOLS_INDEX } from "@/app/tools/tools-data";
 import { brandTagline, defaultDescription, siteUrl } from "@/app/seo";
+import { CHATGPT_FIRST_JOB_PROMPT } from "@/app/chatgpt-setup";
+import {
+  DEEPSEEK_DRAFT_PROMPT,
+  GEMINI_DRAFT_PROMPT,
+  HERMES_DRAFT_PROMPT,
+  KIMI_DRAFT_PROMPT,
+  MISTRAL_DRAFT_PROMPT,
+  QWEN_DRAFT_PROMPT,
+  SARVAM_DRAFT_PROMPT,
+} from "@/app/chat-only-setup";
+import { CLAUDE_CHAT_FIRST_JOB_PROMPT } from "@/app/claude-chat-setup";
+import { CLAUDE_CODE_FIRST_JOB_PROMPT } from "@/app/claude-code-setup";
+import { CODEX_CONFIG_TOML, CODEX_FIRST_JOB_PROMPT } from "@/app/codex-setup";
+import { CURSOR_FIRST_JOB_PROMPT } from "@/app/cursor-setup";
+import { GROK_CHAT_FIRST_JOB_PROMPT } from "@/app/grok-chat-setup";
+import { OPENCLAW_FIRST_JOB_PROMPT } from "@/app/openclaw-setup";
 import {
   GROK_BOT_COLD_DM_PROMPT,
   GROK_BOT_FIRST_JOB_PROMPT,
+  GROK_BOT_FOLLOW_UP_PROMPT,
+  GROK_BOT_LEAD_GEN_PROMPT,
+  GROK_BOT_SALES_NAV_PROMPT,
 } from "@/app/grok-bot-setup";
 import { liveSeoPages, type SeoContentPage } from "@/app/seo-content/types";
 import {
@@ -45,6 +65,7 @@ const MARKETING_PAGES = [
   { htmlPath: "/terms-of-service", title: "Terms of Service" },
   { htmlPath: "/blogs", title: "Blogs" },
   { htmlPath: "/features", title: "Features" },
+  { htmlPath: "/tools", title: "Free tools" },
   { htmlPath: "/comparisons", title: "Comparisons" },
   { htmlPath: "/alternatives", title: "Tool roundups" },
   { htmlPath: "/use-cases", title: "Use cases" },
@@ -344,7 +365,8 @@ function familyIndexMarkdown(
     | "/blogs"
     | "/use-cases"
     | "/alternatives"
-    | "/help",
+    | "/help"
+    | "/tools",
   title: string,
   description: string,
   items: ReadonlyArray<{ title: string; href: string; note: string }>
@@ -421,6 +443,63 @@ function aboutMarkdown() {
       "Omentir helps founders, SDRs, and small sales teams find potential buyers, organize them into groups, and run LinkedIn campaigns from their own account.",
       "/about"
     )}\n\n${body}`
+  );
+}
+
+function toolsIndexMarkdown() {
+  return familyIndexMarkdown(
+    "/tools",
+    TOOLS_INDEX.title,
+    TOOLS_INDEX.description,
+    ALL_TOOLS.map((tool) => ({
+      title: tool.title,
+      href: tool.href,
+      note: tool.summary,
+    }))
+  );
+}
+
+export function toolPageMarkdown(htmlPath: string) {
+  const tool = ALL_TOOLS.find((item) => item.href === htmlPath);
+  if (!tool) return null;
+  const faqs = tool.faqItems.map((item) => `### ${item.question}\n\n${item.answer}`).join("\n\n");
+  const howItWorks = tool.howItWorks
+    ? [
+        "## How it works",
+        tool.howItWorks
+          .map((step, index) => `### ${index + 1}. ${step.title}\n\n${step.body}`)
+          .join("\n\n"),
+      ]
+    : [];
+  const proTips = tool.proTips
+    ? ["## Pro tips", tool.proTips.map((tip) => `- ${tip}`).join("\n")]
+    : [];
+  const bodySections = (tool.bodySections ?? []).flatMap((section) => [
+    `## ${section.heading}`,
+    section.paragraphs.join("\n\n"),
+  ]);
+  const related = tool.relatedLinks?.length
+    ? [
+        "## Related",
+        tool.relatedLinks
+          .map((link) => `- [${link.label}](${internalMarkdownHref(link.href)})${link.description ? `: ${link.description}` : ""}`)
+          .join("\n"),
+      ]
+    : [];
+  return collapseMarkdown(
+    [
+      pageHeader(tool.title, tool.description, tool.href),
+      tool.lede,
+      tool.disclaimer,
+      ...howItWorks,
+      ...proTips,
+      ...bodySections,
+      ...related,
+      tool.ctaBody,
+      "## Frequently asked questions",
+      faqs,
+      tryOmentirLine(),
+    ].join("\n\n")
   );
 }
 
@@ -526,10 +605,33 @@ function blogIndexMarkdown() {
   );
 }
 
-function grokBotPromptFromSource(source: string) {
-  if (source.includes("GROK_BOT_COLD_DM_PROMPT")) return GROK_BOT_COLD_DM_PROMPT;
-  if (source.includes("GROK_BOT_FIRST_JOB_PROMPT")) return GROK_BOT_FIRST_JOB_PROMPT;
-  return null;
+function grokBotPromptFromSource(source: string, body = "") {
+  const catalog: Array<[string, string]> = [
+    ["GROK_BOT_LEAD_GEN_PROMPT", GROK_BOT_LEAD_GEN_PROMPT],
+    ["GROK_BOT_FOLLOW_UP_PROMPT", GROK_BOT_FOLLOW_UP_PROMPT],
+    ["GROK_BOT_SALES_NAV_PROMPT", GROK_BOT_SALES_NAV_PROMPT],
+    ["GROK_BOT_COLD_DM_PROMPT", GROK_BOT_COLD_DM_PROMPT],
+    ["GROK_BOT_FIRST_JOB_PROMPT", GROK_BOT_FIRST_JOB_PROMPT],
+    ["CLAUDE_CODE_FIRST_JOB_PROMPT", CLAUDE_CODE_FIRST_JOB_PROMPT],
+    ["CURSOR_FIRST_JOB_PROMPT", CURSOR_FIRST_JOB_PROMPT],
+    ["CODEX_FIRST_JOB_PROMPT", CODEX_FIRST_JOB_PROMPT],
+    ["CODEX_CONFIG_TOML", CODEX_CONFIG_TOML],
+    ["CHATGPT_FIRST_JOB_PROMPT", CHATGPT_FIRST_JOB_PROMPT],
+    ["CLAUDE_CHAT_FIRST_JOB_PROMPT", CLAUDE_CHAT_FIRST_JOB_PROMPT],
+    ["GROK_CHAT_FIRST_JOB_PROMPT", GROK_CHAT_FIRST_JOB_PROMPT],
+    ["OPENCLAW_FIRST_JOB_PROMPT", OPENCLAW_FIRST_JOB_PROMPT],
+    ["KIMI_DRAFT_PROMPT", KIMI_DRAFT_PROMPT],
+    ["GEMINI_DRAFT_PROMPT", GEMINI_DRAFT_PROMPT],
+    ["DEEPSEEK_DRAFT_PROMPT", DEEPSEEK_DRAFT_PROMPT],
+    ["QWEN_DRAFT_PROMPT", QWEN_DRAFT_PROMPT],
+    ["MISTRAL_DRAFT_PROMPT", MISTRAL_DRAFT_PROMPT],
+    ["SARVAM_DRAFT_PROMPT", SARVAM_DRAFT_PROMPT],
+    ["HERMES_DRAFT_PROMPT", HERMES_DRAFT_PROMPT],
+  ];
+  const prompts = catalog
+    .filter(([name, prompt]) => source.includes(name) && !body.includes(prompt))
+    .map(([, prompt]) => prompt);
+  return prompts.length ? prompts.join("\n\n") : null;
 }
 
 function blogMarkdown(blog: BlogItem) {
@@ -538,11 +640,10 @@ function blogMarkdown(blog: BlogItem) {
   const faqs = body.includes("## Frequently asked questions")
     ? ""
     : faqItemsFromSource(source);
-  const prompt = grokBotPromptFromSource(source);
-  const promptBlock =
-    prompt && !body.includes(prompt)
-      ? `## Paste this into Grok Bot\n\n\`\`\`\n${prompt}\n\`\`\``
-      : "";
+  const prompt = grokBotPromptFromSource(source, body);
+  const promptBlock = prompt
+    ? `## Paste-ready job\n\n\`\`\`\n${prompt}\n\`\`\``
+    : "";
   return collapseMarkdown(
     [
       pageHeader(blog.title, blog.description, `/blogs/${blog.slug}`),
@@ -621,6 +722,13 @@ export function listPublicMarkdownPages(): PublicMarkdownPage[] {
       kind: "seo",
     });
   }
+  for (const tool of ALL_TOOLS) {
+    pages.push({
+      htmlPath: tool.href,
+      markdownPath: `${tool.href}.md`,
+      kind: "marketing",
+    });
+  }
   return pages;
 }
 
@@ -628,6 +736,8 @@ export function renderPublicMarkdown(htmlPath: string): string | null {
   if (htmlPath === "/") return homeMarkdown();
   if (htmlPath === "/pricing") return pricingMarkdown();
   if (htmlPath === "/about") return aboutMarkdown();
+  if (htmlPath === "/tools") return toolsIndexMarkdown();
+  if (htmlPath.startsWith("/tools/")) return toolPageMarkdown(htmlPath);
   if (htmlPath === "/privacy-policy") {
     return legalMarkdown(
       "/privacy-policy",

@@ -46,6 +46,15 @@ export const answerSourceSlugs = [
   "automate-cold-messaging-with-grok-bot",
   "grok-bot-for-sales",
   "grok-bot-vs-chatgpt-for-outbound",
+  "grok-bot-vs-claude-for-outbound",
+  "grok-bot-linkedin-prompts",
+  "claude-code-linkedin-outreach",
+  "claude-code-vs-cursor-for-outbound",
+  "cursor-linkedin-outreach",
+  "codex-linkedin-outreach",
+  "chatgpt-connector-linkedin-outreach",
+  "claude-chat-linkedin-outreach",
+  "grok-com-linkedin-outreach",
   "linkedin-outreach-compliance-2026",
   "10-linkedin-cold-message-templates-that-actually-book-demos",
   "the-b2b-outreach-copywriting-framework-that-gets-replies",
@@ -183,6 +192,26 @@ export async function GET() {
       "LinkedIn outreach, lead finders, reply drafts, demo booking, campaigns, account safety, and agent API."
     ),
     formatMarkdownTwinLink(
+      "Free tools",
+      "/tools",
+      "No-login tools: LinkedIn profile rating, Improve LinkedIn profile, and a 10-lead finder."
+    ),
+    formatMarkdownTwinLink(
+      "LinkedIn profile rating",
+      "/tools/linkedin-profile-rating",
+      "Paste a public LinkedIn URL. Get a score out of 100. No login."
+    ),
+    formatMarkdownTwinLink(
+      "Improve LinkedIn profile",
+      "/tools/improve-linkedin-profile",
+      "Paste a public LinkedIn URL. Get a rewrite you can paste back. No login."
+    ),
+    formatMarkdownTwinLink(
+      "Free lead finder",
+      "/tools/find-leads",
+      "No-login tool: paste a business description and get 10 public profiles that look like buyers."
+    ),
+    formatMarkdownTwinLink(
       "Use cases",
       "/use-cases",
       "Founder outbound, demo booking, first SDR, competitor commenters, open source AI SDR."
@@ -248,8 +277,8 @@ Every public HTML page has a markdown twin at the same path with \`.md\` appende
 People use Omentir from Claude, ChatGPT, Grok, Grok Bot, Cursor, Claude Code, and custom agents without giving those apps their LinkedIn password.
 
 - Chat apps (Claude, ChatGPT, Grok): Settings → Connectors → custom connector URL \`${siteUrl}/api/agent/v1/mcp\` → sign in on Omentir and approve Connect workspace → enable tools in the chat. No API key. Per-client notes: [Claude](${siteUrl}/integrations/claude), [ChatGPT](${siteUrl}/integrations/chatgpt), [Grok](${siteUrl}/integrations/grok), [MCP](${siteUrl}/integrations/mcp).
-- Grok Bot (the always-on teammate app, not grok.com chat): Settings → Plugins → custom MCP at the same URL → approve Connect workspace. Do not sign LinkedIn into the Bot computer. Start with [Grok Bot for LinkedIn outreach](${siteUrl}/blogs/grok-bot-linkedin-sales.md). Notes: [Grok Bot](${siteUrl}/integrations/grok-bot.md), [Grok Bot outbound](${siteUrl}/use-cases/grok-bot-outbound.md), [Grok Bot cold messaging](${siteUrl}/use-cases/grok-bot-cold-messaging.md), [Grok Bot alternatives](${siteUrl}/alternatives/grok-bot.md).
-- Coding agents / scripts (Cursor, Claude Code, and similar): create a token at ${siteUrl}/api-keys and send \`Authorization: Bearer <token>\` to the MCP endpoint or REST \`/api/agent/v1/*\`. See [Cursor](${siteUrl}/integrations/cursor) and [REST API](${siteUrl}/integrations/rest-api).
+- Grok Bot (the always-on teammate app, not grok.com chat): Settings → Plugins → custom MCP at the same URL → approve Connect workspace. Do not sign LinkedIn into the Bot computer. Start with [Grok Bot for LinkedIn outreach](${siteUrl}/blogs/grok-bot-linkedin-sales.md). Prompts: [Grok Bot prompts for LinkedIn](${siteUrl}/blogs/grok-bot-linkedin-prompts.md). Notes: [Grok Bot](${siteUrl}/integrations/grok-bot.md), [Grok Bot outbound](${siteUrl}/use-cases/grok-bot-outbound.md), [Grok Bot cold messaging](${siteUrl}/use-cases/grok-bot-cold-messaging.md), [Grok Bot Sales Navigator](${siteUrl}/use-cases/grok-bot-sales-navigator.md), [Grok Bot alternatives](${siteUrl}/alternatives/grok-bot.md).
+- Coding agents / scripts (Cursor, Claude Code, Codex, and similar): create a token at ${siteUrl}/api-keys and send \`Authorization: Bearer <token>\` to the MCP endpoint or REST \`/api/agent/v1/*\`. Codex stores MCP in \`~/.codex/config.toml\` with \`bearer_token_env_var\`. See [Cursor](${siteUrl}/integrations/cursor), [Claude Code](${siteUrl}/integrations/claude-code), [Codex](${siteUrl}/integrations/codex), and [REST API](${siteUrl}/integrations/rest-api).
 - Manual operators: fetch [agents.md](${siteUrl}/agents.md) first, then ask for a Bearer token.
 
 Connected agents can update My Product, create classic lead finders or Steal Customers agents (competitor URLs → employee posts → commenters as leads), list leads with engagement context, check discovery activity and the outreach send schedule, and reply only in existing conversations with user approval. They cannot create Omentir accounts or buy or change subscriptions. Use MCP or REST for authenticated workspace data. Do not scrape /overview, /leads, or /messages.

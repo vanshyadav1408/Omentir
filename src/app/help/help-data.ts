@@ -13,6 +13,12 @@ import { HELP_PAGES_L } from "./help-pages-l";
 import { HELP_PAGES_M } from "./help-pages-m";
 import { HELP_PAGES_N } from "./help-pages-n";
 import { HELP_PAGES_O } from "./help-pages-o";
+import { HELP_PAGES_P } from "./help-pages-p";
+import { HELP_PAGES_Q } from "./help-pages-q";
+import { HELP_PAGES_R } from "./help-pages-r";
+import { HELP_PAGES_S } from "./help-pages-s";
+import { HELP_PAGES_T } from "./help-pages-t";
+import { HELP_PAGES_U } from "./help-pages-u";
 import {
   HELP_CLUSTER_ORDER,
   type HelpCluster,
@@ -36,6 +42,12 @@ const drafts: HelpPageDraft[] = [
   ...HELP_PAGES_M,
   ...HELP_PAGES_N,
   ...HELP_PAGES_O,
+  ...HELP_PAGES_P,
+  ...HELP_PAGES_Q,
+  ...HELP_PAGES_R,
+  ...HELP_PAGES_S,
+  ...HELP_PAGES_T,
+  ...HELP_PAGES_U,
 ];
 
 const bySlug = new Map(drafts.map((page) => [page.slug, page]));
@@ -65,8 +77,8 @@ function withRelated(pages: HelpPageDraft[]): HelpPage[] {
   });
 }
 
-if (drafts.length !== 147) {
-  throw new Error(`Expected 147 help pages, got ${drafts.length}`);
+if (drafts.length !== 171) {
+  throw new Error(`Expected 171 help pages, got ${drafts.length}`);
 }
 if (bySlug.size !== drafts.length) {
   throw new Error("Duplicate help slugs");

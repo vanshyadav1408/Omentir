@@ -35,12 +35,18 @@ export function PromptCopyButton({
   );
 }
 
-export function PromptCopyBox({ prompt }: { prompt: string }) {
+export function PromptCopyBox({
+  prompt,
+  label = "Paste into Grok Bot",
+}: {
+  prompt: string;
+  label?: string;
+}) {
   return (
     <div className="my-6 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
       <div className="flex items-center justify-between gap-3 border-b border-zinc-200 px-4 py-2">
         <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-          Paste into Grok Bot
+          {label}
         </p>
         <PromptCopyButton
           prompt={prompt}

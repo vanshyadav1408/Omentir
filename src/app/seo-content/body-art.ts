@@ -228,6 +228,14 @@ const INTEGRATION_FLOW: Record<string, { title: string; steps: Array<{ label: st
       { label: "Finish with a review pass", detail: "A local agent can still write a bad note." },
     ],
   },
+  codex: {
+    title: "Codex as the operator",
+    steps: [
+      { label: "Edit config.toml", detail: "url plus bearer_token_env_var, not a chat connector." },
+      { label: "Run /mcp", detail: "Confirm tools before you ask for a finder." },
+      { label: "Review in Overview", detail: "Codex drafts. Omentir sends." },
+    ],
+  },
 };
 
 export function featureFlow(slug: string) {

@@ -2,11 +2,20 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import FaqSplitSection from "../faq-split-section";
+import { CHATGPT_FIRST_JOB_PROMPT } from "../chatgpt-setup";
+import { CLAUDE_CHAT_FIRST_JOB_PROMPT } from "../claude-chat-setup";
+import { CLAUDE_CODE_FIRST_JOB_PROMPT } from "../claude-code-setup";
+import { CODEX_FIRST_JOB_PROMPT } from "../codex-setup";
+import { CURSOR_FIRST_JOB_PROMPT } from "../cursor-setup";
+import { GROK_CHAT_FIRST_JOB_PROMPT } from "../grok-chat-setup";
+import { OPENCLAW_FIRST_JOB_PROMPT } from "../openclaw-setup";
 import {
   GROK_BOT_COLD_DM_PROMPT,
   GROK_BOT_FIRST_JOB_PROMPT,
+  GROK_BOT_FOLLOW_UP_PROMPT,
+  GROK_BOT_LEAD_GEN_PROMPT,
 } from "../grok-bot-setup";
-import { PromptCopyButton } from "../grok-bot-setup-block";
+import { PromptCopyBox, PromptCopyButton } from "../grok-bot-setup-block";
 import JsonLd from "../json-ld";
 import MarketingClosingCta from "../marketing-closing-cta";
 import {
@@ -21,16 +30,32 @@ import {
   siteUrl,
 } from "../seo";
 import LinkedinAutomationLanding from "./landing-automation";
+import ClaudeCodeLanding from "./landing-claude-code";
+import CodexLanding from "./landing-codex";
 import ColdMessagesLanding from "./landing-cold";
-import { RelatedCards } from "./landing-kit";
+import CursorLanding from "./landing-cursor";
+import FollowUpLanding from "./landing-follow-up";
+import { LandingSection, RelatedCards } from "./landing-kit";
+import LeadGenerationLanding from "./landing-lead-gen";
 import OvernightOutboundLanding from "./landing-overnight";
 import SalesOutreachLanding from "./landing-sales";
 import { guideHeroImage, type GuidePage } from "./types";
 
-function promptForGuide(slug: string) {
-  return slug === "grok-bot-cold-messages"
-    ? GROK_BOT_COLD_DM_PROMPT
-    : GROK_BOT_FIRST_JOB_PROMPT;
+function promptForGuide(slug: string): string | null {
+  if (slug === "grok-bot-cold-messages") return GROK_BOT_COLD_DM_PROMPT;
+  if (slug === "grok-bot-follow-up-messages") return GROK_BOT_FOLLOW_UP_PROMPT;
+  if (slug === "grok-bot-lead-generation") return GROK_BOT_LEAD_GEN_PROMPT;
+  if (slug === "claude-code-sales-outreach") return CLAUDE_CODE_FIRST_JOB_PROMPT;
+  if (slug === "cursor-sales-outreach") return CURSOR_FIRST_JOB_PROMPT;
+  if (slug === "codex-sales-outreach") return CODEX_FIRST_JOB_PROMPT;
+  if (slug === "chatgpt-sales-outreach") return CHATGPT_FIRST_JOB_PROMPT;
+  if (slug === "claude-chat-sales-outreach") return CLAUDE_CHAT_FIRST_JOB_PROMPT;
+  if (slug === "grok-chat-sales-outreach") return GROK_CHAT_FIRST_JOB_PROMPT;
+  if (slug === "openclaw-sales-outreach") return OPENCLAW_FIRST_JOB_PROMPT;
+  if (slug.startsWith("grok-bot") || slug === "overnight-outbound-with-grok-bot") {
+    return GROK_BOT_FIRST_JOB_PROMPT;
+  }
+  return null;
 }
 
 function renderInline(text: string): ReactNode[] {
@@ -65,8 +90,53 @@ function renderInline(text: string): ReactNode[] {
   });
 }
 
-function LandingBody({ slug }: { slug: string }) {
-  switch (slug) {
+function pasteLabelFor(slug: string) {
+  if (slug.startsWith("claude-code")) return "Paste into Claude Code";
+  if (slug.startsWith("claude-chat")) return "Paste into Claude";
+  if (slug.startsWith("cursor")) return "Paste into Cursor";
+  if (slug.startsWith("codex")) return "Paste into Codex";
+  if (slug.startsWith("chatgpt")) return "Paste into ChatGPT";
+  if (slug.startsWith("grok-chat")) return "Paste into grok.com";
+  if (slug.startsWith("openclaw")) return "Paste into OpenClaw";
+  if (slug.startsWith("grok-bot") || slug === "overnight-outbound-with-grok-bot") {
+    return "Paste into Grok Bot";
+  }
+  return "Paste this job";
+}
+
+function DefaultGuideBody({ page }: { page: GuidePage }) {
+  return (
+    <div className="omentir-moderate-width min-w-0 space-y-16 pb-8 md:space-y-24 md:pb-12">
+      {page.sections.map((section) => (
+        <LandingSection key={section.heading} title={section.heading}>
+          <div className="space-y-5">
+            {section.paragraphs.map((paragraph) => (
+              <p
+                key={paragraph}
+                className="max-w-2xl text-base leading-8 text-[var(--md-sys-color-on-surface-variant)]"
+              >
+                {renderInline(paragraph)}
+              </p>
+            ))}
+          </div>
+          {section.bullets?.length ? (
+            <ul className="mt-6 max-w-2xl list-disc space-y-2 pl-5 text-base leading-8 text-[var(--md-sys-color-on-surface-variant)]">
+              {section.bullets.map((item) => (
+                <li key={item}>{renderInline(item)}</li>
+              ))}
+            </ul>
+          ) : null}
+          {section.code ? (
+            <PromptCopyBox prompt={section.code} label={pasteLabelFor(page.slug)} />
+          ) : null}
+        </LandingSection>
+      ))}
+    </div>
+  );
+}
+
+function LandingBody({ page }: { page: GuidePage }) {
+  switch (page.slug) {
     case "grok-bot-sales-outreach":
       return <SalesOutreachLanding />;
     case "grok-bot-cold-messages":
@@ -75,8 +145,18 @@ function LandingBody({ slug }: { slug: string }) {
       return <LinkedinAutomationLanding />;
     case "overnight-outbound-with-grok-bot":
       return <OvernightOutboundLanding />;
+    case "grok-bot-lead-generation":
+      return <LeadGenerationLanding />;
+    case "grok-bot-follow-up-messages":
+      return <FollowUpLanding />;
+    case "claude-code-sales-outreach":
+      return <ClaudeCodeLanding />;
+    case "cursor-sales-outreach":
+      return <CursorLanding />;
+    case "codex-sales-outreach":
+      return <CodexLanding />;
     default:
-      return null;
+      return <DefaultGuideBody page={page} />;
   }
 }
 
@@ -120,10 +200,12 @@ export default function GuidePageView({ page }: { page: GuidePage }) {
               <Link href="/signup" className="m3-btn m3-btn-filled m3-btn--hero w-full sm:w-auto">
                 Get started
               </Link>
-              <PromptCopyButton
-                prompt={promptForGuide(page.slug)}
-                className="m3-btn m3-btn-outlined m3-btn--hero w-full sm:w-auto"
-              />
+              {promptForGuide(page.slug) ? (
+                <PromptCopyButton
+                  prompt={promptForGuide(page.slug)!}
+                  className="m3-btn m3-btn-outlined m3-btn--hero w-full sm:w-auto"
+                />
+              ) : null}
             </div>
             {banner ? (
               <figure className="relative mt-10 aspect-[3/2] overflow-hidden rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-low)] md:mt-12">
@@ -140,7 +222,7 @@ export default function GuidePageView({ page }: { page: GuidePage }) {
           </section>
         </div>
 
-        <LandingBody slug={page.slug} />
+        <LandingBody page={page} />
 
         {showFaq ? (
           <FaqSplitSection
@@ -153,7 +235,9 @@ export default function GuidePageView({ page }: { page: GuidePage }) {
           />
         ) : null}
 
-        {page.related?.length ? <RelatedCards links={page.related} /> : null}
+        {page.related?.length ? (
+          <RelatedCards links={page.related} heading={page.relatedHeading} />
+        ) : null}
 
         <MarketingClosingCta className="omentir-moderate-width min-w-0 py-24 text-center md:py-32" />
 

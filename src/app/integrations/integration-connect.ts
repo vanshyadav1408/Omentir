@@ -50,6 +50,11 @@ const CONNECT: Record<string, IntegrationConnect> = {
     auth: "API key",
     bestFor: "Terminal agent",
   },
+  codex: {
+    surface: "MCP",
+    auth: "API key in config.toml",
+    bestFor: "Codex CLI and extension",
+  },
 };
 
 export function integrationConnect(slug: string): IntegrationConnect {

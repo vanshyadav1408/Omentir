@@ -34,6 +34,7 @@ export type GuidePage = {
   sections: GuideSection[];
   faqItems: GuideFaq[];
   related?: GuideRelated[];
+  relatedHeading?: string;
 };
 
 export function getGuide(pages: readonly GuidePage[], slug: string) {

@@ -15,13 +15,13 @@ export const HELP_PAGES_F: HelpPageDraft[] = [
     ],
     cluster: "profile",
     publishedDate: DATE,
-    updatedDate: DATE,
+    updatedDate: "August 28, 2026",
     paragraphs: [
       "People open your profile before they accept. If the photo is a logo, the headline is a slogan, and About is a feature list, they already know the invite is a pitch. Fix the photo, headline, and About before you raise volume.",
       "Use a face photo. Name the buyer and the problem in the headline. Write About in first person, in the language your buyers use, and put proof after the problem, not before. A mission statement about changing the industry belongs somewhere else.",
       "Experience should look like work a human did. Dates, companies, and a couple of outcomes beat a wall of adjectives. Featured links are fine if they are useful. A Calendly link as the first thing on the page is not.",
       "Activity matters. A profile that has not commented or posted in a year looks unused. You do not need a content calendar. A few real comments in your market each week is enough for outbound.",
-      "Then send fewer, better invites and see if acceptance moves. If it does not, the list is still wrong. Profile work cannot save a title blast. Longer notes live in [crafting a LinkedIn profile that doubles outbound acceptances](/blogs/crafting-a-linkedin-profile-that-doubles-your-outbound-acceptances).",
+      "Then send fewer, better invites and see if acceptance moves. If it does not, the list is still wrong. Profile work cannot save a title blast. Score the public page with [LinkedIn profile rating](/tools/linkedin-profile-rating). Get paste-ready copy from [Improve LinkedIn profile](/tools/improve-linkedin-profile). Longer notes live in [crafting a LinkedIn profile that doubles outbound acceptances](/blogs/crafting-a-linkedin-profile-that-doubles-your-outbound-acceptances).",
     ],
     faqItems: [
       {

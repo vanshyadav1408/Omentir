@@ -258,6 +258,16 @@ const INTEGRATION_PAGES: SeoContentPage[] = [
     ],
     relatedLinks: [
       {
+        label: "Cursor for LinkedIn outreach",
+        href: "/blogs/cursor-linkedin-outreach",
+        description: "Editor session job and the first prompt.",
+      },
+      {
+        label: "Cursor outbound",
+        href: "/use-cases/cursor-outbound",
+        description: "Update My Product from the open file.",
+      },
+      {
         label: "REST API",
         href: "/integrations/rest-api",
         description: "HTTP surface and OpenAPI.",
@@ -580,6 +590,11 @@ const INTEGRATION_PAGES: SeoContentPage[] = [
         description: "The cold note, the DM, and the stop rule.",
       },
       {
+        label: "Grok Bot prompts for LinkedIn outreach",
+        href: "/blogs/grok-bot-linkedin-prompts",
+        description: "Paste-ready jobs for research, DMs, follow-ups, and lists.",
+      },
+      {
         label: "Grok Bot alternatives",
         href: "/alternatives/grok-bot",
         description: "ChatGPT, Claude, Cursor, or Overview without a Bot.",
@@ -845,6 +860,16 @@ const INTEGRATION_PAGES: SeoContentPage[] = [
     ],
     relatedLinks: [
       {
+        label: "Claude Code for LinkedIn outreach",
+        href: "/blogs/claude-code-linkedin-outreach",
+        description: "Repo session job and the first prompt.",
+      },
+      {
+        label: "Claude Code outbound",
+        href: "/use-cases/claude-code-outbound",
+        description: "The terminal motion, not overnight research.",
+      },
+      {
         label: "Cursor integration",
         href: "/integrations/cursor",
         description: "Similar coding-agent auth pattern.",
@@ -863,6 +888,92 @@ const INTEGRATION_PAGES: SeoContentPage[] = [
         label: "MCP integration",
         href: "/integrations/mcp",
         description: "Tool groups and connect paths.",
+      },
+    ],
+    primaryCta: { label: "Get started", href: "/signup" },
+    secondaryCta: { label: "MCP overview", href: "/integrations/mcp" },
+  },
+  {
+    slug: "codex",
+    title: "Codex integration",
+    description:
+      "Connect OpenAI Codex to Omentir with a streamable HTTP MCP server in config.toml. Keep the token in an env var. Draft in the session. Send from the workspace. This is not the ChatGPT connector.",
+    summary:
+      "TOML MCP path for Codex CLI and the IDE extension: url, bearer_token_env_var, then /mcp.",
+    publishedDate: "August 27, 2026",
+    updatedDate: "August 27, 2026",
+    keywords: [
+      "Omentir Codex",
+      "Codex MCP config.toml",
+      "OpenAI Codex LinkedIn",
+      "Codex bearer_token_env_var",
+    ],
+    sections: [
+      {
+        id: "why",
+        heading: "Why Codex users connect Omentir",
+        paragraphs: [
+          "Codex is already in the repo. Connected to Omentir, it can read My Product, inspect finders, and leave a scored list without becoming a LinkedIn client. The CLI and the IDE extension share ~/.codex/config.toml. ChatGPT's connector list is a different store.",
+        ],
+      },
+      {
+        id: "setup",
+        heading: "Setup in config.toml",
+        paragraphs: [
+          "Create a revocable API key. Export it before you launch Codex. Add an mcp_servers.omentir table. The table name needs an underscore. bearer_token_env_var is the name of the variable, not the token and not $OMENTIR_API_KEY.",
+        ],
+        bullets: [
+          "url: https://omentir.com/api/agent/v1/mcp",
+          "bearer_token_env_var: OMENTIR_API_KEY",
+          "Confirm with /mcp in the session",
+          "Project-local .codex/config.toml only loads for trusted projects",
+        ],
+      },
+      {
+        id: "vs-chatgpt",
+        heading: "Codex versus ChatGPT chat",
+        paragraphs: [
+          "ChatGPT uses Settings, Connectors, and workspace approval. No API key for that path. Codex uses TOML and a Bearer env var. Do not paste a token into the ChatGPT connector UI. Do not wait for workspace approval inside Codex.",
+        ],
+      },
+    ],
+    faqItems: [
+      {
+        question: "Can I put the API key in the TOML file?",
+        answer:
+          "You can. You should not. The file is easy to commit. Use bearer_token_env_var with the variable name.",
+      },
+      {
+        question: "Will Codex send LinkedIn messages by itself?",
+        answer:
+          "Only through Omentir tools under your campaign and safety settings. Your prompts should still require approval for replies and agent lifecycle changes.",
+      },
+      {
+        question: "Where is the operator prompt?",
+        answer:
+          "https://omentir.com/agents.md is the operator guide. Fetch it before you let Codex create a finder.",
+      },
+    ],
+    relatedLinks: [
+      {
+        label: "Codex for LinkedIn outreach",
+        href: "/blogs/codex-linkedin-outreach",
+        description: "TOML, /mcp, and a first session job.",
+      },
+      {
+        label: "ChatGPT integration",
+        href: "/integrations/chatgpt",
+        description: "Connector path for ChatGPT chat.",
+      },
+      {
+        label: "Cursor integration",
+        href: "/integrations/cursor",
+        description: "Editor MCP client, same Bearer pattern.",
+      },
+      {
+        label: "How do I connect Codex to Omentir?",
+        href: "/help/how-do-i-connect-codex-to-omentir",
+        description: "Short help version of the TOML path.",
       },
     ],
     primaryCta: { label: "Get started", href: "/signup" },

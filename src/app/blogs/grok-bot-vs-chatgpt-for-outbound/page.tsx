@@ -238,6 +238,10 @@ export default function BlogPost() {
       </p>
       <p>
         Other neighbors:{" "}
+        <Link href="/blogs/grok-bot-vs-claude-for-outbound" className="text-blue-600 hover:underline">
+          Grok Bot versus Claude for outbound
+        </Link>{" "}
+        if Claude is the session you already sit with,{" "}
         <Link href="/blogs/openclaw-vs-chatgpt-sales" className="text-blue-600 hover:underline">
           OpenClaw versus ChatGPT for sales
         </Link>{" "}

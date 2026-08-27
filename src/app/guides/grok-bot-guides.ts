@@ -1,5 +1,10 @@
 import type { GuidePage } from "./types";
-import { GROK_BOT_COLD_DM_PROMPT, GROK_BOT_FIRST_JOB_PROMPT } from "../grok-bot-setup";
+import {
+  GROK_BOT_COLD_DM_PROMPT,
+  GROK_BOT_FIRST_JOB_PROMPT,
+  GROK_BOT_FOLLOW_UP_PROMPT,
+  GROK_BOT_LEAD_GEN_PROMPT,
+} from "../grok-bot-setup";
 
 const DATE = "August 23, 2026";
 
@@ -84,6 +89,7 @@ export const GROK_BOT_GUIDES: GuidePage[] = [
       { label: "Grok Bot integration", href: "/integrations/grok-bot" },
       { label: "Grok Bot for LinkedIn outreach", href: "/blogs/grok-bot-linkedin-sales" },
     ],
+    relatedHeading: "More on Grok Bot",
   },
   {
     slug: "grok-bot-cold-messages",
@@ -164,6 +170,7 @@ export const GROK_BOT_GUIDES: GuidePage[] = [
       { label: "Automate cold messaging with Grok Bot", href: "/blogs/automate-cold-messaging-with-grok-bot" },
       { label: "How do I automate cold messaging with Grok Bot?", href: "/help/how-do-i-automate-cold-messaging-with-grok-bot" },
     ],
+    relatedHeading: "More on Grok Bot",
   },
   {
     slug: "grok-bot-linkedin-automation",
@@ -244,6 +251,7 @@ export const GROK_BOT_GUIDES: GuidePage[] = [
       { label: "Grok Bot integration", href: "/integrations/grok-bot" },
       { label: "Grok Bot for LinkedIn outreach", href: "/blogs/grok-bot-linkedin-sales" },
     ],
+    relatedHeading: "More on Grok Bot",
   },
   {
     slug: "overnight-outbound-with-grok-bot",
@@ -319,5 +327,170 @@ export const GROK_BOT_GUIDES: GuidePage[] = [
       { label: "Grok Bot for LinkedIn outreach", href: "/blogs/grok-bot-linkedin-sales" },
       { label: "How do I connect Grok Bot to Omentir?", href: "/help/how-do-i-connect-grok-bot-to-omentir" },
     ],
+    relatedHeading: "More on Grok Bot",
+  },
+  {
+    slug: "grok-bot-lead-generation",
+    title: "Grok Bot for lead generation",
+    description:
+      "Use Grok Bot overnight to find people who match a written ICP. Score the list. Keep LinkedIn off the Bot computer. Draft and send later from Omentir.",
+    query: "grok bot lead generation",
+    kicker: "Lead gen",
+    cluster: "linkedin",
+    publishedDate: "August 27, 2026",
+    updatedDate: "August 27, 2026",
+    keywords: [
+      "Grok Bot lead generation",
+      "Grok Bot find leads",
+      "Grok Bot lead gen",
+      "Grok Bot LinkedIn leads",
+    ],
+    sections: [
+      {
+        heading: "Find people, then stop",
+        paragraphs: [
+          "Lead generation here is a scored list: who matches, why, who to skip. It is not a cloud browser harvesting LinkedIn search. Put the finder in Omentir. Put the Bot on MCP.",
+        ],
+        bullets: [
+          "One ICP, one region, a skip list.",
+          "Fit 1-5 plus evidence.",
+          "Flag anyone already in a sequence.",
+          "No drafts unless you ask for a second job.",
+        ],
+      },
+      {
+        heading: "Do not scrape LinkedIn with computer use",
+        paragraphs: [
+          "Grok Bot can click sites with no API. That is a bad idea on LinkedIn. A VM paging through search is still a bot. [LinkedIn's user agreement](https://www.linkedin.com/legal/user-agreement) restricts unauthorized bots on the consumer product.",
+        ],
+      },
+      {
+        heading: "Paste this into Grok Bot",
+        paragraphs: [
+          "Finish Omentir first. Add MCP. Put the stop rule in the Bot description. Replace the brackets. Keep the last two sentences.",
+        ],
+        code: GROK_BOT_LEAD_GEN_PROMPT,
+      },
+    ],
+    faqItems: [
+      {
+        question: "Is this the same as Grok Bot sales outreach?",
+        answer:
+          "Outreach is research plus drafts plus a campaign. This page is the list. You can stop after the scores if the promise is still changing.",
+      },
+      {
+        question: "Can Grok Bot scrape LinkedIn search?",
+        answer:
+          "Do not ask it to. Use Omentir lead finders over MCP. Computer use on LinkedIn is how accounts get restricted.",
+      },
+      {
+        question: "How many people should the first run pull?",
+        answer:
+          "Thirty is enough to judge the ICP. Four hundred is a spreadsheet you will ignore.",
+      },
+      {
+        question: "Do I need Grok Bot to find LinkedIn leads?",
+        answer:
+          "No. Overview already runs finders. There is also a [free 10-lead search](/tools/find-leads) with no login. Add the Bot if you already pay for it and you want the list while you sleep.",
+      },
+      {
+        question: "Should the lead-gen prompt also write DMs?",
+        answer:
+          "Not on the first night. If the names look wrong, thirty drafts are waste. Score first. Copy second.",
+      },
+      {
+        question: "Where do the people go?",
+        answer:
+          "Into Omentir. You read them in the morning. Then you draft, or you start a small campaign. The Bot should not enroll anyone.",
+      },
+    ],
+    related: [
+      { label: "Find 10 leads", href: "/tools/find-leads" },
+      { label: "Grok Bot prompts for LinkedIn outreach", href: "/blogs/grok-bot-linkedin-prompts" },
+      { label: "Get LinkedIn sales with Grok Bot", href: "/use-cases/grok-bot-outbound" },
+      { label: "Using Grok Bot for sales outreach", href: "/grok-bot-sales-outreach" },
+    ],
+    relatedHeading: "More on Grok Bot",
+  },
+  {
+    slug: "grok-bot-follow-up-messages",
+    title: "Follow-up messages with Grok Bot",
+    description:
+      "Let Grok Bot draft the second LinkedIn note after someone accepts and stays quiet. Cite a new trigger. Send from Omentir. Keep a person on real replies.",
+    query: "grok bot follow up messages",
+    kicker: "Follow-ups",
+    cluster: "linkedin",
+    publishedDate: "August 27, 2026",
+    updatedDate: "August 27, 2026",
+    keywords: [
+      "Grok Bot follow up",
+      "Grok Bot follow-up messages",
+      "Grok Bot LinkedIn follow up",
+      "automate LinkedIn follow up Grok Bot",
+    ],
+    sections: [
+      {
+        heading: "Only after silence",
+        paragraphs: [
+          "Follow-up is for people who accepted and never replied. Skip anyone who already asked a question. A Bot that cannot see the thread will send a second pitch into an open conversation.",
+        ],
+        bullets: [
+          "New trigger, not \"just circling back.\"",
+          "Two sentences. No calendar hold.",
+          "One or two nudges, then stop.",
+        ],
+      },
+      {
+        heading: "The first note still has to exist",
+        paragraphs: [
+          "If the after-accept DM never went out, run the cold-message job instead. How-to: [automate cold messaging with Grok Bot](/blogs/automate-cold-messaging-with-grok-bot).",
+        ],
+      },
+      {
+        heading: "Paste this into Grok Bot",
+        paragraphs: [
+          "Replace the brackets. Keep the last two sentences. Send still goes through Omentir.",
+        ],
+        code: GROK_BOT_FOLLOW_UP_PROMPT,
+      },
+    ],
+    faqItems: [
+      {
+        question: "How many follow-ups?",
+        answer:
+          "One or two after accept if they never replied. Infinite nudges train people to ignore you. Change the promise if ignores pile up.",
+      },
+      {
+        question: "Can it write \"just circling back\"?",
+        answer:
+          "It will if you let it. Ask for a new trigger. A reminder that you exist is not a reason to reply.",
+      },
+      {
+        question: "What if they already answered?",
+        answer:
+          "Stop. A person handles anything with a real question. Do not let a follow-up job run on live threads.",
+      },
+      {
+        question: "Should Grok Bot send the follow-up while I sleep?",
+        answer:
+          "No. Draft overnight. You cut in the morning. Omentir sends under caps. See [can Grok Bot send LinkedIn messages automatically](/help/can-grok-bot-send-linkedin-messages-automatically).",
+      },
+      {
+        question: "Is a follow-up the same as the first DM?",
+        answer:
+          "No. The first DM cites the original trigger. The follow-up needs a new one, or it is spam with extra steps.",
+      },
+      {
+        question: "Do I need Grok Bot for follow-ups?",
+        answer:
+          "No. Omentir can continue a campaign after accept if you set that up. Add the Bot if you already pay for it and you want overnight drafts on the quiet pile.",
+      },
+    ],
+    related: [
+      { label: "Cold messaging with Grok Bot", href: "/grok-bot-cold-messages" },
+      { label: "Grok Bot prompts for LinkedIn outreach", href: "/blogs/grok-bot-linkedin-prompts" },
+      { label: "How do I automate cold messaging with Grok Bot?", href: "/help/how-do-i-automate-cold-messaging-with-grok-bot" },
+    ],
+    relatedHeading: "More on Grok Bot",
   },
 ];

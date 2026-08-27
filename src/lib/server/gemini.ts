@@ -8,6 +8,16 @@ import {
   shouldShareBookingLink,
 } from "./reply-automation-policy";
 import { hasCalendarBookingEvidence } from "@/lib/conversation-category";
+import {
+  clampProfileScore,
+  normalizeLinkedInProfileDraft,
+  parsePublicLinkedInProfileUrl,
+  profileDraftHasContent,
+  type LinkedInProfileDraft,
+  type LinkedInProfileImproveResult,
+  type LinkedInProfileRatingResult,
+  type LinkedInProfileToolMode,
+} from "@/lib/linkedin-profile-tool";
 import { fetchWebsitePages, WebsiteUnreachableError } from "./website";
 import type {
   Agent,
@@ -2462,4 +2472,271 @@ ${conversationContext}`,
     }
   }
   return finalMessage;
+}
+
+const PUBLIC_PROFILE_COPY_LIMIT = 4000;
+
+function cleanPublicProfileCopy(value: unknown, maxLength = PUBLIC_PROFILE_COPY_LIMIT) {
+  if (typeof value !== "string") return "";
+  return value
+    .replace(/\s*[—–]\s*/g, ", ")
+    .replace(/[“”]/g, '"')
+    .replace(/[‘’]/g, "'")
+    .replace(/…/g, "...")
+    .replace(/[\p{Extended_Pictographic}️]/gu, "")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim()
+    .slice(0, maxLength);
+}
+
+function stringList(value: unknown, maxItems: number, maxLength: number) {
+  if (!Array.isArray(value)) return [];
+  const items: string[] = [];
+  for (const entry of value) {
+    const text = cleanPublicProfileCopy(entry, maxLength);
+    if (text) items.push(text);
+    if (items.length >= maxItems) break;
+  }
+  return items;
+}
+
+const RATING_FALLBACK: LinkedInProfileRatingResult = {
+  overall: 0,
+  scores: { headline: 0, about: 0, experience: 0, proof: 0, outboundFit: 0 },
+  verdict: "",
+  summary: "",
+  strengths: [],
+  gaps: [],
+  nextFixes: [],
+};
+
+const IMPROVE_FALLBACK: LinkedInProfileImproveResult = {
+  headline: "",
+  about: "",
+  experience: "",
+  skills: "",
+  changes: [],
+};
+
+function normalizeRating(raw: LinkedInProfileRatingResult): LinkedInProfileRatingResult {
+  const scores = {
+    headline: clampProfileScore(raw.scores?.headline),
+    about: clampProfileScore(raw.scores?.about),
+    experience: clampProfileScore(raw.scores?.experience),
+    proof: clampProfileScore(raw.scores?.proof),
+    outboundFit: clampProfileScore(raw.scores?.outboundFit),
+  };
+  const overall = clampProfileScore(
+    raw.overall,
+    Math.round(
+      (scores.headline + scores.about + scores.experience + scores.proof + scores.outboundFit) / 5,
+    ),
+  );
+  return {
+    overall,
+    scores,
+    verdict: cleanPublicProfileCopy(raw.verdict, 80),
+    summary: cleanPublicProfileCopy(raw.summary, 700),
+    strengths: stringList(raw.strengths, 5, 220),
+    gaps: stringList(raw.gaps, 5, 220),
+    nextFixes: stringList(raw.nextFixes, 6, 220),
+  };
+}
+
+function normalizeImprove(raw: LinkedInProfileImproveResult): LinkedInProfileImproveResult {
+  const changes = Array.isArray(raw.changes)
+    ? raw.changes
+        .map((change) => ({
+          area: cleanPublicProfileCopy(change?.area, 40),
+          why: cleanPublicProfileCopy(change?.why, 220),
+        }))
+        .filter((change) => change.area && change.why)
+        .slice(0, 6)
+    : [];
+  return {
+    headline: cleanPublicProfileCopy(raw.headline, 220),
+    about: cleanPublicProfileCopy(raw.about, 2600),
+    experience: cleanPublicProfileCopy(raw.experience, 4000),
+    skills: cleanPublicProfileCopy(raw.skills, 800),
+    changes,
+  };
+}
+
+function publicProfilePrompt(mode: LinkedInProfileToolMode, draft: LinkedInProfileDraft) {
+  const source = [
+    `Headline:\n${draft.headline || "(empty)"}`,
+    `About:\n${draft.about || "(empty)"}`,
+    `Experience:\n${draft.experience || "(empty)"}`,
+    `Skills:\n${draft.skills || "(empty)"}`,
+    `Who this profile should convince:\n${draft.audience || "(not specified)"}`,
+  ].join("\n\n");
+
+  const sharedRules = `You are scoring a LinkedIn profile as a buyer who just got a connection request. The profile is a landing page, not a resume dump.
+
+Rules:
+- Use only facts present in the pasted text. Do not invent companies, titles, dates, metrics, customers, or awards.
+- If a section is empty, say so and score it low.
+- Write in plain English. Short sentences. No em dashes. No hype words like robust, seamless, unlock, leverage, or game-changer.
+- Do not mention SSI. This is not LinkedIn's Social Selling Index.
+- Prefer outbound-ready copy: who they help, what problem, why they are a peer.`;
+
+  if (mode === "rating") {
+    return `${sharedRules}
+
+Return JSON only:
+{
+  "overall": 0-100,
+  "scores": {
+    "headline": 0-100,
+    "about": 0-100,
+    "experience": 0-100,
+    "proof": 0-100,
+    "outboundFit": 0-100
+  },
+  "verdict": "3-6 word label",
+  "summary": "2-4 sentences on how a buyer would read this",
+  "strengths": ["up to 5 short bullets"],
+  "gaps": ["up to 5 short bullets"],
+  "nextFixes": ["up to 6 concrete edits they can make today"]
+}
+
+Scoring: 0-39 weak, 40-59 needs work, 60-74 decent, 75-86 strong, 87-100 ready for outbound. Be honest. Generic "passionate professional" copy should score low. Do not inflate.
+
+Profile:
+${source}`;
+  }
+
+  return `${sharedRules}
+
+Rewrite the profile. Keep every real fact. Tighten the voice so a buyer can tell who they help in a few seconds.
+
+Return JSON only:
+{
+  "headline": "rewritten headline, under 220 characters",
+  "about": "rewritten About, first person, 3-6 short paragraphs or a short block",
+  "experience": "rewritten experience bullets, keep role names and companies",
+  "skills": "optional cleaned skills line, or empty string",
+  "changes": [{"area": "Headline|About|Experience|Skills", "why": "one sentence"}]
+}
+
+If a section was empty, leave the rewrite empty and explain that in changes. Do not fill empty sections with invented work history.
+
+Profile:
+${source}`;
+}
+
+export async function analyzePublicLinkedInProfile(
+  mode: LinkedInProfileToolMode,
+  input: LinkedInProfileDraft,
+) {
+  const draft = normalizeLinkedInProfileDraft(input);
+  if (!profileDraftHasContent(draft)) {
+    throw new Error("Paste a headline, About, or experience first.");
+  }
+  if (!getGeminiConfig()) {
+    throw new Error("This tool is temporarily unavailable.");
+  }
+
+  const deadlineAt = Date.now() + 28_000;
+  if (mode === "rating") {
+    const raw = await generateJson<LinkedInProfileRatingResult>(
+      publicProfilePrompt(mode, draft),
+      RATING_FALLBACK,
+      0.35,
+      22_000,
+      deadlineAt,
+    );
+    const rating = normalizeRating(raw);
+    if (!rating.summary) {
+      throw new Error("Could not score this profile. Try again in a minute.");
+    }
+    return { mode, rating } as const;
+  }
+
+  const raw = await generateJson<LinkedInProfileImproveResult>(
+    publicProfilePrompt(mode, draft),
+    IMPROVE_FALLBACK,
+    0.55,
+    22_000,
+    deadlineAt,
+  );
+  const improve = normalizeImprove(raw);
+  if (!improve.headline && !improve.about && !improve.experience) {
+    throw new Error("Could not rewrite this profile. Try again in a minute.");
+  }
+  return { mode, improve } as const;
+}
+
+const PROFILE_LOOKUP_FALLBACK = {
+  found: false,
+  headline: "",
+  about: "",
+  experience: "",
+  skills: "",
+};
+
+export async function extractPublicLinkedInProfileFromSearch(rawUrl: string) {
+  const profileUrl = parsePublicLinkedInProfileUrl(rawUrl);
+  if (!profileUrl) {
+    throw new Error("Use a public linkedin.com/in URL.");
+  }
+  const config = getGeminiConfig();
+  if (!config) {
+    throw new Error("This tool is temporarily unavailable.");
+  }
+
+  const client = getClient(config);
+  const prompt = `Look up this public LinkedIn profile.
+
+URL: ${profileUrl}
+
+Use web search and any public snippet, cache, or page title for that linkedin.com/in URL. The Google result title is usually "Name - Headline | LinkedIn". That headline counts.
+
+Extract only facts you can see in those public results. Do not invent companies, titles, dates, metrics, customers, awards, or skills.
+
+Return JSON only:
+{
+  "found": true,
+  "headline": "LinkedIn headline, not the person's name",
+  "about": "About or summary if present",
+  "experience": "roles with company names and dates when present, one role per block",
+  "skills": "comma-separated skills if listed, else empty"
+}
+
+Set found true if you have at least a headline or About. If search returns nothing for this URL, set found false and use empty strings. No em dashes.`;
+
+  const generate = async (tools: Array<Record<string, object>>) =>
+    client.models.generateContent({
+      model: SEARCH_MODEL,
+      contents: prompt,
+      config: {
+        temperature: 0.1,
+        tools,
+        httpOptions: { timeout: 28_000 },
+      },
+    });
+
+  let response;
+  try {
+    response = await generate([{ urlContext: {} }, { googleSearch: {} }]);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "url context failed";
+    console.error(`[linkedin-profile-lookup] urlContext failed: ${message.slice(0, 200)}`);
+    response = await generate([{ googleSearch: {} }]);
+  }
+  const rawText = response.text || "";
+  const parsed = parseJson<typeof PROFILE_LOOKUP_FALLBACK>(rawText, PROFILE_LOOKUP_FALLBACK);
+  const draft = normalizeLinkedInProfileDraft({
+    profileUrl,
+    headline: parsed.headline,
+    about: parsed.about,
+    experience: parsed.experience,
+    skills: parsed.skills,
+  });
+  if (profileDraftHasContent(draft)) return draft;
+  console.error(
+    `[linkedin-profile-lookup] empty draft found=${String(parsed.found)} text=${rawText.slice(0, 400)}`,
+  );
+  throw new Error("Could not read that public profile. Use a public linkedin.com/in URL.");
 }

@@ -1,5 +1,12 @@
 import type { SeoContentPage } from "../seo-content/types";
-import { GROK_BOT_COLD_DM_PROMPT, GROK_BOT_FIRST_JOB_PROMPT } from "../grok-bot-setup";
+import { CHATGPT_FIRST_JOB_PROMPT } from "../chatgpt-setup";
+import { CLAUDE_CHAT_FIRST_JOB_PROMPT } from "../claude-chat-setup";
+import { CLAUDE_CODE_FIRST_JOB_PROMPT } from "../claude-code-setup";
+import { CODEX_FIRST_JOB_PROMPT } from "../codex-setup";
+import { CURSOR_FIRST_JOB_PROMPT } from "../cursor-setup";
+import { GROK_CHAT_FIRST_JOB_PROMPT } from "../grok-chat-setup";
+import { OPENCLAW_FIRST_JOB_PROMPT } from "../openclaw-setup";
+import { GROK_BOT_COLD_DM_PROMPT, GROK_BOT_FIRST_JOB_PROMPT, GROK_BOT_SALES_NAV_PROMPT } from "../grok-bot-setup";
 
 /**
  * Use-case pages. One motion per slug.
@@ -511,6 +518,11 @@ export const ALL_USE_CASES: SeoContentPage[] = [
         "label": "Grok Bot alternatives",
         "href": "/alternatives/grok-bot",
         "description": "If you do not already pay for the Bot plan."
+      },
+      {
+        "label": "Grok Bot and Sales Navigator",
+        "href": "/use-cases/grok-bot-sales-navigator",
+        "description": "Navigator-shaped search without putting the login on the Bot."
       }
     ],
     "ctaTitle": "Connect the Bot to a workspace that already has a buyer written down",
@@ -613,6 +625,519 @@ export const ALL_USE_CASES: SeoContentPage[] = [
     ],
     "ctaTitle": "Connect the Bot only after the first note is something you would send",
     "ctaBody": "If you would not put the draft on your own phone, do not let a campaign send it."
+  },
+  {
+    "slug": "grok-bot-sales-navigator",
+    "title": "Grok Bot and Sales Navigator",
+    "description": "Keep Sales Navigator off the Grok Bot computer. Write the same targeting you would search. Let Omentir find the people. The Bot drafts. You send.",
+    "summary": "Navigator-shaped search without putting the login on a shared VM.",
+    "publishedDate": "August 27, 2026",
+    "updatedDate": "August 27, 2026",
+    "layout": "timeline",
+    "keywords": [
+      "Grok Bot Sales Navigator",
+      "Grok Bot LinkedIn Sales Navigator",
+      "Sales Navigator automation Grok Bot"
+    ],
+    "highlights": [
+      "No Navigator login on the Bot",
+      "Same titles and signals",
+      "Send from Omentir"
+    ],
+    "verdict": "Sales Navigator is still your LinkedIn identity. Logging it into Grok Bot's shared computer is the same mistake as logging in the free profile. Write the search. Run it through Omentir. Stop at a review list.",
+    "phases": [
+      {
+        "title": "Write the search you would have run in Navigator",
+        "detail": "Titles, company type, size, region, signals (hire, post, tech, funding), and who to skip. If you cannot write that in a paragraph, Navigator was not going to save you either."
+      },
+      {
+        "title": "Connect MCP. Keep Navigator off the Bot computer.",
+        "detail": "Add https://omentir.com/api/agent/v1/mcp in Grok Bot Plugins. Stop rule in the Bot description: never send; never enroll; never sign into LinkedIn or Sales Navigator. If it asks you to take over for a password, refuse."
+      },
+      {
+        "title": "Overnight: a scored list that looks like your search",
+        "detail": "Ask for up to 30 people, fit 1-5, evidence, and a two-sentence after-accept DM. InMail is a paid credit. Do not spend it on the first job unless you cannot reach them another way."
+      },
+      {
+        "title": "Morning: cut, then a small campaign",
+        "detail": "Reject bad titles and the wrong country. Edit a few drafts. Start in Omentir with conservative daily limits. Meetings still need a person on the reply."
+      }
+    ],
+    "sections": [
+      {
+        "id": "why-not-the-login",
+        "heading": "Why Sales Navigator does not belong on the Bot",
+        "paragraphs": [
+          "Grok Bot's computer is shared across every Bot on the account. A Navigator session there is a LinkedIn session. Takeover for a password or CAPTCHA persists. The restriction email still has your name on it.",
+          "Omentir already finds people from a written ICP. You do not need the Bot to drive Navigator to get a list that looks like one. If you already exported a CSV yourself, upload it. Do not ask the Bot to scrape the search UI."
+        ]
+      },
+      {
+        "id": "first-job-prompt",
+        "heading": "Paste this into Grok Bot tonight",
+        "paragraphs": [
+          "Finish Omentir first. Add the MCP plugin. Put the stop rule in the Bot description. Replace the brackets. Keep the last two sentences."
+        ],
+        "code": GROK_BOT_SALES_NAV_PROMPT
+      },
+      {
+        "id": "when-to-skip",
+        "heading": "When this is the wrong job",
+        "paragraphs": [
+          "A new or recently recovered LinkedIn account. A week you cannot sit with the list. No written ICP. Grok Bot is still in beta and sits on expensive plans. If you do not already have it, start in Overview.",
+          "If you only wanted InMail volume, stop. Credits plus a vague promise is an expensive way to get ignored."
+        ]
+      }
+    ],
+    "faqItems": [
+      {
+        "question": "Does Omentir require Sales Navigator?",
+        "answer": "No. Write the targeting. Omentir finders pull the people. Navigator on your own laptop is optional if you already pay for it."
+      },
+      {
+        "question": "Can Grok Bot log into Sales Navigator if I watch it?",
+        "answer": "Do not. The session stays on the shared computer. Watching once does not make it private."
+      },
+      {
+        "question": "Is this the grok.com connector?",
+        "answer": "No. This is the Grok Bot app. grok.com is a chat connector with no persistent VM."
+      }
+    ],
+    "relatedLinks": [
+      {
+        "label": "Can I use Grok Bot with Sales Navigator?",
+        "href": "/help/can-i-use-grok-bot-with-sales-navigator",
+        "description": "Short help version of this split."
+      },
+      {
+        "label": "Get LinkedIn sales with Grok Bot",
+        "href": "/use-cases/grok-bot-outbound",
+        "description": "The weekly researcher loop, not the Navigator-shaped search."
+      },
+      {
+        "label": "Grok Bot for lead generation",
+        "href": "/grok-bot-lead-generation",
+        "description": "Scored list only, no copy."
+      },
+      {
+        "label": "How do I connect Grok Bot to LinkedIn?",
+        "href": "/help/how-do-i-connect-grok-bot-to-linkedin",
+        "description": "You do not. Connect the Bot to Omentir instead."
+      }
+    ],
+    "ctaTitle": "Write the search before you connect anything extra",
+    "ctaBody": "If the titles and exclusions are still fuzzy, Navigator and Grok Bot will both multiply the mess."
+  },
+  {
+    "slug": "claude-code-outbound",
+    "title": "Get LinkedIn sales with Claude Code",
+    "description": "Use Claude Code as a terminal operator on Omentir. Diff My Product against the repo. Draft in the session. Send from the workspace. Close the terminal and the job stops.",
+    "summary": "Claude Code checks the repo. Omentir sends. You still take the meeting.",
+    "publishedDate": "August 27, 2026",
+    "updatedDate": "August 27, 2026",
+    "layout": "timeline",
+    "keywords": [
+      "Claude Code LinkedIn sales",
+      "Claude Code outbound",
+      "Claude Code Omentir"
+    ],
+    "highlights": [
+      "Repo session, not overnight",
+      "API key, not a chat connector",
+      "Review list, then send"
+    ],
+    "verdict": "Claude Code is useful when the product already lives in a terminal. It is a bad LinkedIn client. Put LinkedIn in Omentir. Put the key in the environment Claude Code already uses for secrets.",
+    "phases": [
+      {
+        "title": "Finish Omentir, then open the repo",
+        "detail": "LinkedIn connected, My Product written in two sentences a stranger would understand. If the brief is a slogan, the session will invent pain."
+      },
+      {
+        "title": "Connect with a Bearer key",
+        "detail": "Point Claude Code at https://omentir.com/api/agent/v1/mcp. This is not Claude chat. Chat uses Settings, Connectors, and workspace approval. Mixing those paths is how people wait for an OAuth screen that never appears."
+      },
+      {
+        "title": "Diff the story, then a scored list",
+        "detail": "Compare My Product with the README. Fetch agents.md. get_context, then list_agents. If you want a new finder, show the config and wait. Pull up to 30 people with drafts. Do not send."
+      },
+      {
+        "title": "Send from Omentir, own the inbox",
+        "detail": "Cut junk. Start a small campaign. The first real reply is still yours. Close the terminal and the job stops."
+      }
+    ],
+    "sections": [
+      {
+        "id": "why-the-repo",
+        "heading": "Why the repo session matters",
+        "paragraphs": [
+          "Most outbound junk starts as a homepage paragraph pasted into a chat that has never seen the product. Claude Code is useful when the claim on the site and the claim in Omentir can be diffed in one place.",
+          "Creating an agent should be a named request, the same way merging a pull request is a named request. A refactor that also spins up a finder is how targeting drifts."
+        ]
+      },
+      {
+        "id": "first-job-prompt",
+        "heading": "Paste this into Claude Code",
+        "paragraphs": [
+          "Finish Omentir first. Put the key in the environment. Fetch agents.md. Replace the brackets. Keep the last two sentences."
+        ],
+        "code": CLAUDE_CODE_FIRST_JOB_PROMPT
+      }
+    ],
+    "faqItems": [
+      {
+        "question": "Does Claude Code keep working after I close the terminal?",
+        "answer": "No. That is Grok Bot. Claude Code is a session in the repo."
+      },
+      {
+        "question": "Is this the same as Claude on claude.com?",
+        "answer": "No. Chat Claude uses workspace approval. Claude Code uses a revocable key."
+      },
+      {
+        "question": "Should I pick Cursor instead?",
+        "answer": "Pick the window you already live in. Cursor is the editor. Claude Code is the terminal."
+      }
+    ],
+    "relatedLinks": [
+      {
+        "label": "Claude Code integration",
+        "href": "/integrations/claude-code",
+        "description": "API key, MCP URL, and the chat versus terminal split."
+      },
+      {
+        "label": "Claude Code for LinkedIn outreach",
+        "href": "/blogs/claude-code-linkedin-outreach",
+        "description": "Longer walkthrough of the repo job."
+      },
+      {
+        "label": "How do I connect Claude Code to Omentir?",
+        "href": "/help/how-do-i-connect-claude-code-to-omentir",
+        "description": "Short help version of setup."
+      }
+    ],
+    "ctaTitle": "Connect Claude Code only if the terminal is already open",
+    "ctaBody": "If you are not in a repo, start in Overview."
+  },
+  {
+    "slug": "cursor-outbound",
+    "title": "Get LinkedIn sales with Cursor",
+    "description": "Use Cursor as the editor operator on Omentir. Update My Product from the file you have open. Inspect before you create. Send from the workspace. Close the editor and the session stops.",
+    "summary": "Cursor sits next to the file. Omentir sends. You still take the meeting.",
+    "publishedDate": "August 27, 2026",
+    "updatedDate": "August 27, 2026",
+    "layout": "timeline",
+    "keywords": [
+      "Cursor LinkedIn sales",
+      "Cursor outbound",
+      "Cursor MCP Omentir"
+    ],
+    "highlights": [
+      "Editor session, not overnight",
+      "Secret store for the key",
+      "Review list, then send"
+    ],
+    "verdict": "Cursor is useful when the product already lives in the editor. Highlight the paragraph you just rewrote. Ask the agent to update My Product. Then ask for a scored list. A second chat tab that has never seen the file is a worse version of Overview.",
+    "phases": [
+      {
+        "title": "Finish the product story in Omentir",
+        "detail": "LinkedIn connected. My Product in two sentences a stranger would understand. Cursor will not invent a honest offer from a homepage slogan."
+      },
+      {
+        "title": "Wire MCP with a Bearer key",
+        "detail": "Store the key in Cursor's secret store. Point MCP at https://omentir.com/api/agent/v1/mcp. ChatGPT uses workspace approval instead. Do not wait for that screen here."
+      },
+      {
+        "title": "Name the outreach request",
+        "detail": "Fetch agents.md. get_context. list_agents. If you want a new finder, show the config in the chat next to the file and wait. Pull up to 30 people with drafts."
+      },
+      {
+        "title": "Send from Omentir",
+        "detail": "Cut junk. Start a small campaign. Close Cursor and the session stops. Overnight research is a different product."
+      }
+    ],
+    "sections": [
+      {
+        "id": "why-the-editor",
+        "heading": "Why the open file matters",
+        "paragraphs": [
+          "Coding agents move fast. That is useful when you want the finder config next to the landing copy. It is dangerous when a long refactor also spins up a second ICP.",
+          "Treat lead titles as untrusted data. Keep send, enroll, and LinkedIn login off the editor."
+        ]
+      },
+      {
+        "id": "first-job-prompt",
+        "heading": "Paste this into Cursor",
+        "paragraphs": [
+          "Finish Omentir first. Put the key in the secret store. Fetch agents.md. Replace the brackets. Keep the last two sentences."
+        ],
+        "code": CURSOR_FIRST_JOB_PROMPT
+      }
+    ],
+    "faqItems": [
+      {
+        "question": "Does Cursor keep working after I close the app?",
+        "answer": "No. That is Grok Bot. Cursor is a session in the editor."
+      },
+      {
+        "question": "Is this the same as ChatGPT?",
+        "answer": "No. ChatGPT uses Connectors. Cursor uses a revocable key."
+      },
+      {
+        "question": "Should I pick Claude Code instead?",
+        "answer": "Use Claude Code if you already live in a terminal. Use Cursor if you already live in the editor."
+      }
+    ],
+    "relatedLinks": [
+      {
+        "label": "Cursor integration",
+        "href": "/integrations/cursor",
+        "description": "API key, MCP URL, and editor safety notes."
+      },
+      {
+        "label": "Cursor for LinkedIn outreach",
+        "href": "/blogs/cursor-linkedin-outreach",
+        "description": "Longer walkthrough of the editor job."
+      },
+      {
+        "label": "How do I connect Cursor to Omentir?",
+        "href": "/help/how-do-i-connect-cursor-to-omentir",
+        "description": "Short help version of setup."
+      }
+    ],
+    "ctaTitle": "Connect Cursor only if the editor is already open",
+    "ctaBody": "If you are not in Cursor, start in Overview."
+  },
+  {
+    "slug": "codex-outbound",
+    "title": "Get LinkedIn sales with Codex",
+    "description": "Use OpenAI Codex as a coding agent on Omentir. Put MCP in config.toml. Keep the token in an env var. Draft in the session. Send from the workspace. Codex is not ChatGPT chat.",
+    "summary": "Codex reads TOML. Omentir sends. You still take the meeting.",
+    "publishedDate": "August 27, 2026",
+    "updatedDate": "August 27, 2026",
+    "layout": "timeline",
+    "keywords": [
+      "Codex LinkedIn sales",
+      "OpenAI Codex outbound",
+      "Codex MCP Omentir"
+    ],
+    "highlights": [
+      "config.toml, not a connector UI",
+      "Token stays in an env var",
+      "Review list, then send"
+    ],
+    "verdict": "Codex is useful when you already run OpenAI's coding agent against the repo. It is not the ChatGPT connector. Put LinkedIn in Omentir. Put the token name in bearer_token_env_var.",
+    "phases": [
+      {
+        "title": "Finish Omentir in the browser",
+        "detail": "LinkedIn connected. My Product written. Codex will not fix a slogan."
+      },
+      {
+        "title": "Add the server in config.toml",
+        "detail": "Global file at ~/.codex/config.toml, or a project file only if the repo is trusted. url is https://omentir.com/api/agent/v1/mcp. bearer_token_env_var is OMENTIR_API_KEY, the variable name, not the token."
+      },
+      {
+        "title": "Confirm with /mcp, then a scored list",
+        "detail": "If the server is missing, fix the table name and the env var. Fetch agents.md. get_context, then list_agents. Pull up to 30 people with drafts. Do not send."
+      },
+      {
+        "title": "Send from Omentir",
+        "detail": "Cut junk. Start a small campaign. Close the session and the work stops."
+      }
+    ],
+    "sections": [
+      {
+        "id": "why-toml",
+        "heading": "Why the TOML file matters",
+        "paragraphs": [
+          "The CLI and the IDE extension share the same file. Get the table name wrong (mcp-servers instead of mcp_servers) and Codex ignores the block. ChatGPT chat still uses Settings and Connectors.",
+          "A project-local .codex/config.toml only loads for trusted projects. If tools never appear, start with the global file."
+        ]
+      },
+      {
+        "id": "first-job-prompt",
+        "heading": "Paste this into Codex",
+        "paragraphs": [
+          "Export the env var before you launch. Fetch agents.md. Replace the brackets. Keep the last two sentences."
+        ],
+        "code": CODEX_FIRST_JOB_PROMPT
+      }
+    ],
+    "faqItems": [
+      {
+        "question": "Is Codex the same as ChatGPT?",
+        "answer": "No. ChatGPT uses workspace approval. Codex uses TOML and a Bearer env var."
+      },
+      {
+        "question": "Can I put the API key in the TOML file?",
+        "answer": "You can. You should not. The file is easy to commit."
+      },
+      {
+        "question": "Should I pick Cursor instead?",
+        "answer": "Pick the agent you already open. Cursor has its own MCP client. Codex shares config.toml across CLI and extension."
+      }
+    ],
+    "relatedLinks": [
+      {
+        "label": "Codex integration",
+        "href": "/integrations/codex",
+        "description": "config.toml, /mcp, and the ChatGPT split."
+      },
+      {
+        "label": "Codex for LinkedIn outreach",
+        "href": "/blogs/codex-linkedin-outreach",
+        "description": "Longer walkthrough of the TOML job."
+      },
+      {
+        "label": "How do I connect Codex to Omentir?",
+        "href": "/help/how-do-i-connect-codex-to-omentir",
+        "description": "Short help version of setup."
+      }
+    ],
+    "ctaTitle": "Connect Codex only if that agent is already in the repo",
+    "ctaBody": "If you wanted a chat tab, use the ChatGPT connector."
+  },
+  {
+    "slug": "chatgpt-outbound",
+    "title": "Get LinkedIn sales with ChatGPT",
+    "description": "Connect ChatGPT to Omentir with a custom MCP connector. No API key. Draft in the tab. Send from the workspace. Close the tab and the session stops.",
+    "summary": "ChatGPT calls tools. Omentir sends. You still take the meeting.",
+    "publishedDate": "August 27, 2026",
+    "updatedDate": "August 27, 2026",
+    "layout": "timeline",
+    "keywords": ["ChatGPT LinkedIn sales", "ChatGPT outbound", "ChatGPT MCP Omentir"],
+    "highlights": ["Workspace approval", "No API key", "Session, not overnight"],
+    "verdict": "ChatGPT is useful this afternoon if you already live in that tab. It is not Codex and it is not Grok Bot. Keep LinkedIn in Omentir.",
+    "phases": [
+      { "title": "Finish Omentir first", "detail": "LinkedIn connected. My Product written. Then add the connector." },
+      { "title": "Approve Connect workspace", "detail": "Settings, Connectors, https://omentir.com/api/agent/v1/mcp. No API key." },
+      { "title": "Ask it to explain the workspace back", "detail": "If the summary is wrong, fix My Product before you create a finder." },
+      { "title": "Send from Omentir", "detail": "Cut junk. Start a small campaign. Close the tab and the session stops." }
+    ],
+    "sections": [
+      {
+        "id": "first-job-prompt",
+        "heading": "Paste this into ChatGPT",
+        "paragraphs": ["Enable tools in the chat. Replace the brackets. Keep the last two sentences."],
+        "code": CHATGPT_FIRST_JOB_PROMPT
+      }
+    ],
+    "faqItems": [
+      { "question": "Do I need Codex?", "answer": "No. Codex uses config.toml. ChatGPT uses workspace approval." },
+      { "question": "Does it keep working overnight?", "answer": "No. That is Grok Bot." }
+    ],
+    "relatedLinks": [
+      { "label": "ChatGPT integration", "href": "/integrations/chatgpt", "description": "Connector setup." },
+      { "label": "ChatGPT connector for LinkedIn outreach", "href": "/blogs/chatgpt-connector-linkedin-outreach", "description": "The MCP job, not the paste-only job." }
+    ],
+    "ctaTitle": "Connect ChatGPT only if that tab is already open",
+    "ctaBody": "If you are not in ChatGPT, start in Overview."
+  },
+  {
+    "slug": "claude-chat-outbound",
+    "title": "Get LinkedIn sales with Claude chat",
+    "description": "Use Claude on claude.com as a connector session. This is not Claude Code. Draft in the tab. Send from Omentir.",
+    "summary": "Claude chat calls tools. Omentir sends. You still take the meeting.",
+    "publishedDate": "August 27, 2026",
+    "updatedDate": "August 27, 2026",
+    "layout": "timeline",
+    "keywords": ["Claude LinkedIn sales", "Claude chat outbound", "Claude MCP Omentir"],
+    "highlights": ["Connector, not a key", "Not Claude Code", "Session, not overnight"],
+    "verdict": "Claude chat is useful this afternoon. Claude Code is the terminal. Grok Bot is overnight. Pick one window.",
+    "phases": [
+      { "title": "Finish Omentir first", "detail": "LinkedIn connected. My Product written." },
+      { "title": "Add the custom connector", "detail": "Settings, Connectors, approve Connect workspace." },
+      { "title": "Give the ICP in the same message", "detail": "Guessing is how you message the wrong titles at full pace." },
+      { "title": "Send from Omentir", "detail": "Close the tab and the work stops." }
+    ],
+    "sections": [
+      {
+        "id": "first-job-prompt",
+        "heading": "Paste this into Claude",
+        "paragraphs": ["Fetch agents.md. Replace the brackets."],
+        "code": CLAUDE_CHAT_FIRST_JOB_PROMPT
+      }
+    ],
+    "faqItems": [
+      { "question": "Is this Claude Code?", "answer": "No. Claude Code uses a Bearer key in a terminal." },
+      { "question": "Do I need an API key?", "answer": "Not for claude.com." }
+    ],
+    "relatedLinks": [
+      { "label": "Claude integration", "href": "/integrations/claude", "description": "Connector setup." },
+      { "label": "Claude chat for LinkedIn outreach", "href": "/blogs/claude-chat-linkedin-outreach", "description": "Chat tab walkthrough." }
+    ],
+    "ctaTitle": "Connect Claude chat only if that tab is already open",
+    "ctaBody": "If the repo is open, use Claude Code instead."
+  },
+  {
+    "slug": "grok-chat-outbound",
+    "title": "Get LinkedIn sales with grok.com",
+    "description": "Use grok.com as a chat connector. It is not Grok Bot. There is no cloud computer. Draft in the tab. Send from Omentir.",
+    "summary": "grok.com is a session. Grok Bot is a computer. Keep LinkedIn in Omentir.",
+    "publishedDate": "August 27, 2026",
+    "updatedDate": "August 27, 2026",
+    "layout": "timeline",
+    "keywords": ["grok.com LinkedIn sales", "Grok chat outbound", "Grok connector Omentir"],
+    "highlights": ["Not Grok Bot", "No Plugins here", "Refuse a LinkedIn takeover"],
+    "verdict": "grok.com is a custom connector, like Claude. If it asks you to take over for LinkedIn, you opened the wrong product.",
+    "phases": [
+      { "title": "Decide which Grok you have", "detail": "Chat tab or Bot app. This page is the chat tab." },
+      { "title": "Add the connector", "detail": "Paste the MCP URL. Approve Connect workspace." },
+      { "title": "A scored list, drafts only", "detail": "Do not take over for a LinkedIn password." },
+      { "title": "Send from Omentir", "detail": "Close the tab and the work stops." }
+    ],
+    "sections": [
+      {
+        "id": "first-job-prompt",
+        "heading": "Paste this into grok.com",
+        "paragraphs": ["Replace the brackets. Keep the last sentences."],
+        "code": GROK_CHAT_FIRST_JOB_PROMPT
+      }
+    ],
+    "faqItems": [
+      { "question": "Is this Grok Bot?", "answer": "No. Grok Bot has Plugins and a cloud computer." },
+      { "question": "Can I use Plugins on grok.com?", "answer": "Plugins belong to Grok Bot." }
+    ],
+    "relatedLinks": [
+      { "label": "Grok integration", "href": "/integrations/grok", "description": "Chat connector setup." },
+      { "label": "grok.com for LinkedIn outreach", "href": "/blogs/grok-com-linkedin-outreach", "description": "The chat tab, not the Bot." }
+    ],
+    "ctaTitle": "Use grok.com if that is already the chat",
+    "ctaBody": "Use Grok Bot only if you already pay for it and you will read the morning list."
+  },
+  {
+    "slug": "openclaw-outbound",
+    "title": "Get LinkedIn sales with OpenClaw",
+    "description": "Use OpenClaw as a local operator with a Bearer key. A leaked token is a leaked workspace. Draft on the machine. Send from Omentir.",
+    "summary": "OpenClaw runs locally. Omentir sends. You still take the meeting.",
+    "publishedDate": "August 27, 2026",
+    "updatedDate": "August 27, 2026",
+    "layout": "timeline",
+    "keywords": ["OpenClaw LinkedIn sales", "OpenClaw outbound", "OpenClaw MCP Omentir"],
+    "highlights": ["Local runtime", "Key in secret storage", "Not a chat connector"],
+    "verdict": "OpenClaw is useful if you already run it. It is extra surface if you only wanted a hosted chat. Keep LinkedIn in Omentir.",
+    "phases": [
+      { "title": "Finish Omentir first", "detail": "LinkedIn connected. My Product written." },
+      { "title": "Store a revocable key", "detail": "Never in a skill file you commit. Rotate it if the machine is shared." },
+      { "title": "Read before write", "detail": "Fetch agents.md. get_context, then list_agents." },
+      { "title": "Send from Omentir", "detail": "A local process you never read is still your problem." }
+    ],
+    "sections": [
+      {
+        "id": "first-job-prompt",
+        "heading": "Paste this into OpenClaw",
+        "paragraphs": ["Point MCP at https://omentir.com/api/agent/v1/mcp with Bearer auth."],
+        "code": OPENCLAW_FIRST_JOB_PROMPT
+      }
+    ],
+    "faqItems": [
+      { "question": "Is this a chat connector?", "answer": "No. ChatGPT and Claude use workspace approval." },
+      { "question": "Is this Hermes?", "answer": "Hermes here is a local paste. OpenClaw can call Omentir tools." }
+    ],
+    "relatedLinks": [
+      { "label": "OpenClaw integration", "href": "/integrations/openclaw", "description": "Local operator setup." },
+      { "label": "How do I connect OpenClaw to Omentir?", "href": "/help/how-do-i-connect-openclaw-to-omentir", "description": "Short help version." }
+    ],
+    "ctaTitle": "Connect OpenClaw only if that runtime is already on the machine",
+    "ctaBody": "If you wanted a hosted chat, use Claude or ChatGPT."
   }
 ];
 

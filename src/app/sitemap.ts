@@ -6,6 +6,7 @@ import { ALL_FEATURES } from "./features/feature-data";
 import { ALL_GUIDES } from "./guides/guide-data";
 import { ALL_HELP_PAGES } from "./help/help-data";
 import { ALL_INTEGRATIONS } from "./integrations/integration-data";
+import { ALL_TOOLS } from "./tools/tools-data";
 import { ALL_USE_CASES } from "./use-cases/use-case-data";
 import { liveSeoPages } from "./seo-content/types";
 import { siteUrl } from "./seo";
@@ -25,6 +26,7 @@ const publicRoutes = [
   { path: "/", changeFrequency: "weekly", priority: 1.0, lastModified: "2026-08-17" },
   { path: "/blogs", changeFrequency: "weekly", priority: 0.9 },
   { path: "/features", changeFrequency: "monthly", priority: 0.85 },
+  { path: "/tools", changeFrequency: "monthly", priority: 0.8 },
   { path: "/comparisons", changeFrequency: "monthly", priority: 0.85 },
   { path: "/alternatives", changeFrequency: "monthly", priority: 0.85 },
   { path: "/use-cases", changeFrequency: "monthly", priority: 0.85 },
@@ -55,6 +57,13 @@ function blogDate(blog: (typeof ALL_BLOGS)[number]) {
 
 function seoPageDate(page: { publishedDate: string; updatedDate: string }) {
   return new Date(`${page.updatedDate || page.publishedDate} UTC`);
+}
+
+function latestToolDate() {
+  return ALL_TOOLS.reduce((newest, tool) => {
+    const date = seoPageDate(tool);
+    return date > newest ? date : newest;
+  }, new Date(0));
 }
 
 // Released posts only: a scheduled post carries a future date, and advertising
@@ -109,6 +118,22 @@ const highIntentBlogSlugs = new Set([
   "automate-cold-messaging-with-grok-bot",
   "grok-bot-for-sales",
   "grok-bot-vs-chatgpt-for-outbound",
+  "grok-bot-vs-claude-for-outbound",
+  "grok-bot-linkedin-prompts",
+  "claude-code-linkedin-outreach",
+  "claude-code-vs-cursor-for-outbound",
+  "cursor-linkedin-outreach",
+  "codex-linkedin-outreach",
+  "chatgpt-connector-linkedin-outreach",
+  "claude-chat-linkedin-outreach",
+  "grok-com-linkedin-outreach",
+  "kimi-linkedin-drafts",
+  "gemini-linkedin-drafts",
+  "deepseek-linkedin-scoring",
+  "qwen-linkedin-drafts",
+  "mistral-le-chat-linkedin-drafts",
+  "sarvam-linkedin-drafts",
+  "hermes-linkedin-drafts",
   "cold-linkedin-outreach",
   "high-intent-linkedin-leads",
   "icp-based-lead-discovery",
@@ -149,6 +174,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     useCasesIndexDate,
     alternativesIndexDate,
     helpIndexDate,
+    latestToolDate(),
   ].reduce((newest, date) => (date > newest ? date : newest), new Date(0));
 
   const derivedIndexDates: Record<string, Date> = {
@@ -161,6 +187,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/use-cases": useCasesIndexDate,
     "/alternatives": alternativesIndexDate,
     "/help": helpIndexDate,
+    "/tools": latestToolDate(),
   };
 
   const mainRoutes = publicRoutes.map((route) => ({
@@ -204,6 +231,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.65,
   }));
 
+  const toolRoutes = ALL_TOOLS.map((tool) => ({
+    url: absoluteUrl(tool.href),
+    lastModified: seoPageDate(tool),
+    changeFrequency: "monthly" as const,
+    priority: 0.8,
+  }));
+
   // Canonical HTML and machine indexes only. Google and Bing both treat a
   // sitemap as the list of URLs to index. Markdown twins stay at `.md` URLs
   // for agents, with a canonical back to the HTML page. Listing those twins
@@ -219,5 +253,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...alternativeRoutes,
     ...guideRoutes,
     ...helpRoutes,
+    ...toolRoutes,
   ];
 }

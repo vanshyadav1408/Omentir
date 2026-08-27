@@ -6,9 +6,10 @@ import { ALL_FEATURES } from "@/app/features/feature-data";
 import { ALL_GUIDES } from "@/app/guides/guide-data";
 import { ALL_HELP_PAGES } from "@/app/help/help-data";
 import { ALL_INTEGRATIONS } from "@/app/integrations/integration-data";
+import { ALL_TOOLS } from "@/app/tools/tools-data";
 import { ALL_USE_CASES } from "@/app/use-cases/use-case-data";
 import { liveSeoPages } from "@/app/seo-content/types";
-import { guidePageToMarkdown, helpPageToMarkdown, seoPageToMarkdown } from "@/lib/public-page-markdown";
+import { guidePageToMarkdown, helpPageToMarkdown, seoPageToMarkdown, toolPageMarkdown } from "@/lib/public-page-markdown";
 import { defaultDescription, siteUrl } from "@/app/seo";
 
 export const revalidate = 86400;
@@ -51,6 +52,9 @@ ${blog.description}`
     .join("\n\n");
   const guides = ALL_GUIDES.map((page) => guidePageToMarkdown(page)).join("\n\n");
   const help = ALL_HELP_PAGES.map((page) => helpPageToMarkdown(page)).join("\n\n");
+  const tools = ALL_TOOLS.map((tool) => toolPageMarkdown(tool.href))
+    .filter((page): page is string => Boolean(page))
+    .join("\n\n");
 
   const body = `# Omentir
 
@@ -108,6 +112,10 @@ ${integrations}
 ## Search guides
 
 ${guides}
+
+## Free tools
+
+${tools}
 
 ## Help
 
