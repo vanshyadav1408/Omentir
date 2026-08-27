@@ -374,4 +374,42 @@ export const INTEGRATION_EXTRAS: Record<string, PageExtras> = {
       },
     ],
   },
+  codex: {
+    highlights: ["config.toml", "bearer_token_env_var", "Shared CLI and extension"],
+    setupSteps: [
+      {
+        title: "Create and export a token",
+        description: "Generate an Omentir API key and export it as OMENTIR_API_KEY before you launch Codex.",
+      },
+      {
+        title: "Add mcp_servers.omentir",
+        description: "In ~/.codex/config.toml, set url to https://omentir.com/api/agent/v1/mcp and bearer_token_env_var to OMENTIR_API_KEY.",
+      },
+      {
+        title: "Confirm with /mcp",
+        description: "If the server is missing, the env var was empty, the table name is wrong, or a project file is in an untrusted repo.",
+      },
+      {
+        title: "Read before write",
+        description: "Fetch agents.md, then get_context and list_agents, before you let Codex create a finder.",
+      },
+    ],
+    sections: [
+      {
+        id: "first-session",
+        heading: "A first Codex session that does not invent targeting",
+        paragraphs: [
+          "Codex moves fast in a repo. Treat create, delete, and reply as named requests. Ask it to show a create_agent config and wait. A refactor that also spins up a finder is how targeting drifts.",
+          "Keep LinkedIn off Codex. Caps and send stay in Omentir. Close the session and the work stops.",
+        ],
+      },
+      {
+        id: "wrong-path",
+        heading: "When ChatGPT chat is the better surface",
+        paragraphs: [
+          "If you wanted a conversation this afternoon with no repo open, use the ChatGPT connector. Codex earns the TOML file when that coding agent is already the loop you live in.",
+        ],
+      },
+    ],
+  },
 };

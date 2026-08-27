@@ -49,6 +49,12 @@ const RETIRED_PUBLIC_REDIRECTS: Record<string, string> = {
   "/mcp-server": "/integrations/mcp",
   "/for-agents.md": "/features/agent-api-and-mcp.md",
   "/mcp-server.md": "/integrations/mcp.md",
+  "/find-leads": "/tools/find-leads",
+  "/find-leads.md": "/tools/find-leads.md",
+  "/improve-linkedin-profile": "/tools/improve-linkedin-profile",
+  "/improve-linkedin-profile.md": "/tools/improve-linkedin-profile.md",
+  "/tools/linkedin-profile-improver": "/tools/improve-linkedin-profile",
+  "/tools/linkedin-profile-improver.md": "/tools/improve-linkedin-profile.md",
 };
 
 const localPublicPaths = new Set(["/login", "/logout", "/api/health", "/api/local-auth/login"]);

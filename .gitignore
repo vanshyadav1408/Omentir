@@ -53,3 +53,7 @@ next-env.d.ts
 
 # Transient local gitleaks config written by scripts/scan-secrets.sh (Docker path)
 .gitleaks.local.toml
+
+# Remotion
+/video/node_modules
+/video/out

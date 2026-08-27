@@ -530,7 +530,7 @@ export const HELP_PAGES_N: HelpPageDraft[] = [
     relatedSlugs: [
       "can-i-use-grok-bot-for-linkedin-outreach",
       "how-do-i-automate-cold-messaging-with-grok-bot",
-      "what-is-the-difference-between-grok-bot-and-grok-com",
+      "how-do-i-connect-grok-bot-to-linkedin",
     ],
   },
   {

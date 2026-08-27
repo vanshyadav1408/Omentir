@@ -24,6 +24,7 @@ const EXACT_PUBLIC_PATHS = new Set([
   "/robots.txt",
   "/sitemap.xml",
   "/terms-of-service",
+  "/tools",
   "/use-cases",
 ]);
 
@@ -35,6 +36,7 @@ const PUBLIC_PATH_PREFIXES = [
   "/help/",
   "/integrations/",
   "/page-markdown/",
+  "/tools/",
   "/use-cases/",
 ];
 
@@ -51,6 +53,7 @@ const PUBLIC_MARKDOWN_ROOTS = new Set([
   "/pricing",
   "/privacy-policy",
   "/terms-of-service",
+  "/tools",
   "/use-cases",
 ]);
 

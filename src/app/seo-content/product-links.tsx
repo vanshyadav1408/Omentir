@@ -33,6 +33,11 @@ export const PRODUCT_HOMEPAGES: readonly ProductEntry[] = [
     names: ["Cursor", "cursor.com"],
   },
   {
+    id: "codex",
+    href: "https://developers.openai.com/codex",
+    names: ["Codex", "OpenAI Codex"],
+  },
+  {
     id: "grok-bot",
     href: "https://x.ai/bot",
     names: ["Grok Bot"],
@@ -46,6 +51,41 @@ export const PRODUCT_HOMEPAGES: readonly ProductEntry[] = [
     id: "openclaw",
     href: "https://openclaw.ai",
     names: ["OpenClaw", "openclaw.ai"],
+  },
+  {
+    id: "kimi",
+    href: "https://www.kimi.com",
+    names: ["Kimi"],
+  },
+  {
+    id: "gemini",
+    href: "https://gemini.google.com",
+    names: ["Gemini"],
+  },
+  {
+    id: "deepseek",
+    href: "https://www.deepseek.com",
+    names: ["DeepSeek"],
+  },
+  {
+    id: "qwen",
+    href: "https://chat.qwen.ai",
+    names: ["Qwen"],
+  },
+  {
+    id: "mistral-le-chat",
+    href: "https://chat.mistral.ai",
+    names: ["Le Chat", "Mistral Le Chat"],
+  },
+  {
+    id: "sarvam",
+    href: "https://www.sarvam.ai",
+    names: ["Sarvam"],
+  },
+  {
+    id: "hermes",
+    href: "https://nousresearch.com",
+    names: ["Hermes"],
   },
   {
     id: "gojiberry",

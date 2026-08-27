@@ -42,6 +42,7 @@ export async function GET() {
           "integration pages",
           "legal pages",
           "help pages",
+          "free tools",
           "agent documentation",
           "markdown twins of those pages",
         ],

@@ -9,6 +9,8 @@
     "build": "bun --bun next build",
     "start": "bun --bun next start",
     "lint": "bun --bun eslint",
+    "video": "bun run --cwd video studio",
+    "video:render": "bun run --cwd video render",
     "postinstall": "rm -rf .next"
   },
   "dependencies": {

@@ -29,6 +29,10 @@ const INTEGRATION_LOGOS: Record<
     src: "/integration-logos/claude-code.svg",
     name: "Claude Code",
   },
+  codex: {
+    src: "/integration-logos/codex.svg",
+    name: "Codex",
+  },
 };
 
 export function integrationName(slug: string) {

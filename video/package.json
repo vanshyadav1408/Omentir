@@ -1,0 +1,20 @@
+{
+  "name": "omentir-video",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "studio": "remotion studio src/index.ts",
+    "render": "remotion render src/index.ts ProductVideo out/omentir.mp4",
+    "still": "remotion still src/index.ts ProductVideo out/preview.png"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.518",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "remotion": "^4.0.518"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.18",
+    "typescript": "^7.0.2"
+  }
+}

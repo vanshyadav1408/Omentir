@@ -138,11 +138,17 @@ export function CardBody({ children }: { children: ReactNode }) {
   );
 }
 
-export function RelatedCards({ links }: { links: readonly GuideRelated[] }) {
+export function RelatedCards({
+  links,
+  heading = "Related",
+}: {
+  links: readonly GuideRelated[];
+  heading?: string;
+}) {
   if (!links.length) return null;
   return (
     <section className="omentir-moderate-width min-w-0 py-12 md:py-16">
-      <p className="text-sm text-[var(--md-sys-color-on-surface-variant)]">More on Grok Bot</p>
+      <p className="text-sm text-[var(--md-sys-color-on-surface-variant)]">{heading}</p>
       <div className="mt-6 grid gap-4 md:grid-cols-3">
         {links.map((link) => (
           <Link
