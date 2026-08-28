@@ -143,6 +143,21 @@ export const PRODUCT_HOMEPAGES: readonly ProductEntry[] = [
     names: ["Expandi", "expandi.io"],
   },
   {
+    id: "dripify",
+    href: "https://dripify.com",
+    names: ["Dripify", "dripify.com"],
+  },
+  {
+    id: "waalaxy",
+    href: "https://www.waalaxy.com",
+    names: ["Waalaxy", "waalaxy.com"],
+  },
+  {
+    id: "linkedhelper",
+    href: "https://www.linkedhelper.com",
+    names: ["LinkedHelper", "Linked Helper", "linkedhelper.com"],
+  },
+  {
     id: "lemlist",
     href: "https://www.lemlist.com",
     names: ["Lemlist", "lemlist.com"],

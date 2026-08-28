@@ -1439,6 +1439,11 @@ export const ALL_COMPARISONS: SeoContentPage[] = [
         "description": "Sequencers versus workspaces."
       },
       {
+        "label": "Expandi alternatives",
+        "href": "/comparisons/omentir-vs-expandi",
+        "description": "$99 multi-account sequencer and Agency white-label.",
+      },
+      {
         "label": "HeyReach vs Expandi",
         "href": "/comparisons/heyreach-vs-expandi",
         "description": "Two cloud sequencers, then Omentir."
@@ -1985,9 +1990,9 @@ export const ALL_COMPARISONS: SeoContentPage[] = [
         "description": "Sequencers versus workspaces."
       },
       {
-        "label": "Campaigns and send windows",
-        "href": "/features/campaigns-and-send-windows",
-        "description": "How Omentir paces sends."
+        "label": "LinkedHelper alternatives",
+        "href": "/comparisons/omentir-vs-linkedhelper",
+        "description": "A local LinkedIn helper, not a multichannel sequence box."
       },
       {
         "label": "Open source and self-hosting",
@@ -2275,7 +2280,7 @@ export const ALL_COMPARISONS: SeoContentPage[] = [
       },
       {
         "question": "Is Expandi an Omentir alternative?",
-        "answer": "Only if you needed LinkedIn send. Not if you needed LinkedIn discovery. Use the LinkedIn automation roundup."
+        "answer": "Only if you needed LinkedIn send. Not if you needed LinkedIn discovery. The dedicated Expandi alternatives page is the one-to-one matchup. This faceoff is HeyReach versus Expandi."
       }
     ],
     "relatedLinks": [
@@ -2285,14 +2290,14 @@ export const ALL_COMPARISONS: SeoContentPage[] = [
         "description": "Sender pool versus workspace."
       },
       {
+        "label": "Expandi alternatives",
+        "href": "/comparisons/omentir-vs-expandi",
+        "description": "$99 Business and Agency white-label versus $49 discovery.",
+      },
+      {
         "label": "LinkedIn automation roundup",
         "href": "/alternatives/linkedin-automation",
         "description": "The category shortlist."
-      },
-      {
-        "label": "Lead finders",
-        "href": "/features/lead-finders",
-        "description": "How Omentir builds the list the sequencers assume."
       }
     ],
     "ctaTitle": "If both sequencers needed a CSV, the CSV is the product",
@@ -2400,6 +2405,687 @@ export const ALL_COMPARISONS: SeoContentPage[] = [
     ],
     "ctaTitle": "Open the saved search you have not messaged",
     "ctaBody": "If it is full and the inbox is quiet, you needed send, not another filter."
+  },
+  {
+    "slug": "omentir-vs-expandi",
+    "title": "Expandi Alternatives",
+    "description": "Expandi is a $99 Business cloud sequencer for sales teams, agencies, and recruiters. Multiple accounts, LinkedIn plus email in one sequence, Agency white-label. Omentir is $49, one connected profile, ICP finders and Steal Customers, MIT.",
+    "summary": "A $99 multi-account agency sequencer versus a $49 LinkedIn discovery workspace.",
+    "publishedDate": "August 28, 2026",
+    "updatedDate": "August 28, 2026",
+    "keywords": [
+      "Expandi alternatives",
+      "Expandi alternative",
+      "Omentir vs Expandi"
+    ],
+    "verdict": "Keep Expandi when $99 Business (or Agency white-label with extra seats) and several LinkedIn accounts in one cloud sequencer is the job. Use Omentir when you want finders, Steal Customers, and send from one connected profile at $49. Confirm add-ons on expandi.io.",
+    "comparisonTable": {
+      "headers": [
+        "Omentir",
+        "Expandi"
+      ],
+      "rows": [
+        {
+          "dimension": "Price they print",
+          "cells": [
+            "Pro $49 per month: 1 user, 1 LinkedIn account, unlimited agents, leads, campaigns, API, email support",
+            "Business $99 per month, $79 with the annual toggle. Agency is custom, plus 10 seats, white-label. Confirm add-ons on expandi.io"
+          ]
+        },
+        {
+          "dimension": "Who the homepage is for",
+          "cells": [
+            "Founders and small sales teams. LinkedIn workspace, MIT source",
+            "Sales teams, agencies, and recruiters. Their hero is a 3X meeting multiplier"
+          ]
+        },
+        {
+          "dimension": "Accounts",
+          "cells": [
+            "The LinkedIn account you connect. Not an unlimited sender pool",
+            "Multiple accounts. Agency packaging adds seats. Confirm current limits on expandi.io"
+          ]
+        },
+        {
+          "dimension": "Channels",
+          "cells": [
+            "LinkedIn-first. No native email warmup",
+            "LinkedIn plus email in one sequence, per their site"
+          ]
+        },
+        {
+          "dimension": "How people show up",
+          "cells": [
+            "ICP lead finders, or commenters on competitor posts",
+            "They claim collection from groups, events, and posts, plus sequences. Confirm on expandi.io. Not a CSV-only product"
+          ]
+        },
+        {
+          "dimension": "Code you can read",
+          "cells": [
+            "MIT licensed application. Hosted or self-host",
+            "Commercial product"
+          ]
+        }
+      ]
+    },
+    "sections": [
+      {
+        "id": "the-99-agency-sequencer",
+        "heading": "Expandi is the $99 agency sequencer",
+        "paragraphs": [
+          "Expandi's homepage sells a 3X meeting multiplier to sales teams, agencies, and recruiters. Business is $99 a month, $79 if you toggle annual. Agency is custom, with ten extra seats and white-label. The motion is a cloud sequencer: several LinkedIn accounts, LinkedIn and email in one sequence. Confirm add-ons on expandi.io. This page will not invent a pack they did not print.",
+          "Omentir Pro is $49: one user, one LinkedIn account, finders, Steal Customers, send from the connected profile, MIT. If you swap this paragraph onto a Dripify page, the $99 Agency white-label row becomes a lie. That is the point of a second page."
+        ]
+      },
+      {
+        "id": "not-csv-only",
+        "heading": "They collect more than a sheet",
+        "paragraphs": [
+          "Do not write Expandi as imported lists only. Their public story includes audience collection from groups, events, and posts. Confirm the current catalog on expandi.io. LinkedIn still owns the account. This page will not bless scraping.",
+          "Omentir's list source is a written ICP, or people who commented on a competitor post. Steal Customers is not a group collector. Classic finders exist either way. Claude or Cursor can create that agent over MCP. The LinkedIn password stays out of the chat app."
+        ]
+      },
+      {
+        "id": "when-expandi-wins",
+        "heading": "When Expandi is the better buy",
+        "paragraphs": [
+          "Keep Expandi if $99 Business, or Agency white-label with extra seats, is the seat math, and you need several LinkedIn accounts in one cloud sequencer with LinkedIn plus email. Confirm add-ons on their site. Omentir will not grow white-label to win that RFP."
+        ]
+      },
+      {
+        "id": "when-omentir-fits",
+        "heading": "When Omentir fits instead",
+        "paragraphs": [
+          "Pick Omentir when you wanted finders and Steal Customers, send from one connected profile, MIT source, and $49 hosted. No native email warmup. No unlimited sender pool. Self-host with RUN_LOCALLY=TRUE if ops is the constraint."
+        ]
+      }
+    ],
+    "faqItems": [
+      {
+        "question": "Is this the same as HeyReach vs Expandi?",
+        "answer": "No. That faceoff compares two sequencers, then names Omentir as a third path. This page is the $99 multi-account Expandi buy versus Omentir's $49 discovery workspace."
+      },
+      {
+        "question": "Does Omentir rotate unlimited LinkedIn senders?",
+        "answer": "No. Omentir sends from the accounts you connect, with daily limits and send windows. Expandi sells multiple accounts and Agency seats. Confirm their current caps on expandi.io. Neither product is an unlimited rotator we will print as a slogan."
+      },
+      {
+        "question": "Is Dripify the same as Expandi?",
+        "answer": "No. Dripify is per-user visual drips with printed daily quotas and 100 email-finder credits, starting at $59. Expandi is $99 Business, Agency white-label, and several accounts. Use the Dripify matchup if quotas and finder credits are the job."
+      }
+    ],
+    "relatedLinks": [
+      {
+        "label": "Dripify alternatives",
+        "href": "/comparisons/omentir-vs-dripify",
+        "description": "Per-user quotas and finder credits, not Agency white-label."
+      },
+      {
+        "label": "HeyReach vs Expandi",
+        "href": "/comparisons/heyreach-vs-expandi",
+        "description": "Two sequencers, then Omentir as discovery."
+      },
+      {
+        "label": "HeyReach alternatives",
+        "href": "/comparisons/omentir-vs-heyreach",
+        "description": "Sender pool versus workspace."
+      },
+      {
+        "label": "LinkedIn automation roundup",
+        "href": "/alternatives/linkedin-automation",
+        "description": "Different jobs, not swapped logos."
+      }
+    ],
+    "ctaTitle": "If you needed one profile and a list found, skip the $99 sequencer",
+    "ctaBody": "Brief an ICP in Omentir. Agency white-label is a different purchase."
+  },
+  {
+    "slug": "omentir-vs-dripify",
+    "title": "Dripify Alternatives",
+    "description": "Dripify is per-user cloud drips: Basic $59, Pro $79, Advanced $99 a month ($39, $59, $79 annual), a 7-day trial, printed daily quotas, and 100 email-finder credits. Omentir is a $49 LinkedIn workspace that finds ICP-fit buyers or competitor commenters.",
+    "summary": "Printed quotas and email-finder credits versus LinkedIn discovery.",
+    "publishedDate": "August 28, 2026",
+    "updatedDate": "August 28, 2026",
+    "keywords": [
+      "Dripify alternatives",
+      "Dripify alternative",
+      "Omentir vs Dripify"
+    ],
+    "verdict": "Keep Dripify when you want a cheaper visual drip, printed connect and message caps, and email-finder credits on a per-user plan. Use Omentir when you want finders, Steal Customers, and LinkedIn-only send from the connected profile. This is not Expandi's Agency white-label.",
+    "comparisonTable": {
+      "headers": [
+        "Omentir",
+        "Dripify"
+      ],
+      "rows": [
+        {
+          "dimension": "Price they print",
+          "cells": [
+            "Pro $49 per month, one user, one LinkedIn account",
+            "Basic $59, Pro $79, Advanced $99 monthly. Annual $39, $59, $79. 7-day trial. Confirm on dripify.com/pricing"
+          ]
+        },
+        {
+          "dimension": "Daily quotas they print",
+          "cells": [
+            "Send windows and daily invite limits you set in the workspace",
+            "Basic 20 connects and 30 messages. Pro and Advanced 75 connects and 100+ messages. Confirm on dripify.com"
+          ]
+        },
+        {
+          "dimension": "Email finder",
+          "cells": [
+            "None. No native email warmup",
+            "100 credits included. Extra packs sold. Confirm on dripify.com"
+          ]
+        },
+        {
+          "dimension": "Campaign object",
+          "cells": [
+            "My Product, a finder or Steal Customers, campaign goals",
+            "Visual drag-and-drop drips. Homepage: \"LinkedIn Automation Made Ridiculously Simple.\""
+          ]
+        },
+        {
+          "dimension": "Agency white-label",
+          "cells": [
+            "No. Hosted Pro is one user and one LinkedIn account",
+            "Not Expandi's Agency plus 10 seats and white-label. Dripify is per-user"
+          ]
+        },
+        {
+          "dimension": "Code you can read",
+          "cells": [
+            "MIT licensed application",
+            "Commercial product"
+          ]
+        }
+      ]
+    },
+    "sections": [
+      {
+        "id": "printed-quota-drip",
+        "heading": "Dripify sells printed quotas and finder credits",
+        "paragraphs": [
+          "Dripify is per-user cloud drips. Basic is $59 a month, Pro $79, Advanced $99. Annual is $39, $59, $79. There is a 7-day trial. They print daily quotas: Basic 20 connection requests and 30 messages; Pro and Advanced 75 connects and 100+ messages. They include 100 email-finder credits and sell packs. Confirm the grid on dripify.com/pricing. Those numbers are the product.",
+          "Omentir does not sell finder-credit packs. It does not print a 20-connect Basic cap. It finds people on LinkedIn from a written ICP or from comments on a competitor post, then sends from your profile at $49. If you needed the email finder meter, Dripify matches the job. If you needed the list found, it does not."
+        ]
+      },
+      {
+        "id": "not-expandi",
+        "heading": "Not Expandi's $99 Agency buy",
+        "paragraphs": [
+          "Expandi Business is $99, with Agency custom seats, white-label, a 3X meeting multiplier, and several LinkedIn accounts. Dripify is cheaper per user, a visual drip, finder credits, and printed caps. Put Expandi's logo on this paragraph and the $59 Basic row and the 100-credit finder pack are false. That is why both pages exist.",
+          "Dripify runs campaigns on their servers. Confirm current packaging on dripify.com. Do not invent a Chrome Dripify."
+        ]
+      },
+      {
+        "id": "when-dripify-wins",
+        "heading": "When Dripify is the better buy",
+        "paragraphs": [
+          "Keep Dripify if the list is yours, you want a visual drip, and the printed 20/30 or 75/100+ caps plus 100 finder credits are why you can defend the spend. Keep it if $59 Basic beats $99 Expandi Business and you did not need white-label. Confirm on dripify.com. Omentir will not sell email-finder packs."
+        ]
+      },
+      {
+        "id": "when-omentir-fits",
+        "heading": "When Omentir fits instead",
+        "paragraphs": [
+          "Pick Omentir when you needed the people found, LinkedIn-only send from one connected profile, MIT, and $49. No email warmup. No finder-credit meter. Steal Customers only exists if competitors post."
+        ]
+      }
+    ],
+    "faqItems": [
+      {
+        "question": "Is Dripify a Chrome extension?",
+        "answer": "Treat it as cloud drips on their servers. Confirm current packaging on dripify.com. Omentir is not a Chrome extension either."
+      },
+      {
+        "question": "Does Omentir warm email inboxes?",
+        "answer": "No. Dripify's 100 finder credits and email steps are their aisle. Omentir is LinkedIn-first."
+      },
+      {
+        "question": "How is this different from Expandi alternatives?",
+        "answer": "Expandi is $99 Business and Agency white-label with several accounts. Dripify is $59, $79, or $99 per user with printed daily quotas and email-finder credits. The Expandi page does not print a 20-connect Basic cap. This one does, because that is the Dripify buy."
+      }
+    ],
+    "relatedLinks": [
+      {
+        "label": "Expandi alternatives",
+        "href": "/comparisons/omentir-vs-expandi",
+        "description": "$99 Agency sequencer, not a $59 drip with finder credits."
+      },
+      {
+        "label": "Waalaxy alternatives",
+        "href": "/comparisons/omentir-vs-waalaxy",
+        "description": "EUR invite caps, email only on Business."
+      },
+      {
+        "label": "LinkedIn automation roundup",
+        "href": "/alternatives/linkedin-automation",
+        "description": "Different jobs, not swapped logos."
+      },
+      {
+        "label": "Steal Customers",
+        "href": "/features/steal-customers",
+        "description": "The list source a drip builder does not replace."
+      }
+    ],
+    "ctaTitle": "If you are buying finder credits instead of a list, stop",
+    "ctaBody": "Run one Omentir ICP. A 20-connect cap on the wrong people still misses."
+  },
+  {
+    "slug": "omentir-vs-waalaxy",
+    "title": "Waalaxy Alternatives",
+    "description": "Waalaxy prints €19, €49, and €69 per user per month, 300 or 800 invites a month, email sequences on Business, and \"No database.\" Their site also shows Chrome Store reviews and app.waalaxy.com. Omentir is a hosted $49 LinkedIn workspace with finders and Steal Customers.",
+    "summary": "Cheap EUR invite caps and email only on Business versus a hosted discovery workspace.",
+    "publishedDate": "August 28, 2026",
+    "updatedDate": "August 28, 2026",
+    "keywords": [
+      "Waalaxy alternatives",
+      "Waalaxy alternative",
+      "Omentir vs Waalaxy"
+    ],
+    "verdict": "Keep Waalaxy if €19 to €69 and a 300 or 800 invite cap is the budget, and email sequences only matter on Business. Use Omentir if you want finders, Steal Customers, and a hosted workspace at $49. Their homepage does not print cloud or extension. This page will not invent one.",
+    "comparisonTable": {
+      "headers": [
+        "Omentir",
+        "Waalaxy"
+      ],
+      "rows": [
+        {
+          "dimension": "Price they print",
+          "cells": [
+            "Pro $49 per month",
+            "€19, €49, and €69 per user per month. Confirm on waalaxy.com/pricing"
+          ]
+        },
+        {
+          "dimension": "Invite cap they print",
+          "cells": [
+            "Daily limits and send windows you set",
+            "300 invites per month on the lower plan, 800 on the higher ones, as they print"
+          ]
+        },
+        {
+          "dimension": "Email",
+          "cells": [
+            "None native. No inbox warmup",
+            "Email sequences on the Business plan. Confirm on waalaxy.com"
+          ]
+        },
+        {
+          "dimension": "Database",
+          "cells": [
+            "Live LinkedIn finders and Steal Customers. Not a 200 million contact graph",
+            "They print \"No database.\""
+          ]
+        },
+        {
+          "dimension": "What the public site shows",
+          "cells": [
+            "omentir.com as a hosted app, or Docker with RUN_LOCALLY=TRUE. No Chrome Store listing",
+            "Chrome Store reviews and app.waalaxy.com. Homepage and pricing do not print cloud or extension"
+          ]
+        },
+        {
+          "dimension": "Code you can read",
+          "cells": [
+            "MIT licensed application",
+            "Commercial product"
+          ]
+        }
+      ]
+    },
+    "sections": [
+      {
+        "id": "eur-invite-cap",
+        "heading": "Waalaxy is the cheap EUR invite-cap buy",
+        "paragraphs": [
+          "Waalaxy's pricing page prints €19, €49, and €69 per user per month. Invite caps are 300 a month on the lower plan and 800 on the higher ones. Email sequences sit on Business. They print \"No database.\" Confirm the grid on waalaxy.com/pricing. That is a cheap EUR LinkedIn outreach buy with an invite ceiling, not a $99 agency sequencer and not a $59 drip with finder credits.",
+          "Omentir Pro is $49 with finders, Steal Customers, and send from the connected profile. If you put Dripify's logo on the €19 and 300-invite row, the paragraph is false. If you put Expandi's logo on it, the Agency white-label row is missing. Different job."
+        ]
+      },
+      {
+        "id": "what-they-print",
+        "heading": "Print what they print about where it runs",
+        "paragraphs": [
+          "The homepage and pricing page do not print the words cloud or extension. They do print Chrome Store reviews and app.waalaxy.com. This page will not claim in-browser send as a proven fact. Omentir prints omentir.com as a hosted app, or Docker. If you wanted to compare install mechanics, read both sites. If you wanted to compare jobs, the invite cap and the Business-only email are the tell."
+        ]
+      },
+      {
+        "id": "when-waalaxy-wins",
+        "heading": "When Waalaxy is the better buy",
+        "paragraphs": [
+          "Keep Waalaxy if the EUR price and the 300 or 800 invite cap match the team, and you only need email sequences once you are on Business. Keep it if \"No database\" is a feature for you, not a gap. Confirm on waalaxy.com. Omentir will not sell a €19 seat."
+        ]
+      },
+      {
+        "id": "when-omentir-fits",
+        "heading": "When Omentir fits instead",
+        "paragraphs": [
+          "Pick Omentir when you wanted ICP finders or Steal Customers, send from the connected profile, MIT, and $49 hosted. Email warmup is not in the product. Unlimited senders are not in the product."
+        ]
+      }
+    ],
+    "faqItems": [
+      {
+        "question": "Is Waalaxy a Chrome extension?",
+        "answer": "Their homepage and pricing page do not print that. They print Chrome Store reviews and app.waalaxy.com. Confirm the current install on their site. Omentir is a hosted workspace or Docker, with no Chrome Store listing."
+      },
+      {
+        "question": "Does every Waalaxy plan include email sequences?",
+        "answer": "They print email sequences on Business. Confirm on waalaxy.com. Omentir has no native email."
+      },
+      {
+        "question": "Does Omentir include a contact database?",
+        "answer": "No. Waalaxy prints \"No database.\" Omentir also does not sell a 200 million contact graph. Omentir finds people on LinkedIn from an ICP or from competitor comments."
+      }
+    ],
+    "relatedLinks": [
+      {
+        "label": "Dripify alternatives",
+        "href": "/comparisons/omentir-vs-dripify",
+        "description": "USD printed quotas and email-finder credits."
+      },
+      {
+        "label": "LinkedHelper alternatives",
+        "href": "/comparisons/omentir-vs-linkedhelper",
+        "description": "Desktop bot you download, computer stays on."
+      },
+      {
+        "label": "LinkedIn automation roundup",
+        "href": "/alternatives/linkedin-automation",
+        "description": "Different jobs, not swapped logos."
+      },
+      {
+        "label": "Lead finders",
+        "href": "/features/lead-finders",
+        "description": "How Omentir builds a list without buying a database."
+      }
+    ],
+    "ctaTitle": "If 800 invites a month was never the bottleneck, change the object",
+    "ctaBody": "Brief a finder. A cheaper EUR cap will not invent the list."
+  },
+  {
+    "slug": "omentir-vs-linkedhelper",
+    "title": "LinkedHelper Alternatives",
+    "description": "LinkedHelper is a desktop app, not a Chrome extension. Local Standard $15, Pro $45. Cloud storage $29.90 and $59.90. One license is one LinkedIn account. Email is find and enrich so you continue in a cold-email tool. Omentir is a hosted or Docker workspace at $49, with finders and Steal Customers.",
+    "summary": "Local desktop bot, computer on, versus a hosted LinkedIn workspace.",
+    "publishedDate": "August 28, 2026",
+    "updatedDate": "August 28, 2026",
+    "keywords": [
+      "LinkedHelper alternatives",
+      "Linked Helper alternative",
+      "Omentir vs LinkedHelper"
+    ],
+    "verdict": "Keep LinkedHelper if you want a desktop bot you download, one license per LinkedIn account, and you will leave the computer on. Use Omentir if you want a hosted or Docker workspace, finders, and MCP. LinkedHelper email is find/enrich, not a LinkedIn-plus-email sequence.",
+    "comparisonTable": {
+      "headers": [
+        "Omentir",
+        "LinkedHelper"
+      ],
+      "rows": [
+        {
+          "dimension": "Price they print",
+          "cells": [
+            "Pro $49 per month hosted",
+            "Local Standard $15, Pro $45. Cloud storage $29.90 and $59.90. Confirm on linkedhelper.com"
+          ]
+        },
+        {
+          "dimension": "What you install",
+          "cells": [
+            "A hosted login at omentir.com, or Docker with RUN_LOCALLY=TRUE",
+            "Desktop app, not a Chrome extension. Download from linkedhelper.com"
+          ]
+        },
+        {
+          "dimension": "License",
+          "cells": [
+            "Pro is 1 user, 1 LinkedIn account",
+            "1 license = 1 LinkedIn account"
+          ]
+        },
+        {
+          "dimension": "Where it runs",
+          "cells": [
+            "Omentir's servers, or your Docker host",
+            "Your computer. The machine stays on"
+          ]
+        },
+        {
+          "dimension": "Email",
+          "cells": [
+            "None native. No inbox warmup",
+            "Find and enrich so you continue in a cold-email tool, not a LinkedIn-plus-email sequence"
+          ]
+        },
+        {
+          "dimension": "How people show up",
+          "cells": [
+            "ICP finders and Steal Customers",
+            "You collect and run. Confirm on linkedhelper.com"
+          ]
+        }
+      ]
+    },
+    "sections": [
+      {
+        "id": "desktop-bot",
+        "heading": "A desktop bot you download",
+        "paragraphs": [
+          "LinkedHelper prints \"Desktop app, not a Chrome extension.\" Local Standard is $15, Pro $45. Cloud storage is $29.90 and $59.90. One license is one LinkedIn account. You download it. The computer stays on. Confirm the grid on linkedhelper.com.",
+          "Omentir is an application you log into at omentir.com, or run with Docker. Hosted Pro is $49. The campaign does not depend on a laptop lid. MCP is https://omentir.com/api/agent/v1/mcp on hosted. Operators never receive a LinkedIn password."
+        ]
+      },
+      {
+        "id": "email-handoff",
+        "heading": "Email is a handoff, not a sequence",
+        "paragraphs": [
+          "LinkedHelper's email story is find and enrich so you continue in a cold-email tool. That is not Dripify's LinkedIn-plus-email drip, not Expandi's LinkedIn-plus-email sequence, and not Waalaxy email sequences on Business. Omentir has no native email warmup either. The reasons differ: Omentir is LinkedIn-first. LinkedHelper is handing you an address for another product."
+        ]
+      },
+      {
+        "id": "not-lgm",
+        "heading": "Do not swap this with La Growth Machine",
+        "paragraphs": [
+          "La Growth Machine is a desktop-centric multichannel sequencer: LinkedIn plus email plus other steps they ship, with the sequence graph as the asset. LinkedHelper is a local LinkedIn bot you download, one license per account, computer on. Different object. The LGM page already exists. If this paragraph could sit under an LGM logo, we would not have shipped a second page."
+        ]
+      },
+      {
+        "id": "when-linkedhelper-wins",
+        "heading": "When LinkedHelper is the better buy",
+        "paragraphs": [
+          "Keep LinkedHelper if $15 or $45 local, one license per account, and a desktop bot you will leave running is the job. Cloud storage at $29.90 or $59.90 if that is what they sell you. Confirm on linkedhelper.com. Omentir will not become a tray app to win that buyer."
+        ]
+      },
+      {
+        "id": "when-omentir-fits",
+        "heading": "When Omentir fits instead",
+        "paragraphs": [
+          "Pick Omentir when you do not want to babysit a desktop process, you want finders and Steal Customers, $49 hosted, MIT, and MCP. No email warmup. No unlimited senders."
+        ]
+      }
+    ],
+    "faqItems": [
+      {
+        "question": "Is LinkedHelper a Chrome extension?",
+        "answer": "No. They print desktop app, not a Chrome extension. Download for Windows, macOS, or Linux on linkedhelper.com. Confirm the current installer there."
+      },
+      {
+        "question": "Is this the same as La Growth Machine alternatives?",
+        "answer": "No. LGM is a desktop multichannel sequencer. LinkedHelper is a local LinkedIn bot, one license per account, with email as find/enrich for a cold-email tool. Use the LGM matchup if extra channels in a sequence box are the job."
+      },
+      {
+        "question": "Does self-hosting Omentir turn it into LinkedHelper?",
+        "answer": "No. Docker still runs the Omentir application: finders, campaigns, inbox, MCP. LinkedHelper still runs on the desktop and the computer stays on. Same machine, different object."
+      }
+    ],
+    "relatedLinks": [
+      {
+        "label": "La Growth Machine alternatives",
+        "href": "/comparisons/omentir-vs-la-growth-machine",
+        "description": "Desktop multichannel sequences, not a LinkedIn helper."
+      },
+      {
+        "label": "Waalaxy alternatives",
+        "href": "/comparisons/omentir-vs-waalaxy",
+        "description": "EUR invite caps, email on Business, not a $15 desktop bot."
+      },
+      {
+        "label": "Open source and self-hosting",
+        "href": "/features/open-source-self-hosting",
+        "description": "Docker is still an application, not a helper overlay."
+      },
+      {
+        "label": "Self-Host vs Hosted Omentir",
+        "href": "/comparisons/self-host-vs-hosted",
+        "description": "Same MIT code, different ops."
+      }
+    ],
+    "ctaTitle": "If you wanted an app you can leave running, stop babysitting a helper",
+    "ctaBody": "Start hosted, or Docker. MCP stays off your LinkedIn password."
+  },
+  {
+    "slug": "self-host-vs-hosted",
+    "title": "Self-Host vs Hosted Omentir",
+    "description": "Same MIT codebase. Hosted omentir.com is Pro at $49 per month with Unipile, Firebase, and Gemini operated for you, plus a three-bookings-per-week guarantee. Self-host is RUN_LOCALLY=TRUE with your Firebase, Unipile, and Gemini or Vertex.",
+    "summary": "Same application. Different ops, providers, and commercial packaging.",
+    "publishedDate": "August 28, 2026",
+    "updatedDate": "August 28, 2026",
+    "layout": "faceoff",
+    "keywords": [
+      "self-host Omentir",
+      "hosted vs self-host Omentir",
+      "Omentir Docker"
+    ],
+    "verdict": "Use hosted if you want the product without operating providers. Self-host if you will run Docker, Firebase, Unipile, and Gemini or Vertex yourself. The code is the same MIT repo. This is not a competitor page.",
+    "comparisonTable": {
+      "headers": [
+        "Hosted",
+        "Self-host"
+      ],
+      "rows": [
+        {
+          "dimension": "Code",
+          "cells": [
+            "The public MIT application, run for you at omentir.com",
+            "The same public MIT application. github.com/vanshyadav1408/Omentir"
+          ]
+        },
+        {
+          "dimension": "How you turn it on",
+          "cells": [
+            "Sign up on omentir.com",
+            "RUN_LOCALLY=TRUE, Docker, your own provider accounts"
+          ]
+        },
+        {
+          "dimension": "Who operates Firebase, Unipile, Gemini",
+          "cells": [
+            "Omentir. You do not bring those keys",
+            "You. Firestore, Unipile, and Gemini or Vertex are yours to bill and debug"
+          ]
+        },
+        {
+          "dimension": "Price",
+          "cells": [
+            "Pro $49 per month: 1 user, 1 LinkedIn account, unlimited agents, leads, and campaigns, API, email support. Enterprise is unlimited users and accounts, SSO, dedicated onboarding, priority support",
+            "No Omentir subscription. You still pay Google, Unipile, and hosting. Self-host is not free infrastructure"
+          ]
+        },
+        {
+          "dimension": "Booking guarantee",
+          "cells": [
+            "Minimum three bookings per week or you pay nothing, on eligible hosted plans. Read the Minimum Booking Guarantee",
+            "Not included. The guarantee is hosted-only"
+          ]
+        },
+        {
+          "dimension": "Name and logo",
+          "cells": [
+            "You are using Omentir",
+            "The MIT license does not grant the Omentir name or logo. Public forks rebrand"
+          ]
+        }
+      ]
+    },
+    "sections": [
+      {
+        "id": "same-code",
+        "heading": "One repo, two ways to run it",
+        "paragraphs": [
+          "Hosted Omentir and a self-hosted install are the same application. There is no secret second codebase. You pay hosted for operations, providers, support, and the commercial packaging. You pay self-host with your time and your vendor bills. If a page pretended these were two products, it would be lying.",
+          "The switch in the repo is RUN_LOCALLY=TRUE. That turns off hosted auth, billing, marketing, and hosted-only mail. You still need Firebase or Firestore, Unipile for LinkedIn, and Gemini or Vertex for the model. Docker is the supported path. It is not offline."
+        ]
+      },
+      {
+        "id": "when-hosted-fits",
+        "heading": "When hosted Omentir fits",
+        "paragraphs": [
+          "Start hosted if you have not proved the offer yet. Pro is $49 per month for one user and one LinkedIn account, with unlimited agents, leads, and campaigns, API access, and email support. Omentir operates Unipile, Firebase, and Gemini. The three-bookings-per-week or pay-nothing promise applies only on eligible hosted workspaces. Read the policy before you treat it as a slogan.",
+          "Enterprise is the path when you need unlimited users and LinkedIn accounts, SSO, dedicated onboarding, or priority support. That is still hosted. It is not a self-host SKU."
+        ]
+      },
+      {
+        "id": "choose-self-host",
+        "heading": "When you should self-host",
+        "paragraphs": [
+          "Self-host when a reviewer needs the app on your machines, when residency is a real constraint, or when you already run Docker and provider accounts and do not want another SaaS. Budget time for Unipile, Firebase, and Gemini or Vertex before you have learned anything about buyers. That is a week-two project if the motion is unproven, and a day-one project if the constraint is already known.",
+          "Forks may modify the MIT code. They may not present themselves as Omentir or omentir.com. The name and logo are not in the software license."
+        ]
+      },
+      {
+        "id": "when-neither",
+        "heading": "When neither path is the buy",
+        "paragraphs": [
+          "If you wanted a sequencer on a CSV you already have, this page is the wrong aisle. Expandi, Dripify, Waalaxy, and HeyReach are those purchases. Hosted versus self-host only matters after you want Omentir's LinkedIn workspace. Pick the ops model second."
+        ]
+      }
+    ],
+    "faqItems": [
+      {
+        "question": "Is the hosted product closed source?",
+        "answer": "No. Hosted Omentir runs the public MIT application. You pay for operations, providers, and support, not for a hidden fork."
+      },
+      {
+        "question": "Does self-host include the three bookings per week guarantee?",
+        "answer": "No. The Minimum Booking Guarantee is hosted-only. Self-host customers run their own providers and are not on that policy."
+      },
+      {
+        "question": "Can I keep the Omentir name on a public fork?",
+        "answer": "No. The MIT license covers the software. The Omentir name and logo are separate. Public forks should use their own branding."
+      },
+      {
+        "question": "Do I need to self-host to use MCP?",
+        "answer": "No. Hosted MCP is https://omentir.com/api/agent/v1/mcp. Self-host if you need the app on your infrastructure, not because you wanted Claude."
+      }
+    ],
+    "relatedLinks": [
+      {
+        "label": "Open source and self-hosting",
+        "href": "/features/open-source-self-hosting",
+        "description": "What MIT and Docker actually mean."
+      },
+      {
+        "label": "Open source AI SDR",
+        "href": "/use-cases/open-source-ai-sdr",
+        "description": "When inspectable code is the buying reason."
+      },
+      {
+        "label": "Pricing",
+        "href": "/pricing",
+        "description": "Hosted Pro and Enterprise."
+      },
+      {
+        "label": "Minimum Booking Guarantee",
+        "href": "/minimum-booking-guarantee",
+        "description": "Hosted-only. Read the rules."
+      }
+    ],
+    "ctaTitle": "If you have not sent a note yet, do not start with Docker",
+    "ctaBody": "Use hosted Pro for the first test. Self-host when ops is the actual requirement."
   }
 ];
 

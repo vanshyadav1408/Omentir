@@ -12,7 +12,7 @@ export const ALL_ALTERNATIVES: SeoContentPage[] = [
     "description": "A shortlist of LinkedIn sequencers and workspaces. Agency sender pools, chrome extensions, and an inspectable AI workspace are different purchases.",
     "summary": "HeyReach, Expandi, and Omentir solve different LinkedIn jobs.",
     "publishedDate": "August 17, 2026",
-    "updatedDate": "August 17, 2026",
+    "updatedDate": "August 28, 2026",
     "layout": "roundup",
     "keywords": [
       "LinkedIn automation alternatives",
@@ -30,9 +30,9 @@ export const ALL_ALTERNATIVES: SeoContentPage[] = [
       },
       {
         "name": "Expandi",
-        "bestFor": "Cloud LinkedIn sequences with smart delays when the motion is already 'upload CSV, run steps.'",
-        "watchFor": "Same aisle as other sequencers. If two pages could swap the logo, you are shopping send infrastructure, not discovery.",
-        "href": "/comparisons/heyreach-vs-expandi"
+        "bestFor": "$99 Business cloud sequencer for sales teams, agencies, and recruiters. Multiple accounts, LinkedIn plus email, Agency white-label. They also claim collection from groups, events, and posts.",
+        "watchFor": "Confirm add-ons and current collection methods on expandi.io. Not Dripify's per-user quota drip. Discovery is still a different purchase.",
+        "href": "/comparisons/omentir-vs-expandi"
       },
       {
         "name": "Omentir",
@@ -64,7 +64,11 @@ export const ALL_ALTERNATIVES: SeoContentPage[] = [
       },
       {
         "question": "Where is Dripify or Waalaxy?",
-        "answer": "Same sequencer aisle as Expandi. If the buying question is chrome-or-cloud steps on a list you already have, those pages would read the same. This roundup names the job instead of cloning logos."
+        "answer": "They have dedicated matchups. Dripify is per-user visual drips at $59, $79, or $99 with printed daily quotas and 100 email-finder credits. Waalaxy prints €19, €49, and €69, 300 vs 800 invites a month, email sequences on Business, and No database. Expandi is $99 Business and Agency white-label. This roundup still names the job instead of stacking every sequencer logo."
+      },
+      {
+        "question": "Where is LinkedHelper?",
+        "answer": "LinkedHelper is a desktop app you download, not a Chrome extension. Local Standard $15, Pro $45. Cloud storage $29.90 and $59.90. One license is one LinkedIn account. The computer stays on. Email is find and enrich for a cold-email tool, not a LinkedIn-plus-email sequence. Use the LinkedHelper matchup. Do not confuse it with La Growth Machine."
       }
     ],
     "relatedLinks": [
@@ -74,14 +78,24 @@ export const ALL_ALTERNATIVES: SeoContentPage[] = [
         "description": "Sender pool versus LinkedIn workspace."
       },
       {
-        "label": "HeyReach vs Expandi",
-        "href": "/comparisons/heyreach-vs-expandi",
-        "description": "Two sequencers, then Omentir as the third path."
+        "label": "Expandi alternatives",
+        "href": "/comparisons/omentir-vs-expandi",
+        "description": "$99 multi-account sequencer, not a $59 drip."
       },
       {
-        "label": "LinkedIn account safety",
-        "href": "/features/linkedin-account-safety",
-        "description": "Pacing that actually belongs on the account."
+        "label": "Dripify alternatives",
+        "href": "/comparisons/omentir-vs-dripify",
+        "description": "Printed quotas and 100 email-finder credits."
+      },
+      {
+        "label": "Waalaxy alternatives",
+        "href": "/comparisons/omentir-vs-waalaxy",
+        "description": "EUR invite caps, email only on Business."
+      },
+      {
+        "label": "LinkedHelper alternatives",
+        "href": "/comparisons/omentir-vs-linkedhelper",
+        "description": "$15 desktop bot, computer stays on.",
       }
     ],
     "ctaTitle": "If you do not have a list, do not buy a sequencer first",

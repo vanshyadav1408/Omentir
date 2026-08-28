@@ -343,7 +343,7 @@ export const ALL_USE_CASES: SeoContentPage[] = [
     "description": "Omentir is MIT licensed. Use the hosted product, or run the same LinkedIn workspace on your own machine when inspectable code is the buying reason.",
     "summary": "An inspectable LinkedIn sales agent, hosted or self-hosted.",
     "publishedDate": "August 17, 2026",
-    "updatedDate": "August 17, 2026",
+    "updatedDate": "August 28, 2026",
     "layout": "timeline",
     "keywords": [
       "open source AI SDR",
@@ -397,6 +397,11 @@ export const ALL_USE_CASES: SeoContentPage[] = [
       }
     ],
     "relatedLinks": [
+      {
+        "label": "Self-Host vs Hosted Omentir",
+        "href": "/comparisons/self-host-vs-hosted",
+        "description": "Same MIT code. Different ops."
+      },
       {
         "label": "Open source and self-hosting",
         "href": "/features/open-source-self-hosting",
