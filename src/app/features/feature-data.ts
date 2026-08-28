@@ -496,7 +496,7 @@ export const ALL_FEATURES: SeoContentPage[] = [
     "description": "What Omentir being MIT open source means for buyers: read the code, self-host with Docker, or use the managed product with providers and support included.",
     "summary": "Transparent codebase, self-host option, or managed Omentir at omentir.com. Same product family, different ops burden.",
     "publishedDate": "August 12, 2026",
-    "updatedDate": "August 12, 2026",
+    "updatedDate": "August 28, 2026",
     "keywords": [
       "Omentir open source",
       "self-host Omentir",
@@ -565,6 +565,11 @@ export const ALL_FEATURES: SeoContentPage[] = [
       }
     ],
     "relatedLinks": [
+      {
+        "label": "Self-Host vs Hosted Omentir",
+        "href": "/comparisons/self-host-vs-hosted",
+        "description": "Same MIT code. Different ops."
+      },
       {
         "label": "Open source announcement",
         "href": "/blogs/omentir-is-now-open-source",

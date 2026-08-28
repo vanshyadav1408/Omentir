@@ -1439,6 +1439,11 @@ export const ALL_COMPARISONS: SeoContentPage[] = [
         "description": "Sequencers versus workspaces."
       },
       {
+        "label": "Expandi alternatives",
+        "href": "/comparisons/omentir-vs-expandi",
+        "description": "Cloud sequences on one account, not a sender pool."
+      },
+      {
         "label": "HeyReach vs Expandi",
         "href": "/comparisons/heyreach-vs-expandi",
         "description": "Two cloud sequencers, then Omentir."
@@ -1985,9 +1990,9 @@ export const ALL_COMPARISONS: SeoContentPage[] = [
         "description": "Sequencers versus workspaces."
       },
       {
-        "label": "Campaigns and send windows",
-        "href": "/features/campaigns-and-send-windows",
-        "description": "How Omentir paces sends."
+        "label": "LinkedHelper alternatives",
+        "href": "/comparisons/omentir-vs-linkedhelper",
+        "description": "A local LinkedIn helper, not a multichannel sequence box."
       },
       {
         "label": "Open source and self-hosting",
@@ -2275,7 +2280,7 @@ export const ALL_COMPARISONS: SeoContentPage[] = [
       },
       {
         "question": "Is Expandi an Omentir alternative?",
-        "answer": "Only if you needed LinkedIn send. Not if you needed LinkedIn discovery. Use the LinkedIn automation roundup."
+        "answer": "Only if you needed LinkedIn send. Not if you needed LinkedIn discovery. The dedicated Expandi alternatives page is the one-to-one matchup. This faceoff is HeyReach versus Expandi."
       }
     ],
     "relatedLinks": [
@@ -2285,14 +2290,14 @@ export const ALL_COMPARISONS: SeoContentPage[] = [
         "description": "Sender pool versus workspace."
       },
       {
+        "label": "Expandi alternatives",
+        "href": "/comparisons/omentir-vs-expandi",
+        "description": "Cloud sequences versus a workspace that finds the list."
+      },
+      {
         "label": "LinkedIn automation roundup",
         "href": "/alternatives/linkedin-automation",
         "description": "The category shortlist."
-      },
-      {
-        "label": "Lead finders",
-        "href": "/features/lead-finders",
-        "description": "How Omentir builds the list the sequencers assume."
       }
     ],
     "ctaTitle": "If both sequencers needed a CSV, the CSV is the product",
@@ -2400,6 +2405,652 @@ export const ALL_COMPARISONS: SeoContentPage[] = [
     ],
     "ctaTitle": "Open the saved search you have not messaged",
     "ctaBody": "If it is full and the inbox is quiet, you needed send, not another filter."
+  },
+  {
+    "slug": "omentir-vs-expandi",
+    "title": "Expandi Alternatives",
+    "description": "Expandi runs cloud LinkedIn sequences on lists you already have, with smart delays and a single-account safety story. Omentir finds the list with ICP finders or Steal Customers, then sends from the profile you connect.",
+    "summary": "Cloud LinkedIn sequences on an imported list versus a workspace that finds buyers.",
+    "publishedDate": "August 28, 2026",
+    "updatedDate": "August 28, 2026",
+    "keywords": [
+      "Expandi alternatives",
+      "Expandi alternative",
+      "Omentir vs Expandi"
+    ],
+    "verdict": "Keep Expandi when the list exists and you want cloud LinkedIn steps with smart delays on one account. Use Omentir when the missing product is discovery. This is not the HeyReach page.",
+    "comparisonTable": {
+      "headers": [
+        "Omentir",
+        "Expandi"
+      ],
+      "rows": [
+        {
+          "dimension": "Where the list comes from",
+          "cells": [
+            "ICP lead finders, or commenters on competitor posts",
+            "You bring it: CSV, Sales Navigator, or whatever they document today. Confirm on expandi.io"
+          ]
+        },
+        {
+          "dimension": "What they sell",
+          "cells": [
+            "A LinkedIn workspace that finds people, then campaigns from the connected profile",
+            "Cloud LinkedIn sequences, smart delays, a safety story aimed at one account"
+          ]
+        },
+        {
+          "dimension": "Who sends",
+          "cells": [
+            "The LinkedIn account you connect in the workspace",
+            "The account you connect to Expandi. Not HeyReach's many-sender pool. Confirm current limits on their site"
+          ]
+        },
+        {
+          "dimension": "Email warmup",
+          "cells": [
+            "Omentir does not warm email. LinkedIn is the channel",
+            "Treat email as whatever they list today. Do not assume a mailbox rotator"
+          ]
+        },
+        {
+          "dimension": "Code you can read",
+          "cells": [
+            "MIT licensed application. Hosted or self-host",
+            "Commercial product"
+          ]
+        }
+      ]
+    },
+    "sections": [
+      {
+        "id": "not-the-heyreach-page",
+        "heading": "Expandi is not HeyReach with a new logo",
+        "paragraphs": [
+          "HeyReach's public story is many LinkedIn senders on lists you import. Expandi's public story is cloud sequences on one account, with smart delays and a safety pitch. Shopping those two against each other is a real job. That faceoff already exists. This page is Omentir versus Expandi.",
+          "If you swap the Expandi column for HeyReach and the paragraphs still read true, we failed. The tell is senders: Expandi is the cloud safety-and-sequence buy. HeyReach is the agency seat buy."
+        ]
+      },
+      {
+        "id": "list-still-required",
+        "heading": "Cloud sequences still need a list",
+        "paragraphs": [
+          "Expandi is useful when the people are already in a sheet and you want steps to run in the cloud: view, invite, message, wait. Smart delays are why teams pick it over a Chrome helper. Confirm current sequence types and safety packaging on expandi.io. This page will not freeze a feature grid that goes stale.",
+          "Omentir starts earlier. You write the buyer. A finder or Steal Customers fills the group. Campaigns send from the connected profile. Replies land in one inbox. Claude or Cursor can create that agent over MCP. If the CSV was never the problem, stay on Expandi."
+        ]
+      },
+      {
+        "id": "when-expandi-wins",
+        "heading": "When Expandi is the better buy",
+        "paragraphs": [
+          "Keep Expandi if smart delays and a cloud send path on a list you already trust are why you opened the tab. Keep it if you liked their safety docs more than another sequencer's. Confirm pricing and account limits on their site. Do not buy Omentir to clone that sequencer."
+        ]
+      },
+      {
+        "id": "when-omentir-fits",
+        "heading": "When Omentir fits instead",
+        "paragraphs": [
+          "Pick Omentir when exporting Navigator into Expandi still leaves you writing generic first lines, or when the list goes stale between exports. Steal Customers only exists if competitors post. Classic finders exist either way. MCP means an operator can create the agent. Your LinkedIn password stays out of the chat app."
+        ]
+      }
+    ],
+    "faqItems": [
+      {
+        "question": "Is this the same as HeyReach vs Expandi?",
+        "answer": "No. That faceoff compares two sequencers, then names Omentir as a third path. This page is the one-to-one Expandi matchup: cloud sequences on a list you have versus a workspace that finds the list."
+      },
+      {
+        "question": "Does Omentir rotate unlimited LinkedIn senders?",
+        "answer": "No. That is HeyReach's aisle, not Expandi's and not Omentir's. Omentir sends from the accounts you connect, with daily limits and send windows."
+      },
+      {
+        "question": "Is Dripify the same as Expandi?",
+        "answer": "No. Dripify is the simple cloud drip plus email buy. Expandi is the cloud LinkedIn sequence and safety buy. Use the Dripify matchup if email steps in the drip are why you are shopping."
+      }
+    ],
+    "relatedLinks": [
+      {
+        "label": "HeyReach vs Expandi",
+        "href": "/comparisons/heyreach-vs-expandi",
+        "description": "Two sequencers, then Omentir as discovery."
+      },
+      {
+        "label": "HeyReach alternatives",
+        "href": "/comparisons/omentir-vs-heyreach",
+        "description": "Sender pool versus workspace."
+      },
+      {
+        "label": "LinkedIn automation roundup",
+        "href": "/alternatives/linkedin-automation",
+        "description": "List in versus list found."
+      },
+      {
+        "label": "Lead finders",
+        "href": "/features/lead-finders",
+        "description": "How Omentir builds the list Expandi assumes."
+      }
+    ],
+    "ctaTitle": "If the CSV is the painful part, skip the sequencer",
+    "ctaBody": "Brief one ICP in Omentir. Smart delays will not invent buyers."
+  },
+  {
+    "slug": "omentir-vs-dripify",
+    "title": "Dripify Alternatives",
+    "description": "Dripify is cloud LinkedIn and email: drag-and-drop drips, an email finder, email steps on paid plans, campaigns on their servers. Omentir finds ICP-fit buyers or competitor commenters and sends LinkedIn-only from the connected profile.",
+    "summary": "Simple cloud drips with email versus LinkedIn discovery and send.",
+    "publishedDate": "August 28, 2026",
+    "updatedDate": "August 28, 2026",
+    "keywords": [
+      "Dripify alternatives",
+      "Dripify alternative",
+      "Omentir vs Dripify"
+    ],
+    "verdict": "Keep Dripify when you want a simple cloud drip that mixes LinkedIn steps with email on a list you operate. Use Omentir when the list does not exist yet and LinkedIn is the channel. This is not Expandi with a new logo.",
+    "comparisonTable": {
+      "headers": [
+        "Omentir",
+        "Dripify"
+      ],
+      "rows": [
+        {
+          "dimension": "Channels",
+          "cells": [
+            "LinkedIn from the connected profile. No native email warmup",
+            "LinkedIn and email in the same drip. Email finder and email steps on paid plans. Confirm on dripify.com"
+          ]
+        },
+        {
+          "dimension": "How you build the campaign",
+          "cells": [
+            "My Product, a finder or Steal Customers, campaign goals, send windows",
+            "Drag-and-drop drips. Their homepage line is \"LinkedIn Automation Made Ridiculously Simple.\"",
+          ]
+        },
+        {
+          "dimension": "Where it runs",
+          "cells": [
+            "Hosted app at omentir.com, or Docker with RUN_LOCALLY=TRUE",
+            "Campaigns run on Dripify's servers. Not a Chrome extension. Confirm current packaging on dripify.com"
+          ]
+        },
+        {
+          "dimension": "Where the list comes from",
+          "cells": [
+            "ICP finders, or commenters on competitor posts",
+            "A list you operate: LinkedIn search, CSV, or whatever they document. Confirm on their site"
+          ]
+        },
+        {
+          "dimension": "Code you can read",
+          "cells": [
+            "MIT licensed application",
+            "Commercial product"
+          ]
+        }
+      ]
+    },
+    "sections": [
+      {
+        "id": "simple-drip-plus-email",
+        "heading": "Dripify sells simple drips plus email",
+        "paragraphs": [
+          "Dripify's homepage line is \"LinkedIn Automation Made Ridiculously Simple.\" The object is a visual drip: connection, message, wait, then an email step if you bought that plan. They run the campaign on their servers. They sell an email finder. Confirm current actions, finder credits, and prices on dripify.com/pricing. This page will not freeze a dollar amount.",
+          "Omentir does not draw that canvas. It does not find work emails or warm a domain. It finds people on LinkedIn from a written ICP or from comments on a competitor post, then sends from your profile. If you needed the email step, Dripify matches the job. If you needed the list found, it does not."
+        ]
+      },
+      {
+        "id": "not-expandi",
+        "heading": "Do not confuse this with Expandi",
+        "paragraphs": [
+          "Expandi is the cloud LinkedIn sequence and safety buy: smart delays on one account, lists you already have, LinkedIn as the product. Dripify is the simple drip-plus-email buy: visual builder, email finder, campaigns on their servers. Swap those logos and the paragraphs break. If both pages read the same, we would not have shipped a second one.",
+          "Waalaxy is a third object: a Chrome extension. Dripify is not that. Do not invent a Chrome Dripify because older reviews mentioned a browser. Confirm the cloud product on dripify.com."
+        ]
+      },
+      {
+        "id": "when-dripify-wins",
+        "heading": "When Dripify is the better buy",
+        "paragraphs": [
+          "Keep Dripify if the list is fine and you want LinkedIn plus email in one visual drip. Keep it if you wanted simpler than Expandi. Confirm packaging on their site. Omentir will not grow an email finder to win that RFP."
+        ]
+      },
+      {
+        "id": "when-omentir-fits",
+        "heading": "When Omentir fits instead",
+        "paragraphs": [
+          "Pick Omentir when the drip is pretty and the people were wrong, or when you wanted Steal Customers and an inbox a model can operate through MCP. Omentir stays LinkedIn-first. You can run it hosted or self-host. We do not claim to replace Dripify's email steps."
+        ]
+      }
+    ],
+    "faqItems": [
+      {
+        "question": "Is Dripify a Chrome extension?",
+        "answer": "Treat it as a cloud product whose campaigns run on their servers. Confirm current packaging on dripify.com. Omentir is also not a Chrome extension."
+      },
+      {
+        "question": "Does Omentir warm email inboxes?",
+        "answer": "No. If deliverability is the bottleneck, stay in an email tool. Dripify's email finder and email steps are their aisle. Omentir is LinkedIn-first."
+      },
+      {
+        "question": "How is this different from Expandi alternatives?",
+        "answer": "Expandi is cloud LinkedIn sequences and a safety story. Dripify is visual drips that include email on paid plans. The Expandi page does not mention an email finder. This one does, because that is the Dripify buy."
+      }
+    ],
+    "relatedLinks": [
+      {
+        "label": "Expandi alternatives",
+        "href": "/comparisons/omentir-vs-expandi",
+        "description": "Cloud LinkedIn sequences, not drip plus email."
+      },
+      {
+        "label": "Waalaxy alternatives",
+        "href": "/comparisons/omentir-vs-waalaxy",
+        "description": "Chrome extension versus hosted app."
+      },
+      {
+        "label": "LinkedIn automation roundup",
+        "href": "/alternatives/linkedin-automation",
+        "description": "List in versus list found."
+      },
+      {
+        "label": "Steal Customers",
+        "href": "/features/steal-customers",
+        "description": "The list source a drip builder does not replace."
+      }
+    ],
+    "ctaTitle": "If the drip looks fine and the calendar is empty, change the list",
+    "ctaBody": "Run one Omentir finder. A prettier sequence on the wrong people still misses."
+  },
+  {
+    "slug": "omentir-vs-waalaxy",
+    "title": "Waalaxy Alternatives",
+    "description": "Waalaxy is a Chrome extension for LinkedIn plus email, built for small teams who pull lists from Search, Sales Navigator, or a CSV. Omentir is a hosted LinkedIn workspace, not a browser extension, and it does not warm email.",
+    "summary": "Chrome-extension sequencer versus a hosted LinkedIn app.",
+    "publishedDate": "August 28, 2026",
+    "updatedDate": "August 28, 2026",
+    "keywords": [
+      "Waalaxy alternatives",
+      "Waalaxy alternative",
+      "Omentir vs Waalaxy"
+    ],
+    "verdict": "Keep Waalaxy if you want an extension in Chrome that sequences LinkedIn and email follow-ups from Search, Sales Navigator, or a CSV. Use Omentir if you want a hosted app that finds buyers and sends from the connected profile. Extension versus hosted is the whole page.",
+    "comparisonTable": {
+      "headers": [
+        "Omentir",
+        "Waalaxy"
+      ],
+      "rows": [
+        {
+          "dimension": "Where the product lives",
+          "cells": [
+            "Hosted application at omentir.com, or Docker. No Chrome store listing",
+            "Chrome extension. Confirm current install path on waalaxy.com"
+          ]
+        },
+        {
+          "dimension": "How the list shows up",
+          "cells": [
+            "ICP finders, or commenters on competitor posts",
+            "LinkedIn Search, Sales Navigator, or CSV import, per their site"
+          ]
+        },
+        {
+          "dimension": "Email",
+          "cells": [
+            "Omentir has no native email and no inbox warmup",
+            "They sell email follow-ups beside LinkedIn. Confirm plan limits on waalaxy.com"
+          ]
+        },
+        {
+          "dimension": "Who the typical buyer is",
+          "cells": [
+            "Founders and small sales teams who want a workspace, MCP, and inspectable send",
+            "Small teams who want an affordable extension and will live in Chrome"
+          ]
+        },
+        {
+          "dimension": "Operators",
+          "cells": [
+            "Claude, ChatGPT, Cursor, or scripts through MCP or REST. LinkedIn passwords stay in Omentir",
+            "The extension UI and whatever integrations they list today"
+          ]
+        }
+      ]
+    },
+    "sections": [
+      {
+        "id": "extension-vs-hosted",
+        "heading": "An extension is not a hosted app",
+        "paragraphs": [
+          "Waalaxy runs in Chrome. You install it, pull people from LinkedIn Search or Sales Navigator or a CSV, and the extension sequences connection requests, messages, and the email follow-ups they sell. That is a real product for a small team that does not want another login. Confirm current sequences and email credits on waalaxy.com.",
+          "Omentir is an application you open in a browser tab on omentir.com, or run with Docker. There is no Omentir extension. Send windows and daily limits live in the workspace. Claude talks to https://omentir.com/api/agent/v1/mcp. The operator never receives a LinkedIn password. If you wanted the Chrome habit, stay on Waalaxy."
+        ]
+      },
+      {
+        "id": "not-dripify-or-expandi",
+        "heading": "Waalaxy is not Dripify or Expandi",
+        "paragraphs": [
+          "Dripify is cloud LinkedIn plus email with a drag-and-drop drip, campaigns on their servers. Expandi is cloud LinkedIn sequences and a safety story, still not an extension. Waalaxy's tell is the browser: the product sits next to LinkedIn in Chrome. Swap any of those three logos onto this paragraph and it becomes false."
+        ]
+      },
+      {
+        "id": "when-waalaxy-wins",
+        "heading": "When Waalaxy is the better buy",
+        "paragraphs": [
+          "Keep Waalaxy if Chrome is where the work already happens, the team is small, and LinkedIn plus email follow-ups from Search or a CSV is the whole motion. Keep it if you did not want MCP, Docker, or a second product login. Confirm pricing on their site. This page will not invent a hosted Waalaxy."
+        ]
+      },
+      {
+        "id": "when-omentir-fits",
+        "heading": "When Omentir fits instead",
+        "paragraphs": [
+          "Pick Omentir when you wanted the list found, not only messaged, and when you do not want campaign state living in an extension. Steal Customers and classic finders refill groups. Replies sit in one inbox. Hosted Pro is $49 per month for one user and one LinkedIn account. Self-host if you must."
+        ]
+      }
+    ],
+    "faqItems": [
+      {
+        "question": "Does Omentir have a Chrome extension?",
+        "answer": "No. Omentir is a hosted workspace, or the same MIT app under Docker. If the buying criterion is an extension, Waalaxy matches that and Omentir does not."
+      },
+      {
+        "question": "Can Waalaxy replace Omentir's finders?",
+        "answer": "Waalaxy pulls from Search, Sales Navigator, or a CSV you already have. That is list-in. Omentir's finders and Steal Customers are list-found. Do not treat a Search or CSV import as the same object as an ICP agent."
+      },
+      {
+        "question": "Does Omentir warm email like Waalaxy's email steps?",
+        "answer": "No. Omentir does not do native email warmup. If email follow-ups are why you bought Waalaxy, keep that aisle."
+      }
+    ],
+    "relatedLinks": [
+      {
+        "label": "Dripify alternatives",
+        "href": "/comparisons/omentir-vs-dripify",
+        "description": "Cloud drips plus email, not a Chrome extension."
+      },
+      {
+        "label": "LinkedHelper alternatives",
+        "href": "/comparisons/omentir-vs-linkedhelper",
+        "description": "Desktop helper versus hosted app."
+      },
+      {
+        "label": "LinkedIn automation roundup",
+        "href": "/alternatives/linkedin-automation",
+        "description": "Sequencers versus workspaces."
+      },
+      {
+        "label": "Agent API and MCP",
+        "href": "/features/agent-api-and-mcp",
+        "description": "How operators talk to Omentir without an extension."
+      }
+    ],
+    "ctaTitle": "If you wanted a workspace, do not install another extension",
+    "ctaBody": "Connect one profile in Omentir. Chrome is Waalaxy's product, not ours."
+  },
+  {
+    "slug": "omentir-vs-linkedhelper",
+    "title": "LinkedHelper Alternatives",
+    "description": "LinkedHelper is a downloadable desktop app for Windows, macOS, and Linux that runs on your machine next to the LinkedIn session. Omentir is a hosted application, or the same MIT code in Docker, with paced campaigns and MCP.",
+    "summary": "Local LinkedIn helper versus a hosted or Docker application.",
+    "publishedDate": "August 28, 2026",
+    "updatedDate": "August 28, 2026",
+    "keywords": [
+      "LinkedHelper alternatives",
+      "Linked Helper alternative",
+      "Omentir vs LinkedHelper"
+    ],
+    "verdict": "Keep LinkedHelper if you want a power-user desktop helper beside LinkedIn and you will leave the machine on. Use Omentir if you want a hosted or Docker application, send windows, and operators over MCP. This is not La Growth Machine.",
+    "comparisonTable": {
+      "headers": [
+        "Omentir",
+        "LinkedHelper"
+      ],
+      "rows": [
+        {
+          "dimension": "What you install",
+          "cells": [
+            "A hosted login at omentir.com, or Docker with RUN_LOCALLY=TRUE",
+            "A desktop app for Windows, macOS, and Linux. Download from linkedhelper.com. Not a Chrome extension"
+          ]
+        },
+        {
+          "dimension": "Where it runs",
+          "cells": [
+            "Omentir's servers, or your Docker host",
+            "Your machine, next to the LinkedIn session. Confirm current always-on options on their site"
+          ]
+        },
+        {
+          "dimension": "What you operate",
+          "cells": [
+            "Agents, lead groups, campaigns, inbox, MCP",
+            "Campaigns and actions inside the helper. Confirm the current catalog on linkedhelper.com"
+          ]
+        },
+        {
+          "dimension": "How leads appear",
+          "cells": [
+            "Finders and Steal Customers refill groups",
+            "You collect and run. Discovery is not their headline job. Confirm on their site"
+          ]
+        },
+        {
+          "dimension": "Outside operators",
+          "cells": [
+            "Claude, ChatGPT, Cursor, or scripts through MCP or REST. They never see the LinkedIn password",
+            "The desktop UI and whatever API or webhooks they list today"
+          ]
+        }
+      ]
+    },
+    "sections": [
+      {
+        "id": "local-helper-vs-app",
+        "heading": "A local helper is not an application you log into",
+        "paragraphs": [
+          "LinkedHelper (they often write Linked Helper) is software you download. It runs on Windows, macOS, or Linux, on the computer in front of you, next to the LinkedIn session. That is the product: a power-user helper for campaigns that execute where the session already is. Confirm license pricing on linkedhelper.com. This page will not freeze a number.",
+          "Omentir is an application. Hosted customers open omentir.com. Self-hosters set RUN_LOCALLY=TRUE and bring Firebase, Unipile, and Gemini or Vertex. Either way you get paced campaigns, an inbox, and MCP at https://omentir.com/api/agent/v1/mcp on hosted. The helper overlay is gone. If you liked living inside the desktop tool, that is a switching cost, not a bug in LinkedHelper."
+        ]
+      },
+      {
+        "id": "not-lgm",
+        "heading": "Do not swap this with La Growth Machine",
+        "paragraphs": [
+          "La Growth Machine is a desktop-centric multichannel sequencer: LinkedIn plus email plus other steps they ship, with the sequence graph as the asset. LinkedHelper is a local LinkedIn helper beside the session. Different object. The LGM page already exists. If this paragraph could sit under an LGM logo, we would not have shipped a second page."
+        ]
+      },
+      {
+        "id": "when-linkedhelper-wins",
+        "heading": "When LinkedHelper is the better buy",
+        "paragraphs": [
+          "Keep LinkedHelper if you want the helper on your OS, you accept that the machine has to be available, and the campaign types they ship are why you bought it. Keep it if a hosted send path feels like too much trust. Confirm desktop versus any cloud option they sell now on their site. Omentir will not become a tray app to win that buyer."
+        ]
+      },
+      {
+        "id": "when-omentir-fits",
+        "heading": "When Omentir fits instead",
+        "paragraphs": [
+          "Pick Omentir when you want the campaign to keep running without babysitting a desktop process, when you want finders instead of only stepping through a collected list, and when Claude or Cursor should be allowed to create the agent. Hosted Pro is $49 per month. Docker if residency is the constraint. Forks of the MIT code need their own name and logo."
+        ]
+      }
+    ],
+    "faqItems": [
+      {
+        "question": "Is LinkedHelper a Chrome extension?",
+        "answer": "No. It is a downloadable desktop app for Windows, macOS, and Linux. Waalaxy is the Chrome-extension aisle. Confirm the current download on linkedhelper.com."
+      },
+      {
+        "question": "Is this the same as La Growth Machine alternatives?",
+        "answer": "No. LGM is a desktop multichannel sequencer. LinkedHelper is a local LinkedIn helper. Use the LGM matchup if extra channels in a sequence box are the job."
+      },
+      {
+        "question": "Does self-hosting Omentir turn it into LinkedHelper?",
+        "answer": "No. Docker still runs the Omentir application: finders, campaigns, inbox, MCP. LinkedHelper still runs beside the LinkedIn session on your desktop. Same machine, different object."
+      }
+    ],
+    "relatedLinks": [
+      {
+        "label": "La Growth Machine alternatives",
+        "href": "/comparisons/omentir-vs-la-growth-machine",
+        "description": "Desktop multichannel sequences, not a LinkedIn helper."
+      },
+      {
+        "label": "Waalaxy alternatives",
+        "href": "/comparisons/omentir-vs-waalaxy",
+        "description": "Chrome extension, not a desktop download."
+      },
+      {
+        "label": "Open source and self-hosting",
+        "href": "/features/open-source-self-hosting",
+        "description": "Docker is still an application, not a helper overlay."
+      },
+      {
+        "label": "Self-Host vs Hosted Omentir",
+        "href": "/comparisons/self-host-vs-hosted",
+        "description": "Same MIT code, different ops."
+      }
+    ],
+    "ctaTitle": "If you wanted an app you can leave running, stop babysitting a helper",
+    "ctaBody": "Start hosted, or Docker. MCP stays off your LinkedIn password."
+  },
+  {
+    "slug": "self-host-vs-hosted",
+    "title": "Self-Host vs Hosted Omentir",
+    "description": "Same MIT codebase. Hosted omentir.com is Pro at $49 per month with Unipile, Firebase, and Gemini operated for you, plus a three-bookings-per-week guarantee. Self-host is RUN_LOCALLY=TRUE with your Firebase, Unipile, and Gemini or Vertex.",
+    "summary": "Same application. Different ops, providers, and commercial packaging.",
+    "publishedDate": "August 28, 2026",
+    "updatedDate": "August 28, 2026",
+    "layout": "faceoff",
+    "keywords": [
+      "self-host Omentir",
+      "hosted vs self-host Omentir",
+      "Omentir Docker"
+    ],
+    "verdict": "Use hosted if you want the product without operating providers. Self-host if you will run Docker, Firebase, Unipile, and Gemini or Vertex yourself. The code is the same MIT repo. This is not a competitor page.",
+    "comparisonTable": {
+      "headers": [
+        "Hosted",
+        "Self-host"
+      ],
+      "rows": [
+        {
+          "dimension": "Code",
+          "cells": [
+            "The public MIT application, run for you at omentir.com",
+            "The same public MIT application. github.com/vanshyadav1408/Omentir"
+          ]
+        },
+        {
+          "dimension": "How you turn it on",
+          "cells": [
+            "Sign up on omentir.com",
+            "RUN_LOCALLY=TRUE, Docker, your own provider accounts"
+          ]
+        },
+        {
+          "dimension": "Who operates Firebase, Unipile, Gemini",
+          "cells": [
+            "Omentir. You do not bring those keys",
+            "You. Firestore, Unipile, and Gemini or Vertex are yours to bill and debug"
+          ]
+        },
+        {
+          "dimension": "Price",
+          "cells": [
+            "Pro $49 per month: 1 user, 1 LinkedIn account, unlimited agents, leads, and campaigns, API, email support. Enterprise is unlimited users and accounts, SSO, dedicated onboarding, priority support",
+            "No Omentir subscription. You still pay Google, Unipile, and hosting. Self-host is not free infrastructure"
+          ]
+        },
+        {
+          "dimension": "Booking guarantee",
+          "cells": [
+            "Minimum three bookings per week or you pay nothing, on eligible hosted plans. Read the Minimum Booking Guarantee",
+            "Not included. The guarantee is hosted-only"
+          ]
+        },
+        {
+          "dimension": "Name and logo",
+          "cells": [
+            "You are using Omentir",
+            "The MIT license does not grant the Omentir name or logo. Public forks rebrand"
+          ]
+        }
+      ]
+    },
+    "sections": [
+      {
+        "id": "same-code",
+        "heading": "One repo, two ways to run it",
+        "paragraphs": [
+          "Hosted Omentir and a self-hosted install are the same application. There is no secret second codebase. You pay hosted for operations, providers, support, and the commercial packaging. You pay self-host with your time and your vendor bills. If a page pretended these were two products, it would be lying.",
+          "The switch in the repo is RUN_LOCALLY=TRUE. That turns off hosted auth, billing, marketing, and hosted-only mail. You still need Firebase or Firestore, Unipile for LinkedIn, and Gemini or Vertex for the model. Docker is the supported path. It is not offline."
+        ]
+      },
+      {
+        "id": "when-hosted-fits",
+        "heading": "When hosted Omentir fits",
+        "paragraphs": [
+          "Start hosted if you have not proved the offer yet. Pro is $49 per month for one user and one LinkedIn account, with unlimited agents, leads, and campaigns, API access, and email support. Omentir operates Unipile, Firebase, and Gemini. The three-bookings-per-week or pay-nothing promise applies only on eligible hosted workspaces. Read the policy before you treat it as a slogan.",
+          "Enterprise is the path when you need unlimited users and LinkedIn accounts, SSO, dedicated onboarding, or priority support. That is still hosted. It is not a self-host SKU."
+        ]
+      },
+      {
+        "id": "choose-self-host",
+        "heading": "When you should self-host",
+        "paragraphs": [
+          "Self-host when a reviewer needs the app on your machines, when residency is a real constraint, or when you already run Docker and provider accounts and do not want another SaaS. Budget time for Unipile, Firebase, and Gemini or Vertex before you have learned anything about buyers. That is a week-two project if the motion is unproven, and a day-one project if the constraint is already known.",
+          "Forks may modify the MIT code. They may not present themselves as Omentir or omentir.com. The name and logo are not in the software license."
+        ]
+      },
+      {
+        "id": "when-neither",
+        "heading": "When neither path is the buy",
+        "paragraphs": [
+          "If you wanted a sequencer on a CSV you already have, this page is the wrong aisle. Expandi, Dripify, Waalaxy, and HeyReach are those purchases. Hosted versus self-host only matters after you want Omentir's LinkedIn workspace. Pick the ops model second."
+        ]
+      }
+    ],
+    "faqItems": [
+      {
+        "question": "Is the hosted product closed source?",
+        "answer": "No. Hosted Omentir runs the public MIT application. You pay for operations, providers, and support, not for a hidden fork."
+      },
+      {
+        "question": "Does self-host include the three bookings per week guarantee?",
+        "answer": "No. The Minimum Booking Guarantee is hosted-only. Self-host customers run their own providers and are not on that policy."
+      },
+      {
+        "question": "Can I keep the Omentir name on a public fork?",
+        "answer": "No. The MIT license covers the software. The Omentir name and logo are separate. Public forks should use their own branding."
+      },
+      {
+        "question": "Do I need to self-host to use MCP?",
+        "answer": "No. Hosted MCP is https://omentir.com/api/agent/v1/mcp. Self-host if you need the app on your infrastructure, not because you wanted Claude."
+      }
+    ],
+    "relatedLinks": [
+      {
+        "label": "Open source and self-hosting",
+        "href": "/features/open-source-self-hosting",
+        "description": "What MIT and Docker actually mean."
+      },
+      {
+        "label": "Open source AI SDR",
+        "href": "/use-cases/open-source-ai-sdr",
+        "description": "When inspectable code is the buying reason."
+      },
+      {
+        "label": "Pricing",
+        "href": "/pricing",
+        "description": "Hosted Pro and Enterprise."
+      },
+      {
+        "label": "Minimum Booking Guarantee",
+        "href": "/minimum-booking-guarantee",
+        "description": "Hosted-only. Read the rules."
+      }
+    ],
+    "ctaTitle": "If you have not sent a note yet, do not start with Docker",
+    "ctaBody": "Use hosted Pro for the first test. Self-host when ops is the actual requirement."
   }
 ];
 

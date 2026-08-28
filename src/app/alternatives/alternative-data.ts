@@ -12,7 +12,7 @@ export const ALL_ALTERNATIVES: SeoContentPage[] = [
     "description": "A shortlist of LinkedIn sequencers and workspaces. Agency sender pools, chrome extensions, and an inspectable AI workspace are different purchases.",
     "summary": "HeyReach, Expandi, and Omentir solve different LinkedIn jobs.",
     "publishedDate": "August 17, 2026",
-    "updatedDate": "August 17, 2026",
+    "updatedDate": "August 28, 2026",
     "layout": "roundup",
     "keywords": [
       "LinkedIn automation alternatives",
@@ -31,8 +31,8 @@ export const ALL_ALTERNATIVES: SeoContentPage[] = [
       {
         "name": "Expandi",
         "bestFor": "Cloud LinkedIn sequences with smart delays when the motion is already 'upload CSV, run steps.'",
-        "watchFor": "Same aisle as other sequencers. If two pages could swap the logo, you are shopping send infrastructure, not discovery.",
-        "href": "/comparisons/heyreach-vs-expandi"
+        "watchFor": "Cloud LinkedIn sequences on a list you already have. Discovery is a different purchase. See Expandi alternatives.",
+        "href": "/comparisons/omentir-vs-expandi"
       },
       {
         "name": "Omentir",
@@ -64,7 +64,11 @@ export const ALL_ALTERNATIVES: SeoContentPage[] = [
       },
       {
         "question": "Where is Dripify or Waalaxy?",
-        "answer": "Same sequencer aisle as Expandi. If the buying question is chrome-or-cloud steps on a list you already have, those pages would read the same. This roundup names the job instead of cloning logos."
+        "answer": "They have dedicated matchups. Dripify is cloud LinkedIn plus email with a drag-and-drop drip builder (dripify.com, campaigns on their servers, not a Chrome product). Waalaxy is the Chrome-extension buy for small teams, with lists from Search, Sales Navigator, or a CSV. Expandi is the cloud LinkedIn sequence and safety buy. This roundup still names the job, list in versus list found, instead of stacking every sequencer logo."
+      },
+      {
+        "question": "Where is LinkedHelper?",
+        "answer": "LinkedHelper is a desktop app you download for Windows, macOS, or Linux. It runs next to the LinkedIn session on your machine. That is a local helper, not a cloud sequencer. Use the LinkedHelper matchup. Do not confuse it with La Growth Machine, which is a desktop multichannel sequence box."
       }
     ],
     "relatedLinks": [
@@ -74,14 +78,24 @@ export const ALL_ALTERNATIVES: SeoContentPage[] = [
         "description": "Sender pool versus LinkedIn workspace."
       },
       {
-        "label": "HeyReach vs Expandi",
-        "href": "/comparisons/heyreach-vs-expandi",
-        "description": "Two sequencers, then Omentir as the third path."
+        "label": "Expandi alternatives",
+        "href": "/comparisons/omentir-vs-expandi",
+        "description": "Cloud LinkedIn sequences versus discovery."
       },
       {
-        "label": "LinkedIn account safety",
-        "href": "/features/linkedin-account-safety",
-        "description": "Pacing that actually belongs on the account."
+        "label": "Dripify alternatives",
+        "href": "/comparisons/omentir-vs-dripify",
+        "description": "Cloud drips plus email, not a Chrome product."
+      },
+      {
+        "label": "Waalaxy alternatives",
+        "href": "/comparisons/omentir-vs-waalaxy",
+        "description": "Chrome extension versus hosted app."
+      },
+      {
+        "label": "LinkedHelper alternatives",
+        "href": "/comparisons/omentir-vs-linkedhelper",
+        "description": "Desktop helper versus hosted or Docker app."
       }
     ],
     "ctaTitle": "If you do not have a list, do not buy a sequencer first",
