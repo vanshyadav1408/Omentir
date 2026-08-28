@@ -30,8 +30,8 @@ export const ALL_ALTERNATIVES: SeoContentPage[] = [
       },
       {
         "name": "Expandi",
-        "bestFor": "Cloud LinkedIn sequences with smart delays when the motion is already 'upload CSV, run steps.'",
-        "watchFor": "Cloud LinkedIn sequences on a list you already have. Discovery is a different purchase. See Expandi alternatives.",
+        "bestFor": "$99 Business cloud sequencer for sales teams, agencies, and recruiters. Multiple accounts, LinkedIn plus email, Agency white-label. They also claim collection from groups, events, and posts.",
+        "watchFor": "Confirm add-ons and current collection methods on expandi.io. Not Dripify's per-user quota drip. Discovery is still a different purchase.",
         "href": "/comparisons/omentir-vs-expandi"
       },
       {
@@ -64,11 +64,11 @@ export const ALL_ALTERNATIVES: SeoContentPage[] = [
       },
       {
         "question": "Where is Dripify or Waalaxy?",
-        "answer": "They have dedicated matchups. Dripify is cloud LinkedIn plus email with a drag-and-drop drip builder (dripify.com, campaigns on their servers, not a Chrome product). Waalaxy is the Chrome-extension buy for small teams, with lists from Search, Sales Navigator, or a CSV. Expandi is the cloud LinkedIn sequence and safety buy. This roundup still names the job, list in versus list found, instead of stacking every sequencer logo."
+        "answer": "They have dedicated matchups. Dripify is per-user visual drips at $59, $79, or $99 with printed daily quotas and 100 email-finder credits. Waalaxy prints €19, €49, and €69, 300 vs 800 invites a month, email sequences on Business, and No database. Expandi is $99 Business and Agency white-label. This roundup still names the job instead of stacking every sequencer logo."
       },
       {
         "question": "Where is LinkedHelper?",
-        "answer": "LinkedHelper is a desktop app you download for Windows, macOS, or Linux. It runs next to the LinkedIn session on your machine. That is a local helper, not a cloud sequencer. Use the LinkedHelper matchup. Do not confuse it with La Growth Machine, which is a desktop multichannel sequence box."
+        "answer": "LinkedHelper is a desktop app you download, not a Chrome extension. Local Standard $15, Pro $45. Cloud storage $29.90 and $59.90. One license is one LinkedIn account. The computer stays on. Email is find and enrich for a cold-email tool, not a LinkedIn-plus-email sequence. Use the LinkedHelper matchup. Do not confuse it with La Growth Machine."
       }
     ],
     "relatedLinks": [
@@ -80,22 +80,22 @@ export const ALL_ALTERNATIVES: SeoContentPage[] = [
       {
         "label": "Expandi alternatives",
         "href": "/comparisons/omentir-vs-expandi",
-        "description": "Cloud LinkedIn sequences versus discovery."
+        "description": "$99 multi-account sequencer, not a $59 drip."
       },
       {
         "label": "Dripify alternatives",
         "href": "/comparisons/omentir-vs-dripify",
-        "description": "Cloud drips plus email, not a Chrome product."
+        "description": "Printed quotas and 100 email-finder credits."
       },
       {
         "label": "Waalaxy alternatives",
         "href": "/comparisons/omentir-vs-waalaxy",
-        "description": "Chrome extension versus hosted app."
+        "description": "EUR invite caps, email only on Business."
       },
       {
         "label": "LinkedHelper alternatives",
         "href": "/comparisons/omentir-vs-linkedhelper",
-        "description": "Desktop helper versus hosted or Docker app."
+        "description": "$15 desktop bot, computer stays on.",
       }
     ],
     "ctaTitle": "If you do not have a list, do not buy a sequencer first",
