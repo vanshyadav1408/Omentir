@@ -1,0 +1,24 @@
+---
+description: Never start a second localhost Next.js server. Use the existing one.
+alwaysApply: true
+---
+
+# One localhost only
+
+Never start a second `bun run dev`, `next dev`, or `next start`.
+
+Two Next.js processes share `.next`. That corrupts the Turbopack cache (missing `.sst` files, `/_app` panics, 500s on automation ticks).
+
+## Before you start anything
+
+1. Check Cursor terminals and listeners on 3000, 3001, and 3002.
+2. If a Next.js server is already running, use that URL. Do not spawn another.
+3. If 3000 is taken, Next will silently bind 3001 or 3002. That is a second server. Do not do that.
+
+## If the existing server is dead or the cache is corrupt
+
+1. Stop every `next` / `next-server` process first.
+2. Only then `rm -rf .next` if you saw SST or Turbopack cache errors.
+3. Start exactly one `bun run dev`.
+
+Verify against the existing server (`http://localhost:3000` unless its own logs say otherwise).

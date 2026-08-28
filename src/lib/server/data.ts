@@ -2158,6 +2158,10 @@ export async function enrollNewLeadsInCampaign(workspaceId: string, campaign: Ca
 // account rather than the campaign because the spacing rule is per-account:
 // two campaigns sharing one LinkedIn account share one drip.
 //
+// connection_sent is excluded: those nextActionAt values are give-up dates,
+// not send times. Counting them as reserved slots packed the planner around
+// 21-day parks that will never send.
+//
 // Read earliest-first, so a queue deeper than this loses only its far tail -
 // the slots a new action would never be planned into anyway.
 const RESERVED_SLOT_SCAN_LIMIT = 1000;
@@ -2201,7 +2205,7 @@ async function listReservedActionSlots(workspaceId: string, linkedInAccountId?: 
 
     return results
       .flatMap((snap) => snap.docs.map((doc) => doc.data()))
-      .filter((enrollment) => !["stopped", "replied"].includes(enrollment.status))
+      .filter((enrollment) => !["stopped", "replied", "connection_sent"].includes(enrollment.status))
       .map((enrollment) => Date.parse(enrollment.nextActionAt))
       .filter((ms) => Number.isFinite(ms));
   } catch (error) {
@@ -2224,7 +2228,7 @@ async function listReservedActionSlots(workspaceId: string, linkedInAccountId?: 
       .filter(
         (enrollment) =>
           sharingAccount.has(enrollment.campaignId) &&
-          !["stopped", "replied"].includes(enrollment.status),
+          !["stopped", "replied", "connection_sent"].includes(enrollment.status),
       )
       .map((enrollment) => Date.parse(enrollment.nextActionAt))
       .filter((ms) => Number.isFinite(ms) && ms >= now)

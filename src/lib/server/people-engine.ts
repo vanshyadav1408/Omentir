@@ -85,6 +85,10 @@ const DEFAULT_DAILY_QUALIFIED_LEAD_CAP = 75;
 const DEFAULT_MAX_ENRICHMENTS_PER_RUN = 500;
 const PEOPLE_ENGINE_RUN_MS = 15 * 60 * 1000;
 const STOP_BUFFER_MS = 15 * 1000;
+// Leave this much of the run for enrichment + scoring. Collecting 200
+// candidates and then timing out during the first dozen Gemini calls is how
+// agents logged "20 new leads" against a 75 target.
+const QUALIFY_RESERVE_MS = 8 * 60 * 1000;
 // Competitor/founder pages: pull enough recent posts that product launches and
 // demo threads are still in the window, then rank by product keywords.
 const SOURCE_POST_LIMIT = 8;
@@ -252,6 +256,7 @@ async function searchPeopleForAgentQuery(input: {
   targetLocations: string[];
   limit: number;
   excludeKeys?: Set<string>;
+  locationSlot?: number;
 }): Promise<Partial<Lead>[]> {
   // Searching every target country for every title/keyword turns one agent
   // run into dozens of Classic searches, which regularly exhausts LinkedIn's
@@ -268,6 +273,8 @@ async function searchPeopleForAgentQuery(input: {
           selectDailyTargetLocation(
             input.title || input.keyword || "people",
             searchLocations,
+            Date.now(),
+            input.locationSlot,
           )!,
         ]]
       : [[] as string[]];
@@ -786,6 +793,7 @@ async function collectFromKeyword(input: {
   keyword: string;
   targetLocations: string[];
   excludeKeys?: Set<string>;
+  locationSlot?: number;
 }): Promise<number> {
   const sourceLabel = `LinkedIn keyword "${input.keyword}"`;
   let added = 0;
@@ -800,6 +808,7 @@ async function collectFromKeyword(input: {
       targetLocations: input.targetLocations,
       limit: KEYWORD_PROFILE_LIMIT,
       excludeKeys: input.excludeKeys,
+      locationSlot: input.locationSlot,
     });
 
     for (const lead of profiles) {
@@ -828,6 +837,7 @@ async function collectFromTitle(input: {
   title: string;
   targetLocations: string[];
   excludeKeys?: Set<string>;
+  locationSlot?: number;
 }): Promise<number> {
   const sourceLabel = `LinkedIn title "${input.title}"`;
   let added = 0;
@@ -842,6 +852,7 @@ async function collectFromTitle(input: {
       targetLocations: input.targetLocations,
       limit: TITLE_PROFILE_LIMIT,
       excludeKeys: input.excludeKeys,
+      locationSlot: input.locationSlot,
     });
 
     for (const lead of profiles) {
@@ -1212,6 +1223,9 @@ export async function runPeopleEngineForAgent(input: {
   profile: ProductProfile | null;
   initialLeadTarget?: number;
   dailyLeadLimit?: number;
+  // 0-based discovery attempt for this local day. Rotates which country a
+  // title/keyword search hits so refill runs are not stuck on one market.
+  locationSlot?: number;
 }) {
   const deadline = Date.now() + PEOPLE_ENGINE_RUN_MS;
   const dailyLeadLimit = Math.min(
@@ -1279,7 +1293,42 @@ export async function runPeopleEngineForAgent(input: {
     input.initialLeadTarget ?? dailyLeadLimit,
     dailyLeadLimit,
   );
-  const candidatePoolTarget = Math.max(qualifiedLeadTarget * 3, 24);
+  // *2, not *3: the extra hundred candidates were never scored because
+  // collection ate the 15-minute budget. A smaller pool that actually reaches
+  // Gemini is what fills the daily target.
+  const candidatePoolTarget = Math.max(qualifiedLeadTarget * 2, 24);
+  const locationSlot = input.locationSlot ?? 0;
+
+  const unknownNewCount = () => {
+    let count = 0;
+    for (const candidate of candidates.values()) {
+      if (
+        !findKnownLead(
+          existingLeadsById,
+          existingByProviderId,
+          existingByUrl,
+          input.agent.workspaceId,
+          candidate.lead,
+        )
+      ) {
+        count += 1;
+      }
+    }
+    return count;
+  };
+
+  // Stop collecting while there is still time to enrich and score. Hitting
+  // candidatePoolTarget with 90 seconds left is how runs died at 5-20 leads.
+  const shouldKeepCollecting = () => {
+    if (!hasRunTime(deadline)) return false;
+    const unknown = unknownNewCount();
+    if (unknown >= candidatePoolTarget) return false;
+    const remaining = deadline - STOP_BUFFER_MS - Date.now();
+    if (remaining < QUALIFY_RESERVE_MS && unknown >= Math.min(qualifiedLeadTarget, 24)) {
+      return false;
+    }
+    return true;
+  };
   const sourceQueue: PeopleEngineSource[] = stealOnly
     ? buildPeopleEngineSourceQueue({
         competitorUrls: sources.competitorUrls,
@@ -1360,7 +1409,7 @@ export async function runPeopleEngineForAgent(input: {
 
   let peopleSearchHits = 0;
   for (const { source, nextSource } of sourceRun) {
-    if (!hasRunTime(deadline) || candidates.size >= candidatePoolTarget) break;
+    if (!shouldKeepCollecting()) break;
 
     if (nextSource) {
       // false = agent doc gone (deleted mid-run). Stop discovery: further
@@ -1378,6 +1427,7 @@ export async function runPeopleEngineForAgent(input: {
         title: source.value,
         targetLocations,
         excludeKeys: groupLeadKeys,
+        locationSlot,
       });
       continue;
     }
@@ -1390,6 +1440,7 @@ export async function runPeopleEngineForAgent(input: {
         keyword: source.value,
         targetLocations,
         excludeKeys: groupLeadKeys,
+        locationSlot,
       });
       continue;
     }
@@ -1490,7 +1541,7 @@ export async function runPeopleEngineForAgent(input: {
   // independent exact-match source, so broad LinkedIn results must not suppress
   // it. Its evidence is still checked by the same deterministic and model gates.
   // Steal-customers agents stay on competitor post comments only.
-  if (!stealOnly && hasRunTime(deadline)) {
+  if (!stealOnly && shouldKeepCollecting()) {
     const groundedCandidates = await findGroundedAgentCandidates(
       input.agent,
       15,
@@ -1640,7 +1691,25 @@ export async function runPeopleEngineForAgent(input: {
         ),
     );
 
+  // New people first. Re-scoring leads already in this group burned the
+  // 15-minute budget on Gemini calls that cannot raise leadsAdded. Other-group
+  // adoptions still run after the new pool, and only if time remains.
+  const freshCandidates: Candidate[] = [];
+  const adoptCandidates: Candidate[] = [];
   for (const candidate of rankedCandidates) {
+    const existingLead = findKnownLead(
+      existingLeadsById,
+      existingByProviderId,
+      existingByUrl,
+      input.agent.workspaceId,
+      candidate.lead,
+    );
+    if (existingLead?.groupIds?.includes(input.agent.targetGroupId)) continue;
+    if (existingLead) adoptCandidates.push(candidate);
+    else freshCandidates.push(candidate);
+  }
+
+  for (const candidate of [...freshCandidates, ...adoptCandidates]) {
     if (!hasRunTime(deadline)) {
       timeBudgetExpired = true;
       break;

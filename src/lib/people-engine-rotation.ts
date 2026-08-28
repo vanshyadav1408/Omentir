@@ -35,8 +35,13 @@ export function selectDailyTargetLocation(
   query: string,
   locations: string[],
   asOfMs = Date.now(),
+  // Same-day refill runs must not keep hitting the same country. The UTC day
+  // still rotates the market overnight; slotOffset rotates it across the
+  // four discovery attempts inside one day.
+  slotOffset = 0,
 ) {
   if (!locations.length) return undefined;
   const utcDay = Math.floor(asOfMs / (24 * 60 * 60 * 1000));
-  return locations[(stableIndex(query, locations.length) + utcDay) % locations.length];
+  const offset = Number.isFinite(slotOffset) ? Math.trunc(slotOffset) : 0;
+  return locations[(stableIndex(query, locations.length) + utcDay + offset) % locations.length];
 }

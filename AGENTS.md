@@ -59,6 +59,12 @@ If you genuinely think a convention is harmful, surface it. Don't fork silently.
 "Tests pass" is wrong if any were skipped.
 Default to surfacing uncertainty, not hiding it.
 
+## Rule 13 — One localhost only
+Never start a second `bun run dev`, `next dev`, or `next start`.
+Check terminals and ports 3000/3001/3002 first. If a Next.js server is already running, use that URL.
+Two processes share `.next` and corrupt the Turbopack cache (missing `.sst` files, `/_app` panics, 500s).
+If the existing server is dead: stop every `next` process, wipe `.next` only if the cache is corrupt, then start exactly one server.
+
 When i say "Push to Github", I mean push the code to github and sync all the 4 branches: main, testup, origin/main and origin/testup should be on the latest code.
 
 Use no em dash ever.
@@ -77,3 +83,13 @@ Use no em dash ever.
 4. Run `bun run lint:copy` and fix all violations before finishing.
 
 Nested `src/AGENTS.md` applies when working under `src/`. Do not ship marketing copy without this pass.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

@@ -476,6 +476,7 @@ async function runAgents(mode: AutomationSafetyMode) {
           profile,
           initialLeadTarget: remainingTarget,
           dailyLeadLimit: remainingTarget,
+          locationSlot: usage.attempts,
         });
         signalAgents += 1;
         signalsObserved += result.signalsObserved;
@@ -971,15 +972,21 @@ async function runEnrollment(
       const sentAt = enrollment.connectionSentAt || enrollment.createdAt;
       const giveUpAt =
         new Date(sentAt).getTime() + CONNECTION_GIVE_UP_DAYS * 24 * 60 * 60 * 1000;
-      if (accepted === false && Date.now() >= giveUpAt) {
-        await updateCurrentEnrollment({ status: "stopped" });
-        return "invite-expired";
+      if (Date.now() >= giveUpAt) {
+        if (accepted === false) {
+          await updateCurrentEnrollment({ status: "stopped" });
+          return "invite-expired";
+        }
+        // Provider check failed at the give-up date. A short retry is fine
+        // here: this is one enrollment, not the whole pending-invite pool.
+        await updateCurrentEnrollment({ nextActionAt: addMinutes(12 * 60) });
+        return "awaiting-connection";
       }
+      // Not yet due to give up. Do not park this on a 12-hour recheck: a
+      // pool of pending invites used to consume the entire due window every
+      // tick. The webhook and the per-account sweep wake it on acceptance.
       await updateCurrentEnrollment({
-        nextActionAt:
-          accepted === null
-            ? addMinutes(12 * 60)
-            : new Date(giveUpAt).toISOString(),
+        nextActionAt: new Date(giveUpAt).toISOString(),
       });
       return "awaiting-connection";
     }
@@ -2527,17 +2534,31 @@ export async function runAutomationTick(options: RunAutomationTickOptions = {}) 
   }, TICK_LOCK_RENEW_INTERVAL_MS);
   renewTimer.unref();
 
-  try {
-    return await runAutomationTickInner(mode);
-  } finally {
+  let released = false;
+  const releaseLock = async () => {
+    if (released) return;
+    released = true;
     clearInterval(renewTimer);
     await releaseTickLock(TICK_LOCK_ID, ownerToken).catch((error) => {
       console.error("[automation] failed to release tick lock:", error);
     });
+  };
+
+  try {
+    return await runAutomationTickInner(mode, releaseLock);
+  } finally {
+    await releaseLock();
   }
 }
 
-async function runAutomationTickInner(mode: AutomationSafetyMode) {
+async function runAutomationTickInner(
+  mode: AutomationSafetyMode,
+  // Discovery can run 15 minutes per agent. Holding the send lock that long
+  // skipped every later tick, so invites and follow-ups froze until the
+  // people-engine run finished. Release as soon as this tick's sends are done;
+  // claimActionSlot still serializes the actual LinkedIn calls.
+  onCampaignsDone?: () => Promise<void>,
+) {
   let agentResult = {
     agents: 0,
     signalAgents: 0,
@@ -2571,6 +2592,8 @@ async function runAutomationTickInner(mode: AutomationSafetyMode) {
         errors.push(`campaigns: ${message}`);
         console.error("[automation] campaign phase failed:", error);
         await safeLogAutomationRun({ kind: "campaign", status: "error", message });
+      } finally {
+        await onCampaignsDone?.();
       }
     })(),
   ]);
