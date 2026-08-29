@@ -12,6 +12,7 @@ import {
 import { cleanId, normalizeLinkedInProfileUrl, nowIso } from "./firebase";
 import { agentTargetLocations, matchesTargetLocation, searchableLocationNames } from "./geo";
 import { isAnonymousLinkedInProfile } from "./outreach-rules";
+import { maxEnrichmentsPerDiscoveryRun } from "@/lib/linkedin-warmup";
 import {
   balanceTitleSeniority,
   expandedTargetTitles,
@@ -81,8 +82,8 @@ const DEFAULT_DAILY_QUALIFIED_LEAD_CAP = 75;
 // Each enrichment is a live LinkedIn profile view through the user's account.
 // Capped per run so one agent cannot burn unlimited views; kept well above
 // dailyLeadLimit because most enrichments fail region/score gates before a
-// lead is saved.
-const DEFAULT_MAX_ENRICHMENTS_PER_RUN = 500;
+// lead is saved. After the 14-day per-account warmup that cap is 500; during
+// warmup it is 100. The qualified lead cap above stays 75 either way.
 const PEOPLE_ENGINE_RUN_MS = 15 * 60 * 1000;
 const STOP_BUFFER_MS = 15 * 1000;
 // Leave this much of the run for enrichment + scoring. Collecting 200
@@ -1232,7 +1233,7 @@ export async function runPeopleEngineForAgent(input: {
     input.dailyLeadLimit ?? DEFAULT_DAILY_QUALIFIED_LEAD_CAP,
     DEFAULT_DAILY_QUALIFIED_LEAD_CAP,
   );
-  const enrichmentLimit = DEFAULT_MAX_ENRICHMENTS_PER_RUN;
+  const enrichmentLimit = maxEnrichmentsPerDiscoveryRun(input.account);
   // Steal-customers agents only harvest commenters under competitor/founder
   // posts. Other discovery agents use title/keyword search and never steal.
   const stealOnly = isStealCustomersAgent(input.agent);

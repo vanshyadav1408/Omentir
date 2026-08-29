@@ -147,6 +147,12 @@ export type LinkedInAccount = {
   status: "connected" | "disconnected" | "error";
   createdAt: string;
   updatedAt: string;
+  // When the 14-day per-account warmup clock started. Unset on accounts that
+  // predate warmup: readers fall back to createdAt so seats older than 14 days
+  // stay on graduated volume without a settings migration. Reset on first
+  // connect, on reconnect, and when the account-scoped invite restriction
+  // breaker arms.
+  warmupStartedAt?: string;
 };
 
 export type Agent = {

@@ -106,6 +106,10 @@ import { isWithinSendWindow, SPACING_MINUTES, type SendActionKind } from "./send
 import { hasActiveSubscription } from "./subscription";
 import { getAppBaseUrl } from "./runtime-config";
 import {
+  dailyDiscoveryAttemptsForAccount,
+  effectiveSendLimits,
+} from "@/lib/linkedin-warmup";
+import {
   emailWasSkipped,
   sendDailyDigestEmail,
   sendInvitePauseNotification,
@@ -133,10 +137,10 @@ import type {
 } from "./types";
 
 // Per agent per local day. A short run does not end the day: the agent gets
-// up to MAX_DAILY_DISCOVERY_ATTEMPTS runs (30 minutes apart) until it reaches
-// the target, tracked in its own usageDays doc.
+// up to four discovery runs (30 minutes apart) until it reaches the target,
+// tracked in its own usageDays doc. New or restriction-reconnected LinkedIn
+// accounts get one run a day for 14 days (see dailyDiscoveryAttemptsForAccount).
 const DEFAULT_DAILY_DISCOVERED_LEAD_LIMIT = 75;
-const MAX_DAILY_DISCOVERY_ATTEMPTS = 4;
 const DISCOVERY_REFILL_MINUTES = 30;
 // Standard (non-signal) agents pull broad keyword matches, so a real fit check
 // must gate what gets saved - otherwise irrelevant leads enter campaigns and
@@ -490,7 +494,7 @@ async function runAgents(mode: AutomationSafetyMode) {
         );
         const shouldRefill =
           updatedUsage.discoveredLeads < dailyTarget &&
-          updatedUsage.attempts < MAX_DAILY_DISCOVERY_ATTEMPTS;
+          updatedUsage.attempts < dailyDiscoveryAttemptsForAccount(account);
         await markAgentRun(
           agent,
           true,
@@ -678,6 +682,7 @@ async function runEnrollment(
     return "missing-account";
   }
   const budget = budgetForAccount(account.id);
+  const sendLimits = effectiveSendLimits(workspace.settings, account);
 
   const lead = await findLeadForWorkspace({
     workspaceId: enrollment.workspaceId,
@@ -940,7 +945,7 @@ async function runEnrollment(
     await consumeDailyQuota(
       enrollment.workspaceId,
       "messages",
-      workspace.settings.dailyMessageLimit,
+      sendLimits.dailyMessageLimit,
       workspace.timezone,
     );
     await updateLead(enrollment.workspaceId, lead.id, { outreachStatus: "replied" });
@@ -1108,7 +1113,7 @@ async function runEnrollment(
       !(await hasDailyQuotaRemaining(
         enrollment.workspaceId,
         "invites",
-        workspace.settings.dailyInviteLimit,
+        sendLimits.dailyInviteLimit,
         workspace.timezone,
       ))
     ) {
@@ -1216,7 +1221,7 @@ async function runEnrollment(
     const counted = await consumeDailyQuota(
       enrollment.workspaceId,
       "invites",
-      workspace.settings.dailyInviteLimit,
+      sendLimits.dailyInviteLimit,
       workspace.timezone,
     );
     if (!counted) {
@@ -1291,7 +1296,7 @@ async function runEnrollment(
     !(await hasDailyQuotaRemaining(
       enrollment.workspaceId,
       "messages",
-      workspace.settings.dailyMessageLimit,
+      sendLimits.dailyMessageLimit,
       workspace.timezone,
     ))
   ) {
@@ -1418,7 +1423,7 @@ async function runEnrollment(
   await consumeDailyQuota(
     enrollment.workspaceId,
     "messages",
-    workspace.settings.dailyMessageLimit,
+    sendLimits.dailyMessageLimit,
     workspace.timezone,
   );
   await updateLead(enrollment.workspaceId, lead.id, { outreachStatus: "messaged" });

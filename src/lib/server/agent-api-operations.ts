@@ -43,6 +43,7 @@ import { SPACING_MINUTES } from "./send-schedule";
 import { normalizeSchedulingLink, resolveBookingLink } from "@/lib/scheduling-link";
 import { sendLinkedInMessage } from "./unipile";
 import { isValidTimeZone, resolveTimeZone } from "@/lib/time-zone";
+import { effectiveSendLimits } from "@/lib/linkedin-warmup";
 import type { AgentApiContext } from "./agent-api";
 import type { Agent, Campaign, CampaignReplyHandling, SendWindow } from "./types";
 import {
@@ -264,7 +265,11 @@ export async function getAgentWorkspaceContext(context: AgentApiContext) {
     "",
     { invites: 0, messages: 0 },
   ];
-  const { dailyInviteLimit, dailyMessageLimit } = context.workspace.settings;
+  const sendLimits = effectiveSendLimits(
+    context.workspace.settings,
+    linkedInAccounts[0] || null,
+  );
+  const { dailyInviteLimit, dailyMessageLimit } = sendLimits;
 
   return {
     workspace: {
@@ -1123,11 +1128,13 @@ export async function replyToLeadResource(context: AgentApiContext, payload: unk
     throw new AgentApiOperationError("No connected LinkedIn account.", 409);
   }
 
+  const sendLimits = effectiveSendLimits(context.workspace.settings, account);
+
   if (
     !(await hasDailyQuotaRemaining(
       context.workspace.id,
       "messages",
-      context.workspace.settings.dailyMessageLimit,
+      sendLimits.dailyMessageLimit,
       context.workspace.timezone,
     ))
   ) {
@@ -1151,7 +1158,7 @@ export async function replyToLeadResource(context: AgentApiContext, payload: unk
   await consumeDailyQuota(
     context.workspace.id,
     "messages",
-    context.workspace.settings.dailyMessageLimit,
+    sendLimits.dailyMessageLimit,
     context.workspace.timezone,
   );
   await createConversationMessage({

@@ -54,6 +54,7 @@ import { requireActiveSubscription } from "@/lib/server/subscription";
 import { deleteLinkedInAccount, sendLinkedInChatMessage } from "@/lib/server/unipile";
 import type { CampaignReplyHandling, CampaignStep, SendWindow } from "@/lib/server/types";
 import { isLocalMode } from "@/lib/runtime-mode";
+import { effectiveSendLimits } from "@/lib/linkedin-warmup";
 import {
   productProfileIsReadyForSteal,
   targetingFromProductProfile,
@@ -1107,11 +1108,13 @@ export async function sendLinkedInChatMessageAction(formData: FormData) {
   const oversized = attachments.find((file) => file.size > 15 * 1024 * 1024);
   if (oversized) throw new Error(`"${oversized.name}" is too large - attachments must be under 15MB.`);
 
+  const sendLimits = effectiveSendLimits(workspace.settings, linkedInAccount);
+
   if (
     !(await hasDailyQuotaRemaining(
       workspace.id,
       "messages",
-      workspace.settings.dailyMessageLimit,
+      sendLimits.dailyMessageLimit,
       workspace.timezone,
     ))
   ) {
@@ -1131,7 +1134,7 @@ export async function sendLinkedInChatMessageAction(formData: FormData) {
   await consumeDailyQuota(
     workspace.id,
     "messages",
-    workspace.settings.dailyMessageLimit,
+    sendLimits.dailyMessageLimit,
     workspace.timezone,
   );
   const leadId = String(formData.get("leadId") || "").trim();

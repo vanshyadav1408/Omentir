@@ -21,6 +21,12 @@ import { remapStepIndex } from "./enrollment-remap";
 import { sendWindowTimeZoneForLead } from "./lead-time-zone";
 import { addInviteLimitSignal } from "./outreach-rules";
 import {
+  DEFAULT_DAILY_INVITE_LIMIT,
+  DEFAULT_DAILY_MESSAGE_LIMIT,
+  effectiveSendLimits,
+  shouldRestartLinkedInWarmup,
+} from "@/lib/linkedin-warmup";
+import {
   canEnrollLeadForOutreach,
   leadOutcomeNotificationLockId,
   MEETING_BOOKED_CONFIDENCE,
@@ -60,8 +66,8 @@ import {
 } from "@/lib/activity-overview";
 
 const DEFAULT_SETTINGS: WorkspaceSettings = {
-  dailyInviteLimit: 10,
-  dailyMessageLimit: 20,
+  dailyInviteLimit: DEFAULT_DAILY_INVITE_LIMIT,
+  dailyMessageLimit: DEFAULT_DAILY_MESSAGE_LIMIT,
   firstMessageDelayMinutes: 60,
   aiFollowUpEnabled: true,
   aiFollowUpDelayMinutes: 30,
@@ -689,6 +695,11 @@ export async function saveLinkedInAccount(
       throw new Error(`Your current plan supports up to ${limit} LinkedIn account${limit === 1 ? "" : "s"}.`);
     }
   }
+  const restartWarmup =
+    input.status === "connected" && shouldRestartLinkedInWarmup(existingAccount?.status);
+  const warmupStartedAt = restartWarmup
+    ? timestamp
+    : existingAccount?.warmupStartedAt;
   const account: LinkedInAccount = {
     id,
     workspaceId,
@@ -699,6 +710,10 @@ export async function saveLinkedInAccount(
     status: input.status,
     createdAt: existingAccount?.createdAt || timestamp,
     updatedAt: timestamp,
+    // First connect and reconnect (including after a restriction) start a
+    // fresh 14-day clock. Profile refreshes keep the stored clock so a later
+    // in-memory read cannot fall back to an old createdAt and skip warmup.
+    ...(warmupStartedAt ? { warmupStartedAt } : {}),
   };
 
   const ownerRef = collection<{ accountId: string; workspaceId: string; createdAt: string }>(
@@ -2244,17 +2259,26 @@ async function listReservedActionSlots(workspaceId: string, linkedInAccountId?: 
 export type SchedulingContext = {
   reservedSlots: number[];
   usedByDay: Record<string, { invites: number; messages: number }>;
+  dailyInviteLimit: number;
+  dailyMessageLimit: number;
 };
 
 export async function loadSchedulingContext(
   workspace: Workspace,
   campaign: Campaign,
 ): Promise<SchedulingContext> {
+  const account = await getLinkedInAccountForWorkspace(workspace.id, campaign.linkedInAccountId);
+  const sendLimits = effectiveSendLimits(workspace.settings, account);
   const [reservedSlots, usedByDay] = await Promise.all([
     listReservedActionSlots(workspace.id, campaign.linkedInAccountId),
     getDailyQuotaUsage(workspace.id, workspace.timezone),
   ]);
-  return { reservedSlots, usedByDay };
+  return {
+    reservedSlots,
+    usedByDay,
+    dailyInviteLimit: sendLimits.dailyInviteLimit,
+    dailyMessageLimit: sendLimits.dailyMessageLimit,
+  };
 }
 
 // Single entry point for "when should these actions actually fire". Gathers the
@@ -2283,8 +2307,8 @@ export async function planActionSlots(input: {
     nowMs: Date.now(),
     timezone: workspace.timezone,
     window: campaign.sendWindow || "always",
-    dailyInviteLimit: workspace.settings.dailyInviteLimit,
-    dailyMessageLimit: workspace.settings.dailyMessageLimit,
+    dailyInviteLimit: context.dailyInviteLimit,
+    dailyMessageLimit: context.dailyMessageLimit,
     usedByDay: context.usedByDay,
     reservedSlots: [...context.reservedSlots, ...(input.additionalReserved || [])],
     actions: input.actions,
@@ -3612,6 +3636,14 @@ function inviteSafetyLockId(
 // LinkedIn invitation restrictions are per connected account, not per
 // workspace. Keeping the breaker account-scoped prevents one restricted
 // account from freezing outreach on every other connected account.
+export async function restartLinkedInWarmupClock(linkedInAccountId: string) {
+  const timestamp = nowIso();
+  const ref = collection<LinkedInAccount>("linkedinAccounts").doc(linkedInAccountId);
+  const snap = await ref.get();
+  if (!snap.exists) return;
+  await ref.set({ warmupStartedAt: timestamp, updatedAt: timestamp }, { merge: true });
+}
+
 export async function setInviteCooldown(
   workspaceId: string,
   linkedInAccountId: string,
@@ -3623,6 +3655,10 @@ export async function setInviteCooldown(
     .collection("automationLocks")
     .doc(inviteSafetyLockId("invite-cooldown", workspaceId, linkedInAccountId))
     .set({ workspaceId, linkedInAccountId, until, updatedAt: nowIso() });
+  // Restriction is per connected account. Restarting warmup here (and again on
+  // reconnect) puts that seat back on 5/10/1/100 instead of inventing a second
+  // restriction clock.
+  await restartLinkedInWarmupClock(linkedInAccountId);
 }
 
 export async function getInviteCooldown(workspaceId: string, linkedInAccountId: string) {

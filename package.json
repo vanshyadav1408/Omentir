@@ -9,6 +9,7 @@
     "build": "bun --bun next build",
     "start": "bun --bun next start",
     "lint": "bun --bun eslint",
+    "test": "bun test",
     "postinstall": "rm -rf .next"
   },
   "dependencies": {
