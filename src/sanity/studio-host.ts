@@ -53,12 +53,18 @@ export function isStudioAppPath(pathname: string) {
   return pathname === "/studio" || pathname.startsWith("/studio/");
 }
 
-export function studioBasePathForHost(hostname: string) {
-  return isSanityStudioHost(hostname) ? "/" : "/studio";
+export function studioBasePathForHost(_hostname?: string) {
+  return "/studio";
 }
 
 export function studioPathFromPublicPath(pathname: string) {
   if (pathname === "/") return "/studio";
   if (pathname.startsWith("/studio")) return pathname;
   return `/studio${pathname}`;
+}
+
+/** Runs in <head> so sanity.omentir.com never paints the marketing homepage. */
+export function studioHostRedirectScript() {
+  const host = JSON.stringify(SANITY_STUDIO_HOST);
+  return `(function(){if(location.hostname!==${host})return;var p=location.pathname;if(p==="/studio"||p.indexOf("/studio/")===0||p.indexOf("/_next")===0||p.indexOf("/api")===0)return;location.replace((p==="/"?"/studio":"/studio"+p)+location.search+location.hash);})();`;
 }

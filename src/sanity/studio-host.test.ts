@@ -7,6 +7,7 @@ import {
   isSanityStudioRequest,
   isStudioAppPath,
   studioBasePathForHost,
+  studioHostRedirectScript,
   studioPathFromPublicPath,
 } from "./studio-host";
 
@@ -20,13 +21,16 @@ function headers(rows: Record<string, string>) {
 }
 
 describe("Sanity Studio host", () => {
-  test("maps sanity.omentir.com paths onto the internal Studio route without exposing /studio", () => {
+  test("maps sanity.omentir.com onto /studio so the static homepage cannot hydrate over Studio", () => {
     expect(isSanityStudioHost(SANITY_STUDIO_HOST)).toBe(true);
     expect(isSanityStudioHost("omentir.com")).toBe(false);
     expect(isStudioAppPath("/studio")).toBe(true);
     expect(isStudioAppPath("/studio/structure")).toBe(true);
     expect(isStudioAppPath("/")).toBe(false);
-    expect(studioBasePathForHost(SANITY_STUDIO_HOST)).toBe("/");
+    // / is a prerendered marketing page. Studio must live at /studio on both
+    // hosts so the browser URL, Next.js route, and Sanity basePath match.
+    expect(studioBasePathForHost(SANITY_STUDIO_HOST)).toBe("/studio");
+    expect(studioBasePathForHost("omentir.com")).toBe("/studio");
     expect(studioPathFromPublicPath("/")).toBe("/studio");
     expect(studioPathFromPublicPath("/structure")).toBe("/studio/structure");
   });
@@ -58,5 +62,12 @@ describe("Sanity Studio host", () => {
   test("keeps /studio a public path so the origin can render Studio when Cloudflare sends Host omentir.com", () => {
     expect(isPublicMarketingPath("/studio")).toBe(true);
     expect(isPublicMarketingPath("/studio/structure")).toBe(true);
+  });
+
+  test("head script sends the studio host to /studio before the marketing page can paint", () => {
+    const script = studioHostRedirectScript();
+    expect(script).toContain(SANITY_STUDIO_HOST);
+    expect(script).toContain('location.replace((p==="/"?"/studio":"/studio"+p)');
+    expect(script).toContain('p==="/studio"');
   });
 });

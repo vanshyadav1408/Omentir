@@ -9,6 +9,7 @@ import { PostHogProvider } from "./posthog-provider";
 import { buildEarlyFetchScript } from "./sidebar-early-fetch";
 import { ToastProvider } from "./toast";
 import { isLocalMode } from "@/lib/runtime-mode";
+import { studioHostRedirectScript } from "@/sanity/studio-host";
 import "./globals.css";
 
 /* Primary UI faces: Google Sans (display/UI) + Roboto (body). Geist Mono kept for code.
@@ -146,6 +147,7 @@ export default async function RootLayout({
             does not execute an inline script it creates on the client, and the
             root layout is the only node guaranteed to be hydrated instead of
             re-created. See sidebar-early-fetch. */}
+        <script dangerouslySetInnerHTML={{ __html: studioHostRedirectScript() }} />
         <script dangerouslySetInnerHTML={{ __html: buildEarlyFetchScript() }} />
       </head>
       <body className="app-compact flex min-h-screen flex-col">

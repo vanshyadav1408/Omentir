@@ -138,12 +138,14 @@ export default function proxy(request: NextRequest, event: NextFetchEvent) {
   if (isSanityStudioHost(hostname)) {
     const path = request.nextUrl.pathname;
     if (path.startsWith("/_next") || path.startsWith("/api")) return NextResponse.next();
-    // Keep /studio reachable on this host so Studio assets and the internal
-    // rewrite target are not 404ed. omentir.com still 404s /studio below.
     if (isStudioAppPath(path)) return NextResponse.next();
+    // Redirect, do not rewrite. `/` is a statically prerendered marketing page;
+    // a rewrite keeps the browser URL at `/` and the client hydrates the
+    // landing page over Studio. /studio is the real Next.js route and the
+    // Sanity basePath.
     const destination = request.nextUrl.clone();
     destination.pathname = studioPathFromPublicPath(path);
-    return NextResponse.rewrite(destination);
+    return NextResponse.redirect(destination);
   }
 
   const retiredDestination = RETIRED_PUBLIC_REDIRECTS[request.nextUrl.pathname];

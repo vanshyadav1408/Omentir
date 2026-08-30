@@ -6,19 +6,15 @@ import { visionTool } from "@sanity/vision";
 import { apiVersion, dataset, projectId } from "./src/sanity/env";
 import { schemaTypes } from "./src/sanity/schemaTypes";
 import { structure } from "./src/sanity/structure";
-import { studioBasePathForHost } from "./src/sanity/studio-host";
-
-function studioBasePath() {
-  if (typeof window === "undefined") return "/studio";
-  return studioBasePathForHost(window.location.hostname);
-}
 
 export default defineConfig({
   name: "omentir",
   title: "Omentir",
   projectId: projectId || "placeholder",
   dataset,
-  basePath: studioBasePath(),
+  // Always the Next.js route. Host-root `/` on sanity.omentir.com is a
+  // redirect to /studio so this path and the browser URL stay aligned.
+  basePath: "/studio",
   plugins: [structureTool({ structure }), visionTool({ defaultApiVersion: apiVersion })],
   schema: { types: schemaTypes },
 });

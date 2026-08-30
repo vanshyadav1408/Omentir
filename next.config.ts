@@ -66,13 +66,6 @@ const nextConfig: NextConfig = {
   // metadata URL, so both the bare and suffixed forms must resolve.
   async rewrites() {
     return {
-      beforeFiles: [
-        {
-          source: "/",
-          has: [{ type: "host" as const, value: SANITY_STUDIO_HOST }],
-          destination: "/studio",
-        },
-      ],
       afterFiles: [
         { source: "/.well-known/oauth-protected-resource", destination: "/api/oauth/metadata/protected-resource" },
         { source: "/.well-known/oauth-protected-resource/:path*", destination: "/api/oauth/metadata/protected-resource" },
@@ -87,6 +80,16 @@ const nextConfig: NextConfig = {
       { source: "/dashboard/:path*", destination: "/overview/:path*", permanent: true },
       { source: "/for-agents", destination: "/features/agent-api-and-mcp", permanent: true },
       { source: "/mcp-server", destination: "/integrations/mcp", permanent: true },
+      // Do not rewrite `/` to /studio: the homepage is statically prerendered
+      // and the client would hydrate the landing page. Send the browser to the
+      // real Studio route instead. Proxy also redirects when Cloudflare
+      // forwards the studio host in x-forwarded-host.
+      {
+        source: "/",
+        has: [{ type: "host" as const, value: SANITY_STUDIO_HOST }],
+        destination: "/studio",
+        permanent: false,
+      },
     ];
   },
   async headers() {
