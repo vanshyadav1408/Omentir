@@ -8,7 +8,6 @@ import {
 } from "../marketing-table";
 import type { SeoContentPage } from "../seo-content/types";
 import { SeoTitleList } from "../seo-content/shared";
-import { integrationConnect } from "./integration-connect";
 import IntegrationLogo, { integrationName } from "./integration-logo";
 
 export default function IntegrationsDirectory({
@@ -55,15 +54,8 @@ export default function IntegrationsDirectory({
           </MarketingThead>
           <tbody>
             {pages.map((page) => {
-              const row =
-                page.connect ??
-                (() => {
-                  try {
-                    return integrationConnect(page.slug);
-                  } catch {
-                    return { surface: "MCP", auth: "Workspace approval", bestFor: "Operator" };
-                  }
-                })();
+              const row = page.connect;
+              if (!row) return null;
               return (
                 <MarketingTr key={page.slug}>
                   <MarketingTh scope="row">

@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { ALL_TOOLS } from "./tools/tools-data";
 import { liveSeoPages } from "./seo-content/types";
-import { siteUrl } from "./seo";
+import { absoluteAssetUrl, siteUrl } from "./seo";
 import {
   getBlogs,
   getGuides,
@@ -67,12 +67,18 @@ function latestFrom(
 
 function seoFamilyRoutes(
   basePath: "/features" | "/comparisons" | "/integrations" | "/use-cases" | "/alternatives",
-  pages: readonly { slug: string; publishedDate: string; updatedDate: string }[],
+  pages: readonly {
+    slug: string;
+    publishedDate: string;
+    updatedDate: string;
+    ogImage?: { url: string };
+  }[],
   priority: number
 ) {
   return liveSeoPages(pages).map((page) => ({
     url: absoluteUrl(`${basePath}/${page.slug}`),
     lastModified: seoPageDate(page),
+    images: page.ogImage?.url ? [absoluteAssetUrl(page.ogImage.url)] : undefined,
     changeFrequency: "monthly" as const,
     priority,
   }));
@@ -115,7 +121,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const integrationsIndexDate = latestFrom(integrations);
   const useCasesIndexDate = latestFrom(useCases);
   const alternativesIndexDate = latestFrom(alternatives);
-  const helpIndexDate = latestFrom(helpPages, false);
+  const helpIndexDate = latestFrom(helpPages);
   const llmsIndexDate = [
     blogsIndexDate,
     featuresIndexDate,
@@ -158,7 +164,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const blogRoutes = liveBlogList.map((blog) => ({
     url: absoluteUrl(`/blogs/${blog.slug}`),
     lastModified: blogDate(blog),
-    images: [`${siteUrl}${blog.bannerSrc}`],
+    images: blog.bannerSrc ? [absoluteAssetUrl(blog.bannerSrc)] : undefined,
     changeFrequency: "monthly" as const,
     priority: blog.highIntent ? 0.75 : 0.6,
   }));
@@ -169,14 +175,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const useCaseRoutes = seoFamilyRoutes("/use-cases", useCases, 0.75);
   const alternativeRoutes = seoFamilyRoutes("/alternatives", alternatives, 0.75);
 
-  const guideRoutes = guides.map((page) => ({
+  const guideRoutes = liveSeoPages(guides).map((page) => ({
     url: absoluteUrl(`/${page.slug}`),
     lastModified: new Date(`${page.updatedDate || page.publishedDate} UTC`),
+    images: page.ogImage?.url ? [absoluteAssetUrl(page.ogImage.url)] : undefined,
     changeFrequency: "monthly" as const,
     priority: 0.7,
   }));
 
-  const helpRoutes = helpPages.map((page) => ({
+  const helpRoutes = liveSeoPages(helpPages).map((page) => ({
     url: absoluteUrl(`/help/${page.slug}`),
     lastModified: new Date(`${page.updatedDate || page.publishedDate} UTC`),
     changeFrequency: "monthly" as const,

@@ -74,19 +74,15 @@ export const blogPost = defineType({
           title: "Alt text",
         }),
       ],
-      description: "Upload the banner here. Sanity stores the file on cdn.sanity.io.",
-      validation: (rule) =>
-        rule.custom((value, context) => {
-          const src = context.document?.bannerSrc;
-          if (value || (typeof src === "string" && src.length > 0)) return true;
-          return "Upload a banner or set a fallback path.";
-        }),
+      description: "Upload the banner. Served from cdn.sanity.io on the live site.",
+      validation: (rule) => rule.required(),
     }),
     defineField({
       name: "bannerSrc",
       type: "string",
       group: "meta",
-      description: "Fallback path such as /ai-sdr-linkedin-playbook.avif when no uploaded banner is set.",
+      hidden: true,
+      description: "Deprecated public-folder path. Leave empty after the banner is uploaded.",
     }),
     defineField({
       name: "bannerAlt",

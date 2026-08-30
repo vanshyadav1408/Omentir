@@ -1,10 +1,9 @@
 import { notFound } from "next/navigation";
 import { createPageMetadata } from "../../seo";
 import BlogPostTemplate from "../blog-post-template";
-import { getBlog, getBlogSlugs, getLiveBlogs } from "@/lib/cms";
+import { getBlog, getBlogSlugs, getLiveBlogs, isBlogLive } from "@/lib/cms";
 import { BlogPortableText } from "@/lib/cms/portable-text";
-import { tocFromBody } from "@/lib/cms/portable-text-toc";
-import { isBlogLive } from "@/app/blogs/blog-data";
+import { tocFromBody, withoutFaqHeadings } from "@/lib/cms/portable-text-toc";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -34,11 +33,18 @@ export async function generateMetadata({ params }: PageProps) {
     path: `/blogs/${post.slug}`,
     keywords: post.keywords,
     noIndex: !isBlogLive(post),
-    image: {
-      url: post.bannerSrc,
-      width: 1200,
-      height: 600,
-      alt: post.bannerAlt,
+    image: post.bannerSrc
+      ? {
+          url: post.bannerSrc,
+          width: 1200,
+          height: 600,
+          alt: post.bannerAlt,
+        }
+      : undefined,
+    article: {
+      publishedDate: post.publishedDate,
+      updatedDate: post.updatedDate,
+      category: post.category,
     },
   });
 }
@@ -47,8 +53,9 @@ export default async function CmsBlogPage({ params }: PageProps) {
   const { slug } = await params;
   const post = await getBlog(slug);
   if (!post?.body?.length) notFound();
-  const tocItems = tocFromBody(post.body);
-  if (post.faqItems.length && !tocItems.some((item) => item.label.toLowerCase().includes("faq"))) {
+  const body = post.faqItems.length ? withoutFaqHeadings(post.body) : post.body;
+  const tocItems = tocFromBody(body);
+  if (post.faqItems.length) {
     tocItems.push({ id: "faqs", label: "Frequently asked questions", level: 1 });
   }
   const relatedPosts = (await getLiveBlogs())
@@ -74,7 +81,7 @@ export default async function CmsBlogPage({ params }: PageProps) {
       category={post.category}
       relatedPosts={relatedPosts}
     >
-      <BlogPortableText value={post.body} />
+      <BlogPortableText value={body} />
     </BlogPostTemplate>
   );
 }

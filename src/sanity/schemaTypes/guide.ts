@@ -28,26 +28,6 @@ export const guide = defineType({
       },
       validation: (rule) => rule.required(),
     }),
-    defineField({
-      name: "landingVariant",
-      type: "string",
-      description:
-        "Optional React landing kept in code. Leave empty for the default section renderer.",
-      options: {
-        list: [
-          { title: "Default sections", value: "" },
-          { title: "Sales outreach", value: "sales" },
-          { title: "Cold messages", value: "cold" },
-          { title: "LinkedIn automation", value: "automation" },
-          { title: "Overnight", value: "overnight" },
-          { title: "Lead generation", value: "lead-gen" },
-          { title: "Follow-up", value: "follow-up" },
-          { title: "Claude Code", value: "claude-code" },
-          { title: "Cursor", value: "cursor" },
-          { title: "Codex", value: "codex" },
-        ],
-      },
-    }),
     defineField({ name: "publishedDate", type: "string", validation: (rule) => rule.required() }),
     defineField({ name: "updatedDate", type: "string", validation: (rule) => rule.required() }),
     defineField({
@@ -55,6 +35,19 @@ export const guide = defineType({
       type: "array",
       of: [{ type: "string" }],
       options: { layout: "tags" },
+    }),
+    defineField({
+      name: "ogImage",
+      type: "image",
+      options: { hotspot: true },
+      fields: [
+        defineField({
+          name: "alt",
+          type: "string",
+          title: "Alt text",
+        }),
+      ],
+      description: "Social card and page hero. Served from cdn.sanity.io.",
     }),
     defineField({
       name: "sections",

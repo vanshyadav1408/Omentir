@@ -13,7 +13,7 @@ import {
   createWebPageJsonLd,
   siteUrl,
 } from "../seo";
-import { getHelpPages, groupedHelp } from "@/lib/cms";
+import { getHelpPages, groupedHelp, liveSeoPages } from "@/lib/cms";
 import { HELP_CLUSTER_LABELS } from "./types";
 
 const title = "LinkedIn outreach help";
@@ -34,7 +34,7 @@ export const metadata = createPageMetadata({
 });
 
 export default async function HelpIndexPage() {
-  const pages = await getHelpPages();
+  const pages = liveSeoPages(await getHelpPages());
   const pageUrl = `${siteUrl}/help`;
   const groups = groupedHelp(pages);
   const jsonLd = [

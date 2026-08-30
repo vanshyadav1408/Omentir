@@ -145,10 +145,10 @@ export async function GET() {
   const integrationPages = formatSeoFamilyLinks("/integrations", integrations);
   const useCasePages = formatSeoFamilyLinks("/use-cases", useCases);
   const alternativePages = formatSeoFamilyLinks("/alternatives", alternatives);
-  const guidePages = guides
+  const guidePages = liveSeoPages(guides)
     .map((page) => formatMarkdownTwinLink(page.title, `/${page.slug}`, page.description))
     .join("\n");
-  const helpPages = help
+  const helpPages = liveSeoPages(help)
     .map((page) =>
       formatMarkdownTwinLink(page.question, `/help/${page.slug}`, page.description)
     )

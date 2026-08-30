@@ -39,7 +39,7 @@ async function groqFetch<T>(query: string, params: Record<string, string> = {}):
 }
 
 export async function fetchSeoPages(family: SeoFamily): Promise<CmsSeoPage[]> {
-  return cached(["cms-seo-pages", family], ["cms", "cms:seo", `cms:seo:${family}`], async () => {
+  return cached(["cms-seo-pages", family, "cdn"], ["cms", "cms:seo", `cms:seo:${family}`], async () => {
     const rows = await groqFetch<unknown[]>(seoPagesByFamilyQuery, { family });
     return (rows ?? []).map((row) => mapSeoPage(row, family)).filter((page): page is CmsSeoPage => Boolean(page));
   });
@@ -47,7 +47,7 @@ export async function fetchSeoPages(family: SeoFamily): Promise<CmsSeoPage[]> {
 
 export async function fetchSeoPage(family: SeoFamily, slug: string): Promise<CmsSeoPage | undefined> {
   return cached(
-    ["cms-seo-page", family, slug],
+    ["cms-seo-page", family, slug, "cdn"],
     ["cms", "cms:seo", `cms:seo:${family}`, `cms:seo:${family}:${slug}`],
     async () => {
       const row = await groqFetch<unknown>(seoPageBySlugQuery, { family, slug });
@@ -57,7 +57,7 @@ export async function fetchSeoPage(family: SeoFamily, slug: string): Promise<Cms
 }
 
 export async function fetchBlogs(): Promise<Array<Omit<CmsBlogPost, "body" | "faqItems">>> {
-  return cached(["cms-blogs"], ["cms", "cms:blog"], async () => {
+  return cached(["cms-blogs", "cdn"], ["cms", "cms:blog"], async () => {
     const rows = await groqFetch<unknown[]>(blogListQuery);
     return (rows ?? [])
       .map(mapBlogListItem)
@@ -66,7 +66,7 @@ export async function fetchBlogs(): Promise<Array<Omit<CmsBlogPost, "body" | "fa
 }
 
 export async function fetchBlog(slug: string): Promise<CmsBlogPost | undefined> {
-  return cached(["cms-blog", slug], ["cms", "cms:blog", `cms:blog:${slug}`], async () => {
+  return cached(["cms-blog", slug, "cdn"], ["cms", "cms:blog", `cms:blog:${slug}`], async () => {
     const row = await groqFetch<unknown>(blogBySlugQuery, { slug });
     return mapBlogPost(row) ?? undefined;
   });
@@ -93,14 +93,14 @@ export async function fetchHelpPage(slug: string): Promise<HelpPage | undefined>
 }
 
 export async function fetchGuides(): Promise<CmsGuidePage[]> {
-  return cached(["cms-guides"], ["cms", "cms:guide"], async () => {
+  return cached(["cms-guides", "cdn"], ["cms", "cms:guide"], async () => {
     const rows = await groqFetch<unknown[]>(guideListQuery);
     return (rows ?? []).map(mapGuide).filter((page): page is CmsGuidePage => Boolean(page));
   });
 }
 
 export async function fetchGuide(slug: string): Promise<CmsGuidePage | undefined> {
-  return cached(["cms-guide", slug], ["cms", "cms:guide", `cms:guide:${slug}`], async () => {
+  return cached(["cms-guide", slug, "cdn"], ["cms", "cms:guide", `cms:guide:${slug}`], async () => {
     const row = await groqFetch<unknown>(guideBySlugQuery, { slug });
     return mapGuide(row) ?? undefined;
   });

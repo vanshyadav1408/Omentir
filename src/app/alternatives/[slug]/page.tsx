@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { createPageMetadata } from "../../seo";
 import AlternativePageView from "../../seo-content/alternative-page";
-import { isSeoPageLive, seoOgImage } from "../../seo-content/types";
+import { isSeoPageLive } from "../../seo-content/types";
 import { getSeoPage, getSeoSlugs } from "@/lib/cms";
 
 type PageProps = {
@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: PageProps) {
     });
   }
 
-  const image = seoOgImage("alternatives", page.slug, page.title);
+  const image = page.ogImage;
   return createPageMetadata({
     title: `${page.title} - Omentir`,
     description: page.description,

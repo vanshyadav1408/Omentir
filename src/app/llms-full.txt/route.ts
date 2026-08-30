@@ -61,8 +61,12 @@ ${blog.description}`
   const integrationPages = liveSeoPages(integrations)
     .map((page) => seoPageToMarkdown("/integrations", page))
     .join("\n\n");
-  const guidePages = guides.map((page) => guidePageToMarkdown(page)).join("\n\n");
-  const helpPages = help.map((page) => helpPageToMarkdown(page)).join("\n\n");
+  const guidePages = liveSeoPages(guides)
+    .map((page) => guidePageToMarkdown(page))
+    .join("\n\n");
+  const helpPages = liveSeoPages(help)
+    .map((page) => helpPageToMarkdown(page))
+    .join("\n\n");
   const tools = ALL_TOOLS.map((tool) => toolPageMarkdown(tool.href))
     .filter((page): page is string => Boolean(page))
     .join("\n\n");

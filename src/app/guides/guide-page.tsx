@@ -2,20 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import FaqSplitSection from "../faq-split-section";
-import { CHATGPT_FIRST_JOB_PROMPT } from "../chatgpt-setup";
-import { CLAUDE_CHAT_FIRST_JOB_PROMPT } from "../claude-chat-setup";
-import { CLAUDE_CODE_FIRST_JOB_PROMPT } from "../claude-code-setup";
-import { CODEX_FIRST_JOB_PROMPT } from "../codex-setup";
-import { CURSOR_FIRST_JOB_PROMPT } from "../cursor-setup";
-import { GROK_CHAT_FIRST_JOB_PROMPT } from "../grok-chat-setup";
-import { OPENCLAW_FIRST_JOB_PROMPT } from "../openclaw-setup";
-import {
-  GROK_BOT_COLD_DM_PROMPT,
-  GROK_BOT_FIRST_JOB_PROMPT,
-  GROK_BOT_FOLLOW_UP_PROMPT,
-  GROK_BOT_LEAD_GEN_PROMPT,
-} from "../grok-bot-setup";
-import { PromptCopyBox, PromptCopyButton } from "../grok-bot-setup-block";
+import { PromptCopyBox } from "../grok-bot-setup-block";
 import JsonLd from "../json-ld";
 import MarketingClosingCta from "../marketing-closing-cta";
 import {
@@ -29,34 +16,8 @@ import {
   createWebPageJsonLd,
   siteUrl,
 } from "../seo";
-import LinkedinAutomationLanding from "./landing-automation";
-import ClaudeCodeLanding from "./landing-claude-code";
-import CodexLanding from "./landing-codex";
-import ColdMessagesLanding from "./landing-cold";
-import CursorLanding from "./landing-cursor";
-import FollowUpLanding from "./landing-follow-up";
 import { LandingSection, RelatedCards } from "./landing-kit";
-import LeadGenerationLanding from "./landing-lead-gen";
-import OvernightOutboundLanding from "./landing-overnight";
-import SalesOutreachLanding from "./landing-sales";
-import { guideHeroImage, type GuidePage } from "./types";
-
-function promptForGuide(slug: string): string | null {
-  if (slug === "grok-bot-cold-messages") return GROK_BOT_COLD_DM_PROMPT;
-  if (slug === "grok-bot-follow-up-messages") return GROK_BOT_FOLLOW_UP_PROMPT;
-  if (slug === "grok-bot-lead-generation") return GROK_BOT_LEAD_GEN_PROMPT;
-  if (slug === "claude-code-sales-outreach") return CLAUDE_CODE_FIRST_JOB_PROMPT;
-  if (slug === "cursor-sales-outreach") return CURSOR_FIRST_JOB_PROMPT;
-  if (slug === "codex-sales-outreach") return CODEX_FIRST_JOB_PROMPT;
-  if (slug === "chatgpt-sales-outreach") return CHATGPT_FIRST_JOB_PROMPT;
-  if (slug === "claude-chat-sales-outreach") return CLAUDE_CHAT_FIRST_JOB_PROMPT;
-  if (slug === "grok-chat-sales-outreach") return GROK_CHAT_FIRST_JOB_PROMPT;
-  if (slug === "openclaw-sales-outreach") return OPENCLAW_FIRST_JOB_PROMPT;
-  if (slug.startsWith("grok-bot") || slug === "overnight-outbound-with-grok-bot") {
-    return GROK_BOT_FIRST_JOB_PROMPT;
-  }
-  return null;
-}
+import { type GuidePage } from "./types";
 
 function renderInline(text: string): ReactNode[] {
   const parts = text.split(/(\[[^\]]+\]\([^)]+\))/g);
@@ -135,34 +96,17 @@ function DefaultGuideBody({ page }: { page: GuidePage }) {
   );
 }
 
-function LandingBody({ page }: { page: GuidePage }) {
-  const variant = page.landingVariant;
-  if (variant === "sales" || page.slug === "grok-bot-sales-outreach") return <SalesOutreachLanding />;
-  if (variant === "cold" || page.slug === "grok-bot-cold-messages") return <ColdMessagesLanding />;
-  if (variant === "automation" || page.slug === "grok-bot-linkedin-automation") {
-    return <LinkedinAutomationLanding />;
-  }
-  if (variant === "overnight" || page.slug === "overnight-outbound-with-grok-bot") {
-    return <OvernightOutboundLanding />;
-  }
-  if (variant === "lead-gen" || page.slug === "grok-bot-lead-generation") {
-    return <LeadGenerationLanding />;
-  }
-  if (variant === "follow-up" || page.slug === "grok-bot-follow-up-messages") {
-    return <FollowUpLanding />;
-  }
-  if (variant === "claude-code" || page.slug === "claude-code-sales-outreach") {
-    return <ClaudeCodeLanding />;
-  }
-  if (variant === "cursor" || page.slug === "cursor-sales-outreach") return <CursorLanding />;
-  if (variant === "codex" || page.slug === "codex-sales-outreach") return <CodexLanding />;
-  return <DefaultGuideBody page={page} />;
-}
-
 export default function GuidePageView({ page }: { page: GuidePage }) {
   const path = `/${page.slug}`;
   const pageUrl = `${siteUrl}${path}`;
-  const banner = guideHeroImage(page.slug);
+  const banner = page.ogImage
+    ? {
+        src: page.ogImage.url,
+        alt: page.ogImage.alt,
+        width: page.ogImage.width,
+        height: page.ogImage.height,
+      }
+    : null;
   const showFaq = page.faqItems.length > 0;
   const jsonLd = [
     createWebPageJsonLd({
@@ -199,12 +143,6 @@ export default function GuidePageView({ page }: { page: GuidePage }) {
               <Link href="/signup" className="m3-btn m3-btn-filled m3-btn--hero w-full sm:w-auto">
                 Get started
               </Link>
-              {promptForGuide(page.slug) ? (
-                <PromptCopyButton
-                  prompt={promptForGuide(page.slug)!}
-                  className="m3-btn m3-btn-outlined m3-btn--hero w-full sm:w-auto"
-                />
-              ) : null}
             </div>
             {banner ? (
               <figure className="relative mt-10 aspect-[3/2] overflow-hidden rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-low)] md:mt-12">
@@ -221,7 +159,7 @@ export default function GuidePageView({ page }: { page: GuidePage }) {
           </section>
         </div>
 
-        <LandingBody page={page} />
+        <DefaultGuideBody page={page} />
 
         {showFaq ? (
           <FaqSplitSection

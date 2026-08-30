@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { createPageMetadata } from "../../seo";
 import HelpArticle from "../help-page";
+import { isSeoPageLive } from "../../seo-content/types";
 import { getHelpPage, getHelpSlugs } from "@/lib/cms";
 
 type PageProps = {
@@ -30,6 +31,7 @@ export async function generateMetadata({ params }: PageProps) {
     description: page.description,
     path: `/help/${page.slug}`,
     keywords: page.keywords,
+    noIndex: !isSeoPageLive(page),
   });
 }
 

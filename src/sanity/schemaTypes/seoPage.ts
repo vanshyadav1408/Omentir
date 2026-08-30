@@ -68,6 +68,20 @@ export const seoPage = defineType({
       options: { layout: "tags" },
     }),
     defineField({
+      name: "ogImage",
+      type: "image",
+      group: "meta",
+      options: { hotspot: true },
+      fields: [
+        defineField({
+          name: "alt",
+          type: "string",
+          title: "Alt text",
+        }),
+      ],
+      description: "Social card and page hero. Served from cdn.sanity.io.",
+    }),
+    defineField({
       name: "layout",
       type: "string",
       group: "structure",

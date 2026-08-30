@@ -7,7 +7,6 @@ import {
   MarketingFooter,
 } from "../marketing-shell";
 import BlogsList from "./blogs-list";
-import { CATEGORIES } from "./blog-data";
 import { getLiveBlogs } from "@/lib/cms";
 import { createBlogCollectionJsonLd, createPageMetadata } from "../seo";
 
@@ -52,7 +51,7 @@ export default async function BlogsIndexPage() {
               {description}
             </p>
 
-            <BlogsList blogs={blogs} categories={CATEGORIES} />
+            <BlogsList blogs={blogs} />
           </div>
         </div>
         <MarketingFooter />

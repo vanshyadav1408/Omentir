@@ -1,7 +1,6 @@
 import Link from "next/link";
 import type { SeoContentPage } from "../seo-content/types";
 import { SeoTitleList } from "../seo-content/shared";
-import { whoForUseCase } from "./use-case-who";
 
 export default function UseCasesDirectory({
   pages,
@@ -34,15 +33,7 @@ export default function UseCasesDirectory({
         </h2>
         <ul className="divide-y divide-[var(--md-sys-color-outline-variant)] border-b border-[var(--md-sys-color-outline-variant)]">
           {pages.map((page) => {
-            const who =
-              page.who ??
-              (() => {
-                try {
-                  return whoForUseCase(page.slug).who;
-                } catch {
-                  return page.summary;
-                }
-              })();
+            const who = page.who ?? page.summary;
             return (
               <li key={page.slug}>
                 <Link href={`/use-cases/${page.slug}`} className="group block py-4">

@@ -14,10 +14,10 @@ import {
   SeoDocLayout,
   SeoPageChrome,
 } from "./shared";
-import { seoHeroImage, type SeoContentPage } from "./types";
+import { cmsHeroBanner, type SeoContentPage } from "./types";
 
 export default function UseCasePageView({ page }: { page: SeoContentPage }) {
-  const banner = seoHeroImage("use-cases", page.slug);
+  const banner = cmsHeroBanner(page);
   const bannerNode = banner ? (
     <div className="mt-8">
       <SeoBanner src={banner.src} alt={banner.alt} width={banner.width} height={banner.height} />

@@ -36,6 +36,13 @@ export function portableTextToMarkdown(value: PortableTextBlock[] | undefined): 
       else lines.push(text);
       continue;
     }
+    if (block._type === "image") {
+      const image = block as unknown as { alt?: string; src?: string };
+      const src = typeof image.src === "string" ? image.src : "";
+      const alt = typeof image.alt === "string" ? image.alt : "";
+      if (src) lines.push(`![${alt}](${src})`);
+      continue;
+    }
     if (block._type === "codeBlock") {
       const code = "code" in block && typeof block.code === "string" ? block.code : "";
       lines.push("```", code, "```");

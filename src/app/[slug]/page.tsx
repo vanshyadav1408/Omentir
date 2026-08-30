@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { createPageMetadata } from "../seo";
 import { getGuide, getGuideSlugs } from "@/lib/cms";
 import GuidePageView from "../guides/guide-page";
-import { guideHeroImage } from "../guides/types";
+import { isSeoPageLive } from "../seo-content/types";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -26,20 +26,13 @@ export async function generateMetadata({ params }: PageProps) {
       noIndex: true,
     });
   }
-  const image = guideHeroImage(page.slug);
   return createPageMetadata({
     title: page.title,
     description: page.description,
     path: `/${page.slug}`,
     keywords: page.keywords,
-    image: image
-      ? {
-          url: image.src,
-          width: image.width,
-          height: image.height,
-          alt: page.title,
-        }
-      : undefined,
+    noIndex: !isSeoPageLive(page),
+    image: page.ogImage,
   });
 }
 

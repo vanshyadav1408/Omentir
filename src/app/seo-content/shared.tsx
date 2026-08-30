@@ -142,7 +142,7 @@ export function SeoDocLayout({
   return (
     <div className="relative">
       <HeroGridBackdrop height="h-[60vh]" />
-      <Tag className={`${widthClass} relative z-10 min-w-0 pb-16 pt-28 md:pb-24 md:pt-32`}>
+      <Tag className={`${widthClass} relative z-10 min-w-0 pb-16 pt-28 text-left md:pb-24 md:pt-32`}>
         <SeoHeroCrumbs crumbs={crumbs} className="mb-8" />
         <h1
           style={{ fontFamily: "var(--font-varta)" }}
@@ -508,11 +508,11 @@ export function ArticleSection({
     <section id={id} className="scroll-mt-28">
       <h2
         style={{ fontFamily: "var(--font-varta)" }}
-        className="border-b border-[var(--md-sys-color-outline-variant)] pb-2 text-2xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)]"
+        className="border-b border-[var(--md-sys-color-outline-variant)] pb-2 text-left text-2xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)]"
       >
         {heading}
       </h2>
-      <div className="mt-5 space-y-4 text-base leading-8 text-[var(--md-sys-color-on-surface)]">
+      <div className="mt-5 space-y-4 text-left text-base leading-8 text-[var(--md-sys-color-on-surface)]">
         {paragraphs.map((paragraph, index) => (
           <p key={`${id}-p-${index}`}>{linkifyProducts(paragraph, seen)}</p>
         ))}

@@ -1,5 +1,10 @@
 import type { Metadata } from "next";
-import { ALL_BLOGS, isBlogLive } from "./blogs/blog-data";
+
+function isBlogLive(blog: { publishedDate: string }, now: Date = new Date()) {
+  const published = new Date(`${blog.publishedDate} UTC`);
+  if (Number.isNaN(published.getTime())) return true;
+  return published.getTime() <= now.getTime();
+}
 
 export const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://omentir.com").replace(/\/$/, "");
 
@@ -70,7 +75,19 @@ type PageMetadataOptions = {
     height: number;
     alt: string;
   };
+  /** When set, CMS (or the caller) owns article metadata. Do not overlay ALL_BLOGS. */
+  article?: {
+    publishedDate: string;
+    updatedDate?: string;
+    category?: string;
+  };
 };
+
+export function absoluteAssetUrl(src: string) {
+  if (!src) return src;
+  if (src.startsWith("http://") || src.startsWith("https://")) return src;
+  return `${siteUrl}${src.startsWith("/") ? src : `/${src}`}`;
+}
 
 // Dates in blog-data are calendar days ("July 22, 2026") with no timezone, so
 // they must be parsed as UTC. Letting the runtime read them as local time makes
@@ -90,15 +107,6 @@ export function normalizeDate(value: string) {
 
 function uniqueValues(values: string[]) {
   return Array.from(new Set(values.filter(Boolean)));
-}
-
-function getBlogForPath(path: string) {
-  if (!path.startsWith("/blogs/")) {
-    return undefined;
-  }
-
-  const slug = path.replace(/^\/blogs\//, "").replace(/\/$/, "");
-  return ALL_BLOGS.find((blog) => blog.slug === slug);
 }
 
 function markdownAlternatePath(path: string) {
@@ -122,23 +130,25 @@ export function createPageMetadata({
   noIndex = false,
   keywords = [],
   image = defaultOgImage,
+  article,
 }: PageMetadataOptions): Metadata {
   const url = `${siteUrl}${path}`;
   const canonicalUrl = `${siteUrl}${canonicalPath}`;
-  const blog = getBlogForPath(path);
-  // Search results already show the Omentir site name beside the title. Keep
-  // article titles focused on the query instead of forcing the same brand
-  // suffix onto every post and giving Google a reason to rewrite long titles.
-  const pageTitle = blog ? blog.title : title;
-  const pageDescription = blog?.description || description;
-  const metadataImage = blog && image === defaultOgImage
+  const blog = article
     ? {
-        url: blog.bannerSrc,
-        width: 1200,
-        height: 600,
-        alt: blog.bannerAlt,
+        title,
+        description,
+        publishedDate: article.publishedDate,
+        updatedDate: article.updatedDate || article.publishedDate,
+        category: article.category || "Playbooks",
+        bannerSrc: image.url,
+        bannerAlt: image.alt,
       }
-    : image;
+    : undefined;
+  const pageTitle = title;
+  const pageDescription = description;
+  const metadataImage = image;
+  const ogImage = { ...metadataImage, url: absoluteAssetUrl(metadataImage.url) };
   const articleKeywords = blog
     ? [
         blog.title,
@@ -162,7 +172,7 @@ export function createPageMetadata({
         authors: ["Vansh Yadav"],
         section: blog.category,
         tags: uniqueValues([...keywords, blog.title, blog.category]),
-        images: [metadataImage],
+        images: [ogImage],
       }
     : {
         title: pageTitle,
@@ -170,7 +180,7 @@ export function createPageMetadata({
         url,
         siteName: "Omentir",
         type: "website" as const,
-        images: [metadataImage],
+        images: [ogImage],
       };
 
   return {
@@ -206,12 +216,15 @@ export function createPageMetadata({
       card: "summary_large_image",
       title: pageTitle,
       description: pageDescription,
-      images: [metadataImage.url],
+      images: [ogImage.url],
     },
     // A post whose release date has not arrived yet is noindexed without each
     // page needing to opt in, so a scheduled post cannot leak into the index
     // just because its own file forgot to ask.
-    robots: noIndex || (blog && !isBlogLive(blog)) ? noIndexRobots : indexRobots,
+    robots:
+      noIndex || (blog && !isBlogLive(blog))
+        ? noIndexRobots
+        : indexRobots,
   };
 }
 
@@ -349,10 +362,9 @@ export function createBlogJsonLd({
 }: BlogJsonLdOptions) {
   const formattedPublishedDate = normalizeDate(publishedDate);
   const formattedModifiedDate = normalizeDate(modifiedDate || publishedDate);
-  const path = url.startsWith(siteUrl) ? url.slice(siteUrl.length) : url;
-  const blog = getBlogForPath(path);
   const keywords = uniqueValues([
-    ...(blog ? [blog.title, blog.category, `${blog.category} for B2B sales`] : []),
+    title,
+    ...(section ? [section, `${section} for B2B sales`] : []),
     ...defaultKeywords,
   ]);
 

@@ -154,6 +154,17 @@ export function markdownToPortableText(markdown: string): PortableTextBlock[] {
       i += 1;
       continue;
     }
+    const imageMatch = line.trim().match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
+    if (imageMatch) {
+      blocks.push({
+        _type: "image",
+        _key: nextKey(),
+        alt: imageMatch[1],
+        src: imageMatch[2],
+      } as unknown as PortableTextBlock);
+      i += 1;
+      continue;
+    }
     if (line.startsWith("## ")) {
       blocks.push(textBlock("h2", line.slice(3)));
       i += 1;

@@ -1,10 +1,20 @@
 import Link from "next/link";
-import type { BlogItem } from "./blog-data";
+import type { BlogItem } from "@/lib/cms";
 
 type BlogsListProps = {
   blogs: BlogItem[];
-  categories: string[];
 };
+
+const CATEGORY_ORDER = [
+  "Updates",
+  "Playbooks",
+  "Outreach",
+  "Guides",
+  "Case Studies",
+  "Copywriting",
+  "Automation",
+  "Comparisons",
+];
 
 const PUBLISHED_MONTH_INDEX: Record<string, number> = {
   january: 1,
@@ -52,8 +62,8 @@ function sortByNewestPublishedDate(a: BlogItem, b: BlogItem) {
   return a.slug > b.slug ? 1 : -1;
 }
 
-export default function BlogsList({ blogs, categories }: BlogsListProps) {
-  const knownCategories = categories.filter((category) => category !== "All");
+export default function BlogsList({ blogs }: BlogsListProps) {
+  const knownCategories = CATEGORY_ORDER;
   const grouped = knownCategories
     .map((category) => ({
       category,

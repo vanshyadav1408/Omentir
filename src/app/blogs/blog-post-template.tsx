@@ -10,8 +10,7 @@ import {
   MarketingHeader,
   MarketingFooter,
 } from "../marketing-shell";
-import { createBlogJsonLd, createBreadcrumbJsonLd, createFAQJsonLd, normalizeDate, siteUrl } from "../seo";
-import { ALL_BLOGS, isBlogLive } from "./blog-data";
+import { createBlogJsonLd, createBreadcrumbJsonLd, createFAQJsonLd, normalizeDate, siteUrl, absoluteAssetUrl } from "../seo";
 import { MarkdownTwinLink } from "../seo-content/shared";
 
 export interface TocItem {
@@ -70,20 +69,14 @@ export default function BlogPostTemplate({
   relatedPosts,
   children,
 }: BlogPostTemplateProps) {
-  const blogItem = ALL_BLOGS.find((b) => b.slug === slug);
   const canonicalTitle = title;
   const canonicalDescription = description;
   const canonicalBannerSrc = bannerSrc;
   const canonicalBannerAlt = bannerAlt;
-  const category = categoryProp ?? blogItem?.category ?? "Playbooks";
-  const publishedDate = publishedDateProp ?? blogItem?.publishedDate ?? "";
+  const category = categoryProp ?? "Playbooks";
+  const publishedDate = publishedDateProp ?? "";
   const updatedDate = updatedDateProp || publishedDate;
-  const relatedBlogs = relatedPosts
-    ? relatedPosts.slice(0, 4)
-    : [
-        ...ALL_BLOGS.filter((blog) => blog.slug !== slug && isBlogLive(blog) && blog.category === category),
-        ...ALL_BLOGS.filter((blog) => blog.slug !== slug && isBlogLive(blog) && blog.category !== category),
-      ].slice(0, 4);
+  const relatedBlogs = relatedPosts ? relatedPosts.slice(0, 4) : [];
   const hasVisibleFaqs = hasFaqSection(children);
   const faqTocItem = tocItems.find((item) => item.label.toLowerCase().includes("faq"));
   const faqSectionId = faqTocItem?.id ?? "faqs";
@@ -97,11 +90,7 @@ export default function BlogPostTemplate({
       modifiedDate: updatedDate,
       authorName: author.name,
       section: category,
-      images: [
-        canonicalBannerSrc.startsWith("http")
-          ? canonicalBannerSrc
-          : `${siteUrl}${canonicalBannerSrc}`,
-      ],
+      images: canonicalBannerSrc ? [absoluteAssetUrl(canonicalBannerSrc)] : [],
     }),
     createBreadcrumbJsonLd([
       { name: "Home", url: siteUrl },
@@ -154,22 +143,24 @@ export default function BlogPostTemplate({
               </div>
             </div>
 
-            <div
-              className={`relative z-0 mt-8 w-full overflow-hidden rounded-xl bg-[var(--md-sys-color-surface-container-low)] ${
-                bannerAspectRatio === "3/2" ? "aspect-[3/2]" : "aspect-[2/1]"
-              }`}
-            >
-              <Image
-                src={canonicalBannerSrc}
-                alt={canonicalBannerAlt}
-                fill
-                className="object-cover"
-                priority
-                sizes="(max-width: 768px) 100vw, 768px"
-              />
-            </div>
+            {canonicalBannerSrc ? (
+              <div
+                className={`relative z-0 mt-8 w-full overflow-hidden rounded-xl bg-[var(--md-sys-color-surface-container-low)] ${
+                  bannerAspectRatio === "3/2" ? "aspect-[3/2]" : "aspect-[2/1]"
+                }`}
+              >
+                <Image
+                  src={canonicalBannerSrc}
+                  alt={canonicalBannerAlt}
+                  fill
+                  className="object-cover"
+                  priority
+                  sizes="(max-width: 768px) 100vw, 768px"
+                />
+              </div>
+            ) : null}
 
-            <div className="blog-article prose prose-zinc mt-12 max-w-none space-y-6 text-base font-medium leading-8 text-[var(--md-sys-color-on-surface)] md:mt-16">
+            <div className="blog-article prose prose-zinc mt-12 max-w-none space-y-6 text-left text-base font-medium leading-8 text-[var(--md-sys-color-on-surface)] md:mt-16">
               {children}
             </div>
 

@@ -2,49 +2,26 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { FEATURE_NAV_ITEMS } from "@/app/feature-nav";
 import { HELP_CLUSTER_LABELS, type HelpPage } from "@/app/help/types";
-import { guideMedia } from "@/app/guides/guide-media";
 import type { GuidePage } from "@/app/guides/types";
-import { integrationConnect } from "@/app/integrations/integration-connect";
 import { pricingPlans } from "@/app/pricing-plans";
 import { ALL_TOOLS, TOOLS_INDEX } from "@/app/tools/tools-data";
-import { type BlogItem } from "@/app/blogs/blog-data";
 import { brandTagline, defaultDescription, siteUrl } from "@/app/seo";
-import { CHATGPT_FIRST_JOB_PROMPT } from "@/app/chatgpt-setup";
-import {
-  DEEPSEEK_DRAFT_PROMPT,
-  GEMINI_DRAFT_PROMPT,
-  HERMES_DRAFT_PROMPT,
-  KIMI_DRAFT_PROMPT,
-  MISTRAL_DRAFT_PROMPT,
-  QWEN_DRAFT_PROMPT,
-  SARVAM_DRAFT_PROMPT,
-} from "@/app/chat-only-setup";
-import { CLAUDE_CHAT_FIRST_JOB_PROMPT } from "@/app/claude-chat-setup";
-import { CLAUDE_CODE_FIRST_JOB_PROMPT } from "@/app/claude-code-setup";
-import { CODEX_CONFIG_TOML, CODEX_FIRST_JOB_PROMPT } from "@/app/codex-setup";
-import { CURSOR_FIRST_JOB_PROMPT } from "@/app/cursor-setup";
-import { GROK_CHAT_FIRST_JOB_PROMPT } from "@/app/grok-chat-setup";
-import { OPENCLAW_FIRST_JOB_PROMPT } from "@/app/openclaw-setup";
-import {
-  GROK_BOT_COLD_DM_PROMPT,
-  GROK_BOT_FIRST_JOB_PROMPT,
-  GROK_BOT_FOLLOW_UP_PROMPT,
-  GROK_BOT_LEAD_GEN_PROMPT,
-  GROK_BOT_SALES_NAV_PROMPT,
-} from "@/app/grok-bot-setup";
-import { liveSeoPages, type SeoContentPage } from "@/app/seo-content/types";
+import { liveSeoPages, type SeoContentPage, type SeoFamily } from "@/app/seo-content/types";
 import {
   getBlog,
-  getBlogs,
+  getGuide,
   getGuides,
+  getHelpPage,
   getHelpPages,
-  getLegalPages,
+  getLegalPage,
   getLiveBlogs,
+  getSeoPage,
   getSeoPages,
+  type CmsBlogPost,
   type CmsLegalPage,
 } from "@/lib/cms";
-import { blogSourcePath } from "@/lib/cms/blog-from-source";
 import { portableTextToMarkdown } from "@/lib/cms/portable-text-markdown";
+import { withoutFaqHeadings } from "@/lib/cms/portable-text-toc";
 import {
   collapseMarkdown,
   extractTsxScope,
@@ -299,32 +276,8 @@ export function helpPageToMarkdown(page: HelpPage) {
 
 export function guidePageToMarkdown(page: GuidePage) {
   const htmlPath = `/${page.slug}`;
-  const media = guideMedia(page.slug);
-  const insertMarkdown = (index: number) =>
-    media.inserts
-      .filter((item) => item.afterIndex === index)
-      .map((item) => {
-        const bits: string[] = [];
-        if (item.caption && item.visual) bits.push(`*${item.caption}*`);
-        if (item.table) {
-          bits.push(
-            [
-              `**${item.table.caption}**`,
-              ``,
-              `| ${item.table.headers.join(" | ")} |`,
-              `| ${item.table.headers.map(() => "---").join(" | ")} |`,
-              ...item.table.rows.map((row) => `| ${row.join(" | ")} |`),
-            ].join("\n")
-          );
-        }
-        return bits.join("\n\n");
-      })
-      .filter(Boolean)
-      .join("\n\n");
-
-  const ledeMedia = insertMarkdown(-1);
   const sections = page.sections
-    .map((section, index) => {
+    .map((section) => {
       const body = section.paragraphs.join("\n\n");
       const bullets = section.bullets?.length
         ? "\n\n" + section.bullets.map((item) => `- ${item}`).join("\n")
@@ -332,8 +285,7 @@ export function guidePageToMarkdown(page: GuidePage) {
       const code = section.code
         ? `\n\n\`\`\`\n${section.code}\n\`\`\``
         : "";
-      const extras = insertMarkdown(index);
-      return `## ${section.heading}\n\n${body}${bullets}${code}${extras ? `\n\n${extras}` : ""}`;
+      return `## ${section.heading}\n\n${body}${bullets}${code}`;
     })
     .join("\n\n");
   const related = page.related?.length
@@ -344,8 +296,7 @@ export function guidePageToMarkdown(page: GuidePage) {
         }))
       )}`
     : "";
-  const showFaq = media.faq !== false && page.faqItems.length > 0;
-  const faqs = showFaq
+  const faqs = page.faqItems.length
     ? `## Common questions\n\n${page.faqItems
         .map((item) => `**${item.question}**\n\n${item.answer}`)
         .join("\n\n")}`
@@ -353,7 +304,6 @@ export function guidePageToMarkdown(page: GuidePage) {
   return collapseMarkdown(
     [
       pageHeader(page.title, page.description, htmlPath),
-      ledeMedia,
       sections,
       related,
       faqs,
@@ -518,49 +468,33 @@ function legalFromCms(page: CmsLegalPage) {
   );
 }
 
-function legalMarkdown(
-  htmlPath: "/privacy-policy" | "/terms-of-service",
-  title: string,
-  description: string,
-  updated: string
-) {
-  const file =
-    htmlPath === "/privacy-policy"
-      ? readAppFile("privacy-policy", "page.tsx")
-      : readAppFile("terms-of-service", "page.tsx");
-  const start = file.indexOf("const sections");
-  const end = file.indexOf("export default function", start);
-  const block = start < 0 ? file : file.slice(start, end < 0 ? undefined : end);
-  const sections = block
-    .split(/title:\s*"/)
-    .slice(1)
-    .map((chunk) => {
-      const titleEnd = chunk.indexOf('"');
-      const heading = titleEnd >= 0 ? chunk.slice(0, titleEnd) : "";
-      const afterTitle = titleEnd >= 0 ? chunk.slice(titleEnd + 1) : chunk;
-      const stringBody = afterTitle.match(
-        /body:\s*("(?:\\.|[^"\\])*"|`(?:\\.|[^`\\])*`)/
-      );
-      if (stringBody) {
-        const quoted = stringBody[1]!;
-        return `## ${heading}\n\n${quoted.slice(1, -1)}`;
-      }
-      const jsxStart = afterTitle.indexOf("body:");
-      const jsx = jsxStart >= 0 ? afterTitle.slice(jsxStart + 5) : afterTitle;
-      const inner =
-        /<>\s*([\s\S]*?)\s*<\/>/.exec(jsx)?.[1] ??
-        /\(\s*([\s\S]*?)\s*\)/.exec(jsx)?.[1] ??
-        "";
-      const text = collapseMarkdown(
-        jsxChildrenToMarkdown(inner, new Map(), internalMarkdownHref)
-      );
-      return `## ${heading}\n\n${text}`;
-    });
+const SEO_FAMILIES = new Set<SeoFamily>([
+  "features",
+  "comparisons",
+  "integrations",
+  "use-cases",
+  "alternatives",
+]);
+
+export function blogPostToMarkdown(cms: CmsBlogPost) {
+  const body = portableTextToMarkdown(
+    cms.faqItems.length ? withoutFaqHeadings(cms.body) : cms.body
+  );
+  const faqs = cms.faqItems.length
+    ? `## Frequently asked questions\n\n${cms.faqItems
+        .map((item) => `**${item.question}**\n\n${item.answer}`)
+        .join("\n\n")}`
+    : "";
   return collapseMarkdown(
     [
-      pageHeader(title, description, htmlPath),
-      `Last updated: ${updated}`,
-      sections.join("\n\n"),
+      pageHeader(cms.title, cms.description, `/blogs/${cms.slug}`),
+      `- Category: ${cms.category}`,
+      `- Published: ${cms.publishedDate}`,
+      `- Updated: ${cms.updatedDate}`,
+      `- Read time: ${cms.readTime}`,
+      body,
+      faqs,
+      tryOmentirLine(),
     ].join("\n\n")
   );
 }
@@ -620,65 +554,10 @@ function blogIndexMarkdown(
   );
 }
 
-function grokBotPromptFromSource(source: string, body = "") {
-  const catalog: Array<[string, string]> = [
-    ["GROK_BOT_LEAD_GEN_PROMPT", GROK_BOT_LEAD_GEN_PROMPT],
-    ["GROK_BOT_FOLLOW_UP_PROMPT", GROK_BOT_FOLLOW_UP_PROMPT],
-    ["GROK_BOT_SALES_NAV_PROMPT", GROK_BOT_SALES_NAV_PROMPT],
-    ["GROK_BOT_COLD_DM_PROMPT", GROK_BOT_COLD_DM_PROMPT],
-    ["GROK_BOT_FIRST_JOB_PROMPT", GROK_BOT_FIRST_JOB_PROMPT],
-    ["CLAUDE_CODE_FIRST_JOB_PROMPT", CLAUDE_CODE_FIRST_JOB_PROMPT],
-    ["CURSOR_FIRST_JOB_PROMPT", CURSOR_FIRST_JOB_PROMPT],
-    ["CODEX_FIRST_JOB_PROMPT", CODEX_FIRST_JOB_PROMPT],
-    ["CODEX_CONFIG_TOML", CODEX_CONFIG_TOML],
-    ["CHATGPT_FIRST_JOB_PROMPT", CHATGPT_FIRST_JOB_PROMPT],
-    ["CLAUDE_CHAT_FIRST_JOB_PROMPT", CLAUDE_CHAT_FIRST_JOB_PROMPT],
-    ["GROK_CHAT_FIRST_JOB_PROMPT", GROK_CHAT_FIRST_JOB_PROMPT],
-    ["OPENCLAW_FIRST_JOB_PROMPT", OPENCLAW_FIRST_JOB_PROMPT],
-    ["KIMI_DRAFT_PROMPT", KIMI_DRAFT_PROMPT],
-    ["GEMINI_DRAFT_PROMPT", GEMINI_DRAFT_PROMPT],
-    ["DEEPSEEK_DRAFT_PROMPT", DEEPSEEK_DRAFT_PROMPT],
-    ["QWEN_DRAFT_PROMPT", QWEN_DRAFT_PROMPT],
-    ["MISTRAL_DRAFT_PROMPT", MISTRAL_DRAFT_PROMPT],
-    ["SARVAM_DRAFT_PROMPT", SARVAM_DRAFT_PROMPT],
-    ["HERMES_DRAFT_PROMPT", HERMES_DRAFT_PROMPT],
-  ];
-  const prompts = catalog
-    .filter(([name, prompt]) => source.includes(name) && !body.includes(prompt))
-    .map(([, prompt]) => prompt);
-  return prompts.length ? prompts.join("\n\n") : null;
-}
-
-function blogMarkdown(blog: BlogItem) {
-  const file = blogSourcePath(blog.slug);
-  const source = file && existsSync(file) ? readFileSync(file, "utf8") : "";
-  const body = sourceFileToMarkdown(source, internalMarkdownHref, "BlogPostTemplate");
-  const faqs = body.includes("## Frequently asked questions")
-    ? ""
-    : faqItemsFromSource(source);
-  const prompt = grokBotPromptFromSource(source, body);
-  const promptBlock = prompt
-    ? `## Paste-ready job\n\n\`\`\`\n${prompt}\n\`\`\``
-    : "";
-  return collapseMarkdown(
-    [
-      pageHeader(blog.title, blog.description, `/blogs/${blog.slug}`),
-      `- Category: ${blog.category}`,
-      `- Published: ${blog.publishedDate}`,
-      `- Updated: ${blog.updatedDate}`,
-      `- Read time: ${blog.readTime}`,
-      body,
-      promptBlock,
-      faqs,
-      tryOmentirLine(),
-    ].join("\n\n")
-  );
-}
-
 export async function listPublicMarkdownPages(): Promise<PublicMarkdownPage[]> {
   const [blogs, features, comparisons, integrations, useCases, alternatives, guides, help] =
     await Promise.all([
-      getBlogs(),
+      getLiveBlogs(),
       getSeoPages("features"),
       getSeoPages("comparisons"),
       getSeoPages("integrations"),
@@ -701,49 +580,49 @@ export async function listPublicMarkdownPages(): Promise<PublicMarkdownPage[]> {
       kind: "blog",
     });
   }
-  for (const page of features) {
+  for (const page of liveSeoPages(features)) {
     pages.push({
       htmlPath: `/features/${page.slug}`,
       markdownPath: `/features/${page.slug}.md`,
       kind: "seo",
     });
   }
-  for (const page of comparisons) {
+  for (const page of liveSeoPages(comparisons)) {
     pages.push({
       htmlPath: `/comparisons/${page.slug}`,
       markdownPath: `/comparisons/${page.slug}.md`,
       kind: "seo",
     });
   }
-  for (const page of integrations) {
+  for (const page of liveSeoPages(integrations)) {
     pages.push({
       htmlPath: `/integrations/${page.slug}`,
       markdownPath: `/integrations/${page.slug}.md`,
       kind: "seo",
     });
   }
-  for (const page of useCases) {
+  for (const page of liveSeoPages(useCases)) {
     pages.push({
       htmlPath: `/use-cases/${page.slug}`,
       markdownPath: `/use-cases/${page.slug}.md`,
       kind: "seo",
     });
   }
-  for (const page of alternatives) {
+  for (const page of liveSeoPages(alternatives)) {
     pages.push({
       htmlPath: `/alternatives/${page.slug}`,
       markdownPath: `/alternatives/${page.slug}.md`,
       kind: "seo",
     });
   }
-  for (const page of guides) {
+  for (const page of liveSeoPages(guides)) {
     pages.push({
       htmlPath: `/${page.slug}`,
       markdownPath: `/${page.slug}.md`,
       kind: "seo",
     });
   }
-  for (const page of help) {
+  for (const page of liveSeoPages(help)) {
     pages.push({
       htmlPath: `/help/${page.slug}`,
       markdownPath: `/help/${page.slug}.md`,
@@ -767,40 +646,14 @@ export async function renderPublicMarkdown(htmlPath: string): Promise<string | n
   if (htmlPath === "/tools") return toolsIndexMarkdown();
   if (htmlPath.startsWith("/tools/")) return toolPageMarkdown(htmlPath);
   if (htmlPath === "/privacy-policy" || htmlPath === "/terms-of-service") {
-    const legal = await getLegalPages();
-    const page = legal.find((item) => `/${item.slug}` === htmlPath);
-    if (page) return legalFromCms(page);
-    if (htmlPath === "/privacy-policy") {
-      return legalMarkdown(
-        "/privacy-policy",
-        "Privacy Policy",
-        "Read how Omentir collects, uses, stores, and protects account, billing, LinkedIn, lead, campaign, and message data.",
-        "May 4, 2026"
-      );
-    }
-    return legalMarkdown(
-      "/terms-of-service",
-      "Terms of Service",
-      "Read the terms for using Omentir to analyze products, discover leads, run LinkedIn campaigns, and manage outbound workflows.",
-      "August 9, 2026"
-    );
+    const page = await getLegalPage(htmlPath.slice(1));
+    return page ? legalFromCms(page) : null;
   }
   if (htmlPath === "/minimum-booking-guarantee") return guaranteeMarkdown();
 
-  const [blogs, features, comparisons, integrations, useCases, alternatives, guides, help] =
-    await Promise.all([
-      getBlogs(),
-      getSeoPages("features"),
-      getSeoPages("comparisons"),
-      getSeoPages("integrations"),
-      getSeoPages("use-cases"),
-      getSeoPages("alternatives"),
-      getGuides(),
-      getHelpPages(),
-    ]);
-
   if (htmlPath === "/blogs") return blogIndexMarkdown(await getLiveBlogs());
   if (htmlPath === "/features") {
+    const features = await getSeoPages("features");
     return familyIndexMarkdown(
       "/features",
       "Omentir features",
@@ -813,6 +666,7 @@ export async function renderPublicMarkdown(htmlPath: string): Promise<string | n
     );
   }
   if (htmlPath === "/comparisons") {
+    const comparisons = await getSeoPages("comparisons");
     return familyIndexMarkdown(
       "/comparisons",
       "AI sales tool alternatives",
@@ -825,20 +679,15 @@ export async function renderPublicMarkdown(htmlPath: string): Promise<string | n
     );
   }
   if (htmlPath === "/integrations") {
+    const integrations = await getSeoPages("integrations");
     const connectNote = liveSeoPages(integrations).map((page) => {
-      const row =
-        page.connect ??
-        (() => {
-          try {
-            return integrationConnect(page.slug);
-          } catch {
-            return { surface: "MCP", auth: "Workspace approval", bestFor: "Operator" };
-          }
-        })();
+      const row = page.connect;
       return {
         title: page.title,
         href: `/integrations/${page.slug}`,
-        note: `${page.summary} Surface: ${row.surface}. Auth: ${row.auth}. Best for: ${row.bestFor}.`,
+        note: row
+          ? `${page.summary} Surface: ${row.surface}. Auth: ${row.auth}. Best for: ${row.bestFor}.`
+          : page.summary,
       };
     });
     return familyIndexMarkdown(
@@ -849,6 +698,7 @@ export async function renderPublicMarkdown(htmlPath: string): Promise<string | n
     );
   }
   if (htmlPath === "/use-cases") {
+    const useCases = await getSeoPages("use-cases");
     return familyIndexMarkdown(
       "/use-cases",
       "LinkedIn outbound use cases",
@@ -861,6 +711,7 @@ export async function renderPublicMarkdown(htmlPath: string): Promise<string | n
     );
   }
   if (htmlPath === "/alternatives") {
+    const alternatives = await getSeoPages("alternatives");
     return familyIndexMarkdown(
       "/alternatives",
       "Outbound tool roundups",
@@ -873,6 +724,7 @@ export async function renderPublicMarkdown(htmlPath: string): Promise<string | n
     );
   }
   if (htmlPath === "/help") {
+    const help = await getHelpPages();
     return familyIndexMarkdown(
       "/help",
       "LinkedIn outreach help",
@@ -888,64 +740,26 @@ export async function renderPublicMarkdown(htmlPath: string): Promise<string | n
   const blogMatch = htmlPath.match(/^\/blogs\/([^/]+)$/);
   if (blogMatch) {
     const cms = await getBlog(blogMatch[1]);
-    if (cms?.body.length) {
-      const body = portableTextToMarkdown(cms.body);
-      const faqs = cms.faqItems.length
-        ? `## Frequently asked questions\n\n${cms.faqItems
-            .map((item) => `**${item.question}**\n\n${item.answer}`)
-            .join("\n\n")}`
-        : "";
-      return collapseMarkdown(
-        [
-          pageHeader(cms.title, cms.description, `/blogs/${cms.slug}`),
-          `- Category: ${cms.category}`,
-          `- Published: ${cms.publishedDate}`,
-          `- Updated: ${cms.updatedDate}`,
-          `- Read time: ${cms.readTime}`,
-          body,
-          faqs,
-          tryOmentirLine(),
-        ].join("\n\n")
-      );
-    }
-    const blog = blogs.find((item) => item.slug === blogMatch[1]);
-    return blog ? blogMarkdown(blog) : null;
+    return cms?.body.length ? blogPostToMarkdown(cms) : null;
   }
 
-  const feature = htmlPath.match(/^\/features\/([^/]+)$/);
-  if (feature) {
-    const page = features.find((item) => item.slug === feature[1]);
-    return page ? seoPageToMarkdown("/features", page) : null;
-  }
-  const comparison = htmlPath.match(/^\/comparisons\/([^/]+)$/);
-  if (comparison) {
-    const page = comparisons.find((item) => item.slug === comparison[1]);
-    return page ? seoPageToMarkdown("/comparisons", page) : null;
-  }
-  const integration = htmlPath.match(/^\/integrations\/([^/]+)$/);
-  if (integration) {
-    const page = integrations.find((item) => item.slug === integration[1]);
-    return page ? seoPageToMarkdown("/integrations", page) : null;
-  }
-  const useCase = htmlPath.match(/^\/use-cases\/([^/]+)$/);
-  if (useCase) {
-    const page = useCases.find((item) => item.slug === useCase[1]);
-    return page ? seoPageToMarkdown("/use-cases", page) : null;
-  }
-  const alternative = htmlPath.match(/^\/alternatives\/([^/]+)$/);
-  if (alternative) {
-    const page = alternatives.find((item) => item.slug === alternative[1]);
-    return page ? seoPageToMarkdown("/alternatives", page) : null;
+  const seoMatch = htmlPath.match(
+    /^\/(features|comparisons|integrations|use-cases|alternatives)\/([^/]+)$/
+  );
+  if (seoMatch && SEO_FAMILIES.has(seoMatch[1] as SeoFamily)) {
+    const family = seoMatch[1] as SeoFamily;
+    const page = await getSeoPage(family, seoMatch[2]!);
+    return page ? seoPageToMarkdown(`/${family}`, page) : null;
   }
 
   const helpMatch = htmlPath.match(/^\/help\/([^/]+)$/);
   if (helpMatch) {
-    const page = help.find((item) => item.slug === helpMatch[1]);
+    const page = await getHelpPage(helpMatch[1]!);
     return page ? helpPageToMarkdown(page) : null;
   }
 
   if (htmlPath.split("/").length === 2 && htmlPath !== "/") {
-    const page = guides.find((item) => `/${item.slug}` === htmlPath);
+    const page = await getGuide(htmlPath.slice(1));
     return page ? guidePageToMarkdown(page) : null;
   }
 

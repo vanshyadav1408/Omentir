@@ -1,17 +1,6 @@
-import { existsSync } from "node:fs";
-import { join } from "node:path";
-import { defaultOgImage } from "../seo";
-
 /**
- * Hand-curated SEO landing pages for /features, /comparisons, /integrations,
+ * Sanity-backed SEO landing pages for /features, /comparisons, /integrations,
  * /use-cases, and /alternatives.
- *
- * These are not programmatic SEO pages. Each entry is written for a real buyer
- * question, with unique sections and honest tradeoffs. Do not generate thin
- * keyword variants, competitor-pair matrices, or mass-produce slugs from a template.
- *
- * Copy stays unique per slug. Layouts differ on purpose so adjacent pages do
- * not read as one doorway template with swapped names.
  */
 
 export type SeoFaqItem = {
@@ -114,6 +103,13 @@ export type SeoContentPage = {
   who?: string;
   /** Integration connect matrix. */
   connect?: { surface: string; auth: string; bestFor: string };
+  /** CDN hero / Open Graph image from Sanity. */
+  ogImage?: {
+    url: string;
+    width: number;
+    height: number;
+    alt: string;
+  };
 };
 
 export type SeoFamily =
@@ -141,7 +137,7 @@ export function isSeoPageLive(
 ): boolean {
   const published = new Date(`${page.publishedDate} UTC`);
   if (Number.isNaN(published.getTime())) {
-    return true;
+    return false;
   }
   return published.getTime() <= now.getTime();
 }
@@ -160,55 +156,15 @@ export function getSeoPage(
   return pages.find((page) => page.slug === slug);
 }
 
-const seoImageDimensions: Record<SeoFamily, { width: number; height: number }> = {
-  features: { width: 1536, height: 1024 },
-  comparisons: { width: 1536, height: 1024 },
-  integrations: { width: 1536, height: 1024 },
-  "use-cases": { width: 1536, height: 1024 },
-  alternatives: { width: 1536, height: 1024 },
-};
-
-/**
- * Hero art under public/seo. Prefer AVIF, then SVG.
- * Returns null when no asset exists so page heroes can omit the banner.
- */
-export function seoHeroImage(
-  family: SeoFamily,
-  slug: string
-): { src: string; alt: string; width: number; height: number } | null {
-  const dir = join(process.cwd(), "public", "seo", family);
-  const candidates = [
-    { rel: `/seo/${family}/${slug}.avif`, abs: join(dir, `${slug}.avif`) },
-    { rel: `/seo/${family}/${slug}.svg`, abs: join(dir, `${slug}.svg`) },
-  ];
-  const match = candidates.find((file) => existsSync(file.abs));
-  if (!match) return null;
+export function cmsHeroBanner(page: {
+  title: string;
+  ogImage?: { url: string; width: number; height: number; alt: string };
+}): { src: string; alt: string; width: number; height: number } | null {
+  if (!page.ogImage?.url) return null;
   return {
-    src: match.rel,
-    alt: `${slug.replace(/-/g, " ")} illustration for Omentir`,
-    ...seoImageDimensions[family],
-  };
-}
-
-/** Open Graph image with a safe fallback when hero art is missing. */
-export function seoOgImage(
-  family: SeoFamily,
-  slug: string,
-  pageTitle?: string
-): { url: string; width: number; height: number; alt: string } {
-  const hero = seoHeroImage(family, slug);
-  if (hero) {
-    return {
-      url: hero.src,
-      width: hero.width,
-      height: hero.height,
-      alt: hero.alt,
-    };
-  }
-  return {
-    url: defaultOgImage.url,
-    width: defaultOgImage.width,
-    height: defaultOgImage.height,
-    alt: pageTitle ? `${pageTitle} - Omentir` : defaultOgImage.alt,
+    src: page.ogImage.url,
+    alt: page.ogImage.alt || page.title,
+    width: page.ogImage.width,
+    height: page.ogImage.height,
   };
 }

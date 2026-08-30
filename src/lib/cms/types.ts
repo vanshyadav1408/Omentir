@@ -1,10 +1,21 @@
 import type { PortableTextBlock } from "@portabletext/types";
-import type { BlogItem } from "@/app/blogs/blog-data";
 import type { GuidePage } from "@/app/guides/types";
 import type { HelpCluster, HelpPage } from "@/app/help/types";
 import type { SeoContentPage, SeoFamily } from "@/app/seo-content/types";
 
-export type { SeoFamily, SeoContentPage, BlogItem, GuidePage, HelpPage, HelpCluster };
+export type { SeoFamily, SeoContentPage, GuidePage, HelpPage, HelpCluster };
+
+export type BlogItem = {
+  slug: string;
+  title: string;
+  description: string;
+  publishedDate: string;
+  updatedDate: string;
+  category: string;
+  readTime: string;
+  bannerSrc: string;
+  bannerAlt: string;
+};
 
 export type SeoConnect = {
   surface: string;
@@ -25,9 +36,7 @@ export type CmsBlogPost = BlogItem & {
   faqItems: Array<{ question: string; answer: string }>;
 };
 
-export type CmsGuidePage = GuidePage & {
-  landingVariant?: string;
-};
+export type CmsGuidePage = GuidePage;
 
 export type CmsLegalPage = {
   slug: string;

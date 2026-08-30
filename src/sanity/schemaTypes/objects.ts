@@ -255,6 +255,10 @@ export const blogBody = defineType({
     }),
     defineArrayMember({ type: "contentTable" }),
     defineArrayMember({ type: "codeBlock" }),
-    defineArrayMember({ type: "image", options: { hotspot: true } }),
+    defineArrayMember({
+      type: "image",
+      options: { hotspot: true },
+      fields: [defineField({ name: "alt", type: "string", title: "Alt text" })],
+    }),
   ],
 });

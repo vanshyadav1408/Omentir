@@ -1,19 +1,6 @@
 import { isSanityConfigured } from "@/sanity/env";
-import { isBlogLive, type BlogItem } from "@/app/blogs/blog-data";
 import { HELP_CLUSTER_ORDER, type HelpCluster, type HelpPage } from "@/app/help/types";
 import { liveSeoPages, type SeoFamily } from "@/app/seo-content/types";
-import {
-  localBlog,
-  localBlogs,
-  localGuide,
-  localGuides,
-  localHelpPage,
-  localHelpPages,
-  localLegalPage,
-  localSeoPage,
-  localSeoPages,
-  LOCAL_LEGAL,
-} from "./fallback";
 import {
   fetchBlog,
   fetchBlogSlugs,
@@ -28,30 +15,36 @@ import {
   fetchSeoPage,
   fetchSeoPages,
 } from "./sanity";
-import type { CmsBlogPost, CmsGuidePage, CmsLegalPage, CmsSeoPage } from "./types";
+import type { BlogItem, CmsBlogPost, CmsGuidePage, CmsLegalPage, CmsSeoPage } from "./types";
 
 export { isSanityConfigured };
 export type { CmsBlogPost, CmsGuidePage, CmsLegalPage, CmsSeoPage };
 
-async function fromSanity<T>(load: () => Promise<T>, fallback: () => T): Promise<T> {
-  if (!isSanityConfigured()) return fallback();
+export function isBlogLive(
+  blog: Pick<BlogItem, "publishedDate">,
+  now: Date = new Date()
+): boolean {
+  const published = new Date(`${blog.publishedDate} UTC`);
+  if (Number.isNaN(published.getTime())) return false;
+  return published.getTime() <= now.getTime();
+}
+
+async function fromSanity<T>(load: () => Promise<T>, empty: T): Promise<T> {
+  if (!isSanityConfigured()) return empty;
   try {
     return await load();
   } catch (error) {
-    console.error("Sanity CMS fetch failed, using in-code content", error);
-    return fallback();
+    console.error("Sanity CMS fetch failed", error);
+    return empty;
   }
 }
 
 export async function getSeoPages(family: SeoFamily): Promise<CmsSeoPage[]> {
-  return fromSanity(() => fetchSeoPages(family), () => localSeoPages(family));
+  return fromSanity(() => fetchSeoPages(family), []);
 }
 
 export async function getSeoPage(family: SeoFamily, slug: string): Promise<CmsSeoPage | undefined> {
-  return fromSanity(
-    () => fetchSeoPage(family, slug),
-    () => localSeoPage(family, slug)
-  );
+  return fromSanity(() => fetchSeoPage(family, slug), undefined);
 }
 
 export async function getSeoSlugs(family: SeoFamily): Promise<string[]> {
@@ -60,7 +53,7 @@ export async function getSeoSlugs(family: SeoFamily): Promise<string[]> {
 }
 
 export async function getBlogs(): Promise<Array<Omit<CmsBlogPost, "body" | "faqItems">>> {
-  return fromSanity(() => fetchBlogs(), () => localBlogs());
+  return fromSanity(() => fetchBlogs(), []);
 }
 
 export async function getLiveBlogs(now?: Date) {
@@ -69,33 +62,27 @@ export async function getLiveBlogs(now?: Date) {
 }
 
 export async function getBlog(slug: string): Promise<CmsBlogPost | undefined> {
-  if (!isSanityConfigured()) return localBlog(slug);
+  if (!isSanityConfigured()) return undefined;
   try {
     const post = await fetchBlog(slug);
     if (post && post.body.length > 0) return post;
     return undefined;
   } catch (error) {
     console.error("Sanity blog fetch failed", error);
-    return localBlog(slug);
+    return undefined;
   }
 }
 
 export async function getBlogSlugs(): Promise<string[]> {
-  return fromSanity(
-    () => fetchBlogSlugs(),
-    () => localBlogs().map((blog) => blog.slug)
-  );
+  return fromSanity(() => fetchBlogSlugs(), []);
 }
 
 export async function getHelpPages(): Promise<HelpPage[]> {
-  return fromSanity(() => fetchHelpPages(), () => localHelpPages());
+  return fromSanity(() => fetchHelpPages(), []);
 }
 
 export async function getHelpPage(slug: string): Promise<HelpPage | undefined> {
-  return fromSanity(
-    () => fetchHelpPage(slug),
-    () => localHelpPage(slug)
-  );
+  return fromSanity(() => fetchHelpPage(slug), undefined);
 }
 
 export async function getHelpSlugs(): Promise<string[]> {
@@ -111,33 +98,24 @@ export function groupedHelp(pages: HelpPage[]) {
 }
 
 export async function getGuides(): Promise<CmsGuidePage[]> {
-  return fromSanity(() => fetchGuides(), () => localGuides());
+  return fromSanity(() => fetchGuides(), []);
 }
 
 export async function getGuide(slug: string): Promise<CmsGuidePage | undefined> {
-  return fromSanity(
-    () => fetchGuide(slug),
-    () => localGuide(slug)
-  );
+  return fromSanity(() => fetchGuide(slug), undefined);
 }
 
 export async function getGuideSlugs(): Promise<string[]> {
-  return fromSanity(
-    () => fetchGuideSlugs(),
-    () => localGuides().map((page) => page.slug)
-  );
+  return fromSanity(() => fetchGuideSlugs(), []);
 }
 
 export async function getLegalPage(slug: string): Promise<CmsLegalPage | undefined> {
-  return fromSanity(
-    () => fetchLegalPage(slug),
-    () => localLegalPage(slug)
-  );
+  return fromSanity(() => fetchLegalPage(slug), undefined);
 }
 
 export async function getLegalPages(): Promise<CmsLegalPage[]> {
-  return fromSanity(() => fetchLegalPages(), () => LOCAL_LEGAL);
+  return fromSanity(() => fetchLegalPages(), []);
 }
 
-export { isBlogLive, liveSeoPages };
+export { liveSeoPages };
 export type { BlogItem, HelpCluster, SeoFamily };

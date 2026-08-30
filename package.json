@@ -9,8 +9,6 @@
     "build": "bun --bun next build",
     "start": "bun --bun next start",
     "lint": "bun --bun eslint",
-    "migrate:sanity": "bun run scripts/migrate-sanity.ts",
-    "migrate:sanity:check": "bun run scripts/migrate-sanity.ts --dry-run",
     "postinstall": "rm -rf .next"
   },
   "dependencies": {

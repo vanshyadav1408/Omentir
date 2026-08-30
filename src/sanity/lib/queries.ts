@@ -24,7 +24,9 @@ const seoPageFields = groq`{
   comparisonTable{ headers, rows[]{ dimension, cells } },
   roundupItems[]{ name, bestFor, watchFor, href },
   phases[]{ title, detail },
-  thread[]{ speaker, text }
+  thread[]{ speaker, text },
+  "ogUrl": ogImage.asset->url,
+  "ogAlt": ogImage.alt
 }`;
 
 export const seoPagesByFamilyQuery = groq`*[_type == "seoPage" && family == $family] | order(title asc) ${seoPageFields}`;
@@ -113,14 +115,15 @@ export const guideListQuery = groq`*[_type == "guide"] | order(title asc) {
   query,
   kicker,
   cluster,
-  landingVariant,
   publishedDate,
   updatedDate,
   keywords,
   sections[]{ heading, paragraphs, bullets, code },
   faqItems[]{ question, answer },
   related[]{ label, href, description },
-  relatedHeading
+  relatedHeading,
+  "ogUrl": ogImage.asset->url,
+  "ogAlt": ogImage.alt
 }`;
 
 export const guideBySlugQuery = groq`*[_type == "guide" && slug.current == $slug][0] {
@@ -130,14 +133,15 @@ export const guideBySlugQuery = groq`*[_type == "guide" && slug.current == $slug
   query,
   kicker,
   cluster,
-  landingVariant,
   publishedDate,
   updatedDate,
   keywords,
   sections[]{ heading, paragraphs, bullets, code },
   faqItems[]{ question, answer },
   related[]{ label, href, description },
-  relatedHeading
+  relatedHeading,
+  "ogUrl": ogImage.asset->url,
+  "ogAlt": ogImage.alt
 }`;
 
 export const guideSlugsQuery = groq`*[_type == "guide"]{ "slug": slug.current }`;

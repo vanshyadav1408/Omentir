@@ -1,9 +1,8 @@
 import type { PortableTextBlock } from "@portabletext/types";
 import { HELP_CLUSTER_ORDER, type HelpCluster, type HelpPage } from "@/app/help/types";
-import type { GuideCluster, GuidePage } from "@/app/guides/types";
+import type { GuideCluster } from "@/app/guides/types";
 import type {
   SeoComparisonTable,
-  SeoContentPage,
   SeoFamily,
   SeoLayout,
   SeoPhase,
@@ -46,6 +45,22 @@ const LAYOUTS = new Set<SeoLayout>([
 
 const HELP_CLUSTERS = new Set<HelpCluster>(HELP_CLUSTER_ORDER);
 const GUIDE_CLUSTERS = new Set<GuideCluster>(["linkedin", "b2b", "email", "general"]);
+
+function remoteUrl(value: string) {
+  if (value.startsWith("https://") || value.startsWith("http://")) return value;
+  return "";
+}
+
+function mapOgImage(url: unknown, alt: unknown, title: string) {
+  const src = remoteUrl(text(url));
+  if (!src) return undefined;
+  return {
+    url: src,
+    width: 1536,
+    height: 1024,
+    alt: text(alt, title),
+  };
+}
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
@@ -250,6 +265,7 @@ export function mapSeoPage(value: unknown, family: SeoFamily): CmsSeoPage | null
     thread: mapThread(row.thread),
     who: optionalText(row.who),
     connect: mapConnect(row.connect),
+    ogImage: mapOgImage(row.ogUrl, row.ogAlt, title),
   };
   void family;
   return page;
@@ -276,7 +292,10 @@ export function mapBlogListItem(value: unknown): Omit<CmsBlogPost, "body" | "faq
     updatedDate: text(row.updatedDate, publishedDate),
     category: text(row.category, "Playbooks"),
     readTime: text(row.readTime, "7 min read"),
-    bannerSrc: text(row.bannerUrl) || sanityImageUrl(row.banner) || text(row.bannerSrc, `/${slug}.avif`),
+    bannerSrc:
+      remoteUrl(text(row.bannerUrl)) ||
+      remoteUrl(sanityImageUrl(row.banner) || "") ||
+      "",
     bannerAlt: text(row.bannerHotspotAlt) || text(banner?.alt) || text(row.bannerAlt, title),
     keywords: strings(row.keywords),
     featuredInLlms: bool(row.featuredInLlms),
@@ -394,7 +413,6 @@ export function mapGuide(value: unknown): CmsGuidePage | null {
     query: text(row.query, title),
     kicker: text(row.kicker, cluster),
     cluster: cluster as GuideCluster,
-    landingVariant: optionalText(row.landingVariant),
     publishedDate,
     updatedDate: text(row.updatedDate, publishedDate),
     keywords: strings(row.keywords),
@@ -402,6 +420,7 @@ export function mapGuide(value: unknown): CmsGuidePage | null {
     faqItems: mapFaq(row.faqItems),
     related: mapRelated(row.related),
     relatedHeading: optionalText(row.relatedHeading),
+    ogImage: mapOgImage(row.ogUrl, row.ogAlt, title),
   };
 }
 
