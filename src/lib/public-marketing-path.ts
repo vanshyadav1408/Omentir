@@ -57,6 +57,36 @@ const PUBLIC_MARKDOWN_ROOTS = new Set([
   "/use-cases",
 ]);
 
+const ROOT_APP_SEGMENTS = new Set([
+  "overview",
+  "actions",
+  "activity",
+  "agents",
+  "api-keys",
+  "billing",
+  "campaigns",
+  "checkout",
+  "connect",
+  "contact",
+  "dashboard",
+  "leads",
+  "login",
+  "logout",
+  "messages",
+  "my-product",
+  "new-user-experience",
+  "onboarding",
+  "oauth",
+  "reconnect",
+  "settings",
+  "setup",
+  "signup",
+  "sso-callback",
+  "subscription-creation-successful",
+  "upgrade",
+  "api",
+]);
+
 export function htmlPathFromMarkdownPath(pathname: string) {
   if (!pathname.endsWith(".md") || pathname === "/agents.md") return null;
   const withoutExt = pathname.slice(0, -3);
@@ -64,10 +94,19 @@ export function htmlPathFromMarkdownPath(pathname: string) {
   return withoutExt;
 }
 
+function isCmsGuidePath(pathname: string) {
+  const htmlPath = pathname.endsWith(".md") ? htmlPathFromMarkdownPath(pathname) : pathname;
+  if (!htmlPath || htmlPath === "/") return false;
+  const segments = htmlPath.split("/").filter(Boolean);
+  if (segments.length !== 1) return false;
+  return !ROOT_APP_SEGMENTS.has(segments[0]!);
+}
+
 function isPublicHtmlMarketingPath(pathname: string) {
   return (
     EXACT_PUBLIC_PATHS.has(pathname) ||
     GUIDE_PATHS.has(pathname) ||
+    isCmsGuidePath(pathname) ||
     PUBLIC_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix))
   );
 }
@@ -78,6 +117,7 @@ function isPublicMarkdownTwin(pathname: string) {
   return (
     PUBLIC_MARKDOWN_ROOTS.has(htmlPath) ||
     GUIDE_PATHS.has(htmlPath) ||
+    isCmsGuidePath(htmlPath) ||
     PUBLIC_PATH_PREFIXES.some((prefix) => htmlPath.startsWith(prefix))
   );
 }

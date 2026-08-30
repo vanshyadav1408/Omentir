@@ -13,7 +13,7 @@ import {
   createWebPageJsonLd,
   siteUrl,
 } from "../seo";
-import { ALL_HELP_PAGES, groupedHelpPages } from "./help-data";
+import { getHelpPages, groupedHelp } from "@/lib/cms";
 import { HELP_CLUSTER_LABELS } from "./types";
 
 const title = "LinkedIn outreach help";
@@ -33,9 +33,10 @@ export const metadata = createPageMetadata({
   ],
 });
 
-export default function HelpIndexPage() {
+export default async function HelpIndexPage() {
+  const pages = await getHelpPages();
   const pageUrl = `${siteUrl}/help`;
-  const groups = groupedHelpPages();
+  const groups = groupedHelp(pages);
   const jsonLd = [
     createWebPageJsonLd({
       name: title,
@@ -54,8 +55,8 @@ export default function HelpIndexPage() {
       publisher: { "@id": `${siteUrl}/#organization` },
       mainEntity: {
         "@type": "ItemList",
-        numberOfItems: ALL_HELP_PAGES.length,
-        itemListElement: ALL_HELP_PAGES.map((page, index) => ({
+        numberOfItems: pages.length,
+        itemListElement: pages.map((page, index) => ({
           "@type": "ListItem",
           position: index + 1,
           url: `${siteUrl}/help/${page.slug}`,

@@ -136,28 +136,27 @@ function DefaultGuideBody({ page }: { page: GuidePage }) {
 }
 
 function LandingBody({ page }: { page: GuidePage }) {
-  switch (page.slug) {
-    case "grok-bot-sales-outreach":
-      return <SalesOutreachLanding />;
-    case "grok-bot-cold-messages":
-      return <ColdMessagesLanding />;
-    case "grok-bot-linkedin-automation":
-      return <LinkedinAutomationLanding />;
-    case "overnight-outbound-with-grok-bot":
-      return <OvernightOutboundLanding />;
-    case "grok-bot-lead-generation":
-      return <LeadGenerationLanding />;
-    case "grok-bot-follow-up-messages":
-      return <FollowUpLanding />;
-    case "claude-code-sales-outreach":
-      return <ClaudeCodeLanding />;
-    case "cursor-sales-outreach":
-      return <CursorLanding />;
-    case "codex-sales-outreach":
-      return <CodexLanding />;
-    default:
-      return <DefaultGuideBody page={page} />;
+  const variant = page.landingVariant;
+  if (variant === "sales" || page.slug === "grok-bot-sales-outreach") return <SalesOutreachLanding />;
+  if (variant === "cold" || page.slug === "grok-bot-cold-messages") return <ColdMessagesLanding />;
+  if (variant === "automation" || page.slug === "grok-bot-linkedin-automation") {
+    return <LinkedinAutomationLanding />;
   }
+  if (variant === "overnight" || page.slug === "overnight-outbound-with-grok-bot") {
+    return <OvernightOutboundLanding />;
+  }
+  if (variant === "lead-gen" || page.slug === "grok-bot-lead-generation") {
+    return <LeadGenerationLanding />;
+  }
+  if (variant === "follow-up" || page.slug === "grok-bot-follow-up-messages") {
+    return <FollowUpLanding />;
+  }
+  if (variant === "claude-code" || page.slug === "claude-code-sales-outreach") {
+    return <ClaudeCodeLanding />;
+  }
+  if (variant === "cursor" || page.slug === "cursor-sales-outreach") return <CursorLanding />;
+  if (variant === "codex" || page.slug === "codex-sales-outreach") return <CodexLanding />;
+  return <DefaultGuideBody page={page} />;
 }
 
 export default function GuidePageView({ page }: { page: GuidePage }) {

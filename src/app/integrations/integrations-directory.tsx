@@ -6,7 +6,7 @@ import {
   MarketingThead,
   MarketingTr,
 } from "../marketing-table";
-import type { SeoCatalogEntry } from "../seo-content/types";
+import type { SeoContentPage } from "../seo-content/types";
 import { SeoTitleList } from "../seo-content/shared";
 import { integrationConnect } from "./integration-connect";
 import IntegrationLogo, { integrationName } from "./integration-logo";
@@ -14,7 +14,7 @@ import IntegrationLogo, { integrationName } from "./integration-logo";
 export default function IntegrationsDirectory({
   pages,
 }: {
-  pages: readonly Pick<SeoCatalogEntry, "slug" | "title" | "summary">[];
+  pages: readonly Pick<SeoContentPage, "slug" | "title" | "summary" | "connect">[];
 }) {
   return (
     <div className="space-y-14">
@@ -55,7 +55,15 @@ export default function IntegrationsDirectory({
           </MarketingThead>
           <tbody>
             {pages.map((page) => {
-              const row = integrationConnect(page.slug);
+              const row =
+                page.connect ??
+                (() => {
+                  try {
+                    return integrationConnect(page.slug);
+                  } catch {
+                    return { surface: "MCP", auth: "Workspace approval", bestFor: "Operator" };
+                  }
+                })();
               return (
                 <MarketingTr key={page.slug}>
                   <MarketingTh scope="row">

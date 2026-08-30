@@ -2,19 +2,22 @@ import { notFound } from "next/navigation";
 import { createPageMetadata } from "../../seo";
 import FeaturePageView from "../../seo-content/feature-page";
 import { isSeoPageLive, seoOgImage } from "../../seo-content/types";
-import { ALL_FEATURES, getFeature } from "../feature-data";
+import { getSeoPage, getSeoSlugs } from "@/lib/cms";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
 };
 
-export function generateStaticParams() {
-  return ALL_FEATURES.map((page) => ({ slug: page.slug }));
+export const dynamicParams = true;
+
+export async function generateStaticParams() {
+  const slugs = await getSeoSlugs("features");
+  return slugs.map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
-  const page = getFeature(slug);
+  const page = await getSeoPage("features", slug);
 
   if (!page) {
     return createPageMetadata({
@@ -38,7 +41,7 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function FeaturePage({ params }: PageProps) {
   const { slug } = await params;
-  const page = getFeature(slug);
+  const page = await getSeoPage("features", slug);
   if (!page) notFound();
   return <FeaturePageView page={page} />;
 }

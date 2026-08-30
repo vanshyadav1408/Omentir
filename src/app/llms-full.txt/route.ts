@@ -1,21 +1,32 @@
 import { NextResponse } from "next/server";
-import { ALL_ALTERNATIVES } from "@/app/alternatives/alternative-data";
-import { liveBlogs } from "@/app/blogs/blog-data";
-import { ALL_COMPARISONS } from "@/app/comparisons/comparison-data";
-import { ALL_FEATURES } from "@/app/features/feature-data";
-import { ALL_GUIDES } from "@/app/guides/guide-data";
-import { ALL_HELP_PAGES } from "@/app/help/help-data";
-import { ALL_INTEGRATIONS } from "@/app/integrations/integration-data";
 import { ALL_TOOLS } from "@/app/tools/tools-data";
-import { ALL_USE_CASES } from "@/app/use-cases/use-case-data";
 import { liveSeoPages } from "@/app/seo-content/types";
-import { guidePageToMarkdown, helpPageToMarkdown, seoPageToMarkdown, toolPageMarkdown } from "@/lib/public-page-markdown";
+import {
+  guidePageToMarkdown,
+  helpPageToMarkdown,
+  seoPageToMarkdown,
+  toolPageMarkdown,
+} from "@/lib/public-page-markdown";
 import { defaultDescription, siteUrl } from "@/app/seo";
+import { getBlogs, getGuides, getHelpPages, getSeoPages, isBlogLive } from "@/lib/cms";
 
 export const revalidate = 86400;
 
 export async function GET() {
-  const blogs = liveBlogs()
+  const [allBlogs, features, useCases, comparisons, alternatives, integrations, guides, help] =
+    await Promise.all([
+      getBlogs(),
+      getSeoPages("features"),
+      getSeoPages("use-cases"),
+      getSeoPages("comparisons"),
+      getSeoPages("alternatives"),
+      getSeoPages("integrations"),
+      getGuides(),
+      getHelpPages(),
+    ]);
+
+  const blogs = allBlogs
+    .filter((blog) => isBlogLive(blog))
     .sort(
       (a, b) =>
         new Date(`${b.publishedDate} UTC`).getTime() -
@@ -35,23 +46,23 @@ ${blog.description}`
     )
     .join("\n\n");
 
-  const features = liveSeoPages(ALL_FEATURES)
+  const featurePages = liveSeoPages(features)
     .map((page) => seoPageToMarkdown("/features", page))
     .join("\n\n");
-  const useCases = liveSeoPages(ALL_USE_CASES)
+  const useCasePages = liveSeoPages(useCases)
     .map((page) => seoPageToMarkdown("/use-cases", page))
     .join("\n\n");
-  const comparisons = liveSeoPages(ALL_COMPARISONS)
+  const comparisonPages = liveSeoPages(comparisons)
     .map((page) => seoPageToMarkdown("/comparisons", page))
     .join("\n\n");
-  const alternatives = liveSeoPages(ALL_ALTERNATIVES)
+  const alternativePages = liveSeoPages(alternatives)
     .map((page) => seoPageToMarkdown("/alternatives", page))
     .join("\n\n");
-  const integrations = liveSeoPages(ALL_INTEGRATIONS)
+  const integrationPages = liveSeoPages(integrations)
     .map((page) => seoPageToMarkdown("/integrations", page))
     .join("\n\n");
-  const guides = ALL_GUIDES.map((page) => guidePageToMarkdown(page)).join("\n\n");
-  const help = ALL_HELP_PAGES.map((page) => helpPageToMarkdown(page)).join("\n\n");
+  const guidePages = guides.map((page) => guidePageToMarkdown(page)).join("\n\n");
+  const helpPages = help.map((page) => helpPageToMarkdown(page)).join("\n\n");
   const tools = ALL_TOOLS.map((tool) => toolPageMarkdown(tool.href))
     .filter((page): page is string => Boolean(page))
     .join("\n\n");
@@ -91,27 +102,27 @@ Agents cannot create Omentir accounts or buy or change subscriptions.
 
 ## Feature pages
 
-${features}
+${featurePages}
 
 ## Use cases
 
-${useCases}
+${useCasePages}
 
 ## Alternative pages
 
-${comparisons}
+${comparisonPages}
 
 ## Tool roundups
 
-${alternatives}
+${alternativePages}
 
 ## Integration pages
 
-${integrations}
+${integrationPages}
 
 ## Search guides
 
-${guides}
+${guidePages}
 
 ## Free tools
 
@@ -119,7 +130,7 @@ ${tools}
 
 ## Help
 
-${help}
+${helpPages}
 
 ## Blog library
 

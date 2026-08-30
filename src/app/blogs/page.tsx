@@ -7,7 +7,8 @@ import {
   MarketingFooter,
 } from "../marketing-shell";
 import BlogsList from "./blogs-list";
-import { CATEGORIES, liveBlogs } from "./blog-data";
+import { CATEGORIES } from "./blog-data";
+import { getLiveBlogs } from "@/lib/cms";
 import { createBlogCollectionJsonLd, createPageMetadata } from "../seo";
 
 const title = "LinkedIn outreach blogs";
@@ -27,8 +28,9 @@ export const metadata = createPageMetadata({
   ],
 });
 
-export default function BlogsIndexPage() {
-  const jsonLd = createBlogCollectionJsonLd();
+export default async function BlogsIndexPage() {
+  const blogs = await getLiveBlogs();
+  const jsonLd = createBlogCollectionJsonLd(blogs);
 
   return (
     <>
@@ -50,7 +52,7 @@ export default function BlogsIndexPage() {
               {description}
             </p>
 
-            <BlogsList blogs={liveBlogs()} categories={CATEGORIES} />
+            <BlogsList blogs={blogs} categories={CATEGORIES} />
           </div>
         </div>
         <MarketingFooter />

@@ -1,27 +1,18 @@
 import type { MetadataRoute } from "next";
-import { ALL_ALTERNATIVES } from "./alternatives/alternative-data";
-import { ALL_BLOGS, isBlogLive, liveBlogs } from "./blogs/blog-data";
-import { ALL_COMPARISONS } from "./comparisons/comparison-data";
-import { ALL_FEATURES } from "./features/feature-data";
-import { ALL_GUIDES } from "./guides/guide-data";
-import { ALL_HELP_PAGES } from "./help/help-data";
-import { ALL_INTEGRATIONS } from "./integrations/integration-data";
 import { ALL_TOOLS } from "./tools/tools-data";
-import { ALL_USE_CASES } from "./use-cases/use-case-data";
 import { liveSeoPages } from "./seo-content/types";
 import { siteUrl } from "./seo";
+import {
+  getBlogs,
+  getGuides,
+  getHelpPages,
+  getLegalPages,
+  getSeoPages,
+  isBlogLive,
+} from "@/lib/cms";
 
-// Blog visibility and modification dates come from blog-data. Rebuild daily so
-// the sitemap and its machine-readable blog directory stay aligned with it.
 export const revalidate = 86400;
 
-// `lastModified` is hardcoded per route rather than set to build time on
-// purpose: stamping `new Date()` would tell crawlers every page changed on
-// every deploy, and Google discounts a lastmod signal it finds inaccurate.
-// Bump a route's date when that page's content meaningfully changes.
-// `/blogs` and `/llms.txt` are exceptions: both are derived below from the
-// newest post, which is genuinely when those generated indexes last changed.
-// Comparison and integration indexes use the newest live child page.
 const publicRoutes = [
   { path: "/", changeFrequency: "weekly", priority: 1.0, lastModified: "2026-08-17" },
   { path: "/blogs", changeFrequency: "weekly", priority: 0.9 },
@@ -48,10 +39,7 @@ const publicRoutes = [
   lastModified?: string;
 }>;
 
-// Parsed as UTC to match the article JSON-LD; reading these bare calendar days
-// as local time makes lastmod disagree with datePublished by a day on any
-// server east of UTC.
-function blogDate(blog: (typeof ALL_BLOGS)[number]) {
+function blogDate(blog: { publishedDate: string; updatedDate: string }) {
   return new Date(`${blog.updatedDate || blog.publishedDate} UTC`);
 }
 
@@ -66,17 +54,12 @@ function latestToolDate() {
   }, new Date(0));
 }
 
-// Released posts only: a scheduled post carries a future date, and advertising
-// that as the index's lastmod claims a change that has not happened yet.
-function latestBlogDate() {
-  return ALL_BLOGS.filter((blog) => isBlogLive(blog)).reduce((newest, blog) => {
-    const date = blogDate(blog);
-    return date > newest ? date : newest;
-  }, new Date(0));
-}
-
-function latestSeoFamilyDate(pages: readonly { publishedDate: string; updatedDate: string }[]) {
-  return liveSeoPages(pages).reduce((newest, page) => {
+function latestFrom(
+  pages: readonly { publishedDate: string; updatedDate: string }[],
+  live = true
+) {
+  const list = live ? liveSeoPages(pages) : pages;
+  return list.reduce((newest, page) => {
     const date = seoPageDate(page);
     return date > newest ? date : newest;
   }, new Date(0));
@@ -95,77 +78,44 @@ function seoFamilyRoutes(
   }));
 }
 
-const highIntentBlogSlugs = new Set([
-  "instantly-alternatives-autonomous-ai-salesman",
-  "gojiberry-vs-omentir-ai-sales-agent-comparison",
-  "apollo-alternatives-programmatic-lead-sourcing",
-  "11x-ai-alice-alternatives-autonomous-sales-agents",
-  "clay-vs-apollo-data-sourcing-comparison",
-  "lusha-vs-omentir-database-vs-active-outreach",
-  "artisan-ai-alternatives-multi-channel-sales-agents",
-  "smartlead-alternatives-multi-inbox-scaling",
-  "instantly-vs-smartlead-vs-omentir-outreach-faceoff",
-  "finding-the-right-ai-salesman-2026-buyers-guide",
-  "10-linkedin-cold-message-templates-that-actually-book-demos",
-  "the-b2b-outreach-copywriting-framework-that-gets-replies",
-  "ai-linkedin-prospecting",
-  "ai-sdr-linkedin-playbook",
-  "agent-api-outreach",
-  "agent-led-sales-outreach",
-  "b2b-lead-gen-with-ai",
-  "chatgpt-linkedin-leads",
-  "grok-bot-linkedin-sales",
-  "automate-cold-messaging-with-grok-bot",
-  "grok-bot-for-sales",
-  "grok-bot-vs-chatgpt-for-outbound",
-  "grok-bot-vs-claude-for-outbound",
-  "grok-bot-linkedin-prompts",
-  "claude-code-linkedin-outreach",
-  "claude-code-vs-cursor-for-outbound",
-  "cursor-linkedin-outreach",
-  "codex-linkedin-outreach",
-  "chatgpt-connector-linkedin-outreach",
-  "claude-chat-linkedin-outreach",
-  "grok-com-linkedin-outreach",
-  "kimi-linkedin-drafts",
-  "gemini-linkedin-drafts",
-  "deepseek-linkedin-scoring",
-  "qwen-linkedin-drafts",
-  "mistral-le-chat-linkedin-drafts",
-  "sarvam-linkedin-drafts",
-  "hermes-linkedin-drafts",
-  "cold-linkedin-outreach",
-  "high-intent-linkedin-leads",
-  "icp-based-lead-discovery",
-  "linkedin-demo-booking",
-  "linkedin-lead-scoring",
-  "linkedin-outreach-compliance-2026",
-  "mcp-linkedin-outreach",
-  "mcp-outreach-tools",
-  "openclaw-vs-chatgpt-sales",
-  "outbound-sales-with-ai",
-  "sales-leads-from-linkedin",
-  "sales-outreach-automation",
-  "setup-autonomous-prospecting-agent",
-]);
-
 function absoluteUrl(path: string) {
-  // Keep the sitemap's root spelling identical to the canonical root emitted
-  // by Next metadata. Every other public path already has one leading slash.
   return path === "/" ? siteUrl : `${siteUrl}${path}`;
 }
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const blogsIndexDate = latestBlogDate();
-  const featuresIndexDate = latestSeoFamilyDate(ALL_FEATURES);
-  const comparisonsIndexDate = latestSeoFamilyDate(ALL_COMPARISONS);
-  const integrationsIndexDate = latestSeoFamilyDate(ALL_INTEGRATIONS);
-  const useCasesIndexDate = latestSeoFamilyDate(ALL_USE_CASES);
-  const alternativesIndexDate = latestSeoFamilyDate(ALL_ALTERNATIVES);
-  const helpIndexDate = ALL_HELP_PAGES.reduce((newest, page) => {
-    const date = new Date(`${page.updatedDate || page.publishedDate} UTC`);
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const [
+    blogs,
+    features,
+    comparisons,
+    integrations,
+    useCases,
+    alternatives,
+    helpPages,
+    guides,
+    legalPages,
+  ] = await Promise.all([
+    getBlogs(),
+    getSeoPages("features"),
+    getSeoPages("comparisons"),
+    getSeoPages("integrations"),
+    getSeoPages("use-cases"),
+    getSeoPages("alternatives"),
+    getHelpPages(),
+    getGuides(),
+    getLegalPages(),
+  ]);
+
+  const liveBlogList = blogs.filter((blog) => isBlogLive(blog));
+  const blogsIndexDate = liveBlogList.reduce((newest, blog) => {
+    const date = blogDate(blog);
     return date > newest ? date : newest;
   }, new Date(0));
+  const featuresIndexDate = latestFrom(features);
+  const comparisonsIndexDate = latestFrom(comparisons);
+  const integrationsIndexDate = latestFrom(integrations);
+  const useCasesIndexDate = latestFrom(useCases);
+  const alternativesIndexDate = latestFrom(alternatives);
+  const helpIndexDate = latestFrom(helpPages, false);
   const llmsIndexDate = [
     blogsIndexDate,
     featuresIndexDate,
@@ -176,6 +126,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     helpIndexDate,
     latestToolDate(),
   ].reduce((newest, date) => (date > newest ? date : newest), new Date(0));
+
+  const legalDates: Record<string, Date> = {};
+  for (const page of legalPages) {
+    legalDates[`/${page.slug}`] = new Date(`${page.updatedDate} UTC`);
+  }
 
   const derivedIndexDates: Record<string, Date> = {
     "/blogs": blogsIndexDate,
@@ -188,6 +143,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/alternatives": alternativesIndexDate,
     "/help": helpIndexDate,
     "/tools": latestToolDate(),
+    ...legalDates,
   };
 
   const mainRoutes = publicRoutes.map((route) => ({
@@ -199,32 +155,28 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: route.priority,
   }));
 
-  // Scheduled posts are deliberately absent: listing a page as noindex in the
-  // sitemap asks a crawler to fetch what it is then told to ignore.
-  const blogRoutes = liveBlogs().map((blog) => ({
+  const blogRoutes = liveBlogList.map((blog) => ({
     url: absoluteUrl(`/blogs/${blog.slug}`),
     lastModified: blogDate(blog),
     images: [`${siteUrl}${blog.bannerSrc}`],
     changeFrequency: "monthly" as const,
-    priority: highIntentBlogSlugs.has(blog.slug) ? 0.75 : 0.6,
+    priority: blog.highIntent ? 0.75 : 0.6,
   }));
 
-  // Same live-only rule for hand-curated SEO families (features, comparisons,
-  // integrations). Future-dated entries stay out of the sitemap.
-  const featureRoutes = seoFamilyRoutes("/features", ALL_FEATURES, 0.7);
-  const comparisonRoutes = seoFamilyRoutes("/comparisons", ALL_COMPARISONS, 0.75);
-  const integrationRoutes = seoFamilyRoutes("/integrations", ALL_INTEGRATIONS, 0.7);
-  const useCaseRoutes = seoFamilyRoutes("/use-cases", ALL_USE_CASES, 0.75);
-  const alternativeRoutes = seoFamilyRoutes("/alternatives", ALL_ALTERNATIVES, 0.75);
+  const featureRoutes = seoFamilyRoutes("/features", features, 0.7);
+  const comparisonRoutes = seoFamilyRoutes("/comparisons", comparisons, 0.75);
+  const integrationRoutes = seoFamilyRoutes("/integrations", integrations, 0.7);
+  const useCaseRoutes = seoFamilyRoutes("/use-cases", useCases, 0.75);
+  const alternativeRoutes = seoFamilyRoutes("/alternatives", alternatives, 0.75);
 
-  const guideRoutes = ALL_GUIDES.map((page) => ({
+  const guideRoutes = guides.map((page) => ({
     url: absoluteUrl(`/${page.slug}`),
     lastModified: new Date(`${page.updatedDate || page.publishedDate} UTC`),
     changeFrequency: "monthly" as const,
     priority: 0.7,
   }));
 
-  const helpRoutes = ALL_HELP_PAGES.map((page) => ({
+  const helpRoutes = helpPages.map((page) => ({
     url: absoluteUrl(`/help/${page.slug}`),
     lastModified: new Date(`${page.updatedDate || page.publishedDate} UTC`),
     changeFrequency: "monthly" as const,
@@ -238,11 +190,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.8,
   }));
 
-  // Canonical HTML and machine indexes only. Google and Bing both treat a
-  // sitemap as the list of URLs to index. Markdown twins stay at `.md` URLs
-  // for agents, with a canonical back to the HTML page. Listing those twins
-  // here would ask both engines to index duplicate URLs. That wastes Google
-  // crawl budget and is the pattern Bing often parks as discovered-not-indexed.
   return [
     ...mainRoutes,
     ...blogRoutes,

@@ -2,19 +2,22 @@ import { notFound } from "next/navigation";
 import { createPageMetadata } from "../../seo";
 import UseCasePageView from "../../seo-content/use-case-page";
 import { isSeoPageLive, seoOgImage } from "../../seo-content/types";
-import { ALL_USE_CASES, getUseCase } from "../use-case-data";
+import { getSeoPage, getSeoSlugs } from "@/lib/cms";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
 };
 
-export function generateStaticParams() {
-  return ALL_USE_CASES.map((page) => ({ slug: page.slug }));
+export const dynamicParams = true;
+
+export async function generateStaticParams() {
+  const slugs = await getSeoSlugs("use-cases");
+  return slugs.map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
-  const page = getUseCase(slug);
+  const page = await getSeoPage("use-cases", slug);
 
   if (!page) {
     return createPageMetadata({
@@ -38,7 +41,7 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function UseCasePage({ params }: PageProps) {
   const { slug } = await params;
-  const page = getUseCase(slug);
+  const page = await getSeoPage("use-cases", slug);
   if (!page) notFound();
   return <UseCasePageView page={page} />;
 }

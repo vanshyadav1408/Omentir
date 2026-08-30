@@ -35,6 +35,8 @@ export type GuidePage = {
   faqItems: GuideFaq[];
   related?: GuideRelated[];
   relatedHeading?: string;
+  /** React landing kept in code. Empty or omitted uses the default section body. */
+  landingVariant?: string;
 };
 
 export function getGuide(pages: readonly GuidePage[], slug: string) {

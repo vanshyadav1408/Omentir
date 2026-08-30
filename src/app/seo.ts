@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ALL_BLOGS, isBlogLive, liveBlogs } from "./blogs/blog-data";
+import { ALL_BLOGS, isBlogLive } from "./blogs/blog-data";
 
 export const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://omentir.com").replace(/\/$/, "");
 
@@ -395,10 +395,9 @@ export function createBlogJsonLd({
   };
 }
 
-export function createBlogCollectionJsonLd() {
-  // Only released posts: the ItemList is a claim about what /blogs
-  // currently contains, so it has to match what the index actually shows.
-  const publishedBlogs = liveBlogs();
+export function createBlogCollectionJsonLd(
+  publishedBlogs: Array<{ slug: string; title: string }>
+) {
 
   return {
     "@context": "https://schema.org",

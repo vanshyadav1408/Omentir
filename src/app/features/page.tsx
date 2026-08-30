@@ -1,6 +1,6 @@
 import { createPageMetadata } from "../seo";
 import SeoIndexPageView from "../seo-content/index-page";
-import { ALL_FEATURES } from "./feature-data";
+import { getSeoPages } from "@/lib/cms";
 
 export const metadata = createPageMetadata({
   title: "Omentir features - Omentir",
@@ -16,13 +16,14 @@ export const metadata = createPageMetadata({
   ],
 });
 
-export default function FeaturesIndexPage() {
+export default async function FeaturesIndexPage() {
+  const pages = await getSeoPages("features");
   return (
     <SeoIndexPageView
       family="features"
       title="Omentir features"
       description="Each page covers one product job with setup steps, honest tradeoffs, and when to use something else."
-      pages={ALL_FEATURES}
+      pages={pages}
     />
   );
 }

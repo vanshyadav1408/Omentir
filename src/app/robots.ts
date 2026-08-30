@@ -1,7 +1,16 @@
 import type { MetadataRoute } from "next";
+import { headers } from "next/headers";
 import { siteUrl } from "./seo";
+import { hostnameFromHostHeader, isSanityStudioHost } from "@/sanity/studio-host";
 
-export default function robots(): MetadataRoute.Robots {
+export default async function robots(): Promise<MetadataRoute.Robots> {
+  const hostname = hostnameFromHostHeader((await headers()).get("host"));
+  if (isSanityStudioHost(hostname)) {
+    return {
+      rules: { userAgent: "*", disallow: "/" },
+    };
+  }
+
   return {
     rules: [
       {
@@ -26,7 +35,7 @@ export default function robots(): MetadataRoute.Robots {
           "/agents.md",
           "/api/agent/v1/openapi.json",
         ],
-        disallow: ["/api/", "/surveys/", "/page-markdown", "/page-markdown/"],
+        disallow: ["/api/", "/surveys/", "/page-markdown", "/page-markdown/", "/studio", "/studio/"],
       },
       {
         // Bingbot matches this group and ignores the * group. If we Allow
@@ -48,7 +57,7 @@ export default function robots(): MetadataRoute.Robots {
           "/llms-full.txt",
           "/api/agent/v1/openapi.json",
         ],
-        disallow: ["/api/", "/surveys/", "/page-markdown", "/page-markdown/", "/*.md$"],
+        disallow: ["/api/", "/surveys/", "/page-markdown", "/page-markdown/", "/studio", "/studio/", "/*.md$"],
       },
       {
         userAgent: [

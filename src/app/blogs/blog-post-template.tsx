@@ -35,6 +35,10 @@ export interface BlogPostTemplateProps {
   tocItems: readonly TocItem[];
   faqItems?: ReadonlyArray<{ question: string; answer: string }>;
   visibleFaqItems?: ReadonlyArray<{ question: ReactNode; answer: ReactNode }>;
+  publishedDate?: string;
+  updatedDate?: string;
+  category?: string;
+  relatedPosts?: ReadonlyArray<{ slug: string; title: string }>;
   children: React.ReactNode;
 }
 
@@ -60,30 +64,26 @@ export default function BlogPostTemplate({
   tocItems,
   faqItems = [],
   visibleFaqItems,
+  publishedDate: publishedDateProp,
+  updatedDate: updatedDateProp,
+  category: categoryProp,
+  relatedPosts,
   children,
 }: BlogPostTemplateProps) {
   const blogItem = ALL_BLOGS.find((b) => b.slug === slug);
-  // blog-data is the publication registry and the source of truth for every
-  // public article surface. Keep the fallback props for a page that has not
-  // been added to the registry yet, but never let a registered post split its
-  // title or summary across the H1, metadata, and structured data.
-  const canonicalTitle = blogItem?.title ?? title;
-  const canonicalDescription = blogItem?.description ?? description;
-  const canonicalBannerSrc = blogItem?.bannerSrc ?? bannerSrc;
-  const canonicalBannerAlt = blogItem?.bannerAlt ?? bannerAlt;
-  const category = blogItem ? blogItem.category : "Playbooks";
-  // Dates come from blog-data and are never passed in per page: the byline, the
-  // JSON-LD and the sitemap all have to agree, and a page-level override is how
-  // they silently stop agreeing.
-  const publishedDate = blogItem?.publishedDate ?? "";
-  const updatedDate = blogItem?.updatedDate || publishedDate;
-  const relatedCandidates = ALL_BLOGS.filter(
-    (blog) => blog.slug !== slug && isBlogLive(blog)
-  );
-  const relatedBlogs = [
-    ...relatedCandidates.filter((blog) => blog.category === category),
-    ...relatedCandidates.filter((blog) => blog.category !== category),
-  ].slice(0, 4);
+  const canonicalTitle = title;
+  const canonicalDescription = description;
+  const canonicalBannerSrc = bannerSrc;
+  const canonicalBannerAlt = bannerAlt;
+  const category = categoryProp ?? blogItem?.category ?? "Playbooks";
+  const publishedDate = publishedDateProp ?? blogItem?.publishedDate ?? "";
+  const updatedDate = updatedDateProp || publishedDate;
+  const relatedBlogs = relatedPosts
+    ? relatedPosts.slice(0, 4)
+    : [
+        ...ALL_BLOGS.filter((blog) => blog.slug !== slug && isBlogLive(blog) && blog.category === category),
+        ...ALL_BLOGS.filter((blog) => blog.slug !== slug && isBlogLive(blog) && blog.category !== category),
+      ].slice(0, 4);
   const hasVisibleFaqs = hasFaqSection(children);
   const faqTocItem = tocItems.find((item) => item.label.toLowerCase().includes("faq"));
   const faqSectionId = faqTocItem?.id ?? "faqs";

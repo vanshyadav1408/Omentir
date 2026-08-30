@@ -34,7 +34,15 @@ export default function UseCasesDirectory({
         </h2>
         <ul className="divide-y divide-[var(--md-sys-color-outline-variant)] border-b border-[var(--md-sys-color-outline-variant)]">
           {pages.map((page) => {
-            const row = whoForUseCase(page.slug);
+            const who =
+              page.who ??
+              (() => {
+                try {
+                  return whoForUseCase(page.slug).who;
+                } catch {
+                  return page.summary;
+                }
+              })();
             return (
               <li key={page.slug}>
                 <Link href={`/use-cases/${page.slug}`} className="group block py-4">
@@ -42,7 +50,7 @@ export default function UseCasesDirectory({
                     {page.title}
                   </span>
                   <span className="mt-1 block text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)]">
-                    {row.who}
+                    {who}
                   </span>
                 </Link>
               </li>

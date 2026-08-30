@@ -1,20 +1,13 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { ALL_ALTERNATIVES } from "@/app/alternatives/alternative-data";
-import { ALL_BLOGS, liveBlogs, type BlogItem } from "@/app/blogs/blog-data";
-import { ALL_COMPARISONS } from "@/app/comparisons/comparison-data";
-import { ALL_FEATURES } from "@/app/features/feature-data";
 import { FEATURE_NAV_ITEMS } from "@/app/feature-nav";
-import { ALL_GUIDES } from "@/app/guides/guide-data";
-import { ALL_HELP_PAGES } from "@/app/help/help-data";
 import { HELP_CLUSTER_LABELS, type HelpPage } from "@/app/help/types";
 import { guideMedia } from "@/app/guides/guide-media";
 import type { GuidePage } from "@/app/guides/types";
-import { ALL_INTEGRATIONS } from "@/app/integrations/integration-data";
 import { integrationConnect } from "@/app/integrations/integration-connect";
-import { ALL_USE_CASES } from "@/app/use-cases/use-case-data";
 import { pricingPlans } from "@/app/pricing-plans";
 import { ALL_TOOLS, TOOLS_INDEX } from "@/app/tools/tools-data";
+import { type BlogItem } from "@/app/blogs/blog-data";
 import { brandTagline, defaultDescription, siteUrl } from "@/app/seo";
 import { CHATGPT_FIRST_JOB_PROMPT } from "@/app/chatgpt-setup";
 import {
@@ -40,6 +33,18 @@ import {
   GROK_BOT_SALES_NAV_PROMPT,
 } from "@/app/grok-bot-setup";
 import { liveSeoPages, type SeoContentPage } from "@/app/seo-content/types";
+import {
+  getBlog,
+  getBlogs,
+  getGuides,
+  getHelpPages,
+  getLegalPages,
+  getLiveBlogs,
+  getSeoPages,
+  type CmsLegalPage,
+} from "@/lib/cms";
+import { blogSourcePath } from "@/lib/cms/blog-from-source";
+import { portableTextToMarkdown } from "@/lib/cms/portable-text-markdown";
 import {
   collapseMarkdown,
   extractTsxScope,
@@ -503,6 +508,16 @@ export function toolPageMarkdown(htmlPath: string) {
   );
 }
 
+function legalFromCms(page: CmsLegalPage) {
+  return collapseMarkdown(
+    [
+      pageHeader(page.title, page.description, `/${page.slug}`),
+      `Last updated: ${page.updatedDate}`,
+      ...page.sections.map((section) => `## ${section.title}\n\n${section.body}`),
+    ].join("\n\n")
+  );
+}
+
 function legalMarkdown(
   htmlPath: "/privacy-policy" | "/terms-of-service",
   title: string,
@@ -539,15 +554,13 @@ function legalMarkdown(
       const text = collapseMarkdown(
         jsxChildrenToMarkdown(inner, new Map(), internalMarkdownHref)
       );
-      return text ? `## ${heading}\n\n${text}` : heading ? `## ${heading}` : "";
-    })
-    .filter(Boolean)
-    .join("\n\n");
+      return `## ${heading}\n\n${text}`;
+    });
   return collapseMarkdown(
     [
       pageHeader(title, description, htmlPath),
       `Last updated: ${updated}`,
-      sections,
+      sections.join("\n\n"),
     ].join("\n\n")
   );
 }
@@ -585,12 +598,14 @@ function guaranteeMarkdown() {
   );
 }
 
-function blogIndexMarkdown() {
+function blogIndexMarkdown(
+  blogs: Array<{ slug: string; title: string; description: string; publishedDate: string }>
+) {
   return familyIndexMarkdown(
     "/blogs",
     "LinkedIn outreach blogs",
     "Guides, templates, and playbooks for LinkedIn outreach, outbound sequences, and booking demos.",
-    liveBlogs()
+    [...blogs]
       .sort(
         (a, b) =>
           new Date(`${b.publishedDate} UTC`).getTime() -
@@ -635,7 +650,8 @@ function grokBotPromptFromSource(source: string, body = "") {
 }
 
 function blogMarkdown(blog: BlogItem) {
-  const source = readAppFile("blogs", blog.slug, "page.tsx");
+  const file = blogSourcePath(blog.slug);
+  const source = file && existsSync(file) ? readFileSync(file, "utf8") : "";
   const body = sourceFileToMarkdown(source, internalMarkdownHref, "BlogPostTemplate");
   const faqs = body.includes("## Frequently asked questions")
     ? ""
@@ -659,63 +675,75 @@ function blogMarkdown(blog: BlogItem) {
   );
 }
 
-export function listPublicMarkdownPages(): PublicMarkdownPage[] {
+export async function listPublicMarkdownPages(): Promise<PublicMarkdownPage[]> {
+  const [blogs, features, comparisons, integrations, useCases, alternatives, guides, help] =
+    await Promise.all([
+      getBlogs(),
+      getSeoPages("features"),
+      getSeoPages("comparisons"),
+      getSeoPages("integrations"),
+      getSeoPages("use-cases"),
+      getSeoPages("alternatives"),
+      getGuides(),
+      getHelpPages(),
+    ]);
+
   const pages: PublicMarkdownPage[] = MARKETING_PAGES.map((page) => ({
     htmlPath: page.htmlPath,
     markdownPath: markdownPathFromHtmlPath(page.htmlPath)!,
     kind: page.htmlPath === "/" ? "home" : page.htmlPath.split("/").length === 2 ? "marketing" : "index",
   }));
 
-  for (const blog of ALL_BLOGS) {
+  for (const blog of blogs) {
     pages.push({
       htmlPath: `/blogs/${blog.slug}`,
       markdownPath: `/blogs/${blog.slug}.md`,
       kind: "blog",
     });
   }
-  for (const page of ALL_FEATURES) {
+  for (const page of features) {
     pages.push({
       htmlPath: `/features/${page.slug}`,
       markdownPath: `/features/${page.slug}.md`,
       kind: "seo",
     });
   }
-  for (const page of ALL_COMPARISONS) {
+  for (const page of comparisons) {
     pages.push({
       htmlPath: `/comparisons/${page.slug}`,
       markdownPath: `/comparisons/${page.slug}.md`,
       kind: "seo",
     });
   }
-  for (const page of ALL_INTEGRATIONS) {
+  for (const page of integrations) {
     pages.push({
       htmlPath: `/integrations/${page.slug}`,
       markdownPath: `/integrations/${page.slug}.md`,
       kind: "seo",
     });
   }
-  for (const page of ALL_USE_CASES) {
+  for (const page of useCases) {
     pages.push({
       htmlPath: `/use-cases/${page.slug}`,
       markdownPath: `/use-cases/${page.slug}.md`,
       kind: "seo",
     });
   }
-  for (const page of ALL_ALTERNATIVES) {
+  for (const page of alternatives) {
     pages.push({
       htmlPath: `/alternatives/${page.slug}`,
       markdownPath: `/alternatives/${page.slug}.md`,
       kind: "seo",
     });
   }
-  for (const page of ALL_GUIDES) {
+  for (const page of guides) {
     pages.push({
       htmlPath: `/${page.slug}`,
       markdownPath: `/${page.slug}.md`,
       kind: "seo",
     });
   }
-  for (const page of ALL_HELP_PAGES) {
+  for (const page of help) {
     pages.push({
       htmlPath: `/help/${page.slug}`,
       markdownPath: `/help/${page.slug}.md`,
@@ -732,21 +760,24 @@ export function listPublicMarkdownPages(): PublicMarkdownPage[] {
   return pages;
 }
 
-export function renderPublicMarkdown(htmlPath: string): string | null {
+export async function renderPublicMarkdown(htmlPath: string): Promise<string | null> {
   if (htmlPath === "/") return homeMarkdown();
   if (htmlPath === "/pricing") return pricingMarkdown();
   if (htmlPath === "/about") return aboutMarkdown();
   if (htmlPath === "/tools") return toolsIndexMarkdown();
   if (htmlPath.startsWith("/tools/")) return toolPageMarkdown(htmlPath);
-  if (htmlPath === "/privacy-policy") {
-    return legalMarkdown(
-      "/privacy-policy",
-      "Privacy Policy",
-      "Read how Omentir collects, uses, stores, and protects account, billing, LinkedIn, lead, campaign, and message data.",
-      "May 4, 2026"
-    );
-  }
-  if (htmlPath === "/terms-of-service") {
+  if (htmlPath === "/privacy-policy" || htmlPath === "/terms-of-service") {
+    const legal = await getLegalPages();
+    const page = legal.find((item) => `/${item.slug}` === htmlPath);
+    if (page) return legalFromCms(page);
+    if (htmlPath === "/privacy-policy") {
+      return legalMarkdown(
+        "/privacy-policy",
+        "Privacy Policy",
+        "Read how Omentir collects, uses, stores, and protects account, billing, LinkedIn, lead, campaign, and message data.",
+        "May 4, 2026"
+      );
+    }
     return legalMarkdown(
       "/terms-of-service",
       "Terms of Service",
@@ -755,13 +786,26 @@ export function renderPublicMarkdown(htmlPath: string): string | null {
     );
   }
   if (htmlPath === "/minimum-booking-guarantee") return guaranteeMarkdown();
-  if (htmlPath === "/blogs") return blogIndexMarkdown();
+
+  const [blogs, features, comparisons, integrations, useCases, alternatives, guides, help] =
+    await Promise.all([
+      getBlogs(),
+      getSeoPages("features"),
+      getSeoPages("comparisons"),
+      getSeoPages("integrations"),
+      getSeoPages("use-cases"),
+      getSeoPages("alternatives"),
+      getGuides(),
+      getHelpPages(),
+    ]);
+
+  if (htmlPath === "/blogs") return blogIndexMarkdown(await getLiveBlogs());
   if (htmlPath === "/features") {
     return familyIndexMarkdown(
       "/features",
       "Omentir features",
       "Each page covers one product job with setup steps, honest tradeoffs, and when to use something else.",
-      liveSeoPages(ALL_FEATURES).map((page) => ({
+      liveSeoPages(features).map((page) => ({
         title: page.title,
         href: `/features/${page.slug}`,
         note: page.summary,
@@ -773,7 +817,7 @@ export function renderPublicMarkdown(htmlPath: string): string | null {
       "/comparisons",
       "AI sales tool alternatives",
       "Explore Omentir as an alternative to popular AI sales and outbound tools. Compare channel fit, workflows, and tradeoffs before you choose.",
-      liveSeoPages(ALL_COMPARISONS).map((page) => ({
+      liveSeoPages(comparisons).map((page) => ({
         title: page.title,
         href: `/comparisons/${page.slug}`,
         note: page.summary,
@@ -781,8 +825,16 @@ export function renderPublicMarkdown(htmlPath: string): string | null {
     );
   }
   if (htmlPath === "/integrations") {
-    const connectNote = liveSeoPages(ALL_INTEGRATIONS).map((page) => {
-      const row = integrationConnect(page.slug);
+    const connectNote = liveSeoPages(integrations).map((page) => {
+      const row =
+        page.connect ??
+        (() => {
+          try {
+            return integrationConnect(page.slug);
+          } catch {
+            return { surface: "MCP", auth: "Workspace approval", bestFor: "Operator" };
+          }
+        })();
       return {
         title: page.title,
         href: `/integrations/${page.slug}`,
@@ -801,7 +853,7 @@ export function renderPublicMarkdown(htmlPath: string): string | null {
       "/use-cases",
       "LinkedIn outbound use cases",
       "Concrete jobs Omentir is built for. Each page is one motion, not a keyword variant.",
-      liveSeoPages(ALL_USE_CASES).map((page) => ({
+      liveSeoPages(useCases).map((page) => ({
         title: page.title,
         href: `/use-cases/${page.slug}`,
         note: page.summary,
@@ -813,7 +865,7 @@ export function renderPublicMarkdown(htmlPath: string): string | null {
       "/alternatives",
       "Outbound tool roundups",
       "Pick the category first. Each roundup names the job, the usual tools, and when Omentir is the wrong buy.",
-      liveSeoPages(ALL_ALTERNATIVES).map((page) => ({
+      liveSeoPages(alternatives).map((page) => ({
         title: page.title,
         href: `/alternatives/${page.slug}`,
         note: page.summary,
@@ -825,7 +877,7 @@ export function renderPublicMarkdown(htmlPath: string): string | null {
       "/help",
       "LinkedIn outreach help",
       "Short answers to the LinkedIn outreach, cold messaging, cold email, and B2B sales questions people actually ask.",
-      ALL_HELP_PAGES.map((page) => ({
+      help.map((page) => ({
         title: page.question,
         href: `/help/${page.slug}`,
         note: `${HELP_CLUSTER_LABELS[page.cluster]}. ${page.description}`,
@@ -835,50 +887,72 @@ export function renderPublicMarkdown(htmlPath: string): string | null {
 
   const blogMatch = htmlPath.match(/^\/blogs\/([^/]+)$/);
   if (blogMatch) {
-    const blog = ALL_BLOGS.find((item) => item.slug === blogMatch[1]);
+    const cms = await getBlog(blogMatch[1]);
+    if (cms?.body.length) {
+      const body = portableTextToMarkdown(cms.body);
+      const faqs = cms.faqItems.length
+        ? `## Frequently asked questions\n\n${cms.faqItems
+            .map((item) => `**${item.question}**\n\n${item.answer}`)
+            .join("\n\n")}`
+        : "";
+      return collapseMarkdown(
+        [
+          pageHeader(cms.title, cms.description, `/blogs/${cms.slug}`),
+          `- Category: ${cms.category}`,
+          `- Published: ${cms.publishedDate}`,
+          `- Updated: ${cms.updatedDate}`,
+          `- Read time: ${cms.readTime}`,
+          body,
+          faqs,
+          tryOmentirLine(),
+        ].join("\n\n")
+      );
+    }
+    const blog = blogs.find((item) => item.slug === blogMatch[1]);
     return blog ? blogMarkdown(blog) : null;
   }
 
   const feature = htmlPath.match(/^\/features\/([^/]+)$/);
   if (feature) {
-    const page = ALL_FEATURES.find((item) => item.slug === feature[1]);
+    const page = features.find((item) => item.slug === feature[1]);
     return page ? seoPageToMarkdown("/features", page) : null;
   }
   const comparison = htmlPath.match(/^\/comparisons\/([^/]+)$/);
   if (comparison) {
-    const page = ALL_COMPARISONS.find((item) => item.slug === comparison[1]);
+    const page = comparisons.find((item) => item.slug === comparison[1]);
     return page ? seoPageToMarkdown("/comparisons", page) : null;
   }
   const integration = htmlPath.match(/^\/integrations\/([^/]+)$/);
   if (integration) {
-    const page = ALL_INTEGRATIONS.find((item) => item.slug === integration[1]);
+    const page = integrations.find((item) => item.slug === integration[1]);
     return page ? seoPageToMarkdown("/integrations", page) : null;
   }
   const useCase = htmlPath.match(/^\/use-cases\/([^/]+)$/);
   if (useCase) {
-    const page = ALL_USE_CASES.find((item) => item.slug === useCase[1]);
+    const page = useCases.find((item) => item.slug === useCase[1]);
     return page ? seoPageToMarkdown("/use-cases", page) : null;
   }
   const alternative = htmlPath.match(/^\/alternatives\/([^/]+)$/);
   if (alternative) {
-    const page = ALL_ALTERNATIVES.find((item) => item.slug === alternative[1]);
+    const page = alternatives.find((item) => item.slug === alternative[1]);
     return page ? seoPageToMarkdown("/alternatives", page) : null;
   }
 
   const helpMatch = htmlPath.match(/^\/help\/([^/]+)$/);
   if (helpMatch) {
-    const page = ALL_HELP_PAGES.find((item) => item.slug === helpMatch[1]);
+    const page = help.find((item) => item.slug === helpMatch[1]);
     return page ? helpPageToMarkdown(page) : null;
   }
 
   if (htmlPath.split("/").length === 2 && htmlPath !== "/") {
-    const page = ALL_GUIDES.find((item) => `/${item.slug}` === htmlPath);
+    const page = guides.find((item) => `/${item.slug}` === htmlPath);
     return page ? guidePageToMarkdown(page) : null;
   }
 
   return null;
 }
 
-export function isPublicMarkdownHtmlPath(htmlPath: string) {
-  return listPublicMarkdownPages().some((page) => page.htmlPath === htmlPath);
+export async function isPublicMarkdownHtmlPath(htmlPath: string) {
+  const pages = await listPublicMarkdownPages();
+  return pages.some((page) => page.htmlPath === htmlPath);
 }

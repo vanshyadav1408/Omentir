@@ -1,6 +1,6 @@
 import { createPageMetadata } from "../seo";
 import SeoIndexPageView from "../seo-content/index-page";
-import { ALL_USE_CASES } from "./use-case-data";
+import { getSeoPages } from "@/lib/cms";
 
 export const metadata = createPageMetadata({
   title: "LinkedIn outbound use cases - Omentir",
@@ -15,13 +15,14 @@ export const metadata = createPageMetadata({
   ],
 });
 
-export default function UseCasesIndexPage() {
+export default async function UseCasesIndexPage() {
+  const pages = await getSeoPages("use-cases");
   return (
     <SeoIndexPageView
       family="use-cases"
       title="LinkedIn outbound use cases"
       description="Concrete jobs Omentir is built for. Each page is one motion, not a keyword variant."
-      pages={ALL_USE_CASES}
+      pages={pages}
     />
   );
 }

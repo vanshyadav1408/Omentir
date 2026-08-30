@@ -1,21 +1,22 @@
 import { notFound } from "next/navigation";
 import { createPageMetadata } from "../../seo";
 import HelpArticle from "../help-page";
-import { ALL_HELP_PAGES, getHelpPage } from "../help-data";
+import { getHelpPage, getHelpSlugs } from "@/lib/cms";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
 };
 
-export const dynamicParams = false;
+export const dynamicParams = true;
 
-export function generateStaticParams() {
-  return ALL_HELP_PAGES.map((page) => ({ slug: page.slug }));
+export async function generateStaticParams() {
+  const slugs = await getHelpSlugs();
+  return slugs.map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
-  const page = getHelpPage(slug);
+  const page = await getHelpPage(slug);
   if (!page) {
     return createPageMetadata({
       title: "Not found - Omentir",
@@ -34,7 +35,7 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function HelpSlugPage({ params }: PageProps) {
   const { slug } = await params;
-  const page = getHelpPage(slug);
+  const page = await getHelpPage(slug);
   if (!page) notFound();
   return <HelpArticle page={page} />;
 }

@@ -2,19 +2,22 @@ import { notFound } from "next/navigation";
 import { createPageMetadata } from "../../seo";
 import AlternativePageView from "../../seo-content/alternative-page";
 import { isSeoPageLive, seoOgImage } from "../../seo-content/types";
-import { ALL_ALTERNATIVES, getAlternative } from "../alternative-data";
+import { getSeoPage, getSeoSlugs } from "@/lib/cms";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
 };
 
-export function generateStaticParams() {
-  return ALL_ALTERNATIVES.map((page) => ({ slug: page.slug }));
+export const dynamicParams = true;
+
+export async function generateStaticParams() {
+  const slugs = await getSeoSlugs("alternatives");
+  return slugs.map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
-  const page = getAlternative(slug);
+  const page = await getSeoPage("alternatives", slug);
 
   if (!page) {
     return createPageMetadata({
@@ -38,7 +41,7 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function AlternativePage({ params }: PageProps) {
   const { slug } = await params;
-  const page = getAlternative(slug);
+  const page = await getSeoPage("alternatives", slug);
   if (!page) notFound();
   return <AlternativePageView page={page} />;
 }

@@ -1,6 +1,6 @@
 import { createPageMetadata } from "../seo";
 import SeoIndexPageView from "../seo-content/index-page";
-import { ALL_COMPARISONS } from "./comparison-data";
+import { getSeoPages } from "@/lib/cms";
 
 export const metadata = createPageMetadata({
   title: "AI Sales Tool Alternatives - Omentir",
@@ -17,13 +17,14 @@ export const metadata = createPageMetadata({
   ],
 });
 
-export default function ComparisonsIndexPage() {
+export default async function ComparisonsIndexPage() {
+  const pages = await getSeoPages("comparisons");
   return (
     <SeoIndexPageView
       family="comparisons"
       title="AI sales tool alternatives"
       description="Omentir versus popular AI sales and outbound tools. Channel fit, workflows, and tradeoffs before you choose."
-      pages={ALL_COMPARISONS}
+      pages={pages}
     />
   );
 }

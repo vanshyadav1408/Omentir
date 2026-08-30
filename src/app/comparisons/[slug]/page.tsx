@@ -2,19 +2,22 @@ import { notFound } from "next/navigation";
 import { createPageMetadata } from "../../seo";
 import ComparisonPageView from "../../seo-content/comparison-page";
 import { isSeoPageLive, seoOgImage } from "../../seo-content/types";
-import { ALL_COMPARISONS, getComparison } from "../comparison-data";
+import { getSeoPage, getSeoSlugs } from "@/lib/cms";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
 };
 
-export function generateStaticParams() {
-  return ALL_COMPARISONS.map((page) => ({ slug: page.slug }));
+export const dynamicParams = true;
+
+export async function generateStaticParams() {
+  const slugs = await getSeoSlugs("comparisons");
+  return slugs.map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
-  const page = getComparison(slug);
+  const page = await getSeoPage("comparisons", slug);
 
   if (!page) {
     return createPageMetadata({
@@ -38,7 +41,7 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function ComparisonPage({ params }: PageProps) {
   const { slug } = await params;
-  const page = getComparison(slug);
+  const page = await getSeoPage("comparisons", slug);
   if (!page) notFound();
   return <ComparisonPageView page={page} />;
 }

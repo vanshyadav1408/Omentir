@@ -5,6 +5,20 @@ import { LOCAL_SESSION_COOKIE, verifyLocalSession } from "./lib/local-session";
 import { isLocalMode } from "./lib/runtime-mode";
 import { isClerkSessionKeyMismatch } from "./lib/clerk-errors";
 import { isPublicMarketingPath, markdownRewritePath } from "./lib/public-marketing-path";
+import {
+  SANITY_STUDIO_HOST,
+  hostnameFromHostHeader,
+  isSanityStudioHost,
+  isStudioAppPath,
+  studioPathFromPublicPath,
+} from "./sanity/studio-host";
+
+function requestHostname(request: NextRequest) {
+  const forwarded = hostnameFromHostHeader(request.headers.get("x-forwarded-host"));
+  const host = hostnameFromHostHeader(request.headers.get("host"));
+  if (isSanityStudioHost(forwarded) || isSanityStudioHost(host)) return SANITY_STUDIO_HOST;
+  return forwarded || host;
+}
 
 const isProtectedRoute = createRouteMatcher([
   "/dashboard(.*)", "/overview(.*)", "/actions(.*)", "/activity(.*)", "/agents(.*)",
@@ -72,6 +86,7 @@ const localServicePrefixes = [
   "/api/webhooks/unipile",
   "/api/webhooks/clerk",
   "/api/webhooks/whop",
+  "/api/webhooks/sanity",
   "/api/jobs/mailing-list-backfill",
   "/api/mailing-list/unsubscribe",
   "/api/billing/",
@@ -114,6 +129,29 @@ async function localMiddleware(request: NextRequest) {
 
 export default function proxy(request: NextRequest, event: NextFetchEvent) {
   if (isLocalMode()) return localMiddleware(request);
+
+  const hostname = requestHostname(request);
+
+  if (isSanityStudioHost(hostname)) {
+    const path = request.nextUrl.pathname;
+    if (path.startsWith("/_next") || path.startsWith("/api")) return NextResponse.next();
+    if (isStudioAppPath(path)) {
+      return new NextResponse("Not found\n", {
+        status: 404,
+        headers: { "content-type": "text/plain; charset=utf-8" },
+      });
+    }
+    const destination = request.nextUrl.clone();
+    destination.pathname = studioPathFromPublicPath(path);
+    return NextResponse.rewrite(destination);
+  }
+
+  if (isStudioAppPath(request.nextUrl.pathname)) {
+    return new NextResponse("Not found\n", {
+      status: 404,
+      headers: { "content-type": "text/plain; charset=utf-8" },
+    });
+  }
 
   const retiredDestination = RETIRED_PUBLIC_REDIRECTS[request.nextUrl.pathname];
   if (retiredDestination) {

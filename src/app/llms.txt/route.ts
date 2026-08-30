@@ -1,14 +1,7 @@
 import { NextResponse } from "next/server";
-import { ALL_ALTERNATIVES } from "@/app/alternatives/alternative-data";
-import { ALL_BLOGS, isBlogLive, liveBlogs } from "@/app/blogs/blog-data";
-import { ALL_COMPARISONS } from "@/app/comparisons/comparison-data";
-import { ALL_FEATURES } from "@/app/features/feature-data";
-import { ALL_GUIDES } from "@/app/guides/guide-data";
-import { ALL_HELP_PAGES } from "@/app/help/help-data";
-import { ALL_INTEGRATIONS } from "@/app/integrations/integration-data";
-import { ALL_USE_CASES } from "@/app/use-cases/use-case-data";
 import { liveSeoPages, type SeoCatalogEntry, type SeoContentPage } from "@/app/seo-content/types";
 import { defaultDescription, siteUrl } from "@/app/seo";
+import { getBlogs, getGuides, getHelpPages, getSeoPages, isBlogLive } from "@/lib/cms";
 
 // Rebuilt daily rather than pinned at build time: both blog sections are
 // filtered to released posts, so a permanently static copy could drift from
@@ -81,11 +74,14 @@ function formatMarkdownTwinLink(title: string, htmlPath: string, note: string) {
   );
 }
 
-function formatBlogLink(slug: string) {
-  const blog = ALL_BLOGS.find((item) => item.slug === slug);
+function formatBlogLink(
+  slug: string,
+  blogs: Array<{ slug: string; title: string; description: string; publishedDate: string }>
+) {
+  const blog = blogs.find((item) => item.slug === slug);
 
   if (!blog) {
-    throw new Error(`llms.txt answer source "${slug}" is not in ALL_BLOGS`);
+    return null;
   }
 
   // Skip anything not released yet — pointing a model at a scheduled post
@@ -117,11 +113,23 @@ function fileListSection(title: string, body: string) {
 }
 
 export async function GET() {
+  const [blogs, features, comparisons, integrations, useCases, alternatives, guides, help] =
+    await Promise.all([
+      getBlogs(),
+      getSeoPages("features"),
+      getSeoPages("comparisons"),
+      getSeoPages("integrations"),
+      getSeoPages("use-cases"),
+      getSeoPages("alternatives"),
+      getGuides(),
+      getHelpPages(),
+    ]);
+  const liveBlogList = blogs.filter((blog) => isBlogLive(blog));
   const answerSources = answerSourceSlugs
-    .map(formatBlogLink)
+    .map((slug) => formatBlogLink(slug, blogs))
     .filter((line): line is string => Boolean(line))
     .join("\n");
-  const completeBlogLibrary = liveBlogs()
+  const completeBlogLibrary = liveBlogList
     .sort(
       (a, b) =>
         new Date(`${b.publishedDate} UTC`).getTime() -
@@ -132,23 +140,19 @@ export async function GET() {
       formatMarkdownTwinLink(blog.title, `/blogs/${blog.slug}`, blog.description)
     )
     .join("\n");
-  const featurePages = formatSeoFamilyLinks("/features", ALL_FEATURES);
-  const comparisonPages = formatSeoFamilyLinks("/comparisons", ALL_COMPARISONS);
-  const integrationPages = formatSeoFamilyLinks(
-    "/integrations",
-    ALL_INTEGRATIONS
-  );
-  const useCasePages = formatSeoFamilyLinks("/use-cases", ALL_USE_CASES);
-  const alternativePages = formatSeoFamilyLinks(
-    "/alternatives",
-    ALL_ALTERNATIVES
-  );
-  const guidePages = ALL_GUIDES.map((page) =>
-    formatMarkdownTwinLink(page.title, `/${page.slug}`, page.description)
-  ).join("\n");
-  const helpPages = ALL_HELP_PAGES.map((page) =>
-    formatMarkdownTwinLink(page.question, `/help/${page.slug}`, page.description)
-  ).join("\n");
+  const featurePages = formatSeoFamilyLinks("/features", features);
+  const comparisonPages = formatSeoFamilyLinks("/comparisons", comparisons);
+  const integrationPages = formatSeoFamilyLinks("/integrations", integrations);
+  const useCasePages = formatSeoFamilyLinks("/use-cases", useCases);
+  const alternativePages = formatSeoFamilyLinks("/alternatives", alternatives);
+  const guidePages = guides
+    .map((page) => formatMarkdownTwinLink(page.title, `/${page.slug}`, page.description))
+    .join("\n");
+  const helpPages = help
+    .map((page) =>
+      formatMarkdownTwinLink(page.question, `/help/${page.slug}`, page.description)
+    )
+    .join("\n");
 
   const docs = [
     formatMarkdownTwinLink(

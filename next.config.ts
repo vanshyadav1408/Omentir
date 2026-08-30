@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { SANITY_STUDIO_HOST } from "./src/sanity/studio-host";
 
 const privateIndexingRoutes = [
   "/actions/:path*",
@@ -32,6 +33,13 @@ const privateIndexingRoutes = [
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  transpilePackages: ["next-sanity", "@portabletext/react"],
+  serverExternalPackages: ["sanity", "@sanity/vision", "styled-components"],
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "cdn.sanity.io" },
+    ],
+  },
   // CI runs `tsc --noEmit` before every production deploy. Repeating the same
   // check inside `next build` exhausted the VPS during the TypeScript phase and
   // left a partial `.next` directory serving HTML with missing client chunks.
@@ -44,6 +52,7 @@ const nextConfig: NextConfig = {
     "localhost",
     "127.0.0.1",
     "[::1]",
+    SANITY_STUDIO_HOST,
     ...(process.env.ALLOWED_DEV_ORIGINS?.split(",").map((origin) => origin.trim()).filter(Boolean) ?? []),
   ],
   experimental: {
@@ -84,7 +93,8 @@ const nextConfig: NextConfig = {
         // to hand the browser back to the AI app that started the flow, and
         // `form-action 'self'` is enforced against redirect targets in some
         // browsers, which would strand the user on a blocked page mid-connect.
-        source: "/((?!_next/|oauth/).*)",
+        source: "/((?!_next/|oauth/|studio/).*)",
+        missing: [{ type: "host", value: SANITY_STUDIO_HOST }],
         headers: [
           { key: "X-Frame-Options", value: "DENY" },
           {
@@ -114,6 +124,19 @@ const nextConfig: NextConfig = {
           { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
           { key: "X-Robots-Tag", value: "noindex, nofollow" },
         ],
+      },
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: SANITY_STUDIO_HOST }],
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      },
+      {
+        source: "/studio",
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      },
+      {
+        source: "/studio/:path*",
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
       },
       {
         // Static fonts under public/ don't get Next's content-hashed filenames,

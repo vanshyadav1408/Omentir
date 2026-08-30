@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { createPageMetadata } from "../seo";
-import { ALL_GUIDES, getGuidePage } from "../guides/guide-data";
+import { getGuide, getGuideSlugs } from "@/lib/cms";
 import GuidePageView from "../guides/guide-page";
 import { guideHeroImage } from "../guides/types";
 
@@ -8,15 +8,16 @@ type PageProps = {
   params: Promise<{ slug: string }>;
 };
 
-export const dynamicParams = false;
+export const dynamicParams = true;
 
-export function generateStaticParams() {
-  return ALL_GUIDES.map((page) => ({ slug: page.slug }));
+export async function generateStaticParams() {
+  const slugs = await getGuideSlugs();
+  return slugs.map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
-  const page = getGuidePage(slug);
+  const page = await getGuide(slug);
   if (!page) {
     return createPageMetadata({
       title: "Not found - Omentir",
@@ -44,7 +45,7 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function RootGuidePage({ params }: PageProps) {
   const { slug } = await params;
-  const page = getGuidePage(slug);
+  const page = await getGuide(slug);
   if (!page) notFound();
   return <GuidePageView page={page} />;
 }

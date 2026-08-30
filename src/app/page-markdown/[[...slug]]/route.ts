@@ -5,12 +5,12 @@ import {
   renderPublicMarkdown,
 } from "@/lib/public-page-markdown";
 
-// Baked at build time. The renderer reads TSX sources, which exist during
-// `next build` but are not copied into the standalone production image.
-export const dynamic = "force-static";
+export const revalidate = 300;
+export const dynamicParams = true;
 
-export function generateStaticParams() {
-  return listPublicMarkdownPages().map((page) => ({
+export async function generateStaticParams() {
+  const pages = await listPublicMarkdownPages();
+  return pages.map((page) => ({
     slug: page.htmlPath === "/" ? [] : page.htmlPath.slice(1).split("/"),
   }));
 }
@@ -21,7 +21,7 @@ export async function GET(
 ) {
   const { slug } = await context.params;
   const htmlPath = slug?.length ? `/${slug.join("/")}` : "/";
-  const body = renderPublicMarkdown(htmlPath);
+  const body = await renderPublicMarkdown(htmlPath);
 
   if (!body) {
     return new NextResponse("Not found\n", {
@@ -34,8 +34,6 @@ export async function GET(
   return new NextResponse(`${body}\n`, {
     headers: {
       "content-type": "text/markdown; charset=utf-8",
-      // Agent alternate only. HTML at `canonical` stays indexable for Google.
-      // This header is scoped to the markdown route, not to HTML pages.
       "X-Robots-Tag": "noindex, follow",
       Link: `<${canonical}>; rel="canonical"`,
     },

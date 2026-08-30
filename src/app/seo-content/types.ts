@@ -110,6 +110,10 @@ export type SeoContentPage = {
   roundupItems?: SeoRoundupItem[];
   phases?: SeoPhase[];
   thread?: SeoThreadLine[];
+  /** Use-case directory line. */
+  who?: string;
+  /** Integration connect matrix. */
+  connect?: { surface: string; auth: string; bestFor: string };
 };
 
 export type SeoFamily =

@@ -1,6 +1,6 @@
 import { createPageMetadata } from "../seo";
 import SeoIndexPageView from "../seo-content/index-page";
-import { ALL_INTEGRATIONS } from "./integration-data";
+import { getSeoPages } from "@/lib/cms";
 
 export const metadata = createPageMetadata({
   title: "Integrations - Omentir",
@@ -16,13 +16,14 @@ export const metadata = createPageMetadata({
   ],
 });
 
-export default function IntegrationsIndexPage() {
+export default async function IntegrationsIndexPage() {
+  const pages = await getSeoPages("integrations");
   return (
     <SeoIndexPageView
       family="integrations"
       title="Omentir integrations"
       description="Concrete connect paths for the AI apps and protocols people actually use to operate Omentir."
-      pages={ALL_INTEGRATIONS}
+      pages={pages}
     />
   );
 }
