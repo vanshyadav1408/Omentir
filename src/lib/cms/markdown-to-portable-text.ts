@@ -120,7 +120,7 @@ export function markdownToPortableText(markdown: string): PortableTextBlock[] {
         _key: nextKey(),
         language: language || undefined,
         code: code.join("\n"),
-      } as PortableTextBlock);
+      } as unknown as PortableTextBlock);
       continue;
     }
     if (line.startsWith("|") && lines[i + 1]?.includes("---")) {
@@ -146,7 +146,7 @@ export function markdownToPortableText(markdown: string): PortableTextBlock[] {
         _key: nextKey(),
         headers,
         rows,
-      } as PortableTextBlock);
+      } as unknown as PortableTextBlock);
       continue;
     }
     if (line.startsWith("### ")) {

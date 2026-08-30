@@ -94,7 +94,7 @@ const nextConfig: NextConfig = {
         // `form-action 'self'` is enforced against redirect targets in some
         // browsers, which would strand the user on a blocked page mid-connect.
         source: "/((?!_next/|oauth/|studio/).*)",
-        missing: [{ type: "host", value: SANITY_STUDIO_HOST }],
+        missing: [{ type: "host" as const, value: SANITY_STUDIO_HOST }],
         headers: [
           { key: "X-Frame-Options", value: "DENY" },
           {
@@ -127,7 +127,7 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/:path*",
-        has: [{ type: "host", value: SANITY_STUDIO_HOST }],
+        has: [{ type: "host" as const, value: SANITY_STUDIO_HOST }],
         headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
       },
       {

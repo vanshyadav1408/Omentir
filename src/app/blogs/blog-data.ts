@@ -32,7 +32,7 @@ export interface BlogItem {
  * Post pages and /blogs are server-rendered per request. `sitemap.xml` and
  * `llms.txt` are cached, and each sets a daily `revalidate`.
  */
-export function isBlogLive(blog: BlogItem, now: Date = new Date()): boolean {
+export function isBlogLive(blog: Pick<BlogItem, "publishedDate">, now: Date = new Date()): boolean {
   const published = new Date(`${blog.publishedDate} UTC`);
 
   // An unparseable date should never silently hide a post that is already live.

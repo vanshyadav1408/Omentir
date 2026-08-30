@@ -75,13 +75,12 @@ function mapRelated(value: unknown): SeoRelatedLink[] | undefined {
       const label = text(row.label);
       const href = text(row.href);
       if (!label || !href) return null;
-      return {
-        label,
-        href,
-        description: optionalText(row.description),
-      };
+      const link: SeoRelatedLink = { label, href };
+      const description = optionalText(row.description);
+      if (description) link.description = description;
+      return link;
     })
-    .filter((item): item is SeoRelatedLink => Boolean(item));
+    .filter((item): item is SeoRelatedLink => item !== null);
   return links.length ? links : undefined;
 }
 
@@ -95,15 +94,17 @@ function mapSections(value: unknown): SeoSection[] {
       const paragraphs = strings(row.paragraphs);
       if (!heading || paragraphs.length === 0) return null;
       const bullets = strings(row.bullets);
-      return {
+      const section: SeoSection = {
         id: text(row.id, heading.toLowerCase().replace(/[^a-z0-9]+/g, "-")),
         heading,
         paragraphs,
-        bullets: bullets.length ? bullets : undefined,
-        code: optionalText(row.code),
       };
+      if (bullets.length) section.bullets = bullets;
+      const code = optionalText(row.code);
+      if (code) section.code = code;
+      return section;
     })
-    .filter((item): item is SeoSection => Boolean(item));
+    .filter((item): item is SeoSection => item !== null);
 }
 
 function mapSetup(value: unknown): SeoSetupStep[] | undefined {
@@ -150,9 +151,12 @@ function mapRoundup(value: unknown): SeoRoundupItem[] | undefined {
       const bestFor = text(row.bestFor);
       const watchFor = text(row.watchFor);
       if (!name || !bestFor || !watchFor) return null;
-      return { name, bestFor, watchFor, href: optionalText(row.href) };
+      const entry: SeoRoundupItem = { name, bestFor, watchFor };
+      const href = optionalText(row.href);
+      if (href) entry.href = href;
+      return entry;
     })
-    .filter((item): item is SeoRoundupItem => Boolean(item));
+    .filter((item): item is SeoRoundupItem => item !== null);
   return items.length ? items : undefined;
 }
 

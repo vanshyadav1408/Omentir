@@ -42,12 +42,12 @@ export function portableTextToMarkdown(value: PortableTextBlock[] | undefined): 
       continue;
     }
     if (block._type === "contentTable") {
-      const headers = Array.isArray((block as { headers?: string[] }).headers)
-        ? (block as { headers: string[] }).headers
-        : [];
-      const rows = Array.isArray((block as { rows?: Array<{ cells?: string[] }> }).rows)
-        ? (block as { rows: Array<{ cells?: string[] }> }).rows
-        : [];
+      const table = block as unknown as {
+        headers?: string[];
+        rows?: Array<{ cells?: string[] }>;
+      };
+      const headers = Array.isArray(table.headers) ? table.headers : [];
+      const rows = Array.isArray(table.rows) ? table.rows : [];
       if (headers.length) {
         lines.push(`| ${headers.join(" | ")} |`);
         lines.push(`| ${headers.map(() => "---").join(" | ")} |`);
