@@ -46,13 +46,12 @@ const LAYOUTS = new Set<SeoLayout>([
 const HELP_CLUSTERS = new Set<HelpCluster>(HELP_CLUSTER_ORDER);
 const GUIDE_CLUSTERS = new Set<GuideCluster>(["linkedin", "b2b", "email", "general"]);
 
-function remoteUrl(value: string) {
-  if (value.startsWith("https://") || value.startsWith("http://")) return value;
-  return "";
+function cmsRemoteSrc(source: unknown, url: unknown, width?: number) {
+  return sanityImageUrl(source, width) || sanityImageUrl(url, width) || "";
 }
 
-function mapOgImage(url: unknown, alt: unknown, title: string) {
-  const src = remoteUrl(text(url));
+function mapOgImage(source: unknown, url: unknown, alt: unknown, title: string) {
+  const src = cmsRemoteSrc(source, url, 1536);
   if (!src) return undefined;
   return {
     url: src,
@@ -265,7 +264,7 @@ export function mapSeoPage(value: unknown, family: SeoFamily): CmsSeoPage | null
     thread: mapThread(row.thread),
     who: optionalText(row.who),
     connect: mapConnect(row.connect),
-    ogImage: mapOgImage(row.ogUrl, row.ogAlt, title),
+    ogImage: mapOgImage(row.ogImage, row.ogUrl, row.ogAlt, title),
   };
   void family;
   return page;
@@ -292,10 +291,7 @@ export function mapBlogListItem(value: unknown): Omit<CmsBlogPost, "body" | "faq
     updatedDate: text(row.updatedDate, publishedDate),
     category: text(row.category, "Playbooks"),
     readTime: text(row.readTime, "7 min read"),
-    bannerSrc:
-      remoteUrl(text(row.bannerUrl)) ||
-      remoteUrl(sanityImageUrl(row.banner) || "") ||
-      "",
+    bannerSrc: cmsRemoteSrc(row.banner, row.bannerUrl, 1600) || "",
     bannerAlt: text(row.bannerHotspotAlt) || text(banner?.alt) || text(row.bannerAlt, title),
     keywords: strings(row.keywords),
     featuredInLlms: bool(row.featuredInLlms),
@@ -420,7 +416,7 @@ export function mapGuide(value: unknown): CmsGuidePage | null {
     faqItems: mapFaq(row.faqItems),
     related: mapRelated(row.related),
     relatedHeading: optionalText(row.relatedHeading),
-    ogImage: mapOgImage(row.ogUrl, row.ogAlt, title),
+    ogImage: mapOgImage(row.ogImage, row.ogUrl, row.ogAlt, title),
   };
 }
 

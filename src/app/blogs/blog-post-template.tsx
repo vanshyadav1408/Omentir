@@ -12,6 +12,7 @@ import {
 } from "../marketing-shell";
 import { createBlogJsonLd, createBreadcrumbJsonLd, createFAQJsonLd, normalizeDate, siteUrl, absoluteAssetUrl } from "../seo";
 import { MarkdownTwinLink } from "../seo-content/shared";
+import { isSanityCdnUrl } from "@/sanity/lib/image";
 
 export interface TocItem {
   id: string;
@@ -156,6 +157,7 @@ export default function BlogPostTemplate({
                   className="object-cover"
                   priority
                   sizes="(max-width: 768px) 100vw, 768px"
+                  unoptimized={isSanityCdnUrl(canonicalBannerSrc)}
                 />
               </div>
             ) : null}

@@ -18,6 +18,7 @@ import {
 } from "../seo";
 import { LandingSection, RelatedCards } from "./landing-kit";
 import { type GuidePage } from "./types";
+import { isSanityCdnUrl } from "@/sanity/lib/image";
 
 function renderInline(text: string): ReactNode[] {
   const parts = text.split(/(\[[^\]]+\]\([^)]+\))/g);
@@ -153,6 +154,7 @@ export default function GuidePageView({ page }: { page: GuidePage }) {
                   sizes="(min-width: 1024px) 960px, calc(100vw - 2rem)"
                   className="object-cover object-center"
                   priority
+                  unoptimized={isSanityCdnUrl(banner.src)}
                 />
               </figure>
             ) : null}

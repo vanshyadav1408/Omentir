@@ -25,6 +25,7 @@ const seoPageFields = groq`{
   roundupItems[]{ name, bestFor, watchFor, href },
   phases[]{ title, detail },
   thread[]{ speaker, text },
+  ogImage,
   "ogUrl": ogImage.asset->url,
   "ogAlt": ogImage.alt
 }`;
@@ -45,6 +46,7 @@ export const blogListQuery = groq`*[_type == "blogPost"] | order(publishedDate d
   readTime,
   bannerSrc,
   bannerAlt,
+  banner,
   "bannerUrl": banner.asset->url,
   "bannerHotspotAlt": banner.alt,
   keywords,
@@ -62,6 +64,7 @@ export const blogBySlugQuery = groq`*[_type == "blogPost" && slug.current == $sl
   readTime,
   bannerSrc,
   bannerAlt,
+  banner,
   "bannerUrl": banner.asset->url,
   "bannerHotspotAlt": banner.alt,
   keywords,
@@ -122,6 +125,7 @@ export const guideListQuery = groq`*[_type == "guide"] | order(title asc) {
   faqItems[]{ question, answer },
   related[]{ label, href, description },
   relatedHeading,
+  ogImage,
   "ogUrl": ogImage.asset->url,
   "ogAlt": ogImage.alt
 }`;
@@ -140,6 +144,7 @@ export const guideBySlugQuery = groq`*[_type == "guide" && slug.current == $slug
   faqItems[]{ question, answer },
   related[]{ label, href, description },
   relatedHeading,
+  ogImage,
   "ogUrl": ogImage.asset->url,
   "ogAlt": ogImage.alt
 }`;

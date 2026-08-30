@@ -1,4 +1,5 @@
 import type { PortableTextBlock } from "@portabletext/types";
+import { sanityImageUrl } from "@/sanity/lib/image";
 
 type MarkDef = { _key?: string; _type?: string; href?: string };
 
@@ -37,8 +38,8 @@ export function portableTextToMarkdown(value: PortableTextBlock[] | undefined): 
       continue;
     }
     if (block._type === "image") {
-      const image = block as unknown as { alt?: string; src?: string };
-      const src = typeof image.src === "string" ? image.src : "";
+      const image = block as unknown as { alt?: string };
+      const src = sanityImageUrl(block) || "";
       const alt = typeof image.alt === "string" ? image.alt : "";
       if (src) lines.push(`![${alt}](${src})`);
       continue;

@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { MarketingTable, MarketingTd, MarketingTh, MarketingThead, MarketingTr } from "@/app/marketing-table";
 import { headingId, headingIdFromBlock } from "./portable-text-toc";
-import { isSanityConfigured } from "@/sanity/env";
+import { isSanityCdnUrl, sanityImageUrl } from "@/sanity/lib/image";
 
 function InlineLink({
   href,
@@ -81,14 +81,19 @@ const components: PortableTextComponents = {
   },
   types: {
     image: ({ value }) => {
-      const src = typeof value?.src === "string" ? value.src : value?.asset?.url;
+      const src = sanityImageUrl(value);
       const alt = typeof value?.alt === "string" ? value.alt : "";
-      if (!src || typeof src !== "string") return null;
-      const remote = src.startsWith("https://") || src.startsWith("http://");
-      if (!remote && isSanityConfigured()) return null;
+      if (!src) return null;
       return (
         <span className="relative my-8 block aspect-[3/2] overflow-hidden rounded-xl bg-[var(--md-sys-color-surface-container-low)]">
-          <Image src={src} alt={alt} fill className="object-cover" sizes="(max-width: 768px) 100vw, 768px" />
+          <Image
+            src={src}
+            alt={alt}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, 768px"
+            unoptimized={isSanityCdnUrl(src)}
+          />
         </span>
       );
     },

@@ -81,7 +81,7 @@ describe("CMS mappers", () => {
       bannerUrl: "https://cdn.sanity.io/images/xatqbx3d/production/banner.jpg",
       bannerHotspotAlt: "Product screenshot",
     });
-    expect(item?.bannerSrc).toBe("https://cdn.sanity.io/images/xatqbx3d/production/banner.jpg");
+    expect(item?.bannerSrc).toBe("https://cdn.sanity.io/images/xatqbx3d/production/banner.jpg?auto=format");
     expect(item?.bannerAlt).toBe("Product screenshot");
   });
 
@@ -101,7 +101,7 @@ describe("CMS mappers", () => {
       "features"
     );
     expect(page?.ogImage).toEqual({
-      url: "https://cdn.sanity.io/images/xatqbx3d/production/lead-finders.avif",
+      url: "https://cdn.sanity.io/images/xatqbx3d/production/lead-finders.avif?auto=format",
       width: 1536,
       height: 1024,
       alt: "Lead finder illustration",
@@ -118,6 +118,14 @@ describe("CMS mappers", () => {
     });
     expect(item?.bannerSrc).toBe("");
   });
+
+  test("asks Sanity CDN to pick a format so the page does not depend on Next decoding AVIF", async () => {
+    const { sanityImageUrl } = await import("@/sanity/lib/image");
+    expect(sanityImageUrl("https://cdn.sanity.io/images/xatqbx3d/production/banner.jpg")).toBe(
+      "https://cdn.sanity.io/images/xatqbx3d/production/banner.jpg?auto=format"
+    );
+    expect(sanityImageUrl("/find-your-next-10-customers-banner.avif")).toBeUndefined();
+  });
 });
 describe("blog portable text roundtrip", () => {
   test("keeps a heading and a link so migrated posts still have jump targets and internal links", () => {
@@ -132,7 +140,13 @@ describe("blog portable text roundtrip", () => {
     const markdown = "![API key screen](/agent-api-key-creation.avif)";
     const blocks = markdownToPortableText(markdown);
     expect(blocks[0]).toMatchObject({ _type: "image", src: "/agent-api-key-creation.avif" });
-    expect(portableTextToMarkdown(blocks)).toContain("![API key screen](/agent-api-key-creation.avif)");
+  });
+
+  test("writes a Sanity CDN image to markdown so .md twins do not point at deleted public files", () => {
+    const blocks = markdownToPortableText("![API key screen](https://cdn.sanity.io/images/xatqbx3d/production/key.avif)");
+    expect(portableTextToMarkdown(blocks)).toContain(
+      "![API key screen](https://cdn.sanity.io/images/xatqbx3d/production/key.avif?auto=format)"
+    );
   });
 });
 

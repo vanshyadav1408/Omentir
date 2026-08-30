@@ -37,7 +37,7 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["sanity", "@sanity/vision", "styled-components"],
   images: {
     remotePatterns: [
-      { protocol: "https", hostname: "cdn.sanity.io" },
+      { protocol: "https", hostname: "cdn.sanity.io", pathname: "/images/**" },
     ],
   },
   // CI runs `tsc --noEmit` before every production deploy. Repeating the same

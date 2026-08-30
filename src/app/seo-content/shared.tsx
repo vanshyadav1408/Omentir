@@ -20,6 +20,7 @@ import {
   MarketingHeader,
   type ArticleCrumb,
 } from "../marketing-shell";
+import { isSanityCdnUrl } from "@/sanity/lib/image";
 
 export const familyLabels: Record<SeoFamily, string> = {
   features: "Features",
@@ -313,6 +314,7 @@ export function SeoBanner({
         sizes="(min-width: 1280px) 1152px, calc(100vw - 2rem)"
         className="h-auto w-full"
         priority
+        unoptimized={isSanityCdnUrl(src)}
       />
     </figure>
   );
