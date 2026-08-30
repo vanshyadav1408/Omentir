@@ -1,12 +1,52 @@
 export const SANITY_STUDIO_HOST = "sanity.omentir.com";
 export const SANITY_STUDIO_ORIGIN = `https://${SANITY_STUDIO_HOST}`;
 
+type HeaderReader = {
+  get(name: string): string | null;
+};
+
 export function hostnameFromHostHeader(hostHeader: string | null | undefined) {
-  return (hostHeader || "").split(":")[0].toLowerCase();
+  if (!hostHeader) return "";
+  const first = hostHeader.split(",")[0]?.trim() ?? "";
+  return first.replace(/^\[|\]$/g, "").split(":")[0].toLowerCase();
 }
 
 export function isSanityStudioHost(hostname: string) {
-  return hostname === SANITY_STUDIO_HOST;
+  return hostnameFromHostHeader(hostname) === SANITY_STUDIO_HOST;
+}
+
+function hostnamesFromForwarded(value: string | null) {
+  if (!value) return [];
+  const hosts: string[] = [];
+  for (const part of value.split(",")) {
+    const match = /(?:^|;)\s*host=([^;]+)/i.exec(part.trim());
+    if (!match) continue;
+    hosts.push(hostnameFromHostHeader(match[1]!.replace(/^"|"$/g, "")));
+  }
+  return hosts.filter(Boolean);
+}
+
+export function hostnamesFromHeaders(headers: HeaderReader) {
+  const hosts: string[] = [];
+  const add = (value: string | null) => {
+    if (!value) return;
+    for (const part of value.split(",")) {
+      const host = hostnameFromHostHeader(part);
+      if (host) hosts.push(host);
+    }
+  };
+  add(headers.get("x-omentir-studio-host"));
+  add(headers.get("x-forwarded-host"));
+  add(headers.get("x-original-host"));
+  add(headers.get("host"));
+  hosts.push(...hostnamesFromForwarded(headers.get("forwarded")));
+  return hosts;
+}
+
+export function isSanityStudioRequest(headers: HeaderReader, hostname = "") {
+  if (headers.get("x-omentir-studio") === "1") return true;
+  if (isSanityStudioHost(hostname)) return true;
+  return hostnamesFromHeaders(headers).some(isSanityStudioHost);
 }
 
 export function isStudioAppPath(pathname: string) {

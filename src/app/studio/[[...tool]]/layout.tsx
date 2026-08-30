@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 export const metadata = {
+  title: "Sanity Studio",
   robots: { index: false, follow: false },
 };
 

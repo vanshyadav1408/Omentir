@@ -9,14 +9,17 @@ import {
   SANITY_STUDIO_HOST,
   hostnameFromHostHeader,
   isSanityStudioHost,
+  isSanityStudioRequest,
   isStudioAppPath,
   studioPathFromPublicPath,
 } from "./sanity/studio-host";
 
 function requestHostname(request: NextRequest) {
+  if (isSanityStudioRequest(request.headers, request.nextUrl.hostname)) {
+    return SANITY_STUDIO_HOST;
+  }
   const forwarded = hostnameFromHostHeader(request.headers.get("x-forwarded-host"));
   const host = hostnameFromHostHeader(request.headers.get("host"));
-  if (isSanityStudioHost(forwarded) || isSanityStudioHost(host)) return SANITY_STUDIO_HOST;
   return forwarded || host;
 }
 
@@ -135,22 +138,12 @@ export default function proxy(request: NextRequest, event: NextFetchEvent) {
   if (isSanityStudioHost(hostname)) {
     const path = request.nextUrl.pathname;
     if (path.startsWith("/_next") || path.startsWith("/api")) return NextResponse.next();
-    if (isStudioAppPath(path)) {
-      return new NextResponse("Not found\n", {
-        status: 404,
-        headers: { "content-type": "text/plain; charset=utf-8" },
-      });
-    }
+    // Keep /studio reachable on this host so Studio assets and the internal
+    // rewrite target are not 404ed. omentir.com still 404s /studio below.
+    if (isStudioAppPath(path)) return NextResponse.next();
     const destination = request.nextUrl.clone();
     destination.pathname = studioPathFromPublicPath(path);
     return NextResponse.rewrite(destination);
-  }
-
-  if (isStudioAppPath(request.nextUrl.pathname)) {
-    return new NextResponse("Not found\n", {
-      status: 404,
-      headers: { "content-type": "text/plain; charset=utf-8" },
-    });
   }
 
   const retiredDestination = RETIRED_PUBLIC_REDIRECTS[request.nextUrl.pathname];

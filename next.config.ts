@@ -65,12 +65,21 @@ const nextConfig: NextConfig = {
   // anywhere else. RFC 9728 also allows the resource path to be appended to the
   // metadata URL, so both the bare and suffixed forms must resolve.
   async rewrites() {
-    return [
-      { source: "/.well-known/oauth-protected-resource", destination: "/api/oauth/metadata/protected-resource" },
-      { source: "/.well-known/oauth-protected-resource/:path*", destination: "/api/oauth/metadata/protected-resource" },
-      { source: "/.well-known/oauth-authorization-server", destination: "/api/oauth/metadata/authorization-server" },
-      { source: "/.well-known/oauth-authorization-server/:path*", destination: "/api/oauth/metadata/authorization-server" },
-    ];
+    return {
+      beforeFiles: [
+        {
+          source: "/",
+          has: [{ type: "host" as const, value: SANITY_STUDIO_HOST }],
+          destination: "/studio",
+        },
+      ],
+      afterFiles: [
+        { source: "/.well-known/oauth-protected-resource", destination: "/api/oauth/metadata/protected-resource" },
+        { source: "/.well-known/oauth-protected-resource/:path*", destination: "/api/oauth/metadata/protected-resource" },
+        { source: "/.well-known/oauth-authorization-server", destination: "/api/oauth/metadata/authorization-server" },
+        { source: "/.well-known/oauth-authorization-server/:path*", destination: "/api/oauth/metadata/authorization-server" },
+      ],
+    };
   },
   async redirects() {
     return [

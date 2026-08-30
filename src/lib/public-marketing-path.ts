@@ -23,6 +23,7 @@ const EXACT_PUBLIC_PATHS = new Set([
   "/privacy-policy",
   "/robots.txt",
   "/sitemap.xml",
+  "/studio",
   "/terms-of-service",
   "/tools",
   "/use-cases",
@@ -36,6 +37,7 @@ const PUBLIC_PATH_PREFIXES = [
   "/help/",
   "/integrations/",
   "/page-markdown/",
+  "/studio/",
   "/tools/",
   "/use-cases/",
 ];

@@ -1,11 +1,10 @@
 import type { MetadataRoute } from "next";
 import { headers } from "next/headers";
 import { siteUrl } from "./seo";
-import { hostnameFromHostHeader, isSanityStudioHost } from "@/sanity/studio-host";
+import { isSanityStudioRequest } from "@/sanity/studio-host";
 
 export default async function robots(): Promise<MetadataRoute.Robots> {
-  const hostname = hostnameFromHostHeader((await headers()).get("host"));
-  if (isSanityStudioHost(hostname)) {
+  if (isSanityStudioRequest(await headers())) {
     return {
       rules: { userAgent: "*", disallow: "/" },
     };
