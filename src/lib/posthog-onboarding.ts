@@ -40,6 +40,7 @@ export function onboardingSurveySentProperties(answers: OnboardingAnswers) {
   const questions = ONBOARDING_SURVEY_QUESTIONS;
   return {
     $survey_id: ONBOARDING_SURVEY_ID,
+    $survey_name: "Onboarding",
     $survey_completed: true,
     $survey_questions: [
       { id: questions.source.id, question: questions.source.question },
@@ -51,7 +52,10 @@ export function onboardingSurveySentProperties(answers: OnboardingAnswers) {
     [`$survey_response_${questions.role.id}`]: answers.role,
     [`$survey_response_${questions.companySize.id}`]: answers.companySize,
     [`$survey_response_${questions.goal.id}`]: answers.goal,
-    $set: onboardingPersonProperties(answers),
+    $set: {
+      ...onboardingPersonProperties(answers),
+      [`$survey_responded/${ONBOARDING_SURVEY_ID}`]: true,
+    },
     $set_once: {
       initial_onboarding_source: answers.source,
       initial_onboarding_role: answers.role,

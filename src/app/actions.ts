@@ -376,7 +376,7 @@ export async function completeOnboardingQuestionsAction(formData: FormData) {
     const location = await requestLocation(headersList, ipAddress);
 
     try {
-      await sendNewSignupNotification({
+      const mail = await sendNewSignupNotification({
         userId: workspace.ownerId,
         name: name || "Unknown",
         email: email || workspace.notificationEmail || "Unknown",
@@ -389,6 +389,9 @@ export async function completeOnboardingQuestionsAction(formData: FormData) {
         answers: onboarding,
         signedUpAtUtc: formatUtcTime(),
       });
+      if ("skipped" in mail && mail.skipped) {
+        console.error("Skipped new signup notification", mail.reason);
+      }
     } catch (error) {
       console.error("Failed to send new signup notification", error);
     }

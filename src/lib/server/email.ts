@@ -668,13 +668,13 @@ type NewSignupNotificationInput = {
   userId: string;
   name: string;
   email: string;
-  websiteUrl: string;
-  location: string;
-  ipAddress: string;
-  deviceType: string;
-  os: string;
-  browser: string;
-  answers: {
+  websiteUrl?: string;
+  location?: string;
+  ipAddress?: string;
+  deviceType?: string;
+  os?: string;
+  browser?: string;
+  answers?: {
     source: string;
     role: string;
     companySize: string;
@@ -684,21 +684,29 @@ type NewSignupNotificationInput = {
 };
 
 function buildNewSignupNotificationEmail(input: NewSignupNotificationInput) {
-  const rows = [
+  const rows: Array<[string, string]> = [
     ["Name", input.name],
     ["Email", input.email],
-    ["Fetched website", input.websiteUrl || "Not provided"],
-    ["Location", input.location],
-    ["IP address", input.ipAddress],
-    ["Device type", input.deviceType],
-    ["OS", input.os],
-    ["Browser", input.browser],
-    ["Signup time (UTC)", input.signedUpAtUtc],
-    ["Where did you hear about us?", input.answers.source],
-    ["What is your job?", input.answers.role],
-    ["Company size", input.answers.companySize],
-    ["What do you want Omentir to help with?", input.answers.goal],
   ];
+  if (input.answers) {
+    rows.push(
+      ["Fetched website", input.websiteUrl || "Not provided"],
+      ["Location", input.location || "Unknown"],
+      ["IP address", input.ipAddress || "Unknown"],
+      ["Device type", input.deviceType || "Unknown"],
+      ["OS", input.os || "Unknown"],
+      ["Browser", input.browser || "Unknown"],
+    );
+  }
+  rows.push(["Signup time (UTC)", input.signedUpAtUtc]);
+  if (input.answers) {
+    rows.push(
+      ["Where did you hear about us?", input.answers.source],
+      ["What is your job?", input.answers.role],
+      ["Company size", input.answers.companySize],
+      ["What do you want Omentir to help with?", input.answers.goal],
+    );
+  }
 
   const htmlRows = rows
     .map(
@@ -750,8 +758,11 @@ export async function sendNewSignupNotification(input: NewSignupNotificationInpu
   if (!resend) return { skipped: true, reason: "missing_resend_api_key" };
 
   const email = buildNewSignupNotificationEmail(input);
+  const idempotencyKey = input.answers
+    ? `new-signup-notification-${input.userId}`
+    : `new-signup-account-${input.userId}`;
 
-  return resend.emails.send(
+  const result = await resend.emails.send(
     {
       from: hostedNewSignupFrom(),
       to: hostedNewSignupTo(),
@@ -764,8 +775,14 @@ export async function sendNewSignupNotification(input: NewSignupNotificationInpu
         { name: "user_id", value: input.userId.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 256) },
       ],
     },
-    { idempotencyKey: `new-signup-notification-${input.userId}` },
+    { idempotencyKey },
   );
+
+  if (result.error) {
+    throw new Error(result.error.message);
+  }
+
+  return result;
 }
 
 export async function scheduleSignupWelcomeEmail(input: {

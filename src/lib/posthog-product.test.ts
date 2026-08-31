@@ -36,6 +36,7 @@ describe("onboarding survey capture", () => {
     });
 
     expect(properties.$survey_id).toBe(ONBOARDING_SURVEY_ID);
+    expect(properties.$survey_name).toBe("Onboarding");
     expect(properties.$survey_completed).toBe(true);
     expect(properties[`$survey_response_${ONBOARDING_SURVEY_QUESTIONS.source.id}`]).toBe(
       "Product Hunt",
@@ -43,7 +44,10 @@ describe("onboarding survey capture", () => {
     expect(properties[`$survey_response_${ONBOARDING_SURVEY_QUESTIONS.goal.id}`]).toBe(
       "book more demos",
     );
-    expect(properties.$set).toMatchObject({ onboarding_source: "Product Hunt" });
+    expect(properties.$set).toMatchObject({
+      onboarding_source: "Product Hunt",
+      [`$survey_responded/${ONBOARDING_SURVEY_ID}`]: true,
+    });
   });
 });
 

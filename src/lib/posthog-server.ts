@@ -14,7 +14,7 @@ export async function capturePostHogEvent(input: CaptureInput): Promise<void> {
     process.env.NEXT_PUBLIC_POSTHOG_HOST?.replace(/\/$/, "") || "https://us.i.posthog.com";
 
   try {
-    await fetch(`${host}/i/v0/e/`, {
+    const response = await fetch(`${host}/i/v0/e/`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
@@ -29,8 +29,12 @@ export async function capturePostHogEvent(input: CaptureInput): Promise<void> {
       }),
       signal: AbortSignal.timeout(input.timeoutMs ?? 2500),
     });
-  } catch {
+    if (!response.ok) {
+      console.error("PostHog capture failed", input.event, response.status);
+    }
+  } catch (error) {
     // Analytics must never delay signup, checkout, or webhooks.
+    console.error("PostHog capture error", input.event, error);
   }
 }
 

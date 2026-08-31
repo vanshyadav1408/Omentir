@@ -3,7 +3,7 @@ import { verifyWebhook } from "@clerk/nextjs/webhooks";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { isLocalMode } from "@/lib/runtime-mode";
-import { scheduleSignupWelcomeEmail } from "@/lib/server/email";
+import { scheduleSignupWelcomeEmail, sendNewSignupNotification } from "@/lib/server/email";
 import { capturePostHogEvent } from "@/lib/posthog-server";
 import { readTextBody, RequestBodyTooLargeError } from "@/lib/server/request-body";
 import {
@@ -107,6 +107,26 @@ export async function POST(request: NextRequest) {
       $set: { email },
     },
   });
+
+  try {
+    const mail = await sendNewSignupNotification({
+      userId: event.data.id,
+      name: fullName(event.data) || "Unknown",
+      email,
+      signedUpAtUtc: new Intl.DateTimeFormat("en-GB", {
+        timeZone: "UTC",
+        dateStyle: "medium",
+        timeStyle: "long",
+      }).format(
+        event.data.created_at ? new Date(event.data.created_at) : new Date(),
+      ),
+    });
+    if ("skipped" in mail && mail.skipped) {
+      console.error("Skipped new signup notification", mail.reason);
+    }
+  } catch (error) {
+    console.error("Failed to send new signup notification", error);
+  }
 
   if ("error" in result && result.error) {
     return NextResponse.json({ error: result.error.message }, { status: 502 });
