@@ -24,12 +24,6 @@ export function MarketingHeader({ transparentAtTop = false }: { transparentAtTop
           <span className="truncate">Omentir</span>
         </Link>
 
-        {/* Remote GitHub data is cosmetic. Render the link immediately so a
-            slow API response cannot hold back the entire landing header. */}
-        <Suspense fallback={<GithubStarButtonFallback />}>
-          <GithubStarButton />
-        </Suspense>
-
         <nav className="hidden min-w-0 flex-1 items-center justify-center gap-1 text-sm font-medium text-[var(--md-sys-color-on-surface-variant)] md:flex lg:absolute lg:left-1/2 lg:flex-none lg:-translate-x-1/2">
           <FeatureMenu />
           <Link href="/integrations" className="m3-state-layer rounded-md px-3 py-2 transition-colors hover:text-[var(--md-sys-color-on-surface)]">Integrations</Link>
@@ -40,6 +34,11 @@ export function MarketingHeader({ transparentAtTop = false }: { transparentAtTop
         {/* ml-auto keeps actions on the right: on mobile the nav is hidden, and on lg
             the nav is absolutely centered (out of flex flow), so nothing else pushes right */}
         <div className="ml-auto flex min-w-0 shrink-0 items-center gap-1 md:gap-2">
+          {/* Remote GitHub data is cosmetic. Render the link immediately so a
+              slow API response cannot hold back the entire landing header. */}
+          <Suspense fallback={<GithubStarButtonFallback />}>
+            <GithubStarButton />
+          </Suspense>
           {/* Desktop: auth CTAs */}
           <div className="hidden items-center gap-2 md:flex">
             {/* Session resolution is allowed to finish after the usable header
@@ -63,7 +62,7 @@ function GithubStarButtonFallback() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Omentir on GitHub"
-      className="m3-state-layer inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md border border-[var(--md-sys-color-outline-variant)] px-2.5 py-1.5 text-xs font-medium leading-none text-black transition-colors dark:text-[var(--md-sys-color-on-surface-variant)] dark:hover:text-[var(--md-sys-color-on-surface)] md:gap-2 md:px-3 md:py-2 md:text-sm"
+      className="m3-state-layer inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md border border-[var(--md-sys-color-outline-variant)] px-2.5 py-1.5 text-xs font-medium leading-none text-[var(--md-sys-color-on-surface-variant)] transition-colors hover:text-[var(--md-sys-color-on-surface)] md:gap-2 md:px-3 md:py-2 md:text-sm"
     >
       <svg
         viewBox="0 0 16 16"

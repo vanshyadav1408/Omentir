@@ -7,7 +7,7 @@ import {
 export const homeSlides = [
   {
     id: "find",
-    title: "Find people who match buyer profile",
+    title: "Find people who match your buyer profile",
   },
   {
     id: "message",

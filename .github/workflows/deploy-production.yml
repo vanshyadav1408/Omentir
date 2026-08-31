@@ -81,30 +81,35 @@ jobs:
             echo "Production homepage did not become healthy after deployment." >&2
             exit 1
           fi
-          mapfile -t chunks < <(
+          mapfile -t assets < <(
             printf '%s' "$homepage" |
-              grep -oE 'src="/_next/static/chunks/[^"]+\.js"' |
-              sed -E 's/^src="(.*)"$/\1/' |
+              grep -oE '(src|href)="/_next/static/chunks/[^"]+\.(js|css)"' |
+              sed -E 's/^(src|href)="(.*)"$/\2/' |
               sort -u
           )
 
-          if [ "${#chunks[@]}" -eq 0 ]; then
-            echo "No JavaScript chunks found in the production homepage." >&2
+          if [ "${#assets[@]}" -eq 0 ]; then
+            echo "No JavaScript or CSS chunks found in the production homepage." >&2
             exit 1
           fi
 
-          for chunk in "${chunks[@]}"; do
+          for asset in "${assets[@]}"; do
+            case "$asset" in
+              *.js) expected_content_type="application/javascript" ;;
+              *.css) expected_content_type="text/css" ;;
+              *) echo "Unexpected asset type: $asset" >&2; exit 1 ;;
+            esac
             if ! content_type="$(
               curl --fail --silent --show-error --retry 5 --retry-delay 2 \
                 --output /dev/null --write-out '%{content_type}' \
-                "https://omentir.com$chunk"
+                "https://omentir.com$asset"
             )"
             then
-              echo "Production chunk failed to load: $chunk" >&2
+              echo "Production asset failed to load: $asset" >&2
               exit 1
             fi
-            if [[ "$content_type" != application/javascript* ]]; then
-              echo "Unexpected content type for $chunk: $content_type" >&2
+            if [[ "$content_type" != "$expected_content_type"* ]]; then
+              echo "Unexpected content type for $asset: $content_type" >&2
               exit 1
             fi
           done

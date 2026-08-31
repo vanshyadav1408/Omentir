@@ -164,14 +164,10 @@ function MobileMenuSheet({
                   rel="noopener noreferrer"
                   onClick={onClose}
                   aria-label={`Ask ${bot.name} about Omentir`}
-                  className="flex min-h-12 items-center gap-1.5 rounded-2xl px-4 text-base font-medium text-[var(--md-sys-color-on-surface-variant)] transition hover:bg-[var(--md-sys-state-hover)]"
+                  className="flex min-h-12 items-center gap-2 rounded-2xl px-4 text-base font-medium text-[var(--md-sys-color-on-surface-variant)] transition hover:bg-[var(--md-sys-state-hover)]"
                 >
-                  Ask
-                  <span className="flex items-center gap-1">
-                    <AskAiIcon bot={bot} gradientId="askai-gemini-mobile" />
-                    {bot.name}
-                  </span>
-                  about Omentir
+                  <AskAiIcon bot={bot} gradientId="askai-gemini-mobile" />
+                  {bot.name}
                 </a>
               ))}
             </div>

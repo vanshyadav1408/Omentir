@@ -6,7 +6,7 @@
   "private": true,
   "scripts": {
     "dev": "NODE_OPTIONS='--disable-warning=DEP0205 --dns-result-order=ipv4first' next dev",
-    "build": "bun --bun next build",
+    "build": "bun --bun next build && mkdir -p .next/standalone/public .next/standalone/.next/static && cp -R public/. .next/standalone/public/ && cp -R .next/static/. .next/standalone/.next/static/",
     "start": "bun --bun next start",
     "lint": "bun --bun eslint",
     "postinstall": "rm -rf .next"

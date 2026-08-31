@@ -181,14 +181,14 @@ export function AskAiMenu() {
           strokeLinecap="round"
           strokeLinejoin="round"
           aria-hidden="true"
-          className="transition-transform duration-150 group-hover:rotate-180"
+          className="transition-transform duration-150 group-hover:rotate-180 group-focus-within:rotate-180"
         >
           <path d="m6 9 6 6 6-6" />
         </svg>
       </button>
-      <div className="invisible absolute left-1/2 top-full -translate-x-1/2 pt-2 opacity-0 transition-all duration-150 group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100">
+      <div className="invisible pointer-events-none absolute right-0 top-full z-[120] pt-2 opacity-0 transition-[opacity,visibility,transform] duration-150 group-focus-within:visible group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-hover:visible group-hover:pointer-events-auto group-hover:opacity-100">
         <ul
-          className="m3-menu m3-menu--compact m3-menu--origin-top min-w-[12.5rem] scale-95 transition-transform duration-150 group-focus-within:scale-100 group-hover:scale-100"
+          className="m3-menu m3-menu--compact m3-menu--origin-top-right min-w-[11rem] scale-95 bg-[var(--md-sys-color-surface-container-high)] transition-transform duration-150 group-focus-within:scale-100 group-hover:scale-100"
           style={{ maxHeight: "none" }}
         >
           {ASK_AI_LINKS.map((bot) => (
@@ -200,13 +200,9 @@ export function AskAiMenu() {
                 aria-label={`Ask ${bot.name} about Omentir`}
                 className="m3-menu-item whitespace-nowrap"
               >
-                <span className="flex items-center gap-1.5">
-                  Ask
-                  <span className="flex items-center gap-1">
-                    <AskAiIcon bot={bot} gradientId="askai-gemini-desktop" />
-                    {bot.name}
-                  </span>
-                  about Omentir
+                <span className="flex items-center gap-2">
+                  <AskAiIcon bot={bot} gradientId="askai-gemini-desktop" />
+                  {bot.name}
                 </span>
               </a>
             </li>

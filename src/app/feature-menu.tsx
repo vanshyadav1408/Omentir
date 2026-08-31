@@ -22,20 +22,26 @@ export default function FeatureMenu() {
           strokeLinecap="round"
           strokeLinejoin="round"
           aria-hidden="true"
-          className="transition-transform duration-150 group-hover:rotate-180"
+          className="transition-transform duration-150 group-hover:rotate-180 group-focus-within:rotate-180"
         >
           <path d="m6 9 6 6 6-6" />
         </svg>
       </button>
-      <div className="invisible fixed left-1/2 top-12 z-[120] w-[min(56rem,calc(100vw-2rem))] -translate-x-1/2 pt-4 opacity-0 transition-all duration-150 group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100">
-        <ul className="grid scale-95 grid-cols-2 gap-1.5 rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container)] p-2 shadow-[var(--md-sys-elevation-3)] transition-transform duration-150 group-focus-within:scale-100 group-hover:scale-100 lg:grid-cols-5">
+      {/* Narrow bridge under the trigger only, so the pointer can reach the
+          panel without a 56rem hover trap covering Integrations / Ask AI. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-full h-3 group-hover:pointer-events-auto group-focus-within:pointer-events-auto"
+      />
+      <div className="invisible pointer-events-none fixed left-1/2 top-16 z-[120] w-[min(56rem,calc(100vw-2rem))] -translate-x-1/2 pt-1 opacity-0 transition-[opacity,visibility,transform] duration-150 group-focus-within:visible group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-hover:visible group-hover:pointer-events-auto group-hover:opacity-100">
+        <ul className="grid scale-95 grid-cols-2 gap-1.5 rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-high)] p-2 shadow-[var(--md-sys-elevation-3)] transition-transform duration-150 group-focus-within:scale-100 group-hover:scale-100 lg:grid-cols-5">
           {FEATURE_NAV_ITEMS.map((item) => (
             <li key={item.href}>
               <Link
                 href={item.href}
-                className="m3-state-layer flex h-full min-h-14 items-center gap-2 rounded-xl border border-transparent px-2.5 py-2 font-semibold leading-5 text-[var(--md-sys-color-on-surface)] transition-colors hover:border-[var(--md-sys-color-outline-variant)] hover:bg-[var(--md-sys-color-surface-container-high)]"
+                className="m3-state-layer flex h-full min-h-14 items-center gap-2 rounded-xl border border-transparent px-2.5 py-2 font-semibold leading-5 text-[var(--md-sys-color-on-surface)] transition-colors hover:border-[var(--md-sys-color-outline-variant)] hover:bg-[var(--md-sys-color-surface-container-highest)]"
               >
-                <span className="grid h-7 w-7 shrink-0 place-items-center text-black dark:text-white">
+                <span className="grid h-7 w-7 shrink-0 place-items-center text-[var(--md-sys-color-on-surface)]">
                   <FeatureIcon icon={item.icon} />
                 </span>
                 <span>{item.label}</span>
