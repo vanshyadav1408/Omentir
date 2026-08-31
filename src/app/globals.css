@@ -5124,52 +5124,72 @@ html[data-theme="dark"] .blog-article a:hover {
   color: var(--md-ref-primary-80, #ffffff) !important;
 }
 
-/* Tools post: word links (Cursor) green + underline. Host labels
-   (cursor.com) stay body-colored with the same green underline.
+/* Product names (Mintlify, Cursor) are green with no underline.
+   Must beat Tailwind `.underline` and `html.dark .blog-article a`.
    Nested span/strong must be restated or `span { color: white
-   !important }` hides the green. */
+   !important }` hides the green. Buttons stay on their own fills. */
+.blog-article a[data-link-kind],
+.blog-article a[data-link-kind]:hover,
+.blog-article a[data-link-kind]:visited,
+.blog-article a.underline,
+.product-word-link,
+.product-word-link:hover {
+  text-decoration: none !important;
+  text-decoration-line: none !important;
+  text-decoration-color: transparent !important;
+  border-bottom: 0 !important;
+  box-shadow: none !important;
+}
+
+.blog-article[data-blog-link-tone="olive"] a[data-link-kind="word"],
+.blog-article[data-blog-link-tone="olive"] a[data-link-kind="host"],
+.product-word-link {
+  color: #4a5c38;
+}
+
+.blog-article[data-blog-link-tone="olive"] a[data-link-kind="word"] :is(span, strong, em),
+.blog-article[data-blog-link-tone="olive"] a[data-link-kind="host"] :is(span, strong, em),
+.product-word-link :is(span, strong, em) {
+  color: inherit;
+  text-decoration: none !important;
+}
+
+.blog-article[data-blog-link-tone="olive"] a[data-link-kind="word"]:hover,
+.blog-article[data-blog-link-tone="olive"] a[data-link-kind="host"]:hover,
+.blog-article[data-blog-link-tone="olive"] a[data-link-kind="word"]:hover :is(span, strong, em),
+.blog-article[data-blog-link-tone="olive"] a[data-link-kind="host"]:hover :is(span, strong, em),
+.product-word-link:hover {
+  color: #2a3224;
+}
+
 html.dark .blog-article[data-blog-link-tone="olive"] a[data-link-kind="word"],
-html[data-theme="dark"] .blog-article[data-blog-link-tone="olive"] a[data-link-kind="word"] {
+html[data-theme="dark"] .blog-article[data-blog-link-tone="olive"] a[data-link-kind="word"],
+html.dark .blog-article[data-blog-link-tone="olive"] a[data-link-kind="host"],
+html[data-theme="dark"] .blog-article[data-blog-link-tone="olive"] a[data-link-kind="host"],
+html.dark .product-word-link,
+html[data-theme="dark"] .product-word-link {
   color: #9aaa86 !important;
-  text-decoration: underline !important;
-  text-underline-offset: 3px;
-  text-decoration-thickness: 1px;
-  text-decoration-color: #9aaa86 !important;
 }
 
 html.dark .blog-article[data-blog-link-tone="olive"] a[data-link-kind="word"] :is(span, strong, em),
-html[data-theme="dark"] .blog-article[data-blog-link-tone="olive"] a[data-link-kind="word"] :is(span, strong, em) {
-  color: #9aaa86 !important;
-}
-
-html.dark .blog-article[data-blog-link-tone="olive"] a[data-link-kind="host"],
-html[data-theme="dark"] .blog-article[data-blog-link-tone="olive"] a[data-link-kind="host"] {
-  color: rgba(255, 255, 255, 0.92) !important;
-  text-decoration: underline !important;
-  text-underline-offset: 3px;
-  text-decoration-thickness: 1px;
-  text-decoration-color: #9aaa86 !important;
-}
-
+html[data-theme="dark"] .blog-article[data-blog-link-tone="olive"] a[data-link-kind="word"] :is(span, strong, em),
 html.dark .blog-article[data-blog-link-tone="olive"] a[data-link-kind="host"] :is(span, strong, em),
 html[data-theme="dark"] .blog-article[data-blog-link-tone="olive"] a[data-link-kind="host"] :is(span, strong, em) {
-  color: rgba(255, 255, 255, 0.92) !important;
+  color: #9aaa86 !important;
+  text-decoration: none !important;
 }
 
 html.dark .blog-article[data-blog-link-tone="olive"] a[data-link-kind="word"]:hover,
 html[data-theme="dark"] .blog-article[data-blog-link-tone="olive"] a[data-link-kind="word"]:hover,
-html.dark .blog-article[data-blog-link-tone="olive"] a[data-link-kind="word"]:hover :is(span, strong, em),
-html[data-theme="dark"] .blog-article[data-blog-link-tone="olive"] a[data-link-kind="word"]:hover :is(span, strong, em) {
-  color: #c2d0aa !important;
-  text-decoration-color: #c2d0aa !important;
-}
-
 html.dark .blog-article[data-blog-link-tone="olive"] a[data-link-kind="host"]:hover,
 html[data-theme="dark"] .blog-article[data-blog-link-tone="olive"] a[data-link-kind="host"]:hover,
+html.dark .blog-article[data-blog-link-tone="olive"] a[data-link-kind="word"]:hover :is(span, strong, em),
+html[data-theme="dark"] .blog-article[data-blog-link-tone="olive"] a[data-link-kind="word"]:hover :is(span, strong, em),
 html.dark .blog-article[data-blog-link-tone="olive"] a[data-link-kind="host"]:hover :is(span, strong, em),
-html[data-theme="dark"] .blog-article[data-blog-link-tone="olive"] a[data-link-kind="host"]:hover :is(span, strong, em) {
-  color: #ffffff !important;
-  text-decoration-color: #c2d0aa !important;
+html[data-theme="dark"] .blog-article[data-blog-link-tone="olive"] a[data-link-kind="host"]:hover :is(span, strong, em),
+html.dark .product-word-link:hover,
+html[data-theme="dark"] .product-word-link:hover {
+  color: #c2d0aa !important;
 }
 
 /* Filled brand links/buttons must not inherit the article link color. */

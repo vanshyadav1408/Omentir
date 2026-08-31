@@ -22,7 +22,21 @@ export function splitMarkdownLinks(input: string): MarkdownLinkPart[] {
   return parts.length > 0 ? parts : [{ type: "text", text: input }];
 }
 
-/** Host-looking labels such as cursor.com stay white; product names go green. */
+/** Host-looking labels such as cursor.com. Product names stay "word". */
 export function isHostLinkLabel(text: string) {
   return /^(?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/\S*)?$/i.test(text.trim());
+}
+
+/** omentir.com URLs stay on this origin so the tab does not leave the site. */
+export function sameSitePath(href: string): string | null {
+  if (href.startsWith("#")) return href;
+  if (href.startsWith("/") && !href.startsWith("//")) return href;
+  try {
+    const url = new URL(href);
+    const host = url.hostname.replace(/^www\./, "").toLowerCase();
+    if (host !== "omentir.com") return null;
+    return `${url.pathname}${url.search}${url.hash}` || "/";
+  } catch {
+    return null;
+  }
 }

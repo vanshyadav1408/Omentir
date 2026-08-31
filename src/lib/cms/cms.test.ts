@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { isSeoPageLive } from "@/app/seo-content/types";
 import { isBlogLive } from "./index";
 import { mapBlogListItem, mapHelpDraft, mapSeoPage, withHelpRelated } from "./mappers";
-import { isHostLinkLabel, splitMarkdownLinks } from "./markdown-links";
+import { isHostLinkLabel, sameSitePath, splitMarkdownLinks } from "./markdown-links";
 import { markdownToPortableText } from "./markdown-to-portable-text";
 import { portableTextToMarkdown } from "./portable-text-markdown";
 
@@ -230,11 +230,21 @@ describe("markdown table links", () => {
     ]);
   });
 
-  test("treats host labels as host so cursor.com stays white while Cursor goes green", () => {
+  test("treats host labels as host so leftover domain text is classified separately from product names", () => {
     expect(isHostLinkLabel("cursor.com")).toBe(true);
     expect(isHostLinkLabel("rankbull.io/tools")).toBe(true);
     expect(isHostLinkLabel("Cursor")).toBe(false);
     expect(isHostLinkLabel("Build the product")).toBe(false);
+  });
+
+  test("keeps omentir.com on this origin so a product name does not open a second Omentir tab", () => {
+    expect(sameSitePath("/blogs/ai-saas-ready-before-outbound")).toBe(
+      "/blogs/ai-saas-ready-before-outbound"
+    );
+    expect(sameSitePath("#build-the-product")).toBe("#build-the-product");
+    expect(sameSitePath("https://omentir.com")).toBe("/");
+    expect(sameSitePath("https://www.omentir.com/signup")).toBe("/signup");
+    expect(sameSitePath("https://mintlify.com")).toBe(null);
   });
 });
 

@@ -5,7 +5,7 @@ import type { PortableTextBlock } from "@portabletext/types";
 import Image from "next/image";
 import Link from "next/link";
 import { MarketingTable, MarketingTd, MarketingTh, MarketingThead, MarketingTr } from "@/app/marketing-table";
-import { isHostLinkLabel, splitMarkdownLinks } from "./markdown-links";
+import { isHostLinkLabel, sameSitePath, splitMarkdownLinks } from "./markdown-links";
 import { headingId, headingIdFromBlock } from "./portable-text-toc";
 import { isSanityCdnUrl, sanityImageUrl } from "@/sanity/lib/image";
 
@@ -42,20 +42,21 @@ function InlineLink({
   href: string;
   children: React.ReactNode;
 }) {
-  const external = href.startsWith("http://") || href.startsWith("https://");
   const linkKind = isHostLinkLabel(childText(children)) ? "host" : "word";
-  const className = "font-medium underline underline-offset-4";
-  if (external) {
+  const className = "font-medium no-underline";
+  const style = { textDecoration: "none" as const };
+  const internal = sameSitePath(href);
+  if (internal) {
     return (
-      <a href={href} target="_blank" rel="noopener" data-link-kind={linkKind} className={className}>
+      <Link href={internal} data-link-kind={linkKind} className={className} style={style}>
         {children}
-      </a>
+      </Link>
     );
   }
   return (
-    <Link href={href} data-link-kind={linkKind} className={className}>
+    <a href={href} target="_blank" rel="noopener" data-link-kind={linkKind} className={className} style={style}>
       {children}
-    </Link>
+    </a>
   );
 }
 

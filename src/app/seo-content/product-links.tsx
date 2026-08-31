@@ -213,8 +213,7 @@ const NAME_PATTERN = PRODUCT_HOMEPAGES.flatMap((product) => product.names)
 
 const PRODUCT_PATTERN = new RegExp(`\\b(?:${NAME_PATTERN})\\b`, "g");
 
-export const PRODUCT_LINK_CLASS =
-  "underline decoration-[var(--md-sys-color-outline)] underline-offset-4 transition-colors hover:text-[var(--md-sys-color-primary)] hover:decoration-[var(--md-sys-color-primary)]";
+export const PRODUCT_LINK_CLASS = "product-word-link font-medium no-underline";
 
 export function productHref(name: string): string | undefined {
   return NAME_TO_PRODUCT.get(name.trim().toLowerCase())?.href;
