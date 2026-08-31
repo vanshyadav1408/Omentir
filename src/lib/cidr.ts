@@ -24,10 +24,10 @@ function expandIpv6(ip: string): bigint | null {
   if (sides.length === 1 && missing !== 0) return null;
   const groups = [...head, ...Array(Math.max(missing, 0)).fill("0"), ...tail];
   if (groups.length !== 8) return null;
-  let value = 0n;
+  let value = BigInt(0);
   for (const group of groups) {
     if (!/^[0-9a-f]{1,4}$/.test(group)) return null;
-    value = (value << 16n) + BigInt(parseInt(group, 16));
+    value = (value << BigInt(16)) + BigInt(parseInt(group, 16));
   }
   return value;
 }
@@ -52,7 +52,9 @@ export function cidrContains(ip: string, cidr: string): boolean {
   const net6 = expandIpv6(network);
   if (addr === null || net6 === null || bits > 128) return false;
   if (bits === 0) return true;
-  const mask = bits === 128 ? (1n << 128n) - 1n : ((1n << 128n) - 1n) ^ ((1n << BigInt(128 - bits)) - 1n);
+  const one = BigInt(1);
+  const allOnes = (one << BigInt(128)) - one;
+  const mask = bits === 128 ? allOnes : allOnes ^ ((one << BigInt(128 - bits)) - one);
   return (addr & mask) === (net6 & mask);
 }
 
