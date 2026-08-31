@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { LOCAL_SESSION_COOKIE, verifyLocalSession } from "./lib/local-session";
 import { isLocalMode } from "./lib/runtime-mode";
 import { isClerkSessionKeyMismatch } from "./lib/clerk-errors";
+import { captureAiPageFetch } from "./lib/ai-page-fetch";
 import { isPublicMarketingPath, markdownRewritePath } from "./lib/public-marketing-path";
 import {
   SANITY_STUDIO_HOST,
@@ -132,6 +133,8 @@ async function localMiddleware(request: NextRequest) {
 
 export default function proxy(request: NextRequest, event: NextFetchEvent) {
   if (isLocalMode()) return localMiddleware(request);
+
+  event.waitUntil(captureAiPageFetch(request));
 
   const hostname = requestHostname(request);
 
