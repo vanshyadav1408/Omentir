@@ -28,6 +28,7 @@ import {
 import { findNextScheduledStepIndex } from "./campaign-sequence";
 import { sendWindowTimeZoneForLead } from "./lead-time-zone";
 import { nextAiReplyAt } from "./send-schedule";
+import { capturePostHogEvent } from "@/lib/posthog-server";
 import { classifyReplyIntent, draftCampaignMessage } from "./gemini";
 import { renderTemplate } from "./outreach-rules";
 import {
@@ -265,6 +266,17 @@ export async function applyConnectionAccepted(input: {
     ...(currentStep?.type === "wait"
       ? { currentStepIndex: enrollment.currentStepIndex + 1, nextActionAt }
       : { nextActionAt }),
+  });
+
+  void capturePostHogEvent({
+    event: "connection_request_accepted",
+    distinctId: workspaceId,
+    insertId: `connection_request_accepted:${enrollment.id}`,
+    properties: {
+      lead_id: lead.id,
+      enrollment_id: enrollment.id,
+      campaign_id: campaign?.id,
+    },
   });
 
   try {

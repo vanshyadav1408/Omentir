@@ -6699,3 +6699,108 @@ html:has(.dashboard-shell) .m3-dialog-btn {
   letter-spacing: -0.03em;
   line-height: 1.35;
 }
+
+/* PostHog Support widget sits in the page DOM, so global dark input rules
+   paint its fields. Keep identification fills black, focus on the border only,
+   and leave the composer as PostHog's borderless bar. */
+html.dark #ph-conversations-widget-container input[type="text"],
+html.dark #ph-conversations-widget-container input[type="email"],
+#ph-conversations-widget-container input[type="text"],
+#ph-conversations-widget-container input[type="email"] {
+  background: #000 !important;
+  background-color: #000 !important;
+  color: #fff !important;
+  caret-color: #fff !important;
+  border: 1px solid #2a2c2e !important;
+  border-width: 1px !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+  outline: none !important;
+  transition: border-color 0.15s ease !important;
+}
+
+html.dark #ph-conversations-widget-container input[type="text"]:hover,
+html.dark #ph-conversations-widget-container input[type="email"]:hover,
+html.dark #ph-conversations-widget-container input[type="text"]:focus,
+html.dark #ph-conversations-widget-container input[type="email"]:focus,
+html.dark #ph-conversations-widget-container input[type="text"]:focus-visible,
+html.dark #ph-conversations-widget-container input[type="email"]:focus-visible,
+#ph-conversations-widget-container input[type="text"]:hover,
+#ph-conversations-widget-container input[type="email"]:hover,
+#ph-conversations-widget-container input[type="text"]:focus,
+#ph-conversations-widget-container input[type="email"]:focus,
+#ph-conversations-widget-container input[type="text"]:focus-visible,
+#ph-conversations-widget-container input[type="email"]:focus-visible {
+  background: #000 !important;
+  background-color: #000 !important;
+  border-color: #1d4aff !important;
+  border-width: 1px !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+#ph-conversations-widget-container input[type="text"]::placeholder,
+#ph-conversations-widget-container input[type="email"]::placeholder {
+  color: rgba(255, 255, 255, 0.45) !important;
+}
+
+#ph-conversations-widget-container input[type="text"]:-webkit-autofill,
+#ph-conversations-widget-container input[type="text"]:-webkit-autofill:hover,
+#ph-conversations-widget-container input[type="text"]:-webkit-autofill:focus,
+#ph-conversations-widget-container input[type="email"]:-webkit-autofill,
+#ph-conversations-widget-container input[type="email"]:-webkit-autofill:hover,
+#ph-conversations-widget-container input[type="email"]:-webkit-autofill:focus,
+html.dark #ph-conversations-widget-container input[type="text"]:-webkit-autofill,
+html.dark #ph-conversations-widget-container input[type="text"]:-webkit-autofill:hover,
+html.dark #ph-conversations-widget-container input[type="text"]:-webkit-autofill:focus,
+html.dark #ph-conversations-widget-container input[type="email"]:-webkit-autofill,
+html.dark #ph-conversations-widget-container input[type="email"]:-webkit-autofill:hover,
+html.dark #ph-conversations-widget-container input[type="email"]:-webkit-autofill:focus {
+  -webkit-text-fill-color: #fff;
+  caret-color: #fff;
+  -webkit-box-shadow: 0 0 0 1000px #000 inset;
+  box-shadow: 0 0 0 1000px #000 inset;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+html.dark #ph-conversations-widget-container textarea,
+html.dark #ph-conversations-widget-container textarea:focus,
+html.dark #ph-conversations-widget-container textarea:focus-visible,
+#ph-conversations-widget-container textarea,
+#ph-conversations-widget-container textarea:focus,
+#ph-conversations-widget-container textarea:focus-visible {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  border-width: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  color: #020617 !important;
+  caret-color: #020617 !important;
+  -webkit-box-shadow: none !important;
+  resize: none !important;
+}
+
+#ph-conversations-widget-container textarea::-webkit-resizer {
+  display: none;
+}
+
+#ph-conversations-widget-container textarea::placeholder {
+  color: #939393 !important;
+}
+
+#ph-conversations-widget-container button[aria-label="Send message"] svg {
+  display: none;
+}
+
+#ph-conversations-widget-container button[aria-label="Send message"]::after {
+  content: "";
+  width: 18px;
+  height: 18px;
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M2.01 21 23 12 2.01 3 2 10l15 2-15 2z'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M2.01 21 23 12 2.01 3 2 10l15 2-15 2z'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+}

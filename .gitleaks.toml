@@ -18,11 +18,21 @@ disabledRules = ["linkedin-client-id"]
 # vendored and build output that a git-aware scan would skip via .gitignore.
 # `private-infra/` never ships in the public snapshot but is excluded here so a
 # working-tree scan of the private repo does not report on deploy tooling.
+#
+# Regex allowlist is only for matches that are not credentials:
+# - IndexNow's published proof token (Bing fetches it from the site).
+# - Sidebar resource names that sit next to the word "linkedin" and trip the
+#   default linkedin-client-secret rule.
 [allowlist]
 paths = [
   '''(^|/)node_modules/''',
   '''(^|/)\.next/''',
   '''(^|/)private-infra/''',
+]
+regexes = [
+  '''8f3c1a9e6b24d0c75e18a4f2b9d63c07''',
+  '''linkedinConnected''',
+  '''linkedinAccounts''',
 ]
 
 # Public provider identifiers are not authorization secrets, but Omentir does

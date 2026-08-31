@@ -104,6 +104,7 @@ import {
 import { localDayAndHour } from "./scheduling";
 import { isWithinSendWindow, SPACING_MINUTES, type SendActionKind } from "./send-schedule";
 import { hasActiveSubscription } from "./subscription";
+import { capturePostHogEvent } from "@/lib/posthog-server";
 import { getAppBaseUrl } from "./runtime-config";
 import {
   emailWasSkipped,
@@ -968,6 +969,16 @@ async function runEnrollment(
       enrollment = { ...enrollment, status: "connected" };
       await updateCurrentEnrollment({ status: "connected" });
       await updateLead(enrollment.workspaceId, lead.id, { outreachStatus: "connected" });
+      void capturePostHogEvent({
+        event: "connection_request_accepted",
+        distinctId: enrollment.workspaceId,
+        insertId: `connection_request_accepted:${enrollment.id}`,
+        properties: {
+          lead_id: lead.id,
+          enrollment_id: enrollment.id,
+          campaign_id: campaign.id,
+        },
+      });
     } else {
       const sentAt = enrollment.connectionSentAt || enrollment.createdAt;
       const giveUpAt =
@@ -1242,6 +1253,16 @@ async function runEnrollment(
       // sweep wakes it the moment the invite is actually accepted.
       nextActionAt: addMinutes(CONNECTION_GIVE_UP_DAYS * 24 * 60),
     });
+    void capturePostHogEvent({
+      event: "connection_request_sent",
+      distinctId: enrollment.workspaceId,
+      insertId: `connection_request_sent:${enrollment.id}`,
+      properties: {
+        lead_id: lead.id,
+        enrollment_id: enrollment.id,
+        campaign_id: campaign.id,
+      },
+    });
     return "connection";
   }
 
@@ -1455,6 +1476,16 @@ async function runEnrollment(
     nextActionAt: addMinutes(
       !stepAfterMessage || stepAfterMessage.type === "wait" ? 1 : 24 * 60,
     ),
+  });
+  void capturePostHogEvent({
+    event: "message_sent",
+    distinctId: enrollment.workspaceId,
+    insertId: `message_sent:${enrollment.id}:${enrollment.currentStepIndex}`,
+    properties: {
+      lead_id: lead.id,
+      enrollment_id: enrollment.id,
+      campaign_id: campaign.id,
+    },
   });
   return "message";
 }

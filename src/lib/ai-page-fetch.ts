@@ -1,17 +1,20 @@
 import type { NextRequest } from "next/server";
 import { isPublicMarketingPath } from "@/lib/public-marketing-path";
 import { isSanityStudioRequest } from "@/sanity/studio-host";
+import { aiNameFromReferrer } from "@/lib/referral-channel";
+import { isGoogleAgentIp, loadGoogleAgentCidrs } from "@/lib/google-agent-ip";
 
 export type AiFetchKind = "assistant" | "search" | "crawler";
 
 export type AiFetchMatch = {
   name: string;
   kind: AiFetchKind;
+  match: "ua" | "referrer" | "google_agent_ip";
 };
 
 // More specific tokens first. ChatGPT-User must win over GPTBot.
-// Googlebot, Bingbot, Applebot, Baiduspider, and facebookexternalhit stay out:
-// those are search/preview crawlers and would drown the dashboard.
+// Googlebot is included because it feeds AI Overviews and AI Mode. Bingbot,
+// Applebot, Baiduspider, and facebookexternalhit stay out.
 const AI_USER_AGENTS: Array<{ token: string; name: string; kind: AiFetchKind }> = [
   { token: "chatgpt-user", name: "ChatGPT", kind: "assistant" },
   { token: "chatgpt-agent", name: "ChatGPT", kind: "assistant" },
@@ -29,6 +32,7 @@ const AI_USER_AGENTS: Array<{ token: string; name: string; kind: AiFetchKind }> 
   { token: "perplexitybot", name: "Perplexity", kind: "crawler" },
   { token: "gemini-deep-research", name: "Gemini", kind: "assistant" },
   { token: "google-gemini-cli", name: "Gemini", kind: "assistant" },
+  { token: "gemini notebook", name: "NotebookLM", kind: "assistant" },
   { token: "google-notebooklm", name: "NotebookLM", kind: "assistant" },
   { token: "googleagent-mariner", name: "Gemini", kind: "assistant" },
   { token: "googleagent-urlcontext", name: "Gemini", kind: "assistant" },
@@ -37,6 +41,7 @@ const AI_USER_AGENTS: Array<{ token: string; name: string; kind: AiFetchKind }> 
   { token: "google-agent", name: "Gemini", kind: "assistant" },
   { token: "cloudvertexbot", name: "Gemini", kind: "crawler" },
   { token: "notebooklm", name: "NotebookLM", kind: "assistant" },
+  { token: "googlebot", name: "Googlebot", kind: "search" },
   { token: "applebot-extended", name: "Apple Intelligence", kind: "crawler" },
   { token: "grok-deepsearch", name: "Grok", kind: "search" },
   { token: "grok-user", name: "Grok", kind: "assistant" },
@@ -64,8 +69,10 @@ const AI_USER_AGENTS: Array<{ token: string; name: string; kind: AiFetchKind }> 
   { token: "azureai-searchbot", name: "Copilot", kind: "search" },
   { token: "github-copilot", name: "Copilot", kind: "assistant" },
   { token: "copilot", name: "Copilot", kind: "assistant" },
+  { token: "deepseek-user", name: "DeepSeek", kind: "assistant" },
   { token: "deepseekbot", name: "DeepSeek", kind: "crawler" },
   { token: "deepseek", name: "DeepSeek", kind: "crawler" },
+  { token: "qwen-user", name: "Qwen", kind: "assistant" },
   { token: "tongyibot", name: "Qwen", kind: "assistant" },
   { token: "qwenbot", name: "Qwen", kind: "crawler" },
   { token: "alibababot", name: "Qwen", kind: "crawler" },
@@ -154,7 +161,36 @@ const AI_USER_AGENTS: Array<{ token: string; name: string; kind: AiFetchKind }> 
 export function matchAiUserAgent(userAgent: string): AiFetchMatch | null {
   const lower = userAgent.toLowerCase();
   for (const entry of AI_USER_AGENTS) {
-    if (lower.includes(entry.token)) return { name: entry.name, kind: entry.kind };
+    if (lower.includes(entry.token)) return { name: entry.name, kind: entry.kind, match: "ua" };
+  }
+  return null;
+}
+
+function looksLikeBrowser(userAgent: string): boolean {
+  const lower = userAgent.toLowerCase();
+  if (!lower.includes("mozilla/")) return false;
+  if (lower.includes("bot") || lower.includes("crawler") || lower.includes("spider")) return false;
+  return true;
+}
+
+export function matchAiFetch(input: {
+  userAgent: string;
+  referrer?: string;
+  ip?: string;
+  googleAgentCidrs?: readonly string[];
+}): AiFetchMatch | null {
+  const fromUa = matchAiUserAgent(input.userAgent);
+  if (fromUa) return fromUa;
+  const fromReferrer = input.referrer ? aiNameFromReferrer(input.referrer) : null;
+  if (fromReferrer) return { name: fromReferrer, kind: "assistant", match: "referrer" };
+  if (
+    input.ip &&
+    input.googleAgentCidrs &&
+    input.googleAgentCidrs.length > 0 &&
+    looksLikeBrowser(input.userAgent) &&
+    isGoogleAgentIp(input.ip, input.googleAgentCidrs)
+  ) {
+    return { name: "Gemini", kind: "assistant", match: "google_agent_ip" };
   }
   return null;
 }
@@ -201,12 +237,14 @@ export async function captureAiPageFetch(request: NextRequest) {
   if (!shouldCapture(request)) return;
 
   const userAgent = request.headers.get("user-agent") || "";
-  const match = matchAiUserAgent(userAgent);
+  const referrer = request.headers.get("referer") || "";
+  const ip = clientIp(request);
+  const googleAgentCidrs = await loadGoogleAgentCidrs();
+  const match = matchAiFetch({ userAgent, referrer, ip, googleAgentCidrs });
   if (!match) return;
 
   const host =
     process.env.NEXT_PUBLIC_POSTHOG_HOST?.replace(/\/$/, "") || "https://us.i.posthog.com";
-  const ip = clientIp(request);
   const currentUrl = requestUrl(request);
 
   try {
@@ -223,10 +261,12 @@ export async function captureAiPageFetch(request: NextRequest) {
           $current_url: currentUrl,
           $pathname: request.nextUrl.pathname,
           $host: request.nextUrl.host,
+          $referrer: referrer || undefined,
           $ip: ip || undefined,
           method: request.method,
           ai_name: match.name,
           ai_kind: match.kind,
+          ai_match: match.match,
         },
       }),
       signal: AbortSignal.timeout(2500),

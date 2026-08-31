@@ -7,6 +7,18 @@ import {
   agentMcpTools,
   callAgentTool,
 } from "@/lib/server/agent-api-operations";
+import {
+  advertisedMcpTools,
+  attachMcpSessionHeader,
+  flushPostHogMcp,
+  getMoreToolsResult,
+  getPostHogMcp,
+  mcpCaptureContext,
+  mcpSessionFromRequest,
+  mintMcpSession,
+  parseMcpClientInfo,
+  prepareIncomingToolCall,
+} from "@/lib/posthog-mcp";
 
 export const dynamic = "force-dynamic";
 
@@ -156,13 +168,19 @@ async function handlePost(request: NextRequest) {
     return rpcError(undefined, -32600, "Invalid JSON-RPC request.");
   }
 
+  const posthog = getPostHogMcp();
+  const replayedSession = mcpSessionFromRequest(request);
+  const capture = mcpCaptureContext(auth.context.workspace, request, replayedSession);
+
   if (rpc.method === "initialize") {
+    const startedAt = Date.now();
     const requested = requestedProtocolVersion(rpc.params);
     const protocolVersion =
       requested && SUPPORTED_PROTOCOL_VERSIONS.has(requested)
         ? requested
         : CURRENT_PROTOCOL_VERSION;
-    return rpcResult(rpc.id, {
+    const clientInfo = parseMcpClientInfo(rpc.params);
+    const result = {
       protocolVersion,
       capabilities: { tools: { listChanged: false } },
       serverInfo: {
@@ -175,7 +193,21 @@ async function handlePost(request: NextRequest) {
       },
       instructions:
         "Call omentir_get_context first (time zone + remaining send allowance). Call omentir_get_product_profile and ensure My Product is set before Steal Customers. List agents before create. Classic lead finders need mode signals/filters/prompt plus prompt and filters. Steal Customers: mode steal_customers, groupName, signalSources.competitorUrls and/or founderUrls (company pages and optional founder/employee profiles); no ICP; AI outreach attaches automatically; discovery finds competitor employees, scans their posts and company posts, and promotes commenters who look like buyers. Lead discovery is asynchronous: use list_activity before treating empty leads as final. Use list_leads/get_lead for engagementContext. Use list_scheduled_actions for exact outreach send times.",
+    };
+    const minted = posthog
+      ? mintMcpSession({ ...clientInfo, protocolVersion })
+      : null;
+    posthog?.captureInitialize({
+      ...capture,
+      ...clientInfo,
+      sessionId: minted?.session.sessionId,
+      protocolVersion,
+      parameters: rpc.params,
+      response: result,
+      durationMs: Date.now() - startedAt,
     });
+    const response = rpcResult(rpc.id, result);
+    return minted ? attachMcpSessionHeader(response, minted.token) : response;
   }
 
   if (rpc.id === undefined && rpc.method.startsWith("notifications/")) {
@@ -187,7 +219,16 @@ async function handlePost(request: NextRequest) {
   }
 
   if (rpc.method === "tools/list") {
-    return rpcResult(rpc.id, { tools: agentMcpTools });
+    const startedAt = Date.now();
+    const tools = advertisedMcpTools(agentMcpTools);
+    posthog?.captureToolsList({
+      ...capture,
+      toolNames: tools.map((tool) => tool.name),
+      parameters: rpc.params,
+      response: { tools },
+      durationMs: Date.now() - startedAt,
+    });
+    return rpcResult(rpc.id, { tools });
   }
 
   if (rpc.method === "tools/call") {
@@ -195,18 +236,52 @@ async function handlePost(request: NextRequest) {
     if (!params) {
       return rpcError(rpc.id, -32602, "tools/call requires params.name.");
     }
+    const prepared = prepareIncomingToolCall(params.name, params.arguments);
+    if (prepared.isMissingCapability) {
+      posthog?.captureMissingCapability({
+        ...capture,
+        context: prepared.intent,
+        parameters: params.arguments,
+      });
+      return rpcResult(rpc.id, getMoreToolsResult());
+    }
     if (!agentMcpTools.some((tool) => tool.name === params.name)) {
       return rpcError(rpc.id, -32602, `Unknown tool: ${params.name}`);
     }
 
+    const startedAt = Date.now();
+    const toolDescription = agentMcpTools.find((tool) => tool.name === params.name)?.description;
     try {
-      const result = await callAgentTool(auth.context, params.name, params.arguments);
+      const result = await callAgentTool(auth.context, params.name, prepared.dispatchArgs);
+      posthog?.captureToolCall({
+        ...capture,
+        toolName: params.name,
+        toolDescription,
+        intent: prepared.intent,
+        intentSource: prepared.intentSource,
+        parameters: prepared.dispatchArgs,
+        response: result,
+        durationMs: Date.now() - startedAt,
+        isError: false,
+      });
       return rpcResult(rpc.id, {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
         structuredContent: result,
         isError: false,
       });
     } catch (error) {
+      posthog?.captureToolCall({
+        ...capture,
+        toolName: params.name,
+        toolDescription,
+        intent: prepared.intent,
+        intentSource: prepared.intentSource,
+        parameters: prepared.dispatchArgs,
+        durationMs: Date.now() - startedAt,
+        isError: true,
+        error,
+        errorType: error instanceof AgentApiOperationError ? "operation" : "internal",
+      });
       if (error instanceof AgentApiOperationError) {
         return toolExecutionError(rpc.id, error);
       }
@@ -230,5 +305,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  return withCors(await handlePost(request), request.headers.get("origin"));
+  try {
+    return withCors(await handlePost(request), request.headers.get("origin"));
+  } finally {
+    await flushPostHogMcp();
+  }
 }

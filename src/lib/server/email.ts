@@ -4,8 +4,6 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { Resend } from "resend";
 import {
-  hostedContactFormFrom,
-  hostedContactFormTo,
   hostedNewSignupFrom,
   hostedNewSignupTo,
   hostedTransactionalFrom,
@@ -813,86 +811,4 @@ export async function scheduleSignupWelcomeEmail(input: {
     },
     input.eventId ? { idempotencyKey: `signup-welcome-${input.eventId}` } : undefined,
   );
-}
-
-/**
- * In-app Contact form. Subject = title, body = message only.
- * Reply-To is the customer's account email so you can answer in one click.
- * Hosted-only: self-hosted installs do not send to Omentir inboxes.
- */
-export async function sendContactFormEmail(input: {
-  title: string;
-  contactEmail: string;
-  roleTitle?: string;
-  query: string;
-  workspaceId?: string;
-}) {
-  if (!hostedEmailEnabled()) {
-    throw new Error("The contact form is only available on the hosted Omentir cloud.");
-  }
-  const resend = getResend();
-  if (!resend) {
-    throw new Error("Email is not configured. Try again later or use another contact option.");
-  }
-
-  const title = input.title.trim().slice(0, 200);
-  const contactEmail = input.contactEmail.trim().slice(0, 320);
-  const query = input.query.trim().slice(0, 5000);
-
-  if (!title || !contactEmail || !query) {
-    throw new Error("Title, contact email, and message are required.");
-  }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) {
-    throw new Error("Enter a valid contact email.");
-  }
-
-  // Body is intentionally only the customer message, with no labels or metadata.
-  const text = query;
-  const attachment = logoAttachment();
-  const html = `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="color-scheme" content="dark">
-    <meta name="supported-color-schemes" content="dark">
-    <title>${escapeHtml(title)}</title>
-  </head>
-  <body style="margin:0;background:${MAIL.canvas};color:${MAIL.text};font-family:${MAIL_FONT};-webkit-font-smoothing:antialiased;">
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" bgcolor="${MAIL.canvas}" style="background:${MAIL.canvas};padding:24px 16px;">
-      <tr>
-        <td align="center">
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" bgcolor="${MAIL.surface}" style="max-width:560px;background:${MAIL.surface};border:1px solid ${MAIL.border};border-radius:10px;overflow:hidden;">
-            <tr>
-              <td style="padding:20px 22px 0;">
-                <table role="presentation" cellspacing="0" cellpadding="0" border="0">
-                  <tr>
-                    <td valign="middle" style="padding:0 8px 0 0;">${logoImg(Boolean(attachment))}</td>
-                    <td valign="middle" style="font-family:${MAIL_FONT};font-size:18px;line-height:20px;font-weight:600;letter-spacing:-0.01em;color:${MAIL.text};">Omentir</td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:20px 22px 22px;font-family:${MAIL_FONT};font-size:14px;line-height:1.5;color:${MAIL.text};">
-                <p style="margin:0;white-space:pre-wrap;">${escapeHtml(query)}</p>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-  </body>
-</html>`;
-
-  return resend.emails.send({
-    from: hostedContactFormFrom(),
-    to: hostedContactFormTo(),
-    replyTo: contactEmail,
-    subject: title,
-    text,
-    html,
-    ...(attachment ? { attachments: [attachment] } : {}),
-    tags: [{ name: "kind", value: "contact_form" }],
-  });
 }

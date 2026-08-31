@@ -11,7 +11,6 @@ const privateIndexingRoutes = [
   "/campaigns/:path*",
   "/checkout/:path*",
   "/connect/:path*",
-  "/contact/:path*",
   "/dashboard/:path*",
   "/overview/:path*",
   "/leads/:path*",
@@ -37,7 +36,7 @@ const nextConfig: NextConfig = {
   // serving until the new build is finished. See scripts/production-build.sh.
   distDir: process.env.NEXT_DIST_DIR || ".next",
   transpilePackages: ["next-sanity", "@portabletext/react"],
-  serverExternalPackages: ["sanity", "@sanity/vision", "styled-components"],
+  serverExternalPackages: ["sanity", "@sanity/vision", "styled-components", "posthog-node", "@posthog/mcp"],
   images: {
     qualities: [75, 90],
     remotePatterns: [
@@ -82,6 +81,8 @@ const nextConfig: NextConfig = {
     return [
       { source: "/dashboard", destination: "/overview", permanent: true },
       { source: "/dashboard/:path*", destination: "/overview/:path*", permanent: true },
+      { source: "/contact", destination: "/overview", permanent: true },
+      { source: "/contact/:path*", destination: "/overview", permanent: true },
       { source: "/for-agents", destination: "/features/agent-api-and-mcp", permanent: true },
       { source: "/mcp-server", destination: "/integrations/mcp", permanent: true },
       // Do not rewrite `/` to /studio: the homepage is statically prerendered

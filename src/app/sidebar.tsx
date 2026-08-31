@@ -81,7 +81,6 @@ function getPageTitle(pathname: string) {
   if (pathname.startsWith("/my-product")) return "My Product";
   if (pathname.startsWith("/api-keys")) return "API";
   if (pathname.startsWith("/settings")) return "Settings";
-  if (pathname.startsWith("/contact")) return "Contact";
   if (pathname.startsWith("/connect")) return "Connect";
   if (pathname.startsWith("/onboarding")) return "Get Started";
   if (pathname.startsWith("/upgrade")) return "Upgrade";
@@ -167,7 +166,6 @@ export default function Sidebar({
   const productActive = linkActive("/my-product");
   const apiActive = setupDone && linkActive("/api-keys");
   const settingsActive = linkActive("/settings");
-  const contactActive = linkActive("/contact");
 
   const bottomLinks = (onClick?: () => void) => (
     <>
@@ -176,7 +174,7 @@ export default function Sidebar({
           href={itemHref("/api-keys", setupDone)}
           onClick={onClick}
           aria-current={apiActive ? "page" : undefined}
-          className={`mb-0.5 ${navClassName(apiActive)}`}
+          className={`mb-0.5 last:mb-0 ${navClassName(apiActive)}`}
         >
           <NavIcon name="key" />
           <span>API</span>
@@ -186,7 +184,7 @@ export default function Sidebar({
         href="/my-product"
         onClick={onClick}
         aria-current={productActive ? "page" : undefined}
-        className={`mb-0.5 ${navClassName(productActive)}`}
+        className={`mb-0.5 last:mb-0 ${navClassName(productActive)}`}
       >
         <NavIcon name="package_2" />
         <span>My Product</span>
@@ -195,22 +193,11 @@ export default function Sidebar({
         href="/settings"
         onClick={onClick}
         aria-current={settingsActive ? "page" : undefined}
-        className={`mb-0.5 ${navClassName(settingsActive)}`}
+        className={`mb-0.5 last:mb-0 ${navClassName(settingsActive)}`}
       >
         <NavIcon name="settings" />
         <span>Settings</span>
       </Link>
-      {!localMode ? (
-        <Link
-          href="/contact"
-          onClick={onClick}
-          aria-current={contactActive ? "page" : undefined}
-          className={`mb-0.5 ${navClassName(contactActive)}`}
-        >
-          <NavIcon name="support_agent" />
-          <span>Contact</span>
-        </Link>
-      ) : null}
     </>
   );
 
@@ -281,7 +268,7 @@ export default function Sidebar({
           {primaryNav.map((item) => renderNavLink(item, () => setMobileOpen(false)))}
         </nav>
 
-        <div className="shrink-0 px-2 pb-3 pt-2">
+        <div className="mt-auto shrink-0 px-2 pb-2 pt-2">
           {bottomLinks(() => setMobileOpen(false))}
         </div>
       </aside>
@@ -344,7 +331,7 @@ export default function Sidebar({
         </nav>
 
         <div
-          className={`shrink-0 pb-3 pt-1 transition-[padding] duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${isCollapsed ? "px-1.5" : "px-2"
+          className={`mt-auto shrink-0 pb-2 pt-1 transition-[padding] duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${isCollapsed ? "px-1.5" : "px-2"
             }`}
         >
           {!localMode && showApi ? (
@@ -352,7 +339,7 @@ export default function Sidebar({
               href={itemHref("/api-keys", setupDone)}
               title={isCollapsed ? "API" : undefined}
               aria-current={apiActive ? "page" : undefined}
-              className={`mb-0.5 ${desktopNavClassName(apiActive, isCollapsed)}`}
+              className={`mb-0.5 last:mb-0 ${desktopNavClassName(apiActive, isCollapsed)}`}
             >
               <NavIcon name="key" />
               <SidebarLabel collapsed={isCollapsed}>API</SidebarLabel>
@@ -362,7 +349,7 @@ export default function Sidebar({
             href="/my-product"
             title={isCollapsed ? "My Product" : undefined}
             aria-current={productActive ? "page" : undefined}
-            className={`mb-0.5 ${desktopNavClassName(productActive, isCollapsed)}`}
+            className={`mb-0.5 last:mb-0 ${desktopNavClassName(productActive, isCollapsed)}`}
           >
             <NavIcon name="package_2" />
             <SidebarLabel collapsed={isCollapsed}>My Product</SidebarLabel>
@@ -371,22 +358,11 @@ export default function Sidebar({
             href="/settings"
             title={isCollapsed ? "Settings" : undefined}
             aria-current={settingsActive ? "page" : undefined}
-            className={`mb-0.5 ${desktopNavClassName(settingsActive, isCollapsed)}`}
+            className={`mb-0.5 last:mb-0 ${desktopNavClassName(settingsActive, isCollapsed)}`}
           >
             <NavIcon name="settings" />
             <SidebarLabel collapsed={isCollapsed}>Settings</SidebarLabel>
           </Link>
-          {!localMode ? (
-            <Link
-              href="/contact"
-              title={isCollapsed ? "Contact" : undefined}
-              aria-current={contactActive ? "page" : undefined}
-              className={`mb-0.5 ${desktopNavClassName(contactActive, isCollapsed)}`}
-            >
-              <NavIcon name="support_agent" />
-              <SidebarLabel collapsed={isCollapsed}>Contact</SidebarLabel>
-            </Link>
-          ) : null}
         </div>
       </aside>
     </>

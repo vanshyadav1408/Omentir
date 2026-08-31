@@ -46,7 +46,9 @@ import {
 import { parseLinkedInLeadCsv } from "@/lib/linkedin-csv";
 import { normalizeLinkedInProfileUrl } from "@/lib/server/firebase";
 import { normalizeSchedulingLink, resolveBookingLink } from "@/lib/scheduling-link";
-import { sendContactFormEmail, sendNewSignupNotification } from "@/lib/server/email";
+import { sendNewSignupNotification } from "@/lib/server/email";
+import { capturePostHogEvent } from "@/lib/posthog-server";
+import { onboardingSurveySentProperties } from "@/lib/posthog-onboarding";
 import { executeScheduledActionNow } from "@/lib/server/automation";
 import { listScheduledActions } from "@/lib/server/scheduled-actions";
 import { analyzeWebsiteOrSearch, draftAgentSetupWithGemini } from "@/lib/server/gemini";
@@ -358,6 +360,13 @@ export async function completeOnboardingQuestionsAction(formData: FormData) {
   await updateWorkspaceOnboarding(workspace.id, onboarding);
 
   if (!hadCompletedOnboarding && !isLocalMode()) {
+    await capturePostHogEvent({
+      event: "survey sent",
+      distinctId: workspace.ownerId,
+      insertId: `onboarding_survey:${workspace.ownerId}`,
+      properties: onboardingSurveySentProperties(onboarding),
+    });
+
     const [headersList, user] = await Promise.all([headers(), currentUser()]);
     const userAgent = headersList.get("user-agent") || "";
     const name = [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim();
@@ -1156,33 +1165,4 @@ export async function completeConversationManualFollowUpAction(formData: FormDat
   if (!leadId) throw new Error("Lead id is required.");
   await completeConversationManualFollowUp(workspace.id, leadId);
   revalidatePath("/messages");
-}
-
-export async function submitContactFormAction(formData: FormData) {
-  const workspace = await requireWorkspace();
-  const user = await currentUser();
-  const title = String(formData.get("title") || "").trim();
-  const query = String(formData.get("query") || "").trim();
-  const contactEmail =
-    String(formData.get("contactEmail") || "").trim() ||
-    user?.primaryEmailAddress?.emailAddress ||
-    user?.emailAddresses[0]?.emailAddress ||
-    workspace.notificationEmail ||
-    "";
-
-  if (!title) throw new Error("Title is required.");
-  if (!query) throw new Error("Message is required.");
-  if (!contactEmail) {
-    throw new Error("No email on your account. Add one in Settings.");
-  }
-
-  await sendContactFormEmail({
-    title,
-    contactEmail,
-    roleTitle: "",
-    query,
-    workspaceId: workspace.id,
-  });
-
-  return { ok: true as const };
 }

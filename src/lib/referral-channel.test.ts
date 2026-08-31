@@ -1,9 +1,28 @@
 import { describe, expect, test } from "bun:test";
-import { classifyVisit } from "./referral-channel";
+import { aiNameFromReferrer, classifyVisit, googleClickSignals } from "./referral-channel";
 import { mergeAttribution, parseStoredAttribution, rememberVisit } from "./referral-attribution";
 import { revenueFromWhopPayment } from "./posthog-server";
 
 describe("classifyVisit", () => {
+  test("labels Grok DeepSeek Qwen and Kimi citation clicks as AI so they are not dumped into Referral", () => {
+    expect(classifyVisit("https://omentir.com/pricing", "https://grok.com/chat")).toMatchObject({
+      channel: "ai",
+      referring_domain: "grok.com",
+    });
+    expect(classifyVisit("https://omentir.com/", "https://chat.deepseek.com/a/chat")).toMatchObject({
+      channel: "ai",
+      referring_domain: "chat.deepseek.com",
+    });
+    expect(classifyVisit("https://omentir.com/blogs/x", "https://chat.qwen.ai/")).toMatchObject({
+      channel: "ai",
+      referring_domain: "chat.qwen.ai",
+    });
+    expect(classifyVisit("https://omentir.com/", "https://kimi.ai/chat")).toMatchObject({
+      channel: "ai",
+      referring_domain: "kimi.ai",
+    });
+  });
+
   test("labels ChatGPT citation clicks as AI so they are not dumped into Referral", () => {
     expect(
       classifyVisit("https://omentir.com/pricing", "https://chatgpt.com/c/abc"),
@@ -45,6 +64,18 @@ describe("classifyVisit", () => {
     ).toMatchObject({ channel: "email", utm_campaign: "welcome" });
   });
 
+  test("labels utm_medium=ai_search as AI even when the referrer was stripped to Direct", () => {
+    expect(
+      classifyVisit("https://omentir.com/blogs/x?utm_medium=ai_search&utm_source=chatgpt", ""),
+    ).toMatchObject({ channel: "ai", utm_source: "chatgpt" });
+  });
+
+  test("treats the Google app referrer as Organic Search so Android hits are not dumped into Referral", () => {
+    expect(
+      classifyVisit("https://omentir.com/pricing", "android-app://com.google.android.googlequicksearchbox/"),
+    ).toMatchObject({ channel: "organic_search", referring_domain: "google.com" });
+  });
+
   test("labels LinkedIn and X as Social", () => {
     expect(
       classifyVisit("https://omentir.com/", "https://www.linkedin.com/feed/"),
@@ -52,6 +83,42 @@ describe("classifyVisit", () => {
     expect(classifyVisit("https://omentir.com/", "https://t.co/abc")).toMatchObject({
       channel: "social",
       referring_domain: "t.co",
+    });
+  });
+});
+
+describe("aiNameFromReferrer", () => {
+  test("maps Grok DeepSeek Qwen and Kimi hosts to one label so dashboard filters group them", () => {
+    expect(aiNameFromReferrer("https://grok.com/chat")).toBe("Grok");
+    expect(aiNameFromReferrer("https://chat.deepseek.com/")).toBe("DeepSeek");
+    expect(aiNameFromReferrer("https://www.qwen.ai/")).toBe("Qwen");
+    expect(aiNameFromReferrer("https://chat.qwen.ai/c/1")).toBe("Qwen");
+    expect(aiNameFromReferrer("https://kimi.com/")).toBe("Kimi");
+    expect(aiNameFromReferrer("https://kimi.ai/chat")).toBe("Kimi");
+    expect(aiNameFromReferrer("https://kimi.moonshot.cn/")).toBe("Kimi");
+  });
+});
+
+describe("googleClickSignals", () => {
+  test("does not invent an AI Overview label for a stripped google.com referrer", () => {
+    expect(googleClickSignals("https://omentir.com/pricing", "https://www.google.com/")).toEqual({
+      google_click: "true",
+    });
+  });
+
+  test("keeps Gemini citation clicks out of the Google search flag so they stay on the AI channel", () => {
+    expect(googleClickSignals("https://omentir.com/", "https://gemini.google.com/app")).toEqual({});
+  });
+
+  test("records a text fragment from a Google landing so AI Overview and snippet jumps can be counted later", () => {
+    expect(
+      googleClickSignals(
+        "https://omentir.com/blogs/x#:~:text=Grok%20bot%20LinkedIn",
+        "https://www.google.com/",
+      ),
+    ).toMatchObject({
+      google_click: "true",
+      google_text_fragment: "Grok bot LinkedIn",
     });
   });
 });

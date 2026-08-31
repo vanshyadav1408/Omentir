@@ -19,6 +19,7 @@ import {
 } from "./send-schedule";
 import { remapStepIndex } from "./enrollment-remap";
 import { sendWindowTimeZoneForLead } from "./lead-time-zone";
+import { capturePostHogEvent } from "@/lib/posthog-server";
 import { addInviteLimitSignal } from "./outreach-rules";
 import {
   canEnrollLeadForOutreach,
@@ -875,6 +876,17 @@ export async function createAgent(
     }
   }
 
+  void capturePostHogEvent({
+    event: "agent_activated",
+    distinctId: workspaceId,
+    insertId: `agent_activated:${agent.id}`,
+    properties: {
+      agent_id: agent.id,
+      mode: agent.mode,
+      leads_only: Boolean(agent.leadsOnly),
+    },
+  });
+
   return agent;
 }
 
@@ -1020,6 +1032,12 @@ export async function pauseAgent(workspaceId: string, agentId: string) {
     runStartedAt: FieldValue.delete(),
     updatedAt: nowIso(),
   });
+
+  void capturePostHogEvent({
+    event: "agent_paused",
+    distinctId: workspaceId,
+    properties: { agent_id: agentId },
+  });
 }
 
 export async function resumeAgent(workspaceId: string, agentId: string) {
@@ -1042,6 +1060,12 @@ export async function resumeAgent(workspaceId: string, agentId: string) {
     runStartedAt: FieldValue.delete(),
     nextRunAt: nowIso(),
     updatedAt: nowIso(),
+  });
+
+  void capturePostHogEvent({
+    event: "agent_activated",
+    distinctId: workspaceId,
+    properties: { agent_id: agentId, source: "resume" },
   });
   // Mirrors the tick: pause parks the enrollments of every lead this agent
   // sourced, leads-only included, so resume has to wake them or they idle for
@@ -1657,6 +1681,15 @@ export async function upsertLead(workspaceId: string, groupId: string, lead: Par
   });
   if (created) {
     await recordActivityEvent(workspaceId, `lead-${result.id}`, "found", result.createdAt);
+    void capturePostHogEvent({
+      event: "lead_found",
+      distinctId: workspaceId,
+      insertId: `lead_found:${result.id}`,
+      properties: {
+        lead_id: result.id,
+        source_agent_id: result.sourceAgentId,
+      },
+    });
   }
   return result;
 }

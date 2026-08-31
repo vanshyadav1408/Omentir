@@ -5,8 +5,8 @@
  * installs (`RUN_LOCALLY=TRUE`). That is intentional.
  *
  * - Hosted mode uses these defaults for public brand, support, and hosted-only
- *   mail (signup welcome, contact form, founder notifications). They are not
- *   secrets - the same addresses appear on the public website.
+ *   mail (signup welcome, founder notifications). They are not secrets - the
+ *   same addresses appear on the public website.
  * - Production can override any value with env vars without a code change.
  * - Local mode must never depend on these for correctness. Marketing and
  *   hosted mail are gated off; transactional mail uses the operator's own
@@ -26,7 +26,7 @@ export function hostedSupportEmail() {
   return envOr("HOSTED_SUPPORT_EMAIL", "hi@omentir.com");
 }
 
-/** Primary founder/ops contact shown on marketing and in-app contact. */
+/** Primary founder/ops contact shown on marketing. */
 export function hostedContactEmail() {
   return envOr("HOSTED_CONTACT_EMAIL", "vansh@omentir.com");
 }
@@ -34,16 +34,6 @@ export function hostedContactEmail() {
 /** Default From for operational (transactional) mail when Resend is configured. */
 export function hostedTransactionalFrom() {
   return envOr("RESEND_FROM_EMAIL", "Omentir <notifications@omentir.com>");
-}
-
-/** Hosted-only: contact form sender. */
-export function hostedContactFormFrom() {
-  return envOr("HOSTED_CONTACT_FORM_FROM", "Omentir Contact <contact-page@omentir.com>");
-}
-
-/** Hosted-only: contact form inbox. */
-export function hostedContactFormTo() {
-  return envOr("HOSTED_CONTACT_FORM_TO", hostedContactEmail());
 }
 
 /** Hosted-only: new-signup internal notification From. */

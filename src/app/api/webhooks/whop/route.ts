@@ -202,6 +202,16 @@ async function deactivateWorkspace(workspaceId: string, sourceId: string) {
     message: `Deactivated workspace from Whop ${sourceId}.`,
   });
 
+  void capturePostHogEvent({
+    event: "subscription_cancelled",
+    distinctId: workspaceId,
+    insertId: `subscription_cancelled:${sourceId}`,
+    properties: {
+      plan: existingPlan ?? "solo",
+      source: sourceId,
+    },
+  });
+
   return { ok: true };
 }
 

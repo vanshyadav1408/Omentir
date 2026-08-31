@@ -16,13 +16,20 @@ export function MarketingHeader({ transparentAtTop = false }: { transparentAtTop
       {/* Width + gutters from .omentir-primary-width.
           Desktop: logo | nav centered in full header | actions */}
       <header className="omentir-primary-width relative flex h-16 min-w-0 items-center gap-2 md:gap-4">
-        <Link
-          href="/"
-          className="flex min-w-0 shrink-0 select-none items-center gap-1.5 text-[20px] font-medium leading-none tracking-tight text-[var(--md-sys-color-on-surface)] md:gap-2 md:text-[24px]"
-        >
-          <LogoMark className="h-6 w-6 md:h-7 md:w-7" />
-          <span className="truncate">Omentir</span>
-        </Link>
+        <div className="flex min-w-0 shrink-0 items-center gap-2 md:gap-3">
+          <Link
+            href="/"
+            className="flex min-w-0 shrink-0 select-none items-center gap-1.5 text-[20px] font-medium leading-none tracking-tight text-[var(--md-sys-color-on-surface)] md:gap-2 md:text-[24px]"
+          >
+            <LogoMark className="h-6 w-6 md:h-7 md:w-7" />
+            <span className="truncate">Omentir</span>
+          </Link>
+          {/* Remote GitHub data is cosmetic. Render the link immediately so a
+              slow API response cannot hold back the entire landing header. */}
+          <Suspense fallback={<GithubStarButtonFallback />}>
+            <GithubStarButton />
+          </Suspense>
+        </div>
 
         <nav className="hidden min-w-0 flex-1 items-center justify-center gap-1 text-sm font-medium text-[var(--md-sys-color-on-surface-variant)] md:flex lg:absolute lg:left-1/2 lg:flex-none lg:-translate-x-1/2">
           <FeatureMenu />
@@ -34,11 +41,6 @@ export function MarketingHeader({ transparentAtTop = false }: { transparentAtTop
         {/* ml-auto keeps actions on the right: on mobile the nav is hidden, and on lg
             the nav is absolutely centered (out of flex flow), so nothing else pushes right */}
         <div className="ml-auto flex min-w-0 shrink-0 items-center gap-1 md:gap-2">
-          {/* Remote GitHub data is cosmetic. Render the link immediately so a
-              slow API response cannot hold back the entire landing header. */}
-          <Suspense fallback={<GithubStarButtonFallback />}>
-            <GithubStarButton />
-          </Suspense>
           {/* Desktop: auth CTAs */}
           <div className="hidden items-center gap-2 md:flex">
             {/* Session resolution is allowed to finish after the usable header

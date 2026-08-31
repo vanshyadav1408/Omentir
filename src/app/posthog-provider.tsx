@@ -2,7 +2,7 @@
 
 import posthog from 'posthog-js'
 import { PostHogProvider as PHProvider, usePostHog } from 'posthog-js/react'
-import { useAuth } from '@clerk/nextjs'
+import { useAuth, useUser } from '@clerk/nextjs'
 import { useEffect, useRef, Suspense } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import {
@@ -11,6 +11,8 @@ import {
   cookieHeaderValue,
   rememberVisit,
 } from '@/lib/referral-attribution'
+import { googleClickSignals } from '@/lib/referral-channel'
+import { watchSupportWidgetGreeting } from '@/lib/posthog-support'
 
 const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY
 let posthogInitialized = false
@@ -42,10 +44,12 @@ function PostHogPageView() {
     document.cookie =
       cookieHeaderValue(attribution) + (window.location.protocol === "https:" ? "; Secure" : "")
     const properties = attributionProperties(attribution)
+    const googleSignals = googleClickSignals(pageUrl, document.referrer)
 
     posthogClient.capture('$pageview', {
       $current_url: pageUrl,
       ...properties,
+      ...googleSignals,
       $set: {
         channel: properties.channel,
         channel_name: properties.channel_name,
@@ -65,15 +69,22 @@ function PostHogPageView() {
 
 function PostHogIdentify() {
   const { userId, isSignedIn } = useAuth()
+  const { user } = useUser()
   const posthogClient = usePostHog()
   const identified = useRef<string | null>(null)
 
   useEffect(() => {
     if (!posthogClient || !isSignedIn || !userId) return
-    if (identified.current === userId) return
-    identified.current = userId
-    posthogClient.identify(userId)
-  }, [posthogClient, isSignedIn, userId])
+    const email = user?.primaryEmailAddress?.emailAddress
+    const name = [user?.firstName, user?.lastName].filter(Boolean).join(' ').trim()
+    const identityKey = `${userId}:${email ?? ''}:${name}`
+    if (identified.current === identityKey) return
+    identified.current = identityKey
+    posthogClient.identify(userId, {
+      ...(email ? { email } : {}),
+      ...(name ? { name } : {}),
+    })
+  }, [posthogClient, isSignedIn, userId, user])
 
   return null
 }
@@ -89,6 +100,11 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       capture_pageleave: true,
     })
     posthogInitialized = true
+  }, [])
+
+  useEffect(() => {
+    if (!posthogKey) return
+    return watchSupportWidgetGreeting()
   }, [])
 
   if (!posthogKey) {
