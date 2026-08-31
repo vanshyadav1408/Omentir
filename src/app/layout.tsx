@@ -68,6 +68,9 @@ export const metadata: Metadata = {
     description: defaultDescription,
     images: [defaultOgImage.url],
   },
+  other: {
+    "ory-verify": "orynth-480c700439eb4a8790b21af5a538ba16",
+  },
   // Google Search reads rel=icon on the homepage. Files live in public/ at
   // stable paths. Do not put favicon.ico or icon.png in src/app/: Next hashes
   // those to /favicon.ico?<hash> and tags them sizes=48x48, which is below
