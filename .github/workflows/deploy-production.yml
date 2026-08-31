@@ -79,39 +79,43 @@ jobs:
           restore_previous_build() {
             ssh -i ~/.ssh/omentir_vps -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
               "$VPS_USER@$VPS_HOST" \
-              'set -euo pipefail
-              app_dir="$HOME/omentir"
-              backup_dir="$HOME/omentir-deploy-backup"
-              if [ "$app_dir" != "$HOME/omentir" ] || [ "$backup_dir" != "$HOME/omentir-deploy-backup" ]; then
-                echo "Refusing to restore unexpected deployment paths." >&2
-                exit 1
-              fi
-              if [ ! -d "$backup_dir/.next" ]; then
-                echo "No previous Next.js build is available to restore." >&2
-                pm2 restart omentir --update-env
-                exit 1
-              fi
-              rm -rf "$app_dir/.next"
-              cp -a "$backup_dir/.next" "$app_dir/.next"
-              pm2 restart omentir --update-env
-              pm2 save'
+              "APP_COMMIT_SHA=$APP_COMMIT_SHA APP_REPOSITORY=$APP_REPOSITORY bash -s" <<'REMOTE'
+          set -euo pipefail
+          app_dir="$HOME/omentir"
+          backup_dir="$HOME/omentir-deploy-backup"
+          if [ "$app_dir" != "$HOME/omentir" ] || [ "$backup_dir" != "$HOME/omentir-deploy-backup" ]; then
+            echo "Refusing to restore unexpected deployment paths." >&2
+            exit 1
+          fi
+          if [ ! -d "$backup_dir/.next" ]; then
+            echo "No previous Next.js build is available to restore." >&2
+            pm2 restart omentir --update-env
+            exit 1
+          fi
+          rm -rf "$app_dir/.next"
+          cp -a "$backup_dir/.next" "$app_dir/.next"
+          pm2 restart omentir --update-env
+          pm2 save
+          REMOTE
           }
 
           ssh -i ~/.ssh/omentir_vps -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
             "$VPS_USER@$VPS_HOST" \
-            'set -euo pipefail
-            app_dir="$HOME/omentir"
-            backup_dir="$HOME/omentir-deploy-backup"
-            if [ "$app_dir" != "$HOME/omentir" ] || [ "$backup_dir" != "$HOME/omentir-deploy-backup" ]; then
-              echo "Refusing to prepare unexpected deployment paths." >&2
-              exit 1
-            fi
-            rm -rf "$backup_dir"
-            mkdir -p "$backup_dir"
-            if [ -d "$app_dir/.next" ]; then
-              cp -a "$app_dir/.next" "$backup_dir/.next"
-            fi
-            pm2 stop omentir || true'
+            "APP_COMMIT_SHA=$APP_COMMIT_SHA APP_REPOSITORY=$APP_REPOSITORY bash -s" <<'REMOTE'
+          set -euo pipefail
+          app_dir="$HOME/omentir"
+          backup_dir="$HOME/omentir-deploy-backup"
+          if [ "$app_dir" != "$HOME/omentir" ] || [ "$backup_dir" != "$HOME/omentir-deploy-backup" ]; then
+            echo "Refusing to prepare unexpected deployment paths." >&2
+            exit 1
+          fi
+          rm -rf "$backup_dir"
+          mkdir -p "$backup_dir"
+          if [ -d "$app_dir/.next" ]; then
+            cp -a "$app_dir/.next" "$backup_dir/.next"
+          fi
+          pm2 stop omentir || true
+          REMOTE
 
           if ! ssh -i ~/.ssh/omentir_vps -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
             "$VPS_USER@$VPS_HOST" \
@@ -166,13 +170,15 @@ jobs:
 
           ssh -i ~/.ssh/omentir_vps -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
             "$VPS_USER@$VPS_HOST" \
-            'set -euo pipefail
-            backup_dir="$HOME/omentir-deploy-backup"
-            if [ "$backup_dir" != "$HOME/omentir-deploy-backup" ]; then
-              echo "Refusing to remove an unexpected backup path." >&2
-              exit 1
-            fi
-            rm -rf "$backup_dir"'
+            "APP_COMMIT_SHA=$APP_COMMIT_SHA APP_REPOSITORY=$APP_REPOSITORY bash -s" <<'REMOTE'
+          set -euo pipefail
+          backup_dir="$HOME/omentir-deploy-backup"
+          if [ "$backup_dir" != "$HOME/omentir-deploy-backup" ]; then
+            echo "Refusing to remove an unexpected backup path." >&2
+            exit 1
+          fi
+          rm -rf "$backup_dir"
+          REMOTE
 
       - name: Notify IndexNow
         continue-on-error: true
