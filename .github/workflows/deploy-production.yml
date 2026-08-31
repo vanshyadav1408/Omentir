@@ -76,10 +76,13 @@ jobs:
           # SSH sessions are rewritten into another rebuild, so backup, pm2
           # stop, and restore live in scripts/production-build.sh instead.
           ssh -i ~/.ssh/omentir_vps -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            -o ServerAliveInterval=15 -o ServerAliveCountMax=8 \
             "$VPS_USER@$VPS_HOST" \
             "APP_COMMIT_SHA=$APP_COMMIT_SHA APP_REPOSITORY=$APP_REPOSITORY bash ~/scripts/deploy-omentir.sh"
 
-          if ! homepage="$(curl --fail --silent --show-error --retry 5 --retry-delay 2 https://omentir.com/)"
+          # pm2 needs a moment to boot next start after the rebuild, so give
+          # the first check generous retries. curl retries HTTP 5xx responses.
+          if ! homepage="$(curl --fail --silent --show-error --retry 12 --retry-delay 5 https://omentir.com/)"
           then
             echo "Production homepage did not become healthy after deployment." >&2
             exit 1
