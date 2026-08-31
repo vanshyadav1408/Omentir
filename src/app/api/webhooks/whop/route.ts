@@ -118,7 +118,7 @@ async function activateWorkspace(
   plan: BillingPlan,
   payerEmail?: string | null,
   currentPeriodEnd?: string,
-) {
+): Promise<{ ok: true; workspaceId: string }> {
   await updateWorkspaceBilling(workspaceId, {
     provider: "whop",
     plan,
@@ -144,7 +144,7 @@ async function activateWorkspaceFromEmail(
   sourceId: string,
   plan: BillingPlan,
   currentPeriodEnd?: string,
-) {
+): Promise<{ ok: true; workspaceId: string } | { ok: true; ignored: string }> {
   const clerk = await clerkClient();
   const users = await clerk.users.getUserList({ emailAddress: [email] });
   const workspaceUser = users.data.length === 1 ? users.data[0] : null;
