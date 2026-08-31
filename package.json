@@ -6,10 +6,10 @@
   "private": true,
   "scripts": {
     "dev": "NODE_OPTIONS='--disable-warning=DEP0205 --dns-result-order=ipv4first' next dev",
-    "build": "bash scripts/production-build.sh",
+    "build": "sh scripts/production-build.sh",
     "start": "bun --bun next start",
     "lint": "bun --bun eslint",
-    "postinstall": "if [ -z \"${APP_COMMIT_SHA:-}\" ]; then rm -rf .next; fi"
+    "postinstall": "if [ ! -f .env.production ]; then rm -rf .next; fi"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.3.0",
