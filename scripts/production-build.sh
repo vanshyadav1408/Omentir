@@ -57,6 +57,9 @@ restore_previous() {
 # GitHub CI, Docker, and local builds have neither .env.production nor pm2.
 if [ -f .env.production ] && command -v pm2 >/dev/null 2>&1; then
   rm -rf "$INCOMING"
+  # Live `.next/types` still lists routes this commit deleted. tsconfig includes
+  # that path, so tsc fails before the sidecar compile. Those files are not served.
+  rm -rf .next/types .next/dev/types
   # next build wipes its distDir. Compile into a sidecar so the live process
   # keeps serving the previous output until this compile finishes.
   if NEXT_DIST_DIR="$INCOMING" bun --bun next build; then

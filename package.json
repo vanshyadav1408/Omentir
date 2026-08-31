@@ -9,7 +9,7 @@
     "build": "sh scripts/production-build.sh",
     "start": "bun --bun next start",
     "lint": "bun --bun eslint",
-    "postinstall": "if [ ! -f .env.production ]; then rm -rf .next; fi"
+    "postinstall": "if [ ! -f .env.production ]; then rm -rf .next; else rm -rf .next/types .next/dev/types; fi"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.3.0",
