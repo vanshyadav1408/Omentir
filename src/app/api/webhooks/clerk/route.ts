@@ -4,6 +4,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { isLocalMode } from "@/lib/runtime-mode";
 import { scheduleSignupWelcomeEmail } from "@/lib/server/email";
+import { capturePostHogEvent } from "@/lib/posthog-server";
 import { readTextBody, RequestBodyTooLargeError } from "@/lib/server/request-body";
 import {
   currentMailingListPlan,
@@ -95,6 +96,16 @@ export async function POST(request: NextRequest) {
     userId: event.data.id,
     eventId: request.headers.get("svix-id"),
     unsubscribeUrl: unsubscribeUrlFor(entry),
+  });
+
+  await capturePostHogEvent({
+    event: "signed_up",
+    distinctId: event.data.id,
+    insertId: `signed_up:${event.data.id}`,
+    properties: {
+      email,
+      $set: { email },
+    },
   });
 
   if ("error" in result && result.error) {

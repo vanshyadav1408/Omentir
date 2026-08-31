@@ -11,8 +11,55 @@ import {
   planFromWhopPayload,
   type BillingPlan,
 } from "@/lib/server/whop";
+import { capturePostHogEvent, revenueFromWhopPayment } from "@/lib/posthog-server";
+import { CHANNEL_LABELS, type ReferralChannel } from "@/lib/referral-channel";
 
 export const dynamic = "force-dynamic";
+
+function metadataAttribution(metadata: { [key: string]: unknown } | null | undefined) {
+  const channel = metadataString(metadata, "channel");
+  const referringDomain = metadataString(metadata, "referring_domain");
+  const initialChannel = metadataString(metadata, "initial_channel");
+  const initialReferringDomain = metadataString(metadata, "initial_referring_domain");
+  const properties: Record<string, string> = {};
+  if (channel) {
+    properties.channel = channel;
+    properties.channel_name =
+      channel in CHANNEL_LABELS ? CHANNEL_LABELS[channel as ReferralChannel] : channel;
+  }
+  if (referringDomain) properties.referring_domain = referringDomain;
+  if (initialChannel) properties.initial_channel = initialChannel;
+  if (initialReferringDomain) properties.initial_referring_domain = initialReferringDomain;
+  const landingPath = metadataString(metadata, "landing_path");
+  const utmSource = metadataString(metadata, "utm_source");
+  const utmMedium = metadataString(metadata, "utm_medium");
+  const utmCampaign = metadataString(metadata, "utm_campaign");
+  if (landingPath) properties.landing_path = landingPath;
+  if (utmSource) properties.utm_source = utmSource;
+  if (utmMedium) properties.utm_medium = utmMedium;
+  if (utmCampaign) properties.utm_campaign = utmCampaign;
+  return properties;
+}
+
+async function capturePaymentSucceeded(
+  workspaceId: string,
+  payment: { id: string; metadata?: { [key: string]: unknown } | null; user?: { email?: string | null } | null },
+  plan: BillingPlan,
+) {
+  const revenue = revenueFromWhopPayment(payment, plan);
+  await capturePostHogEvent({
+    event: "payment_succeeded",
+    distinctId: workspaceId,
+    insertId: `payment_succeeded:${payment.id}`,
+    properties: {
+      plan,
+      email: payment.user?.email || undefined,
+      revenue,
+      currency: "USD",
+      ...metadataAttribution(payment.metadata),
+    },
+  });
+}
 
 function unixToIso(value?: string | null) {
   if (!value) return undefined;
@@ -89,7 +136,7 @@ async function activateWorkspace(
     message: `Activated workspace from Whop ${sourceId}.`,
   });
 
-  return { ok: true };
+  return { ok: true, workspaceId };
 }
 
 async function activateWorkspaceFromEmail(
@@ -309,22 +356,34 @@ export async function POST(request: NextRequest) {
   if (!plan) {
     return NextResponse.json({ ok: true, ignored: "wrong_plan" });
   }
+
+  const captureIfPaid = async (result: { ok: true; workspaceId?: string; ignored?: string }) => {
+    if (result.workspaceId) {
+      await capturePaymentSucceeded(result.workspaceId, payment, plan);
+    }
+    return result;
+  };
+
   const metadataWorkspaceId =
     metadataString(payment.metadata, "workspaceId") ||
     metadataString(payment.metadata, "clerkUserId");
   if (metadataWorkspaceId) {
-    const result = await activateWorkspace(
-      metadataWorkspaceId,
-      `payment ${payment.id}`,
-      plan,
-      payment.user?.email,
+    const result = await captureIfPaid(
+      await activateWorkspace(
+        metadataWorkspaceId,
+        `payment ${payment.id}`,
+        plan,
+        payment.user?.email,
+      ),
     );
     return NextResponse.json(result);
   }
 
   const paymentEmail = payment.user?.email?.trim().toLowerCase();
   if (paymentEmail) {
-    const result = await activateWorkspaceFromEmail(paymentEmail, `payment ${payment.id}`, plan);
+    const result = await captureIfPaid(
+      await activateWorkspaceFromEmail(paymentEmail, `payment ${payment.id}`, plan),
+    );
     return NextResponse.json(result);
   }
 
@@ -351,6 +410,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, ignored: "no_email" });
   }
 
-  const result = await activateWorkspaceFromEmail(memberEmail, `payment ${payment.id}`, plan);
+  const result = await captureIfPaid(
+    await activateWorkspaceFromEmail(memberEmail, `payment ${payment.id}`, plan),
+  );
   return NextResponse.json(result);
 }

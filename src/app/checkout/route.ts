@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getWhopCheckoutPlanId, getWhopClient, type BillingPlan } from "@/lib/server/whop";
 import { isLocalMode } from "@/lib/runtime-mode";
 import { getAppBaseUrl } from "@/lib/server/runtime-config";
+import { attributionFromCookieHeader, attributionMetadata, attributionProperties } from "@/lib/referral-attribution";
+import { capturePostHogEvent } from "@/lib/posthog-server";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +31,7 @@ export async function GET(request: NextRequest) {
     const user = await currentUser();
     const email = user?.primaryEmailAddress?.emailAddress;
     const successUrl = new URL("/subscription-creation-successful", appUrl);
+    const attribution = attributionFromCookieHeader(request.headers.get("cookie"));
 
     // @whop/sdk 0.0.42 removed the source_url attribution field from
     // checkout configurations; there is no replacement.
@@ -40,12 +43,25 @@ export async function GET(request: NextRequest) {
         clerkUserId: userId,
         email,
         plan,
+        ...attributionMetadata(attribution),
       },
     });
 
     if (!checkout.purchase_url) {
       throw new Error("Whop checkout configuration returned no purchase_url.");
     }
+
+    await capturePostHogEvent({
+      event: "checkout_started",
+      distinctId: userId,
+      insertId: `checkout_started:${checkout.id || userId}`,
+      properties: {
+        plan,
+        email,
+        ...(attribution ? attributionProperties(attribution) : {}),
+      },
+      timeoutMs: 800,
+    });
 
     // Whop hosted checkout prefills the email field from the `email` query param:
     // https://docs.whop.com/manage-your-business/payment-processing/checkout-branding
