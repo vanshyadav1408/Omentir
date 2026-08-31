@@ -5,8 +5,35 @@ import type { PortableTextBlock } from "@portabletext/types";
 import Image from "next/image";
 import Link from "next/link";
 import { MarketingTable, MarketingTd, MarketingTh, MarketingThead, MarketingTr } from "@/app/marketing-table";
+import { isHostLinkLabel, splitMarkdownLinks } from "./markdown-links";
 import { headingId, headingIdFromBlock } from "./portable-text-toc";
 import { isSanityCdnUrl, sanityImageUrl } from "@/sanity/lib/image";
+
+function MarkdownCell({ text }: { text: string }) {
+  return (
+    <>
+      {splitMarkdownLinks(text).map((part, index) =>
+        part.type === "link" ? (
+          <InlineLink key={`${part.href}-${index}`} href={part.href}>
+            {part.text}
+          </InlineLink>
+        ) : (
+          <span key={`text-${index}`}>{part.text}</span>
+        )
+      )}
+    </>
+  );
+}
+
+function childText(node: React.ReactNode): string {
+  if (node == null || typeof node === "boolean") return "";
+  if (typeof node === "string" || typeof node === "number") return String(node);
+  if (Array.isArray(node)) return node.map(childText).join("");
+  if (typeof node === "object" && node && "props" in node) {
+    return childText((node as { props?: { children?: React.ReactNode } }).props?.children);
+  }
+  return "";
+}
 
 function InlineLink({
   href,
@@ -16,17 +43,17 @@ function InlineLink({
   children: React.ReactNode;
 }) {
   const external = href.startsWith("http://") || href.startsWith("https://");
-  const className =
-    "font-medium text-[var(--md-sys-color-primary)] underline decoration-[var(--md-sys-color-primary)]/30 underline-offset-4 hover:text-[var(--md-sys-color-on-surface)]";
+  const linkKind = isHostLinkLabel(childText(children)) ? "host" : "word";
+  const className = "font-medium underline underline-offset-4";
   if (external) {
     return (
-      <a href={href} target="_blank" rel="noopener" className={className}>
+      <a href={href} target="_blank" rel="noopener" data-link-kind={linkKind} className={className}>
         {children}
       </a>
     );
   }
   return (
-    <Link href={href} className={className}>
+    <Link href={href} data-link-kind={linkKind} className={className}>
       {children}
     </Link>
   );
@@ -110,8 +137,10 @@ const components: PortableTextComponents = {
         <MarketingTable className="my-6">
           <MarketingThead>
             <tr>
-              {headers.map((header: string) => (
-                <MarketingTh key={header}>{header}</MarketingTh>
+              {headers.map((header: string, headerIndex: number) => (
+                <MarketingTh key={`${headerIndex}-${header}`}>
+                  <MarkdownCell text={header} />
+                </MarketingTh>
               ))}
             </tr>
           </MarketingThead>
@@ -119,7 +148,9 @@ const components: PortableTextComponents = {
             {rows.map((row: { cells?: string[] }, index: number) => (
               <MarketingTr key={index}>
                 {(row.cells ?? []).map((cell, cellIndex) => (
-                  <MarketingTd key={`${index}-${cellIndex}`}>{cell}</MarketingTd>
+                  <MarketingTd key={`${index}-${cellIndex}`}>
+                    <MarkdownCell text={cell} />
+                  </MarketingTd>
                 ))}
               </MarketingTr>
             ))}

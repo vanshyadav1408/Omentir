@@ -5124,6 +5124,54 @@ html[data-theme="dark"] .blog-article a:hover {
   color: var(--md-ref-primary-80, #ffffff) !important;
 }
 
+/* Tools post: word links (Cursor) green + underline. Host labels
+   (cursor.com) stay body-colored with the same green underline.
+   Nested span/strong must be restated or `span { color: white
+   !important }` hides the green. */
+html.dark .blog-article[data-blog-link-tone="olive"] a[data-link-kind="word"],
+html[data-theme="dark"] .blog-article[data-blog-link-tone="olive"] a[data-link-kind="word"] {
+  color: #9aaa86 !important;
+  text-decoration: underline !important;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  text-decoration-color: #9aaa86 !important;
+}
+
+html.dark .blog-article[data-blog-link-tone="olive"] a[data-link-kind="word"] :is(span, strong, em),
+html[data-theme="dark"] .blog-article[data-blog-link-tone="olive"] a[data-link-kind="word"] :is(span, strong, em) {
+  color: #9aaa86 !important;
+}
+
+html.dark .blog-article[data-blog-link-tone="olive"] a[data-link-kind="host"],
+html[data-theme="dark"] .blog-article[data-blog-link-tone="olive"] a[data-link-kind="host"] {
+  color: rgba(255, 255, 255, 0.92) !important;
+  text-decoration: underline !important;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  text-decoration-color: #9aaa86 !important;
+}
+
+html.dark .blog-article[data-blog-link-tone="olive"] a[data-link-kind="host"] :is(span, strong, em),
+html[data-theme="dark"] .blog-article[data-blog-link-tone="olive"] a[data-link-kind="host"] :is(span, strong, em) {
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+
+html.dark .blog-article[data-blog-link-tone="olive"] a[data-link-kind="word"]:hover,
+html[data-theme="dark"] .blog-article[data-blog-link-tone="olive"] a[data-link-kind="word"]:hover,
+html.dark .blog-article[data-blog-link-tone="olive"] a[data-link-kind="word"]:hover :is(span, strong, em),
+html[data-theme="dark"] .blog-article[data-blog-link-tone="olive"] a[data-link-kind="word"]:hover :is(span, strong, em) {
+  color: #c2d0aa !important;
+  text-decoration-color: #c2d0aa !important;
+}
+
+html.dark .blog-article[data-blog-link-tone="olive"] a[data-link-kind="host"]:hover,
+html[data-theme="dark"] .blog-article[data-blog-link-tone="olive"] a[data-link-kind="host"]:hover,
+html.dark .blog-article[data-blog-link-tone="olive"] a[data-link-kind="host"]:hover :is(span, strong, em),
+html[data-theme="dark"] .blog-article[data-blog-link-tone="olive"] a[data-link-kind="host"]:hover :is(span, strong, em) {
+  color: #ffffff !important;
+  text-decoration-color: #c2d0aa !important;
+}
+
 /* Filled brand links/buttons must not inherit the article link color. */
 :is(html.dark, html[data-theme="dark"]) .blog-article :is(a, button).m3-btn-filled,
 :is(html.dark, html[data-theme="dark"]) .blog-article :is(a, button)[class~="bg-[#ba3871]"],

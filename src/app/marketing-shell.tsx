@@ -178,6 +178,26 @@ const footerColumns: Array<[string, ...Array<[label: string, href: string]>]> = 
   ],
 ];
 
+const mobileProductLabels = new Set([
+  "Features",
+  "Free tools",
+  "LinkedIn profile rating",
+  "Improve LinkedIn profile",
+  "Find leads",
+  "Pricing",
+  "Use cases",
+  "Blogs",
+  "Open Source",
+]);
+
+const mobileFooterColumns = footerColumns
+  .filter(([heading]) => heading !== "Alternatives")
+  .map(([heading, ...links]) =>
+    heading === "Product"
+      ? ([heading, ...links.filter(([label]) => mobileProductLabels.has(label))] as (typeof footerColumns)[number])
+      : ([heading, ...links] as (typeof footerColumns)[number]),
+  );
+
 // Hosted product brand links — intentional in source (public website identity).
 // Local mode never renders marketing shell (non-app routes 404).
 const footerSocialLinks = [
@@ -258,6 +278,29 @@ export function MarketingFooter() {
               </a>
             ))}
           </div>
+        </div>
+        <div className="grid min-w-0 grid-cols-2 gap-x-6 gap-y-8 md:hidden">
+          {mobileFooterColumns.map(([heading, ...links]) => {
+            const fullRow = heading === "Integrations";
+            return (
+              <div key={heading} className={fullRow ? "col-span-2 min-w-0" : "min-w-0"}>
+                <h3 className="mb-4 text-sm font-semibold text-white">{heading}</h3>
+                <div
+                  className={`text-sm text-zinc-400 ${
+                    fullRow ? "grid grid-cols-2 gap-x-6 gap-y-3" : "space-y-3"
+                  }`}
+                >
+                  {links.map(([label, href]) => (
+                    <div key={label}>
+                      <Link href={href} className="transition-colors hover:text-white">
+                        {label}
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
         <div className="hidden min-w-0 flex-1 grid-cols-1 gap-8 md:grid md:grid-cols-2 lg:grid-cols-4">
           {footerColumns.map(([heading, ...links]) => (

@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { isSeoPageLive } from "@/app/seo-content/types";
 import { isBlogLive } from "./index";
 import { mapBlogListItem, mapHelpDraft, mapSeoPage, withHelpRelated } from "./mappers";
+import { isHostLinkLabel, splitMarkdownLinks } from "./markdown-links";
 import { markdownToPortableText } from "./markdown-to-portable-text";
 import { portableTextToMarkdown } from "./portable-text-markdown";
 
@@ -207,6 +208,33 @@ describe("portable text heading ids", () => {
     );
     const body = withoutFaqHeadings(blocks);
     expect(tocFromBody(body).map((item) => item.label)).toEqual(["New pricing"]);
+  });
+});
+
+describe("markdown table links", () => {
+  test("keeps the words around a tool link so a job row still reads as a sentence", () => {
+    expect(
+      splitMarkdownLinks("[Cursor](https://cursor.com) or [Claude Code](https://claude.com/product/claude-code)")
+    ).toEqual([
+      { type: "link", text: "Cursor", href: "https://cursor.com" },
+      { type: "text", text: " or " },
+      { type: "link", text: "Claude Code", href: "https://claude.com/product/claude-code" },
+    ]);
+  });
+
+  test("leaves unfinished brackets as copy so a broken cell does not swallow the rest of the row", () => {
+    expect(splitMarkdownLinks("See [RankBull](https://rankbull.io) and [unfinished")).toEqual([
+      { type: "text", text: "See " },
+      { type: "link", text: "RankBull", href: "https://rankbull.io" },
+      { type: "text", text: " and [unfinished" },
+    ]);
+  });
+
+  test("treats host labels as host so cursor.com stays white while Cursor goes green", () => {
+    expect(isHostLinkLabel("cursor.com")).toBe(true);
+    expect(isHostLinkLabel("rankbull.io/tools")).toBe(true);
+    expect(isHostLinkLabel("Cursor")).toBe(false);
+    expect(isHostLinkLabel("Build the product")).toBe(false);
   });
 });
 

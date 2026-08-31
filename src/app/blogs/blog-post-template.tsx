@@ -162,7 +162,10 @@ export default function BlogPostTemplate({
               </div>
             ) : null}
 
-            <div className="blog-article prose prose-zinc mt-12 max-w-none space-y-6 text-left text-base font-medium leading-8 text-[var(--md-sys-color-on-surface)] md:mt-16">
+            <div
+              className="blog-article prose prose-zinc mt-12 max-w-none space-y-6 text-left text-base font-medium leading-8 text-[var(--md-sys-color-on-surface)] md:mt-16"
+              {...(slug === "ai-saas-ready-before-outbound" ? { "data-blog-link-tone": "olive" } : {})}
+            >
               {children}
             </div>
 
