@@ -41,7 +41,23 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Deploy to VPS
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.3.14
+      - run: bun install --frozen-lockfile
+
+      # The VPS does not have enough memory to run `next build`: the kernel
+      # OOM-kills the compile (SIGKILL, exit 137) and production is left
+      # serving HTML whose CSS/JS chunks 500. So the build happens here, with
+      # the VPS runtime env fetched first so NEXT_PUBLIC_* values are baked in,
+      # and the finished .next is shipped to the VPS over SSH.
+      #
+      # The VPS SSH wrapper only accepts commands prefixed with
+      # APP_COMMIT_SHA=<40-hex> APP_REPOSITORY=<owner/name>. It validates that
+      # prefix but does NOT export those variables to the remote command, so
+      # anything the remote script needs must be embedded in the script itself.
+      - name: Build and deploy to VPS
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
@@ -72,16 +88,93 @@ jobs:
           fi
           chmod 600 ~/.ssh/known_hosts
 
-          # The VPS key wrapper only runs ~/scripts/deploy-omentir.sh. Extra SSH
-          # sessions get rewritten into another rebuild, so backup, pm2 stop,
-          # and restore live in scripts/production-build.sh instead.
-          ssh -i ~/.ssh/omentir_vps -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
-            "$VPS_USER@$VPS_HOST" \
-            "APP_COMMIT_SHA=$APP_COMMIT_SHA APP_REPOSITORY=$APP_REPOSITORY bash ~/scripts/deploy-omentir.sh"
+          run_remote() {
+            ssh -i ~/.ssh/omentir_vps -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+              -o ServerAliveInterval=15 -o ServerAliveCountMax=8 \
+              "$VPS_USER@$VPS_HOST" \
+              "APP_COMMIT_SHA=$APP_COMMIT_SHA APP_REPOSITORY=$APP_REPOSITORY bash -s"
+          }
+
+          restore_previous_build() {
+            run_remote <<'REMOTE'
+          set -euo pipefail
+          app_dir="$HOME/omentir"
+          backup_dir="$HOME/omentir-deploy-backup"
+          if [ ! -d "$backup_dir/.next" ]; then
+            echo "No previous Next.js build is available to restore." >&2
+            pm2 restart omentir --update-env
+            exit 1
+          fi
+          rm -rf "$app_dir/.next"
+          cp -a "$backup_dir/.next" "$app_dir/.next"
+          pm2 restart omentir --update-env
+          pm2 save
+          REMOTE
+          }
+
+          # Fetch the runtime env so next build inlines the real NEXT_PUBLIC_*
+          # values. Markers guard against any extra output on the channel.
+          run_remote <<'REMOTE' > envfile.raw
+          set -euo pipefail
+          echo "OMENTIR_ENVFILE_BEGIN"
+          cat "$HOME/omentir/.env.production"
+          echo "OMENTIR_ENVFILE_END"
+          REMOTE
+          sed -n '/^OMENTIR_ENVFILE_BEGIN$/,/^OMENTIR_ENVFILE_END$/p' envfile.raw | sed '1d;$d' > .env.production
+          rm -f envfile.raw
+          if [ ! -s .env.production ]; then
+            echo "Failed to fetch .env.production from the VPS." >&2
+            exit 1
+          fi
+
+          bun run build
+          tar -czf release.tar.gz --exclude='.next/cache' .next
+
+          # Self-extracting deploy script: bash -s reads the script and the
+          # base64 payload from the same stdin stream. Backup happens before
+          # bun install because postinstall deletes .next when APP_COMMIT_SHA
+          # is missing, and the wrapper does not export it.
+          {
+            printf 'export APP_COMMIT_SHA=%q APP_REPOSITORY=%q\n' "$APP_COMMIT_SHA" "$APP_REPOSITORY"
+            cat <<'REMOTE'
+          set -euo pipefail
+          app_dir="$HOME/omentir"
+          backup_dir="$HOME/omentir-deploy-backup"
+          cd "$app_dir"
+          rm -rf "$backup_dir"
+          mkdir -p "$backup_dir"
+          if [ -d .next ]; then
+            cp -a .next "$backup_dir/.next"
+          fi
+          git fetch origin
+          git checkout -f "$APP_COMMIT_SHA"
+          bun install --frozen-lockfile
+          rm -rf .next-incoming
+          mkdir .next-incoming
+          base64 -d <<'PAYLOAD' | tar -xzf - -C .next-incoming
+          REMOTE
+            base64 release.tar.gz
+            cat <<'REMOTE'
+          PAYLOAD
+          pm2 stop omentir || true
+          rm -rf .next
+          mv .next-incoming/.next .next
+          rmdir .next-incoming
+          pm2 restart omentir --update-env
+          pm2 save
+          REMOTE
+          } > remote-deploy.sh
+
+          if ! run_remote < remote-deploy.sh; then
+            echo "Deployment failed. Restoring the previous Next.js build." >&2
+            restore_previous_build
+            exit 1
+          fi
 
           if ! homepage="$(curl --fail --silent --show-error --retry 5 --retry-delay 2 https://omentir.com/)"
           then
-            echo "Production homepage did not become healthy after deployment." >&2
+            echo "Production homepage did not become healthy. Restoring the previous build." >&2
+            restore_previous_build
             exit 1
           fi
           mapfile -t assets < <(
@@ -93,6 +186,7 @@ jobs:
 
           if [ "${#assets[@]}" -eq 0 ]; then
             echo "No JavaScript or CSS chunks found in the production homepage." >&2
+            restore_previous_build
             exit 1
           fi
 
@@ -100,7 +194,7 @@ jobs:
             case "$asset" in
               *.js) expected_content_type="application/javascript" ;;
               *.css) expected_content_type="text/css" ;;
-              *) echo "Unexpected asset type: $asset" >&2; exit 1 ;;
+              *) echo "Unexpected asset type: $asset" >&2; restore_previous_build; exit 1 ;;
             esac
             if ! content_type="$(
               curl --fail --silent --show-error --retry 5 --retry-delay 2 \
@@ -109,13 +203,20 @@ jobs:
             )"
             then
               echo "Production asset failed to load: $asset" >&2
+              restore_previous_build
               exit 1
             fi
             if [[ "$content_type" != "$expected_content_type"* ]]; then
               echo "Unexpected content type for $asset: $content_type" >&2
+              restore_previous_build
               exit 1
             fi
           done
+
+          run_remote <<'REMOTE'
+          set -euo pipefail
+          rm -rf "$HOME/omentir-deploy-backup"
+          REMOTE
 
       - name: Notify IndexNow
         continue-on-error: true
