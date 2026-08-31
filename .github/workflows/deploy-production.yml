@@ -73,15 +73,16 @@ jobs:
           chmod 600 ~/.ssh/known_hosts
 
           # The VPS key wrapper only runs ~/scripts/deploy-omentir.sh. Extra
-          # SSH sessions are rewritten into another rebuild, so backup, pm2
-          # stop, and restore live in scripts/production-build.sh instead.
+          # SSH sessions are rewritten into another rebuild. production-build.sh
+          # compiles into a sidecar so the live process keeps serving until the
+          # new build is ready, then swaps and restarts.
           ssh -i ~/.ssh/omentir_vps -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
             -o ServerAliveInterval=15 -o ServerAliveCountMax=8 \
             "$VPS_USER@$VPS_HOST" \
             "APP_COMMIT_SHA=$APP_COMMIT_SHA APP_REPOSITORY=$APP_REPOSITORY bash ~/scripts/deploy-omentir.sh"
 
-          # pm2 needs a moment to boot next start after the rebuild, so give
-          # the first check generous retries. curl retries HTTP 5xx responses.
+          # Cutover is a short pm2 reload after the sidecar compile. Give the
+          # first check retries in case the new process is still booting.
           if ! homepage="$(curl --fail --silent --show-error --retry 12 --retry-delay 5 https://omentir.com/)"
           then
             echo "Production homepage did not become healthy after deployment." >&2

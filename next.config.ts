@@ -33,6 +33,9 @@ const privateIndexingRoutes = [
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // VPS deploys compile into a sidecar directory so the live `.next` keeps
+  // serving until the new build is finished. See scripts/production-build.sh.
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   transpilePackages: ["next-sanity", "@portabletext/react"],
   serverExternalPackages: ["sanity", "@sanity/vision", "styled-components"],
   images: {
