@@ -94,7 +94,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
     if (!posthogKey || posthogInitialized) return
 
     posthog.init(posthogKey, {
-      api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
+      api_host: 'https://e.omentir.com',
       ui_host: 'https://us.posthog.com',
       capture_pageview: false,
       capture_pageleave: true,
