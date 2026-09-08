@@ -34,7 +34,7 @@ export const agentToolInputSchemas = {
       schedulingLink: {
         type: "string",
         description:
-          "Workspace demo booking link (https://cal.com/... or https://calendly.com/...). Used by agents whose reply mode is continue-until-booked when they have no per-agent bookingLink override.",
+          "Workspace demo booking link (https URL). Used by agents whose reply mode is continue-until-booked when they have no per-agent bookingLink override.",
       },
       keyFeatures: { type: "array", items: { type: "string" } },
       socialProof: { type: "array", items: { type: "string" } },
@@ -122,7 +122,7 @@ export const agentToolInputSchemas = {
       bookingLink: {
         type: "string",
         description:
-          "Optional per-agent Calendly/Cal.com link for ai_until_booked. Falls back to the product profile schedulingLink.",
+          "Optional per-agent booking link for ai_until_booked. Falls back to the product profile schedulingLink.",
       },
       notifyOnReply: {
         type: "boolean",
@@ -209,7 +209,7 @@ export const agentToolInputSchemas = {
       bookingLink: {
         type: "string",
         description:
-          "Optional per-agent Calendly/Cal.com link for ai_until_booked. Falls back to the product profile schedulingLink.",
+          "Optional per-agent booking link for ai_until_booked. Falls back to the product profile schedulingLink.",
       },
       notifyOnReply: {
         type: "boolean",
@@ -366,7 +366,7 @@ const agentMcpToolDefinitions = [
   {
     name: "omentir_update_product_profile",
     description:
-      "Update the workspace product profile used to qualify and rank discovered leads. Also sets the workspace demo booking link (schedulingLink: Calendly or Cal.com) used by continue-until-booked outreach.",
+      "Update the workspace product profile used to qualify and rank discovered leads. Also sets the workspace demo booking link (schedulingLink) used by continue-until-booked outreach.",
     inputSchema: agentToolInputSchemas.omentir_update_product_profile,
   },
   {

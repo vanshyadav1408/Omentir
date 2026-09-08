@@ -2,6 +2,7 @@ import { clerkClient } from "@clerk/nextjs/server";
 import { isLocalMode } from "@/lib/runtime-mode";
 import { NextResponse, type NextRequest } from "next/server";
 import { getWorkspace, logAutomationRun, updateWorkspaceBilling } from "@/lib/server/data";
+import { purgeWorkspaceUnipileAccounts } from "@/lib/server/linkedin-accounts";
 import { syncMailingListPlan } from "@/lib/server/mailing-list";
 import { readTextBody, RequestBodyTooLargeError } from "@/lib/server/request-body";
 import {
@@ -195,14 +196,30 @@ async function deactivateWorkspace(workspaceId: string, sourceId: string) {
 
   await syncMailingListPlan(workspaceId, "none");
 
+  let purgeNote = "";
+  try {
+    const purged = await purgeWorkspaceUnipileAccounts(workspaceId);
+    purgeNote =
+      purged.considered > 0
+        ? ` Removed ${purged.deleted} Unipile LinkedIn account${purged.deleted === 1 ? "" : "s"} so they stop being billed.`
+        : "";
+    if (purged.failed) {
+      purgeNote += ` ${purged.failed} Unipile delete${purged.failed === 1 ? "" : "s"} failed and will retry on the next tick.`;
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unipile purge failed.";
+    console.error("[whop webhook] Unipile purge after deactivation failed:", message);
+    purgeNote = " Unipile purge failed and will retry on the next tick.";
+  }
+
   await logAutomationRun({
     workspaceId,
     kind: "webhook",
     status: "completed",
-    message: `Deactivated workspace from Whop ${sourceId}.`,
+    message: `Deactivated workspace from Whop ${sourceId}.${purgeNote}`,
   });
 
-  void capturePostHogEvent({
+  await capturePostHogEvent({
     event: "subscription_cancelled",
     distinctId: workspaceId,
     insertId: `subscription_cancelled:${sourceId}`,

@@ -1,5 +1,9 @@
 export const ONBOARDING_SURVEY_ID = "01a0578d-dc6f-0000-2fc2-3fedab12088a";
 
+/** PostHog Surveys only indexes these exact event names, not `$survey_sent`. */
+export const ONBOARDING_SURVEY_SHOWN_EVENT = "survey shown";
+export const ONBOARDING_SURVEY_SENT_EVENT = "survey sent";
+
 export const ONBOARDING_SURVEY_QUESTIONS = {
   source: {
     id: "a013ac3c-663e-407f-b919-bedd0710ba9e",
@@ -35,13 +39,21 @@ export function onboardingPersonProperties(answers: OnboardingAnswers) {
   };
 }
 
+export function onboardingSurveyShownProperties() {
+  return {
+    $survey_id: ONBOARDING_SURVEY_ID,
+    $survey_name: "Onboarding",
+  };
+}
+
 /** Event payload so the existing onboarding form shows up in PostHog Surveys. */
-export function onboardingSurveySentProperties(answers: OnboardingAnswers) {
+export function onboardingSurveySentProperties(answers: OnboardingAnswers, submissionId?: string) {
   const questions = ONBOARDING_SURVEY_QUESTIONS;
   return {
     $survey_id: ONBOARDING_SURVEY_ID,
     $survey_name: "Onboarding",
     $survey_completed: true,
+    ...(submissionId ? { $survey_submission_id: submissionId } : {}),
     $survey_questions: [
       { id: questions.source.id, question: questions.source.question },
       { id: questions.role.id, question: questions.role.question },

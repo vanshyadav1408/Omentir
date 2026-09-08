@@ -43,8 +43,10 @@ import {
   listConnectionSentEnrollments,
   listLeads,
   listWorkspaces,
+  listAllLinkedInAccounts,
   clearInviteLimitSignals,
   logAutomationRun,
+  updateWorkspaceBilling,
   markAgentRun,
   markAgentStarted,
   prepareEnrollmentActionNow,
@@ -104,6 +106,8 @@ import {
 import { localDayAndHour } from "./scheduling";
 import { isWithinSendWindow, SPACING_MINUTES, type SendActionKind } from "./send-schedule";
 import { hasActiveSubscription } from "./subscription";
+import { shouldMarkBillingExpired, shouldPurgeUnipileAccounts } from "@/lib/unipile-billing-purge";
+import { purgeWorkspaceUnipileAccounts } from "./linkedin-accounts";
 import { capturePostHogEvent } from "@/lib/posthog-server";
 import { getAppBaseUrl } from "./runtime-config";
 import {
@@ -178,6 +182,8 @@ const REPLY_SYNC_MESSAGE_LIMIT = 100;
 // reads off the per-tick hot path.
 const PROVIDER_SYNC_CYCLE_MS = 15 * 60 * 1000;
 const WEBHOOK_REGISTRATION_INTERVAL_MS = 6 * 60 * 60 * 1000;
+const UNIPILE_BILLING_PURGE_INTERVAL_MS = 30 * 60 * 1000;
+const UNIPILE_WORKSPACE_PURGE_INTERVAL_MS = 6 * 60 * 60 * 1000;
 // Paused/draft campaigns park their enrollments a full day (marked with
 // pausedDeferredAt) because resumeCampaign wakes them explicitly - shorter
 // defers just churn the due queue hourly. Workspaces without an active
@@ -969,7 +975,7 @@ async function runEnrollment(
       enrollment = { ...enrollment, status: "connected" };
       await updateCurrentEnrollment({ status: "connected" });
       await updateLead(enrollment.workspaceId, lead.id, { outreachStatus: "connected" });
-      void capturePostHogEvent({
+      await capturePostHogEvent({
         event: "connection_request_accepted",
         distinctId: enrollment.workspaceId,
         insertId: `connection_request_accepted:${enrollment.id}`,
@@ -1253,7 +1259,7 @@ async function runEnrollment(
       // sweep wakes it the moment the invite is actually accepted.
       nextActionAt: addMinutes(CONNECTION_GIVE_UP_DAYS * 24 * 60),
     });
-    void capturePostHogEvent({
+    await capturePostHogEvent({
       event: "connection_request_sent",
       distinctId: enrollment.workspaceId,
       insertId: `connection_request_sent:${enrollment.id}`,
@@ -1477,7 +1483,7 @@ async function runEnrollment(
       !stepAfterMessage || stepAfterMessage.type === "wait" ? 1 : 24 * 60,
     ),
   });
-  void capturePostHogEvent({
+  await capturePostHogEvent({
     event: "message_sent",
     distinctId: enrollment.workspaceId,
     insertId: `message_sent:${enrollment.id}:${enrollment.currentStepIndex}`,
@@ -2533,6 +2539,47 @@ async function sendDailyDigests(mode: AutomationSafetyMode) {
   return sent;
 }
 
+async function purgeExpiredUnipileAccounts(mode: AutomationSafetyMode) {
+  const result = { workspaces: 0, deleted: 0 };
+  if (mode.dryRun) return result;
+  if (!(await claimSystemTask("unipile-billing-purge", UNIPILE_BILLING_PURGE_INTERVAL_MS))) {
+    return result;
+  }
+
+  const workspaces = await listWorkspaces();
+  for (const workspace of workspaces) {
+    let billing = workspace.billing;
+    if (shouldMarkBillingExpired(billing)) {
+      billing = await updateWorkspaceBilling(workspace.id, {
+        provider: billing?.provider || "whop",
+        plan: billing?.plan || "solo",
+        status: "expired",
+        payerEmail: billing?.payerEmail,
+        currentPeriodEnd: billing?.currentPeriodEnd,
+      });
+    }
+    if (!shouldPurgeUnipileAccounts(billing)) continue;
+
+    const accounts = await listAllLinkedInAccounts(workspace.id);
+    if (!accounts.length) continue;
+    if (!(await claimSystemTask(`unipile-purge-${workspace.id}`, UNIPILE_WORKSPACE_PURGE_INTERVAL_MS))) {
+      continue;
+    }
+
+    const purged = await purgeWorkspaceUnipileAccounts(workspace.id);
+    result.workspaces += 1;
+    result.deleted += purged.deleted;
+    await safeLogAutomationRun({
+      workspaceId: workspace.id,
+      kind: "cron",
+      status: purged.failed ? "error" : "completed",
+      message: `Purged Unipile after billing ended: deleted ${purged.deleted} of ${purged.considered} LinkedIn account${purged.considered === 1 ? "" : "s"}${purged.failed ? `, ${purged.failed} failed` : ""}.`,
+    });
+  }
+
+  return result;
+}
+
 type RunAutomationTickOptions = AutomationSafetyOptions & {
   scheduled?: boolean;
 };
@@ -2640,6 +2687,15 @@ async function runAutomationTickInner(
     console.error("[automation] provider sync phase failed:", error);
   }
 
+  let unipilePurge = { workspaces: 0, deleted: 0 };
+  try {
+    unipilePurge = await purgeExpiredUnipileAccounts(mode);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unipile billing purge failed";
+    errors.push(`unipile-purge: ${message}`);
+    console.error("[automation] Unipile billing purge failed:", error);
+  }
+
   // After the action phases so today's activity is included in the summary.
   let digestsSent = 0;
   try {
@@ -2653,7 +2709,7 @@ async function runAutomationTickInner(
   await safeLogAutomationRun({
     kind: "cron",
     status: errors.length ? "error" : "completed",
-    message: `${mode.dryRun ? "DRY RUN " : ""}Agents: ${agentResult.agents}, signal agents: ${agentResult.signalAgents}, signals: ${agentResult.signalsObserved}, leads: ${agentResult.leadsAdded}, time-expired runs: ${agentResult.timeBudgetExpiredRuns}, newly enrolled: ${campaignResult.newlyEnrolled}, campaign actions: ${campaignResult.actions}${providerSync.sweptAccounts ? `, sweeps: ${providerSync.sweptAccounts} (accepted: ${providerSync.acceptedViaSweep})` : ""}${providerSync.syncedReplies ? `, synced replies: ${providerSync.syncedReplies}` : ""}${digestsSent ? `, digests: ${digestsSent}` : ""}${errors.length ? ` | errors: ${errors.join("; ")}` : ""}`,
+    message: `${mode.dryRun ? "DRY RUN " : ""}Agents: ${agentResult.agents}, signal agents: ${agentResult.signalAgents}, signals: ${agentResult.signalsObserved}, leads: ${agentResult.leadsAdded}, time-expired runs: ${agentResult.timeBudgetExpiredRuns}, newly enrolled: ${campaignResult.newlyEnrolled}, campaign actions: ${campaignResult.actions}${providerSync.sweptAccounts ? `, sweeps: ${providerSync.sweptAccounts} (accepted: ${providerSync.acceptedViaSweep})` : ""}${providerSync.syncedReplies ? `, synced replies: ${providerSync.syncedReplies}` : ""}${unipilePurge.deleted ? `, unipile purged: ${unipilePurge.deleted} from ${unipilePurge.workspaces} workspace${unipilePurge.workspaces === 1 ? "" : "s"}` : ""}${digestsSent ? `, digests: ${digestsSent}` : ""}${errors.length ? ` | errors: ${errors.join("; ")}` : ""}`,
   });
 
   return { agentResult, campaignResult, errors, dryRun: mode.dryRun };

@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { isPublicMarketingPath } from "@/lib/public-marketing-path";
+import { posthogIngestHost } from "@/lib/posthog-server";
 import { isSanityStudioRequest } from "@/sanity/studio-host";
 import { aiNameFromReferrer } from "@/lib/referral-channel";
 import { isGoogleAgentIp, loadGoogleAgentCidrs } from "@/lib/google-agent-ip";
@@ -201,11 +202,18 @@ function clientIp(request: NextRequest) {
   return firstHop || request.headers.get("cf-connecting-ip") || request.headers.get("x-real-ip") || "";
 }
 
-function requestUrl(request: NextRequest) {
-  const host =
+// nextUrl.host is the internal server address (localhost:3000) behind a proxy,
+// so the public host has to come from the forwarded headers.
+function requestHost(request: NextRequest) {
+  return (
     request.headers.get("x-forwarded-host") ||
     request.headers.get("host") ||
-    request.nextUrl.host;
+    request.nextUrl.host
+  );
+}
+
+function requestUrl(request: NextRequest) {
+  const host = requestHost(request);
   const proto =
     request.headers.get("x-forwarded-proto") ||
     request.nextUrl.protocol.replace(/:$/, "") ||
@@ -213,15 +221,52 @@ function requestUrl(request: NextRequest) {
   return `${proto}://${host}${request.nextUrl.pathname}${request.nextUrl.search}`;
 }
 
+const AI_FETCH_SKIP_EXACT = new Set([
+  "/robots.txt",
+  "/sitemap.xml",
+  "/indexnow-key.txt",
+  "/8f3c1a9e6b24d0c75e18a4f2b9d63c07.txt",
+  "/fetch",
+  "/proxy",
+  "/studio",
+  "/page-markdown",
+  "/agent.json",
+  "/admin",
+  "/private-key",
+  "/wp-admin",
+  "/phpmyadmin",
+]);
+
+function isAiFetchFileLikePath(pathname: string): boolean {
+  if (pathname.startsWith("/.")) return true;
+  if (pathname.endsWith("~")) return true;
+  const last = pathname.split("/").pop() || "";
+  if (!last.includes(".")) return false;
+  return last !== "llms.txt" && last !== "llms-full.txt" && !last.endsWith(".md");
+}
+
+export function isAiFetchContentPath(pathname: string): boolean {
+  if (!isPublicMarketingPath(pathname)) return false;
+  if (AI_FETCH_SKIP_EXACT.has(pathname)) return false;
+  if (pathname.startsWith("/studio/") || pathname.startsWith("/page-markdown/")) return false;
+  if (pathname.endsWith(".xml")) return false;
+  if (
+    pathname.endsWith(".txt") &&
+    pathname !== "/llms.txt" &&
+    pathname !== "/llms-full.txt"
+  ) {
+    return false;
+  }
+  if (isAiFetchFileLikePath(pathname)) return false;
+  return true;
+}
+
 function shouldCapture(request: NextRequest) {
   if (request.method !== "GET" && request.method !== "HEAD") return false;
   const host = request.headers.get("host") || request.nextUrl.hostname;
   if (host.startsWith("localhost") || host.startsWith("127.0.0.1")) return false;
   if (isSanityStudioRequest(request.headers, request.nextUrl.hostname)) return false;
-  const path = request.nextUrl.pathname;
-  if (path === "/studio" || path.startsWith("/studio/")) return false;
-  if (path.startsWith("/page-markdown")) return false;
-  return isPublicMarketingPath(path);
+  return isAiFetchContentPath(request.nextUrl.pathname);
 }
 
 async function distinctId(ip: string, userAgent: string) {
@@ -243,8 +288,7 @@ export async function captureAiPageFetch(request: NextRequest) {
   const match = matchAiFetch({ userAgent, referrer, ip, googleAgentCidrs });
   if (!match) return;
 
-  const host =
-    process.env.NEXT_PUBLIC_POSTHOG_HOST?.replace(/\/$/, "") || "https://us.i.posthog.com";
+  const host = posthogIngestHost();
   const currentUrl = requestUrl(request);
 
   try {
@@ -260,7 +304,7 @@ export async function captureAiPageFetch(request: NextRequest) {
           $raw_user_agent: userAgent,
           $current_url: currentUrl,
           $pathname: request.nextUrl.pathname,
-          $host: request.nextUrl.host,
+          $host: requestHost(request),
           $referrer: referrer || undefined,
           $ip: ip || undefined,
           method: request.method,

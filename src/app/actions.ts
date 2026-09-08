@@ -3,6 +3,7 @@
 import { auth, currentUser } from "@/lib/server/auth";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
+import { after } from "next/server";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { buildCampaignSteps } from "@/lib/server/campaign-sequence";
@@ -45,10 +46,18 @@ import {
 } from "@/lib/server/data";
 import { parseLinkedInLeadCsv } from "@/lib/linkedin-csv";
 import { normalizeLinkedInProfileUrl } from "@/lib/server/firebase";
-import { normalizeSchedulingLink, resolveBookingLink } from "@/lib/scheduling-link";
+import {
+  INVALID_SCHEDULING_LINK_MESSAGE,
+  normalizeSchedulingLink,
+  resolveBookingLink,
+  shouldSyncCampaignBookingLink,
+} from "@/lib/scheduling-link";
 import { sendNewSignupNotification } from "@/lib/server/email";
 import { capturePostHogEvent } from "@/lib/posthog-server";
-import { onboardingSurveySentProperties } from "@/lib/posthog-onboarding";
+import {
+  ONBOARDING_SURVEY_SENT_EVENT,
+  onboardingSurveySentProperties,
+} from "@/lib/posthog-onboarding";
 import { executeScheduledActionNow } from "@/lib/server/automation";
 import { listScheduledActions } from "@/lib/server/scheduled-actions";
 import { analyzeWebsiteOrSearch, draftAgentSetupWithGemini } from "@/lib/server/gemini";
@@ -325,6 +334,7 @@ export async function analyzeWebsiteAction(formData: FormData) {
       companySize: analysis.companySize,
       painPointsText: analysis.painPointsText,
       pricingDetails: analysis.pricingDetails,
+      schedulingLink: existing?.schedulingLink || "",
       keyFeatures: analysis.keyFeatures,
       socialProof: analysis.socialProof,
       linkedInCompanyPage: existing?.linkedInCompanyPage || "",
@@ -337,6 +347,7 @@ export async function analyzeWebsiteAction(formData: FormData) {
       painPoints: analysis.painPoints,
       keywords: analysis.keywords,
       preferredLocations: analysis.preferredLocations,
+      averageTicketSize: existing?.averageTicketSize,
     });
   } catch {
     // Keep the previous profile when re-analysis fails.
@@ -349,52 +360,60 @@ export async function analyzeWebsiteAction(formData: FormData) {
 export async function completeOnboardingQuestionsAction(formData: FormData) {
   const workspace = await requireWorkspace();
   const websiteUrl = String(formData.get("websiteUrl") || "").trim();
-  const hadCompletedOnboarding = Boolean(workspace.onboarding);
   const onboarding = {
     source: String(formData.get("source") || "").trim(),
     role: String(formData.get("role") || "").trim(),
     companySize: String(formData.get("companySize") || "").trim(),
     goal: String(formData.get("goal") || "").trim(),
   };
+  if (!onboarding.source || !onboarding.role || !onboarding.companySize || !onboarding.goal) {
+    throw new Error("Please fill in every question.");
+  }
+
+  const surveySubmissionId =
+    String(formData.get("surveySubmissionId") || "").trim() || workspace.ownerId;
 
   await updateWorkspaceOnboarding(workspace.id, onboarding);
 
-  if (!hadCompletedOnboarding && !isLocalMode()) {
+  if (!isLocalMode()) {
+    // Capture must finish before redirect. Email and geo lookup used to run
+    // in this request and the form never reached PostHog Surveys.
     await capturePostHogEvent({
-      event: "survey sent",
+      event: ONBOARDING_SURVEY_SENT_EVENT,
       distinctId: workspace.ownerId,
-      insertId: `onboarding_survey:${workspace.ownerId}`,
-      properties: onboardingSurveySentProperties(onboarding),
+      insertId: `onboarding_survey:${surveySubmissionId}`,
+      properties: onboardingSurveySentProperties(onboarding, surveySubmissionId),
     });
 
-    const [headersList, user] = await Promise.all([headers(), currentUser()]);
-    const userAgent = headersList.get("user-agent") || "";
-    const name = [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim();
-    const email =
-      user?.primaryEmailAddress?.emailAddress || user?.emailAddresses[0]?.emailAddress || "";
-    const ipAddress = requestIpAddress(headersList);
-    const location = await requestLocation(headersList, ipAddress);
-
-    try {
-      const mail = await sendNewSignupNotification({
-        userId: workspace.ownerId,
-        name: name || "Unknown",
-        email: email || workspace.notificationEmail || "Unknown",
-        websiteUrl,
-        location,
-        ipAddress,
-        deviceType: parseDeviceType(userAgent),
-        os: parseOs(userAgent),
-        browser: parseBrowser(userAgent),
-        answers: onboarding,
-        signedUpAtUtc: formatUtcTime(),
-      });
-      if ("skipped" in mail && mail.skipped) {
-        console.error("Skipped new signup notification", mail.reason);
+    after(async () => {
+      try {
+        const [headersList, user] = await Promise.all([headers(), currentUser()]);
+        const userAgent = headersList.get("user-agent") || "";
+        const name = [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim();
+        const email =
+          user?.primaryEmailAddress?.emailAddress || user?.emailAddresses[0]?.emailAddress || "";
+        const ipAddress = requestIpAddress(headersList);
+        const location = await requestLocation(headersList, ipAddress);
+        const mail = await sendNewSignupNotification({
+          userId: workspace.ownerId,
+          name: name || "Unknown",
+          email: email || workspace.notificationEmail || "Unknown",
+          websiteUrl,
+          location,
+          ipAddress,
+          deviceType: parseDeviceType(userAgent),
+          os: parseOs(userAgent),
+          browser: parseBrowser(userAgent),
+          answers: onboarding,
+          signedUpAtUtc: formatUtcTime(),
+        });
+        if ("skipped" in mail && mail.skipped) {
+          console.error("Skipped new signup notification", mail.reason);
+        }
+      } catch (error) {
+        console.error("Failed to send new signup notification", error);
       }
-    } catch (error) {
-      console.error("Failed to send new signup notification", error);
-    }
+    });
   }
 
   revalidatePath("/onboarding");
@@ -420,7 +439,13 @@ export async function completeSelfHostedOnboardingAction() {
   return { ok: true };
 }
 
-export async function saveProductProfileAction(formData: FormData) {
+export type SaveProductProfileResult =
+  | { ok: true }
+  | { ok: false; error: string };
+
+export async function saveProductProfileAction(
+  formData: FormData,
+): Promise<SaveProductProfileResult> {
   const workspace = await requireWorkspace();
   const currentProfile = await getProductProfile(workspace.id);
   const rawSchedulingLink = stringFromForm(
@@ -430,7 +455,9 @@ export async function saveProductProfileAction(formData: FormData) {
   );
   const schedulingLink = normalizeSchedulingLink(rawSchedulingLink);
   if (schedulingLink === null) {
-    throw new Error("Use a valid https://cal.com or https://calendly.com demo booking link.");
+    // Return, do not throw. A thrown server action is the Oops page, which is
+    // what blocked new users on the booking-link setup step.
+    return { ok: false, error: INVALID_SCHEDULING_LINK_MESSAGE };
   }
 
   await upsertProductProfile(workspace.id, {
@@ -477,26 +504,34 @@ export async function saveProductProfileAction(formData: FormData) {
     ),
   }, currentProfile);
 
-  // Fill empty booking links on until-booked campaigns so existing agents can
-  // share the My Product demo booking link without re-opening each agent.
+  // Copy the new My Product URL onto until-booked campaigns that have no link
+  // yet, or that still have the previous workspace URL. Per-agent overrides stay.
   if (schedulingLink) {
-    const campaigns = await listCampaigns(workspace.id);
-    await Promise.all(
-      campaigns
-        .filter(
-          (campaign) =>
-            campaign.replyHandling === "ai_until_booked" &&
-            !resolveBookingLink(campaign.bookingLink),
-        )
-        .map((campaign) =>
-          updateCampaign(workspace.id, campaign.id, { bookingLink: schedulingLink }),
-        ),
-    );
+    try {
+      const campaigns = await listCampaigns(workspace.id);
+      await Promise.all(
+        campaigns
+          .filter((campaign) =>
+            shouldSyncCampaignBookingLink({
+              replyHandling: campaign.replyHandling,
+              campaignBookingLink: campaign.bookingLink,
+              previousWorkspaceLink: currentProfile?.schedulingLink,
+              nextWorkspaceLink: schedulingLink,
+            }),
+          )
+          .map((campaign) =>
+            updateCampaign(workspace.id, campaign.id, { bookingLink: schedulingLink }),
+          ),
+      );
+    } catch (error) {
+      console.error("Failed to copy booking link onto until-booked campaigns", error);
+    }
   }
 
   revalidatePath("/my-product");
   revalidatePath("/overview");
   revalidatePath("/agents");
+  return { ok: true };
 }
 
 // Used by the Overview "Set deal size" modal to set the average ticket size in
@@ -511,7 +546,8 @@ export async function setAverageTicketSizeAction(formData: FormData) {
 }
 
 export async function continueWithProductProfileAction(formData: FormData) {
-  await saveProductProfileAction(formData);
+  const result = await saveProductProfileAction(formData);
+  if (!result.ok) return result;
   redirect("/onboarding");
 }
 
@@ -773,7 +809,7 @@ export async function importLinkedInCsvLeadsAction(formData: FormData) {
   if (!agent || agent.targetGroupId !== groupId || agent.mode !== "outreach") {
     throw new Error("Outreach agent not found.");
   }
-  const leads = parseLinkedInLeadCsv(String(formData.get("csvContents") || ""));
+  const { leads } = parseLinkedInLeadCsv(String(formData.get("csvContents") || ""));
   const existingLeads = await listLeads(workspace.id, undefined, 5000);
   const existingByUrl = new Map(
     existingLeads.map((lead) => [normalizeLinkedInProfileUrl(lead.linkedInUrl), lead]),
@@ -1031,7 +1067,7 @@ async function bookingLinkFromForm(
   const fromProduct = resolveBookingLink(profile?.schedulingLink);
   if (fromProduct) return fromProduct;
   throw new Error(
-    "Add a demo booking link (Calendly or Cal.com) in My Product, or enter one for this agent.",
+    "Add a demo booking link in My Product, or enter one for this agent.",
   );
 }
 

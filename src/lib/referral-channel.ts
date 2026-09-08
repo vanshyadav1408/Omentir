@@ -55,7 +55,7 @@ const AI_MEDIUMS = new Set(["ai", "ai_search", "ai-search"]);
 
 const GOOGLE_APP_HOST = "com.google.android.googlequicksearchbox";
 
-const AI_HOSTS = [
+export const AI_REFERRAL_HOSTS = [
   "chatgpt.com",
   "chat.openai.com",
   "perplexity.ai",
@@ -192,7 +192,7 @@ export function isGoogleSearchHost(hostname: string): boolean {
 
 function hostChannel(hostname: string, referrerUrl: string): ReferralChannel | null {
   if (!hostname || isOwnHostname(hostname)) return null;
-  if (hostMatches(hostname, AI_HOSTS)) return "ai";
+  if (hostMatches(hostname, AI_REFERRAL_HOSTS)) return "ai";
   if (hostname === "bing.com" && referrerUrl.toLowerCase().includes("/chat")) return "ai";
   if (hostname === GOOGLE_APP_HOST || hostMatches(hostname, SEARCH_HOSTS)) return "organic_search";
   if (hostMatches(hostname, SOCIAL_HOSTS)) return "social";
@@ -241,7 +241,7 @@ export function aiNameFromReferrer(referrer: string): string | null {
   const hostname = hostnameOf(referrer);
   if (!hostname) return null;
   if (hostname === "bing.com" && referrer.toLowerCase().includes("/chat")) return "Copilot";
-  for (const host of AI_HOSTS) {
+  for (const host of AI_REFERRAL_HOSTS) {
     if (hostname === host || hostname.endsWith(`.${host}`)) return AI_HOST_LABELS[host] || host;
   }
   return null;

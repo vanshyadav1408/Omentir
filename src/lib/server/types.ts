@@ -100,8 +100,8 @@ export type ProductProfile = {
   // supports monthly, annual, usage-based, and custom pricing without forcing
   // every product into one numeric field.
   pricingDetails?: string;
-  // Workspace demo booking link (Calendly / Cal.com). Agents running until
-  // booking fetch this when the campaign has no override.
+  // Workspace demo booking link. Agents running until booking fetch this
+  // when the campaign has no override.
   schedulingLink?: string;
   keyFeatures: string[];
   socialProof: string[];

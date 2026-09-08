@@ -646,6 +646,48 @@ export async function listLinkedInAccounts(workspaceId: string) {
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
 
+export async function listAllLinkedInAccounts(workspaceId: string) {
+  const snap = await collection<LinkedInAccount>("linkedinAccounts")
+    .where("workspaceId", "==", workspaceId)
+    .get();
+  return snap.docs.map((doc) => doc.data());
+}
+
+// Includes disconnected and error rows so reconnect can reuse the Unipile
+// account id after the session died.
+export async function getLatestLinkedInAccount(workspaceId: string) {
+  return (
+    (await listAllLinkedInAccounts(workspaceId)).sort((a, b) =>
+      (b.updatedAt || b.createdAt).localeCompare(a.updatedAt || a.createdAt),
+    )[0] || null
+  );
+}
+
+export async function markLinkedInAccountDisconnected(
+  workspaceId: string,
+  linkedInAccountId: string,
+) {
+  const ref = collection<LinkedInAccount>("linkedinAccounts").doc(linkedInAccountId);
+  const snap = await ref.get();
+  const account = snap.data();
+  if (!account || account.workspaceId !== workspaceId) return null;
+  if (account.status === "disconnected") return account;
+  const timestamp = nowIso();
+  await ref.set({ status: "disconnected", updatedAt: timestamp }, { merge: true });
+  return { ...account, status: "disconnected" as const, updatedAt: timestamp };
+}
+
+export async function getLinkedInAccountByAccountIdAnyStatus(accountId: string) {
+  const cleanAccountId = accountId.trim();
+  if (!cleanAccountId) return null;
+
+  const snap = await collection<LinkedInAccount>("linkedinAccounts")
+    .where("accountId", "==", cleanAccountId)
+    .limit(1)
+    .get();
+  return snap.docs[0]?.data() || null;
+}
+
 export async function getLinkedInAccountForWorkspace(workspaceId: string, linkedInAccountId?: string) {
   if (!linkedInAccountId) return getLinkedInAccount(workspaceId);
 
@@ -876,7 +918,7 @@ export async function createAgent(
     }
   }
 
-  void capturePostHogEvent({
+  await capturePostHogEvent({
     event: "agent_activated",
     distinctId: workspaceId,
     insertId: `agent_activated:${agent.id}`,
@@ -1033,7 +1075,7 @@ export async function pauseAgent(workspaceId: string, agentId: string) {
     updatedAt: nowIso(),
   });
 
-  void capturePostHogEvent({
+  await capturePostHogEvent({
     event: "agent_paused",
     distinctId: workspaceId,
     properties: { agent_id: agentId },
@@ -1062,7 +1104,7 @@ export async function resumeAgent(workspaceId: string, agentId: string) {
     updatedAt: nowIso(),
   });
 
-  void capturePostHogEvent({
+  await capturePostHogEvent({
     event: "agent_activated",
     distinctId: workspaceId,
     properties: { agent_id: agentId, source: "resume" },
@@ -1681,7 +1723,7 @@ export async function upsertLead(workspaceId: string, groupId: string, lead: Par
   });
   if (created) {
     await recordActivityEvent(workspaceId, `lead-${result.id}`, "found", result.createdAt);
-    void capturePostHogEvent({
+    await capturePostHogEvent({
       event: "lead_found",
       distinctId: workspaceId,
       insertId: `lead_found:${result.id}`,

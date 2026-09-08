@@ -67,7 +67,7 @@ const agentOutreachProperties = {
   bookingLink: {
     type: "string",
     description:
-      "Optional per-agent Calendly or Cal.com link for ai_until_booked. Falls back to product profile schedulingLink.",
+      "Optional per-agent booking link for ai_until_booked. Falls back to product profile schedulingLink.",
   },
   notifyOnReply: {
     type: "boolean",

@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { matchAiFetch, matchAiUserAgent } from "./ai-page-fetch";
+import { matchAiFetch, matchAiUserAgent, isAiFetchContentPath } from "./ai-page-fetch";
+import { isPublicMarketingPath } from "./public-marketing-path";
 
 describe("matchAiUserAgent", () => {
   test("labels ChatGPT assistant fetches separately from the training crawler", () => {
@@ -135,5 +136,35 @@ describe("matchAiFetch", () => {
         googleAgentCidrs: ["66.249.90.0/24"],
       }),
     ).toEqual({ name: "Gemini", kind: "assistant", match: "google_agent_ip" });
+  });
+});
+
+describe("isAiFetchContentPath", () => {
+  test("keeps marketing pages and llms.txt so assistant fetches of real copy still count", () => {
+    expect(isAiFetchContentPath("/")).toBe(true);
+    expect(isAiFetchContentPath("/pricing")).toBe(true);
+    expect(isAiFetchContentPath("/llms.txt")).toBe(true);
+    expect(isAiFetchContentPath("/blogs/grok-bot-linkedin-sales")).toBe(true);
+  });
+
+  test("drops robots, sitemap, probe paths, and unknown slugs that are not pages", () => {
+    expect(isPublicMarketingPath("/fetch")).toBe(false);
+    expect(isAiFetchContentPath("/robots.txt")).toBe(false);
+    expect(isAiFetchContentPath("/sitemap.xml")).toBe(false);
+    expect(isAiFetchContentPath("/fetch")).toBe(false);
+    expect(isAiFetchContentPath("/proxy")).toBe(false);
+    expect(isAiFetchContentPath("/agent.json")).toBe(false);
+    expect(isAiFetchContentPath("/admin")).toBe(false);
+    expect(isAiFetchContentPath("/private-key")).toBe(false);
+  });
+
+  test("drops secret-probe file paths that CMS slug matching would otherwise treat as guides", () => {
+    expect(isAiFetchContentPath("/.env.production.local")).toBe(false);
+    expect(isAiFetchContentPath("/credentials.json")).toBe(false);
+    expect(isAiFetchContentPath("/wp-config.php.old")).toBe(false);
+    expect(isAiFetchContentPath("/wp-config.php~")).toBe(false);
+    expect(isAiFetchContentPath("/secrets.yml")).toBe(false);
+    expect(isAiFetchContentPath("/settings.local.py")).toBe(false);
+    expect(isAiFetchContentPath("/about.md")).toBe(true);
   });
 });

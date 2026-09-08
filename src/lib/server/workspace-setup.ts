@@ -1,41 +1,44 @@
 import "server-only";
 
+import { cache } from "react";
 import { redirect } from "next/navigation";
-import {
-  getProductProfile,
-  listAgents,
-  listLinkedInAccounts,
-} from "./data";
-import { normalizeSchedulingLink } from "@/lib/scheduling-link";
+import { getLatestLinkedInAccount, getProductProfile, listAgents } from "./data";
+import { listVerifiedLinkedInAccounts } from "./linkedin-accounts";
+import { hasUsableBookingLink } from "@/lib/scheduling-link";
 import type { ProductProfile } from "./types";
 
 export type WorkspaceSetup = {
   productProfile: ProductProfile | null;
   linkedInConnected: boolean;
+  needsLinkedInReconnect: boolean;
   hasBookingLink: boolean;
   hasAgent: boolean;
   setupDone: boolean;
 };
 
-export async function getWorkspaceSetup(workspaceId: string): Promise<WorkspaceSetup> {
-  const [productProfile, linkedInAccounts, agents] = await Promise.all([
+// Layout, overview, and requireWorkspaceSetup all call this in one request.
+// Verification hits Unipile, so cache it for the request.
+export const getWorkspaceSetup = cache(async function getWorkspaceSetup(
+  workspaceId: string,
+): Promise<WorkspaceSetup> {
+  const [productProfile, linkedInVerification, agents, latestLinkedInAccount] = await Promise.all([
     getProductProfile(workspaceId),
-    listLinkedInAccounts(workspaceId),
+    listVerifiedLinkedInAccounts(workspaceId),
     listAgents(workspaceId),
+    getLatestLinkedInAccount(workspaceId),
   ]);
-  const linkedInConnected = linkedInAccounts.length > 0;
-  const hasBookingLink = Boolean(
-    normalizeSchedulingLink(productProfile?.schedulingLink || ""),
-  );
+  const linkedInConnected = linkedInVerification.accounts.length > 0;
+  const hasBookingLink = hasUsableBookingLink(productProfile?.schedulingLink);
   const hasAgent = agents.length > 0;
   return {
     productProfile,
     linkedInConnected,
+    needsLinkedInReconnect: !linkedInConnected && Boolean(latestLinkedInAccount),
     hasBookingLink,
     hasAgent,
     setupDone: linkedInConnected && hasBookingLink && hasAgent,
   };
-}
+});
 
 export async function requireWorkspaceSetup(workspaceId: string) {
   const setup = await getWorkspaceSetup(workspaceId);

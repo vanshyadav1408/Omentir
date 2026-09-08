@@ -8,6 +8,7 @@ import {
 } from "@/app/actions";
 import { getWorkspace } from "@/lib/server/data";
 import { hasActiveSubscription } from "@/lib/server/subscription";
+import { requireWorkspaceSetup } from "@/lib/server/workspace-setup";
 import { createPageMetadata } from "@/app/seo";
 import { isLocalMode } from "@/lib/runtime-mode";
 
@@ -49,6 +50,7 @@ export default async function SettingsPage() {
   if (!hasActiveSubscription(workspace)) {
     redirect("/upgrade");
   }
+  await requireWorkspaceSetup(userId);
   const profile = (sessionClaims || {}) as SessionClaimsProfile;
   const userName =
     user?.fullName ||

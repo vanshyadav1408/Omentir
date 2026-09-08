@@ -1,5 +1,6 @@
 import { auth } from "@/lib/server/auth";
 import { redirect } from "next/navigation";
+import { saveProductProfileAction } from "@/app/actions";
 import { getWorkspace } from "@/lib/server/data";
 import { hasActiveSubscription } from "@/lib/server/subscription";
 import { getWorkspaceSetup } from "@/lib/server/workspace-setup";
@@ -56,6 +57,9 @@ export default async function HomePage({
         linkedInConnected={setup.linkedInConnected}
         linkedInError={linkedinParam === "error"}
         hasBookingLink={setup.hasBookingLink}
+        schedulingLink={setup.productProfile.schedulingLink || ""}
+        saveBookingLink={saveProductProfileAction}
+        needsLinkedInReconnect={setup.needsLinkedInReconnect}
         hasAgent={setup.hasAgent}
       />
     );

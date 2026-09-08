@@ -79,6 +79,8 @@ const ROOT_APP_SEGMENTS = new Set([
   "new-user-experience",
   "onboarding",
   "oauth",
+  "fetch",
+  "proxy",
   "reconnect",
   "settings",
   "setup",

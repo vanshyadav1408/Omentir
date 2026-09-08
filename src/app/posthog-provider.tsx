@@ -13,9 +13,25 @@ import {
 } from '@/lib/referral-attribution'
 import { googleClickSignals } from '@/lib/referral-channel'
 import { watchSupportWidgetGreeting } from '@/lib/posthog-support'
+import { isLocalDevHost } from '@/lib/posthog-local'
 
 const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY
 let posthogInitialized = false
+
+function ensurePostHog() {
+  if (!posthogKey || posthogInitialized) return
+  if (typeof window === 'undefined') return
+  if (isLocalDevHost(window.location.hostname)) return
+  posthog.init(posthogKey, {
+    api_host: 'https://e.omentir.com',
+    ui_host: 'https://us.posthog.com',
+    capture_pageview: false,
+    capture_pageleave: true,
+  })
+  posthogInitialized = true
+}
+
+ensurePostHog()
 
 function readAttributionCookie(): string | undefined {
   if (typeof document === 'undefined') return undefined
@@ -34,7 +50,7 @@ function PostHogPageView() {
   const lastPath = useRef<string | null>(null)
 
   useEffect(() => {
-    if (!pathname || !posthogClient) return
+    if (!pathname || !posthogClient || !posthogInitialized) return
     const url = pathname + (searchParams?.toString() ? `?${searchParams.toString()}` : '')
     if (url === lastPath.current) return
     lastPath.current = url
@@ -74,7 +90,7 @@ function PostHogIdentify() {
   const identified = useRef<string | null>(null)
 
   useEffect(() => {
-    if (!posthogClient || !isSignedIn || !userId) return
+    if (!posthogClient || !posthogInitialized || !isSignedIn || !userId) return
     const email = user?.primaryEmailAddress?.emailAddress
     const name = [user?.firstName, user?.lastName].filter(Boolean).join(' ').trim()
     const identityKey = `${userId}:${email ?? ''}:${name}`
@@ -90,16 +106,10 @@ function PostHogIdentify() {
 }
 
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
-  useEffect(() => {
-    if (!posthogKey || posthogInitialized) return
+  ensurePostHog()
 
-    posthog.init(posthogKey, {
-      api_host: 'https://e.omentir.com',
-      ui_host: 'https://us.posthog.com',
-      capture_pageview: false,
-      capture_pageleave: true,
-    })
-    posthogInitialized = true
+  useEffect(() => {
+    ensurePostHog()
   }, [])
 
   useEffect(() => {

@@ -268,7 +268,7 @@ export async function applyConnectionAccepted(input: {
       : { nextActionAt }),
   });
 
-  void capturePostHogEvent({
+  await capturePostHogEvent({
     event: "connection_request_accepted",
     distinctId: workspaceId,
     insertId: `connection_request_accepted:${enrollment.id}`,

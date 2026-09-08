@@ -70,6 +70,7 @@ export async function POST(request: NextRequest) {
       companySize: analysis.companySize,
       painPointsText: analysis.painPointsText,
       pricingDetails: analysis.pricingDetails,
+      schedulingLink: existing?.schedulingLink || "",
       keyFeatures: analysis.keyFeatures,
       socialProof: analysis.socialProof,
       linkedInCompanyPage: existing?.linkedInCompanyPage || "",
@@ -82,6 +83,7 @@ export async function POST(request: NextRequest) {
       painPoints: analysis.painPoints,
       keywords: analysis.keywords,
       preferredLocations: analysis.preferredLocations,
+      averageTicketSize: existing?.averageTicketSize,
     });
 
     revalidatePath("/my-product");

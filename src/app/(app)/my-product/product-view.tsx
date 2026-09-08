@@ -1,15 +1,24 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import type { ProductProfile } from "@/lib/server/types";
 import AiLoadingOverlay from "@/app/ai-loading-overlay";
 import MobileHeaderPortal from "@/app/mobile-header-portal";
 import { SelectField } from "@/app/ui/select";
 import { TextAreaField, TextField } from "@/app/ui/text-field";
+import {
+  INVALID_SCHEDULING_LINK_MESSAGE,
+  hasUsableBookingLink,
+  normalizeSchedulingLink,
+} from "@/lib/scheduling-link";
+import { useToast, userFacingError } from "@/app/toast";
+
+type SaveProductResult = { ok: true } | { ok: false; error: string };
 
 type ProductViewProps = {
   profile?: ProductProfile;
-  saveAction: (formData: FormData) => void | Promise<void>;
+  saveAction: (formData: FormData) => void | Promise<void | SaveProductResult>;
   analyzeAction: (formData: FormData) => void | Promise<void>;
 };
 
@@ -46,6 +55,7 @@ function TextInput({
   placeholder,
   type = "text",
   required,
+  error,
 }: {
   name: string;
   value: string;
@@ -54,6 +64,7 @@ function TextInput({
   placeholder?: string;
   type?: string;
   required?: boolean;
+  error?: boolean | string;
 }) {
   return (
     <TextField
@@ -64,6 +75,7 @@ function TextInput({
       label={label}
       placeholder={placeholder}
       required={required}
+      error={error}
     />
   );
 }
@@ -178,6 +190,8 @@ function ListField({
 }
 
 export default function ProductView({ profile, saveAction, analyzeAction }: ProductViewProps) {
+  const router = useRouter();
+  const { showSuccess } = useToast();
   const [pending, startTransition] = useTransition();
   const [analyzing, startAnalyzing] = useTransition();
 
@@ -189,6 +203,8 @@ export default function ProductView({ profile, saveAction, analyzeAction }: Prod
   const [painPointsText, setPainPointsText] = useState(profile?.painPointsText ?? "");
   const [pricingDetails, setPricingDetails] = useState(profile?.pricingDetails ?? "");
   const [schedulingLink, setSchedulingLink] = useState(profile?.schedulingLink ?? "");
+  const [schedulingError, setSchedulingError] = useState("");
+  const [saveError, setSaveError] = useState("");
   const [keyFeatures, setKeyFeatures] = useState<string[]>(profile?.keyFeatures ?? []);
   const [socialProof, setSocialProof] = useState<string[]>(profile?.socialProof ?? []);
   const [linkedInCompanyPage, setLinkedInCompanyPage] = useState(profile?.linkedInCompanyPage ?? "");
@@ -206,6 +222,8 @@ export default function ProductView({ profile, saveAction, analyzeAction }: Prod
       setPainPointsText(profile.painPointsText ?? "");
       setPricingDetails(profile.pricingDetails ?? "");
       setSchedulingLink(profile.schedulingLink ?? "");
+      setSchedulingError("");
+      setSaveError("");
       setKeyFeatures(profile.keyFeatures ?? []);
       setSocialProof(profile.socialProof ?? []);
       setLinkedInCompanyPage(profile.linkedInCompanyPage ?? "");
@@ -222,6 +240,8 @@ export default function ProductView({ profile, saveAction, analyzeAction }: Prod
 
   function handleSave(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setSchedulingError("");
+    setSaveError("");
     const formData = new FormData(event.currentTarget);
     [
       ["keyFeatures", keyFeatures],
@@ -230,7 +250,31 @@ export default function ProductView({ profile, saveAction, analyzeAction }: Prod
       formData.delete(key as string);
       (list as string[]).forEach((value) => formData.append(key as string, value));
     });
-    startTransition(() => saveAction(formData));
+    if (normalizeSchedulingLink(String(formData.get("schedulingLink") || "")) === null) {
+      setSchedulingError(INVALID_SCHEDULING_LINK_MESSAGE);
+      return;
+    }
+    startTransition(async () => {
+      try {
+        const result = await saveAction(formData);
+        if (result && typeof result === "object" && result.ok === false) {
+          setSchedulingError(result.error);
+          return;
+        }
+        showSuccess("Saved.");
+        router.refresh();
+        // Overview "Add a booking link" deep-links here. After a successful
+        // save, send them back so the checklist can mark the step done.
+        if (
+          hasUsableBookingLink(String(formData.get("schedulingLink") || "")) &&
+          window.location.hash === "#demo-booking"
+        ) {
+          router.replace("/overview");
+        }
+      } catch (error) {
+        setSaveError(userFacingError(error, "Could not save. Try again."));
+      }
+    });
   }
 
   return (
@@ -286,6 +330,11 @@ export default function ProductView({ profile, saveAction, analyzeAction }: Prod
           <div className="max-w-5xl pb-8 pt-1 sm:pb-10 sm:pt-2 md:pb-3">
             {/* Section heading */}
             <div className="mb-8">
+              {saveError ? (
+                <p className="mb-4 text-sm text-[#c62828]" role="alert">
+                  {saveError}
+                </p>
+              ) : null}
               <h2
                 style={{ fontFamily: "var(--font-varta)" }}
                 className="text-xl font-semibold tracking-tight text-zinc-950"
@@ -413,17 +462,22 @@ export default function ProductView({ profile, saveAction, analyzeAction }: Prod
             <div className="mt-8" id="demo-booking">
               <TextInput
                 name="schedulingLink"
-                type="url"
                 value={schedulingLink}
-                onChange={setSchedulingLink}
+                onChange={(next) => {
+                  setSchedulingLink(next);
+                  setSchedulingError("");
+                }}
                 label="Demo booking link"
                 placeholder="https://cal.com/your-name/intro"
+                error={schedulingError || undefined}
               />
-              <p className="mt-1.5 text-[12px] font-medium text-zinc-600">
-                Paste any meeting scheduler URL. Agents that continue until a demo is
-                booked use this link by default. You can override it per agent during
-                setup.
-              </p>
+              {!schedulingError ? (
+                <p className="mt-1.5 text-[12px] font-medium text-zinc-600">
+                  Paste any meeting scheduler URL. Agents that continue until a demo is
+                  booked use this link by default. You can override it per agent during
+                  setup.
+                </p>
+              ) : null}
             </div>
 
             {/* Key Features */}

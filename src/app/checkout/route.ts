@@ -60,7 +60,6 @@ export async function GET(request: NextRequest) {
         email,
         ...(attribution ? attributionProperties(attribution) : {}),
       },
-      timeoutMs: 800,
     });
 
     // Whop hosted checkout prefills the email field from the `email` query param:

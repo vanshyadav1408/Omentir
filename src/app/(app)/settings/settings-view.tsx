@@ -790,7 +790,7 @@ export default function SettingsView({
                         <div className="flex w-full shrink-0 flex-col items-stretch gap-2 sm:w-auto sm:flex-row sm:items-center">
                           {index === 0 ? (
                             <a
-                              href="/reconnect"
+                              href="/api/connect/linkedin"
                               className="flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 text-[13px] font-semibold text-zinc-700 transition-colors hover:bg-zinc-50"
                             >
                               <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -838,7 +838,7 @@ export default function SettingsView({
                 {linkedInAccountsLoading ? null : linkedInIsUnlimited ||
                   loadedLinkedInAccounts.length < linkedInAccountCap ? (
                   <a
-                    href="/reconnect"
+                    href="/api/connect/linkedin"
                     style={{ fontFamily: "var(--font-varta)" }}
                     className="mt-3 inline-flex h-9 cursor-pointer items-center justify-center rounded-md bg-[#0a66c2] px-4 text-[13px] font-semibold text-white transition-colors hover:bg-[#0855a3]"
                   >

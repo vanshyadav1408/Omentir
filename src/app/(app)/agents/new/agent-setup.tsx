@@ -12,9 +12,15 @@ import { useWorkspaceTimeZone } from "@/app/workspace-time-zone";
 import { TextAreaField, TextField } from "@/app/ui/text-field";
 import { normalizeSchedulingLink } from "@/lib/scheduling-link";
 import {
+  LINKEDIN_CSV_MAX_BYTES,
+  decodeCsvBytes,
+  parseLinkedInLeadCsv,
+} from "@/lib/linkedin-csv";
+import {
   AGENT_STARTED_STORAGE_KEY,
   markAgentStartedNotice,
   useToast,
+  userFacingError,
   type AgentStartedKind,
 } from "@/app/toast";
 import type { Agent, CampaignReplyHandling, SendWindow } from "@/lib/server/types";
@@ -63,7 +69,9 @@ type AgentSetupProps = {
   createAgent: (formData: FormData) => void | Promise<void>;
   prepareAgent: (formData: FormData) => Promise<PreparedAgent>;
   draftSetup: () => Promise<AgentSetupDraft>;
-  saveProductProfile?: (formData: FormData) => void | Promise<void>;
+  saveProductProfile?: (
+    formData: FormData,
+  ) => void | Promise<void | { ok: true } | { ok: false; error: string }>;
   profile?: CompanyProfile | null;
   initialAgent?: Agent | null;
   // The window the agent's existing campaign is already sending in. Lives on
@@ -716,7 +724,7 @@ export default function AgentSetup({
   const stealCustomers =
     stealCustomersProp || initialAgent?.mode === "steal_customers";
   const router = useRouter();
-  const { showAgentStarted } = useToast();
+  const { showAgentStarted, showError, showSuccess } = useToast();
   const agentStartedKind: AgentStartedKind = outreachOnly
     ? "outreach_only"
     : stealCustomers
@@ -751,6 +759,15 @@ export default function AgentSetup({
   const [preparedAgentId, setPreparedAgentId] = useState("");
   const [csvContents, setCsvContents] = useState("");
   const [csvFileName, setCsvFileName] = useState("");
+  const csvImport = useMemo(() => {
+    if (!outreachOnly || !csvContents.trim()) return { leads: 0, skipped: 0 };
+    try {
+      const parsed = parseLinkedInLeadCsv(csvContents);
+      return { leads: parsed.leads.length, skipped: parsed.skipped };
+    } catch {
+      return { leads: 0, skipped: 0 };
+    }
+  }, [csvContents, outreachOnly]);
   const [name, setName] = useState(
     initialAgent?.name || (stealCustomers ? "Steal Customers" : "New Agent"),
   );
@@ -979,9 +996,17 @@ export default function AgentSetup({
           setDiscoveryError("Name your lead group to continue.");
           return;
         }
-        if (outreachOnly && !csvContents.trim()) {
-          setDiscoveryError("Choose a CSV file with LinkedIn profiles to continue.");
-          return;
+        if (outreachOnly) {
+          try {
+            parseLinkedInLeadCsv(csvContents);
+          } catch (error) {
+            setDiscoveryError(
+              error instanceof Error
+                ? error.message
+                : "Choose a CSV file with LinkedIn profiles to continue.",
+            );
+            return;
+          }
         }
         // Step headers allow jumping, so re-check required setup here.
         if (!outreachOnly && !stealCustomers && !setupIcpComplete) {
@@ -1043,7 +1068,7 @@ export default function AgentSetup({
         !normalizeSchedulingLink(profile?.schedulingLink || "")
       ) {
         setSetupStepError(
-          "Add a demo booking link in My Product, or enter a Calendly/Cal.com link here.",
+          "Add a demo booking link in My Product, or paste one here.",
         );
         return;
       }
@@ -1054,8 +1079,20 @@ export default function AgentSetup({
     // Always force mode on submit. A stale/missing hidden field previously
     // sent mode=signals for Steal Customers, which then failed the classic ICP
     // assert (job titles / industries / locations) with empty filters.
-    if (outreachOnly) formData.set("mode", "outreach");
-    else if (stealCustomers) formData.set("mode", "steal_customers");
+    if (outreachOnly) {
+      try {
+        parseLinkedInLeadCsv(csvContents);
+      } catch (error) {
+        setSubmitError(
+          error instanceof Error
+            ? error.message
+            : "Choose a CSV file with LinkedIn profiles before launching.",
+        );
+        setStep("leads");
+        return;
+      }
+      formData.set("mode", "outreach");
+    } else if (stealCustomers) formData.set("mode", "steal_customers");
     else formData.set("mode", "signals");
     if (!stealCustomers && !setupIcpComplete) {
       setSubmitError(
@@ -1088,7 +1125,7 @@ export default function AgentSetup({
       !normalizeSchedulingLink(profile?.schedulingLink || "")
     ) {
       setSubmitError(
-        "Add a demo booking link in My Product, or enter a Calendly/Cal.com link here.",
+        "Add a demo booking link in My Product, or paste one here.",
       );
       setStep("campaign");
       return;
@@ -1136,8 +1173,17 @@ export default function AgentSetup({
     formData.set("companySize", companySize);
     formData.set("painPointsText", companyPainPoints);
     startCompanySaving(async () => {
-      await saveProductProfile(formData);
-      setCompanyModalOpen(false);
+      try {
+        const result = await saveProductProfile(formData);
+        if (result && typeof result === "object" && result.ok === false) {
+          showError(result.error);
+          return;
+        }
+        setCompanyModalOpen(false);
+        showSuccess("Saved.");
+      } catch (error) {
+        showError(userFacingError(error, "Could not save. Try again."));
+      }
     });
   }
 
@@ -1312,7 +1358,7 @@ export default function AgentSetup({
               style={{ fontFamily: "var(--font-varta)" }}
               className="text-[20px] font-semibold tracking-tight text-zinc-950"
             >
-              {outreachOnly ? "Upload your LinkedIn accounts" : "Set filters & scoring"}
+              {outreachOnly ? "Upload LinkedIn profiles" : "Set filters & scoring"}
             </h2>
             <p className="mt-1 text-[14px] font-medium text-zinc-700">
               {outreachOnly
@@ -1340,22 +1386,51 @@ export default function AgentSetup({
             <label className="grid cursor-pointer gap-2 rounded-md border border-dashed border-zinc-300 bg-zinc-50 p-5 hover:border-[#ba3871]">
               <span className="text-[14px] font-semibold text-zinc-900">LinkedIn profiles CSV</span>
               <span className="text-[13px] leading-5 text-zinc-600">
-                Required column: LinkedIn URL. Optional: Name, First Name, Last Name, Title, Company, Location. Up to 500 unique profiles.
+                Each row needs a LinkedIn profile URL (linkedin.com/in/...). Name, title, company, and location are optional. Up to 500 unique profiles.
               </span>
               <input
                 type="file"
-                accept=".csv,text/csv"
+                accept=".csv,.tsv,text/csv,text/tab-separated-values"
                 className="text-sm text-zinc-700 file:mr-3 file:rounded-md file:border-0 file:bg-[#ba3871] file:px-3 file:py-2 file:font-semibold file:text-white"
                 onChange={async (event) => {
-                  const file = event.target.files?.[0];
+                  const input = event.currentTarget;
+                  const file = input.files?.[0];
                   setDiscoveryError("");
-                  if (!file) { setCsvContents(""); setCsvFileName(""); return; }
-                  if (file.size > 1_000_000) { setCsvContents(""); setDiscoveryError("CSV files must be smaller than 1 MB."); return; }
-                  setCsvFileName(file.name);
-                  setCsvContents(await file.text());
+                  if (!file) {
+                    setCsvContents("");
+                    setCsvFileName("");
+                    return;
+                  }
+                  if (file.size > LINKEDIN_CSV_MAX_BYTES) {
+                    setCsvContents("");
+                    setCsvFileName("");
+                    setDiscoveryError("CSV files must be smaller than 1 MB.");
+                    input.value = "";
+                    return;
+                  }
+                  try {
+                    const text = decodeCsvBytes(new Uint8Array(await file.arrayBuffer()));
+                    parseLinkedInLeadCsv(text);
+                    setCsvFileName(file.name);
+                    setCsvContents(text);
+                  } catch (error) {
+                    setCsvContents("");
+                    setCsvFileName("");
+                    setDiscoveryError(
+                      error instanceof Error ? error.message : "Could not read this CSV.",
+                    );
+                    input.value = "";
+                  }
                 }}
               />
-              {csvFileName ? <span className="text-[12px] font-medium text-emerald-700">Ready to import: {csvFileName}</span> : null}
+              {csvFileName && csvImport.leads ? (
+                <span className="text-[12px] font-medium text-emerald-700">
+                  Ready: {csvImport.leads} profile{csvImport.leads === 1 ? "" : "s"} from {csvFileName}
+                  {csvImport.skipped
+                    ? `. Skipped ${csvImport.skipped} row${csvImport.skipped === 1 ? "" : "s"} that were not person profile URLs.`
+                    : ""}
+                </span>
+              ) : null}
             </label>
           ) : null}
           {/* Setup no longer asks for a discovery hour: the agent starts the
@@ -1433,7 +1508,35 @@ export default function AgentSetup({
           </p>
         </div>
 
-        {stealCustomers ? (
+        {outreachOnly ? (
+          <div className="rounded-md border border-zinc-200 bg-white p-5">
+            <div
+              style={{ fontFamily: "var(--font-varta)" }}
+              className="text-[12px] font-bold uppercase tracking-wider text-zinc-900"
+            >
+              CSV list
+            </div>
+            <div className="mt-3 grid gap-2 text-[14px] leading-6 text-zinc-700">
+              <p>
+                <span className="font-semibold text-zinc-900">File: </span>
+                {csvFileName || "No CSV selected"}
+              </p>
+              <p>
+                <span className="font-semibold text-zinc-900">People to contact: </span>
+                {csvImport.leads || 0}
+              </p>
+              {csvImport.skipped ? (
+                <p className="text-[13px] font-medium text-zinc-600">
+                  {csvImport.skipped} row{csvImport.skipped === 1 ? "" : "s"} skipped because they
+                  were not LinkedIn person profile URLs.
+                </p>
+              ) : null}
+              <p className="text-[13px] font-medium text-zinc-600">
+                This agent messages the people you imported. It does not find new leads.
+              </p>
+            </div>
+          </div>
+        ) : stealCustomers ? (
           <div className="rounded-md border border-zinc-200 bg-white p-5">
             <div
               style={{ fontFamily: "var(--font-varta)" }}
@@ -1561,9 +1664,11 @@ export default function AgentSetup({
           </div>
           <ul className="mt-2 grid gap-1.5 text-[13px] font-light text-[#ba3871]">
             <li>
-              {stealCustomers
-                ? "New leads will come from people commenting under competitor posts."
-                : "New leads will be added continuously from automatic sources."}
+              {outreachOnly
+                ? "Outreach starts on the people in your CSV. This agent does not find new leads."
+                : stealCustomers
+                  ? "New leads will come from people commenting under competitor posts."
+                  : "New leads will be added continuously from automatic sources."}
             </li>
             <li>You can pause your agent anytime, edit sources, targeting, and outreach.</li>
           </ul>
@@ -1824,7 +1929,6 @@ export default function AgentSetup({
         {replyHandling === "ai_until_booked" ? (
           <div className="rounded-md border border-zinc-200 bg-white p-5">
             <TextField
-              type="url"
               label="Demo booking link"
               value={bookingLink}
               onChange={(event) => setBookingLink(event.target.value)}

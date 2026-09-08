@@ -1187,14 +1187,17 @@ export async function createLinkedInAuthLink(input: {
   successRedirectUrl: string;
   failureRedirectUrl: string;
   notifyUrl: string;
+  reconnectAccountId?: string;
 }) {
   const config = getConfig();
   if (!config) throw new Error("Unipile is not configured.");
   const expiresOn = new Date(Date.now() + 30 * 60 * 1000).toISOString();
+  const reconnectAccountId = input.reconnectAccountId?.trim();
   const data = await request<{ url?: string }>("/api/v1/hosted/accounts/link", {
     method: "POST",
     body: JSON.stringify({
-      type: "create",
+      type: reconnectAccountId ? "reconnect" : "create",
+      ...(reconnectAccountId ? { reconnect_account: reconnectAccountId } : {}),
       providers: ["LINKEDIN"],
       api_url: config.baseUrl,
       expiresOn,

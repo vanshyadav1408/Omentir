@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { consumeLinkedInConnectToken, saveLinkedInAccount } from "@/lib/server/data";
+import {
+  consumeLinkedInConnectToken,
+  getLinkedInAccountByAccountIdAnyStatus,
+  saveLinkedInAccount,
+} from "@/lib/server/data";
 import { listUnipileLinkedInAccounts } from "@/lib/server/unipile";
 import { rateLimit } from "@/lib/request-rate-limit";
 import { readJsonBody, RequestBodyTooLargeError } from "@/lib/server/request-body";
@@ -32,14 +36,23 @@ export async function POST(request: NextRequest) {
     }
     throw error;
   }
-  if (!payload || payload.status !== "CREATION_SUCCESS" || !payload.account_id || !payload.name) {
+  const notifyStatus = String(payload?.status || "").toUpperCase();
+  if (
+    !payload ||
+    (notifyStatus !== "CREATION_SUCCESS" && notifyStatus !== "RECONNECTED") ||
+    !payload.account_id
+  ) {
     return NextResponse.json({ ok: true, ignored: true });
   }
 
-  if (!/^[A-Za-z0-9_-]{40,64}$/.test(payload.name)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  let workspaceId: string | null = null;
+  if (payload.name && /^[A-Za-z0-9_-]{40,64}$/.test(payload.name)) {
+    workspaceId = await consumeLinkedInConnectToken(payload.name);
   }
-  const workspaceId = await consumeLinkedInConnectToken(payload.name);
+  if (!workspaceId) {
+    const existing = await getLinkedInAccountByAccountIdAnyStatus(payload.account_id);
+    workspaceId = existing?.workspaceId || null;
+  }
   if (!workspaceId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const providerAccount = (await listUnipileLinkedInAccounts()).find(

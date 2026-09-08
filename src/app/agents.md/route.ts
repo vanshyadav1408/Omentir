@@ -117,11 +117,11 @@ By default a classic lead finder discovers and scores leads only. To also start 
 
 - \`handoff\`: stop after the first reply and email the user (same as "Stop after the first reply" / manual handoff in the app). Optional \`notifyOnReply\` (default true).
 - \`ai_until_interest\`: AI answers ordinary replies; email the user when qualified interest is detected.
-- \`ai_until_booked\`: AI continues the conversation, shares the scheduling link after interest, and emails the user when the lead confirms a meeting. Requires a Calendly or Cal.com link via \`bookingLink\` or the product profile \`schedulingLink\`.
+- \`ai_until_booked\`: AI continues the conversation, shares the scheduling link after interest, and emails the user when the lead confirms a meeting. Requires an https booking link via \`bookingLink\` or the product profile \`schedulingLink\`.
 
 \`omentir_update_agent\` can change \`mode\`, \`prompt\`, \`filters\`, \`signalSources\`, \`replyHandling\`, \`bookingLink\`, \`notifyOnReply\`, and \`sendWindow\` on existing agents, or create the default sequence if the agent has none yet. \`omentir_list_agents\` reports each agent's \`mode\`, \`outreach.configured\`, \`replyHandling\`, and \`bookingLink\`. Pause, resume, and delete work for every mode including \`steal_customers\`.
 
-Workspace-wide calendar link: set \`schedulingLink\` with \`omentir_update_product_profile\` (https://cal.com/... or https://calendly.com/...). Per-agent overrides use \`bookingLink\` on create/update agent.
+Workspace-wide calendar link: set \`schedulingLink\` with \`omentir_update_product_profile\` (any https meeting URL). Per-agent overrides use \`bookingLink\` on create/update agent.
 
 ## Creating a Steal Customers Agent
 

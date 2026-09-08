@@ -1,7 +1,14 @@
 import "server-only";
 
-import { disconnectLinkedInAccount, listLinkedInAccounts, saveLinkedInAccount } from "./data";
-import { listUnipileLinkedInAccounts, retrieveOwnLinkedInProfile } from "./unipile";
+import { isUnipileAccountUsable } from "@/lib/unipile-account-status";
+import {
+  disconnectLinkedInAccount,
+  listAllLinkedInAccounts,
+  listLinkedInAccounts,
+  markLinkedInAccountDisconnected,
+  saveLinkedInAccount,
+} from "./data";
+import { deleteLinkedInAccount, listUnipileLinkedInAccounts, retrieveOwnLinkedInProfile } from "./unipile";
 import type { LinkedInAccount } from "./types";
 
 type VerifiedLinkedInAccounts = {
@@ -25,9 +32,13 @@ export async function listVerifiedLinkedInAccounts(
 
   try {
     const providerAccounts = await listUnipileLinkedInAccounts();
-    const providerAccountIds = new Set(providerAccounts.map((account) => account.id));
-    const activeAccounts = accounts.filter((account) => providerAccountIds.has(account.accountId));
-    const staleAccounts = accounts.filter((account) => !providerAccountIds.has(account.accountId));
+    const usableAccountIds = new Set(
+      providerAccounts
+        .filter((account) => isUnipileAccountUsable(account.status))
+        .map((account) => account.id),
+    );
+    const activeAccounts = accounts.filter((account) => usableAccountIds.has(account.accountId));
+    const staleAccounts = accounts.filter((account) => !usableAccountIds.has(account.accountId));
 
     if (staleAccounts.length) {
       await Promise.all(
@@ -65,4 +76,25 @@ export async function listVerifiedLinkedInAccounts(
 export async function getVerifiedLinkedInAccount(workspaceId: string) {
   const result = await listVerifiedLinkedInAccounts(workspaceId);
   return result.accounts[0] || null;
+}
+
+export async function purgeWorkspaceUnipileAccounts(workspaceId: string) {
+  const accounts = await listAllLinkedInAccounts(workspaceId);
+  let deleted = 0;
+  let failed = 0;
+  for (const account of accounts) {
+    if (!account.accountId) continue;
+    try {
+      await deleteLinkedInAccount(account.accountId);
+      deleted += 1;
+    } catch (error) {
+      failed += 1;
+      console.error(
+        `[unipile] failed to delete account ${account.accountId} for workspace ${workspaceId}:`,
+        error instanceof Error ? error.message : error,
+      );
+    }
+    await markLinkedInAccountDisconnected(workspaceId, account.id);
+  }
+  return { considered: accounts.length, deleted, failed };
 }

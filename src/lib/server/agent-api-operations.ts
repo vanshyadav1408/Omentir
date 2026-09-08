@@ -40,7 +40,11 @@ import { sumAgentLeadTotals } from "@/lib/agent-lead-totals";
 import { buildDefaultAiOutreachSteps } from "./campaign-sequence";
 import { listScheduledActions } from "./scheduled-actions";
 import { SPACING_MINUTES } from "./send-schedule";
-import { normalizeSchedulingLink, resolveBookingLink } from "@/lib/scheduling-link";
+import {
+  INVALID_SCHEDULING_LINK_MESSAGE,
+  normalizeSchedulingLink,
+  resolveBookingLink,
+} from "@/lib/scheduling-link";
 import { sendLinkedInMessage } from "./unipile";
 import { isValidTimeZone, resolveTimeZone } from "@/lib/time-zone";
 import type { AgentApiContext } from "./agent-api";
@@ -94,7 +98,7 @@ const bookingLinkSchema = z
   .max(500)
   .refine(
     (value) => !value || normalizeSchedulingLink(value) !== null,
-    "Use a valid https://cal.com or https://calendly.com demo booking link.",
+    INVALID_SCHEDULING_LINK_MESSAGE,
   );
 
 // Shared outreach fields: creating or updating a lead finder can set the same
@@ -189,7 +193,7 @@ export const updateProductProfilePayloadSchema = z.object({
   pricingDetails: z.string().trim().max(4000).optional(),
   schedulingLink: z.string().trim().max(500).refine(
     (value) => normalizeSchedulingLink(value) !== null,
-    "Use a valid https://cal.com or https://calendly.com demo booking link.",
+    INVALID_SCHEDULING_LINK_MESSAGE,
   ).optional(),
   keyFeatures: stringList,
   socialProof: stringList,
@@ -315,7 +319,7 @@ export async function getAgentWorkspaceContext(context: AgentApiContext) {
           companyName: profile.companyName,
           websiteUrl: profile.websiteUrl,
           description: profile.description,
-          // Workspace-wide Calendly/Cal.com link used by until-booked agents
+          // Workspace-wide booking link used by until-booked agents
           // when the campaign has no override.
           schedulingLink: profile.schedulingLink || "",
           targetBuyers: profile.targetBuyers,
@@ -430,7 +434,7 @@ async function resolveBookingLinkForMode(
   const fromPayload = bookingLink !== undefined ? normalizeSchedulingLink(bookingLink) : null;
   if (fromPayload === null && bookingLink) {
     throw new AgentApiOperationError(
-      "Use a valid https://cal.com or https://calendly.com demo booking link.",
+      INVALID_SCHEDULING_LINK_MESSAGE,
       400,
     );
   }
