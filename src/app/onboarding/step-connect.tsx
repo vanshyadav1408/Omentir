@@ -30,9 +30,9 @@ export default function StepConnect({
       ) : null}
 
       <div className="grid gap-3">
-        <Link href={connectHref} className="auth-btn">
+        <a href={connectHref} className="auth-btn">
           {linkedInAccount ? "Reconnect LinkedIn" : "Connect LinkedIn"}
-        </Link>
+        </a>
         {linkedInAccount ? (
           <Link href="/overview" className="auth-social text-sm">
             Continue to overview

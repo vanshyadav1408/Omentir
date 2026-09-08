@@ -212,9 +212,9 @@ export default function OverviewSetup({
                 linkedInConnected ? (
                   <TaskDone />
                 ) : (
-                  <Link href="/api/connect/linkedin" className={TASK_CTA}>
+                  <a href="/api/connect/linkedin" className={TASK_CTA}>
                     {needsLinkedInReconnect ? "Reconnect LinkedIn" : "Connect LinkedIn"}
-                  </Link>
+                  </a>
                 )
               }
             />

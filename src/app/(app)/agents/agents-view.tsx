@@ -410,13 +410,13 @@ export default function AgentsView({
                 </p>
               </div>
             </div>
-            <Link
+            <a
               href="/api/connect/linkedin"
               className="m3-btn m3-btn-filled h-8 w-full px-2.5 text-xs sm:w-auto"
             >
               Connect LinkedIn
               <span aria-hidden>→</span>
-            </Link>
+            </a>
           </div>
         ) : null}
 
