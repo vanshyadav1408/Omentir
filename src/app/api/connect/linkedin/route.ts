@@ -22,7 +22,7 @@ export async function GET() {
       createLinkedInConnectToken(userId),
       getLatestLinkedInAccount(userId),
     ]);
-    let reconnectAccountId = latestAccount?.accountId;
+    let reconnectAccountId: string | undefined = latestAccount?.accountId;
     if (reconnectAccountId) {
       try {
         const providerAccounts = await listUnipileLinkedInAccounts();

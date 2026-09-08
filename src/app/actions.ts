@@ -547,7 +547,7 @@ export async function setAverageTicketSizeAction(formData: FormData) {
 
 export async function continueWithProductProfileAction(formData: FormData) {
   const result = await saveProductProfileAction(formData);
-  if (!result.ok) return result;
+  if (!result.ok) return;
   redirect("/onboarding");
 }
 

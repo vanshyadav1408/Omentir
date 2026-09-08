@@ -30,6 +30,9 @@ export type OnboardingAnswers = {
   goal: string;
 };
 
+type OnboardingSurveyResponseKey =
+  `$survey_response_${(typeof ONBOARDING_SURVEY_QUESTIONS)[keyof typeof ONBOARDING_SURVEY_QUESTIONS]["id"]}`;
+
 export function onboardingPersonProperties(answers: OnboardingAnswers) {
   return {
     onboarding_source: answers.source,
@@ -49,6 +52,12 @@ export function onboardingSurveyShownProperties() {
 /** Event payload so the existing onboarding form shows up in PostHog Surveys. */
 export function onboardingSurveySentProperties(answers: OnboardingAnswers, submissionId?: string) {
   const questions = ONBOARDING_SURVEY_QUESTIONS;
+  const responses = {
+    [`$survey_response_${questions.source.id}`]: answers.source,
+    [`$survey_response_${questions.role.id}`]: answers.role,
+    [`$survey_response_${questions.companySize.id}`]: answers.companySize,
+    [`$survey_response_${questions.goal.id}`]: answers.goal,
+  } as Record<OnboardingSurveyResponseKey, string>;
   return {
     $survey_id: ONBOARDING_SURVEY_ID,
     $survey_name: "Onboarding",
@@ -60,10 +69,7 @@ export function onboardingSurveySentProperties(answers: OnboardingAnswers, submi
       { id: questions.companySize.id, question: questions.companySize.question },
       { id: questions.goal.id, question: questions.goal.question },
     ],
-    [`$survey_response_${questions.source.id}`]: answers.source,
-    [`$survey_response_${questions.role.id}`]: answers.role,
-    [`$survey_response_${questions.companySize.id}`]: answers.companySize,
-    [`$survey_response_${questions.goal.id}`]: answers.goal,
+    ...responses,
     $set: {
       ...onboardingPersonProperties(answers),
       [`$survey_responded/${ONBOARDING_SURVEY_ID}`]: true,
