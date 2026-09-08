@@ -1,11 +1,9 @@
 import { auth } from "@/lib/server/auth";
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { createPageMetadata } from "@/app/seo";
-import { getAgent, getWorkspace, listLinkedInAccounts } from "@/lib/server/data";
+import { getAgent, getWorkspace } from "@/lib/server/data";
 import { listScheduledActions } from "@/lib/server/scheduled-actions";
-import { hasActiveSubscription } from "@/lib/server/subscription";
-import { requireWorkspaceSetup } from "@/lib/server/workspace-setup";
 import ActivityDashboard from "../../actions/activity-dashboard";
 
 export const metadata = createPageMetadata({
@@ -27,14 +25,10 @@ export default async function AgentActionsPage(props: { params: Promise<{ id: st
   }
 
   const workspace = await getWorkspace(userId);
-  if (!hasActiveSubscription(workspace)) redirect("/upgrade");
-  await requireWorkspaceSetup(workspace.id);
-  const [accounts, agent, items] = await Promise.all([
-    listLinkedInAccounts(workspace.id),
+  const [agent, items] = await Promise.all([
     getAgent(workspace.id, id),
     listScheduledActions(workspace.id, { agentId: id }),
   ]);
-  if (!accounts.length) redirect("/overview");
   if (!agent) return notFound();
   const serverNow = new Date().getTime();
 

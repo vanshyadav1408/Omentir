@@ -1,9 +1,7 @@
 import { auth } from "@/lib/server/auth";
-import { redirect } from "next/navigation";
 import MessagesView from "./messages-view";
-import { getWorkspace, listLinkedInAccounts } from "@/lib/server/data";
-import { hasActiveSubscription } from "@/lib/server/subscription";
-import { requireWorkspaceSetup } from "@/lib/server/workspace-setup";
+import { getWorkspaceSetup } from "@/lib/server/workspace-setup";
+import CompleteSetupPrompt from "@/app/(app)/complete-setup-prompt";
 import { createPageMetadata } from "@/app/seo";
 
 export const metadata = createPageMetadata({
@@ -30,17 +28,11 @@ export default async function MessagesPage() {
     await auth.protect();
     throw new Error("Unauthorized");
   }
-  // Workspace docs are keyed by owner userId, so both reads run in parallel.
-  const [workspace, linkedInAccounts] = await Promise.all([
-    getWorkspace(userId),
-    listLinkedInAccounts(userId),
-  ]);
-  if (!hasActiveSubscription(workspace)) {
-    redirect("/upgrade");
-  }
-  await requireWorkspaceSetup(userId);
-  if (!linkedInAccounts.length) {
-    redirect("/overview");
+  const setup = await getWorkspaceSetup(userId);
+  if (!setup.linkedInConnected) {
+    return (
+      <CompleteSetupPrompt emoji="💬" message="Connect LinkedIn on Overview to see messages." />
+    );
   }
 
   return <MessagesContent />;

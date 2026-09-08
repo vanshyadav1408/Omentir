@@ -1,8 +1,6 @@
 import { auth } from "@/lib/server/auth";
-import { redirect } from "next/navigation";
-import { getWorkspace } from "@/lib/server/data";
-import { hasActiveSubscription } from "@/lib/server/subscription";
-import { requireWorkspaceSetup } from "@/lib/server/workspace-setup";
+import { getWorkspaceSetup } from "@/lib/server/workspace-setup";
+import CompleteSetupPrompt from "@/app/(app)/complete-setup-prompt";
 import LeadsView from "./leads-view";
 import { createPageMetadata } from "@/app/seo";
 
@@ -23,11 +21,12 @@ export default async function LeadsPage() {
     await auth.protect();
     throw new Error("Unauthorized");
   }
-  const workspace = await getWorkspace(userId);
-  if (!hasActiveSubscription(workspace)) {
-    redirect("/upgrade");
+  const setup = await getWorkspaceSetup(userId);
+  if (!setup.hasAgent) {
+    return (
+      <CompleteSetupPrompt emoji="👤" message="Start an AI agent on Overview first." />
+    );
   }
-  await requireWorkspaceSetup(userId);
 
   return <LeadsContent />;
 }

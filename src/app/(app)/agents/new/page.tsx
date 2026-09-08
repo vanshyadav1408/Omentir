@@ -23,6 +23,7 @@ import {
 import { hasActiveSubscription } from "@/lib/server/subscription";
 import { formatPlanLimit, planLimits } from "@/lib/plan-limits";
 import { isAtPlanLimit } from "@/lib/agent-limit";
+import CompleteSetupPrompt from "@/app/(app)/complete-setup-prompt";
 import AgentSetup from "./agent-setup";
 import { createPageMetadata } from "@/app/seo";
 import Link from "next/link";
@@ -160,18 +161,19 @@ export default async function NewAgentPage({
   }
 
   const workspace = await getWorkspace(userId);
-  if (!hasActiveSubscription(workspace)) {
-    redirect("/upgrade");
-  }
-
   const params = await searchParams;
   const [linkedInAccounts, requestedAgent, profile] = await Promise.all([
     listLinkedInAccounts(workspace.id),
     params.id ? getAgent(workspace.id, params.id) : null,
     getProductProfile(workspace.id),
   ]);
-  if (!linkedInAccounts.length) {
-    redirect("/overview");
+  if (!hasActiveSubscription(workspace) || !linkedInAccounts.length) {
+    return (
+      <CompleteSetupPrompt
+        emoji="🤖"
+        message="Finish the 4 steps on Overview, then start an AI agent."
+      />
+    );
   }
 
   let agent = requestedAgent;

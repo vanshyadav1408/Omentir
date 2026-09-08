@@ -1,7 +1,6 @@
 import "server-only";
 
 import { cache } from "react";
-import { redirect } from "next/navigation";
 import { getLatestLinkedInAccount, getProductProfile, listAgents } from "./data";
 import { listVerifiedLinkedInAccounts } from "./linkedin-accounts";
 import { hasUsableBookingLink } from "@/lib/scheduling-link";
@@ -16,8 +15,8 @@ export type WorkspaceSetup = {
   setupDone: boolean;
 };
 
-// Layout, overview, and requireWorkspaceSetup all call this in one request.
-// Verification hits Unipile, so cache it for the request.
+// Overview and per-page setup checks call this in one request. Verification
+// hits Unipile, so cache it for the request.
 export const getWorkspaceSetup = cache(async function getWorkspaceSetup(
   workspaceId: string,
 ): Promise<WorkspaceSetup> {
@@ -39,9 +38,3 @@ export const getWorkspaceSetup = cache(async function getWorkspaceSetup(
     setupDone: linkedInConnected && hasBookingLink && hasAgent,
   };
 });
-
-export async function requireWorkspaceSetup(workspaceId: string) {
-  const setup = await getWorkspaceSetup(workspaceId);
-  if (!setup.setupDone) redirect("/overview");
-  return setup;
-}

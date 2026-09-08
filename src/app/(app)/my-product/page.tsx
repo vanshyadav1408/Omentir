@@ -1,7 +1,6 @@
 import { auth } from "@/lib/server/auth";
 import { analyzeWebsiteAction, saveProductProfileAction } from "@/app/actions";
 import { getProductProfile } from "@/lib/server/data";
-import { requireWorkspaceSetup } from "@/lib/server/workspace-setup";
 import ProductView from "./product-view";
 import { createPageMetadata } from "@/app/seo";
 
@@ -18,7 +17,6 @@ export default async function MyProductPage() {
     await auth.protect();
     throw new Error("Unauthorized");
   }
-  await requireWorkspaceSetup(userId);
   const profile = await getProductProfile(userId);
 
   return (

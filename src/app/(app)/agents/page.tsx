@@ -1,14 +1,13 @@
 import { auth } from "@/lib/server/auth";
-import { redirect } from "next/navigation";
 import {
   listAgents,
   listLinkedInAccounts,
   getWorkspace,
 } from "@/lib/server/data";
-import { hasActiveSubscription } from "@/lib/server/subscription";
-import { requireWorkspaceSetup } from "@/lib/server/workspace-setup";
+import { getWorkspaceSetup } from "@/lib/server/workspace-setup";
 import { isAtPlanLimit } from "@/lib/agent-limit";
 import { planLimits, serializablePlanLimit } from "@/lib/plan-limits";
+import CompleteSetupPrompt from "@/app/(app)/complete-setup-prompt";
 import AgentsView from "./agents-view";
 import { createPageMetadata } from "@/app/seo";
 
@@ -29,16 +28,21 @@ export default async function AgentsPage() {
     throw new Error("Unauthorized");
   }
 
-  // Workspace docs are keyed by owner userId, so both reads run in parallel.
+  const setup = await getWorkspaceSetup(userId);
+  if (!setup.hasAgent) {
+    return (
+      <CompleteSetupPrompt
+        emoji="🤖"
+        message="Finish the 4 steps on Overview, then start an AI agent."
+      />
+    );
+  }
+
   const [workspace, linkedInAccounts, agents] = await Promise.all([
     getWorkspace(userId),
     listLinkedInAccounts(userId),
     listAgents(userId),
   ]);
-  if (!hasActiveSubscription(workspace)) {
-    redirect("/upgrade");
-  }
-  await requireWorkspaceSetup(userId);
   const agentLimit = planLimits(workspace.billing?.plan).agents;
 
   return (

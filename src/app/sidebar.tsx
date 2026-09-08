@@ -87,21 +87,13 @@ function getPageTitle(pathname: string) {
   return "Omentir";
 }
 
-function itemHref(href: string, setupDone: boolean) {
-  if (setupDone || href === "/overview") return href;
-  return "/overview";
-}
-
 export default function Sidebar({
   localMode = false,
   showApi = false,
-  setupDone = true,
 }: {
   localMode?: boolean;
-  /** Startup+ only. Hidden for Basic so the nav matches plan benefits. */
+  /** Shown for every plan. Plans without API access land on the page locked. */
   showApi?: boolean;
-  /** When false, top nav (except Overview) and API send the user back to setup. */
-  setupDone?: boolean;
 }) {
   const pathname = usePathname() ?? "";
   const [collapsed, setCollapsed] = useState(false);
@@ -144,14 +136,11 @@ export default function Sidebar({
   const linkActive = (href: string) => hydrated && isHrefActive(pathname, href);
 
   const renderNavLink = (item: (typeof primaryNav)[number], onClick?: () => void) => {
-    const href = itemHref(item.href, setupDone);
-    const active = setupDone
-      ? linkActive(item.href)
-      : item.href === "/overview" && linkActive("/overview");
+    const active = linkActive(item.href);
     return (
       <Link
         key={item.href}
-        href={href}
+        href={item.href}
         onClick={onClick}
         title={isCollapsed ? item.label : undefined}
         aria-current={active ? "page" : undefined}
@@ -164,14 +153,14 @@ export default function Sidebar({
   };
 
   const productActive = linkActive("/my-product");
-  const apiActive = setupDone && linkActive("/api-keys");
+  const apiActive = linkActive("/api-keys");
   const settingsActive = linkActive("/settings");
 
   const bottomLinks = (onClick?: () => void) => (
     <>
       {!localMode && showApi ? (
         <Link
-          href={itemHref("/api-keys", setupDone)}
+          href="/api-keys"
           onClick={onClick}
           aria-current={apiActive ? "page" : undefined}
           className={`mb-0.5 last:mb-0 ${navClassName(apiActive)}`}
@@ -311,14 +300,11 @@ export default function Sidebar({
             }`}
         >
           {primaryNav.map((item) => {
-            const href = itemHref(item.href, setupDone);
-            const active = setupDone
-              ? linkActive(item.href)
-              : item.href === "/overview" && linkActive("/overview");
+            const active = linkActive(item.href);
             return (
               <Link
                 key={item.href}
-                href={href}
+                href={item.href}
                 title={isCollapsed ? item.label : undefined}
                 aria-current={active ? "page" : undefined}
                 className={desktopNavClassName(active, isCollapsed)}
@@ -336,7 +322,7 @@ export default function Sidebar({
         >
           {!localMode && showApi ? (
             <Link
-              href={itemHref("/api-keys", setupDone)}
+              href="/api-keys"
               title={isCollapsed ? "API" : undefined}
               aria-current={apiActive ? "page" : undefined}
               className={`mb-0.5 last:mb-0 ${desktopNavClassName(apiActive, isCollapsed)}`}

@@ -6,7 +6,7 @@
   "private": true,
   "scripts": {
     "dev": "NODE_OPTIONS='--disable-warning=DEP0205 --dns-result-order=ipv4first' next dev",
-    "build": "sh scripts/production-build.sh",
+    "build": "sh production-build.sh",
     "start": "bun --bun next start",
     "lint": "bun --bun eslint",
     "postinstall": "if [ ! -f .env.production ]; then rm -rf .next; else rm -rf .next/types .next/dev/types; fi"

@@ -2,12 +2,13 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-const script = readFileSync(join(import.meta.dir, "production-build.sh"), "utf8");
-const nextConfig = readFileSync(join(import.meta.dir, "../next.config.ts"), "utf8");
-const pkg = JSON.parse(readFileSync(join(import.meta.dir, "../package.json"), "utf8")) as {
+const root = join(import.meta.dir, "../..");
+const script = readFileSync(join(root, "production-build.sh"), "utf8");
+const nextConfig = readFileSync(join(root, "next.config.ts"), "utf8");
+const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8")) as {
   scripts: { postinstall: string };
 };
-const tsconfig = JSON.parse(readFileSync(join(import.meta.dir, "../tsconfig.json"), "utf8")) as {
+const tsconfig = JSON.parse(readFileSync(join(root, "tsconfig.json"), "utf8")) as {
   exclude: string[];
 };
 

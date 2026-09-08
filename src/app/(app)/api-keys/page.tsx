@@ -4,7 +4,6 @@ import ApiKeysView from "./api-keys-view";
 import { createAgentApiKeyAction, revokeAgentApiKeyAction } from "@/app/actions";
 import { getWorkspace } from "@/lib/server/data";
 import { hasActiveSubscription } from "@/lib/server/subscription";
-import { requireWorkspaceSetup } from "@/lib/server/workspace-setup";
 import { planHasApiAccess } from "@/lib/plan-limits";
 import { createPageMetadata } from "@/app/seo";
 
@@ -26,7 +25,6 @@ export default async function ApiKeysPage() {
   if (!hasActiveSubscription(workspace)) {
     redirect("/upgrade");
   }
-  await requireWorkspaceSetup(userId);
 
   // Plans without API access see the page rather than a redirect: the keys
   // section renders locked behind an upgrade prompt so the feature is visible
