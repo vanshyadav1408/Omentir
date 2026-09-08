@@ -268,14 +268,13 @@ function ToastCard({
   return (
     <div
       role={toast.tone === "error" ? "alert" : "status"}
-      className={`pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-xl border px-4 py-3 shadow-[var(--md-sys-elevation-3)] ${toneClass}`}
+      className={`pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-xl border px-4 py-3 shadow-[var(--md-sys-elevation-3)] ${toneClass}`}
       style={{ fontFamily: "var(--font-app-sans), var(--font-google-sans), var(--font-roboto), sans-serif" }}
     >
-      <span
-        className="material-symbols-outlined mt-0.5 shrink-0 text-[20px] leading-none"
-        aria-hidden
-      >
-        {iconName}
+      <span className="grid h-5 w-5 shrink-0 place-items-center" aria-hidden>
+        <span className="material-symbols-outlined text-[20px] leading-none">
+          {iconName}
+        </span>
       </span>
       <div className="min-w-0 flex-1">
         {toast.title ? (
@@ -288,10 +287,10 @@ function ToastCard({
       <button
         type="button"
         onClick={() => onDismiss(toast.id)}
-        className="ms-icon-button -mr-1 -mt-1 h-8 w-8 shrink-0 opacity-70 hover:opacity-100"
+        className="grid h-8 w-8 shrink-0 place-items-center rounded-full opacity-70 hover:bg-black/5 hover:opacity-100"
         aria-label="Dismiss"
       >
-        <span className="material-symbols-outlined text-[18px]" aria-hidden>
+        <span className="material-symbols-outlined text-[18px] leading-none" aria-hidden>
           close
         </span>
       </button>

@@ -58,7 +58,7 @@ function TaskRow({
 }) {
   return (
     <li className="flex flex-col gap-4 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-5">
-      <div className="flex min-w-0 items-start gap-3">
+      <div className="flex min-w-0 items-center gap-3">
         <StatusMark done={done} step={step} />
         <div className="min-w-0">
           <p className="text-sm font-semibold text-[var(--md-sys-color-on-surface)]">{title}</p>
@@ -75,10 +75,10 @@ function TaskRow({
 const TASK_CTA =
   "m3-btn m3-btn-filled box-border h-8 min-h-8 !min-h-8 w-full cursor-pointer justify-center px-2.5 text-xs";
 
-function TaskDone() {
+function TaskDone({ label = "Done" }: { label?: string }) {
   return (
-    <span className="box-border flex h-8 min-h-8 w-full items-center justify-center rounded-[var(--md-sys-shape-corner-small)] border border-emerald-200 bg-emerald-50 px-2.5 text-xs font-medium text-emerald-700">
-      Done
+    <span className="box-border flex h-8 min-h-8 w-full items-center justify-center rounded-[var(--md-sys-shape-corner-small)] border border-emerald-200 bg-emerald-50 px-2.5 text-xs font-medium leading-none text-emerald-700">
+      {label}
     </span>
   );
 }
@@ -189,7 +189,7 @@ export default function OverviewSetup({
               body="Omentir needs an active plan to find buyers and send messages."
               action={
                 hasSubscription ? (
-                  <TaskDone />
+                  <TaskDone label="Subscribed" />
                 ) : (
                   <Link href="/upgrade" className={TASK_CTA}>
                     View plans
