@@ -60,7 +60,10 @@ export default function StepQuestions() {
       // Beacon + send_instantly so the event leaves before the server action redirects.
       posthog.capture(
         ONBOARDING_SURVEY_SENT_EVENT,
-        onboardingSurveySentProperties(answers, submissionId),
+        {
+          ...onboardingSurveySentProperties(answers, submissionId),
+          $insert_id: `onboarding_survey:${submissionId}`,
+        },
         { send_instantly: true, transport: "sendBeacon" },
       );
     }

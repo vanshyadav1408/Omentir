@@ -674,7 +674,7 @@ type NewSignupNotificationInput = {
   deviceType?: string;
   os?: string;
   browser?: string;
-  answers?: {
+  answers: {
     source: string;
     role: string;
     companySize: string;
@@ -687,26 +687,18 @@ function buildNewSignupNotificationEmail(input: NewSignupNotificationInput) {
   const rows: Array<[string, string]> = [
     ["Name", input.name],
     ["Email", input.email],
+    ["Fetched website", input.websiteUrl || "Not provided"],
+    ["Location", input.location || "Unknown"],
+    ["IP address", input.ipAddress || "Unknown"],
+    ["Device type", input.deviceType || "Unknown"],
+    ["OS", input.os || "Unknown"],
+    ["Browser", input.browser || "Unknown"],
+    ["Signup time (UTC)", input.signedUpAtUtc],
+    ["Where did you hear about us?", input.answers.source],
+    ["What is your job?", input.answers.role],
+    ["Company size", input.answers.companySize],
+    ["What do you want Omentir to help with?", input.answers.goal],
   ];
-  if (input.answers) {
-    rows.push(
-      ["Fetched website", input.websiteUrl || "Not provided"],
-      ["Location", input.location || "Unknown"],
-      ["IP address", input.ipAddress || "Unknown"],
-      ["Device type", input.deviceType || "Unknown"],
-      ["OS", input.os || "Unknown"],
-      ["Browser", input.browser || "Unknown"],
-    );
-  }
-  rows.push(["Signup time (UTC)", input.signedUpAtUtc]);
-  if (input.answers) {
-    rows.push(
-      ["Where did you hear about us?", input.answers.source],
-      ["What is your job?", input.answers.role],
-      ["Company size", input.answers.companySize],
-      ["What do you want Omentir to help with?", input.answers.goal],
-    );
-  }
 
   const htmlRows = rows
     .map(
@@ -758,9 +750,7 @@ export async function sendNewSignupNotification(input: NewSignupNotificationInpu
   if (!resend) return { skipped: true, reason: "missing_resend_api_key" };
 
   const email = buildNewSignupNotificationEmail(input);
-  const idempotencyKey = input.answers
-    ? `new-signup-notification-${input.userId}`
-    : `new-signup-account-${input.userId}`;
+  const idempotencyKey = `new-signup-notification-${input.userId}`;
 
   const result = await resend.emails.send(
     {

@@ -10,7 +10,7 @@ import { LINKEDIN_INBOX_RESOURCE } from "@/app/sidebar-early-fetch";
 // whatever the current page already loaded:
 //
 //   /leads      groups, leadPreviews
-//   /agents     agents, groups, leadAgentRefs*, enrollmentPreviews, linkedinConnected
+//   /agents     agents, groups, leadAgentRefs*, enrollmentPreviews
 //   /messages   conversations, leadPreviews, linkedinInbox
 //   /overview  agents, groups, leadDashboardPreviews*, enrollmentPreviews,
 //               conversations, linkedinInbox
@@ -27,7 +27,6 @@ const PAGE_RESOURCES = [
   "agents,enrollmentPreviews",
   "conversations",
   LINKEDIN_INBOX_RESOURCE,
-  "linkedinConnected",
   "linkedinAccounts",
   "agentApiKeys",
 ];

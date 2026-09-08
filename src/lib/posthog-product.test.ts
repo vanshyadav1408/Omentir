@@ -31,6 +31,17 @@ describe("onboarding survey capture", () => {
       onboarding_company_size: "2-10",
       onboarding_goal: "find SaaS founders",
     });
+    expect(
+      onboardingPersonProperties(
+        {
+          source: "LinkedIn",
+          role: "Founder",
+          companySize: "2-10",
+          goal: "find SaaS founders",
+        },
+        { websiteUrl: "https://acme.com" },
+      ),
+    ).toMatchObject({ onboarding_website: "https://acme.com" });
   });
 
   test("uses the live PostHog survey ids so responses land in Surveys, not a one-off event", () => {
@@ -68,6 +79,13 @@ describe("onboarding survey capture", () => {
       onboarding_source: "Product Hunt",
       [`$survey_responded/${ONBOARDING_SURVEY_ID}`]: true,
     });
+    expect(
+      onboardingSurveySentProperties(
+        { source: "Product Hunt", role: "Sales", companySize: "Just me", goal: "book more demos" },
+        "user_abc",
+        { websiteUrl: "https://acme.com" },
+      ).$set,
+    ).toMatchObject({ onboarding_website: "https://acme.com" });
   });
 });
 

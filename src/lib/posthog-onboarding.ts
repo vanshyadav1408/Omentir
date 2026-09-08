@@ -33,12 +33,16 @@ export type OnboardingAnswers = {
 type OnboardingSurveyResponseKey =
   `$survey_response_${(typeof ONBOARDING_SURVEY_QUESTIONS)[keyof typeof ONBOARDING_SURVEY_QUESTIONS]["id"]}`;
 
-export function onboardingPersonProperties(answers: OnboardingAnswers) {
+export function onboardingPersonProperties(
+  answers: OnboardingAnswers,
+  extras?: { websiteUrl?: string },
+) {
   return {
     onboarding_source: answers.source,
     onboarding_role: answers.role,
     onboarding_company_size: answers.companySize,
     onboarding_goal: answers.goal,
+    ...(extras?.websiteUrl ? { onboarding_website: extras.websiteUrl } : {}),
   };
 }
 
@@ -50,7 +54,11 @@ export function onboardingSurveyShownProperties() {
 }
 
 /** Event payload so the existing onboarding form shows up in PostHog Surveys. */
-export function onboardingSurveySentProperties(answers: OnboardingAnswers, submissionId?: string) {
+export function onboardingSurveySentProperties(
+  answers: OnboardingAnswers,
+  submissionId?: string,
+  extras?: { websiteUrl?: string },
+) {
   const questions = ONBOARDING_SURVEY_QUESTIONS;
   const responses = {
     [`$survey_response_${questions.source.id}`]: answers.source,
@@ -71,7 +79,7 @@ export function onboardingSurveySentProperties(answers: OnboardingAnswers, submi
     ],
     ...responses,
     $set: {
-      ...onboardingPersonProperties(answers),
+      ...onboardingPersonProperties(answers, extras),
       [`$survey_responded/${ONBOARDING_SURVEY_ID}`]: true,
     },
     $set_once: {

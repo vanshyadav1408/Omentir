@@ -1,9 +1,5 @@
 import { auth } from "@/lib/server/auth";
-import {
-  listAgents,
-  listLinkedInAccounts,
-  getWorkspace,
-} from "@/lib/server/data";
+import { listAgents, getWorkspace } from "@/lib/server/data";
 import { getWorkspaceSetup } from "@/lib/server/workspace-setup";
 import { isAtPlanLimit } from "@/lib/agent-limit";
 import { planLimits, serializablePlanLimit } from "@/lib/plan-limits";
@@ -38,9 +34,8 @@ export default async function AgentsPage() {
     );
   }
 
-  const [workspace, linkedInAccounts, agents] = await Promise.all([
+  const [workspace, agents] = await Promise.all([
     getWorkspace(userId),
-    listLinkedInAccounts(userId),
     listAgents(userId),
   ]);
   const agentLimit = planLimits(workspace.billing?.plan).agents;
@@ -51,7 +46,6 @@ export default async function AgentsPage() {
       groups={[]}
       leads={[]}
       enrollments={[]}
-      linkedInConnected={linkedInAccounts.length > 0}
       agentLimit={serializablePlanLimit(agentLimit)}
       atAgentLimit={isAtPlanLimit(agents.length, agentLimit)}
     />

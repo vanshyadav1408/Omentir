@@ -378,27 +378,37 @@ export async function completeOnboardingQuestionsAction(formData: FormData) {
   if (!isLocalMode()) {
     // Capture must finish before redirect. Email and geo lookup used to run
     // in this request and the form never reached PostHog Surveys.
+    const headersList = await headers();
+    const userAgent = headersList.get("user-agent") || "";
+    const ipAddress = requestIpAddress(headersList);
+    const profile = await getProductProfile(workspace.id);
+    const resolvedWebsite = websiteUrl || profile?.websiteUrl || "";
+    const surveyProperties = onboardingSurveySentProperties(onboarding, surveySubmissionId, {
+      websiteUrl: resolvedWebsite,
+    });
     await capturePostHogEvent({
       event: ONBOARDING_SURVEY_SENT_EVENT,
       distinctId: workspace.ownerId,
       insertId: `onboarding_survey:${surveySubmissionId}`,
-      properties: onboardingSurveySentProperties(onboarding, surveySubmissionId),
+      properties: {
+        ...surveyProperties,
+        ...(ipAddress !== "Unknown" ? { $ip: ipAddress } : {}),
+        ...(userAgent ? { $raw_user_agent: userAgent } : {}),
+      },
     });
 
     after(async () => {
       try {
-        const [headersList, user] = await Promise.all([headers(), currentUser()]);
-        const userAgent = headersList.get("user-agent") || "";
+        const user = await currentUser();
         const name = [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim();
         const email =
           user?.primaryEmailAddress?.emailAddress || user?.emailAddresses[0]?.emailAddress || "";
-        const ipAddress = requestIpAddress(headersList);
         const location = await requestLocation(headersList, ipAddress);
         const mail = await sendNewSignupNotification({
           userId: workspace.ownerId,
           name: name || "Unknown",
           email: email || workspace.notificationEmail || "Unknown",
-          websiteUrl,
+          websiteUrl: resolvedWebsite,
           location,
           ipAddress,
           deviceType: parseDeviceType(userAgent),

@@ -14,6 +14,7 @@ import {
   useToast,
   userFacingError,
 } from "@/app/toast";
+import CompleteSetupPrompt from "@/app/(app)/complete-setup-prompt";
 import MobileHeaderPortal from "@/app/mobile-header-portal";
 import { useWorkspaceTimeZone } from "@/app/workspace-time-zone";
 import { formatZonedDate } from "@/lib/time-zone";
@@ -31,14 +32,11 @@ type AgentsViewProps = {
   groups: Group[];
   leads: LeadAgentRef[];
   enrollments: CampaignEnrollmentPreview[];
-  linkedInConnected: boolean;
   /** Finite plan cap, or null when the plan has unlimited agents. */
   agentLimit: number | null;
   atAgentLimit: boolean;
 };
 
-const PINK_BG = "bg-[#ba3871]";
-const selectLinkedInConnected = (data: Record<string, unknown>) => Boolean(data.connected);
 const selectAgentsData = (data: Record<string, unknown>) => ({
   agents: data.agents as Agent[] || [],
   groups: data.groups as Group[] || [],
@@ -113,7 +111,6 @@ export default function AgentsView({
   groups,
   leads,
   enrollments,
-  linkedInConnected,
   agentLimit,
   atAgentLimit,
 }: AgentsViewProps) {
@@ -131,11 +128,6 @@ export default function AgentsView({
     enrollments: loadedEnrollments,
   } = agentsResource.value;
   const isInitialLoading = agentsResource.loading;
-  const loadedLinkedInConnected = useSidebarResource(
-    "linkedinConnected",
-    linkedInConnected,
-    selectLinkedInConnected,
-  ).value;
   const [pendingToggleIds, setPendingToggleIds] = useState<Set<string>>(new Set());
   const [optimisticStatuses, setOptimisticStatuses] = useState<Record<string, Agent["status"]>>({});
   const [deleteAgent, setDeleteAgent] = useState<{ id: string; name: string } | null>(null);
@@ -313,6 +305,15 @@ export default function AgentsView({
     );
   }, [loadedAgents, loadedLeads, loadedEnrollments]);
 
+  if (!isInitialLoading && visibleAgents.length === 0) {
+    return (
+      <CompleteSetupPrompt
+        emoji="🤖"
+        message="Finish the 4 steps on Overview, then start an AI agent."
+      />
+    );
+  }
+
   const createAgentIcon = (
     <svg
       className="h-3.5 w-3.5"
@@ -394,44 +395,6 @@ export default function AgentsView({
           <OutreachListSkeleton label="Loading agents" />
         ) : (
           <ContentReveal>
-        {/* LinkedIn connection banner */}
-        {!loadedLinkedInConnected ? (
-          <div
-            className={`mb-4 flex flex-col items-start justify-between gap-4 rounded-xl border border-[#ba3871] ${PINK_BG} px-4 py-4 sm:flex-row sm:items-center sm:px-5`}
-          >
-            <div className="flex min-w-0 items-center gap-3">
-              <span className="grid h-9 w-9 place-items-center rounded-md bg-white/70 text-[#0a66c2]">
-                <span className="text-base font-bold">in</span>
-              </span>
-              <div>
-                <p className="text-sm font-semibold text-zinc-950">LinkedIn not connected!</p>
-                <p className="text-xs text-zinc-700">
-                  You need to connect your LinkedIn account to run agents.
-                </p>
-              </div>
-            </div>
-            <a
-              href="/api/connect/linkedin"
-              className="m3-btn m3-btn-filled h-8 w-full px-2.5 text-xs sm:w-auto"
-            >
-              Connect LinkedIn
-              <span aria-hidden>→</span>
-            </a>
-          </div>
-        ) : null}
-
-        {/* Agent cards */}
-        {visibleAgents.length === 0 ? (
-          <div className="m3-card m3-card-outlined m3-card-lg border-dashed py-16 text-center">
-            <span className="material-symbols-outlined text-3xl text-zinc-400">smart_toy</span>
-            <h2 className="mt-3 text-sm font-semibold text-zinc-900">No agents yet</h2>
-            <p className="mt-1 text-xs text-zinc-500">Create one to start finding leads.</p>
-            <NewAgentButton className="m3-btn m3-btn-filled mt-5 hidden h-8 shrink-0 cursor-pointer gap-1 px-2.5 text-xs md:inline-flex">
-              {createAgentIcon}
-              Create an agent
-            </NewAgentButton>
-          </div>
-        ) : (
           <ul className="flex flex-col gap-3">
             {visibleAgents.map((agent) => {
               const metrics = agentMetrics.get(agent.id) ?? NO_METRICS;
@@ -602,7 +565,6 @@ export default function AgentsView({
               );
             })}
           </ul>
-        )}
           </ContentReveal>
         )}
         </div>
