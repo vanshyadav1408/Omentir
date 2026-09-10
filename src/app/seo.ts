@@ -89,6 +89,13 @@ export function absoluteAssetUrl(src: string) {
   return `${siteUrl}${src.startsWith("/") ? src : `/${src}`}`;
 }
 
+/** Sitemap image:loc values. Next.js writes them without XML-escaping, so a raw `&` is an unknown entity. */
+export function sitemapImageUrl(src: string) {
+  const url = absoluteAssetUrl(src);
+  const query = url.indexOf("?");
+  return query === -1 ? url : url.slice(0, query);
+}
+
 // Dates in blog-data are calendar days ("July 22, 2026") with no timezone, so
 // they must be parsed as UTC. Letting the runtime read them as local time makes
 // `toISOString()` shift the day backwards anywhere west-positive of UTC — on an

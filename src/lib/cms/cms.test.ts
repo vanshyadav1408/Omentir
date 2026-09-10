@@ -178,6 +178,15 @@ describe("SEO crawl helpers", () => {
       "/find-your-next-10-customers-banner.avif"
     );
   });
+
+  test("drops Sanity transform query strings so Search Console does not treat image:loc `&` as an unknown XML entity", async () => {
+    const { sitemapImageUrl } = await import("@/app/seo");
+    expect(
+      sitemapImageUrl(
+        "https://cdn.sanity.io/images/xatqbx3d/production/banner.avif?w=1600&auto=format"
+      )
+    ).toBe("https://cdn.sanity.io/images/xatqbx3d/production/banner.avif");
+  });
 });
 
 describe("portable text heading ids", () => {

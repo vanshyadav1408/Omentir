@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { ALL_TOOLS } from "./tools/tools-data";
 import { liveSeoPages } from "./seo-content/types";
-import { absoluteAssetUrl, siteUrl } from "./seo";
+import { sitemapImageUrl, siteUrl } from "./seo";
 import {
   getBlogs,
   getGuides,
@@ -78,7 +78,7 @@ function seoFamilyRoutes(
   return liveSeoPages(pages).map((page) => ({
     url: absoluteUrl(`${basePath}/${page.slug}`),
     lastModified: seoPageDate(page),
-    images: page.ogImage?.url ? [absoluteAssetUrl(page.ogImage.url)] : undefined,
+    images: page.ogImage?.url ? [sitemapImageUrl(page.ogImage.url)] : undefined,
     changeFrequency: "monthly" as const,
     priority,
   }));
@@ -164,7 +164,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const blogRoutes = liveBlogList.map((blog) => ({
     url: absoluteUrl(`/blogs/${blog.slug}`),
     lastModified: blogDate(blog),
-    images: blog.bannerSrc ? [absoluteAssetUrl(blog.bannerSrc)] : undefined,
+    images: blog.bannerSrc ? [sitemapImageUrl(blog.bannerSrc)] : undefined,
     changeFrequency: "monthly" as const,
     priority: blog.highIntent ? 0.75 : 0.6,
   }));
@@ -178,7 +178,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const guideRoutes = liveSeoPages(guides).map((page) => ({
     url: absoluteUrl(`/${page.slug}`),
     lastModified: new Date(`${page.updatedDate || page.publishedDate} UTC`),
-    images: page.ogImage?.url ? [absoluteAssetUrl(page.ogImage.url)] : undefined,
+    images: page.ogImage?.url ? [sitemapImageUrl(page.ogImage.url)] : undefined,
     changeFrequency: "monthly" as const,
     priority: 0.7,
   }));
