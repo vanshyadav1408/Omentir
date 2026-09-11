@@ -18,6 +18,7 @@ import {
 } from "@/lib/linkedin-csv";
 import {
   AGENT_STARTED_STORAGE_KEY,
+  isNextNavigationError,
   markAgentStartedNotice,
   useToast,
   userFacingError,
@@ -588,6 +589,13 @@ function CompanyEditModal({
         className="m3-dialog-surface flex max-h-[90vh] flex-col overflow-hidden !p-0"
         onClick={(event) => event.stopPropagation()}
       >
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (!isWorking) onSubmit();
+          }}
+          className="flex min-h-0 flex-1 flex-col overflow-hidden"
+        >
         <div className="flex items-center justify-between border-b border-[var(--md-sys-color-outline-variant)] px-6 py-4">
           <div>
             <h3 id="agent-edit-company-title" className="m3-dialog-title text-[17px]">
@@ -687,8 +695,7 @@ function CompanyEditModal({
             Cancel
           </button>
           <button
-            type="button"
-            onClick={onSubmit}
+            type="submit"
             disabled={isWorking}
             aria-busy={isWorking}
             className="m3-dialog-btn m3-dialog-btn--filled"
@@ -697,6 +704,7 @@ function CompanyEditModal({
             {saving ? "Saving" : "Save"}
           </button>
         </div>
+        </form>
       </div>
     </div>
   );
@@ -1048,8 +1056,14 @@ export default function AgentSetup({
           showAgentStarted(agentStartedLabel(), "leads_only");
           router.replace("/agents");
         } catch (error) {
+          // Production delivers a completed setup redirect as React #441.
+          // That is navigation, not a failed prepare.
+          if (isNextNavigationError(error)) {
+            router.replace("/agents");
+            return;
+          }
           setDiscoveryError(
-            error instanceof Error ? error.message : "Lead discovery failed.",
+            userFacingError(error, "Lead discovery failed."),
           );
         } finally {
           setDiscovering(false);
@@ -1140,23 +1154,23 @@ export default function AgentSetup({
         // here; client replace covers cases where the redirect is swallowed.
         router.replace("/agents");
       } catch (error) {
-        if (
-          typeof error === "object" &&
-          error !== null &&
-          "digest" in error &&
-          String((error as { digest?: unknown }).digest).startsWith("NEXT_REDIRECT")
-        ) {
-          // Server redirect already targets /agents; still force client route
-          // so a mismatched redirect cannot leave the user elsewhere.
+        if (isNextNavigationError(error)) {
+          // Server redirect already targets /agents. Production hides that
+          // throw as minified React #441; treat it as a completed launch.
           router.replace("/agents");
-          throw error;
+          const digest =
+            typeof error === "object" && error !== null && "digest" in error
+              ? String((error as { digest?: unknown }).digest || "")
+              : "";
+          if (digest.startsWith("NEXT_REDIRECT")) throw error;
+          return;
         }
         try {
           window.sessionStorage.removeItem(AGENT_STARTED_STORAGE_KEY);
         } catch {
           // ignore
         }
-        setSubmitError(error instanceof Error ? error.message : "Agent launch failed.");
+        setSubmitError(userFacingError(error, "Agent launch failed."));
       }
     });
   }
@@ -1172,6 +1186,7 @@ export default function AgentSetup({
     formData.set("industry", companyIndustry);
     formData.set("companySize", companySize);
     formData.set("painPointsText", companyPainPoints);
+    formData.set("websiteUrl", companyWebsiteUrl);
     startCompanySaving(async () => {
       try {
         const result = await saveProductProfile(formData);
@@ -1182,6 +1197,13 @@ export default function AgentSetup({
         setCompanyModalOpen(false);
         showSuccess("Saved.");
       } catch (error) {
+        // The profile write returns instead of throwing on validation. A #441
+        // here is the follow-up page render, not a rejected save.
+        if (isNextNavigationError(error)) {
+          setCompanyModalOpen(false);
+          showSuccess("Saved.");
+          return;
+        }
         showError(userFacingError(error, "Could not save. Try again."));
       }
     });
@@ -2499,11 +2521,12 @@ export default function AgentSetup({
         : "Continue";
 
   return (
-    <form
-      id="agent-setup-form"
-      onSubmit={handleSubmit}
-      className="app-x flex h-full min-h-0 min-w-0 flex-col gap-2 md:ml-4 md:mr-0.5 md:pb-3"
-    >
+    <div className="app-x flex h-full min-h-0 min-w-0 flex-col gap-2 md:ml-4 md:mr-0.5 md:pb-3">
+      <form
+        id="agent-setup-form"
+        onSubmit={handleSubmit}
+        className="flex h-full min-h-0 min-w-0 flex-1 flex-col gap-2"
+      >
       <AiLoadingOverlay
         open={drafting}
         title="Finding your ideal customer profile with AI"
@@ -2787,8 +2810,9 @@ export default function AgentSetup({
             </button>
           </div>
         </section>
-
-        <CompanyEditModal
+      </div>
+      </form>
+      <CompanyEditModal
           open={companyModalOpen}
           saving={companySaving}
           analyzing={analyzingCompany}
@@ -2813,7 +2837,6 @@ export default function AgentSetup({
           onAnalyze={handleCompanyAnalyze}
           onClose={() => setCompanyModalOpen(false)}
         />
-      </div>
-    </form>
+    </div>
   );
 }

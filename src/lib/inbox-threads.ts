@@ -111,6 +111,10 @@ export function sameLinkedInInboxThread(a: LinkedInInboxThread, b: LinkedInInbox
 // LinkedIn still has one 1:1 thread per person, so those copies must collapse
 // to a single inbox row. Otherwise the user sees Ezekiel twice and can open
 // the wrong copy.
+//
+// The extra copy often has no attendee name and a different last-message id,
+// so merge misses it and it lands as a "LinkedIn chat" row. Drop those. The
+// named Classic thread is the one the user can actually open.
 export function dedupeLinkedInInboxThreads(threads: LinkedInInboxThread[]) {
   const ranked = [...threads].sort((a, b) => threadCompleteness(b) - threadCompleteness(a));
   const kept: LinkedInInboxThread[] = [];
@@ -122,7 +126,9 @@ export function dedupeLinkedInInboxThreads(threads: LinkedInInboxThread[]) {
     }
     kept[matchIndex] = mergeInboxThreads(kept[matchIndex], thread);
   }
-  return kept.sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
+  return kept
+    .filter((thread) => !isGenericInboxName(thread.profileName || thread.title))
+    .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
 }
 
 // Firestore conversations mirror provider chats. Hide the stored copy when the

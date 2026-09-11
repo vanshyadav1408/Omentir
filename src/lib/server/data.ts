@@ -1916,7 +1916,7 @@ export async function createCampaign(
     createdAt: timestamp,
     updatedAt: timestamp,
   };
-  await ref.set(campaign);
+  await ref.set(omitUndefined(campaign));
 
   // Same post-write reconcile as createAgent: concurrent submits can both clear
   // the pre-check, so re-count and roll back the excess to keep the cap hard.

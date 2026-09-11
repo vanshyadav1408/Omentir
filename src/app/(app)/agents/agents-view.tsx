@@ -11,6 +11,7 @@ import NewAgentButton from "./new-agent-button";
 import { useBodyScrollLock } from "@/app/use-body-scroll-lock";
 import {
   consumeAgentStartedNotice,
+  isNextNavigationError,
   useToast,
   userFacingError,
 } from "@/app/toast";
@@ -206,6 +207,16 @@ export default function AgentsView({
       router.refresh();
       agentsResource.reload();
     } catch (error) {
+      if (isNextNavigationError(error)) {
+        setOptimisticStatuses((current) => {
+          const next = { ...current };
+          delete next[agent.id];
+          return next;
+        });
+        router.refresh();
+        agentsResource.reload();
+        return;
+      }
       setOptimisticStatuses((current) => ({ ...current, [agent.id]: agent.status }));
       showError(userFacingError(error, "Agent status could not be updated."));
     } finally {
@@ -230,6 +241,11 @@ export default function AgentsView({
       agentsResource.reload();
       router.refresh();
     } catch (error) {
+      if (isNextNavigationError(error)) {
+        agentsResource.reload();
+        router.refresh();
+        return;
+      }
       setDeletedIds((current) => {
         const next = new Set(current);
         next.delete(target.id);

@@ -1141,6 +1141,72 @@ export async function createCampaignAction(formData: FormData) {
   revalidateWorkspaceDataPages();
 }
 
+async function cleanupAgentAfterFailedLaunch(agentId: string, context: string) {
+  const cleanup = new FormData();
+  cleanup.set("agentId", agentId);
+  try {
+    await deleteAgentAction(cleanup);
+  } catch (cleanupError) {
+    console.error(context, cleanupError);
+  }
+}
+
+export async function launchAgentFromSetupAction(formData: FormData) {
+  const groupName = String(formData.get("groupName") || "").trim();
+  const agentName = String(formData.get("name") || groupName || "LinkedIn agent").trim();
+
+  const createdAgent = await createAgentForSetupAction(formData);
+  formData.set("name", agentName);
+  formData.set("groupId", createdAgent.groupId);
+  formData.set("allowEmptyLeadGroup", "on");
+
+  try {
+    await createCampaignAction(formData);
+  } catch (error) {
+    // A failed final launch must not leave a newly-created agent consuming the
+    // user's plan slot.
+    await cleanupAgentAfterFailedLaunch(
+      createdAgent.agentId,
+      "Failed to clean up agent after launch error.",
+    );
+    throw error;
+  }
+  redirect("/agents");
+}
+
+export async function launchOutreachAgentFromSetupAction(formData: FormData) {
+  const groupName = String(formData.get("groupName") || "").trim();
+  formData.set("name", String(formData.get("name") || groupName || "LinkedIn outreach").trim());
+  formData.set("mode", "outreach");
+  const createdAgent = await createAgentForSetupAction(formData);
+  formData.set("agentId", createdAgent.agentId);
+  formData.set("groupId", createdAgent.groupId);
+  try {
+    await importLinkedInCsvLeadsAction(formData);
+    await createCampaignAction(formData);
+  } catch (error) {
+    await cleanupAgentAfterFailedLaunch(
+      createdAgent.agentId,
+      "Failed to clean up outreach agent after launch error.",
+    );
+    throw error;
+  }
+  redirect("/agents");
+}
+
+export async function launchExistingAgentFromSetupAction(formData: FormData) {
+  const groupName = String(formData.get("groupName") || "").trim();
+  const agentName = String(formData.get("name") || groupName || "LinkedIn agent").trim();
+  formData.set("name", agentName);
+
+  const updatedAgent = await updateAgentForSetupAction(formData);
+  formData.set("groupId", updatedAgent.groupId);
+  formData.set("allowEmptyLeadGroup", "on");
+
+  await createCampaignAction(formData);
+  redirect("/agents");
+}
+
 export async function sendLinkedInChatMessageAction(formData: FormData) {
   const workspace = await requireWorkspace();
   requireActiveSubscription(workspace);

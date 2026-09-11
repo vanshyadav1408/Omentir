@@ -4,7 +4,7 @@ import { useState, useTransition, type FormEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import NewAgentButton from "@/app/(app)/agents/new-agent-button";
-import { useToast, userFacingError } from "@/app/toast";
+import { isNextNavigationError, useToast, userFacingError } from "@/app/toast";
 import { TextField } from "@/app/ui/text-field";
 import {
   INVALID_SCHEDULING_LINK_MESSAGE,
@@ -114,6 +114,11 @@ function BookingLinkForm({
         showSuccess("Saved.");
         router.refresh();
       } catch (saveError) {
+        if (isNextNavigationError(saveError)) {
+          showSuccess("Saved.");
+          router.refresh();
+          return;
+        }
         setError(userFacingError(saveError, "Could not save. Try again."));
       }
     });

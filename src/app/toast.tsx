@@ -45,6 +45,45 @@ const AUTO_DISMISS_MS = 5600;
 const AGENT_STARTED_DISMISS_MS = 3800;
 export const AGENT_STARTED_STORAGE_KEY = "omentir:agent-started";
 
+const RSC_RENDER_ERROR =
+  "An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details.";
+
+function errorDigest(error: unknown) {
+  if (typeof error !== "object" || error === null || !("digest" in error)) return "";
+  return String((error as { digest?: unknown }).digest || "");
+}
+
+function errorMessage(error: unknown) {
+  if (typeof error === "string") return error.trim();
+  if (error instanceof Error) return error.message?.trim() || "";
+  return "";
+}
+
+/**
+ * True for Next redirect/not-found throws and for React #441, the production
+ * stand-in for a Server Components render failure. A server action that
+ * `redirect()`s is delivered to the client as #441 in the production build,
+ * so catching it as a form error shows "Minified React error #441".
+ */
+export function isNextNavigationError(error: unknown) {
+  const digest = errorDigest(error);
+  if (digest.startsWith("NEXT_REDIRECT") || digest.startsWith("NEXT_NOT_FOUND")) {
+    return true;
+  }
+  return isRscDigestMessage(errorMessage(error));
+}
+
+export function isRscDigestMessage(message: string) {
+  const msg = message.trim();
+  if (!msg) return false;
+  if (msg === RSC_RENDER_ERROR) return true;
+  if (msg.startsWith("An error occurred in the Server Components")) return true;
+  // Production React hides the RSC text behind this minified code.
+  if (/^Minified React error #441\b/i.test(msg)) return true;
+  if (/^[a-f0-9]{8,}$/i.test(msg)) return true;
+  return false;
+}
+
 /** Pull a short user-facing string from thrown values (server actions, Error, string). */
 export function userFacingError(
   error: unknown,
@@ -52,19 +91,12 @@ export function userFacingError(
 ): string {
   if (typeof error === "string") {
     const trimmed = error.trim();
-    return trimmed || fallback;
+    if (!trimmed || isRscDigestMessage(trimmed)) return fallback;
+    return trimmed;
   }
   if (error instanceof Error) {
     const msg = error.message?.trim() || "";
-    // Next.js / React generic digests — not useful to end users
-    if (
-      !msg ||
-      msg === "An error occurred in the Server Components render. The specific message is omitted in production builds to avoid leaking sensitive details." ||
-      msg.startsWith("An error occurred in the Server Components") ||
-      /^[a-f0-9]{8,}$/i.test(msg)
-    ) {
-      return fallback;
-    }
+    if (!msg || isNextNavigationError(error) || isRscDigestMessage(msg)) return fallback;
     return msg;
   }
   return fallback;

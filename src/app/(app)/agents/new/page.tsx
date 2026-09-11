@@ -2,14 +2,12 @@ import { auth } from "@/lib/server/auth";
 import { redirect } from "next/navigation";
 import {
   createAgentAndDiscoverLeadsAction,
-  createAgentForSetupAction,
-  createCampaignAction,
-  deleteAgentAction,
   draftAgentSetupAction,
-  importLinkedInCsvLeadsAction,
+  launchAgentFromSetupAction,
+  launchExistingAgentFromSetupAction,
+  launchOutreachAgentFromSetupAction,
   saveProductProfileAction,
   updateAgentAction,
-  updateAgentForSetupAction,
 } from "@/app/actions";
 import {
   getAgent,
@@ -37,70 +35,6 @@ export const metadata = createPageMetadata({
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
-
-async function createAgentFromSetup(formData: FormData) {
-  "use server";
-
-  const groupName = String(formData.get("groupName") || "").trim();
-  const agentName = String(formData.get("name") || groupName || "LinkedIn agent").trim();
-
-  const createdAgent = await createAgentForSetupAction(formData);
-  formData.set("name", agentName);
-  formData.set("groupId", createdAgent.groupId);
-  formData.set("allowEmptyLeadGroup", "on");
-
-  try {
-    await createCampaignAction(formData);
-  } catch (error) {
-    // A failed final launch must not leave a newly-created agent consuming the
-    // user's plan slot.
-    const cleanup = new FormData();
-    cleanup.set("agentId", createdAgent.agentId);
-    try {
-      await deleteAgentAction(cleanup);
-    } catch (cleanupError) {
-      console.error("Failed to clean up agent after launch error.", cleanupError);
-    }
-    throw error;
-  }
-  redirect("/agents");
-}
-
-async function createOutreachOnlyAgentFromSetup(formData: FormData) {
-  "use server";
-  const groupName = String(formData.get("groupName") || "").trim();
-  formData.set("name", String(formData.get("name") || groupName || "LinkedIn outreach").trim());
-  formData.set("mode", "outreach");
-  const createdAgent = await createAgentForSetupAction(formData);
-  formData.set("agentId", createdAgent.agentId);
-  formData.set("groupId", createdAgent.groupId);
-  try {
-    await importLinkedInCsvLeadsAction(formData);
-    await createCampaignAction(formData);
-  } catch (error) {
-    const cleanup = new FormData();
-    cleanup.set("agentId", createdAgent.agentId);
-    try { await deleteAgentAction(cleanup); }
-    catch (cleanupError) { console.error("Failed to clean up outreach agent after launch error.", cleanupError); }
-    throw error;
-  }
-  redirect("/agents");
-}
-
-async function launchExistingAgentFromSetup(formData: FormData) {
-  "use server";
-
-  const groupName = String(formData.get("groupName") || "").trim();
-  const agentName = String(formData.get("name") || groupName || "LinkedIn agent").trim();
-  formData.set("name", agentName);
-
-  const updatedAgent = await updateAgentForSetupAction(formData);
-  formData.set("groupId", updatedAgent.groupId);
-  formData.set("allowEmptyLeadGroup", "on");
-
-  await createCampaignAction(formData);
-  redirect("/agents");
-}
 
 function AgentLimitReached({ limit }: { limit: number }) {
   return (
@@ -157,7 +91,7 @@ export default async function NewAgentPage({
   const { userId } = await auth();
   if (!userId) {
     await auth.protect();
-    throw new Error("Unauthorized");
+    redirect("/login");
   }
 
   const workspace = await getWorkspace(userId);
@@ -237,12 +171,12 @@ export default async function NewAgentPage({
       key={agent?.id || "new-agent"}
       createAgent={
         isResumingOutreach
-          ? launchExistingAgentFromSetup
+          ? launchExistingAgentFromSetupAction
           : agent
             ? updateAgentAction
             : params.mode === "outreach"
-              ? createOutreachOnlyAgentFromSetup
-              : createAgentFromSetup
+              ? launchOutreachAgentFromSetupAction
+              : launchAgentFromSetupAction
       }
       prepareAgent={createAgentAndDiscoverLeadsAction}
       leadsOnly={!agent && params.mode === "leads"}

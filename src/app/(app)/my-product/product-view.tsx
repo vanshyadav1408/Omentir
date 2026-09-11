@@ -12,7 +12,7 @@ import {
   hasUsableBookingLink,
   normalizeSchedulingLink,
 } from "@/lib/scheduling-link";
-import { useToast, userFacingError } from "@/app/toast";
+import { isNextNavigationError, useToast, userFacingError } from "@/app/toast";
 
 type SaveProductResult = { ok: true } | { ok: false; error: string };
 
@@ -272,6 +272,17 @@ export default function ProductView({ profile, saveAction, analyzeAction }: Prod
           router.replace("/overview");
         }
       } catch (error) {
+        if (isNextNavigationError(error)) {
+          showSuccess("Saved.");
+          router.refresh();
+          if (
+            hasUsableBookingLink(String(formData.get("schedulingLink") || "")) &&
+            window.location.hash === "#demo-booking"
+          ) {
+            router.replace("/overview");
+          }
+          return;
+        }
         setSaveError(userFacingError(error, "Could not save. Try again."));
       }
     });
