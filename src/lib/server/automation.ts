@@ -423,7 +423,11 @@ async function runAgents(mode: AutomationSafetyMode) {
         });
         continue;
       }
-      const account = await getLinkedInAccountForWorkspace(agent.workspaceId, agent.linkedInAccountId);
+      const account = await getLinkedInAccountForWorkspace(
+        agent.workspaceId,
+        agent.linkedInAccountId,
+        { fallbackToDefault: true },
+      );
       const profile = await getProductProfile(agent.workspaceId);
 
       if (!account) {
@@ -675,6 +679,7 @@ async function runEnrollment(
   const account = await getLinkedInAccountForWorkspace(
     enrollment.workspaceId,
     campaign.linkedInAccountId,
+    { fallbackToDefault: true },
   );
   if (!account) {
     await updateCurrentEnrollment({
@@ -1542,6 +1547,7 @@ export async function executeScheduledActionNow(workspaceId: string, enrollmentI
       const account = await getLinkedInAccountForWorkspace(
         workspaceId,
         campaign.linkedInAccountId,
+        { fallbackToDefault: true },
       );
       const identifier = lead.providerProfileId || lead.linkedInUrl;
       const accepted =
@@ -1669,6 +1675,7 @@ async function previewEnrollment(
   const account = await getLinkedInAccountForWorkspace(
     enrollment.workspaceId,
     campaign.linkedInAccountId,
+    { fallbackToDefault: true },
   );
   if (!account) return "missing-account";
   if (enrollment.pendingAction) return "pending-action";
@@ -1943,6 +1950,7 @@ async function runCampaigns(mode: AutomationSafetyMode) {
         const rejectedAccount = await getLinkedInAccountForWorkspace(
           enrollment.workspaceId,
           campaign.linkedInAccountId,
+          { fallbackToDefault: true },
         );
         const invitePending =
           rejectedLead && rejectedAccount
@@ -2315,6 +2323,7 @@ async function runProviderSyncs(mode: AutomationSafetyMode) {
       const account = await getLinkedInAccountForWorkspace(
         campaign.workspaceId,
         campaign.linkedInAccountId,
+        { fallbackToDefault: true },
       );
       if (!account) continue;
       const key = `${campaign.workspaceId}:${account.id}`;

@@ -285,7 +285,9 @@ export async function applyConnectionAccepted(input: {
       input.account &&
       (!campaign.linkedInAccountId || campaign.linkedInAccountId === input.account.id)
         ? input.account
-        : await getLinkedInAccountForWorkspace(workspaceId, campaign.linkedInAccountId);
+        : await getLinkedInAccountForWorkspace(workspaceId, campaign.linkedInAccountId, {
+            fallbackToDefault: true,
+          });
     if (!campaignAccount) return;
     const draftFromStepIndex =
       currentStep?.type === "wait"

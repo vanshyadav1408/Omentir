@@ -140,7 +140,9 @@ async function assertCampaignCanRun(
 ) {
   const requireLeads = options.requireLeads ?? true;
   const [account, leads, profile] = await Promise.all([
-    getLinkedInAccountForWorkspace(workspaceId, options.linkedInAccountId),
+    getLinkedInAccountForWorkspace(workspaceId, options.linkedInAccountId, {
+      fallbackToDefault: true,
+    }),
     groupId ? listLeads(workspaceId, groupId) : Promise.resolve([]),
     getProductProfile(workspaceId),
   ]);

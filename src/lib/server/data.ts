@@ -21,6 +21,7 @@ import { remapStepIndex } from "./enrollment-remap";
 import { sendWindowTimeZoneForLead } from "./lead-time-zone";
 import { capturePostHogEvent } from "@/lib/posthog-server";
 import { addInviteLimitSignal } from "./outreach-rules";
+import { resolveUsableLinkedInAccount } from "@/lib/linkedin-account-fallback";
 import {
   canEnrollLeadForOutreach,
   leadOutcomeNotificationLockId,
@@ -688,17 +689,21 @@ export async function getLinkedInAccountByAccountIdAnyStatus(accountId: string) 
   return snap.docs[0]?.data() || null;
 }
 
-export async function getLinkedInAccountForWorkspace(workspaceId: string, linkedInAccountId?: string) {
+export async function getLinkedInAccountForWorkspace(
+  workspaceId: string,
+  linkedInAccountId?: string,
+  options?: { fallbackToDefault?: boolean },
+) {
   if (!linkedInAccountId) return getLinkedInAccount(workspaceId);
 
   const ref = collection<LinkedInAccount>("linkedinAccounts").doc(linkedInAccountId);
   const snap = await ref.get();
   const account = snap.data();
-  if (account?.workspaceId === workspaceId && account.status === "connected") {
-    return account;
-  }
-
-  return null;
+  const requested =
+    account?.workspaceId === workspaceId ? account : null;
+  if (requested?.status === "connected") return requested;
+  if (!options?.fallbackToDefault) return null;
+  return resolveUsableLinkedInAccount(requested, await getLinkedInAccount(workspaceId));
 }
 
 export async function getLinkedInAccountByAccountId(accountId: string) {

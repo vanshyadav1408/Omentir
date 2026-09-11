@@ -1122,6 +1122,7 @@ export async function replyToLeadResource(context: AgentApiContext, payload: unk
   const account = await getLinkedInAccountForWorkspace(
     context.workspace.id,
     campaign?.linkedInAccountId,
+    { fallbackToDefault: true },
   );
   if (!account) {
     throw new AgentApiOperationError("No connected LinkedIn account.", 409);
