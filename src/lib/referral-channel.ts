@@ -133,8 +133,6 @@ const SOCIAL_HOSTS = [
   "medium.com",
 ];
 
-const AFFILIATE_HOSTS = ["appsumo.com"];
-
 const EMAIL_HOSTS = ["mail.google.com", "outlook.live.com", "mail.yahoo.com"];
 
 export function hostnameOf(value: string): string {
@@ -197,7 +195,6 @@ function hostChannel(hostname: string, referrerUrl: string): ReferralChannel | n
   if (hostname === GOOGLE_APP_HOST || hostMatches(hostname, SEARCH_HOSTS)) return "organic_search";
   if (hostMatches(hostname, SOCIAL_HOSTS)) return "social";
   if (hostMatches(hostname, EMAIL_HOSTS)) return "email";
-  if (hostMatches(hostname, AFFILIATE_HOSTS)) return "affiliate";
   return "referral";
 }
 
