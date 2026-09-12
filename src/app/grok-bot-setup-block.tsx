@@ -87,7 +87,9 @@ export default function GrokBotSetupBlock({
           sentences a stranger would understand.
         </li>
         <li>
-          In Grok Bot, open Settings, then Plugins. Add{" "}
+          In Grok Bot, open Settings, then Plugins. Search Marketplace for
+          Omentir and add it. If it is not listed, add a custom MCP server
+          named Omentir with URL{" "}
           <span className="font-mono text-sm">{GROK_BOT_MCP_URL}</span>
           . Approve Connect workspace.
         </li>

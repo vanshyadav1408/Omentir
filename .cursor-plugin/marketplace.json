@@ -1,0 +1,17 @@
+{
+  "name": "omentir",
+  "owner": {
+    "name": "Omentir",
+    "email": "hi@omentir.com"
+  },
+  "metadata": {
+    "description": "Omentir LinkedIn outreach plugin for Grok Bot and Cursor."
+  },
+  "plugins": [
+    {
+      "name": "omentir",
+      "source": "plugins/omentir",
+      "description": "Find LinkedIn prospects, draft outreach, and run human-paced campaigns."
+    }
+  ]
+}

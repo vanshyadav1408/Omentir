@@ -1,0 +1,34 @@
+{
+  "name": "omentir",
+  "displayName": "Omentir",
+  "version": "1.0.0",
+  "minClientVersions": {
+    "cursor": "3.13.0"
+  },
+  "description": "Find LinkedIn prospects, draft outreach, and run human-paced campaigns.",
+  "author": {
+    "name": "Omentir",
+    "email": "hi@omentir.com"
+  },
+  "homepage": "https://omentir.com/integrations/mcp",
+  "repository": "https://github.com/vanshyadav1408/Omentir",
+  "license": "MIT",
+  "logo": "assets/logo.svg",
+  "keywords": [
+    "omentir",
+    "linkedin",
+    "sales",
+    "outreach",
+    "prospecting",
+    "mcp",
+    "grok-bot"
+  ],
+  "category": "integrations",
+  "tags": [
+    "omentir",
+    "sales",
+    "linkedin",
+    "mcp"
+  ],
+  "mcpServers": "./mcp.json"
+}

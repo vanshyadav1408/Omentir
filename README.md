@@ -18,7 +18,7 @@ People use Omentir from chat and coding agents without sharing LinkedIn password
 2. **Chat apps (Claude, ChatGPT, Grok):** Settings → Connectors → add  
    `https://omentir.com/api/agent/v1/mcp` → sign in and approve **Connect workspace** → enable tools in the chat.  
    No API key.
-3. **Grok Bot** (the always-on teammate app, not grok.com chat): Settings → Plugins → same MCP URL → approve Connect workspace. Do not sign LinkedIn into the Bot computer. [Grok Bot integration](https://omentir.com/integrations/grok-bot).
+3. **Grok Bot** (the always-on teammate app, not grok.com chat): Settings → Plugins → search Marketplace for Omentir. If it is not listed, add the same MCP URL as a custom server → approve Connect workspace. Do not sign LinkedIn into the Bot computer. [Grok Bot integration](https://omentir.com/integrations/grok-bot).
 4. **Cursor / Claude Code / scripts:** create a key on the [API page](https://omentir.com/api-keys) and send  
    `Authorization: Bearer <token>` to the MCP endpoint or REST `/api/agent/v1/*`.
 5. Ask the assistant to create a classic lead finder or a **Steal Customers** agent (`mode: steal_customers` + competitor company URLs).

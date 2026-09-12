@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "omentir": {
+      "type": "http",
+      "url": "https://omentir.com/api/agent/v1/mcp"
+    }
+  }
+}

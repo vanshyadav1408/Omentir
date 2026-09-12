@@ -38,7 +38,7 @@ Users connect once in Omentir (LinkedIn + plan), then attach their chat app or c
 Works with **Claude**, **ChatGPT**, **Grok**, **Grok Bot**, and other clients that support custom MCP connectors.
 
 1. User connects LinkedIn in Omentir and fills **My Product**.
-2. In the chat app: Settings → Connectors (or equivalent) → add custom connector. In **Grok Bot**: Settings → Plugins → add the MCP URL.
+2. In the chat app: Settings → Connectors (or equivalent) → add custom connector. In **Grok Bot**: Settings → Plugins → search Marketplace for Omentir, or add the MCP URL if it is not listed.
 3. Connector URL: \`${siteUrl}/api/agent/v1/mcp\`
 4. The app sends the user to Omentir to sign in and approve **Connect workspace**.
 5. User enables Omentir tools **in that conversation** (many apps require a separate toggle).
