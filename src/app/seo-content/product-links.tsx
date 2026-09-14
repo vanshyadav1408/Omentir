@@ -1,4 +1,5 @@
-import type { ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
+import { splitMarkdownLinks } from "@/lib/cms/markdown-links";
 
 /**
  * Official homepages for third-party products we name on marketing pages.
@@ -101,6 +102,11 @@ export const PRODUCT_HOMEPAGES: readonly ProductEntry[] = [
     id: "instantly",
     href: "https://instantly.ai",
     names: ["Instantly", "instantly.ai"],
+  },
+  {
+    id: "valley",
+    href: "https://www.joinvalley.co",
+    names: ["Valley", "joinvalley.co"],
   },
   {
     id: "smartlead",
@@ -235,6 +241,43 @@ export function ProductHomeLink({
       {children ?? name}
     </a>
   );
+}
+
+function normalizeHref(href: string) {
+  return href.replace(/\/+$/, "").toLowerCase();
+}
+
+/** Markdown anchors on SEO pages win over a second auto-link to the same homepage. */
+export function linkifySeoCopy(text: string, seen?: Set<string>): ReactNode {
+  const linked = seen ?? new Set<string>();
+  const parts = splitMarkdownLinks(text);
+  const hasMarkdownLink = parts.some((part) => part.type === "link");
+  if (!hasMarkdownLink) return linkifyProducts(text, linked);
+
+  for (const part of parts) {
+    if (part.type !== "link") continue;
+    const product = PRODUCT_HOMEPAGES.find(
+      (item) => normalizeHref(item.href) === normalizeHref(part.href)
+    );
+    if (product) linked.add(product.id);
+  }
+
+  return parts.map((part, index) => {
+    if (part.type === "text") {
+      return <Fragment key={`t${index}`}>{linkifyProducts(part.text, linked)}</Fragment>;
+    }
+    return (
+      <a
+        key={`a${index}`}
+        href={part.href}
+        target="_blank"
+        rel="noopener"
+        className={PRODUCT_LINK_CLASS}
+      >
+        {part.text}
+      </a>
+    );
+  });
 }
 
 export function linkifyProducts(text: string, seen?: Set<string>): ReactNode {

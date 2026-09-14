@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { PromptCopyBox } from "../grok-bot-setup-block";
-import { linkifyProducts } from "./product-links";
+import { linkifyProducts, linkifySeoCopy } from "./product-links";
 import type { SeoContentPage, SeoFamily, SeoRelatedLink } from "./types";
 import {
   createBreadcrumbJsonLd,
@@ -516,13 +516,13 @@ export function ArticleSection({
       </h2>
       <div className="mt-5 space-y-4 text-left text-base leading-8 text-[var(--md-sys-color-on-surface)]">
         {paragraphs.map((paragraph, index) => (
-          <p key={`${id}-p-${index}`}>{linkifyProducts(paragraph, seen)}</p>
+          <p key={`${id}-p-${index}`}>{linkifySeoCopy(paragraph, seen)}</p>
         ))}
         {bullets && bullets.length > 0 ? (
           <ul className="list-disc space-y-2 pl-5 text-[var(--md-sys-color-on-surface-variant)]">
             {bullets.map((bullet, index) => (
               <li key={`${id}-b-${index}`} className="leading-7">
-                {linkifyProducts(bullet, seen)}
+                {linkifySeoCopy(bullet, seen)}
               </li>
             ))}
           </ul>
