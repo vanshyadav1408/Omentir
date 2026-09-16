@@ -25,8 +25,7 @@ import {
   type AgentStartedKind,
 } from "@/app/toast";
 import {
-  messageToneForAgentForm,
-  sendWindowForAgentForm,
+  agentFormOutreachDefaults,
   type AgentMessageTone,
 } from "@/lib/agent-setup-defaults";
 import type { Agent, CampaignReplyHandling, SendWindow } from "@/lib/server/types";
@@ -85,6 +84,10 @@ type AgentSetupProps = {
   initialSendWindow?: SendWindow;
   // Same split as sendWindow: stored campaign tone on edit, new-agent default otherwise.
   initialMessageTone?: string;
+  // True only when a campaign already exists. Resume-at-plan-limit reuses an
+  // agent row with no campaign; that is first-time outreach and must not use
+  // the edit fallbacks (always / professional).
+  hasExistingCampaign?: boolean;
   initialReplyHandling?: CampaignReplyHandling;
   initialBookingLink?: string;
   linkedInAccounts?: { id: string; displayName: string; accountId: string; avatarUrl?: string }[];
@@ -727,6 +730,7 @@ export default function AgentSetup({
   initialAgent,
   initialSendWindow,
   initialMessageTone,
+  hasExistingCampaign = false,
   initialReplyHandling,
   initialBookingLink,
   linkedInAccounts = [],
@@ -800,15 +804,18 @@ export default function AgentSetup({
   const [outreachMode, setOutreachMode] = useState<"automatic" | "manual">(
     stealCustomers ? "automatic" : "automatic",
   );
-  // Extended hours is the default for NEW agents (every day 7am-10pm). An
-  // existing agent opens on the window its campaign is actually sending in -
-  // and campaigns created before the picker existed have none stored, so they
-  // show (and keep) "always" until their owner changes it. Saving this form
-  // now writes the window back, so defaulting to "extended" here would
-  // silently narrow every old campaign.
-  const [sendWindow, setSendWindow] = useState<SendWindow>(
-    sendWindowForAgentForm(initialSendWindow, isEditing),
-  );
+  const outreachDefaults = agentFormOutreachDefaults({
+    storedSendWindow: initialSendWindow,
+    storedMessageTone: initialMessageTone,
+    hasExistingCampaign,
+  });
+  // Extended hours is the default for NEW agents (every day 7am-10pm), including
+  // resume-at-plan-limit where an agent row exists but no campaign does. An
+  // existing campaign opens on the window it is actually sending in - campaigns
+  // created before the picker have none stored, so they show (and keep) "always"
+  // until their owner changes it. Saving this form now writes the window back,
+  // so treating resume as edit would silently launch 24/7.
+  const [sendWindow, setSendWindow] = useState<SendWindow>(outreachDefaults.sendWindow);
   const [replyHandling, setReplyHandling] = useState<
     "handoff" | "ai_until_interest" | "ai_until_booked"
   >(() => {
@@ -832,12 +839,11 @@ export default function AgentSetup({
   const [campaignGoal, setCampaignGoal] = useState<"warm" | "demo">(
     initialAgent ? "warm" : "demo",
   );
-  // Conversational is the default for NEW agents. Existing agents keep their
-  // stored tone; campaigns with none stored keep professional, which is the
-  // voice Gemini already uses when messageTone is missing.
-  const [messageTone, setMessageTone] = useState<AgentMessageTone>(
-    messageToneForAgentForm(initialMessageTone, isEditing),
-  );
+  // Conversational is the default for NEW agents and for resume-at-plan-limit
+  // (no campaign yet). Existing campaigns keep their stored tone; campaigns
+  // with none stored keep professional, which is the voice Gemini already uses
+  // when messageTone is missing.
+  const [messageTone, setMessageTone] = useState<AgentMessageTone>(outreachDefaults.messageTone);
   const [excludeFirstDegree, setExcludeFirstDegree] = useState(true);
   const [prompt, setPrompt] = useState(initialAgent?.prompt || "");
   const [titles, setTitles] = useState<string[]>(initialAgent?.filters.titles ?? []);

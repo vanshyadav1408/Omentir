@@ -162,7 +162,7 @@ Example create payload (MCP tool or \`POST /api/agent/v1/agents\`):
     "founderUrls": ["https://www.linkedin.com/in/example-founder-or-employee"]
   },
   "replyHandling": "ai_until_interest",
-  "sendWindow": "business"
+  "sendWindow": "extended"
 }
 \`\`\`
 

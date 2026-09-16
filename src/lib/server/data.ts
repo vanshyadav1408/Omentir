@@ -1945,6 +1945,7 @@ export async function updateCampaign(
       | "bookingLink"
       | "sendWindow"
       | "notifyOnReply"
+      | "messageTone"
     >
   >,
 ) {
