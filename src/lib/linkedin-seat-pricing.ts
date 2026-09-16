@@ -60,7 +60,43 @@ export function extraLinkedInSeatsFromMetadata(
   metadata: { [key: string]: unknown } | null | undefined,
 ) {
   if (!isLinkedInSeatCheckoutMetadata(metadata)) return null;
-  return parseExtraLinkedInSeatCount(metadataString(metadata, "extraSeats"));
+  return parseExtraLinkedInSeatCount(metadata?.extraSeats);
+}
+
+export function extraLinkedInSeatsFromPlanTitle(title: unknown) {
+  if (typeof title !== "string") return null;
+  const match = title.trim().match(/^Extra Seats \((\d+)\)$/i);
+  return match ? parseExtraLinkedInSeatCount(match[1]) : null;
+}
+
+// Checkout configuration metadata often never appears on the payment. Seat
+// count then has to come from the Extra Seats product, plan metadata, or title.
+export function extraLinkedInSeatsFromWhopFields(input: {
+  metadata?: { [key: string]: unknown } | null;
+  planMetadata?: { [key: string]: unknown } | null;
+  planTitle?: string | null;
+  product?: { title?: string | null; metadata?: { [key: string]: unknown } | null } | null;
+}) {
+  const fromKind =
+    extraLinkedInSeatsFromMetadata(input.metadata) ||
+    extraLinkedInSeatsFromMetadata(input.planMetadata);
+  if (fromKind) return fromKind;
+  const fromTitle = extraLinkedInSeatsFromPlanTitle(input.planTitle);
+  if (fromTitle) return fromTitle;
+  if (!isLinkedInSeatProduct(input.product || {})) return null;
+  return (
+    parseExtraLinkedInSeatCount(input.metadata?.extraSeats) ||
+    parseExtraLinkedInSeatCount(input.planMetadata?.extraSeats)
+  );
+}
+
+export function isLinkedInSeatWhopObject(input: {
+  metadata?: { [key: string]: unknown } | null;
+  product?: { title?: string | null; metadata?: { [key: string]: unknown } | null } | null;
+}) {
+  return (
+    isLinkedInSeatCheckoutMetadata(input.metadata) || isLinkedInSeatProduct(input.product || {})
+  );
 }
 
 // Firestore `set({ billing }, { merge: true })` replaces the whole billing map.

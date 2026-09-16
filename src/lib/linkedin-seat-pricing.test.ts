@@ -4,8 +4,11 @@ import {
   extraLinkedInSeatPlanTitle,
   extraLinkedInSeatUnitPriceUsd,
   extraLinkedInSeatsFromMetadata,
+  extraLinkedInSeatsFromPlanTitle,
+  extraLinkedInSeatsFromWhopFields,
   isLinkedInSeatCheckoutMetadata,
   isLinkedInSeatProduct,
+  isLinkedInSeatWhopObject,
   LINKEDIN_SEAT_PRODUCT_TITLE,
   mergeLinkedInSeatFields,
   parseExtraLinkedInSeatCount,
@@ -45,6 +48,28 @@ describe("Whop extra-seat metadata", () => {
       extraLinkedInSeatsFromMetadata({ kind: "linkedin_seats", extraSeats: "10" }),
     ).toBe(10);
     expect(extraLinkedInSeatsFromMetadata({ plan: "solo", extraSeats: "10" })).toBeNull();
+    expect(
+      extraLinkedInSeatsFromMetadata({ kind: "linkedin_seats", extraSeats: 8 }),
+    ).toBe(8);
+  });
+
+  test("reads extra seats from the Extra Seats plan title when checkout metadata never reaches the webhook", () => {
+    expect(extraLinkedInSeatsFromPlanTitle("Extra Seats (8)")).toBe(8);
+    expect(
+      extraLinkedInSeatsFromWhopFields({
+        product: { title: LINKEDIN_SEAT_PRODUCT_TITLE },
+        planTitle: "Extra Seats (8)",
+      }),
+    ).toBe(8);
+    expect(
+      extraLinkedInSeatsFromWhopFields({
+        product: { title: "Omentir Pro" },
+        metadata: { extraSeats: "8" },
+      }),
+    ).toBeNull();
+    expect(isLinkedInSeatWhopObject({ product: { title: LINKEDIN_SEAT_PRODUCT_TITLE } })).toBe(
+      true,
+    );
   });
 
   test("finds the extra-seat Whop product by kind so checkout does not attach add-on plans to Pro", () => {

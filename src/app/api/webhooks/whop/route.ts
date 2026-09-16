@@ -7,6 +7,7 @@ import { syncMailingListPlan } from "@/lib/server/mailing-list";
 import { readTextBody, RequestBodyTooLargeError } from "@/lib/server/request-body";
 import {
   cancelWhopSeatMembership,
+  extraLinkedInSeatsFromWhopSource,
   getConfiguredWhopPlanIds,
   getWhopClient,
   isLifetimePlan,
@@ -15,8 +16,8 @@ import {
 } from "@/lib/server/whop";
 import {
   extraLinkedInSeatMonthlyTotalUsd,
-  extraLinkedInSeatsFromMetadata,
   isLinkedInSeatCheckoutMetadata,
+  isLinkedInSeatWhopObject,
 } from "@/lib/linkedin-seat-pricing";
 import { capturePostHogEvent, revenueFromWhopPayment } from "@/lib/posthog-server";
 import { CHANNEL_LABELS, type ReferralChannel } from "@/lib/referral-channel";
@@ -388,6 +389,7 @@ export async function POST(request: NextRequest) {
     const workspace = await getWorkspace(workspaceId).catch(() => null);
     const currentSeatMembershipId = workspace?.billing?.seatMembershipId;
     const isSeatMembership =
+      isLinkedInSeatWhopObject(membership) ||
       isLinkedInSeatCheckoutMetadata(membership.metadata) ||
       membership.id === currentSeatMembershipId;
     if (isSeatMembership) {
@@ -413,7 +415,7 @@ export async function POST(request: NextRequest) {
 
   if (event.type === "membership.activated") {
     const membership = event.data;
-    const extraSeats = extraLinkedInSeatsFromMetadata(membership.metadata);
+    const extraSeats = await extraLinkedInSeatsFromWhopSource(membership);
     if (extraSeats) {
       const workspaceId = await resolveWorkspaceId(whop, membership);
       if (!workspaceId) {
@@ -497,7 +499,7 @@ export async function POST(request: NextRequest) {
   }
 
   const payment = event.data;
-  const extraSeats = extraLinkedInSeatsFromMetadata(payment.metadata);
+  const extraSeats = await extraLinkedInSeatsFromWhopSource(payment);
   if (extraSeats) {
     const workspaceId =
       metadataString(payment.metadata, "workspaceId") ||

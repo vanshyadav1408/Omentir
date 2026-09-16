@@ -5,6 +5,7 @@ import { chooseCheckoutPlan } from "@/lib/whop-plan-selection";
 import {
   extraLinkedInSeatMonthlyTotalUsd,
   extraLinkedInSeatPlanTitle,
+  extraLinkedInSeatsFromWhopFields,
   isLinkedInSeatProduct,
   LINKEDIN_SEAT_CHECKOUT_KIND,
   LINKEDIN_SEAT_PRODUCT_TITLE,
@@ -238,6 +239,85 @@ export async function cancelWhopSeatMembership(membershipId: string | undefined 
   }
 }
 
+export type WhopActiveLinkedInSeatMembership = {
+  extraSeats: number;
+  membershipId: string;
+  payerEmail: string;
+};
+
+function objectMetadata(
+  value: unknown,
+): { [key: string]: unknown } | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  return value as { [key: string]: unknown };
+}
+
+export async function extraLinkedInSeatsFromWhopSource(source: {
+  metadata?: { [key: string]: unknown } | null;
+  plan?: { id?: string | null; metadata?: { [key: string]: unknown } | null; title?: string | null } | null;
+  product?: { title?: string | null; metadata?: { [key: string]: unknown } | null } | null;
+}) {
+  const direct = extraLinkedInSeatsFromWhopFields({
+    metadata: source.metadata,
+    planMetadata: source.plan?.metadata,
+    planTitle: source.plan?.title,
+    product: source.product,
+  });
+  if (direct) return direct;
+
+  const productLooksLikeSeats = isLinkedInSeatProduct(source.product || {});
+  const planId = source.plan?.id?.trim();
+  if (!productLooksLikeSeats || !planId) return null;
+
+  const plan = await getWhopClient().plans.retrieve(planId);
+  return extraLinkedInSeatsFromWhopFields({
+    metadata: source.metadata,
+    planMetadata: objectMetadata(plan.metadata),
+    planTitle: plan.title,
+    product: source.product,
+  });
+}
+
+export async function findActiveLinkedInSeatMembershipByEmail(email: string) {
+  const companyId = process.env.WHOP_COMPANY_ID?.trim();
+  if (!companyId) return null;
+
+  const normalizedEmail = email.trim().toLowerCase();
+  if (!normalizedEmail) return null;
+
+  const whop = getWhopClient();
+  const members = await whop.members.list({
+    company_id: companyId,
+    query: normalizedEmail,
+    access_level: "customer",
+    statuses: ["joined"],
+    first: 10,
+  });
+  const member = members.data.find(
+    (item) => item.user?.email?.trim().toLowerCase() === normalizedEmail,
+  );
+  if (!member?.user?.id) return null;
+
+  const memberships = await whop.memberships.list({
+    company_id: companyId,
+    user_ids: [member.user.id],
+    statuses: ["active", "trialing"],
+    first: 20,
+  });
+
+  for (const membership of memberships.data) {
+    const extraSeats = await extraLinkedInSeatsFromWhopSource(membership);
+    if (!extraSeats) continue;
+    return {
+      extraSeats,
+      membershipId: membership.id,
+      payerEmail: membership.user?.email?.trim().toLowerCase() || normalizedEmail,
+    } satisfies WhopActiveLinkedInSeatMembership;
+  }
+
+  return null;
+}
+
 async function getLinkedInSeatProductId() {
   if (linkedInSeatProductId) return linkedInSeatProductId;
 
@@ -324,6 +404,11 @@ export async function createLinkedInSeatCheckout(input: {
       product_id: productId,
       title: extraLinkedInSeatPlanTitle(extraSeats),
       description: `${extraSeats} extra LinkedIn account${extraSeats === 1 ? "" : "s"} on top of the included account.`,
+      metadata: {
+        kind: LINKEDIN_SEAT_CHECKOUT_KIND,
+        extraSeats: String(extraSeats),
+        workspaceId: input.workspaceId,
+      },
       plan_type: "renewal",
       release_method: "buy_now",
       visibility: "hidden",

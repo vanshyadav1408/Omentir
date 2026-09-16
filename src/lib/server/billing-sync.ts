@@ -1,9 +1,11 @@
 import "server-only";
 
 import { currentUser } from "./auth";
-import { logAutomationRun, updateWorkspaceBilling } from "./data";
+import { logAutomationRun, updateWorkspaceBilling, updateWorkspaceLinkedInSeats } from "./data";
 import { hasActiveSubscription } from "./subscription";
-import { findActiveWhopMembershipByEmail } from "./whop";
+import { findActiveLinkedInSeatMembershipByEmail, findActiveWhopMembershipByEmail } from "./whop";
+import { extraLinkedInSeatsCount } from "@/lib/linkedin-seat-pricing";
+import { commercialPlanLimits } from "@/lib/plan-limits";
 import { isLocalMode } from "@/lib/runtime-mode";
 import type { Workspace } from "./types";
 
@@ -18,19 +20,21 @@ function uniqueEmails(emails: Array<string | null | undefined>) {
   );
 }
 
-/** If Firestore still says unpaid, copy an active Whop membership onto the workspace. */
-export async function syncWorkspaceBillingIfInactive(workspace: Workspace): Promise<Workspace> {
-  if (isLocalMode() || hasActiveSubscription(workspace)) return workspace;
-
-  const user = await currentUser();
-  const emails = uniqueEmails([
+function emailsForWorkspace(workspace: Workspace, user: Awaited<ReturnType<typeof currentUser>>) {
+  return uniqueEmails([
     user?.primaryEmailAddress?.emailAddress,
     ...(user?.emailAddresses.map((item) => item.emailAddress) ?? []),
     workspace.notificationEmail,
     workspace.billing?.payerEmail,
   ]);
+}
 
-  for (const email of emails) {
+/** If Firestore still says unpaid, copy an active Whop membership onto the workspace. */
+export async function syncWorkspaceBillingIfInactive(workspace: Workspace): Promise<Workspace> {
+  if (isLocalMode() || hasActiveSubscription(workspace)) return workspace;
+
+  const user = await currentUser();
+  for (const email of emailsForWorkspace(workspace, user)) {
     try {
       const membership = await findActiveWhopMembershipByEmail(email);
       if (!membership) continue;
@@ -51,6 +55,42 @@ export async function syncWorkspaceBillingIfInactive(workspace: Workspace): Prom
     } catch (error) {
       const message = error instanceof Error ? error.message : "Whop membership check failed.";
       console.error("[billing sync] Whop membership check failed:", message);
+    }
+  }
+
+  return workspace;
+}
+
+/** Copy a paid Extra Seats membership onto the workspace when the webhook never stored it. */
+export async function syncWorkspaceLinkedInSeatsFromWhop(workspace: Workspace): Promise<Workspace> {
+  if (isLocalMode() || !hasActiveSubscription(workspace)) return workspace;
+  if (!Number.isFinite(commercialPlanLimits(workspace.billing?.plan).linkedInAccounts)) {
+    return workspace;
+  }
+
+  const user = await currentUser();
+  for (const email of emailsForWorkspace(workspace, user)) {
+    try {
+      const seats = await findActiveLinkedInSeatMembershipByEmail(email);
+      if (!seats) continue;
+      const current = extraLinkedInSeatsCount(workspace.billing?.extraLinkedInSeats);
+      if (current === seats.extraSeats && workspace.billing?.seatMembershipId === seats.membershipId) {
+        return workspace;
+      }
+      const billing = await updateWorkspaceLinkedInSeats(workspace.id, {
+        extraLinkedInSeats: seats.extraSeats,
+        seatMembershipId: seats.membershipId,
+      });
+      await logAutomationRun({
+        workspaceId: workspace.id,
+        kind: "webhook",
+        status: "completed",
+        message: `Set ${seats.extraSeats} extra LinkedIn seat${seats.extraSeats === 1 ? "" : "s"} from Whop membership check ${seats.membershipId}.`,
+      });
+      return { ...workspace, billing };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Whop extra-seat membership check failed.";
+      console.error("[billing sync] Whop extra-seat membership check failed:", message);
     }
   }
 
