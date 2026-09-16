@@ -44,6 +44,7 @@ import {
   upsertLead,
   stopLeadOutreach,
 } from "@/lib/server/data";
+import { parseAgentMessageTone } from "@/lib/agent-setup-defaults";
 import { parseLinkedInLeadCsv } from "@/lib/linkedin-csv";
 import { normalizeLinkedInProfileUrl } from "@/lib/server/firebase";
 import {
@@ -921,9 +922,11 @@ export async function updateAgentAction(formData: FormData) {
       ? "handoff"
       : parseReplyHandling(formData.get("replyHandling"));
   const bookingLink = await bookingLinkFromForm(formData, replyHandling, workspace.id);
+  const messageTone = parseAgentMessageTone(String(formData.get("messageTone") || ""));
   // Editing an agent does not go through createCampaignAction, so the send
   // window picker on the same form has to be applied to the agent's existing
-  // campaigns here or it silently does nothing after launch.
+  // campaigns here or it silently does nothing after launch. Tone is the same:
+  // the picker is on this form, the value lives on the campaign.
   await setSendWindowForGroup(
     workspace.id,
     agent.targetGroupId,
@@ -937,6 +940,7 @@ export async function updateAgentAction(formData: FormData) {
       updateCampaign(workspace.id, campaign.id, {
         replyHandling,
         bookingLink: bookingLink || "",
+        ...(messageTone ? { messageTone } : {}),
       }),
     ),
   );
@@ -1112,7 +1116,7 @@ export async function createCampaignAction(formData: FormData) {
     });
   }
 
-  const messageTone = String(formData.get("messageTone") || "").trim();
+  const messageTone = parseAgentMessageTone(String(formData.get("messageTone") || ""));
   const campaign = await createCampaign(workspace.id, {
     name: String(formData.get("name") || "LinkedIn campaign").trim(),
     groupId,

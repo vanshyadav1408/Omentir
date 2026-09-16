@@ -18,6 +18,7 @@ import {
   type LinkedInProfileRatingResult,
   type LinkedInProfileToolMode,
 } from "@/lib/linkedin-profile-tool";
+import { NEW_AGENT_MESSAGE_TONE } from "@/lib/agent-setup-defaults";
 import { fetchWebsitePages, WebsiteUnreachableError } from "./website";
 import type {
   Agent,
@@ -1175,7 +1176,7 @@ export async function draftAgentSetupWithGemini(profile: ProductProfile | null) 
     competitorUrls: [],
     founderUrls: [],
     campaignGoal: "warm",
-    messageTone: "professional",
+    messageTone: NEW_AGENT_MESSAGE_TONE,
     connectionNote:
       `Hi {{firstName}}, I'm with ${profile?.companyName || "a small team"}. Thought it made sense to connect.`,
     firstMessage:

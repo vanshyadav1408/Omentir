@@ -37,6 +37,7 @@ import {
   upsertProductProfile,
 } from "./data";
 import { sumAgentLeadTotals } from "@/lib/agent-lead-totals";
+import { NEW_AGENT_MESSAGE_TONE, sendWindowForOutreachAttach } from "@/lib/agent-setup-defaults";
 import { buildDefaultAiOutreachSteps } from "./campaign-sequence";
 import { listScheduledActions } from "./scheduled-actions";
 import { SPACING_MINUTES } from "./send-schedule";
@@ -476,6 +477,7 @@ async function ensureDefaultOutreachCampaign(input: {
     ...(input.bookingLink ? { bookingLink: input.bookingLink } : {}),
     notifyOnReply: input.notifyOnReply,
     sendWindow: input.sendWindow,
+    messageTone: NEW_AGENT_MESSAGE_TONE,
   });
   await enrollGroupInCampaign(input.workspaceId, campaign);
   return campaign;
@@ -636,7 +638,7 @@ export async function createAgentResource(context: AgentApiContext, payload: unk
       input.bookingLink,
     );
     const notifyOnReply = input.notifyOnReply ?? true;
-    const sendWindow = input.sendWindow ?? "business";
+    const sendWindow = sendWindowForOutreachAttach(input.sendWindow, undefined);
     try {
       await ensureDefaultOutreachCampaign({
         workspaceId: context.workspace.id,
@@ -847,8 +849,9 @@ export async function updateAgentResource(context: AgentApiContext, payload: unk
         : "";
     const notifyOnReply =
       input.notifyOnReply ?? existing?.notifyOnReply ?? true;
-    const sendWindow =
-      input.sendWindow ?? existing?.sendWindow ?? ("business" as SendWindow);
+    // Missing stored window only applies when creating outreach on an agent
+    // that has none yet. Existing campaigns keep their own sendWindow above.
+    const sendWindow = sendWindowForOutreachAttach(input.sendWindow, existing?.sendWindow);
 
     let created = false;
     let sequencesUpdated = 0;
