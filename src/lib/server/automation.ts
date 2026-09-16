@@ -2277,15 +2277,16 @@ async function syncInboundReplies(input: {
       matchPendingAcceptance: true,
     });
     if (!lead) continue;
+    const leadWorkspaceId = lead.workspaceId;
     if (message.senderProviderId && !lead.providerProfileId) {
-      await updateLead(workspaceId, lead.id, {
+      await updateLead(leadWorkspaceId, lead.id, {
         providerProfileId: message.senderProviderId,
       });
       lead.providerProfileId = message.senderProviderId;
     }
 
     const result = await processInboundMessage({
-      workspaceId,
+      workspaceId: leadWorkspaceId,
       lead,
       body: message.body,
       senderName: message.senderName || lead.name,

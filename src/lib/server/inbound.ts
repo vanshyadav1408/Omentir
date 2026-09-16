@@ -18,6 +18,7 @@ import {
   getWorkspace,
   listCampaignEnrollments,
   listCampaigns,
+  listWorkspaceIdsSharingLinkedIn,
   logAutomationRun,
   planActionSlots,
   releaseLeadOutcomeNotification,
@@ -339,6 +340,27 @@ const INBOUND_IDENTITY_MATCH_STATUSES: CampaignEnrollment["status"][] = [
 ];
 
 export async function findLeadForInboundEvent(input: {
+  workspaceId: string;
+  leadId?: string;
+  linkedInUrl?: string;
+  providerProfileId?: string;
+  publicIdentifier?: string;
+  fullName?: string;
+  matchPendingAcceptance?: boolean;
+}) {
+  const ownedIds = await listWorkspaceIdsSharingLinkedIn(input.workspaceId);
+  const workspaceIds = [
+    input.workspaceId,
+    ...ownedIds.filter((id) => id !== input.workspaceId),
+  ];
+  for (const workspaceId of workspaceIds) {
+    const lead = await findLeadForInboundEventInWorkspace({ ...input, workspaceId });
+    if (lead) return lead;
+  }
+  return null;
+}
+
+async function findLeadForInboundEventInWorkspace(input: {
   workspaceId: string;
   leadId?: string;
   linkedInUrl?: string;

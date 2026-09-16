@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import LogoMark from "./logo-mark";
 import { useHydrated } from "./use-hydrated";
 import WorkspaceSwitcher, { type WorkspaceSwitcherItem } from "./workspace-switcher";
@@ -164,6 +164,40 @@ export default function Sidebar({
   const apiActive = linkActive("/api-keys");
   const settingsActive = linkActive("/settings");
 
+  const workspaceControl = ({
+    collapsed: isRowCollapsed,
+    className,
+    onNavigate,
+    label,
+  }: {
+    collapsed: boolean;
+    className: string;
+    onNavigate?: () => void;
+    label: ReactNode;
+  }) =>
+    workspaces.length ? (
+      <WorkspaceSwitcher
+        workspaces={workspaces}
+        activeWorkspaceId={activeWorkspaceId}
+        canCreateWorkspace={canCreateWorkspace}
+        collapsed={isRowCollapsed}
+        active={workspaceActive}
+        className={className}
+        onNavigate={onNavigate}
+      />
+    ) : (
+      <Link
+        href="/workspace"
+        onClick={onNavigate}
+        title={isRowCollapsed ? "Workspace" : undefined}
+        aria-current={workspaceActive ? "page" : undefined}
+        className={className}
+      >
+        <NavIcon name="package_2" />
+        {label}
+      </Link>
+    );
+
   const bottomLinks = (onClick?: () => void) => (
     <>
       {!localMode && showApi ? (
@@ -178,15 +212,6 @@ export default function Sidebar({
         </Link>
       ) : null}
       <Link
-        href="/workspace"
-        onClick={onClick}
-        aria-current={workspaceActive ? "page" : undefined}
-        className={`mb-0.5 last:mb-0 ${navClassName(workspaceActive)}`}
-      >
-        <NavIcon name="package_2" />
-        <span>Workspace</span>
-      </Link>
-      <Link
         href="/settings"
         onClick={onClick}
         aria-current={settingsActive ? "page" : undefined}
@@ -195,6 +220,12 @@ export default function Sidebar({
         <NavIcon name="settings" />
         <span>Settings</span>
       </Link>
+      {workspaceControl({
+        collapsed: false,
+        className: `mb-0.5 last:mb-0 ${navClassName(workspaceActive)}`,
+        onNavigate: onClick,
+        label: <span>Workspace</span>,
+      })}
     </>
   );
 
@@ -262,18 +293,10 @@ export default function Sidebar({
         </div>
 
         <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 pb-3 pt-1">
-          {workspaces.length ? (
-            <WorkspaceSwitcher
-              workspaces={workspaces}
-              activeWorkspaceId={activeWorkspaceId}
-              canCreateWorkspace={canCreateWorkspace}
-              onNavigate={() => setMobileOpen(false)}
-            />
-          ) : null}
           {primaryNav.map((item) => renderNavLink(item, () => setMobileOpen(false)))}
         </nav>
 
-        <div className="mt-auto shrink-0 px-2 pb-2 pt-2">
+        <div className="mt-auto flex shrink-0 flex-col px-2 pb-2 pt-2">
           {bottomLinks(() => setMobileOpen(false))}
         </div>
       </aside>
@@ -315,14 +338,6 @@ export default function Sidebar({
           className={`flex flex-1 flex-col gap-0.5 overflow-y-auto pb-3 pt-1 transition-[padding] duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${isCollapsed ? "px-1.5" : "px-2"
             }`}
         >
-          {workspaces.length ? (
-            <WorkspaceSwitcher
-              workspaces={workspaces}
-              activeWorkspaceId={activeWorkspaceId}
-              canCreateWorkspace={canCreateWorkspace}
-              collapsed={isCollapsed}
-            />
-          ) : null}
           {primaryNav.map((item) => {
             const active = linkActive(item.href);
             return (
@@ -341,7 +356,7 @@ export default function Sidebar({
         </nav>
 
         <div
-          className={`mt-auto shrink-0 pb-2 pt-1 transition-[padding] duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${isCollapsed ? "px-1.5" : "px-2"
+          className={`mt-auto flex shrink-0 flex-col pb-2 pt-1 transition-[padding] duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${isCollapsed ? "px-1.5" : "px-2"
             }`}
         >
           {!localMode && showApi ? (
@@ -356,15 +371,6 @@ export default function Sidebar({
             </Link>
           ) : null}
           <Link
-            href="/workspace"
-            title={isCollapsed ? "Workspace" : undefined}
-            aria-current={workspaceActive ? "page" : undefined}
-            className={`mb-0.5 last:mb-0 ${desktopNavClassName(workspaceActive, isCollapsed)}`}
-          >
-            <NavIcon name="package_2" />
-            <SidebarLabel collapsed={isCollapsed}>Workspace</SidebarLabel>
-          </Link>
-          <Link
             href="/settings"
             title={isCollapsed ? "Settings" : undefined}
             aria-current={settingsActive ? "page" : undefined}
@@ -373,6 +379,11 @@ export default function Sidebar({
             <NavIcon name="settings" />
             <SidebarLabel collapsed={isCollapsed}>Settings</SidebarLabel>
           </Link>
+          {workspaceControl({
+            collapsed: isCollapsed,
+            className: `mb-0.5 last:mb-0 ${desktopNavClassName(workspaceActive, isCollapsed)}`,
+            label: <SidebarLabel collapsed={isCollapsed}>Workspace</SidebarLabel>,
+          })}
         </div>
       </aside>
     </>

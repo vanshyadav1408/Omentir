@@ -1,6 +1,6 @@
 import { auth } from "@/lib/server/auth";
 import { NextResponse } from "next/server";
-import { getLinkedInAccountByAccountId } from "@/lib/server/data";
+import { getLinkedInAccountByAccountId, listWorkspaceIdsSharingLinkedIn } from "@/lib/server/data";
 import { resolveActiveWorkspace } from "@/lib/server/active-workspace";
 import { hasActiveSubscription } from "@/lib/server/subscription";
 import { listLinkedInChatMessagesPage, listLinkedInInbox } from "@/lib/server/unipile";
@@ -21,8 +21,9 @@ export async function GET(request: Request) {
   const accountId = url.searchParams.get("accountId")?.trim() || "";
   const cursor = url.searchParams.get("cursor")?.trim() || undefined;
   const account = accountId ? await getLinkedInAccountByAccountId(accountId) : null;
+  const ownedIds = account ? await listWorkspaceIdsSharingLinkedIn(workspace.id) : [];
 
-  if (!chatId || !account || account.workspaceId !== workspace.id) {
+  if (!chatId || !account || !ownedIds.includes(account.workspaceId)) {
     return NextResponse.json({ error: "Chat not found" }, { status: 404 });
   }
 

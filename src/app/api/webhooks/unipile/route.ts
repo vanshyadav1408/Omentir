@@ -4,6 +4,7 @@ import {
   getLinkedInAccountByAccountId,
   listCampaigns,
   listCampaignEnrollments,
+  listWorkspaceIdsSharingLinkedIn,
   logAutomationRun,
   updateLead,
 } from "@/lib/server/data";
@@ -195,10 +196,13 @@ export async function POST(request: NextRequest) {
     ? await getLinkedInAccountByAccountId(payload.account_id)
     : null;
   if (account && payload.workspace_id && payload.workspace_id !== account.workspaceId) {
-    return NextResponse.json({ error: "Webhook workspace does not match its account." }, { status: 400 });
+    const ownedIds = await listWorkspaceIdsSharingLinkedIn(account.workspaceId);
+    if (!ownedIds.includes(payload.workspace_id)) {
+      return NextResponse.json({ error: "Webhook workspace does not match its account." }, { status: 400 });
+    }
   }
-  const workspaceId = account?.workspaceId || payload.workspace_id;
-  if (!workspaceId) {
+  const accountWorkspaceId = account?.workspaceId || payload.workspace_id;
+  if (!accountWorkspaceId) {
     return NextResponse.json(
       { error: "workspace_id or known account_id is required in webhook payload." },
       { status: 400 },
@@ -246,7 +250,7 @@ export async function POST(request: NextRequest) {
     : payload.user_full_name || messageSender?.name || messageSender?.attendee_name;
 
   const lead = await findLeadForInboundEvent({
-    workspaceId,
+    workspaceId: accountWorkspaceId,
     leadId: payload.lead_id,
     linkedInUrl: identityProfileUrl,
     providerProfileId: identityProviderId,
@@ -254,6 +258,7 @@ export async function POST(request: NextRequest) {
     fullName: identityName,
     matchPendingAcceptance: isConnectionApproved || isOwnMessage || isReply,
   });
+  const workspaceId = lead?.workspaceId || accountWorkspaceId;
 
   // Messages we send through Unipile come back as message webhooks too; treating
   // them as replies would stop the campaign right after its first message.

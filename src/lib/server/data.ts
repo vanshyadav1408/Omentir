@@ -22,6 +22,10 @@ import { sendWindowTimeZoneForLead } from "./lead-time-zone";
 import { capturePostHogEvent } from "@/lib/posthog-server";
 import { addInviteLimitSignal } from "./outreach-rules";
 import { resolveUsableLinkedInAccount } from "@/lib/linkedin-account-fallback";
+import {
+  canonicalLinkedInAccountsByProvider,
+  linkedInAccountIsOnOwnedWorkspace,
+} from "@/lib/linkedin-account-sharing";
 import { httpsAvatarUrl } from "@/lib/lead-avatar";
 import {
   canEnrollLeadForOutreach,
@@ -308,6 +312,36 @@ async function workspaceIdsForOwner(ownerId: string) {
   const ids = new Set(snap.docs.map((doc) => doc.id));
   ids.add(ownerId);
   return [...ids];
+}
+
+const FIRESTORE_IN_LIMIT = 30;
+
+function chunkIds(ids: string[]) {
+  const unique = [...new Set(ids.filter(Boolean))];
+  const chunks: string[][] = [];
+  for (let i = 0; i < unique.length; i += FIRESTORE_IN_LIMIT) {
+    chunks.push(unique.slice(i, i + FIRESTORE_IN_LIMIT));
+  }
+  return chunks;
+}
+
+export async function listWorkspaceIdsSharingLinkedIn(workspaceId: string) {
+  const workspace = await findWorkspace(workspaceId);
+  if (!workspace) return [workspaceId];
+  return workspaceIdsForOwner(workspace.ownerId || workspace.id);
+}
+
+async function listLinkedInAccountDocs(workspaceIds: string[], connectedOnly: boolean) {
+  const chunks = chunkIds(workspaceIds);
+  if (!chunks.length) return [];
+  const snaps = await Promise.all(
+    chunks.map((chunk) => {
+      let query = collection<LinkedInAccount>("linkedinAccounts").where("workspaceId", "in", chunk);
+      if (connectedOnly) query = query.where("status", "==", "connected");
+      return query.get();
+    }),
+  );
+  return snaps.flatMap((snap) => snap.docs.map((doc) => doc.data()));
 }
 
 export async function listWorkspacesForOwner(ownerId: string) {
@@ -732,13 +766,9 @@ export async function getLinkedInAccount(workspaceId: string) {
 }
 
 export async function listLinkedInAccounts(workspaceId: string) {
-  const snap = await collection<LinkedInAccount>("linkedinAccounts")
-    .where("workspaceId", "==", workspaceId)
-    .where("status", "==", "connected")
-    .get();
-  return snap.docs
-    .map((doc) => doc.data())
-    .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  return canonicalLinkedInAccountsByProvider(
+    await listLinkedInAccountDocs(await listWorkspaceIdsSharingLinkedIn(workspaceId), true),
+  );
 }
 
 export async function listAllLinkedInAccounts(workspaceId: string) {
@@ -749,12 +779,21 @@ export async function listAllLinkedInAccounts(workspaceId: string) {
 }
 
 // Includes disconnected and error rows so reconnect can reuse the Unipile
-// account id after the session died.
+// account id after the session died. Looks across the owner's workspaces so a
+// new workspace can reconnect the same LinkedIn instead of starting over.
 export async function getLatestLinkedInAccount(workspaceId: string) {
   return (
-    (await listAllLinkedInAccounts(workspaceId)).sort((a, b) =>
-      (b.updatedAt || b.createdAt).localeCompare(a.updatedAt || a.createdAt),
+    (await listLinkedInAccountDocs(await listWorkspaceIdsSharingLinkedIn(workspaceId), false)).sort(
+      (a, b) => (b.updatedAt || b.createdAt).localeCompare(a.updatedAt || a.createdAt),
     )[0] || null
+  );
+}
+
+async function linkedInAccountAllowedInWorkspace(account: LinkedInAccount, workspaceId: string) {
+  if (account.workspaceId === workspaceId) return true;
+  return linkedInAccountIsOnOwnedWorkspace(
+    account.workspaceId,
+    await listWorkspaceIdsSharingLinkedIn(workspaceId),
   );
 }
 
@@ -765,7 +804,7 @@ export async function markLinkedInAccountDisconnected(
   const ref = collection<LinkedInAccount>("linkedinAccounts").doc(linkedInAccountId);
   const snap = await ref.get();
   const account = snap.data();
-  if (!account || account.workspaceId !== workspaceId) return null;
+  if (!account || !(await linkedInAccountAllowedInWorkspace(account, workspaceId))) return null;
   if (account.status === "disconnected") return account;
   const timestamp = nowIso();
   await ref.set({ status: "disconnected", updatedAt: timestamp }, { merge: true });
@@ -794,7 +833,7 @@ export async function getLinkedInAccountForWorkspace(
   const snap = await ref.get();
   const account = snap.data();
   const requested =
-    account?.workspaceId === workspaceId ? account : null;
+    account && (await linkedInAccountAllowedInWorkspace(account, workspaceId)) ? account : null;
   if (requested?.status === "connected") return requested;
   if (!options?.fallbackToDefault) return null;
   return resolveUsableLinkedInAccount(requested, await getLinkedInAccount(workspaceId));
@@ -821,10 +860,17 @@ export async function saveLinkedInAccount(
   const workspace = await getWorkspace(workspaceId);
   const limit = linkedInAccountLimit(workspace.billing?.plan);
   const timestamp = nowIso();
-  const id = `${workspaceId}-${cleanId(input.accountId) || "linkedin"}`;
+  const allowedWorkspaceIds = await listWorkspaceIdsSharingLinkedIn(workspaceId);
+  const existingForOwner = await getLinkedInAccountByAccountIdAnyStatus(input.accountId);
+  const reusable =
+    existingForOwner &&
+    linkedInAccountIsOnOwnedWorkspace(existingForOwner.workspaceId, allowedWorkspaceIds)
+      ? existingForOwner
+      : null;
+  const id = reusable?.id || `${workspaceId}-${cleanId(input.accountId) || "linkedin"}`;
+  const homeWorkspaceId = reusable?.workspaceId || workspaceId;
   const accountRef = collection<LinkedInAccount>("linkedinAccounts").doc(id);
-  const existing = await accountRef.get();
-  const existingAccount = existing.exists ? (existing.data() as LinkedInAccount) : null;
+  const existingAccount = reusable;
   if (!existingAccount && input.status === "connected") {
     const connectedAccounts = await listLinkedInAccounts(workspaceId);
     if (connectedAccounts.length >= limit) {
@@ -833,7 +879,7 @@ export async function saveLinkedInAccount(
   }
   const account: LinkedInAccount = {
     id,
-    workspaceId,
+    workspaceId: homeWorkspaceId,
     provider: "unipile",
     accountId: input.accountId,
     displayName: input.displayName,
@@ -849,12 +895,20 @@ export async function saveLinkedInAccount(
   await getDb().runTransaction(async (transaction) => {
     const ownerSnap = await transaction.get(ownerRef);
     const owner = ownerSnap.data();
-    if (owner && (owner.accountId !== input.accountId || owner.workspaceId !== workspaceId)) {
+    if (
+      owner &&
+      (owner.accountId !== input.accountId ||
+        !linkedInAccountIsOnOwnedWorkspace(owner.workspaceId, allowedWorkspaceIds))
+    ) {
       throw new Error("This LinkedIn account is already connected to another workspace.");
     }
     transaction.set(
       ownerRef,
-      { accountId: input.accountId, workspaceId, createdAt: owner?.createdAt || timestamp },
+      {
+        accountId: input.accountId,
+        workspaceId: homeWorkspaceId,
+        createdAt: owner?.createdAt || timestamp,
+      },
       { merge: true },
     );
     transaction.set(accountRef, account, { merge: true });

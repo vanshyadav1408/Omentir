@@ -1,7 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition, type FormEvent } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useTransition,
+  type CSSProperties,
+  type FormEvent,
+} from "react";
 import { createPortal } from "react-dom";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createWorkspaceAction, switchWorkspaceAction } from "@/app/actions";
 import { isNextNavigationError, userFacingError } from "@/app/toast";
@@ -56,17 +65,41 @@ export function WorkspaceAvatar({
   );
 }
 
+function PlusIcon() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      aria-hidden="true"
+      className="shrink-0"
+    >
+      <path
+        d="M10 4.5v11M4.5 10h11"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 export default function WorkspaceSwitcher({
   workspaces,
   activeWorkspaceId,
   canCreateWorkspace,
   collapsed = false,
+  active = false,
+  className = "",
   onNavigate,
 }: {
   workspaces: WorkspaceSwitcherItem[];
   activeWorkspaceId: string;
   canCreateWorkspace: boolean;
   collapsed?: boolean;
+  active?: boolean;
+  className?: string;
   onNavigate?: () => void;
 }) {
   const router = useRouter();
@@ -75,19 +108,52 @@ export default function WorkspaceSwitcher({
   const [open, setOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
+  const [menuStyle, setMenuStyle] = useState<CSSProperties>({});
   const [pending, startTransition] = useTransition();
   useBodyScrollLock(creating);
 
-  const active =
+  const activeWorkspace =
     workspaces.find((workspace) => workspace.id === activeWorkspaceId) || workspaces[0];
-  const activeName = workspaceDisplayName(active || { id: activeWorkspaceId, name: "Workspace" });
+  const activeName = workspaceDisplayName(
+    activeWorkspace || { id: activeWorkspaceId, name: "Workspace" },
+  );
+  const showSwitcher = workspaces.length > 1 || canCreateWorkspace;
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    function place() {
+      const rect = menuRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      if (collapsed) {
+        setMenuStyle({
+          left: rect.right + 8,
+          bottom: window.innerHeight - rect.bottom,
+          width: 224,
+        });
+      } else {
+        setMenuStyle({
+          left: rect.left,
+          bottom: window.innerHeight - rect.top + 4,
+          width: Math.max(rect.width, 176),
+        });
+      }
+    }
+    place();
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, true);
+    return () => {
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place, true);
+    };
+  }, [open, collapsed]);
 
   useEffect(() => {
     if (!open) return;
     const onPointer = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
+      const target = event.target;
+      if (target instanceof Node && menuRef.current?.contains(target)) return;
+      if (target instanceof Element && target.closest('[role="listbox"]')) return;
+      setOpen(false);
     };
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") setOpen(false);
@@ -100,10 +166,15 @@ export default function WorkspaceSwitcher({
     };
   }, [open]);
 
+  function goToWorkspace() {
+    setOpen(false);
+    onNavigate?.();
+  }
+
   function switchTo(workspaceId: string) {
     if (workspaceId === activeWorkspaceId) {
-      setOpen(false);
-      onNavigate?.();
+      goToWorkspace();
+      router.push("/workspace");
       return;
     }
     startTransition(async () => {
@@ -209,75 +280,130 @@ export default function WorkspaceSwitcher({
         )
       : null;
 
-  if (!active) return null;
+  if (!activeWorkspace) return null;
+
+  const menu =
+    open && hydrated
+      ? createPortal(
+          <div
+            role="listbox"
+            aria-label="Workspaces"
+            style={menuStyle}
+            onMouseDown={(event) => event.stopPropagation()}
+            className="fixed z-[120] max-h-[min(24rem,calc(100vh-1rem))] overflow-y-auto rounded-md border border-zinc-200 bg-white py-1 shadow-[0_8px_24px_rgba(15,23,42,0.12)]"
+          >
+            {workspaces.map((workspace) => {
+              const name = workspaceDisplayName(workspace);
+              const selected = workspace.id === activeWorkspaceId;
+              const rowClassName =
+                "flex w-full items-center gap-2.5 px-2.5 py-1.5 text-left text-[13px] text-zinc-800 hover:bg-zinc-50 disabled:opacity-60";
+              const content = (
+                <>
+                  <WorkspaceAvatar name={name} faviconUrl={workspace.faviconUrl} />
+                  <span className="min-w-0 flex-1 truncate">{name}</span>
+                  {selected ? (
+                    <span className="material-symbols-outlined ms-size-20 text-[#ba3871]">check</span>
+                  ) : null}
+                </>
+              );
+              if (selected) {
+                return (
+                  <Link
+                    key={workspace.id}
+                    href="/workspace"
+                    role="option"
+                    aria-selected="true"
+                    onClick={goToWorkspace}
+                    className={rowClassName}
+                  >
+                    {content}
+                  </Link>
+                );
+              }
+              return (
+                <button
+                  key={workspace.id}
+                  type="button"
+                  role="option"
+                  aria-selected="false"
+                  disabled={pending}
+                  onClick={() => switchTo(workspace.id)}
+                  className={rowClassName}
+                >
+                  {content}
+                </button>
+              );
+            })}
+            {canCreateWorkspace ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  setCreateError("");
+                  setCreating(true);
+                }}
+                className="mt-1 flex w-full items-center gap-2.5 border-t border-zinc-100 px-2.5 py-1.5 text-left text-[13px] text-zinc-700 hover:bg-zinc-50"
+              >
+                <PlusIcon />
+                New workspace
+              </button>
+            ) : null}
+          </div>,
+          document.body,
+        )
+      : null;
+
+  const identity = (
+    <Link
+      href="/workspace"
+      title={collapsed ? activeName : undefined}
+      aria-label={collapsed ? activeName : undefined}
+      aria-current={active ? "page" : undefined}
+      onClick={goToWorkspace}
+      className={
+        collapsed
+          ? "grid h-full w-full place-items-center"
+          : "flex min-w-0 flex-1 items-center gap-2.5"
+      }
+    >
+      <WorkspaceAvatar name={activeName} faviconUrl={activeWorkspace.faviconUrl} />
+      {collapsed ? null : <span className="min-w-0 flex-1 truncate text-left">{activeName}</span>}
+    </Link>
+  );
 
   return (
-    <div ref={menuRef} className="relative mb-1">
-      <button
-        type="button"
-        onClick={() => setOpen((value) => !value)}
-        title={collapsed ? activeName : undefined}
-        aria-expanded={open}
-        aria-haspopup="listbox"
-        className={`flex items-center rounded-md py-1.5 text-[13px] font-normal text-[var(--md-sys-color-on-surface)] hover:bg-[var(--md-sys-nav-item-active)] ${
-          collapsed ? "h-8 w-8 justify-center self-center p-0" : "min-h-8 w-full gap-2.5 px-2"
-        }`}
-      >
-        <WorkspaceAvatar name={activeName} faviconUrl={active.faviconUrl} />
-        {collapsed ? null : (
-          <>
-            <span className="min-w-0 flex-1 truncate text-left">{activeName}</span>
-            <span className="material-symbols-outlined ms-size-20 shrink-0 text-[var(--md-sys-color-on-surface-variant)]">
-              expand_more
-            </span>
-          </>
-        )}
-      </button>
-      {open ? (
-        <div
-          role="listbox"
-          aria-label="Workspaces"
-          className={`absolute z-[120] rounded-md border border-zinc-200 bg-white py-1 shadow-[0_8px_24px_rgba(15,23,42,0.12)] ${
-            collapsed ? "left-full top-0 ml-2 w-56" : "inset-x-0 top-full mt-1"
-          }`}
+    <div ref={menuRef} className={`relative ${className}`}>
+      {collapsed && showSwitcher ? (
+        <button
+          type="button"
+          title={activeName}
+          aria-label={activeName}
+          aria-current={active ? "page" : undefined}
+          aria-expanded={open}
+          aria-haspopup="listbox"
+          disabled={pending}
+          onClick={() => setOpen((value) => !value)}
+          className="grid h-full w-full place-items-center"
         >
-          {workspaces.map((workspace) => {
-            const name = workspaceDisplayName(workspace);
-            const selected = workspace.id === activeWorkspaceId;
-            return (
-              <button
-                key={workspace.id}
-                type="button"
-                role="option"
-                aria-selected={selected}
-                disabled={pending}
-                onClick={() => switchTo(workspace.id)}
-                className="flex w-full items-center gap-2.5 px-2.5 py-1.5 text-left text-[13px] text-zinc-800 hover:bg-zinc-50 disabled:opacity-60"
-              >
-                <WorkspaceAvatar name={name} faviconUrl={workspace.faviconUrl} />
-                <span className="min-w-0 flex-1 truncate">{name}</span>
-                {selected ? (
-                  <span className="material-symbols-outlined ms-size-20 text-[#ba3871]">check</span>
-                ) : null}
-              </button>
-            );
-          })}
-          {canCreateWorkspace ? (
-            <button
-              type="button"
-              onClick={() => {
-                setOpen(false);
-                setCreateError("");
-                setCreating(true);
-              }}
-              className="mt-1 flex w-full items-center gap-2.5 border-t border-zinc-100 px-2.5 py-1.5 text-left text-[13px] text-zinc-700 hover:bg-zinc-50"
-            >
-              <span className="material-symbols-outlined ms-size-20">add</span>
-              New workspace
-            </button>
-          ) : null}
-        </div>
+          <WorkspaceAvatar name={activeName} faviconUrl={activeWorkspace.faviconUrl} />
+        </button>
+      ) : (
+        identity
+      )}
+      {!collapsed && showSwitcher ? (
+        <button
+          type="button"
+          aria-label="Switch workspace"
+          aria-expanded={open}
+          aria-haspopup="listbox"
+          disabled={pending}
+          onClick={() => setOpen((value) => !value)}
+          className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-nav-item-active)]"
+        >
+          <span className="material-symbols-outlined ms-size-20">expand_more</span>
+        </button>
       ) : null}
+      {menu}
       {createDialog}
     </div>
   );
