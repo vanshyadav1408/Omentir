@@ -24,6 +24,11 @@ import {
   userFacingError,
   type AgentStartedKind,
 } from "@/app/toast";
+import {
+  messageToneForAgentForm,
+  sendWindowForAgentForm,
+  type AgentMessageTone,
+} from "@/lib/agent-setup-defaults";
 import type { Agent, CampaignReplyHandling, SendWindow } from "@/lib/server/types";
 import {
   INDUSTRY_SUGGESTIONS,
@@ -55,7 +60,7 @@ type AgentSetupDraft = {
   competitorUrls: string[];
   founderUrls: string[];
   campaignGoal: "warm" | "demo";
-  messageTone: "professional" | "conversational" | "direct";
+  messageTone: AgentMessageTone;
   connectionNote: string;
   firstMessage: string;
   followUpMessage: string;
@@ -78,6 +83,8 @@ type AgentSetupProps = {
   // The window the agent's existing campaign is already sending in. Lives on
   // the campaign, not the agent, so it has to be passed in separately.
   initialSendWindow?: SendWindow;
+  // Same split as sendWindow: stored campaign tone on edit, new-agent default otherwise.
+  initialMessageTone?: string;
   initialReplyHandling?: CampaignReplyHandling;
   initialBookingLink?: string;
   linkedInAccounts?: { id: string; displayName: string; accountId: string; avatarUrl?: string }[];
@@ -719,6 +726,7 @@ export default function AgentSetup({
   profile,
   initialAgent,
   initialSendWindow,
+  initialMessageTone,
   initialReplyHandling,
   initialBookingLink,
   linkedInAccounts = [],
@@ -792,14 +800,14 @@ export default function AgentSetup({
   const [outreachMode, setOutreachMode] = useState<"automatic" | "manual">(
     stealCustomers ? "automatic" : "automatic",
   );
-  // Business hours is the default for NEW agents: sending at 3am is the single
-  // most unnatural thing automated outreach can do. An existing agent opens on
-  // the window its campaign is actually sending in - and campaigns created
-  // before the picker existed have none stored, so they show (and keep) "always"
-  // until their owner changes it. Saving this form now writes the window back,
-  // so defaulting to "business" here would silently narrow every old campaign.
+  // Extended hours is the default for NEW agents (every day 7am-10pm). An
+  // existing agent opens on the window its campaign is actually sending in -
+  // and campaigns created before the picker existed have none stored, so they
+  // show (and keep) "always" until their owner changes it. Saving this form
+  // now writes the window back, so defaulting to "extended" here would
+  // silently narrow every old campaign.
   const [sendWindow, setSendWindow] = useState<SendWindow>(
-    initialSendWindow ?? (initialAgent ? "always" : "business"),
+    sendWindowForAgentForm(initialSendWindow, isEditing),
   );
   const [replyHandling, setReplyHandling] = useState<
     "handoff" | "ai_until_interest" | "ai_until_booked"
@@ -824,8 +832,11 @@ export default function AgentSetup({
   const [campaignGoal, setCampaignGoal] = useState<"warm" | "demo">(
     initialAgent ? "warm" : "demo",
   );
-  const [messageTone, setMessageTone] = useState<"professional" | "conversational" | "direct">(
-    "professional",
+  // Conversational is the default for NEW agents. Existing agents keep their
+  // stored tone; campaigns with none stored keep professional, which is the
+  // voice Gemini already uses when messageTone is missing.
+  const [messageTone, setMessageTone] = useState<AgentMessageTone>(
+    messageToneForAgentForm(initialMessageTone, isEditing),
   );
   const [excludeFirstDegree, setExcludeFirstDegree] = useState(true);
   const [prompt, setPrompt] = useState(initialAgent?.prompt || "");

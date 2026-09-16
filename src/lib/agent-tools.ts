@@ -132,7 +132,7 @@ export const agentToolInputSchemas = {
       sendWindow: {
         enum: ["always", "business", "extended"],
         description:
-          "When this agent's outreach may send: always (24/7), business (Mon-Fri 09:00-18:00), or extended (daily 07:00-22:00). Defaults to business when outreach is set up here.",
+          "When this agent's outreach may send: always (24/7), business (Mon-Fri 09:00-18:00), or extended (daily 07:00-22:00). Defaults to extended when outreach is set up here.",
       },
     },
   },

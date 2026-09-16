@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { NEW_AGENT_SEND_WINDOW } from "@/lib/agent-setup-defaults";
 import { getAppBaseUrl } from "@/lib/server/runtime-config";
 
 export const dynamic = "force-dynamic";
@@ -115,6 +116,7 @@ export async function GET() {
             },
             signalSources,
             ...agentOutreachProperties,
+            sendWindow: { ...sendWindow, default: NEW_AGENT_SEND_WINDOW },
           },
         },
         AgentUpdate: {

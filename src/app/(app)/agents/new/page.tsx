@@ -188,6 +188,7 @@ export default async function NewAgentPage({
       saveProductProfile={saveProductProfileAction}
       initialAgent={agent}
       initialSendWindow={existingCampaign?.sendWindow}
+      initialMessageTone={existingCampaign?.messageTone}
       initialReplyHandling={existingCampaign?.replyHandling}
       initialBookingLink={existingCampaign?.bookingLink}
       timezone={workspace.timezone}
