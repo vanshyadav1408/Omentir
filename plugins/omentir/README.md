@@ -41,13 +41,13 @@ Auth is OAuth 2.1 against Omentir with Dynamic Client Registration and PKCE. The
 
 ## Before you connect
 
-You need an [Omentir](https://omentir.com) workspace with LinkedIn connected and **My Product** filled in.
+You need an [Omentir](https://omentir.com) workspace with LinkedIn connected and **Workspace** filled in.
 
 ## What agents can do
 
 | Category | Capabilities |
 | --- | --- |
-| Workspace | Read setup status, send allowance, and My Product |
+| Workspace | Read setup status, send allowance, and the product profile |
 | Agents | List, create, pause, resume, or delete lead finders and Steal Customers agents |
 | Leads | List scored people, including comment-level context on Steal Customers leads |
 | Outreach | Inspect the planned send queue. Draft notes. Send only when the user asks |

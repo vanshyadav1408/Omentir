@@ -2,7 +2,7 @@ import { auth } from "@/lib/server/auth";
 import { redirect } from "next/navigation";
 import ApiKeysView from "./api-keys-view";
 import { createAgentApiKeyAction, revokeAgentApiKeyAction } from "@/app/actions";
-import { getWorkspace } from "@/lib/server/data";
+import { resolveActiveWorkspace } from "@/lib/server/active-workspace";
 import { hasActiveSubscription } from "@/lib/server/subscription";
 import { planHasApiAccess } from "@/lib/plan-limits";
 import { createPageMetadata } from "@/app/seo";
@@ -21,7 +21,7 @@ export default async function ApiKeysPage() {
     throw new Error("Unauthorized");
   }
 
-  const workspace = await getWorkspace(userId);
+  const workspace = await resolveActiveWorkspace(userId);
   if (!hasActiveSubscription(workspace)) {
     redirect("/upgrade");
   }

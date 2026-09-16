@@ -36,6 +36,8 @@ export type Workspace = {
   id: string;
   ownerId: string;
   name: string;
+  // Favicon of the workspace landing page. Shown as the workspace avatar.
+  faviconUrl?: string;
   notificationEmail?: string;
   // IANA timezone (e.g. "America/New_York") used for local-time features like
   // the daily digest send hour. Unset means UTC.

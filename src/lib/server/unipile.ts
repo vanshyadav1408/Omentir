@@ -14,6 +14,7 @@ import {
   linkedInIdentityKeys,
   type LinkedInIdentity,
 } from "../linkedin-identity";
+import { httpsAvatarUrl } from "../lead-avatar";
 import { dedupeLinkedInInboxThreads } from "../inbox-threads";
 
 const UNIPILE_TIMEOUT_MS = 30_000;
@@ -142,6 +143,8 @@ export type UnipileProfile = {
   profile_url?: string;
   linkedin_url?: string;
   profile_picture_url?: string;
+  profile_picture_url_large?: string;
+  public_picture_url?: string;
   profile_image_url?: string;
   picture_url?: string;
   avatar_url?: string;
@@ -347,6 +350,7 @@ type UnipileMessage = {
 type UnipileChat = {
   id?: string;
   provider_id?: string;
+  attendee_id?: string;
   attendee_provider_id?: string;
   account_id?: string;
   name?: string;
@@ -569,28 +573,39 @@ function actorFromEngagement(item: UnipileComment | UnipileReaction): UnipilePro
   return null;
 }
 
-function profileAvatarUrl(profile: UnipileProfile) {
-  const record = asRecord(profile);
+function firstAvatarUrl(...values: unknown[]) {
+  for (const value of values) {
+    const url = httpsAvatarUrl(value);
+    if (url) return url;
+  }
+  return undefined;
+}
 
-  return (
-    profile.profile_picture_url ||
-    profile.profile_image_url ||
-    profile.picture_url ||
-    profile.avatar_url ||
-    pickString(record, [
-      "profilePictureUrl",
-      "profile_picture_url_large",
-      "profilePictureUrlLarge",
-      "profileImageUrl",
-      "pictureUrl",
-      "avatarUrl",
-      "image_url",
-      "imageUrl",
-      "picture",
-      "avatar",
-      "profile_picture",
-      "image",
-    ]) ||
+function recordAvatarUrl(record: RecordLike | null | undefined) {
+  if (!record) return undefined;
+  return firstAvatarUrl(
+    record.profile_picture_url_large,
+    record.profilePictureUrlLarge,
+    record.public_picture_url,
+    record.publicPictureUrl,
+    record.profile_picture_url,
+    record.profilePictureUrl,
+    record.profile_image_url,
+    record.profileImageUrl,
+    record.picture_url,
+    record.pictureUrl,
+    record.avatar_url,
+    record.avatarUrl,
+    record.image_url,
+    record.imageUrl,
+    record.picture,
+    record.avatar,
+    record.profile_picture,
+    record.image,
+    asRecord(record.picture)?.urls,
+    asRecord(record.avatar)?.urls,
+    asRecord(record.profile_picture)?.urls,
+    asRecord(record.image)?.urls,
     pickNestedString(
       record,
       [
@@ -603,12 +618,17 @@ function profileAvatarUrl(profile: UnipileProfile) {
         "linkedin",
         "linkedin_specific",
         "provider_data",
+        "urls",
       ],
       [
         "url",
         "large",
+        "original",
+        "medium",
+        "small",
         "profile_picture_url_large",
         "profilePictureUrlLarge",
+        "public_picture_url",
         "profile_picture_url",
         "profilePictureUrl",
         "profile_image_url",
@@ -620,7 +640,19 @@ function profileAvatarUrl(profile: UnipileProfile) {
         "image_url",
         "imageUrl",
       ],
-    )
+    ),
+  );
+}
+
+function profileAvatarUrl(profile: UnipileProfile) {
+  return firstAvatarUrl(
+    profile.profile_picture_url_large,
+    profile.public_picture_url,
+    profile.profile_picture_url,
+    profile.profile_image_url,
+    profile.picture_url,
+    profile.avatar_url,
+    recordAvatarUrl(asRecord(profile)),
   );
 }
 
@@ -912,57 +944,56 @@ function attendeeProfileUrl(attendee: UnipileChatAttendee | null) {
 function attendeeAvatarUrl(attendee: UnipileChatAttendee | null) {
   const record = asRecord(attendee);
   if (!record) return undefined;
+  return recordAvatarUrl(record);
+}
 
-  return (
-    pickString(record, [
-      "profile_picture_url_large",
-      "profilePictureUrlLarge",
-      "profile_picture_url",
-      "profilePictureUrl",
-      "profile_image_url",
-      "profileImageUrl",
-      "picture_url",
-      "pictureUrl",
-      "avatar_url",
-      "avatarUrl",
-      "image_url",
-      "imageUrl",
-      "picture",
-      "avatar",
-      "profile_picture",
-      "image",
-    ]) ||
-    pickNestedString(
-      record,
-      [
-        "picture",
-        "avatar",
-        "profile_picture",
-        "image",
-        "profile",
-        "user",
-        "linkedin",
-        "linkedin_specific",
-        "provider_data",
-      ],
-      [
-        "url",
-        "large",
-        "profile_picture_url_large",
-        "profilePictureUrlLarge",
-        "profile_picture_url",
-        "profilePictureUrl",
-        "profile_image_url",
-        "profileImageUrl",
-        "picture_url",
-        "pictureUrl",
-        "avatar_url",
-        "avatarUrl",
-        "image_url",
-        "imageUrl",
-      ],
-    )
-  );
+function rememberAttendeeKey(
+  byKey: Map<string, UnipileChatAttendee>,
+  raw: string | undefined,
+  attendee: UnipileChatAttendee,
+) {
+  const key = raw?.trim();
+  if (!key || byKey.has(key)) return;
+  byKey.set(key, attendee);
+  const lower = key.toLowerCase();
+  if (!byKey.has(lower)) byKey.set(lower, attendee);
+}
+
+function indexChatAttendees(attendees: UnipileChatAttendee[]) {
+  const byKey = new Map<string, UnipileChatAttendee>();
+  for (const attendee of attendees) {
+    rememberAttendeeKey(byKey, attendee.id, attendee);
+    rememberAttendeeKey(byKey, attendee.provider_id, attendee);
+    rememberAttendeeKey(byKey, attendee.member_id, attendee);
+    rememberAttendeeKey(byKey, attendee.urn, attendee);
+    rememberAttendeeKey(byKey, attendee.public_identifier, attendee);
+    for (const key of linkedInIdentityKeys({
+      providerProfileId: attendee.provider_id || attendee.member_id || attendee.urn,
+      publicIdentifier: attendee.public_identifier,
+      linkedInUrl: attendeeProfileUrl(attendee),
+    })) {
+      rememberAttendeeKey(byKey, key, attendee);
+    }
+  }
+  return byKey;
+}
+
+function attendeeForChat(
+  chat: UnipileChat,
+  byKey: Map<string, UnipileChatAttendee>,
+) {
+  const candidates = [
+    chat.attendee_id,
+    chat.attendee_provider_id,
+    ...linkedInIdentityKeys({ providerProfileId: chat.attendee_provider_id }),
+  ];
+  for (const candidate of candidates) {
+    const key = candidate?.trim();
+    if (!key) continue;
+    const hit = byKey.get(key) || byKey.get(key.toLowerCase());
+    if (hit) return hit;
+  }
+  return undefined;
 }
 
 function attendeeProviderIdentifier(attendee: UnipileChatAttendee | null) {
@@ -1993,13 +2024,32 @@ async function enrichChatAttendee(input: {
 export async function listLinkedInAccountAttendees(accountId: string) {
   if (!isUnipileConfigured()) return [] as UnipileChatAttendee[];
 
+  const attendees: UnipileChatAttendee[] = [];
+  const seen = new Set<string>();
+  let cursor: string | undefined;
+
   try {
-    const result = await request<
-      UnipileListResponse<UnipileChatAttendee> | UnipileChatAttendee[]
-    >(withQuery("/api/v1/chat_attendees", { account_id: accountId, limit: 200 }));
-    return getListItems<UnipileChatAttendee>(result);
+    // Inbox matching needs the attendee for each open chat. One page of 200
+    // misses people on busy accounts, so walk a few pages instead of leaving
+    // those rows without a name or photo.
+    for (let page = 0; page < 3; page += 1) {
+      const result = await request<
+        UnipileListResponse<UnipileChatAttendee> | UnipileChatAttendee[]
+      >(withQuery("/api/v1/chat_attendees", { account_id: accountId, limit: 200, cursor }));
+      const pageItems = getListItems<UnipileChatAttendee>(result);
+      if (!pageItems.length) break;
+      for (const attendee of pageItems) {
+        const id = attendee.id || attendee.provider_id || "";
+        if (id && seen.has(id)) continue;
+        if (id) seen.add(id);
+        attendees.push(attendee);
+      }
+      cursor = getListCursor(result);
+      if (!cursor) break;
+    }
+    return attendees;
   } catch {
-    return [];
+    return attendees;
   }
 }
 
@@ -2132,10 +2182,7 @@ export async function listLinkedInInbox(input: {
     seenChatIds.add(chat.id);
     chats.push(chat);
   }
-  const attendeeByProviderId = new Map<string, UnipileChatAttendee>();
-  for (const attendee of bulkAttendees) {
-    if (attendee.provider_id) attendeeByProviderId.set(attendee.provider_id, attendee);
-  }
+  const attendeeByKey = indexChatAttendees(bulkAttendees);
   // Most recent message per chat, for the inbox list preview.
   const lastMessageByChat = new Map<string, UnipileMessage>();
   for (const message of bulkMessages) {
@@ -2159,18 +2206,22 @@ export async function listLinkedInInbox(input: {
     chats.map(async (chat): Promise<LinkedInInboxThread> => {
       const chatId = chat.id || "";
       if (!includeMessageHistory) {
-        // Resolve this chat's attendee from the bulk attendees map (matched by
-        // provider id) so the inbox row gets a real name and avatar without a
-        // per-chat request or a rate-limited profile view.
-        const matched = chat.attendee_provider_id
-          ? attendeeByProviderId.get(chat.attendee_provider_id)
-          : undefined;
+        // Resolve this chat's attendee from ONE bulk attendees list, matching
+        // Unipile attendee ids and Classic/Sales Nav provider ids, so the
+        // inbox row gets a real name and photo without a per-chat request.
+        const matched = attendeeForChat(chat, attendeeByKey);
         const detailedAttendees = matched ? [matched] : [];
         const fallbackTitle = chatTitle(chat, detailedAttendees);
-        const baseAttendee = primaryChatAttendee(chat, detailedAttendees);
-        let profileName = attendeeName(baseAttendee) || fallbackTitle;
-        // Preview = the chat's most recent message from the bulk messages map.
         const lastMessage = lastMessageByChat.get(chatId);
+        const sender =
+          lastMessage && !lastMessage.is_sender
+            ? lastMessage.sender || lastMessage.from || messageSenderAttendee(lastMessage)
+            : null;
+        const baseAttendee = primaryChatAttendee(chat, [
+          ...detailedAttendees,
+          ...(sender ? [sender] : []),
+        ]);
+        let profileName = attendeeName(baseAttendee) || fallbackTitle;
         const lastMessageAt = lastMessage
           ? messageTimestamp(lastMessage)
           : chat.last_message_at ||
@@ -2191,9 +2242,9 @@ export async function listLinkedInInbox(input: {
           accountId: chat.account_id || input.accountId,
           title: fallbackTitle,
           profileName,
-          profileHeadline: attendeeHeadline(baseAttendee),
-          profileUrl: attendeeProfileUrl(baseAttendee),
-          avatarUrl: attendeeAvatarUrl(baseAttendee),
+          profileHeadline: attendeeHeadline(baseAttendee) || attendeeHeadline(sender),
+          profileUrl: attendeeProfileUrl(baseAttendee) || attendeeProfileUrl(sender),
+          avatarUrl: attendeeAvatarUrl(baseAttendee) || attendeeAvatarUrl(sender),
           attendeeProviderId:
             chat.attendee_provider_id || attendeeProviderIdentifier(baseAttendee),
           unread: Boolean(chat.unread || Number(chat.unread_count || 0) > 0 || chat.read === false),

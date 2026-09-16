@@ -27,7 +27,7 @@ function requestHostname(request: NextRequest) {
 const isProtectedRoute = createRouteMatcher([
   "/dashboard(.*)", "/overview(.*)", "/actions(.*)", "/activity(.*)", "/agents(.*)",
   "/api-keys(.*)", "/campaigns(.*)", "/messages(.*)",
-  "/leads(.*)", "/my-product(.*)", "/new-user-experience(.*)",
+  "/leads(.*)", "/my-product(.*)", "/workspace(.*)", "/new-user-experience(.*)",
   "/onboarding(.*)", "/setup(.*)", "/settings(.*)",
 ]);
 

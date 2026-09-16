@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import type { ScheduledAction } from "@/lib/server/scheduled-actions";
+import { LeadAvatar } from "@/app/lead-avatar";
 
 type Lead = NonNullable<ScheduledAction["lead"]>;
 
@@ -37,13 +38,14 @@ export function timeLabel(value: string, timeZone: string) {
 
 function Avatar({ lead, size = "md" }: { lead: Lead; size?: "sm" | "md" | "lg" }) {
   const classes = size === "lg" ? "h-11 w-11" : size === "sm" ? "h-7 w-7" : "h-9 w-9";
-  return lead.avatarUrl ? (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img src={lead.avatarUrl} alt="" className={`${classes} shrink-0 rounded-full object-cover`} />
-  ) : (
-    <span className={`grid ${classes} shrink-0 place-items-center rounded-full bg-[#f8e8ef] text-[11px] font-bold text-[#ba3871]`}>
-      {lead.name.slice(0, 2).toUpperCase()}
-    </span>
+  const text = size === "lg" ? "text-[12px]" : "text-[11px]";
+  return (
+    <LeadAvatar
+      name={lead.name}
+      avatarUrl={lead.avatarUrl}
+      className={`${classes} bg-[#f8e8ef]`}
+      initialsClassName={`${text} font-bold text-[#ba3871]`}
+    />
   );
 }
 

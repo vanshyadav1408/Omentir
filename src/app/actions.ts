@@ -12,6 +12,7 @@ import {
   createAgentApiKey,
   createCampaign,
   createOrGetGroup,
+  createOwnedWorkspace,
   claimActionSlot,
   completeConversationManualFollowUp,
   consumeDailyQuota,
@@ -20,6 +21,7 @@ import {
   disconnectLinkedInAccount,
   enrollGroupInCampaign,
   ensureWorkspace,
+  findOwnedWorkspace,
   getAgent,
   getLinkedInAccount,
   getLinkedInAccountByAccountId,
@@ -35,6 +37,7 @@ import {
   setSendWindowForGroup,
   updateAgent,
   updateCampaign,
+  updateWorkspaceIdentity,
   updateWorkspaceOnboarding,
   updateWorkspaceNotificationEmail,
   updateWorkspaceOwnerImage,
@@ -64,17 +67,22 @@ import { listScheduledActions } from "@/lib/server/scheduled-actions";
 import { analyzeWebsiteOrSearch, draftAgentSetupWithGemini } from "@/lib/server/gemini";
 import { requireActiveSubscription } from "@/lib/server/subscription";
 import { deleteLinkedInAccount, sendLinkedInChatMessage } from "@/lib/server/unipile";
-import type { CampaignReplyHandling, CampaignStep, SendWindow } from "@/lib/server/types";
+import type { CampaignReplyHandling, CampaignStep, ProductProfile, SendWindow } from "@/lib/server/types";
 import { isLocalMode } from "@/lib/runtime-mode";
 import {
   productProfileIsReadyForSteal,
   targetingFromProductProfile,
 } from "@/lib/steal-customers-targeting";
+import {
+  resolveActiveWorkspace,
+  setActiveWorkspaceCookie,
+} from "@/lib/server/active-workspace";
+import { resolveWebsiteFavicon } from "@/lib/server/website-favicon";
 
 async function requireWorkspace() {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
-  const workspace = await ensureWorkspace(userId);
+  const workspace = await resolveActiveWorkspace(userId);
   // currentUser() is a Clerk API round trip and the email write is a Firestore
   // write, both on the critical path of every single action. The address only
   // needs capturing once, so skip both once the workspace has one. A workspace
@@ -86,6 +94,104 @@ async function requireWorkspace() {
     user?.primaryEmailAddress?.emailAddress || user?.emailAddresses[0]?.emailAddress || "";
   await updateWorkspaceNotificationEmail(workspace.id, email);
   return { ...workspace, notificationEmail: email || workspace.notificationEmail };
+}
+
+function hostnameFromWebsite(websiteUrl: string) {
+  try {
+    const withProtocol = /^https?:\/\//i.test(websiteUrl) ? websiteUrl : `https://${websiteUrl}`;
+    return new URL(withProtocol).hostname.replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+}
+
+function emptyProductProfileFields(
+  websiteUrl = "",
+  companyName = "",
+): Omit<ProductProfile, "id" | "workspaceId" | "createdAt" | "updatedAt"> {
+  return {
+    websiteUrl,
+    description: "",
+    companyName,
+    industry: "",
+    companySize: "",
+    painPointsText: "",
+    pricingDetails: "",
+    schedulingLink: "",
+    keyFeatures: [],
+    socialProof: [],
+    linkedInCompanyPage: "",
+    useCases: [],
+    targetBuyers: [],
+    buyerTitles: [],
+    roleVocabulary: [],
+    industries: [],
+    companySizes: [],
+    painPoints: [],
+    keywords: [],
+    preferredLocations: [],
+  };
+}
+
+function refreshWorkspaceIdentity(
+  workspaceId: string,
+  profile: { websiteUrl?: string; companyName?: string },
+) {
+  after(async () => {
+    try {
+      const websiteUrl = profile.websiteUrl?.trim();
+      const faviconUrl = websiteUrl ? await resolveWebsiteFavicon(websiteUrl) : null;
+      await updateWorkspaceIdentity(workspaceId, {
+        name: profile.companyName,
+        faviconUrl: faviconUrl || undefined,
+      });
+    } catch (error) {
+      console.error("Failed to refresh workspace favicon", error);
+    }
+  });
+}
+
+function revalidateWorkspacePages() {
+  revalidatePath("/workspace");
+  revalidatePath("/my-product");
+  revalidatePath("/overview");
+  revalidatePath("/agents");
+  revalidatePath("/", "layout");
+}
+
+export async function switchWorkspaceAction(workspaceId: string) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+  const workspace = await findOwnedWorkspace(userId, workspaceId.trim());
+  if (!workspace) throw new Error("Workspace not found.");
+  await setActiveWorkspaceCookie(workspace.id);
+  revalidateWorkspacePages();
+}
+
+export async function createWorkspaceAction(formData: FormData) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+  const primary = await ensureWorkspace(userId);
+  requireActiveSubscription(primary);
+
+  const websiteUrl = String(formData.get("websiteUrl") || "").trim();
+  if (!websiteUrl) throw new Error("Enter the landing page URL for this workspace.");
+
+  const typedName = String(formData.get("name") || "").trim();
+  const name = typedName || hostnameFromWebsite(websiteUrl) || "Workspace";
+  const faviconUrl = await resolveWebsiteFavicon(websiteUrl);
+  const workspace = await createOwnedWorkspace(userId, {
+    name,
+    faviconUrl: faviconUrl || undefined,
+  });
+  await upsertProductProfile(
+    workspace.id,
+    emptyProductProfileFields(websiteUrl, typedName || name),
+    null,
+  );
+  await setActiveWorkspaceCookie(workspace.id);
+  revalidateWorkspacePages();
+  redirect("/workspace");
 }
 
 function splitList(value: FormDataEntryValue | null) {
@@ -352,10 +458,15 @@ export async function analyzeWebsiteAction(formData: FormData) {
       preferredLocations: analysis.preferredLocations,
       averageTicketSize: existing?.averageTicketSize,
     });
+    refreshWorkspaceIdentity(workspace.id, {
+      websiteUrl,
+      companyName: analysis.companyName,
+    });
   } catch {
     // Keep the previous profile when re-analysis fails.
   }
 
+  revalidatePath("/workspace");
   revalidatePath("/my-product");
   revalidatePath("/overview");
 }
@@ -517,7 +628,12 @@ export async function saveProductProfileAction(
     ),
   }, currentProfile);
 
-  // Copy the new My Product URL onto until-booked campaigns that have no link
+  refreshWorkspaceIdentity(workspace.id, {
+    websiteUrl: stringFromForm(formData, "websiteUrl", currentProfile?.websiteUrl),
+    companyName: stringFromForm(formData, "companyName", currentProfile?.companyName),
+  });
+
+  // Copy the new workspace booking URL onto until-booked campaigns that have no link
   // yet, or that still have the previous workspace URL. Per-agent overrides stay.
   if (schedulingLink) {
     try {
@@ -541,6 +657,7 @@ export async function saveProductProfileAction(
     }
   }
 
+  revalidatePath("/workspace");
   revalidatePath("/my-product");
   revalidatePath("/overview");
   revalidatePath("/agents");
@@ -555,6 +672,7 @@ export async function setAverageTicketSizeAction(formData: FormData) {
   if (value === undefined) return;
   await setAverageTicketSize(workspace.id, value);
   revalidatePath("/overview");
+  revalidatePath("/workspace");
   revalidatePath("/my-product");
 }
 
@@ -765,7 +883,7 @@ async function createAgentFromForm(
     const productProfile = await getProductProfile(workspace.id);
     if (!productProfileIsReadyForSteal(productProfile)) {
       throw new Error(
-        "Set up My Product (company name, description, or pain points) before creating a Steal Customers agent.",
+        "Set up Workspace (company name, description, or pain points) before creating a Steal Customers agent.",
       );
     }
     const targeting = targetingFromProductProfile(productProfile);
@@ -864,7 +982,7 @@ async function updateAgentFromForm(
     const productProfile = await getProductProfile(workspace.id);
     if (!productProfileIsReadyForSteal(productProfile)) {
       throw new Error(
-        "Set up My Product (company name, description, or pain points) before saving a Steal Customers agent.",
+        "Set up Workspace (company name, description, or pain points) before saving a Steal Customers agent.",
       );
     }
     const targeting = targetingFromProductProfile(productProfile);
@@ -1083,7 +1201,7 @@ async function bookingLinkFromForm(
   const fromProduct = resolveBookingLink(profile?.schedulingLink);
   if (fromProduct) return fromProduct;
   throw new Error(
-    "Add a demo booking link in My Product, or enter one for this agent.",
+    "Add a demo booking link in Workspace, or enter one for this agent.",
   );
 }
 

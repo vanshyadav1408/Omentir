@@ -1,5 +1,6 @@
 import { auth } from "@/lib/server/auth";
-import { listAgents, getWorkspace } from "@/lib/server/data";
+import { listAgents } from "@/lib/server/data";
+import { resolveActiveWorkspace } from "@/lib/server/active-workspace";
 import { getWorkspaceSetup } from "@/lib/server/workspace-setup";
 import { isAtPlanLimit } from "@/lib/agent-limit";
 import { planLimits, serializablePlanLimit } from "@/lib/plan-limits";
@@ -24,7 +25,8 @@ export default async function AgentsPage() {
     throw new Error("Unauthorized");
   }
 
-  const setup = await getWorkspaceSetup(userId);
+  const workspace = await resolveActiveWorkspace(userId);
+  const setup = await getWorkspaceSetup(workspace.id);
   if (!setup.hasAgent) {
     return (
       <CompleteSetupPrompt
@@ -34,10 +36,7 @@ export default async function AgentsPage() {
     );
   }
 
-  const [workspace, agents] = await Promise.all([
-    getWorkspace(userId),
-    listAgents(userId),
-  ]);
+  const agents = await listAgents(workspace.id);
   const agentLimit = planLimits(workspace.billing?.plan).agents;
 
   return (

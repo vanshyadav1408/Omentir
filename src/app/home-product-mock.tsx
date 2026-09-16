@@ -322,7 +322,7 @@ function Shell({
               </li>
             ))}
           </ul>
-          <p className={page === "product" ? "is-on" : undefined}>My Product</p>
+          <p className={page === "product" ? "is-on" : undefined}>Workspace</p>
         </aside>
       )}
       <div className="home-mock-stage">
@@ -339,7 +339,7 @@ function Shell({
 
 export function MockProductScreen() {
   return (
-    <Shell page="product" title="My Product" action="Save changes">
+    <Shell page="product" title="Workspace" action="Save changes">
       <div className="home-mock-product">
         <div className="home-mock-fields">
           <label>

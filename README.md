@@ -14,7 +14,7 @@ Use the managed product at [omentir.com](https://omentir.com), or self-host the 
 
 People use Omentir from chat and coding agents without sharing LinkedIn passwords:
 
-1. In Omentir: connect LinkedIn and fill **My Product**.
+1. In Omentir: connect LinkedIn and fill **Workspace**.
 2. **Chat apps (Claude, ChatGPT, Grok):** Settings → Connectors → add  
    `https://omentir.com/api/agent/v1/mcp` → sign in and approve **Connect workspace** → enable tools in the chat.  
    No API key.

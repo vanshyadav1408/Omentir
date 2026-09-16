@@ -66,17 +66,17 @@ export const agentToolInputSchemas = {
         enum: ["signals", "filters", "prompt", "steal_customers"],
         default: "signals",
         description:
-          "signals/filters/prompt: classic ICP lead discovery (needs prompt+filters). steal_customers (Steal Customers): no ICP; My Product defines buyers; requires competitorUrls and/or founderUrls; finds employees at competitor companies, scans company+employee posts, promotes commenters as leads; AI outreach attached automatically.",
+          "signals/filters/prompt: classic ICP lead discovery (needs prompt+filters). steal_customers (Steal Customers): no ICP; Workspace defines buyers; requires competitorUrls and/or founderUrls; finds employees at competitor companies, scans company+employee posts, promotes commenters as leads; AI outreach attached automatically.",
       },
       prompt: {
         type: "string",
         description:
-          "Prospect definition for classic lead finders. Optional for steal_customers (filled from My Product on the server).",
+          "Prospect definition for classic lead finders. Optional for steal_customers (filled from Workspace on the server).",
       },
       filters: {
         type: "object",
         description:
-          "Required for classic lead finders (each list needs at least one entry). Omit for steal_customers (filled from My Product).",
+          "Required for classic lead finders (each list needs at least one entry). Omit for steal_customers (filled from Workspace).",
         required: ["titles", "industries", "locations", "keywords"],
         properties: {
           titles: { type: "array", items: { type: "string" }, minItems: 1 },
@@ -88,7 +88,7 @@ export const agentToolInputSchemas = {
       signalSources: {
         type: "object",
         description:
-          "Steal Customers: pass competitorUrls (company pages) and optional founderUrls (founder/employee profiles). At least one URL required. My Product drives buyer fit.",
+          "Steal Customers: pass competitorUrls (company pages) and optional founderUrls (founder/employee profiles). At least one URL required. Workspace drives buyer fit.",
         properties: {
           competitorUrls: {
             type: "array",
@@ -153,17 +153,17 @@ export const agentToolInputSchemas = {
       mode: {
         enum: ["signals", "filters", "prompt", "steal_customers"],
         description:
-          "signals/filters/prompt: classic ICP lead finder. steal_customers (Steal Customers): competitor post commenters only; no ICP; My Product defines buyer fit; AI outreach required.",
+          "signals/filters/prompt: classic ICP lead finder. steal_customers (Steal Customers): competitor post commenters only; no ICP; Workspace defines buyer fit; AI outreach required.",
       },
       prompt: {
         type: "string",
         description:
-          "Prospect definition for classic lead finders. Ignored for steal_customers (refilled from My Product on save).",
+          "Prospect definition for classic lead finders. Ignored for steal_customers (refilled from Workspace on save).",
       },
       filters: {
         type: "object",
         description:
-          "Replacement targeting filters for classic lead finders (each list needs at least one entry). Ignored for steal_customers (My Product is used).",
+          "Replacement targeting filters for classic lead finders (each list needs at least one entry). Ignored for steal_customers (Workspace is used).",
         required: ["titles", "industries", "locations", "keywords"],
         properties: {
           titles: { type: "array", items: { type: "string" }, minItems: 1 },
@@ -378,13 +378,13 @@ const agentMcpToolDefinitions = [
   {
     name: "omentir_create_agent",
     description:
-      "Create an agent. Classic (signals/filters/prompt): prompt + titles/industries/locations/keywords; optional setupOutreach/replyHandling. Steal Customers (mode=steal_customers): groupName + signalSources.competitorUrls and/or founderUrls only (no ICP); My Product required; finds competitor employees, scans company+employee posts, scores commenters as buyers, AI outreach automatic; optional replyHandling/bookingLink/sendWindow. Returns agent + leadGroup for omentir_list_leads. Full lifecycle: list/update/pause/resume/delete also work for steal_customers.",
+      "Create an agent. Classic (signals/filters/prompt): prompt + titles/industries/locations/keywords; optional setupOutreach/replyHandling. Steal Customers (mode=steal_customers): groupName + signalSources.competitorUrls and/or founderUrls only (no ICP); Workspace required; finds competitor employees, scans company+employee posts, scores commenters as buyers, AI outreach automatic; optional replyHandling/bookingLink/sendWindow. Returns agent + leadGroup for omentir_list_leads. Full lifecycle: list/update/pause/resume/delete also work for steal_customers.",
     inputSchema: agentToolInputSchemas.omentir_create_agent,
   },
   {
     name: "omentir_update_agent",
     description:
-      "Update any agent including Steal Customers (steal_customers): rename, mode, signalSources (competitor + founder/employee URLs), LinkedIn account, lead group, send window, replyHandling, bookingLink, notifyOnReply, setupOutreach, or status active/paused. For steal_customers, prompt/filters are refilled from My Product on save; competitor/founder URLs remain required. Daily discovery time is fixed at creation. Only provided fields change.",
+      "Update any agent including Steal Customers (steal_customers): rename, mode, signalSources (competitor + founder/employee URLs), LinkedIn account, lead group, send window, replyHandling, bookingLink, notifyOnReply, setupOutreach, or status active/paused. For steal_customers, prompt/filters are refilled from Workspace on save; competitor/founder URLs remain required. Daily discovery time is fixed at creation. Only provided fields change.",
     inputSchema: agentToolInputSchemas.omentir_update_agent,
   },
   {

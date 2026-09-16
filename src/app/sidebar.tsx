@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import LogoMark from "./logo-mark";
 import { useHydrated } from "./use-hydrated";
+import WorkspaceSwitcher, { type WorkspaceSwitcherItem } from "./workspace-switcher";
 
 const primaryNav = [
   { href: "/overview", label: "Overview", icon: "apps" },
@@ -78,7 +79,8 @@ function getPageTitle(pathname: string) {
   if (pathname.startsWith("/agents")) return "AI Agents";
   if (pathname.startsWith("/messages")) return "Messages";
   if (pathname.startsWith("/leads")) return "Leads";
-  if (pathname.startsWith("/my-product")) return "My Product";
+  if (pathname.startsWith("/workspace")) return "Workspace";
+  if (pathname.startsWith("/my-product")) return "Workspace";
   if (pathname.startsWith("/api-keys")) return "API";
   if (pathname.startsWith("/settings")) return "Settings";
   if (pathname.startsWith("/connect")) return "Connect";
@@ -90,10 +92,16 @@ function getPageTitle(pathname: string) {
 export default function Sidebar({
   localMode = false,
   showApi = false,
+  workspaces = [],
+  activeWorkspaceId = "",
+  canCreateWorkspace = false,
 }: {
   localMode?: boolean;
   /** Shown for every plan. Plans without API access land on the page locked. */
   showApi?: boolean;
+  workspaces?: WorkspaceSwitcherItem[];
+  activeWorkspaceId?: string;
+  canCreateWorkspace?: boolean;
 }) {
   const pathname = usePathname() ?? "";
   const [collapsed, setCollapsed] = useState(false);
@@ -152,7 +160,7 @@ export default function Sidebar({
     );
   };
 
-  const productActive = linkActive("/my-product");
+  const workspaceActive = linkActive("/workspace") || linkActive("/my-product");
   const apiActive = linkActive("/api-keys");
   const settingsActive = linkActive("/settings");
 
@@ -170,13 +178,13 @@ export default function Sidebar({
         </Link>
       ) : null}
       <Link
-        href="/my-product"
+        href="/workspace"
         onClick={onClick}
-        aria-current={productActive ? "page" : undefined}
-        className={`mb-0.5 last:mb-0 ${navClassName(productActive)}`}
+        aria-current={workspaceActive ? "page" : undefined}
+        className={`mb-0.5 last:mb-0 ${navClassName(workspaceActive)}`}
       >
         <NavIcon name="package_2" />
-        <span>My Product</span>
+        <span>Workspace</span>
       </Link>
       <Link
         href="/settings"
@@ -254,6 +262,14 @@ export default function Sidebar({
         </div>
 
         <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 pb-3 pt-1">
+          {workspaces.length ? (
+            <WorkspaceSwitcher
+              workspaces={workspaces}
+              activeWorkspaceId={activeWorkspaceId}
+              canCreateWorkspace={canCreateWorkspace}
+              onNavigate={() => setMobileOpen(false)}
+            />
+          ) : null}
           {primaryNav.map((item) => renderNavLink(item, () => setMobileOpen(false)))}
         </nav>
 
@@ -299,6 +315,14 @@ export default function Sidebar({
           className={`flex flex-1 flex-col gap-0.5 overflow-y-auto pb-3 pt-1 transition-[padding] duration-300 ease-[cubic-bezier(0.2,0,0,1)] ${isCollapsed ? "px-1.5" : "px-2"
             }`}
         >
+          {workspaces.length ? (
+            <WorkspaceSwitcher
+              workspaces={workspaces}
+              activeWorkspaceId={activeWorkspaceId}
+              canCreateWorkspace={canCreateWorkspace}
+              collapsed={isCollapsed}
+            />
+          ) : null}
           {primaryNav.map((item) => {
             const active = linkActive(item.href);
             return (
@@ -332,13 +356,13 @@ export default function Sidebar({
             </Link>
           ) : null}
           <Link
-            href="/my-product"
-            title={isCollapsed ? "My Product" : undefined}
-            aria-current={productActive ? "page" : undefined}
-            className={`mb-0.5 last:mb-0 ${desktopNavClassName(productActive, isCollapsed)}`}
+            href="/workspace"
+            title={isCollapsed ? "Workspace" : undefined}
+            aria-current={workspaceActive ? "page" : undefined}
+            className={`mb-0.5 last:mb-0 ${desktopNavClassName(workspaceActive, isCollapsed)}`}
           >
             <NavIcon name="package_2" />
-            <SidebarLabel collapsed={isCollapsed}>My Product</SidebarLabel>
+            <SidebarLabel collapsed={isCollapsed}>Workspace</SidebarLabel>
           </Link>
           <Link
             href="/settings"

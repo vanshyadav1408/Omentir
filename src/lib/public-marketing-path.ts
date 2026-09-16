@@ -76,6 +76,7 @@ const ROOT_APP_SEGMENTS = new Set([
   "logout",
   "messages",
   "my-product",
+  "workspace",
   "new-user-experience",
   "onboarding",
   "oauth",

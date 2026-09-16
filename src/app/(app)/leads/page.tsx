@@ -1,5 +1,6 @@
 import { auth } from "@/lib/server/auth";
 import { getWorkspaceSetup } from "@/lib/server/workspace-setup";
+import { resolveActiveWorkspace } from "@/lib/server/active-workspace";
 import CompleteSetupPrompt from "@/app/(app)/complete-setup-prompt";
 import LeadsView from "./leads-view";
 import { createPageMetadata } from "@/app/seo";
@@ -21,7 +22,8 @@ export default async function LeadsPage() {
     await auth.protect();
     throw new Error("Unauthorized");
   }
-  const setup = await getWorkspaceSetup(userId);
+  const workspace = await resolveActiveWorkspace(userId);
+  const setup = await getWorkspaceSetup(workspace.id);
   if (!setup.hasAgent) {
     return (
       <CompleteSetupPrompt emoji="👤" message="Start an AI agent on Overview first." />

@@ -44,7 +44,7 @@ export default function FeaturePageView({ page }: { page: SeoContentPage }) {
           page={page}
           boxed
           title="Run this on the LinkedIn account you already use"
-          body="Connect LinkedIn, fill My Product, and try the motion in one workspace."
+          body="Connect LinkedIn, fill Workspace, and try the motion in one place."
         />
       </SeoDocLayout>
     </SeoPageChrome>

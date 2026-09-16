@@ -1,6 +1,7 @@
 import { auth } from "@/lib/server/auth";
 import { NextResponse } from "next/server";
-import { getLinkedInAccountByAccountId, getWorkspace } from "@/lib/server/data";
+import { getLinkedInAccountByAccountId } from "@/lib/server/data";
+import { resolveActiveWorkspace } from "@/lib/server/active-workspace";
 import { hasActiveSubscription } from "@/lib/server/subscription";
 import { listLinkedInChatMessagesPage, listLinkedInInbox } from "@/lib/server/unipile";
 
@@ -10,7 +11,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const workspace = await getWorkspace(userId);
+  const workspace = await resolveActiveWorkspace(userId);
   if (!hasActiveSubscription(workspace)) {
     return NextResponse.json({ error: "Subscription required" }, { status: 403 });
   }

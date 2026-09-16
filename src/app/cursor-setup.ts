@@ -5,7 +5,7 @@ My product helps [buyer] get [result]. Best-fit accounts are [company type, size
 
 Work only through Omentir MCP or REST. Read https://omentir.com/agents.md if you have not. Start with get_context, then list_agents. If no finder matches this ICP, show me a create_agent config in this chat and wait for a yes.
 
-If My Product disagrees with the file I have open, say so before you pull people.
+If Workspace disagrees with the file I have open, say so before you pull people.
 
 Pull up to 30 people. For each one write fit 1-5, the evidence, any risk, and a two-sentence draft that cites a real trigger. If a note could fit two buyers, rewrite it.
 

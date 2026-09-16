@@ -12,12 +12,12 @@ import {
 import {
   getAgent,
   getProductProfile,
-  getWorkspace,
   listAgents,
   listCampaigns,
   listGroups,
   listLinkedInAccounts,
 } from "@/lib/server/data";
+import { resolveActiveWorkspace } from "@/lib/server/active-workspace";
 import { hasActiveSubscription } from "@/lib/server/subscription";
 import { formatPlanLimit, planLimits } from "@/lib/plan-limits";
 import { isAtPlanLimit } from "@/lib/agent-limit";
@@ -94,7 +94,7 @@ export default async function NewAgentPage({
     redirect("/login");
   }
 
-  const workspace = await getWorkspace(userId);
+  const workspace = await resolveActiveWorkspace(userId);
   const params = await searchParams;
   const [linkedInAccounts, requestedAgent, profile] = await Promise.all([
     listLinkedInAccounts(workspace.id),

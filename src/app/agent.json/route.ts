@@ -57,7 +57,7 @@ export async function GET() {
           { path: "/agents/new", use: "omentir_create_agent" },
           { path: "/leads", use: "omentir_list_leads and omentir_get_lead" },
           { path: "/messages", use: "omentir_list_conversations" },
-          { path: "/my-product", use: "omentir_get_product_profile" },
+          { path: "/workspace", use: "omentir_get_product_profile" },
           { path: "/settings", use: "omentir_get_context" },
         ],
       },
@@ -65,7 +65,7 @@ export async function GET() {
     actions: {
       available: [
         "read workspace context, Overview metrics, and connected LinkedIn accounts",
-        "read and update My Product",
+        "read and update Workspace",
         "create, update, pause, resume, and delete lead-finding agents",
         "read lead groups, qualified leads, discovery activity, and scheduled outreach",
         "read existing conversations and reply in existing conversations",

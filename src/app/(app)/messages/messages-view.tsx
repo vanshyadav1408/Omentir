@@ -33,6 +33,7 @@ import {
   dedupeLinkedInInboxThreads,
   storedConversationIsLiveMirror,
 } from "@/lib/inbox-threads";
+import { LeadAvatar } from "@/app/lead-avatar";
 
 type InboxThread =
   | {
@@ -153,15 +154,6 @@ function buildThreads(
   });
 }
 
-function initials(name: string) {
-  return name
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
-
 function timeAgo(iso?: string) {
   if (!iso) return "";
   const diff = Date.now() - new Date(iso).getTime();
@@ -183,22 +175,25 @@ function Avatar({
   avatarUrl?: string;
   size?: "sm" | "md" | "lg";
 }) {
-  const cls =
+  const sizeClass =
     size === "lg"
-      ? "h-12 w-12 text-[14px]"
+      ? "h-12 w-12"
       : size === "sm"
-        ? "h-8 w-8 text-[11px]"
-        : "h-10 w-10 text-[12px]";
-  if (avatarUrl) {
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img src={avatarUrl} alt="" className={`${cls} shrink-0 rounded-full object-cover`} />;
-  }
+        ? "h-8 w-8"
+        : "h-10 w-10";
+  const textClass =
+    size === "lg"
+      ? "text-[14px]"
+      : size === "sm"
+        ? "text-[11px]"
+        : "text-[12px]";
   return (
-    <div
-      className={`${cls} grid shrink-0 place-items-center rounded-full bg-[#0a66c2] font-semibold text-white`}
-    >
-      {initials(name)}
-    </div>
+    <LeadAvatar
+      name={name}
+      avatarUrl={avatarUrl}
+      className={`${sizeClass} bg-[#0a66c2]`}
+      initialsClassName={`${textClass} font-semibold text-white`}
+    />
   );
 }
 

@@ -1099,7 +1099,7 @@ export default function AgentSetup({
         !normalizeSchedulingLink(profile?.schedulingLink || "")
       ) {
         setSetupStepError(
-          "Add a demo booking link in My Product, or paste one here.",
+          "Add a demo booking link in Workspace, or paste one here.",
         );
         return;
       }
@@ -1156,7 +1156,7 @@ export default function AgentSetup({
       !normalizeSchedulingLink(profile?.schedulingLink || "")
     ) {
       setSubmitError(
-        "Add a demo booking link in My Product, or paste one here.",
+        "Add a demo booking link in Workspace, or paste one here.",
       );
       setStep("campaign");
       return;
@@ -1353,15 +1353,15 @@ export default function AgentSetup({
             ) : null}
           </div>
           <p className="text-[13px] font-medium leading-5 text-zinc-600">
-            Buyer fit uses your product on{" "}
+            Buyer fit uses your company profile in{" "}
             <a
-              href="/my-product"
+              href="/workspace"
               className="font-semibold text-zinc-900 underline decoration-zinc-400 underline-offset-2 hover:text-zinc-950"
             >
-              My Product
+              Workspace
             </a>
             . Description, use cases, pain points, and keywords there decide who
-            among commenters is likely to buy. Keep My Product up to date so
+            among commenters is likely to buy. Keep that workspace page current so
             similar-product posts and comments are ranked correctly. No separate
             ICP is required for this agent.
           </p>
@@ -1587,8 +1587,8 @@ export default function AgentSetup({
               <p>
                 Scans competitor post comments and AI-reaches out with post +
                 comment context. Likely buyers are judged from{" "}
-                <a href="/my-product" className="font-semibold text-[#ba3871] underline">
-                  My Product
+                <a href="/workspace" className="font-semibold text-[#ba3871] underline">
+                  Workspace
                 </a>
                 , not a separate ICP form.
               </p>
@@ -1608,7 +1608,7 @@ export default function AgentSetup({
               ) : null}
               <p>
                 <span className="font-semibold text-zinc-900">Product context: </span>
-                {companyName || profile?.companyName || "From My Product"}
+                {companyName || profile?.companyName || "From Workspace"}
               </p>
             </div>
           </div>
@@ -1974,8 +1974,8 @@ export default function AgentSetup({
               placeholder="https://cal.com/your-name/intro"
               supportingText={
                 profile?.schedulingLink
-                  ? "Defaults from My Product. Override only if this agent should use a different calendar."
-                  : "Add this here, or save a demo booking link in My Product for all until-booked agents."
+                  ? "Defaults from Workspace. Override only if this agent should use a different calendar."
+                  : "Add this here, or save a demo booking link in Workspace for all until-booked agents."
               }
               required={!normalizeSchedulingLink(profile?.schedulingLink || "")}
             />

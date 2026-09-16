@@ -60,7 +60,7 @@ export default function UseCasePageView({ page }: { page: SeoContentPage }) {
           title={page.ctaTitle ?? "Run this motion on one LinkedIn account"}
           body={
             page.ctaBody ??
-            "Connect LinkedIn, fill My Product, and measure replies before you add volume."
+            "Connect LinkedIn, fill Workspace, and measure replies before you add volume."
           }
         />
       </SeoDocLayout>

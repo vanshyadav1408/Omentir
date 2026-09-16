@@ -2,7 +2,6 @@ import { auth } from "@/lib/server/auth";
 import { NextResponse } from "next/server";
 import {
   getLeadsByIds,
-  getWorkspace,
   listActivityDays,
   listAgents,
   listAgentApiKeys,
@@ -24,6 +23,7 @@ import {
 } from "@/lib/server/linkedin-accounts";
 import { hasActiveSubscription } from "@/lib/server/subscription";
 import { listLinkedInInbox } from "@/lib/server/unipile";
+import { resolveActiveWorkspace } from "@/lib/server/active-workspace";
 
 async function loadFirestoreResource(resource: string, workspaceId: string) {
   if (resource === "agents") return { agents: await listAgents(workspaceId) };
@@ -72,14 +72,13 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Workspace docs are keyed by owner userId, so the subscription gate runs in
-  // parallel with the requested Firestore reads (they are the user's own data;
-  // nothing is returned unless the gate passes). External calls (Unipile) stay
-  // strictly behind the gate.
-  const subscribedPromise = getWorkspace(userId).then(hasActiveSubscription);
+  // Subscription and workspace-scoped reads use the active workspace cookie.
+  const workspacePromise = resolveActiveWorkspace(userId);
+  const subscribedPromise = workspacePromise.then(hasActiveSubscription);
   // Branches that return without awaiting the gate (e.g. unknown resource)
   // must not turn a failed workspace read into an unhandled rejection.
   subscribedPromise.catch(() => {});
+  workspacePromise.catch(() => {});
   const subscriptionRequired = () =>
     NextResponse.json({ error: "Subscription required" }, { status: 403 });
 
@@ -88,25 +87,26 @@ export async function GET(request: Request) {
 
   const requestedResources = resource.split(",").filter(Boolean);
   if (requestedResources.length) {
-    const [subscribed, results] = await Promise.all([
-      subscribedPromise,
-      Promise.all(requestedResources.map((item) => loadFirestoreResource(item, userId))),
-    ]);
+    const [workspace, subscribed] = await Promise.all([workspacePromise, subscribedPromise]);
     if (!subscribed) return subscriptionRequired();
+    const results = await Promise.all(
+      requestedResources.map((item) => loadFirestoreResource(item, workspace.id)),
+    );
     if (results.every((result) => result !== null)) {
       return NextResponse.json(Object.assign({}, ...results));
     }
   }
   if (resource === "activityItems") {
+    const workspace = await workspacePromise;
     const [subscribed, runs, agents, leads, campaigns, enrollments, conversations] =
       await Promise.all([
         subscribedPromise,
-        listAutomationRuns(userId),
-        listAgents(userId),
-        listLeadPreviews(userId),
-        listCampaigns(userId),
-        listCampaignEnrollmentPreviews(userId),
-        listConversations(userId),
+        listAutomationRuns(workspace.id),
+        listAgents(workspace.id),
+        listLeadPreviews(workspace.id),
+        listCampaigns(workspace.id),
+        listCampaignEnrollmentPreviews(workspace.id),
+        listConversations(workspace.id),
       ]);
     if (!subscribed) return subscriptionRequired();
     const agentsById = new Map(agents.map((agent) => [agent.id, agent]));
@@ -119,7 +119,7 @@ export async function GET(request: Request) {
       ...conversations.map((conversation) => conversation.leadId),
     ].filter((leadId) => leadId && !knownLeadIds.has(leadId));
     const extraLeads = referencedLeadIds.length
-      ? await getLeadsByIds(userId, referencedLeadIds)
+      ? await getLeadsByIds(workspace.id, referencedLeadIds)
       : [];
     const leadsById = new Map(
       [...leads, ...extraLeads].map((lead) => [lead.id, lead]),
@@ -244,8 +244,9 @@ export async function GET(request: Request) {
     return NextResponse.json({ items });
   }
   if (resource === "linkedinAccounts") {
+    const workspace = await workspacePromise;
     if (!(await subscribedPromise)) return subscriptionRequired();
-    const { accounts } = await listVerifiedLinkedInAccounts(userId);
+    const { accounts } = await listVerifiedLinkedInAccounts(workspace.id);
     return NextResponse.json({ accounts });
   }
   if (resource === "linkedinInbox") {
@@ -253,9 +254,10 @@ export async function GET(request: Request) {
     // Unipile /accounts verification is not needed to load the inbox and keeps
     // it off the critical path (it still runs for the connected/accounts
     // resources). If an account is stale, its inbox call simply returns empty.
+    const workspace = await workspacePromise;
     const [subscribed, accounts] = await Promise.all([
       subscribedPromise,
-      listLinkedInAccounts(userId),
+      listLinkedInAccounts(workspace.id),
     ]);
     if (!subscribed) return subscriptionRequired();
     const seenAccountIds = new Set<string>();

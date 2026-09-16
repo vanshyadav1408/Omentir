@@ -1,7 +1,7 @@
 import { clerkClient } from "@clerk/nextjs/server";
 import { isLocalMode } from "@/lib/runtime-mode";
 import { NextResponse, type NextRequest } from "next/server";
-import { getWorkspace, logAutomationRun, updateWorkspaceBilling } from "@/lib/server/data";
+import { getWorkspace, listWorkspacesForOwner, logAutomationRun, updateWorkspaceBilling } from "@/lib/server/data";
 import { purgeWorkspaceUnipileAccounts } from "@/lib/server/linkedin-accounts";
 import { syncMailingListPlan } from "@/lib/server/mailing-list";
 import { readTextBody, RequestBodyTooLargeError } from "@/lib/server/request-body";
@@ -198,13 +198,18 @@ async function deactivateWorkspace(workspaceId: string, sourceId: string) {
 
   let purgeNote = "";
   try {
-    const purged = await purgeWorkspaceUnipileAccounts(workspaceId);
+    const ownerWorkspace = await getWorkspace(workspaceId);
+    const owned = await listWorkspacesForOwner(ownerWorkspace.ownerId || workspaceId);
+    const purges = await Promise.all(owned.map((item) => purgeWorkspaceUnipileAccounts(item.id)));
+    const considered = purges.reduce((sum, item) => sum + item.considered, 0);
+    const deleted = purges.reduce((sum, item) => sum + item.deleted, 0);
+    const failed = purges.reduce((sum, item) => sum + item.failed, 0);
     purgeNote =
-      purged.considered > 0
-        ? ` Removed ${purged.deleted} Unipile LinkedIn account${purged.deleted === 1 ? "" : "s"} so they stop being billed.`
+      considered > 0
+        ? ` Removed ${deleted} Unipile LinkedIn account${deleted === 1 ? "" : "s"} so they stop being billed.`
         : "";
-    if (purged.failed) {
-      purgeNote += ` ${purged.failed} Unipile delete${purged.failed === 1 ? "" : "s"} failed and will retry on the next tick.`;
+    if (failed) {
+      purgeNote += ` ${failed} Unipile delete${failed === 1 ? "" : "s"} failed and will retry on the next tick.`;
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unipile purge failed.";

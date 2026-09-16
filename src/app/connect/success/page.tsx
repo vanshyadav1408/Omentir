@@ -2,10 +2,10 @@ import { auth } from "@/lib/server/auth";
 import { redirect } from "next/navigation";
 import {
   getLinkedInAccount,
-  getWorkspace,
   listLinkedInAccounts,
   saveLinkedInAccount,
 } from "@/lib/server/data";
+import { resolveActiveWorkspace } from "@/lib/server/active-workspace";
 import { isLocalMode } from "@/lib/runtime-mode";
 import { findSingleRecentlyCreatedAccount } from "@/lib/linkedin-connect-recovery";
 import { listUnipileLinkedInAccounts, retrieveOwnLinkedInProfile } from "@/lib/server/unipile";
@@ -19,7 +19,7 @@ export default async function ConnectSuccessPage() {
     redirect("/login");
   }
 
-  const workspace = await getWorkspace(userId);
+  const workspace = await resolveActiveWorkspace(userId);
   const [linkedInAccount, linkedInAccounts] = await Promise.all([
     getLinkedInAccount(workspace.id),
     listLinkedInAccounts(workspace.id),

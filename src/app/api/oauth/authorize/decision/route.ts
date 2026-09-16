@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/server/auth";
-import { createOAuthAuthorizationCode, getWorkspace } from "@/lib/server/data";
+import { createOAuthAuthorizationCode, findOwnedWorkspace } from "@/lib/server/data";
+import { resolveActiveWorkspace } from "@/lib/server/active-workspace";
 import { hasActiveSubscription } from "@/lib/server/subscription";
 import { planHasApiAccess } from "@/lib/plan-limits";
 import { resolveAuthorizationRequest } from "@/lib/server/oauth-authorize";
@@ -59,7 +60,11 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const workspace = await getWorkspace(userId);
+  const requestedWorkspaceId = form.get("workspace_id")?.trim() || "";
+  const workspace = requestedWorkspaceId
+    ? (await findOwnedWorkspace(userId, requestedWorkspaceId)) ||
+      (await resolveActiveWorkspace(userId))
+    : await resolveActiveWorkspace(userId);
   if (!hasActiveSubscription(workspace) || !planHasApiAccess(workspace.billing?.plan)) {
     return seeOther(
       redirectWithError(

@@ -6,6 +6,7 @@ import { useEffect, useState, useTransition } from "react";
 import AiLoadingOverlay from "../ai-loading-overlay";
 import { completeSelfHostedOnboardingAction } from "../actions";
 import { AuthHeading } from "../auth-ui";
+import { LeadAvatar } from "@/app/lead-avatar";
 
 type PreviewLead = {
   name: string;
@@ -39,15 +40,6 @@ type State =
   | { status: "ready"; leads: PreviewLead[]; upgrading: boolean }
   | { status: "error"; message: string };
 
-function initials(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
-}
-
 /** "Co-Founder & CEO @Surfe (Paris, France)" — parts dropped when absent. */
 function roleLine(lead: PreviewLead) {
   const role = [lead.title, lead.company ? `@${lead.company}` : ""].filter(Boolean).join(" ");
@@ -58,20 +50,12 @@ function roleLine(lead: PreviewLead) {
 function LeadIdentity({ lead }: { lead: PreviewLead }) {
   return (
     <div className="flex min-w-0 items-center gap-3">
-      <span className="relative grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full bg-[#2a2a2a] text-[12px] font-semibold text-white">
-        {initials(lead.name)}
-        {lead.avatarUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={lead.avatarUrl}
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover"
-            onError={(event) => {
-              event.currentTarget.style.display = "none";
-            }}
-          />
-        ) : null}
-      </span>
+      <LeadAvatar
+        name={lead.name}
+        avatarUrl={lead.avatarUrl}
+        className="h-10 w-10 bg-[#2a2a2a]"
+        initialsClassName="text-[12px] font-semibold text-white"
+      />
       <div className="min-w-0">
         <a
           href={lead.linkedInUrl}

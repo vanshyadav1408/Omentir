@@ -23,20 +23,12 @@ import { useWorkspaceTimeZone } from "@/app/workspace-time-zone";
 import { zonedDayKey } from "@/lib/time-zone";
 import type { ScheduledAction } from "@/lib/server/scheduled-actions";
 import { ActionDetails, resultMessage } from "@/app/(app)/actions/action-details";
+import { LeadAvatar } from "@/app/lead-avatar";
 
 type LeadsViewProps = {
   groups: Group[];
   leads: LeadPreview[];
 };
-
-function initials(name: string) {
-  return name
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
 
 function LinkedInProfileLink({ href }: { href: string }) {
   return (
@@ -79,14 +71,12 @@ function outreachEmptyCopy(status: LeadPreview["outreachStatus"]) {
 function LeadContact({ lead }: { lead: LeadPreview }) {
   return (
     <div className="flex min-w-0 items-center gap-3">
-      {lead.avatarUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={lead.avatarUrl} alt="" className="h-10 w-10 shrink-0 rounded-full object-cover" />
-      ) : (
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#ba3871] text-[12px] font-semibold text-white">
-          {initials(lead.name)}
-        </span>
-      )}
+      <LeadAvatar
+        name={lead.name}
+        avatarUrl={lead.avatarUrl}
+        className="h-10 w-10 bg-[#ba3871]"
+        initialsClassName="text-[12px] font-semibold text-white"
+      />
       <div className="min-w-0">
         <div className="flex min-w-0 items-end gap-0.5">
           {lead.linkedInUrl ? (

@@ -22,6 +22,7 @@ import { sendWindowTimeZoneForLead } from "./lead-time-zone";
 import { capturePostHogEvent } from "@/lib/posthog-server";
 import { addInviteLimitSignal } from "./outreach-rules";
 import { resolveUsableLinkedInAccount } from "@/lib/linkedin-account-fallback";
+import { httpsAvatarUrl } from "@/lib/lead-avatar";
 import {
   canEnrollLeadForOutreach,
   leadOutcomeNotificationLockId,
@@ -279,8 +280,92 @@ export async function getWorkspace(userId: string) {
   return ensureWorkspace(userId);
 }
 
+export async function findWorkspace(workspaceId: string) {
+  if (!workspaceId) return null;
+  const snap = await collection<Workspace>("workspaces").doc(workspaceId).get();
+  if (!snap.exists) return null;
+  const workspace = snap.data() as Workspace;
+  if (hasAllSettings(workspace.settings) && !hasLegacySettings(workspace.settings)) {
+    return workspace;
+  }
+  const settings = withDefaultSettings(workspace.settings);
+  await collection<Workspace>("workspaces").doc(workspaceId).update({
+    settings,
+    updatedAt: nowIso(),
+  });
+  return { ...workspace, settings };
+}
+
+export async function findOwnedWorkspace(ownerId: string, workspaceId: string) {
+  const workspace = await findWorkspace(workspaceId);
+  if (!workspace) return null;
+  if (workspace.ownerId !== ownerId && workspace.id !== ownerId) return null;
+  return workspace;
+}
+
+async function workspaceIdsForOwner(ownerId: string) {
+  const snap = await collection<Workspace>("workspaces").where("ownerId", "==", ownerId).get();
+  const ids = new Set(snap.docs.map((doc) => doc.id));
+  ids.add(ownerId);
+  return [...ids];
+}
+
+export async function listWorkspacesForOwner(ownerId: string) {
+  const primary = await ensureWorkspace(ownerId);
+  try {
+    const snap = await collection<Workspace>("workspaces").where("ownerId", "==", ownerId).get();
+    const byId = new Map<string, Workspace>();
+    byId.set(primary.id, primary);
+    for (const doc of snap.docs) {
+      byId.set(doc.id, doc.data());
+    }
+    return [...byId.values()].sort((left, right) => left.createdAt.localeCompare(right.createdAt));
+  } catch (error) {
+    console.error("listWorkspacesForOwner failed", error);
+    return [primary];
+  }
+}
+
+export async function createOwnedWorkspace(
+  ownerId: string,
+  input: { name: string; faviconUrl?: string },
+) {
+  const primary = await ensureWorkspace(ownerId);
+  const ref = collection<Workspace>("workspaces").doc();
+  const timestamp = nowIso();
+  const name = input.name.trim().slice(0, 80) || "Workspace";
+  const workspace: Workspace = {
+    id: ref.id,
+    ownerId,
+    name,
+    ...(input.faviconUrl ? { faviconUrl: input.faviconUrl } : {}),
+    ...(primary.notificationEmail ? { notificationEmail: primary.notificationEmail } : {}),
+    ...(primary.timezone ? { timezone: primary.timezone } : {}),
+    ...(primary.billing ? { billing: primary.billing } : {}),
+    ...(primary.onboarding ? { onboarding: primary.onboarding } : {}),
+    settings: withDefaultSettings(primary.settings),
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  };
+
+  await ref.set(workspace);
+  return workspace;
+}
+
+export async function updateWorkspaceIdentity(
+  workspaceId: string,
+  input: { name?: string; faviconUrl?: string },
+) {
+  const patch: Record<string, unknown> = { updatedAt: nowIso() };
+  const name = input.name?.trim().slice(0, 80);
+  if (name) patch.name = name;
+  if (input.faviconUrl) patch.faviconUrl = input.faviconUrl;
+  if (Object.keys(patch).length === 1) return;
+  await collection<Workspace>("workspaces").doc(workspaceId).set(patch, { merge: true });
+}
+
 export async function createLinkedInConnectToken(workspaceId: string) {
-  await ensureWorkspace(workspaceId);
+  if (!(await findWorkspace(workspaceId))) throw new Error("Workspace not found.");
   const token = randomBytes(32).toString("base64url");
   const createdAt = nowIso();
   const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
@@ -511,12 +596,21 @@ export async function updateWorkspaceBilling(
     updatedAt: nowIso(),
   }) as WorkspaceBilling;
 
-  await collection<Workspace>("workspaces").doc(workspaceId).set(
-    {
-      billing: next,
-      updatedAt: next.updatedAt,
-    },
-    { merge: true },
+  const target = await findWorkspace(workspaceId);
+  const ownerId = target?.ownerId || workspaceId;
+  await ensureWorkspace(ownerId);
+  const workspaceIds = await workspaceIdsForOwner(ownerId);
+
+  await Promise.all(
+    workspaceIds.map((id) =>
+      collection<Workspace>("workspaces").doc(id).set(
+        {
+          billing: next,
+          updatedAt: next.updatedAt,
+        },
+        { merge: true },
+      ),
+    ),
   );
 
   return next;
@@ -1666,6 +1760,10 @@ export async function upsertLead(workspaceId: string, groupId: string, lead: Par
       if (existingLead.sourceAgentId) {
         delete leadFields.sourceAgentId;
       }
+      // A later pass without a photo must not wipe one we already stored.
+      const nextAvatarUrl = httpsAvatarUrl(leadFields.avatarUrl);
+      if (nextAvatarUrl) leadFields.avatarUrl = nextAvatarUrl;
+      else delete leadFields.avatarUrl;
 
       transaction.update(ref, omitUndefined({
         ...leadFields,
@@ -1695,7 +1793,7 @@ export async function upsertLead(workspaceId: string, groupId: string, lead: Par
       groupIds: [groupId],
       linkedInUrl,
       providerProfileId: lead.providerProfileId,
-      avatarUrl: lead.avatarUrl,
+      avatarUrl: httpsAvatarUrl(lead.avatarUrl),
       name: lead.name || "Unknown lead",
       title: lead.title || "",
       company: lead.company || "",

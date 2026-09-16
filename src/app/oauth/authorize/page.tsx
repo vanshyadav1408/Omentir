@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/server/auth";
-import { getWorkspace } from "@/lib/server/data";
+import { listOwnedWorkspaces, resolveActiveWorkspace } from "@/lib/server/active-workspace";
+import { workspaceDisplayName } from "@/lib/workspace-ownership";
 import { hasActiveSubscription } from "@/lib/server/subscription";
 import { planHasApiAccess } from "@/lib/plan-limits";
 import { resolveAuthorizationRequest } from "@/lib/server/oauth-authorize";
@@ -76,7 +77,10 @@ export default async function OAuthAuthorizePage({
     redirect(`/login?next=${encodeURIComponent(`/oauth/authorize?${params.toString()}`)}`);
   }
 
-  const workspace = await getWorkspace(userId);
+  const [workspace, workspaces] = await Promise.all([
+    resolveActiveWorkspace(userId),
+    listOwnedWorkspaces(userId),
+  ]);
   const denyUrl = redirectWithError(redirectUri, "access_denied", "You declined the request.", state);
 
   if (!hasActiveSubscription(workspace)) {
@@ -124,13 +128,32 @@ export default async function OAuthAuthorizePage({
         time from the API page, which disconnects the app immediately.
       </p>
 
-      <form action="/api/oauth/authorize/decision" method="post" className="mt-5 flex gap-2">
+      <form action="/api/oauth/authorize/decision" method="post" className="mt-5 grid gap-3">
         <input type="hidden" name="client_id" value={client.id} />
         <input type="hidden" name="redirect_uri" value={redirectUri} />
         <input type="hidden" name="code_challenge" value={codeChallenge} />
         <input type="hidden" name="code_challenge_method" value="S256" />
         <input type="hidden" name="response_type" value="code" />
         <input type="hidden" name="state" value={state} />
+        {workspaces.length > 1 ? (
+          <label className="grid gap-1 text-[13px] font-medium text-zinc-800">
+            Workspace
+            <select
+              name="workspace_id"
+              defaultValue={workspace.id}
+              className="h-10 rounded-md border border-zinc-200 bg-white px-3 text-[13px] font-normal text-zinc-900"
+            >
+              {workspaces.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {workspaceDisplayName(item)}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : (
+          <input type="hidden" name="workspace_id" value={workspace.id} />
+        )}
+        <div className="flex gap-2">
         <button
           type="submit"
           name="decision"
@@ -145,6 +168,7 @@ export default async function OAuthAuthorizePage({
         >
           Cancel
         </a>
+        </div>
       </form>
     </Shell>
   );

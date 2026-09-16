@@ -5,7 +5,7 @@ import {
   saveSettingsAction,
   uploadProfileImageAction,
 } from "@/app/actions";
-import { getWorkspace } from "@/lib/server/data";
+import { resolveActiveWorkspace } from "@/lib/server/active-workspace";
 import { createPageMetadata } from "@/app/seo";
 import { isLocalMode } from "@/lib/runtime-mode";
 
@@ -43,7 +43,7 @@ export default async function SettingsPage() {
     throw new Error("Unauthorized");
   }
 
-  const [workspace, user] = await Promise.all([getWorkspace(userId), currentUser()]);
+  const [workspace, user] = await Promise.all([resolveActiveWorkspace(userId), currentUser()]);
   const profile = (sessionClaims || {}) as SessionClaimsProfile;
   const userName =
     user?.fullName ||

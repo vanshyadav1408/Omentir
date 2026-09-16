@@ -115,6 +115,12 @@ function loadSidebarResource(resource: string): Promise<Record<string, unknown> 
 // are already cached or already being fetched - otherwise the background warmer
 // fires a second copy of a query the current page is still waiting on, and the
 // two compete for the same Firestore/bandwidth budget.
+export function clearSidebarResourceCache() {
+  responseCache.clear();
+  inflightRequests.clear();
+  inflightNames.clear();
+}
+
 export function prefetchSidebarResource(resource: string): Promise<unknown> {
   const missing = resourceNames(resource).filter((name) => !isSatisfied(name));
   if (!missing.length) return Promise.resolve();

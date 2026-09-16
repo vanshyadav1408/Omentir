@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { LeadAvatar } from "@/app/lead-avatar";
 
 export type SelectOption = {
   value: string;
@@ -23,29 +24,16 @@ function optionInitials(option: SelectOption) {
 }
 
 function OptionAvatar({ option, size = "sm" }: { option: SelectOption; size?: "sm" | "md" }) {
-  const className =
-    size === "md"
-      ? "h-8 w-8 text-[11px]"
-      : "h-6 w-6 text-[10px]";
-
-  if (option.imageUrl) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={option.imageUrl}
-        alt=""
-        className={`${className} shrink-0 rounded-full object-cover`}
-      />
-    );
-  }
+  const className = size === "md" ? "h-8 w-8" : "h-6 w-6";
+  const textClass = size === "md" ? "text-[11px]" : "text-[10px]";
 
   return (
-    <span
-      className={`${className} grid shrink-0 place-items-center rounded-full bg-[#0a66c2] font-semibold text-white`}
-      aria-hidden="true"
-    >
-      {optionInitials(option)}
-    </span>
+    <LeadAvatar
+      name={option.imageFallback || option.label || option.value}
+      avatarUrl={option.imageUrl}
+      className={`${className} bg-[#0a66c2]`}
+      initialsClassName={`${textClass} font-semibold text-white`}
+    />
   );
 }
 

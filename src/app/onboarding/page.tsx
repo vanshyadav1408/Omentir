@@ -1,6 +1,7 @@
 import { auth } from "@/lib/server/auth";
 import { redirect } from "next/navigation";
-import { getProductProfile, getWorkspace } from "@/lib/server/data";
+import { getProductProfile } from "@/lib/server/data";
+import { resolveActiveWorkspace } from "@/lib/server/active-workspace";
 import { hasActiveSubscription } from "@/lib/server/subscription";
 import { isLocalMode } from "@/lib/runtime-mode";
 import AuthShell from "../auth-shell";
@@ -47,7 +48,7 @@ export default async function OnboardingPage({
   // the preview's Personalise button advances via ?step=3. There is no way to
   // navigate back to an earlier step.
   let step = 1;
-  const workspace = await getWorkspace(userId);
+  const workspace = await resolveActiveWorkspace(userId);
   const profile = await getProductProfile(workspace.id);
   const billingStatus = workspace.billing?.status;
 

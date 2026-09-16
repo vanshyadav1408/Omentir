@@ -1,7 +1,7 @@
 import { auth } from "@/lib/server/auth";
 import { redirect } from "next/navigation";
 import { saveProductProfileAction } from "@/app/actions";
-import { getWorkspace } from "@/lib/server/data";
+import { resolveActiveWorkspace } from "@/lib/server/active-workspace";
 import { syncWorkspaceBillingIfInactive } from "@/lib/server/billing-sync";
 import { hasActiveSubscription } from "@/lib/server/subscription";
 import { getWorkspaceSetup } from "@/lib/server/workspace-setup";
@@ -36,14 +36,12 @@ export default async function HomePage({
   const params = await searchParams;
   const linkedinParam = Array.isArray(params.linkedin) ? params.linkedin[0] : params.linkedin;
 
-  const [loadedWorkspace, setup] = await Promise.all([
-    getWorkspace(userId),
-    getWorkspaceSetup(userId),
-  ]);
+  const loadedWorkspace = await resolveActiveWorkspace(userId);
+  const setup = await getWorkspaceSetup(loadedWorkspace.id);
   const workspace = await syncWorkspaceBillingIfInactive(loadedWorkspace);
 
   if (!setup.productProfile) {
-    redirect("/onboarding");
+    redirect(workspace.onboarding ? "/workspace" : "/onboarding");
   }
 
   if (!workspace.onboarding) {

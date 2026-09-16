@@ -1,12 +1,16 @@
 import { auth } from "@/lib/server/auth";
 import type { Metadata } from "next";
+import { after } from "next/server";
 import Sidebar from "@/app/sidebar";
 import { noIndexRobots } from "@/app/seo";
 import AppPageTransition from "@/app/app-page-transition";
 import AppDataPrefetch from "@/app/(app)/app-data-prefetch";
 import { WorkspaceTimeZoneProvider } from "@/app/workspace-time-zone";
-import { getWorkspace } from "@/lib/server/data";
+import { resolveActiveWorkspace, listOwnedWorkspaces } from "@/lib/server/active-workspace";
+import { hasActiveSubscription } from "@/lib/server/subscription";
+import { backfillWorkspaceFavicons } from "@/lib/server/workspace-favicons";
 import { isLocalMode } from "@/lib/runtime-mode";
+import { workspaceDisplayName } from "@/lib/workspace-ownership";
 
 export const metadata: Metadata = {
   robots: noIndexRobots,
@@ -26,10 +30,27 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // plan; plans without API access land on the page with the keys section
   // locked behind an upgrade prompt.
   let timeZone: string | undefined;
+  let workspaces: Array<{ id: string; name: string; faviconUrl?: string }> = [];
+  let activeWorkspaceId = "";
+  let canCreateWorkspace = false;
   if (userId) {
     try {
-      const workspace = await getWorkspace(userId);
+      const [workspace, owned] = await Promise.all([
+        resolveActiveWorkspace(userId),
+        listOwnedWorkspaces(userId),
+      ]);
       timeZone = workspace.timezone;
+      activeWorkspaceId = workspace.id;
+      canCreateWorkspace = hasActiveSubscription(workspace);
+      workspaces = owned.map((item) => ({
+        id: item.id,
+        name: workspaceDisplayName(item),
+        faviconUrl: item.faviconUrl,
+      }));
+      const missingFavicons = owned.filter((item) => !item.faviconUrl);
+      if (missingFavicons.length) {
+        after(() => backfillWorkspaceFavicons(missingFavicons, 8));
+      }
     } catch {
       timeZone = undefined;
     }
@@ -38,7 +59,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <WorkspaceTimeZoneProvider timeZone={timeZone}>
       <div className="dashboard-shell app-compact flex h-screen max-w-full overflow-hidden overflow-x-hidden bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)]">
-        <Sidebar localMode={isLocalMode()} showApi />
+        <Sidebar
+          localMode={isLocalMode()}
+          showApi
+          workspaces={workspaces}
+          activeWorkspaceId={activeWorkspaceId}
+          canCreateWorkspace={canCreateWorkspace}
+        />
         <main className="h-screen w-full min-w-0 flex-1 overflow-hidden">
           {/* Mobile: 56px compact app bar; navigation stays in the drawer. */}
           <section className="flex h-full w-full flex-col pt-14 md:pt-0">

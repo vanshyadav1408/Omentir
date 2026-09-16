@@ -43,7 +43,11 @@ type PublicResponse = {
   text: string;
 };
 
-async function requestPublicWebsite(url: URL, timeoutMs: number): Promise<PublicResponse> {
+async function requestPublicWebsite(
+  url: URL,
+  timeoutMs: number,
+  acceptHeader = "text/html, text/plain;q=0.9, */*;q=0.8",
+): Promise<PublicResponse> {
   const addresses = await publicAddresses(url);
   const selected = addresses.find(({ family }) => family === 4) || addresses[0];
   const request = url.protocol === "https:" ? httpsRequest : httpRequest;
@@ -59,7 +63,7 @@ async function requestPublicWebsite(url: URL, timeoutMs: number): Promise<Public
       url,
       {
         headers: {
-          accept: "text/html, text/plain;q=0.9, */*;q=0.8",
+          accept: acceptHeader,
           "accept-language": "en-US,en;q=0.9",
           "user-agent": "Mozilla/5.0 (compatible; Omentir/1.0; +https://omentir.com)",
         },
@@ -215,4 +219,38 @@ export async function fetchWebsitePages(websiteUrl: string) {
   }
 
   return pages;
+}
+
+function headerString(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] || "" : value || "";
+}
+
+export async function fetchWebsiteDocument(websiteUrl: string, timeoutMs = PAGE_TIMEOUT_MS) {
+  try {
+    const base = await resolvePublicBase(normalizeUrl(websiteUrl));
+    const response = await fetchPublicWebsite(base, timeoutMs);
+    return {
+      url: response.url.toString(),
+      status: response.status,
+      text: response.text,
+      contentType: headerString(response.headers["content-type"]),
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchPublicUrl(rawUrl: string, timeoutMs = 5000) {
+  try {
+    const url = new URL(rawUrl);
+    validatePublicWebsiteUrl(url);
+    const response = await fetchPublicWebsite(url, timeoutMs);
+    return {
+      url: response.url.toString(),
+      status: response.status,
+      contentType: headerString(response.headers["content-type"]),
+    };
+  } catch {
+    return null;
+  }
 }

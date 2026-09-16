@@ -2,7 +2,8 @@ import { auth } from "@/lib/server/auth";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createPageMetadata } from "@/app/seo";
-import { getAgent, getWorkspace } from "@/lib/server/data";
+import { getAgent } from "@/lib/server/data";
+import { resolveActiveWorkspace } from "@/lib/server/active-workspace";
 import { listScheduledActions } from "@/lib/server/scheduled-actions";
 import ActivityDashboard from "../../actions/activity-dashboard";
 
@@ -24,7 +25,7 @@ export default async function AgentActionsPage(props: { params: Promise<{ id: st
     throw new Error("Unauthorized");
   }
 
-  const workspace = await getWorkspace(userId);
+  const workspace = await resolveActiveWorkspace(userId);
   const [agent, items] = await Promise.all([
     getAgent(workspace.id, id),
     listScheduledActions(workspace.id, { agentId: id }),

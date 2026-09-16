@@ -123,9 +123,10 @@ describe("support widget greeting", () => {
 });
 
 describe("product app paths", () => {
-  test("includes my-product and api-keys so signed-in usage is not undercounted", () => {
+  test("includes workspace and api-keys so signed-in usage is not undercounted", () => {
     expect(isProductAppPath("/agents")).toBe(true);
     expect(isProductAppPath("/my-product")).toBe(true);
+    expect(isProductAppPath("/workspace")).toBe(true);
     expect(isProductAppPath("/api-keys")).toBe(true);
     expect(isProductAppPath("/pricing")).toBe(false);
   });

@@ -98,7 +98,7 @@ Agents cannot create Omentir accounts or buy or change subscriptions.
 
 - Category: AI sales outreach software, LinkedIn-first.
 - Audience: B2B founders, SDRs, solo operators, and small sales teams.
-- Core motion: product context (My Product) → lead discovery (classic ICP finders or Steal Customers) → human-paced LinkedIn outreach → reply handling.
+- Core motion: product context (Workspace) → lead discovery (classic ICP finders or Steal Customers) → human-paced LinkedIn outreach → reply handling.
 - Steal Customers: competitor company and employee posts → commenters become leads with engagement context.
 - Pricing: Pro is $49/month. Enterprise adds unlimited users, unlimited LinkedIn accounts, SSO, dedicated onboarding, and priority support. See ${siteUrl}/pricing.
 - Guarantee: minimum of three bookings per week or you pay nothing, subject to ${siteUrl}/minimum-booking-guarantee.

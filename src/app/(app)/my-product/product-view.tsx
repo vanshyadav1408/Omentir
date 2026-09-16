@@ -13,11 +13,14 @@ import {
   normalizeSchedulingLink,
 } from "@/lib/scheduling-link";
 import { isNextNavigationError, useToast, userFacingError } from "@/app/toast";
+import { WorkspaceAvatar } from "@/app/workspace-switcher";
 
 type SaveProductResult = { ok: true } | { ok: false; error: string };
 
 type ProductViewProps = {
   profile?: ProductProfile;
+  faviconUrl?: string;
+  workspaceName?: string;
   saveAction: (formData: FormData) => void | Promise<void | SaveProductResult>;
   analyzeAction: (formData: FormData) => void | Promise<void>;
 };
@@ -189,7 +192,13 @@ function ListField({
   );
 }
 
-export default function ProductView({ profile, saveAction, analyzeAction }: ProductViewProps) {
+export default function ProductView({
+  profile,
+  faviconUrl,
+  workspaceName,
+  saveAction,
+  analyzeAction,
+}: ProductViewProps) {
   const router = useRouter();
   const { showSuccess } = useToast();
   const [pending, startTransition] = useTransition();
@@ -318,9 +327,14 @@ export default function ProductView({ profile, saveAction, analyzeAction }: Prod
 
       {/* Header — primary action matches Leads "Add leads" */}
       <div className="app-x hidden shrink-0 items-center justify-between gap-3 pt-6 md:flex">
-        <div className="min-w-0">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <WorkspaceAvatar
+            name={companyName || workspaceName || "Workspace"}
+            faviconUrl={faviconUrl}
+            size={28}
+          />
           <h1 className="text-2xl font-semibold leading-none tracking-tight text-[var(--md-sys-color-on-surface)]">
-            My Product
+            Workspace
           </h1>
         </div>
         <button
@@ -354,7 +368,7 @@ export default function ProductView({ profile, saveAction, analyzeAction }: Prod
               </h2>
               <span className="mt-1.5 block h-0.5 w-8 rounded-full bg-[#ba3871]/60" aria-hidden />
               <p className="mt-2 text-sm leading-relaxed text-zinc-600">
-                These details power your AI-generated messages. Update them whenever your value proposition changes.
+                These details power outreach from this workspace. Update them when the offer changes.
               </p>
             </div>
 

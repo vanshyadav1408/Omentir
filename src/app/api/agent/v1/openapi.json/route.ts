@@ -43,7 +43,7 @@ const signalSources = {
 const agentMode = {
   enum: ["signals", "filters", "prompt", "steal_customers"],
   description:
-    "signals/filters/prompt: classic ICP lead discovery (needs prompt + filters). steal_customers (Steal Customers): no ICP; My Product required; discovers competitor employees, scans their posts and company posts, finds commenters who can be customers, AI outreach with post+comment context.",
+    "signals/filters/prompt: classic ICP lead discovery (needs prompt + filters). steal_customers (Steal Customers): no ICP; Workspace required; discovers competitor employees, scans their posts and company posts, finds commenters who can be customers, AI outreach with post+comment context.",
 } as const;
 
 const sendWindow = {
@@ -107,12 +107,12 @@ export async function GET() {
               type: "string",
               maxLength: 4000,
               description:
-                "Required for classic lead finders. Optional for steal_customers (filled from My Product).",
+                "Required for classic lead finders. Optional for steal_customers (filled from Workspace).",
             },
             filters: {
               ...agentFilters,
               description:
-                "Required for classic lead finders. Optional for steal_customers (ignored; My Product defines buyer fit).",
+                "Required for classic lead finders. Optional for steal_customers (ignored; Workspace defines buyer fit).",
             },
             signalSources,
             ...agentOutreachProperties,
@@ -132,12 +132,12 @@ export async function GET() {
               type: "string",
               maxLength: 4000,
               description:
-                "Classic lead finders only. For steal_customers, refilled from My Product on save.",
+                "Classic lead finders only. For steal_customers, refilled from Workspace on save.",
             },
             filters: {
               ...agentFilters,
               description:
-                "Classic lead finders only. For steal_customers, refilled from My Product on save.",
+                "Classic lead finders only. For steal_customers, refilled from Workspace on save.",
             },
             signalSources,
             status: { enum: ["active", "paused"] },
@@ -260,7 +260,7 @@ export async function GET() {
         post: {
           operationId: "createLeadFinder",
           summary:
-            "Create a classic lead finder or Steal Customers (steal_customers) agent. First discovery run starts immediately and repeats daily. Steal Customers: mode + signalSources.competitorUrls and/or founderUrls (company, founder, or employee); no ICP; My Product required for buyer fit; AI outreach attached automatically. Classic finders need prompt+filters and may take setupOutreach and replyHandling.",
+            "Create a classic lead finder or Steal Customers (steal_customers) agent. First discovery run starts immediately and repeats daily. Steal Customers: mode + signalSources.competitorUrls and/or founderUrls (company, founder, or employee); no ICP; Workspace required for buyer fit; AI outreach attached automatically. Classic finders need prompt+filters and may take setupOutreach and replyHandling.",
           requestBody: {
             required: true,
             content: { "application/json": { schema: { $ref: "#/components/schemas/AgentCreate" } } },
@@ -268,13 +268,13 @@ export async function GET() {
           responses: {
             "201": { description: "Created agent and lead group" },
             "400": { description: "Invalid targeting configuration" },
-            "409": { description: "LinkedIn not connected or My Product incomplete for Steal Customers" },
+            "409": { description: "LinkedIn not connected or Workspace incomplete for Steal Customers" },
           },
         },
         patch: {
           operationId: "updateLeadFinder",
           summary:
-            "Update, pause, or resume any agent including Steal Customers: signalSources (competitor + founder/employee URLs), send window, replyHandling, booking link, setupOutreach. For steal_customers, prompt/filters are refilled from My Product. Daily discovery time is fixed at creation. Only supplied fields change.",
+            "Update, pause, or resume any agent including Steal Customers: signalSources (competitor + founder/employee URLs), send window, replyHandling, booking link, setupOutreach. For steal_customers, prompt/filters are refilled from Workspace. Daily discovery time is fixed at creation. Only supplied fields change.",
           requestBody: {
             required: true,
             content: { "application/json": { schema: { $ref: "#/components/schemas/AgentUpdate" } } },

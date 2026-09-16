@@ -18,6 +18,7 @@ const privateIndexingRoutes = [
   "/logout/:path*",
   "/messages/:path*",
   "/my-product/:path*",
+  "/workspace/:path*",
   "/new-user-experience/:path*",
   "/onboarding/:path*",
   "/reconnect/:path*",
@@ -80,6 +81,10 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       { source: "/dashboard", destination: "/overview", permanent: true },
+      { source: "/my-product", destination: "/workspace", permanent: true },
+      { source: "/my-product/:path*", destination: "/workspace/:path*", permanent: true },
+      { source: "/features/my-product", destination: "/features/workspace", permanent: true },
+      { source: "/features/my-product.md", destination: "/features/workspace.md", permanent: true },
       { source: "/dashboard/:path*", destination: "/overview/:path*", permanent: true },
       { source: "/contact", destination: "/overview", permanent: true },
       { source: "/contact/:path*", destination: "/overview", permanent: true },

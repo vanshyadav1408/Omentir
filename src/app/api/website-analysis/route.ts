@@ -1,12 +1,15 @@
 import { auth, currentUser } from "@/lib/server/auth";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { NextRequest, NextResponse } from "next/server";
 import {
-  ensureWorkspace,
   getProductProfile,
+  updateWorkspaceIdentity,
   updateWorkspaceNotificationEmail,
   upsertProductProfile,
 } from "@/lib/server/data";
+import { resolveActiveWorkspace } from "@/lib/server/active-workspace";
+import { resolveWebsiteFavicon } from "@/lib/server/website-favicon";
 import { analyzeWebsiteOrSearch } from "@/lib/server/gemini";
 import { rateLimitRequestShared } from "@/lib/request-rate-limit";
 import { readJsonBody, RequestBodyTooLargeError } from "@/lib/server/request-body";
@@ -14,7 +17,7 @@ import { readJsonBody, RequestBodyTooLargeError } from "@/lib/server/request-bod
 export const dynamic = "force-dynamic";
 
 async function getSignedInWorkspaceId(userId: string) {
-  const workspace = await ensureWorkspace(userId);
+  const workspace = await resolveActiveWorkspace(userId);
   const user = await currentUser();
   const email =
     user?.primaryEmailAddress?.emailAddress || user?.emailAddresses[0]?.emailAddress || "";
@@ -86,6 +89,19 @@ export async function POST(request: NextRequest) {
       averageTicketSize: existing?.averageTicketSize,
     });
 
+    after(async () => {
+      try {
+        const faviconUrl = await resolveWebsiteFavicon(websiteUrl);
+        await updateWorkspaceIdentity(workspaceId, {
+          name: analysis.companyName,
+          faviconUrl: faviconUrl || undefined,
+        });
+      } catch (error) {
+        console.error("Failed to refresh workspace favicon", error);
+      }
+    });
+
+    revalidatePath("/workspace");
     revalidatePath("/my-product");
     revalidatePath("/overview");
 

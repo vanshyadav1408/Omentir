@@ -17,12 +17,12 @@ Omentir already holds the user's LinkedIn connection and daily send limits. Talk
 3. `omentir_list_linkedin_accounts`
 4. `omentir_list_agents`
 
-If LinkedIn is not connected or My Product is empty, stop and tell the user to finish that in Omentir. Do not guess ICP from a homepage.
+If LinkedIn is not connected or Workspace is empty, stop and tell the user to finish that in Omentir. Do not guess ICP from a homepage.
 
 ## Finding people
 
 - Classic finder: `omentir_create_agent` with a prompt plus titles, industries, locations, and keywords. Show the config and wait for a yes before creating.
-- Steal Customers: `mode: "steal_customers"` plus competitor or founder URLs. My Product must already be set.
+- Steal Customers: `mode: "steal_customers"` plus competitor or founder URLs. Workspace must already be set.
 - After create, discovery can still be empty. Use `omentir_list_activity` before treating that as failure.
 - Score from evidence on the lead. Rewrite a note that could fit two buyers.
 

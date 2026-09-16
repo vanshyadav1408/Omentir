@@ -21,7 +21,7 @@ Start with ${siteUrl}/agent.json when you need a compact, machine-readable map o
 
 Public pages: ${siteUrl}/llms.txt (directory) and ${siteUrl}/llms-full.txt (longer page text for features, use cases, alternatives, roundups, and integrations). Every public HTML page has a markdown twin at the same path with .md appended (homepage: ${siteUrl}/index.md).
 
-For workspace work, use MCP or REST instead of scraping authenticated Overview pages. The API mirrors Overview's safe operational surfaces: Overview (omentir_get_stats), Actions (omentir_list_scheduled_actions), Activity (omentir_list_activity), Agents (omentir_list_agents / omentir_create_agent / omentir_update_agent), Leads (omentir_list_leads / omentir_get_lead), Messages (omentir_list_conversations / omentir_reply_to_lead), My Product (omentir_get_product_profile / omentir_update_product_profile), and Settings (omentir_get_context / omentir_update_settings).
+For workspace work, use MCP or REST instead of scraping authenticated Overview pages. The API mirrors Overview's safe operational surfaces: Overview (omentir_get_stats), Actions (omentir_list_scheduled_actions), Activity (omentir_list_activity), Agents (omentir_list_agents / omentir_create_agent / omentir_update_agent), Leads (omentir_list_leads / omentir_get_lead), Messages (omentir_list_conversations / omentir_reply_to_lead), Workspace (omentir_get_product_profile / omentir_update_product_profile), and Settings (omentir_get_context / omentir_update_settings).
 
 Never create an Omentir account or buy or change a subscription. These flows are deliberately unavailable to agents.
 
@@ -37,7 +37,7 @@ Users connect once in Omentir (LinkedIn + plan), then attach their chat app or c
 
 Works with **Claude**, **ChatGPT**, **Grok**, **Grok Bot**, and other clients that support custom MCP connectors.
 
-1. User connects LinkedIn in Omentir and fills **My Product**.
+1. User connects LinkedIn in Omentir and fills **Workspace**.
 2. In the chat app: Settings → Connectors (or equivalent) → add custom connector. In **Grok Bot**: Settings → Plugins → search Marketplace for Omentir, or add the MCP URL if it is not listed.
 3. Connector URL: \`${siteUrl}/api/agent/v1/mcp\`
 4. The app sends the user to Omentir to sign in and approve **Connect workspace**.
@@ -68,7 +68,7 @@ For agents that can call HTTP tools with a Bearer token but need instructions fi
 
 ### What connected AI apps can do
 
-- Configure **My Product** and read workspace readiness
+- Configure **Workspace** and read workspace readiness
 - Create, list, update, pause, resume, and delete agents (classic lead finders **and** Steal Customers)
 - List scored leads (Steal Customers leads include \`engagementContext\`: post text, post URL, comment)
 - Inspect discovery activity and the planned outreach send schedule
@@ -94,7 +94,7 @@ Authorization: Bearer <omentir_agent_token>
 4. Call \`omentir_list_agents\` before creating anything so retries do not create duplicate agents (includes classic lead finders and Steal Customers / \`steal_customers\`).
 5. Call \`omentir_create_agent\`:
    - **Classic lead finder:** complete \`prompt\` plus at least one title, industry, location, and keyword. Pass \`setupOutreach: true\` and \`replyHandling\` to start messaging immediately.
-   - **Steal Customers:** \`mode: "steal_customers"\` plus \`signalSources.competitorUrls\` and/or \`founderUrls\` (company pages, founders, or employees who post). No ICP. My Product must already be set. AI outreach is attached automatically.
+   - **Steal Customers:** \`mode: "steal_customers"\` plus \`signalSources.competitorUrls\` and/or \`founderUrls\` (company pages, founders, or employees who post). No ICP. Workspace must already be set. AI outreach is attached automatically.
 6. Use the returned \`leadGroup.id\` with \`omentir_list_leads\` (and \`omentir_get_lead\` for full post + comment context on Steal Customers leads). Discovery is scheduled, so an empty first response can mean the first run is still pending.
 7. Use \`omentir_list_activity\` and the agent's \`status\`, \`lastRunAt\`, and \`nextRunAt\` to explain progress without inventing results.
 8. Use \`omentir_list_scheduled_actions\` to report what outreach is queued and exactly when it sends.
@@ -127,7 +127,7 @@ Workspace-wide calendar link: set \`schedulingLink\` with \`omentir_update_produ
 
 Use this when the user wants to reach people who are already talking about a similar product under competitor LinkedIn posts (high intent: same problem, actively shopping).
 
-There is **no ICP form** for this mode. The pool is people who comment under competitor posts. Who is "likely to buy" is judged from the workspace **product profile (My Product)** (description, use cases, pain points, keywords, target buyers), which must be set up first.
+There is **no ICP form** for this mode. The pool is people who comment under competitor posts. Who is "likely to buy" is judged from the **Workspace** product profile (description, use cases, pain points, keywords, target buyers), which must be set up first.
 
 \`omentir_create_agent\` with:
 
@@ -135,7 +135,7 @@ There is **no ICP form** for this mode. The pool is people who comment under com
 - \`groupName\`: name of the lead list
 - \`signalSources.competitorUrls\`: one or more LinkedIn company (or profile) URLs of competitors
 - Optional \`signalSources.founderUrls\`: LinkedIn profile URLs of competitor **founders or employees** who post about the product
-- \`prompt\` and \`filters\` are **optional** and ignored for targeting; the server fills them from My Product
+- \`prompt\` and \`filters\` are **optional** and ignored for targeting; the server fills them from Workspace
 - Outreach: AI outreach is attached automatically (manual templates cannot carry post + comment context). You may still pass \`replyHandling\`, \`bookingLink\`, and \`sendWindow\`
 
 What discovery does for Steal Customers (\`steal_customers\`):
@@ -143,10 +143,10 @@ What discovery does for Steal Customers (\`steal_customers\`):
 1. Pulls recent posts from each competitor **company page**.
 2. For each company, **finds employees** at that company and pulls **their personal posts** (employees are content sources only, not leads).
 3. Also uses any optional founder/employee profile URLs you pass, and product-relevant discussion post search.
-4. Ranks posts using product language from My Product (keywords, use cases, pains); prefers recent posts (~14 days when dates exist).
+4. Ranks posts using product language from Workspace (keywords, use cases, pains); prefers recent posts (~14 days when dates exist).
 5. Scans **comments only** under those posts. Keeps substantive, intent-bearing comments; drops cheer/emoji noise.
 6. Keeps only **fresh** comments: hard max **7 days**.
-7. Scores commenters as likely **customers** of the My Product profile (not the competitor's employees as buyers by default).
+7. Scores commenters as likely **customers** of the Workspace profile (not the competitor's employees as buyers by default).
 8. Stores full engagement context: **post text**, **post URL**, **comment text**, **comment URL**, plus profile, for AI outreach.
 9. \`omentir_list_leads\` / \`omentir_get_lead\` return \`engagementContext\`, \`signalText\`, and \`leadReason\`.
 
@@ -166,9 +166,9 @@ Example create payload (MCP tool or \`POST /api/agent/v1/agents\`):
 }
 \`\`\`
 
-When helping a user configure Steal Customers, first ensure My Product is complete (what the product does, use cases, pain points, keywords, buyers). Then collect competitor company URLs and optional founder/employee profile URLs only. Do not invent an ICP form or assume a vertical.
+When helping a user configure Steal Customers, first ensure Workspace is complete (what the product does, use cases, pain points, keywords, buyers). Then collect competitor company URLs and optional founder/employee profile URLs only. Do not invent an ICP form or assume a vertical.
 
-Edit with \`omentir_update_agent\` (same \`agentId\`): change \`signalSources\`, \`replyHandling\`, \`bookingLink\`, \`sendWindow\`, or \`status\`. On save, prompt/filters are refilled from My Product. Pause, resume, and delete use the same tools as other agents.
+Edit with \`omentir_update_agent\` (same \`agentId\`): change \`signalSources\`, \`replyHandling\`, \`bookingLink\`, \`sendWindow\`, or \`status\`. On save, prompt/filters are refilled from Workspace. Pause, resume, and delete use the same tools as other agents.
 
 ## Time, Send Windows, and Daily Limits
 

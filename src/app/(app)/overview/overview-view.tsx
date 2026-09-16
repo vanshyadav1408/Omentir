@@ -32,6 +32,7 @@ import { TextField } from "@/app/ui/text-field";
 import { useWorkspaceTimeZone } from "@/app/workspace-time-zone";
 import { formatZonedDate, zonedDayKey, zonedMonthStart } from "@/lib/time-zone";
 import ActivityHeatmap, { heatmapTotal } from "./activity-heatmap";
+import { LeadAvatar } from "@/app/lead-avatar";
 
 type OverviewViewProps = {
   agents: Agent[];
@@ -80,21 +81,6 @@ function timeAgo(iso?: string) {
   if (h < 24) return `${h}h ago`;
   const d = Math.floor(h / 24);
   return `${d}d ago`;
-}
-
-function Initials({ name }: { name: string }) {
-  const initials = name
-    .split(" ")
-    .filter(Boolean)
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-  return (
-    <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#1f1f1f] text-[10px] font-medium text-[var(--md-sys-color-on-surface)]">
-      {initials || "?"}
-    </div>
-  );
 }
 
 function FitScore({ score }: { score: number }) {
@@ -258,7 +244,7 @@ export default function OverviewView({
           leadName: lead?.name ?? thread.profileName ?? thread.title ?? "LinkedIn lead",
           title: lead?.title ?? thread.profileHeadline ?? "",
           company: lead?.company ?? "",
-          avatarUrl: lead?.avatarUrl ?? thread.avatarUrl,
+          avatarUrl: lead?.avatarUrl || thread.avatarUrl,
           body: inbound.body,
           when: inbound.createdAt,
         };
@@ -472,16 +458,12 @@ export default function OverviewView({
               ) : (
                 hotLeads.map((lead) => (
                   <li key={lead.id} className="app-list-row px-0">
-                    {lead.avatarUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={lead.avatarUrl}
-                        alt=""
-                        className="h-8 w-8 shrink-0 rounded-full object-cover"
-                      />
-                    ) : (
-                      <Initials name={lead.name} />
-                    )}
+                    <LeadAvatar
+                      name={lead.name}
+                      avatarUrl={lead.avatarUrl}
+                      className="h-8 w-8 bg-[#1f1f1f]"
+                      initialsClassName="text-[10px] font-medium text-[var(--md-sys-color-on-surface)]"
+                    />
                     <div className="min-w-0 flex-1">
                       <Link
                         href={lead.linkedInUrl || "/leads"}
@@ -551,16 +533,12 @@ export default function OverviewView({
               <ul className="divide-y divide-[var(--md-sys-color-outline-variant)]">
                 {recentReplies.map((reply) => (
                   <li key={reply.id} className="app-list-row items-start px-0">
-                    {reply.avatarUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={reply.avatarUrl}
-                        alt=""
-                        className="h-8 w-8 shrink-0 rounded-full object-cover"
-                      />
-                    ) : (
-                      <Initials name={reply.leadName} />
-                    )}
+                    <LeadAvatar
+                      name={reply.leadName}
+                      avatarUrl={reply.avatarUrl}
+                      className="h-8 w-8 bg-[#1f1f1f]"
+                      initialsClassName="text-[10px] font-medium text-[var(--md-sys-color-on-surface)]"
+                    />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-baseline justify-between gap-2">
                         <span className="truncate text-sm font-semibold text-[var(--md-sys-color-on-surface)]">

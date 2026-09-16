@@ -1,6 +1,6 @@
 import { auth } from "@/lib/server/auth";
 import { NextRequest, NextResponse } from "next/server";
-import { getWorkspace } from "@/lib/server/data";
+import { resolveActiveWorkspace } from "@/lib/server/active-workspace";
 import { findPreviewLeadsWithGemini } from "@/lib/server/gemini";
 import { rateLimitRequestShared } from "@/lib/request-rate-limit";
 import { readJsonBody, RequestBodyTooLargeError } from "@/lib/server/request-body";
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
   // Step 2 is the only caller, so a workspace that has finished onboarding has
   // no legitimate reason to hit this. Without the check a completed user can
   // keep replaying the endpoint and burning search-grounded Gemini calls.
-  const workspace = await getWorkspace(userId);
+  const workspace = await resolveActiveWorkspace(userId);
   if (workspace.onboarding) {
     return NextResponse.json({ error: "Onboarding is already complete." }, { status: 403 });
   }

@@ -580,7 +580,7 @@ export async function createAgentResource(context: AgentApiContext, payload: unk
     const productProfile = await getProductProfile(context.workspace.id);
     if (!productProfileIsReadyForSteal(productProfile)) {
       throw new AgentApiOperationError(
-        "Set up the product profile (My Product) before creating a Steal Customers agent.",
+        "Set up the product profile (Workspace) before creating a Steal Customers agent.",
         409,
       );
     }
@@ -684,7 +684,7 @@ export async function createAgentResource(context: AgentApiContext, payload: unk
       timeZone: resolveTimeZone(context.workspace.timezone),
       mode: agent.mode,
       guidance: isSteal
-        ? "Steal Customers: scans recent competitor and founder/employee posts, keeps fresh intent-bearing comments (max ~7 days), scores likely buyers from My Product, and stores post URL + post text + comment + profile. Use omentir_list_leads / omentir_get_lead on this lead group."
+        ? "Steal Customers: scans recent competitor and founder/employee posts, keeps fresh intent-bearing comments (max ~7 days), scores likely buyers from Workspace, and stores post URL + post text + comment + profile. Use omentir_list_leads / omentir_get_lead on this lead group."
         : "Use omentir_list_leads with this lead group id to inspect results.",
     },
     outreach: outreachConfigured
@@ -772,7 +772,7 @@ export async function updateAgentResource(context: AgentApiContext, payload: unk
       const productProfile = await getProductProfile(context.workspace.id);
       if (!productProfileIsReadyForSteal(productProfile)) {
         throw new AgentApiOperationError(
-          "Set up the product profile (My Product) before saving a Steal Customers agent.",
+          "Set up the product profile (Workspace) before saving a Steal Customers agent.",
           409,
         );
       }

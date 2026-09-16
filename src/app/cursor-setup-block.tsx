@@ -29,7 +29,7 @@ export default function CursorSetupBlock({
       ) : null}
       <ol className="mt-5 list-decimal space-y-2 pl-5 text-zinc-800">
         <li>
-          Finish Omentir first: LinkedIn connected, My Product written in two
+          Finish Omentir first: LinkedIn connected, Workspace written in two
           sentences a stranger would understand.
         </li>
         <li>

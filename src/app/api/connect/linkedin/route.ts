@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { createLinkedInAuthLink, listUnipileLinkedInAccounts } from "@/lib/server/unipile";
 import { getAppBaseUrl } from "@/lib/server/runtime-config";
 import { createLinkedInConnectToken, getLatestLinkedInAccount } from "@/lib/server/data";
+import { resolveActiveWorkspace } from "@/lib/server/active-workspace";
 
 export const dynamic = "force-dynamic";
 
@@ -18,9 +19,10 @@ export async function GET() {
   const failurePath = "/overview?linkedin=error";
 
   try {
+    const workspace = await resolveActiveWorkspace(userId);
     const [callbackToken, latestAccount] = await Promise.all([
-      createLinkedInConnectToken(userId),
-      getLatestLinkedInAccount(userId),
+      createLinkedInConnectToken(workspace.id),
+      getLatestLinkedInAccount(workspace.id),
     ]);
     let reconnectAccountId: string | undefined = latestAccount?.accountId;
     if (reconnectAccountId) {

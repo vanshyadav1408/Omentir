@@ -1585,7 +1585,7 @@ export async function scoreLeadForProduct(
   const isStealCustomers = agent.mode === "steal_customers";
   const stealScoringGuidance = isStealCustomers
     ? `
-This agent mode is steal_customers. There is no separate agent ICP form: the pool is people who commented on a competitor or similar-product post. Before scoring, exhaustively reconstruct who this product is for ONLY from the product profile (My Product) — do not assume any industry, channel, or GTM motion:
+This agent mode is steal_customers. There is no separate agent ICP form: the pool is people who commented on a competitor or similar-product post. Before scoring, exhaustively reconstruct who this product is for ONLY from the product profile (Workspace). Do not assume any industry, channel, or GTM motion:
 - What the product or service is and does (description, key features, use cases).
 - Concrete jobs-to-be-done and problems it solves (pain points, use cases, keywords).
 - Who buys and who uses it (target buyers, buyer titles, role vocabulary, company sizes, industries, preferred locations).
