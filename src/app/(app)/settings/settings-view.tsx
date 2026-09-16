@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import type { LinkedInAccount, Workspace } from "@/lib/server/types";
 import { ContentReveal, LinkedInAccountsSkeleton } from "@/app/app-skeletons";
@@ -11,7 +10,9 @@ import { SelectField } from "@/app/ui/select";
 import { TextField } from "@/app/ui/text-field";
 import { useWorkspaceTimeZone } from "@/app/workspace-time-zone";
 import { formatZonedDate } from "@/lib/time-zone";
-import { commercialPlanLimits, formatPlanLimit } from "@/lib/plan-limits";
+import { billedLinkedInAccountLimit, commercialPlanLimits, formatPlanLimit } from "@/lib/plan-limits";
+import { extraLinkedInSeatsCount } from "@/lib/linkedin-seat-pricing";
+import LinkedInSeatsCard from "./linkedin-seats-card";
 
 type SettingsViewProps = {
   workspace: Workspace;
@@ -426,13 +427,19 @@ export default function SettingsView({
           ? "Custom"
           : "$49/month";
   // Same ceilings as plan-limits enforcement. Local/self-hosted is unlimited.
+  const extraLinkedInSeats = extraLinkedInSeatsCount(workspace.billing?.extraLinkedInSeats);
   const linkedInAccountCap = localMode
+    ? Number.POSITIVE_INFINITY
+    : billedLinkedInAccountLimit(plan, extraLinkedInSeats);
+  const includedLinkedInAccounts = localMode
     ? Number.POSITIVE_INFINITY
     : commercialPlanLimits(plan).linkedInAccounts;
   const linkedInLimit = formatPlanLimit(linkedInAccountCap);
   const linkedInLimitLabel =
     linkedInLimit === "unlimited" ? "unlimited" : linkedInLimit;
   const linkedInIsUnlimited = !Number.isFinite(linkedInAccountCap);
+  const subscriptionActive =
+    workspace.billing?.status === "active" || workspace.billing?.status === "bypassed";
   const [notifFlags, setNotifFlags] = useState({ campaign: true, weekly: true, product: false });
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -846,16 +853,22 @@ export default function SettingsView({
                   </a>
                 ) : (
                   <p className="mt-3 text-[13px] font-medium text-zinc-700">
-                    Your plan supports up to {linkedInLimit} connected account
-                    {linkedInAccountCap === 1 ? "" : "s"}.{" "}
-                    <Link
-                      href="/upgrade"
-                      className="font-semibold text-zinc-950 underline underline-offset-2"
-                    >
-                      Upgrade
-                    </Link>{" "}
-                    to connect more.
+                    You are using all {linkedInLimit} connected account
+                    {linkedInAccountCap === 1 ? "" : "s"}. Add extra LinkedIn
+                    accounts below to connect more.
                   </p>
+                )}
+
+                {localMode || linkedInIsUnlimited ? null : (
+                  <div className="mt-8">
+                    <LinkedInSeatsCard
+                      extraSeats={extraLinkedInSeats}
+                      includedAccounts={
+                        Number.isFinite(includedLinkedInAccounts) ? includedLinkedInAccounts : 1
+                      }
+                      subscribed={subscriptionActive}
+                    />
+                  </div>
                 )}
               </>
             )}
@@ -900,6 +913,12 @@ export default function SettingsView({
                           </>
                         )}
                       </p>
+                      {extraLinkedInSeats > 0 ? (
+                        <p className="mt-2 text-[13px] font-medium text-zinc-700">
+                          Plus {extraLinkedInSeats} extra LinkedIn{" "}
+                          {extraLinkedInSeats === 1 ? "account" : "accounts"} billed separately.
+                        </p>
+                      ) : null}
                     </div>
                     <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${billing.cls}`}>
                       {billing.label}

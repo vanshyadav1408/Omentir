@@ -1,4 +1,5 @@
 import type { WorkspaceBilling } from "@/lib/server/types";
+import { extraLinkedInSeatsCount } from "./linkedin-seat-pricing";
 import { isLocalMode } from "./runtime-mode.ts";
 
 export type PlanId = WorkspaceBilling["plan"];
@@ -58,6 +59,17 @@ export function commercialPlanLimits(plan: PlanId | undefined): PlanLimits {
 export function planLimits(plan: PlanId | undefined): PlanLimits {
   if (isLocalMode()) return unlimitedLimits;
   return commercialPlanLimits(plan);
+}
+
+// Extra paid LinkedIn seats stack on the plan's included account. Enterprise
+// stays uncapped. Callers in local mode must keep using planLimits() / entitlements.
+export function billedLinkedInAccountLimit(
+  plan: PlanId | undefined,
+  extraSeats: unknown = 0,
+) {
+  const base = commercialPlanLimits(plan).linkedInAccounts;
+  if (!Number.isFinite(base)) return base;
+  return base + extraLinkedInSeatsCount(extraSeats);
 }
 
 /**

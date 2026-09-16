@@ -108,6 +108,7 @@ import { isWithinSendWindow, SPACING_MINUTES, type SendActionKind } from "./send
 import { hasActiveSubscription } from "./subscription";
 import { shouldMarkBillingExpired, shouldPurgeUnipileAccounts } from "@/lib/unipile-billing-purge";
 import { purgeWorkspaceUnipileAccounts } from "./linkedin-accounts";
+import { cancelWhopSeatMembership } from "./whop";
 import { capturePostHogEvent } from "@/lib/posthog-server";
 import { getAppBaseUrl } from "./runtime-config";
 import {
@@ -2560,12 +2561,14 @@ async function purgeExpiredUnipileAccounts(mode: AutomationSafetyMode) {
   for (const workspace of workspaces) {
     let billing = workspace.billing;
     if (shouldMarkBillingExpired(billing)) {
+      await cancelWhopSeatMembership(billing?.seatMembershipId);
       billing = await updateWorkspaceBilling(workspace.id, {
         provider: billing?.provider || "whop",
         plan: billing?.plan || "solo",
         status: "expired",
         payerEmail: billing?.payerEmail,
         currentPeriodEnd: billing?.currentPeriodEnd,
+        extraLinkedInSeats: 0,
       });
     }
     if (!shouldPurgeUnipileAccounts(billing)) continue;

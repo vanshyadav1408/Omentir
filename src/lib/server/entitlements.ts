@@ -1,7 +1,7 @@
 import "server-only";
 
 import { isLocalMode } from "@/lib/runtime-mode";
-import { planLimits, type PlanLimits } from "@/lib/plan-limits";
+import { billedLinkedInAccountLimit, planLimits, type PlanLimits } from "@/lib/plan-limits";
 import type { Workspace } from "./types";
 
 export type Entitlements = {
@@ -29,5 +29,14 @@ export function entitlementsFor(workspace: Pick<Workspace, "billing">): Entitlem
   }
   const active = workspace.billing?.status === "active" || workspace.billing?.status === "bypassed";
   const plan = workspace.billing?.plan || "solo";
-  return { planId: plan, subscriptionActive: active, billingManaged: true, limits: planLimits(plan) };
+  const limits = planLimits(plan);
+  return {
+    planId: plan,
+    subscriptionActive: active,
+    billingManaged: true,
+    limits: {
+      ...limits,
+      linkedInAccounts: billedLinkedInAccountLimit(plan, workspace.billing?.extraLinkedInSeats),
+    },
+  };
 }

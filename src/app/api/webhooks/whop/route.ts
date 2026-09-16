@@ -1,19 +1,26 @@
 import { clerkClient } from "@clerk/nextjs/server";
 import { isLocalMode } from "@/lib/runtime-mode";
 import { NextResponse, type NextRequest } from "next/server";
-import { getWorkspace, listWorkspacesForOwner, logAutomationRun, updateWorkspaceBilling } from "@/lib/server/data";
-import { purgeWorkspaceUnipileAccounts } from "@/lib/server/linkedin-accounts";
+import { getWorkspace, listWorkspacesForOwner, logAutomationRun, updateWorkspaceBilling, updateWorkspaceLinkedInSeats } from "@/lib/server/data";
+import { enforceLinkedInAccountCap, purgeWorkspaceUnipileAccounts } from "@/lib/server/linkedin-accounts";
 import { syncMailingListPlan } from "@/lib/server/mailing-list";
 import { readTextBody, RequestBodyTooLargeError } from "@/lib/server/request-body";
 import {
+  cancelWhopSeatMembership,
   getConfiguredWhopPlanIds,
   getWhopClient,
   isLifetimePlan,
   planFromWhopPayload,
   type BillingPlan,
 } from "@/lib/server/whop";
+import {
+  extraLinkedInSeatMonthlyTotalUsd,
+  extraLinkedInSeatsFromMetadata,
+  isLinkedInSeatCheckoutMetadata,
+} from "@/lib/linkedin-seat-pricing";
 import { capturePostHogEvent, revenueFromWhopPayment } from "@/lib/posthog-server";
 import { CHANNEL_LABELS, type ReferralChannel } from "@/lib/referral-channel";
+import { hasActiveSubscription } from "@/lib/server/subscription";
 
 export const dynamic = "force-dynamic";
 
@@ -161,6 +168,60 @@ async function activateWorkspaceFromEmail(
   return activateWorkspace(workspaceUser.id, sourceId, plan, email, currentPeriodEnd);
 }
 
+async function applyLinkedInSeatPurchase(
+  workspaceId: string,
+  extraSeats: number,
+  membershipId: string | undefined,
+  sourceId: string,
+) {
+  const workspace = await getWorkspace(workspaceId);
+  if (!hasActiveSubscription(workspace)) {
+    await logAutomationRun({
+      workspaceId,
+      kind: "webhook",
+      status: "completed",
+      message: `Ignored extra LinkedIn seats ${sourceId}: workspace is not subscribed.`,
+    });
+    return { ok: true as const, ignored: "no_subscription" };
+  }
+  const previousSeatMembershipId = workspace.billing?.seatMembershipId;
+  await updateWorkspaceLinkedInSeats(workspaceId, {
+    extraLinkedInSeats: extraSeats,
+    seatMembershipId: membershipId || previousSeatMembershipId,
+  });
+  if (previousSeatMembershipId && previousSeatMembershipId !== membershipId) {
+    await cancelWhopSeatMembership(previousSeatMembershipId);
+  }
+  const trimmed = await enforceLinkedInAccountCap(workspaceId);
+  await logAutomationRun({
+    workspaceId,
+    kind: "webhook",
+    status: "completed",
+    message: `Set ${extraSeats} extra LinkedIn seat${extraSeats === 1 ? "" : "s"} from Whop ${sourceId}.${
+      trimmed.removed
+        ? ` Disconnected ${trimmed.removed} account${trimmed.removed === 1 ? "" : "s"} over the new cap.`
+        : ""
+    }`,
+  });
+  return { ok: true as const, workspaceId };
+}
+
+async function clearLinkedInSeats(workspaceId: string, sourceId: string) {
+  await updateWorkspaceLinkedInSeats(workspaceId, { extraLinkedInSeats: 0 });
+  const trimmed = await enforceLinkedInAccountCap(workspaceId);
+  await logAutomationRun({
+    workspaceId,
+    kind: "webhook",
+    status: "completed",
+    message: `Cleared extra LinkedIn seats from Whop ${sourceId}.${
+      trimmed.removed
+        ? ` Disconnected ${trimmed.removed} account${trimmed.removed === 1 ? "" : "s"} over the included cap.`
+        : ""
+    }`,
+  });
+  return { ok: true as const };
+}
+
 async function deactivateWorkspace(workspaceId: string, sourceId: string) {
   // Keep the provider/plan on record but drop access. The cron and server
   // actions gate on status === "active", so this stops all paid background work.
@@ -169,9 +230,8 @@ async function deactivateWorkspace(workspaceId: string, sourceId: string) {
   // silently promoted a cancelled Basic buyer to Startup limits (unlimited
   // agents/leads), which a later manual bypass or reactivation would honour.
   // Fail closed to "solo" when nothing is on record.
-  const existingPlan = await getWorkspace(workspaceId)
-    .then((workspace) => workspace.billing?.plan)
-    .catch(() => undefined);
+  const existing = await getWorkspace(workspaceId).catch(() => null);
+  const existingPlan = existing?.billing?.plan;
 
   // A lifetime buyer paid once and can never be re-charged, so a deactivation
   // here is unrecoverable without manual work. Whop can emit this event for a
@@ -188,10 +248,15 @@ async function deactivateWorkspace(workspaceId: string, sourceId: string) {
     return { ok: true, ignored: "lifetime_plan" };
   }
 
+  await cancelWhopSeatMembership(existing?.billing?.seatMembershipId);
+
   await updateWorkspaceBilling(workspaceId, {
     provider: "whop",
     plan: existingPlan ?? "solo",
     status: "cancelled",
+    payerEmail: existing?.billing?.payerEmail,
+    currentPeriodEnd: existing?.billing?.currentPeriodEnd,
+    extraLinkedInSeats: 0,
   });
 
   await syncMailingListPlan(workspaceId, "none");
@@ -265,6 +330,11 @@ async function resolveWorkspaceId(
   return users.data.length === 1 ? users.data[0].id : null;
 }
 
+function payloadMembershipId(payload: { membership?: { id?: string | null } | null }) {
+  const id = payload.membership?.id?.trim();
+  return id || undefined;
+}
+
 export async function POST(request: NextRequest) {
   if (isLocalMode()) return new NextResponse(null, { status: 404 });
   let whop;
@@ -314,12 +384,55 @@ export async function POST(request: NextRequest) {
       });
       return NextResponse.json({ ok: true, ignored: "no_workspace" });
     }
+
+    const workspace = await getWorkspace(workspaceId).catch(() => null);
+    const currentSeatMembershipId = workspace?.billing?.seatMembershipId;
+    const isSeatMembership =
+      isLinkedInSeatCheckoutMetadata(membership.metadata) ||
+      membership.id === currentSeatMembershipId;
+    if (isSeatMembership) {
+      if (currentSeatMembershipId && membership.id !== currentSeatMembershipId) {
+        return NextResponse.json({ ok: true, ignored: "stale_seat_membership" });
+      }
+      const result = await clearLinkedInSeats(workspaceId, `membership ${membership.id}`);
+      return NextResponse.json(result);
+    }
+
+    const plan = await expectedWhopPlan(
+      membership,
+      `membership ${membership.id}`,
+      membership.metadata,
+    );
+    if (!plan) {
+      return NextResponse.json({ ok: true, ignored: "wrong_plan" });
+    }
+
     const result = await deactivateWorkspace(workspaceId, `membership ${membership.id}`);
     return NextResponse.json(result);
   }
 
   if (event.type === "membership.activated") {
     const membership = event.data;
+    const extraSeats = extraLinkedInSeatsFromMetadata(membership.metadata);
+    if (extraSeats) {
+      const workspaceId = await resolveWorkspaceId(whop, membership);
+      if (!workspaceId) {
+        await logAutomationRun({
+          kind: "webhook",
+          status: "completed",
+          message: `Ignored extra LinkedIn seats ${membership.id}: no matching workspace.`,
+        });
+        return NextResponse.json({ ok: true, ignored: "no_workspace" });
+      }
+      const result = await applyLinkedInSeatPurchase(
+        workspaceId,
+        extraSeats,
+        membership.id,
+        `membership ${membership.id}`,
+      );
+      return NextResponse.json(result);
+    }
+
     const plan = await expectedWhopPlan(
       membership,
       `membership ${membership.id}`,
@@ -384,6 +497,42 @@ export async function POST(request: NextRequest) {
   }
 
   const payment = event.data;
+  const extraSeats = extraLinkedInSeatsFromMetadata(payment.metadata);
+  if (extraSeats) {
+    const workspaceId =
+      metadataString(payment.metadata, "workspaceId") ||
+      metadataString(payment.metadata, "clerkUserId") ||
+      (await resolveWorkspaceId(whop, payment));
+    if (!workspaceId) {
+      await logAutomationRun({
+        kind: "webhook",
+        status: "completed",
+        message: `Ignored extra LinkedIn seats payment ${payment.id}: no matching workspace.`,
+      });
+      return NextResponse.json({ ok: true, ignored: "no_workspace" });
+    }
+    const result = await applyLinkedInSeatPurchase(
+      workspaceId,
+      extraSeats,
+      payloadMembershipId(payment),
+      `payment ${payment.id}`,
+    );
+    await capturePostHogEvent({
+      event: "payment_succeeded",
+      distinctId: workspaceId,
+      insertId: `payment_succeeded:${payment.id}`,
+      properties: {
+        plan: "linkedin_seats",
+        extraSeats,
+        email: payment.user?.email || undefined,
+        revenue: revenueFromWhopPayment(payment, null) ?? extraLinkedInSeatMonthlyTotalUsd(extraSeats),
+        currency: "USD",
+        ...metadataAttribution(payment.metadata),
+      },
+    });
+    return NextResponse.json(result);
+  }
+
   const plan = await expectedWhopPlan(payment, `payment ${payment.id}`, payment.metadata);
   if (!plan) {
     return NextResponse.json({ ok: true, ignored: "wrong_plan" });

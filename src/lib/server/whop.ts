@@ -2,9 +2,18 @@ import "server-only";
 
 import { Whop } from "@whop/sdk";
 import { chooseCheckoutPlan } from "@/lib/whop-plan-selection";
+import {
+  extraLinkedInSeatMonthlyTotalUsd,
+  extraLinkedInSeatPlanTitle,
+  isLinkedInSeatProduct,
+  LINKEDIN_SEAT_CHECKOUT_KIND,
+  LINKEDIN_SEAT_PRODUCT_TITLE,
+  parseExtraLinkedInSeatCount,
+} from "@/lib/linkedin-seat-pricing";
 
 let client: Whop | null = null;
 const checkoutPlanIds = new Map<string, string>();
+let linkedInSeatProductId: string | null = null;
 // "startup" is a retired product. It stays here so existing subscribers keep
 // resolving and renewing; it is no longer purchasable.
 export type BillingPlan = "solo" | "lifetime" | "startup";
@@ -213,4 +222,124 @@ export async function findActiveWhopMembershipByEmail(email: string) {
     payerEmail: membership.user?.email?.trim().toLowerCase() || normalizedEmail,
     currentPeriodEnd: unixToIso(membership.renewal_period_end),
   } satisfies WhopActiveMembership;
+}
+
+export async function cancelWhopSeatMembership(membershipId: string | undefined | null) {
+  const id = membershipId?.trim();
+  if (!id) return;
+  try {
+    await getWhopClient().memberships.cancel(id, { cancellation_mode: "immediate" });
+  } catch (error) {
+    console.error(
+      "[whop] failed to cancel extra LinkedIn seat membership",
+      id,
+      error instanceof Error ? error.message : error,
+    );
+  }
+}
+
+async function getLinkedInSeatProductId() {
+  if (linkedInSeatProductId) return linkedInSeatProductId;
+
+  const configured = process.env.WHOP_LINKEDIN_SEATS_PRODUCT_ID?.trim();
+  if (configured) {
+    if (!configured.startsWith("prod_")) {
+      throw new Error("WHOP_LINKEDIN_SEATS_PRODUCT_ID must be the extra-seats prod_ id.");
+    }
+    linkedInSeatProductId = configured;
+    return configured;
+  }
+
+  const companyId = process.env.WHOP_COMPANY_ID?.trim();
+  if (!companyId) {
+    throw new Error("WHOP_COMPANY_ID is required to start extra LinkedIn seat checkout.");
+  }
+
+  const whop = getWhopClient();
+  const products = await whop.products.list({
+    account_id: companyId,
+    visibilities: ["hidden", "visible", "quick_link"],
+    first: 50,
+    order: "created_at",
+    direction: "desc",
+  });
+  const existing = products.data.find((product) => isLinkedInSeatProduct(product));
+  if (existing?.id.startsWith("prod_")) {
+    if (existing.title.trim() !== LINKEDIN_SEAT_PRODUCT_TITLE) {
+      await whop.products.update(existing.id, { title: LINKEDIN_SEAT_PRODUCT_TITLE });
+    }
+    linkedInSeatProductId = existing.id;
+    return existing.id;
+  }
+
+  // Whop refuses a renewal checkout without a product. Keep this add-on on its
+  // own hidden product so cancelling seats cannot match the Pro plan id.
+  const created = await whop.products.create({
+    account_id: companyId,
+    title: LINKEDIN_SEAT_PRODUCT_TITLE,
+    description: "Extra LinkedIn accounts billed on top of the included Pro account.",
+    visibility: "hidden",
+    send_welcome_message: false,
+    metadata: { kind: LINKEDIN_SEAT_CHECKOUT_KIND },
+    "Idempotency-Key": "omentir-linkedin-seats-product",
+  });
+  if (!created.id.startsWith("prod_")) {
+    throw new Error("Whop did not return a product id for extra LinkedIn seats.");
+  }
+  linkedInSeatProductId = created.id;
+  return created.id;
+}
+
+export async function createLinkedInSeatCheckout(input: {
+  extraSeats: number;
+  workspaceId: string;
+  email?: string;
+  redirectUrl: string;
+  metadata?: Record<string, string>;
+}) {
+  const extraSeats = parseExtraLinkedInSeatCount(input.extraSeats);
+  if (!extraSeats) {
+    throw new Error("Choose at least one extra LinkedIn account.");
+  }
+
+  const monthlyTotal = extraLinkedInSeatMonthlyTotalUsd(extraSeats);
+  const companyId = process.env.WHOP_COMPANY_ID?.trim();
+  if (!companyId) {
+    throw new Error("WHOP_COMPANY_ID is required to start extra LinkedIn seat checkout.");
+  }
+  const productId = await getLinkedInSeatProductId();
+  const checkout = await getWhopClient().checkoutConfigurations.create({
+    account_id: companyId,
+    redirect_url: input.redirectUrl,
+    metadata: {
+      workspaceId: input.workspaceId,
+      clerkUserId: input.workspaceId,
+      email: input.email,
+      kind: LINKEDIN_SEAT_CHECKOUT_KIND,
+      extraSeats: String(extraSeats),
+      ...input.metadata,
+    },
+    plan: {
+      account_id: companyId,
+      product_id: productId,
+      title: extraLinkedInSeatPlanTitle(extraSeats),
+      description: `${extraSeats} extra LinkedIn account${extraSeats === 1 ? "" : "s"} on top of the included account.`,
+      plan_type: "renewal",
+      release_method: "buy_now",
+      visibility: "hidden",
+      currency: "usd",
+      billing_period: 30,
+      // Charged on top of renewal_price on the first invoice, so this stays 0
+      // or the first month would be billed twice.
+      initial_price: 0,
+      renewal_price: monthlyTotal,
+      unlimited_stock: true,
+    },
+  });
+
+  if (!checkout.purchase_url) {
+    throw new Error("Whop checkout configuration returned no purchase_url.");
+  }
+
+  return { purchaseUrl: checkout.purchase_url, checkoutId: checkout.id, extraSeats, monthlyTotal };
 }

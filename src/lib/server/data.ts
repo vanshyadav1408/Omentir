@@ -26,6 +26,8 @@ import {
   canonicalLinkedInAccountsByProvider,
   linkedInAccountIsOnOwnedWorkspace,
 } from "@/lib/linkedin-account-sharing";
+import { entitlementsFor } from "./entitlements";
+import { mergeLinkedInSeatFields } from "@/lib/linkedin-seat-pricing";
 import { httpsAvatarUrl } from "@/lib/lead-avatar";
 import {
   canEnrollLeadForOutreach,
@@ -179,8 +181,8 @@ function agentTokenPrefix(token: string) {
   return `${token.slice(0, AGENT_API_TOKEN_PREFIX.length + 8)}...`;
 }
 
-function linkedInAccountLimit(plan: WorkspaceBilling["plan"] | undefined) {
-  return planLimits(plan).linkedInAccounts;
+function linkedInAccountLimit(billing: WorkspaceBilling | undefined) {
+  return entitlementsFor({ billing }).limits.linkedInAccounts;
 }
 
 function limitMessage(resource: string, limit: number) {
@@ -625,15 +627,15 @@ export async function updateWorkspaceBilling(
   workspaceId: string,
   billing: Omit<WorkspaceBilling, "updatedAt">,
 ) {
-  const next = omitUndefined({
-    ...billing,
-    updatedAt: nowIso(),
-  }) as WorkspaceBilling;
-
   const target = await findWorkspace(workspaceId);
   const ownerId = target?.ownerId || workspaceId;
   await ensureWorkspace(ownerId);
   const workspaceIds = await workspaceIdsForOwner(ownerId);
+  const next = omitUndefined({
+    ...billing,
+    ...mergeLinkedInSeatFields(target?.billing, billing),
+    updatedAt: nowIso(),
+  }) as WorkspaceBilling;
 
   await Promise.all(
     workspaceIds.map((id) =>
@@ -648,6 +650,26 @@ export async function updateWorkspaceBilling(
   );
 
   return next;
+}
+
+export async function updateWorkspaceLinkedInSeats(
+  workspaceId: string,
+  input: { extraLinkedInSeats: number; seatMembershipId?: string | null },
+) {
+  const workspace = await findWorkspace(workspaceId);
+  if (!workspace?.billing) {
+    throw new Error("Workspace billing is missing.");
+  }
+
+  return updateWorkspaceBilling(workspaceId, {
+    provider: workspace.billing.provider,
+    plan: workspace.billing.plan,
+    status: workspace.billing.status,
+    payerEmail: workspace.billing.payerEmail,
+    currentPeriodEnd: workspace.billing.currentPeriodEnd,
+    extraLinkedInSeats: input.extraLinkedInSeats,
+    seatMembershipId: input.seatMembershipId || undefined,
+  });
 }
 
 export async function updateWorkspaceOnboarding(
@@ -858,7 +880,7 @@ export async function saveLinkedInAccount(
   },
 ) {
   const workspace = await getWorkspace(workspaceId);
-  const limit = linkedInAccountLimit(workspace.billing?.plan);
+  const limit = linkedInAccountLimit(workspace.billing);
   const timestamp = nowIso();
   const allowedWorkspaceIds = await listWorkspaceIdsSharingLinkedIn(workspaceId);
   const existingForOwner = await getLinkedInAccountByAccountIdAnyStatus(input.accountId);

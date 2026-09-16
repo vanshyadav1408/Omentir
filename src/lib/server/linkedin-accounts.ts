@@ -3,12 +3,14 @@ import "server-only";
 import { isUnipileAccountUsable } from "@/lib/unipile-account-status";
 import {
   disconnectLinkedInAccount,
+  getWorkspace,
   listAllLinkedInAccounts,
   listLinkedInAccounts,
   markLinkedInAccountDisconnected,
   saveLinkedInAccount,
 } from "./data";
 import { deleteLinkedInAccount, listUnipileLinkedInAccounts, retrieveOwnLinkedInProfile } from "./unipile";
+import { entitlementsFor } from "./entitlements";
 import type { LinkedInAccount } from "./types";
 
 type VerifiedLinkedInAccounts = {
@@ -97,4 +99,35 @@ export async function purgeWorkspaceUnipileAccounts(workspaceId: string) {
     await markLinkedInAccountDisconnected(workspaceId, account.id);
   }
   return { considered: accounts.length, deleted, failed };
+}
+
+// After extra seats drop, Unipile still bills every connected account. Keep
+// the oldest accounts that fit the paid cap and delete the rest on Unipile.
+export async function enforceLinkedInAccountCap(workspaceId: string) {
+  const workspace = await getWorkspace(workspaceId);
+  const cap = entitlementsFor(workspace).limits.linkedInAccounts;
+  if (!Number.isFinite(cap)) return { kept: 0, removed: 0 };
+
+  const accounts = [...(await listLinkedInAccounts(workspaceId))].sort((left, right) =>
+    left.createdAt.localeCompare(right.createdAt),
+  );
+  if (accounts.length <= cap) return { kept: accounts.length, removed: 0 };
+
+  const extra = accounts.slice(cap);
+  let removed = 0;
+  for (const account of extra) {
+    if (account.accountId) {
+      try {
+        await deleteLinkedInAccount(account.accountId);
+      } catch (error) {
+        console.error(
+          `[unipile] failed to delete extra account ${account.accountId} after seat cap dropped:`,
+          error instanceof Error ? error.message : error,
+        );
+      }
+    }
+    await markLinkedInAccountDisconnected(workspaceId, account.id);
+    removed += 1;
+  }
+  return { kept: cap, removed };
 }

@@ -21,6 +21,10 @@ export type WorkspaceBilling = {
     | "expired";
   payerEmail?: string;
   currentPeriodEnd?: string;
+  // Extra LinkedIn accounts on top of the one included with the plan. Billed
+  // as a separate Whop membership so cancelling seats never cancels Pro.
+  extraLinkedInSeats?: number;
+  seatMembershipId?: string;
   updatedAt: string;
 };
 
