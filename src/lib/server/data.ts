@@ -410,7 +410,7 @@ const WORKSPACE_SCOPED_COLLECTIONS = [
 
 async function deleteDocsForWorkspace(collectionName: string, workspaceId: string) {
   while (true) {
-    const snap = await collection(collectionName)
+    const snap = await collection<FirebaseFirestore.DocumentData>(collectionName)
       .where("workspaceId", "==", workspaceId)
       .limit(450)
       .get();
