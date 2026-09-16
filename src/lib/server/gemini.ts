@@ -20,6 +20,7 @@ import {
 } from "@/lib/linkedin-profile-tool";
 import { NEW_AGENT_MESSAGE_TONE } from "@/lib/agent-setup-defaults";
 import { fetchWebsitePages, WebsiteUnreachableError } from "./website";
+import { isRetryableGeminiSearchError } from "@/lib/gemini-retry";
 import type {
   Agent,
   CampaignReplyHandling,
@@ -42,6 +43,12 @@ const MODEL = process.env.GEMINI_MODEL || DEFAULT_MODEL;
 // GEMINI_SEARCH_MODEL explicitly to override this.
 const SEARCH_MODEL = process.env.GEMINI_SEARCH_MODEL || DEFAULT_MODEL;
 const GEMINI_MAX_RETRIES = 2;
+// Onboarding's 5-person grounded preview finishes in 15-28s. Asking Vertex for
+// 15 people with a 90s client timeout hits 504 DEADLINE_EXCEEDED, then a retry
+// of the same request burns a second minute. Keep this at the size that actually
+// completes inside Vertex's generateContent deadline.
+const GROUNDED_CANDIDATE_LIMIT = 6;
+const GROUNDED_SEARCH_TIMEOUT_MS = 50_000;
 const LINKEDIN_MESSAGE_LIMIT = 8000;
 const AI_OUTBOUND_MESSAGE_LIMIT = 250;
 const AI_OUTBOUND_MESSAGE_TARGET = 130;
@@ -312,7 +319,10 @@ function getGeminiConfig() {
 
 function getClient(config: NonNullable<ReturnType<typeof getGeminiConfig>>) {
   if (config.provider === "api-key") {
-    return new GoogleGenAI({ apiKey: config.apiKey });
+    // Pin this. GOOGLE_GENAI_USE_VERTEXAI=true in the env would otherwise make
+    // the SDK ignore the API key and use ADC, which is how a "simple" key setup
+    // still hit Vertex 504s on grounded search.
+    return new GoogleGenAI({ apiKey: config.apiKey, vertexai: false });
   }
   return new GoogleGenAI({
     vertexai: true,
@@ -1407,19 +1417,20 @@ Keywords and required context: ${JSON.stringify(agent.filters.keywords.slice(0, 
 
 export async function findGroundedAgentCandidates(
   agent: Agent,
-  limit = 15,
+  limit = GROUNDED_CANDIDATE_LIMIT,
   profile: ProductProfile | null = null,
 ): Promise<GroundedAgentCandidate[]> {
   const config = getGeminiConfig();
   if (!config) return [];
 
+  const searchLimit = Math.min(Math.max(1, limit), GROUNDED_CANDIDATE_LIMIT);
   const fallback = { leads: [] as GroundedAgentCandidate[] };
   const client = getClient(config);
   for (let attempt = 1; attempt <= 2; attempt += 1) {
     try {
       const response = await client.models.generateContent({
         model: SEARCH_MODEL,
-        contents: `Use web search to find up to ${limit} real, currently employed people who satisfy this discovery agent's exact request.
+        contents: `Use web search to find up to ${searchLimit} real, currently employed people who satisfy this discovery agent's exact request.
 
 Every defining requirement is mandatory. Verify the current role, employer or industry, requested location, and every named technology, company, certification, or company-size requirement from public sources. Do not infer technology usage from a generic job title or industry. Return fewer people, including zero, when a requirement cannot be verified. Never broaden the request to people who would merely be good customers for another product.
 
@@ -1439,7 +1450,7 @@ Keywords and required context: ${JSON.stringify(agent.filters.keywords.slice(0, 
         config: {
           temperature: 0.2,
           tools: [{ googleSearch: {} }],
-          httpOptions: { timeout: 90_000 },
+          httpOptions: { timeout: GROUNDED_SEARCH_TIMEOUT_MS },
         },
       });
       const parsed = parseJson<typeof fallback>(response.text || "", fallback);
@@ -1463,15 +1474,18 @@ Keywords and required context: ${JSON.stringify(agent.filters.keywords.slice(0, 
           seen.add(key);
           return true;
         })
-        .slice(0, Math.max(1, Math.min(limit, 25)));
+        .slice(0, searchLimit);
       if (candidates.length) return candidates;
       break;
     } catch (error) {
-      if (attempt === 2) {
-        console.error("[people-engine] grounded candidate search failed after retry:", error);
-      } else {
-        console.warn("[people-engine] grounded candidate search retrying after failure:", error);
+      const message = getGeminiErrorMessage(error, config.project);
+      if (attempt < 2 && isRetryableGeminiSearchError(message)) {
+        console.warn("[people-engine] grounded candidate search retrying after failure:", message);
+        await wait(500 * 2 ** (attempt - 1));
+        continue;
       }
+      console.warn("[people-engine] grounded candidate search failed:", message);
+      break;
     }
   }
 
