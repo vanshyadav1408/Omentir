@@ -99,6 +99,24 @@ export function isLinkedInSeatWhopObject(input: {
   );
 }
 
+// Membership list payloads omit plan.title. If the count is missing too, Settings
+// recovery has to retrieve the Extra Seats plan instead of leaving extraLinkedInSeats at 0.
+export function extraLinkedInSeatsNeedsPlanRetrieve(input: {
+  extractedSeats: number | null;
+  planId?: string | null;
+  metadata?: { [key: string]: unknown } | null;
+  planMetadata?: { [key: string]: unknown } | null;
+  product?: { title?: string | null; metadata?: { [key: string]: unknown } | null } | null;
+}) {
+  if (input.extractedSeats) return false;
+  if (!input.planId?.trim()) return false;
+  return (
+    isLinkedInSeatProduct(input.product || {}) ||
+    isLinkedInSeatCheckoutMetadata(input.metadata) ||
+    isLinkedInSeatCheckoutMetadata(input.planMetadata)
+  );
+}
+
 // Firestore `set({ billing }, { merge: true })` replaces the whole billing map.
 // Pro renewals omit these fields, so copy them forward unless the caller sets them.
 export function mergeLinkedInSeatFields(

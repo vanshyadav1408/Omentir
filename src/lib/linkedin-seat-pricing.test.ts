@@ -6,6 +6,7 @@ import {
   extraLinkedInSeatsFromMetadata,
   extraLinkedInSeatsFromPlanTitle,
   extraLinkedInSeatsFromWhopFields,
+  extraLinkedInSeatsNeedsPlanRetrieve,
   isLinkedInSeatCheckoutMetadata,
   isLinkedInSeatProduct,
   isLinkedInSeatWhopObject,
@@ -82,6 +83,37 @@ describe("Whop extra-seat metadata", () => {
     expect(isLinkedInSeatProduct({ title: LINKEDIN_SEAT_PRODUCT_TITLE })).toBe(true);
     expect(isLinkedInSeatProduct({ title: "Omentir extra LinkedIn accounts" })).toBe(true);
     expect(isLinkedInSeatProduct({ title: "Omentir Pro" })).toBe(false);
+  });
+
+  test("retrieves the Extra Seats plan when list metadata has the kind but not the count so Settings recovery can still write extraLinkedInSeats", () => {
+    expect(
+      extraLinkedInSeatsNeedsPlanRetrieve({
+        extractedSeats: null,
+        planId: "plan_seats",
+        planMetadata: { kind: "linkedin_seats" },
+      }),
+    ).toBe(true);
+    expect(
+      extraLinkedInSeatsNeedsPlanRetrieve({
+        extractedSeats: null,
+        planId: "plan_seats",
+        product: { title: LINKEDIN_SEAT_PRODUCT_TITLE },
+      }),
+    ).toBe(true);
+    expect(
+      extraLinkedInSeatsNeedsPlanRetrieve({
+        extractedSeats: 8,
+        planId: "plan_seats",
+        product: { title: LINKEDIN_SEAT_PRODUCT_TITLE },
+      }),
+    ).toBe(false);
+    expect(
+      extraLinkedInSeatsNeedsPlanRetrieve({
+        extractedSeats: null,
+        planId: "plan_pro",
+        product: { title: "Omentir Pro" },
+      }),
+    ).toBe(false);
   });
 
   test("a Pro billing write that omits extra seats keeps the paid add-on so a renewal cannot drop LinkedIn capacity", () => {

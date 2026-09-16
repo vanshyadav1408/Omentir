@@ -10,8 +10,13 @@ import { SelectField } from "@/app/ui/select";
 import { TextField } from "@/app/ui/text-field";
 import { useWorkspaceTimeZone } from "@/app/workspace-time-zone";
 import { formatZonedDate } from "@/lib/time-zone";
-import { billedLinkedInAccountLimit, formatPlanLimit } from "@/lib/plan-limits";
+import { billedLinkedInAccountLimit, commercialPlanLimits, formatPlanLimit } from "@/lib/plan-limits";
 import { extraLinkedInSeatMonthlyTotalUsd, extraLinkedInSeatsCount } from "@/lib/linkedin-seat-pricing";
+import {
+  extraLinkedInSeatMerchandisingVisible,
+  extraSeatsSubscriptionBuyVisible,
+  extraSeatsSubscriptionManageVisible,
+} from "@/lib/linkedin-seat-visibility";
 import { WHOP_MEMBERSHIPS_URL } from "@/lib/whop-billing-url";
 import LinkedInSeatsCard from "./linkedin-seats-card";
 import DeleteWorkspaceCard from "@/app/delete-workspace-card";
@@ -490,6 +495,23 @@ export default function SettingsView({
   const linkedInAccountCap = localMode
     ? Number.POSITIVE_INFINITY
     : billedLinkedInAccountLimit(plan, extraLinkedInSeats);
+  const includedLinkedInAccounts = localMode
+    ? Number.POSITIVE_INFINITY
+    : commercialPlanLimits(plan).linkedInAccounts;
+  const extraSeatMerchandisingVisible = extraLinkedInSeatMerchandisingVisible({
+    localMode: Boolean(localMode),
+    plan,
+  });
+  const extraSeatsManageVisible = extraSeatsSubscriptionManageVisible({
+    localMode: Boolean(localMode),
+    plan,
+    extraSeats: extraLinkedInSeats,
+  });
+  const extraSeatsBuyVisible = extraSeatsSubscriptionBuyVisible({
+    localMode: Boolean(localMode),
+    plan,
+    extraSeats: extraLinkedInSeats,
+  });
   const linkedInLimit = formatPlanLimit(linkedInAccountCap);
   const linkedInLimitLabel =
     linkedInLimit === "unlimited" ? "unlimited" : linkedInLimit;
@@ -926,16 +948,17 @@ export default function SettingsView({
                   </p>
                 )}
 
-                {localMode || linkedInIsUnlimited ? null : (
+                {extraSeatMerchandisingVisible ? (
                   <div className="mt-8">
                     <LinkedInSeatsCard
-                      totalAccounts={
-                        Number.isFinite(linkedInAccountCap) ? linkedInAccountCap : 1
+                      extraSeats={extraLinkedInSeats}
+                      includedAccounts={
+                        Number.isFinite(includedLinkedInAccounts) ? includedLinkedInAccounts : 1
                       }
                       subscribed={subscriptionActive}
                     />
                   </div>
-                )}
+                ) : null}
               </>
             )}
 
@@ -971,7 +994,7 @@ export default function SettingsView({
                       )
                     }
                   />
-                  {extraLinkedInSeats > 0 ? (
+                  {extraSeatsManageVisible ? (
                     <SubscriptionCard
                       name="Extra Seats"
                       price={`$${extraLinkedInSeatMonthlyTotalUsd(extraLinkedInSeats)}/month`}
@@ -985,6 +1008,14 @@ export default function SettingsView({
                           included account.
                         </>
                       }
+                    />
+                  ) : extraSeatsBuyVisible ? (
+                    <LinkedInSeatsCard
+                      extraSeats={extraLinkedInSeats}
+                      includedAccounts={
+                        Number.isFinite(includedLinkedInAccounts) ? includedLinkedInAccounts : 1
+                      }
+                      subscribed={subscriptionActive}
                     />
                   ) : null}
                 </div>

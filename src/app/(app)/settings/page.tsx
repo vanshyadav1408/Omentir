@@ -7,7 +7,7 @@ import {
   uploadProfileImageAction,
 } from "@/app/actions";
 import { resolveActiveWorkspace } from "@/lib/server/active-workspace";
-import { syncWorkspaceLinkedInSeatsFromWhop } from "@/lib/server/billing-sync";
+import { syncWorkspaceBillingIfInactive, syncWorkspaceLinkedInSeatsFromWhop } from "@/lib/server/billing-sync";
 import { createPageMetadata } from "@/app/seo";
 import { isLocalMode } from "@/lib/runtime-mode";
 
@@ -46,7 +46,8 @@ export default async function SettingsPage() {
   }
 
   const [loadedWorkspace, user] = await Promise.all([resolveActiveWorkspace(userId), currentUser()]);
-  const workspace = await syncWorkspaceLinkedInSeatsFromWhop(loadedWorkspace);
+  const billedWorkspace = await syncWorkspaceBillingIfInactive(loadedWorkspace);
+  const workspace = await syncWorkspaceLinkedInSeatsFromWhop(billedWorkspace);
   const profile = (sessionClaims || {}) as SessionClaimsProfile;
   const userName =
     user?.fullName ||

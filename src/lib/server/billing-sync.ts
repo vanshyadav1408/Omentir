@@ -5,7 +5,7 @@ import { logAutomationRun, updateWorkspaceBilling, updateWorkspaceLinkedInSeats 
 import { hasActiveSubscription } from "./subscription";
 import { findActiveLinkedInSeatMembershipByEmail, findActiveWhopMembershipByEmail } from "./whop";
 import { extraLinkedInSeatsCount } from "@/lib/linkedin-seat-pricing";
-import { commercialPlanLimits } from "@/lib/plan-limits";
+import { shouldRecoverLinkedInSeatsFromWhop } from "@/lib/linkedin-seat-visibility";
 import { isLocalMode } from "@/lib/runtime-mode";
 import type { Workspace } from "./types";
 
@@ -63,8 +63,13 @@ export async function syncWorkspaceBillingIfInactive(workspace: Workspace): Prom
 
 /** Copy a paid Extra Seats membership onto the workspace when the webhook never stored it. */
 export async function syncWorkspaceLinkedInSeatsFromWhop(workspace: Workspace): Promise<Workspace> {
-  if (isLocalMode() || !hasActiveSubscription(workspace)) return workspace;
-  if (!Number.isFinite(commercialPlanLimits(workspace.billing?.plan).linkedInAccounts)) {
+  if (
+    !shouldRecoverLinkedInSeatsFromWhop({
+      localMode: isLocalMode(),
+      subscriptionActive: hasActiveSubscription(workspace),
+      plan: workspace.billing?.plan,
+    })
+  ) {
     return workspace;
   }
 

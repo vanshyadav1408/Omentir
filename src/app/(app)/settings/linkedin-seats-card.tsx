@@ -5,25 +5,33 @@ import { extraLinkedInSeatMonthlyTotalUsd, extraLinkedInSeatUnitPriceUsd } from 
 import { TextField } from "@/app/ui/text-field";
 
 export default function LinkedInSeatsCard({
-  totalAccounts,
+  extraSeats = 0,
+  includedAccounts,
   subscribed,
 }: {
-  totalAccounts: number;
+  extraSeats?: number;
+  includedAccounts: number;
   subscribed: boolean;
 }) {
-  const [count, setCount] = useState(1);
+  const [count, setCount] = useState(extraSeats > 0 ? extraSeats : 1);
   const selected = Number.isFinite(count) && count >= 1 ? Math.min(100, Math.floor(count)) : 1;
   const unit = extraLinkedInSeatUnitPriceUsd(selected);
   const total = extraLinkedInSeatMonthlyTotalUsd(selected);
+  const unchanged = extraSeats > 0 && selected === extraSeats;
   const noun = selected === 1 ? "account" : "accounts";
 
   return (
     <div className="rounded-md border border-zinc-200 bg-white p-5">
-      <div className="text-[14px] font-semibold text-zinc-950">Extra LinkedIn accounts</div>
+      <div className="text-[14px] font-semibold text-zinc-950">Extra Seats</div>
       <p className="mt-2 text-[13px] font-medium leading-5 text-zinc-700">
-        Your plan includes {totalAccounts} LinkedIn account
-        {totalAccounts === 1 ? "" : "s"}.
+        Your plan includes {includedAccounts} LinkedIn account
+        {includedAccounts === 1 ? "" : "s"}.
       </p>
+      {extraSeats > 0 ? (
+        <p className="mt-2 text-[13px] font-medium text-zinc-700">
+          You currently pay for {extraSeats} extra {extraSeats === 1 ? "account" : "accounts"}.
+        </p>
+      ) : null}
       {subscribed ? (
         <>
           <div className="mt-4 max-w-xs">
@@ -39,12 +47,18 @@ export default function LinkedInSeatsCard({
           <p className="mt-2 text-[13px] font-medium text-zinc-700">
             {selected} extra {noun} at ${unit}/month each. ${total}/month total.
           </p>
-          <a
-            href={`/checkout/seats?count=${selected}`}
-            className="mt-4 inline-flex h-9 items-center justify-center rounded-md bg-[#ba3871] px-4 text-[13px] font-semibold text-white transition hover:brightness-[0.98]"
-          >
-            Subscribe for ${total}/mo
-          </a>
+          {unchanged ? (
+            <p className="mt-3 text-[13px] font-medium text-zinc-600">
+              That is your current extra-account count.
+            </p>
+          ) : (
+            <a
+              href={`/checkout/seats?count=${selected}`}
+              className="mt-4 inline-flex h-9 items-center justify-center rounded-md bg-[#ba3871] px-4 text-[13px] font-semibold text-white transition hover:brightness-[0.98]"
+            >
+              Subscribe for ${total}/mo
+            </a>
+          )}
         </>
       ) : (
         <p className="mt-3 text-[13px] font-medium text-zinc-700">

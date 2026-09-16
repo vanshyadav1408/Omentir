@@ -6,6 +6,7 @@ import {
   extraLinkedInSeatMonthlyTotalUsd,
   extraLinkedInSeatPlanTitle,
   extraLinkedInSeatsFromWhopFields,
+  extraLinkedInSeatsNeedsPlanRetrieve,
   isLinkedInSeatProduct,
   LINKEDIN_SEAT_CHECKOUT_KIND,
   LINKEDIN_SEAT_PRODUCT_TITLE,
@@ -265,9 +266,19 @@ export async function extraLinkedInSeatsFromWhopSource(source: {
   });
   if (direct) return direct;
 
-  const productLooksLikeSeats = isLinkedInSeatProduct(source.product || {});
   const planId = source.plan?.id?.trim();
-  if (!productLooksLikeSeats || !planId) return null;
+  if (
+    !extraLinkedInSeatsNeedsPlanRetrieve({
+      extractedSeats: direct,
+      planId,
+      metadata: source.metadata,
+      planMetadata: source.plan?.metadata,
+      product: source.product,
+    }) ||
+    !planId
+  ) {
+    return null;
+  }
 
   const plan = await getWhopClient().plans.retrieve(planId);
   return extraLinkedInSeatsFromWhopFields({
@@ -298,15 +309,34 @@ export async function findActiveLinkedInSeatMembershipByEmail(email: string) {
   );
   if (!member?.user?.id) return null;
 
+  let seatsProductId: string | null = null;
+  try {
+    seatsProductId = await findExistingLinkedInSeatProductId();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Whop extra-seat product lookup failed.";
+    console.error("[whop] extra-seat product lookup failed:", message);
+  }
   const memberships = await whop.memberships.list({
     company_id: companyId,
     user_ids: [member.user.id],
+    product_ids: seatsProductId ? [seatsProductId] : undefined,
     statuses: ["active", "trialing"],
     first: 20,
   });
 
   for (const membership of memberships.data) {
-    const extraSeats = await extraLinkedInSeatsFromWhopSource(membership);
+    const product =
+      seatsProductId && membership.product?.id === seatsProductId
+        ? {
+            title: membership.product.title || LINKEDIN_SEAT_PRODUCT_TITLE,
+            metadata: membership.product.metadata,
+          }
+        : membership.product;
+    const extraSeats = await extraLinkedInSeatsFromWhopSource({
+      metadata: membership.metadata,
+      plan: membership.plan,
+      product,
+    });
     if (!extraSeats) continue;
     return {
       extraSeats,
@@ -318,25 +348,19 @@ export async function findActiveLinkedInSeatMembershipByEmail(email: string) {
   return null;
 }
 
-async function getLinkedInSeatProductId() {
+async function findExistingLinkedInSeatProductId() {
   if (linkedInSeatProductId) return linkedInSeatProductId;
 
   const configured = process.env.WHOP_LINKEDIN_SEATS_PRODUCT_ID?.trim();
-  if (configured) {
-    if (!configured.startsWith("prod_")) {
-      throw new Error("WHOP_LINKEDIN_SEATS_PRODUCT_ID must be the extra-seats prod_ id.");
-    }
+  if (configured?.startsWith("prod_")) {
     linkedInSeatProductId = configured;
     return configured;
   }
 
   const companyId = process.env.WHOP_COMPANY_ID?.trim();
-  if (!companyId) {
-    throw new Error("WHOP_COMPANY_ID is required to start extra LinkedIn seat checkout.");
-  }
+  if (!companyId) return null;
 
-  const whop = getWhopClient();
-  const products = await whop.products.list({
+  const products = await getWhopClient().products.list({
     account_id: companyId,
     visibilities: ["hidden", "visible", "quick_link"],
     first: 50,
@@ -345,16 +369,29 @@ async function getLinkedInSeatProductId() {
   });
   const existing = products.data.find((product) => isLinkedInSeatProduct(product));
   if (existing?.id.startsWith("prod_")) {
-    if (existing.title.trim() !== LINKEDIN_SEAT_PRODUCT_TITLE) {
-      await whop.products.update(existing.id, { title: LINKEDIN_SEAT_PRODUCT_TITLE });
-    }
     linkedInSeatProductId = existing.id;
     return existing.id;
+  }
+  return null;
+}
+
+async function getLinkedInSeatProductId() {
+  const existingId = await findExistingLinkedInSeatProductId();
+  if (existingId) return existingId;
+
+  const configured = process.env.WHOP_LINKEDIN_SEATS_PRODUCT_ID?.trim();
+  if (configured) {
+    throw new Error("WHOP_LINKEDIN_SEATS_PRODUCT_ID must be the extra-seats prod_ id.");
+  }
+
+  const companyId = process.env.WHOP_COMPANY_ID?.trim();
+  if (!companyId) {
+    throw new Error("WHOP_COMPANY_ID is required to start extra LinkedIn seat checkout.");
   }
 
   // Whop refuses a renewal checkout without a product. Keep this add-on on its
   // own hidden product so cancelling seats cannot match the Pro plan id.
-  const created = await whop.products.create({
+  const created = await getWhopClient().products.create({
     account_id: companyId,
     title: LINKEDIN_SEAT_PRODUCT_TITLE,
     description: "Extra LinkedIn accounts billed on top of the included Pro account.",
