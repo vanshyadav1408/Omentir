@@ -10,8 +10,9 @@ import { SelectField } from "@/app/ui/select";
 import { TextField } from "@/app/ui/text-field";
 import { useWorkspaceTimeZone } from "@/app/workspace-time-zone";
 import { formatZonedDate } from "@/lib/time-zone";
-import { billedLinkedInAccountLimit, commercialPlanLimits, formatPlanLimit } from "@/lib/plan-limits";
-import { extraLinkedInSeatsCount } from "@/lib/linkedin-seat-pricing";
+import { billedLinkedInAccountLimit, formatPlanLimit } from "@/lib/plan-limits";
+import { extraLinkedInSeatMonthlyTotalUsd, extraLinkedInSeatsCount } from "@/lib/linkedin-seat-pricing";
+import { WHOP_MEMBERSHIPS_URL } from "@/lib/whop-billing-url";
 import LinkedInSeatsCard from "./linkedin-seats-card";
 
 type SettingsViewProps = {
@@ -125,6 +126,61 @@ function SectionHeader({ title, description }: { title: string; description?: st
       </h2>
       <span className="mt-1.5 block h-0.5 w-8 rounded-full bg-[#ba3871]/60" aria-hidden />
       {description ? <p className="mt-2 text-[13px] leading-relaxed text-zinc-600">{description}</p> : null}
+    </div>
+  );
+}
+
+function SubscriptionCard({
+  name,
+  price,
+  detail,
+  status,
+  manageHref,
+  manageHint,
+}: {
+  name: string;
+  price: string;
+  detail: React.ReactNode;
+  status: { label: string; cls: string };
+  manageHref: string;
+  manageHint: string;
+}) {
+  return (
+    <div className="rounded-md border border-zinc-200 bg-white p-5">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <div
+            style={{ fontFamily: "var(--font-varta)" }}
+            className="text-[14px] font-semibold text-zinc-950"
+          >
+            {name}
+          </div>
+          <div className="mt-2 flex items-baseline gap-1">
+            <span className="text-[32px] font-bold tracking-tight text-zinc-950">{price}</span>
+          </div>
+          <p className="mt-1 text-[13px] font-medium text-zinc-700">{detail}</p>
+        </div>
+        <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${status.cls}`}>
+          {status.label}
+        </span>
+      </div>
+
+      <div className="mt-5 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+        <a
+          href={manageHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ fontFamily: "var(--font-varta)" }}
+          className="flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-md bg-[#ba3871] px-4 text-[13px] font-semibold text-white shadow-[0_8px_24px_rgba(255,255,255,0.12)] transition hover:brightness-[0.98]"
+        >
+          <span className="leading-none">Manage plan</span>
+          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12" />
+            <polyline points="12 5 19 12 12 19" />
+          </svg>
+        </a>
+        <span className="text-[11px] font-medium text-zinc-700">{manageHint}</span>
+      </div>
     </div>
   );
 }
@@ -431,9 +487,6 @@ export default function SettingsView({
   const linkedInAccountCap = localMode
     ? Number.POSITIVE_INFINITY
     : billedLinkedInAccountLimit(plan, extraLinkedInSeats);
-  const includedLinkedInAccounts = localMode
-    ? Number.POSITIVE_INFINITY
-    : commercialPlanLimits(plan).linkedInAccounts;
   const linkedInLimit = formatPlanLimit(linkedInAccountCap);
   const linkedInLimitLabel =
     linkedInLimit === "unlimited" ? "unlimited" : linkedInLimit;
@@ -862,9 +915,8 @@ export default function SettingsView({
                 {localMode || linkedInIsUnlimited ? null : (
                   <div className="mt-8">
                     <LinkedInSeatsCard
-                      extraSeats={extraLinkedInSeats}
-                      includedAccounts={
-                        Number.isFinite(includedLinkedInAccounts) ? includedLinkedInAccounts : 1
+                      totalAccounts={
+                        Number.isFinite(linkedInAccountCap) ? linkedInAccountCap : 1
                       }
                       subscribed={subscriptionActive}
                     />
@@ -876,71 +928,51 @@ export default function SettingsView({
             {tab === "Subscription" && (
               <>
                 <SectionHeader
-                  title="Current plan"
-                  description="Manage your subscription, usage, and billing details."
+                  title="Subscriptions"
+                  description="Manage your subscriptions and billing details."
                 />
 
-                <div className="rounded-md border border-zinc-200 bg-white p-5">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <div
-                        style={{ fontFamily: "var(--font-varta)" }}
-                        className="text-[14px] font-semibold text-zinc-950"
-                      >
-                        {planName}
-                      </div>
-                      <div className="mt-2 flex items-baseline gap-1">
-                        <span className="text-[32px] font-bold tracking-tight text-zinc-950">
-                          {planPrice}
-                        </span>
-                      </div>
-                      <p className="mt-1 text-[13px] font-medium text-zinc-700">
-                        {plan === "lifetime" ? (
-                          // A one-time purchase carries no renewal date, so the
-                          // date formatter would fall back to a placeholder.
-                          "Lifetime access. No renewal."
-                        ) : plan === "enterprise" ? (
-                          "Custom billing terms."
-                        ) : (
-                          <>
-                            Renews on{" "}
-                            {formatZonedDate(
-                              workspace.billing?.currentPeriodEnd,
-                              timeZone,
-                              { month: "long", day: "numeric", year: "numeric" },
-                              "Jun 2, 2025",
-                            )}
-                          </>
-                        )}
-                      </p>
-                      {extraLinkedInSeats > 0 ? (
-                        <p className="mt-2 text-[13px] font-medium text-zinc-700">
-                          Plus {extraLinkedInSeats} extra LinkedIn{" "}
-                          {extraLinkedInSeats === 1 ? "account" : "accounts"} billed separately.
-                        </p>
-                      ) : null}
-                    </div>
-                    <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${billing.cls}`}>
-                      {billing.label}
-                    </span>
-                  </div>
-
-                  <div className="mt-5 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
-                    <a
-                      href="/billing/manage"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ fontFamily: "var(--font-varta)" }}
-                      className="flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-md bg-[#ba3871] px-4 text-[13px] font-semibold text-white shadow-[0_8px_24px_rgba(255,255,255,0.12)] transition hover:brightness-[0.98]"
-                    >
-                      <span className="leading-none">Manage plan</span>
-                      <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="5" y1="12" x2="19" y2="12" />
-                        <polyline points="12 5 19 12 12 19" />
-                      </svg>
-                    </a>
-                    <span className="text-[11px] font-medium text-zinc-700">Cancel or upgrade anytime</span>
-                  </div>
+                <div className="flex flex-col gap-4">
+                  <SubscriptionCard
+                    name={planName}
+                    price={planPrice}
+                    status={billing}
+                    manageHref="/billing/manage"
+                    manageHint="Cancel or upgrade anytime"
+                    detail={
+                      plan === "lifetime" ? (
+                        "Lifetime access. No renewal."
+                      ) : plan === "enterprise" ? (
+                        "Custom billing terms."
+                      ) : (
+                        <>
+                          Renews on{" "}
+                          {formatZonedDate(
+                            workspace.billing?.currentPeriodEnd,
+                            timeZone,
+                            { month: "long", day: "numeric", year: "numeric" },
+                            "Jun 2, 2025",
+                          )}
+                        </>
+                      )
+                    }
+                  />
+                  {extraLinkedInSeats > 0 ? (
+                    <SubscriptionCard
+                      name="Extra Seats"
+                      price={`$${extraLinkedInSeatMonthlyTotalUsd(extraLinkedInSeats)}/month`}
+                      status={billing}
+                      manageHref={WHOP_MEMBERSHIPS_URL}
+                      manageHint="Cancel extra seats without cancelling Pro"
+                      detail={
+                        <>
+                          {extraLinkedInSeats} extra LinkedIn{" "}
+                          {extraLinkedInSeats === 1 ? "account" : "accounts"} on top of the
+                          included account.
+                        </>
+                      }
+                    />
+                  ) : null}
                 </div>
 
                 <div className="my-8 h-px bg-zinc-200" />
