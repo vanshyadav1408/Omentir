@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import {
-  displayAvatarUrl,
   httpsAvatarUrl,
   isLinkedInMediaUrl,
   personInitials,
+  proxiedAvatarUrl,
 } from "./lead-avatar";
 
 describe("httpsAvatarUrl", () => {
@@ -41,15 +41,12 @@ describe("httpsAvatarUrl", () => {
   });
 });
 
-describe("displayAvatarUrl", () => {
-  test("proxies licdn hosts so the browser does not send omentir.com as Referer", () => {
+describe("proxiedAvatarUrl", () => {
+  test("keeps a same-origin fallback for licdn URLs when the browser blocks the CDN", () => {
     const source = "https://media.licdn.com/dms/image/v2/abc.jpg?e=1&t=2";
     expect(isLinkedInMediaUrl(source)).toBe(true);
-    expect(displayAvatarUrl(source)).toBe(`/api/app/avatar?u=${encodeURIComponent(source)}`);
-    expect(displayAvatarUrl("https://images.example.com/a.jpg")).toBe(
-      "https://images.example.com/a.jpg",
-    );
-    expect(displayAvatarUrl("")).toBeUndefined();
+    expect(proxiedAvatarUrl(source)).toBe(`/api/app/avatar?u=${encodeURIComponent(source)}`);
+    expect(proxiedAvatarUrl("https://images.example.com/a.jpg")).toBeUndefined();
   });
 });
 

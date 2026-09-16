@@ -1,8 +1,7 @@
 // LinkedIn serves headshots from media.licdn.com with a short-lived token.
-// The app stores that URL and puts it on <img>. Two things then hide the
-// photo: the page Referrer-Policy sends https://omentir.com, which LinkedIn
-// often 403s, and an empty or non-https value is treated as "has an avatar"
-// so the UI never falls back. Keep extraction strict and proxy licdn URLs.
+// The app stored that URL and rendered <img src> with no fallback, so a 403
+// looked like a missing photo. Keep extraction to real https URLs, hide the
+// image when it fails, and offer a same-origin proxy as a second try.
 
 const AVATAR_KEYS = [
   "profile_picture_url_large",
@@ -80,10 +79,8 @@ export function isLinkedInMediaUrl(url: string) {
   }
 }
 
-export function displayAvatarUrl(value?: unknown) {
-  const url = httpsAvatarUrl(value);
-  if (!url) return undefined;
-  if (!isLinkedInMediaUrl(url)) return url;
+export function proxiedAvatarUrl(url: string) {
+  if (!isLinkedInMediaUrl(url)) return undefined;
   return `/api/app/avatar?u=${encodeURIComponent(url)}`;
 }
 

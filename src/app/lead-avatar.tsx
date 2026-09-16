@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { displayAvatarUrl, personInitials } from "@/lib/lead-avatar";
+import { useEffect, useState } from "react";
+import { httpsAvatarUrl, personInitials, proxiedAvatarUrl } from "@/lib/lead-avatar";
 
 export function LeadAvatar({
   name,
@@ -14,8 +14,17 @@ export function LeadAvatar({
   className: string;
   initialsClassName: string;
 }) {
-  const src = displayAvatarUrl(avatarUrl);
+  const direct = httpsAvatarUrl(avatarUrl);
+  const proxy = direct ? proxiedAvatarUrl(direct) : undefined;
+  const [failedDirect, setFailedDirect] = useState("");
   const [failedSrc, setFailedSrc] = useState("");
+  const src =
+    direct && failedDirect === direct ? proxy : direct;
+
+  useEffect(() => {
+    setFailedDirect("");
+    setFailedSrc("");
+  }, [direct]);
 
   return (
     <span className={`relative grid shrink-0 place-items-center overflow-hidden rounded-full ${className}`}>
@@ -28,7 +37,13 @@ export function LeadAvatar({
           alt=""
           referrerPolicy="no-referrer"
           className="absolute inset-0 h-full w-full object-cover"
-          onError={() => setFailedSrc(src)}
+          onError={() => {
+            if (direct && src === direct && proxy && proxy !== direct) {
+              setFailedDirect(direct);
+              return;
+            }
+            setFailedSrc(src);
+          }}
         />
       ) : null}
     </span>
