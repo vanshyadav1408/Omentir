@@ -1620,6 +1620,7 @@ export async function runPeopleEngineForAgent(input: {
     const lead = await upsertLead(input.agent.workspaceId, input.agent.targetGroupId, {
       linkedInUrl: existingLead.linkedInUrl || candidate.lead.linkedInUrl,
       providerProfileId: existingLead.providerProfileId || candidate.lead.providerProfileId,
+      avatarUrl: mergedLead.avatarUrl,
       // Refresh warm-signal context when we re-qualify someone already known.
       signalType: firstSignal.signalType,
       signalSource: firstSignal.signalSource,
