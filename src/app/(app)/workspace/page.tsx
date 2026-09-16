@@ -1,5 +1,9 @@
 import { auth } from "@/lib/server/auth";
-import { analyzeWebsiteAction, saveProductProfileAction } from "@/app/actions";
+import {
+  analyzeWebsiteAction,
+  deleteWorkspaceAction,
+  saveProductProfileAction,
+} from "@/app/actions";
 import { getProductProfile } from "@/lib/server/data";
 import { resolveActiveWorkspace } from "@/lib/server/active-workspace";
 import ProductView from "@/app/(app)/my-product/product-view";
@@ -24,10 +28,12 @@ export default async function WorkspacePage() {
   return (
     <ProductView
       profile={profile ?? undefined}
+      workspace={workspace}
       faviconUrl={workspace.faviconUrl}
       workspaceName={workspace.name}
       saveAction={saveProductProfileAction}
       analyzeAction={analyzeWebsiteAction}
+      deleteAction={deleteWorkspaceAction}
     />
   );
 }

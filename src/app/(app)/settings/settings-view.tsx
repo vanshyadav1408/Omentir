@@ -14,6 +14,7 @@ import { billedLinkedInAccountLimit, formatPlanLimit } from "@/lib/plan-limits";
 import { extraLinkedInSeatMonthlyTotalUsd, extraLinkedInSeatsCount } from "@/lib/linkedin-seat-pricing";
 import { WHOP_MEMBERSHIPS_URL } from "@/lib/whop-billing-url";
 import LinkedInSeatsCard from "./linkedin-seats-card";
+import DeleteWorkspaceCard from "@/app/delete-workspace-card";
 
 type SettingsViewProps = {
   workspace: Workspace;
@@ -22,6 +23,7 @@ type SettingsViewProps = {
   saveAction: (formData: FormData) => void | Promise<void>;
   uploadImageAction: (formData: FormData) => void | Promise<void>;
   disconnectAction: (formData: FormData) => void | Promise<void>;
+  deleteWorkspaceAction: (workspaceId: string) => void | Promise<void>;
   localMode?: boolean;
   notificationsEnabled?: boolean;
 };
@@ -434,6 +436,7 @@ export default function SettingsView({
   saveAction,
   uploadImageAction,
   disconnectAction,
+  deleteWorkspaceAction,
   localMode = false,
   notificationsEnabled = true,
 }: SettingsViewProps) {
@@ -806,6 +809,17 @@ export default function SettingsView({
                     <SignOutButton localMode={workspace.id === "local"} />
                   </>
                 ) : null}
+
+                <div className="my-8 h-px bg-zinc-200" />
+
+                <SectionHeader
+                  title="Workspace"
+                  description="Delete this workspace and everything in it."
+                />
+                <DeleteWorkspaceCard
+                  workspace={workspace}
+                  deleteAction={deleteWorkspaceAction}
+                />
               </>
             )}
 

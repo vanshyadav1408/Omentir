@@ -13,6 +13,8 @@ import {
   createCampaign,
   createOrGetGroup,
   createOwnedWorkspace,
+  deleteOwnedWorkspace,
+  listWorkspacesForOwner,
   claimActionSlot,
   completeConversationManualFollowUp,
   consumeDailyQuota,
@@ -190,6 +192,22 @@ export async function createWorkspaceAction(formData: FormData) {
     null,
   );
   await setActiveWorkspaceCookie(workspace.id);
+  revalidateWorkspacePages();
+  redirect("/workspace");
+}
+
+export async function deleteWorkspaceAction(workspaceId: string) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+  const id = workspaceId.trim();
+  if (!id) throw new Error("Workspace not found.");
+  const current = await resolveActiveWorkspace(userId);
+  await deleteOwnedWorkspace(userId, id);
+  if (current.id === id) {
+    const remaining = await listWorkspacesForOwner(userId);
+    const next = remaining.find((workspace) => workspace.id !== id) || remaining[0];
+    await setActiveWorkspaceCookie(next?.id || userId);
+  }
   revalidateWorkspacePages();
   redirect("/workspace");
 }

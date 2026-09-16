@@ -1,6 +1,7 @@
 import { auth, currentUser } from "@/lib/server/auth";
 import SettingsView from "./settings-view";
 import {
+  deleteWorkspaceAction,
   disconnectLinkedInAccountAction,
   saveSettingsAction,
   uploadProfileImageAction,
@@ -70,6 +71,7 @@ export default async function SettingsPage() {
       saveAction={saveSettingsAction}
       uploadImageAction={uploadProfileImageAction}
       disconnectAction={disconnectLinkedInAccountAction}
+      deleteWorkspaceAction={deleteWorkspaceAction}
       localMode={isLocalMode()}
       notificationsEnabled={
         !isLocalMode() || Boolean(process.env.RESEND_API_KEY && process.env.RESEND_FROM_EMAIL)

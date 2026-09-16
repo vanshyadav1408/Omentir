@@ -1,8 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import {
+  isOriginalWorkspace,
   workspaceBelongsToOwner,
-  workspaceCanBeDeleted,
   workspaceDisplayName,
+  workspaceIsRemovedOnDelete,
 } from "./workspace-ownership";
 
 describe("workspaceBelongsToOwner", () => {
@@ -19,13 +20,19 @@ describe("workspaceBelongsToOwner", () => {
   });
 });
 
-describe("workspaceCanBeDeleted", () => {
-  test("lets an extra workspace be removed so a leftover test company can leave the switcher", () => {
-    expect(workspaceCanBeDeleted({ id: "ws_extra", ownerId: "user_1" })).toBe(true);
+describe("workspaceIsRemovedOnDelete", () => {
+  test("lets an extra workspace leave the switcher so a leftover test company can be removed", () => {
+    expect(workspaceIsRemovedOnDelete({ id: "ws_extra", ownerId: "user_1" })).toBe(true);
   });
 
-  test("keeps the original user-id workspace because the next page load would recreate it empty and drop billing", () => {
-    expect(workspaceCanBeDeleted({ id: "user_1", ownerId: "user_1" })).toBe(false);
+  test("empties the original user-id workspace instead of removing it because the next page load would recreate it blank and drop billing", () => {
+    expect(isOriginalWorkspace({ id: "user_1", ownerId: "user_1" })).toBe(true);
+    expect(workspaceIsRemovedOnDelete({ id: "user_1", ownerId: "user_1" })).toBe(false);
+  });
+
+  test("treats a workspace whose id is the owner as original even when ownerId was never stored", () => {
+    expect(isOriginalWorkspace({ id: "user_1" }, "user_1")).toBe(true);
+    expect(workspaceIsRemovedOnDelete({ id: "user_1" }, "user_1")).toBe(false);
   });
 });
 

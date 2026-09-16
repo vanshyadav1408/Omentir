@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import type { ProductProfile } from "@/lib/server/types";
+import type { ProductProfile, Workspace } from "@/lib/server/types";
+import DeleteWorkspaceCard from "@/app/delete-workspace-card";
 import AiLoadingOverlay from "@/app/ai-loading-overlay";
 import MobileHeaderPortal from "@/app/mobile-header-portal";
 import { SelectField } from "@/app/ui/select";
@@ -19,10 +20,12 @@ type SaveProductResult = { ok: true } | { ok: false; error: string };
 
 type ProductViewProps = {
   profile?: ProductProfile;
+  workspace: Pick<Workspace, "id" | "ownerId" | "name">;
   faviconUrl?: string;
   workspaceName?: string;
   saveAction: (formData: FormData) => void | Promise<void | SaveProductResult>;
   analyzeAction: (formData: FormData) => void | Promise<void>;
+  deleteAction: (workspaceId: string) => void | Promise<void>;
 };
 
 const INDUSTRY_OPTIONS = [
@@ -194,10 +197,12 @@ function ListField({
 
 export default function ProductView({
   profile,
+  workspace,
   faviconUrl,
   workspaceName,
   saveAction,
   analyzeAction,
+  deleteAction,
 }: ProductViewProps) {
   const router = useRouter();
   const { showSuccess } = useToast();
@@ -541,6 +546,22 @@ export default function ProductView({
                 placeholder="https://linkedin.com/company/your-company"
               />
             </div>
+
+            <div className="my-8 h-px bg-zinc-200" />
+
+            <div className="mb-5">
+              <h2
+                style={{ fontFamily: "var(--font-varta)" }}
+                className="text-xl font-semibold tracking-tight text-zinc-950"
+              >
+                Delete workspace
+              </h2>
+              <span className="mt-1.5 block h-0.5 w-8 rounded-full bg-[#ba3871]/60" aria-hidden />
+              <p className="mt-2 text-sm leading-relaxed text-zinc-600">
+                Delete this workspace and everything in it.
+              </p>
+            </div>
+            <DeleteWorkspaceCard workspace={workspace} deleteAction={deleteAction} />
           </div>
         </div>
       </div>

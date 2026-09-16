@@ -1,21 +1,28 @@
 export const ACTIVE_WORKSPACE_COOKIE = "omentir_workspace_id";
 
 export function workspaceBelongsToOwner(
-  workspace: { id: string; ownerId: string },
+  workspace: { id: string; ownerId?: string },
   ownerId: string,
 ) {
   return workspace.ownerId === ownerId || workspace.id === ownerId;
 }
 
-export function isOriginalWorkspace(workspace: { id: string; ownerId: string }) {
-  return workspace.id === workspace.ownerId;
+export function isOriginalWorkspace(
+  workspace: { id: string; ownerId?: string },
+  ownerId = workspace.ownerId || workspace.id,
+) {
+  return workspace.id === ownerId;
 }
 
-// Extra workspaces can leave the switcher. The original user-id workspace
-// cannot: the next authenticated request recreates it empty via
-// ensureWorkspace, which would drop billing until a later Whop sync.
-export function workspaceCanBeDeleted(workspace: { id: string; ownerId: string }) {
-  return !isOriginalWorkspace(workspace);
+// Extra workspaces are removed from the switcher. The original user-id
+// workspace is emptied instead: deleting that document would make the next
+// page load recreate it blank via ensureWorkspace and drop billing until a
+// later Whop sync.
+export function workspaceIsRemovedOnDelete(
+  workspace: { id: string; ownerId?: string },
+  ownerId = workspace.ownerId || workspace.id,
+) {
+  return !isOriginalWorkspace(workspace, ownerId);
 }
 
 export function workspaceDisplayName(workspace: { name?: string; id: string }) {

@@ -27,6 +27,7 @@ import {
   linkedInAccountIsOnOwnedWorkspace,
 } from "@/lib/linkedin-account-sharing";
 import { entitlementsFor } from "./entitlements";
+import { isOriginalWorkspace } from "@/lib/workspace-ownership";
 import { mergeLinkedInSeatFields } from "@/lib/linkedin-seat-pricing";
 import { httpsAvatarUrl } from "@/lib/lead-avatar";
 import {
@@ -386,6 +387,129 @@ export async function createOwnedWorkspace(
 
   await ref.set(workspace);
   return workspace;
+}
+
+const WORKSPACE_SCOPED_COLLECTIONS = [
+  "agents",
+  "groups",
+  "leads",
+  "leadSignals",
+  "campaigns",
+  "campaignEnrollments",
+  "conversations",
+  "productProfiles",
+  "agentApiKeys",
+  "automationRuns",
+  "activityDays",
+  "activityEvents",
+  "usageDays",
+  "linkedInConnectTokens",
+  "notificationLocks",
+  "oauthCodes",
+] as const;
+
+async function deleteDocsForWorkspace(collectionName: string, workspaceId: string) {
+  while (true) {
+    const snap = await collection(collectionName)
+      .where("workspaceId", "==", workspaceId)
+      .limit(450)
+      .get();
+    if (snap.empty) return;
+    await commitInBatches(
+      snap.docs.map((doc) => doc.ref),
+      (batch, ref) => batch.delete(ref),
+    );
+    if (snap.size < 450) return;
+  }
+}
+
+async function pauseWorkspaceOutreach(workspaceId: string) {
+  const now = nowIso();
+  const [agentSnap, campaignSnap] = await Promise.all([
+    collection<Agent>("agents").where("workspaceId", "==", workspaceId).get(),
+    collection<Campaign>("campaigns").where("workspaceId", "==", workspaceId).get(),
+  ]);
+  await commitInBatches(
+    agentSnap.docs
+      .filter((doc) => doc.data().status !== "paused")
+      .map((doc) => doc.ref),
+    (batch, ref) =>
+      batch.update(ref, {
+        status: "paused",
+        runStartedAt: FieldValue.delete(),
+        updatedAt: now,
+      }),
+  );
+  await commitInBatches(
+    campaignSnap.docs
+      .filter((doc) => doc.data().status !== "paused")
+      .map((doc) => doc.ref),
+    (batch, ref) => batch.update(ref, { status: "paused", updatedAt: now }),
+  );
+}
+
+// LinkedIn is owned by the person, not one extra workspace. Move the Unipile
+// rows onto the original workspace so deleting a leftover company does not
+// disconnect LinkedIn everywhere.
+async function rehomeLinkedInAccountsToPrimary(
+  fromWorkspaceId: string,
+  primaryWorkspaceId: string,
+) {
+  const accounts = await listAllLinkedInAccounts(fromWorkspaceId);
+  if (!accounts.length) return;
+  const timestamp = nowIso();
+  for (const account of accounts) {
+    await collection<LinkedInAccount>("linkedinAccounts").doc(account.id).set(
+      { workspaceId: primaryWorkspaceId, updatedAt: timestamp },
+      { merge: true },
+    );
+    if (!account.accountId) continue;
+    const ownerRef = collection<{
+      accountId: string;
+      workspaceId: string;
+      createdAt: string;
+    }>("linkedInAccountOwners").doc(hashId(account.accountId));
+    const owner = (await ownerRef.get()).data();
+    if (owner && owner.workspaceId !== fromWorkspaceId) continue;
+    await ownerRef.set(
+      {
+        accountId: account.accountId,
+        workspaceId: primaryWorkspaceId,
+        createdAt: owner?.createdAt || timestamp,
+      },
+      { merge: true },
+    );
+  }
+}
+
+export async function deleteOwnedWorkspace(ownerId: string, workspaceId: string) {
+  const workspace = await findOwnedWorkspace(ownerId, workspaceId);
+  if (!workspace) throw new Error("Workspace not found.");
+
+  await pauseWorkspaceOutreach(workspaceId);
+
+  // The original user-id workspace stays as an empty shell so billing is not
+  // dropped when ensureWorkspace recreates it on the next request.
+  if (isOriginalWorkspace(workspace, ownerId)) {
+    for (const name of WORKSPACE_SCOPED_COLLECTIONS) {
+      await deleteDocsForWorkspace(name, workspaceId);
+    }
+    await collection<Workspace>("workspaces").doc(workspaceId).set(
+      {
+        name: "Omentir workspace",
+        faviconUrl: FieldValue.delete(),
+        updatedAt: nowIso(),
+      },
+      { merge: true },
+    );
+    return;
+  }
+
+  await rehomeLinkedInAccountsToPrimary(workspaceId, workspace.ownerId || ownerId);
+  for (const name of WORKSPACE_SCOPED_COLLECTIONS) {
+    await deleteDocsForWorkspace(name, workspaceId);
+  }
+  await collection<Workspace>("workspaces").doc(workspaceId).delete();
 }
 
 export async function updateWorkspaceIdentity(
