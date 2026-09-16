@@ -11,18 +11,6 @@ export type SelectOption = {
   imageFallback?: string;
 };
 
-function optionInitials(option: SelectOption) {
-  const source = option.imageFallback || option.label || option.value;
-  return (
-    source
-      .split(/[\s@._-]+/)
-      .map((part) => part[0])
-      .join("")
-      .slice(0, 2)
-      .toUpperCase() || "LI"
-  );
-}
-
 function OptionAvatar({ option, size = "sm" }: { option: SelectOption; size?: "sm" | "md" }) {
   const className = size === "md" ? "h-8 w-8" : "h-6 w-6";
   const textClass = size === "md" ? "text-[11px]" : "text-[10px]";
