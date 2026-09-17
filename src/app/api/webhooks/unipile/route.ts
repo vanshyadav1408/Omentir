@@ -16,6 +16,7 @@ import {
   processInboundMessage,
 } from "@/lib/server/inbound";
 import { passwordsMatch } from "@/lib/local-session";
+import { unipileWebhookProvidedSecret } from "@/lib/unipile-webhook-auth";
 import { rateLimitRequestShared } from "@/lib/request-rate-limit";
 import { readJsonBody, RequestBodyTooLargeError } from "@/lib/server/request-body";
 
@@ -33,7 +34,7 @@ function revalidateWorkspaceDataPages() {
 function isAuthorized(request: NextRequest) {
   const secret = process.env.UNIPILE_WEBHOOK_SECRET;
   if (!secret) return false;
-  return passwordsMatch(request.headers.get("x-omentir-webhook-secret") || "", secret);
+  return passwordsMatch(unipileWebhookProvidedSecret(request.headers), secret);
 }
 
 type UnipileWebhookSender = {

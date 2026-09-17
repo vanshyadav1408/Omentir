@@ -25,17 +25,66 @@ import { hasActiveSubscription } from "@/lib/server/subscription";
 import { listLinkedInInbox } from "@/lib/server/unipile";
 import { resolveActiveWorkspace } from "@/lib/server/active-workspace";
 
-async function loadFirestoreResource(resource: string, workspaceId: string) {
+type SidebarFetchCache = {
+  leadDashboardPreviews?: ReturnType<typeof listLeadDashboardPreviews>;
+  enrollmentPreviews?: ReturnType<typeof listCampaignEnrollmentPreviews>;
+};
+
+const ACTIVITY_RECONCILE_MIN_MS = 30_000;
+const lastActivityReconcileAt = new Map<string, number>();
+const activityReconcileInflight = new Map<string, Promise<unknown>>();
+
+function cachedLeadDashboardPreviews(workspaceId: string, cache: SidebarFetchCache) {
+  cache.leadDashboardPreviews ||= listLeadDashboardPreviews(workspaceId);
+  return cache.leadDashboardPreviews;
+}
+
+function cachedEnrollmentPreviews(workspaceId: string, cache: SidebarFetchCache) {
+  cache.enrollmentPreviews ||= listCampaignEnrollmentPreviews(workspaceId);
+  return cache.enrollmentPreviews;
+}
+
+async function reconcileActivityForSidebar(
+  workspaceId: string,
+  input: Parameters<typeof reconcileActivityFromLive>[1],
+) {
+  const inflight = activityReconcileInflight.get(workspaceId);
+  if (inflight) return inflight;
+  const last = lastActivityReconcileAt.get(workspaceId) || 0;
+  if (Date.now() - last < ACTIVITY_RECONCILE_MIN_MS) return;
+
+  const work = reconcileActivityFromLive(workspaceId, input)
+    .then(() => {
+      lastActivityReconcileAt.set(workspaceId, Date.now());
+    })
+    .catch((error) => {
+      console.error(
+        "[sidebar-data] activity reconcile failed:",
+        error instanceof Error ? error.message : error,
+      );
+    })
+    .finally(() => {
+      activityReconcileInflight.delete(workspaceId);
+    });
+  activityReconcileInflight.set(workspaceId, work);
+  return work;
+}
+
+async function loadFirestoreResource(
+  resource: string,
+  workspaceId: string,
+  cache: SidebarFetchCache,
+) {
   if (resource === "agents") return { agents: await listAgents(workspaceId) };
   if (resource === "agentApiKeys") return { agentApiKeys: await listAgentApiKeys(workspaceId) };
   if (resource === "groups") return { groups: await listGroups(workspaceId) };
   if (resource === "leadPreviews") return { leads: await listLeadPreviews(workspaceId) };
   if (resource === "leadDashboardPreviews") {
-    return { leads: await listLeadDashboardPreviews(workspaceId) };
+    return { leads: await cachedLeadDashboardPreviews(workspaceId, cache) };
   }
   if (resource === "leadAgentRefs") return { leads: await listLeadAgentRefs(workspaceId) };
   if (resource === "enrollmentPreviews") {
-    return { enrollments: await listCampaignEnrollmentPreviews(workspaceId) };
+    return { enrollments: await cachedEnrollmentPreviews(workspaceId, cache) };
   }
   if (resource === "campaigns") return { campaigns: await listCampaigns(workspaceId) };
   if (resource === "conversations") return { conversations: await listConversations(workspaceId) };
@@ -44,19 +93,14 @@ async function loadFirestoreResource(resource: string, workspaceId: string) {
     // Refresh durable history from whatever CRM rows still exist, then return
     // the full series. max-merge never shrinks days already frozen by deletes.
     const [leads, enrollments, conversations] = await Promise.all([
-      listLeadDashboardPreviews(workspaceId),
-      listCampaignEnrollmentPreviews(workspaceId),
+      cachedLeadDashboardPreviews(workspaceId, cache),
+      cachedEnrollmentPreviews(workspaceId, cache),
       listConversationsForActivity(workspaceId),
     ]);
-    await reconcileActivityFromLive(workspaceId, {
+    await reconcileActivityForSidebar(workspaceId, {
       leads,
       enrollments,
       conversations,
-    }).catch((error) => {
-      console.error(
-        "[sidebar-data] activity reconcile failed:",
-        error instanceof Error ? error.message : error,
-      );
     });
     return { activityDays: await listActivityDays(workspaceId) };
   }
@@ -89,8 +133,9 @@ export async function GET(request: Request) {
   if (requestedResources.length) {
     const [workspace, subscribed] = await Promise.all([workspacePromise, subscribedPromise]);
     if (!subscribed) return subscriptionRequired();
+    const cache: SidebarFetchCache = {};
     const results = await Promise.all(
-      requestedResources.map((item) => loadFirestoreResource(item, workspace.id)),
+      requestedResources.map((item) => loadFirestoreResource(item, workspace.id, cache)),
     );
     if (results.every((result) => result !== null)) {
       return NextResponse.json(Object.assign({}, ...results));

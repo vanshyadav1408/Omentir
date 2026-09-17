@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   httpsAvatarUrl,
+  isExpiredLinkedInMediaUrl,
   isLinkedInMediaUrl,
   personInitials,
   proxiedAvatarUrl,
@@ -43,10 +44,18 @@ describe("httpsAvatarUrl", () => {
 
 describe("proxiedAvatarUrl", () => {
   test("keeps a same-origin fallback for licdn URLs when the browser blocks the CDN", () => {
-    const source = "https://media.licdn.com/dms/image/v2/abc.jpg?e=1&t=2";
+    const source = "https://media.licdn.com/dms/image/v2/abc.jpg?e=2000000000&t=2";
     expect(isLinkedInMediaUrl(source)).toBe(true);
-    expect(proxiedAvatarUrl(source)).toBe(`/api/app/avatar?u=${encodeURIComponent(source)}`);
+    expect(proxiedAvatarUrl(source, 1_780_000_000_000)).toBe(
+      `/api/app/avatar?u=${encodeURIComponent(source)}`,
+    );
     expect(proxiedAvatarUrl("https://images.example.com/a.jpg")).toBeUndefined();
+  });
+
+  test("skips the proxy for an expired LinkedIn e= token so the UI shows initials instead of 404ing", () => {
+    const source = "https://media.licdn.com/dms/image/v2/abc.jpg?e=1784764800&t=2";
+    expect(isExpiredLinkedInMediaUrl(source, 1_789_600_000_000)).toBe(true);
+    expect(proxiedAvatarUrl(source, 1_789_600_000_000)).toBeUndefined();
   });
 });
 

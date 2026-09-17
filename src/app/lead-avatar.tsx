@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { httpsAvatarUrl, personInitials, proxiedAvatarUrl } from "@/lib/lead-avatar";
+import {
+  httpsAvatarUrl,
+  isExpiredLinkedInMediaUrl,
+  personInitials,
+  proxiedAvatarUrl,
+} from "@/lib/lead-avatar";
 
 export function LeadAvatar({
   name,
@@ -14,7 +19,8 @@ export function LeadAvatar({
   className: string;
   initialsClassName: string;
 }) {
-  const direct = httpsAvatarUrl(avatarUrl);
+  const raw = httpsAvatarUrl(avatarUrl);
+  const direct = raw && !isExpiredLinkedInMediaUrl(raw) ? raw : undefined;
   const proxy = direct ? proxiedAvatarUrl(direct) : undefined;
   const [failedDirect, setFailedDirect] = useState("");
   const [failedSrc, setFailedSrc] = useState("");

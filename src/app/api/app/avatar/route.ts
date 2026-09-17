@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/server/auth";
 import { fetchLeadAvatarBytes } from "@/lib/server/lead-avatar-fetch";
-import { httpsAvatarUrl, isLinkedInMediaUrl } from "@/lib/lead-avatar";
+import { httpsAvatarUrl, isExpiredLinkedInMediaUrl, isLinkedInMediaUrl } from "@/lib/lead-avatar";
 import { rateLimitRequest } from "@/lib/request-rate-limit";
 
 export const dynamic = "force-dynamic";
@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
 
   const url = httpsAvatarUrl(request.nextUrl.searchParams.get("u"));
   if (!url || !isLinkedInMediaUrl(url)) return emptyImage(400);
+  if (isExpiredLinkedInMediaUrl(url)) return emptyImage(404);
 
   const avatar = await fetchLeadAvatarBytes(url);
   if (!avatar) return emptyImage(404);

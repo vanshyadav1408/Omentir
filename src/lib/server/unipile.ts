@@ -15,6 +15,7 @@ import {
   type LinkedInIdentity,
 } from "../linkedin-identity";
 import { httpsAvatarUrl } from "../lead-avatar";
+import { unipileWebhookSecretHeaders } from "../unipile-webhook-auth";
 import { dedupeLinkedInInboxThreads } from "../inbox-threads";
 
 const UNIPILE_TIMEOUT_MS = 30_000;
@@ -1262,11 +1263,26 @@ export async function ensureUnipileWebhooks(input: {
   // "messaging" delivers new_message (replies); "users" delivers new_relation
   // (invite accepted). Both point at the same handler route.
   const created: string[] = [];
+  const headers = unipileWebhookSecretHeaders(input.secretHeaderValue);
   for (const source of ["messaging", "users"]) {
-    const alreadyRegistered = existing.some(
+    const alreadyRegistered = existing.find(
       (webhook) => webhook.source === source && webhook.request_url === input.requestUrl,
     );
-    if (alreadyRegistered) continue;
+    if (alreadyRegistered?.id) {
+      // Dashboard-created webhooks often have the same URL but no secret
+      // header. PATCH so later deliveries authorize instead of 401.
+      await request(`/api/v1/webhooks/${encodeURIComponent(alreadyRegistered.id)}`, {
+        method: "PATCH",
+        body: JSON.stringify({ headers }),
+      }).catch((error) => {
+        console.warn(
+          "[unipile] could not update webhook headers",
+          alreadyRegistered.id,
+          error instanceof Error ? error.message : error,
+        );
+      });
+      continue;
+    }
 
     await request<{ id?: string }>("/api/v1/webhooks", {
       method: "POST",
@@ -1274,7 +1290,7 @@ export async function ensureUnipileWebhooks(input: {
         source,
         request_url: input.requestUrl,
         name: `omentir-${source}`,
-        headers: [{ key: "x-omentir-webhook-secret", value: input.secretHeaderValue }],
+        headers,
       }),
     });
     created.push(source);

@@ -79,8 +79,27 @@ export function isLinkedInMediaUrl(url: string) {
   }
 }
 
-export function proxiedAvatarUrl(url: string) {
-  if (!isLinkedInMediaUrl(url)) return undefined;
+// LinkedIn signs media URLs with `e=` (unix seconds, sometimes ms). After that
+// instant the CDN 404s, and hitting our proxy just repeats the miss.
+export function linkedInMediaExpirySeconds(url: string) {
+  try {
+    const raw = new URL(url).searchParams.get("e");
+    if (!raw) return null;
+    const value = Number(raw);
+    if (!Number.isFinite(value) || value <= 0) return null;
+    return value > 1e12 ? Math.floor(value / 1000) : Math.floor(value);
+  } catch {
+    return null;
+  }
+}
+
+export function isExpiredLinkedInMediaUrl(url: string, nowMs = Date.now()) {
+  const expiry = linkedInMediaExpirySeconds(url);
+  return expiry != null && expiry * 1000 <= nowMs;
+}
+
+export function proxiedAvatarUrl(url: string, nowMs = Date.now()) {
+  if (!isLinkedInMediaUrl(url) || isExpiredLinkedInMediaUrl(url, nowMs)) return undefined;
   return `/api/app/avatar?u=${encodeURIComponent(url)}`;
 }
 

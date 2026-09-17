@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { setAverageTicketSizeAction } from "@/app/actions";
 import AnalysisChart from "@/app/analysis-chart";
@@ -132,6 +132,10 @@ export default function OverviewView({
   const loadedLinkedInThreads = linkedInInboxResource.value;
   const reloadLinkedInInbox = linkedInInboxResource.reload;
   const repliesLoading = linkedInInboxResource.loading || dashboardLoading;
+  const dashboardLoadingRef = useRef(dashboardLoading);
+  const inboxLoadingRef = useRef(linkedInInboxResource.loading);
+  dashboardLoadingRef.current = dashboardLoading;
+  inboxLoadingRef.current = linkedInInboxResource.loading;
   const [range, setRange] = useState<RangeKey>("30d");
   const [now, setNow] = useState(() => Date.now());
   const timeZone = useWorkspaceTimeZone();
@@ -149,8 +153,8 @@ export default function OverviewView({
   useEffect(() => {
     const interval = window.setInterval(() => {
       setNow(Date.now());
-      reloadDashboard();
-      reloadLinkedInInbox();
+      if (!dashboardLoadingRef.current) reloadDashboard();
+      if (!inboxLoadingRef.current) reloadLinkedInInbox();
     }, 15_000);
     return () => window.clearInterval(interval);
   }, [reloadDashboard, reloadLinkedInInbox]);

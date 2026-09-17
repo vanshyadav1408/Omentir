@@ -97,7 +97,7 @@ export async function fetchLeadAvatarBytes(rawUrl: string): Promise<FetchedLeadA
     let response: Response;
     try {
       response = await requestAvatar(current);
-      if (response.status === 403) {
+      if (response.status === 401 || response.status === 403) {
         response = await requestAvatar(current, "https://www.linkedin.com/");
       }
     } catch {

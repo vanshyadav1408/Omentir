@@ -293,7 +293,35 @@ export type WhopMatchedLinkedInSeatMembership = WhopActiveLinkedInSeatMembership
   duplicateMembershipIds: string[];
 };
 
-export async function extraSeatMonthlyUsdForMembership(input: {
+const EXTRA_SEAT_MEMBERSHIP_CACHE_MS = 45_000;
+const extraSeatMembershipCache = new Map<
+  string,
+  { at: number; value: WhopMatchedLinkedInSeatMembership | null }
+>();
+const extraSeatMembershipInflight = new Map<
+  string,
+  Promise<WhopMatchedLinkedInSeatMembership | null>
+>();
+
+function extraSeatMembershipCacheKey(input: {
+  emails?: Array<string | null | undefined>;
+  workspaceId?: string | null;
+  workspaceIds?: Array<string | null | undefined>;
+}) {
+  const workspaceIds = [
+    ...new Set(
+      [input.workspaceId, ...(input.workspaceIds || [])]
+        .map((id) => id?.trim())
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ].sort();
+  return JSON.stringify({
+    emails: extraSeatBuyerEmails(input.emails || []),
+    workspaceIds,
+  });
+}
+
+async function extraSeatMonthlyUsdFromMembership(input: {
   id: string;
   planId?: string | null;
   promo?: unknown;
@@ -327,6 +355,15 @@ export async function extraSeatMonthlyUsdForMembership(input: {
   });
 }
 
+export async function extraSeatMonthlyUsdForMembership(input: {
+  id: string;
+  planId?: string | null;
+  promo?: unknown;
+  payment?: unknown;
+}) {
+  return extraSeatMonthlyUsdFromMembership(input);
+}
+
 async function latestPaidPaymentForMembership(membershipId: string) {
   const companyId = process.env.WHOP_COMPANY_ID?.trim();
   if (!companyId) return null;
@@ -354,11 +391,11 @@ async function latestPaidPaymentForMembership(membershipId: string) {
   }
 }
 
-export async function findActiveLinkedInSeatMembership(input: {
+async function lookupActiveLinkedInSeatMembership(input: {
   emails?: Array<string | null | undefined>;
   workspaceId?: string | null;
   workspaceIds?: Array<string | null | undefined>;
-}) {
+}): Promise<WhopMatchedLinkedInSeatMembership | null> {
   const companyId = process.env.WHOP_COMPANY_ID?.trim();
   if (!companyId) return null;
 
@@ -407,7 +444,7 @@ export async function findActiveLinkedInSeatMembership(input: {
   const selected = selectExtraSeatMembership(matches);
   if (!selected) return null;
   const billing = membershipBilling.get(selected.winner.membershipId);
-  const monthlyUsd = await extraSeatMonthlyUsdForMembership({
+  const monthlyUsd = await extraSeatMonthlyUsdFromMembership({
     id: selected.winner.membershipId,
     planId: billing?.planId,
     promo: billing?.promo,
@@ -416,7 +453,32 @@ export async function findActiveLinkedInSeatMembership(input: {
     ...selected.winner,
     monthlyUsd: monthlyUsd ?? undefined,
     duplicateMembershipIds: selected.duplicates.map((item) => item.membershipId),
-  } satisfies WhopMatchedLinkedInSeatMembership;
+  };
+}
+
+export async function findActiveLinkedInSeatMembership(input: {
+  emails?: Array<string | null | undefined>;
+  workspaceId?: string | null;
+  workspaceIds?: Array<string | null | undefined>;
+}) {
+  const key = extraSeatMembershipCacheKey(input);
+  const cached = extraSeatMembershipCache.get(key);
+  if (cached && Date.now() - cached.at < EXTRA_SEAT_MEMBERSHIP_CACHE_MS) {
+    return cached.value;
+  }
+  const pending = extraSeatMembershipInflight.get(key);
+  if (pending) return pending;
+
+  const lookup = lookupActiveLinkedInSeatMembership(input)
+    .then((value) => {
+      extraSeatMembershipCache.set(key, { at: Date.now(), value });
+      return value;
+    })
+    .finally(() => {
+      extraSeatMembershipInflight.delete(key);
+    });
+  extraSeatMembershipInflight.set(key, lookup);
+  return lookup;
 }
 
 export async function findActiveLinkedInSeatMembershipByEmail(email: string) {

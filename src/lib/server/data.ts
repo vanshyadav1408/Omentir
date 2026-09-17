@@ -3619,7 +3619,7 @@ export async function listActivityDays(workspaceId: string, limit = 120) {
           .get();
       }
     })(),
-    (async () => {
+    (async (): Promise<{ docs: Array<{ data(): FirebaseFirestore.DocumentData }> }> => {
       try {
         return await getDb()
           .collection("activityEvents")
@@ -3628,15 +3628,14 @@ export async function listActivityDays(workspaceId: string, limit = 120) {
           .limit(5000)
           .get();
       } catch (error) {
+        // An unordered limit(5000) is a random subset and was taking ~20s on
+        // Overview. activityDays already holds durable totals; skip events
+        // until the workspaceId+createdAt index is serving.
         console.warn(
-          "[data] ordered activity-event query failed; using capped scan:",
+          "[data] ordered activity-event query failed; using activityDays only:",
           error instanceof Error ? error.message : error,
         );
-        return getDb()
-          .collection("activityEvents")
-          .where("workspaceId", "==", workspaceId)
-          .limit(5000)
-          .get();
+        return { docs: [] };
       }
     })(),
   ]);
@@ -3685,6 +3684,17 @@ export async function listActivityDays(workspaceId: string, limit = 120) {
   return [...byDay.values()].sort((a, b) => a.day.localeCompare(b.day));
 }
 
+async function mapInBatches<T>(
+  items: T[],
+  batchSize: number,
+  fn: (item: T) => Promise<void>,
+) {
+  const size = Math.max(1, batchSize);
+  for (let index = 0; index < items.length; index += size) {
+    await Promise.all(items.slice(index, index + size).map((item) => fn(item)));
+  }
+}
+
 /** Max-merge day totals into activityDays. Safe to call before deletes. */
 export async function persistActivityTotals(
   workspaceId: string,
@@ -3693,34 +3703,39 @@ export async function persistActivityTotals(
   if (!points.length) return 0;
 
   let written = 0;
-  for (const point of points) {
-    if (!point.dateKey) continue;
+  await mapInBatches(points, 8, async (point) => {
+    if (!point.dateKey) return;
     const ref = getDb().collection("activityDays").doc(`${workspaceId}-${point.dateKey}`);
+    let didWrite = false;
     await getDb().runTransaction(async (transaction) => {
       const snap = await transaction.get(ref);
       const existing = snap.exists ? (snap.data() as ActivityDay) : null;
-      transaction.set(
-        ref,
-        {
-          workspaceId,
-          day: point.dateKey,
-          found: Math.max(Number(existing?.found || 0), Number(point.found || 0)),
-          contacted: Math.max(
-            Number(existing?.contacted || 0),
-            Number(point.contacted || 0),
-          ),
-          replies: Math.max(Number(existing?.replies || 0), Number(point.replies || 0)),
-          meetingsBooked: Math.max(
-            Number(existing?.meetingsBooked || 0),
-            Number(point.meetingsBooked || 0),
-          ),
-          updatedAt: nowIso(),
-        },
-        { merge: true },
-      );
+      const next = {
+        workspaceId,
+        day: point.dateKey,
+        found: Math.max(Number(existing?.found || 0), Number(point.found || 0)),
+        contacted: Math.max(Number(existing?.contacted || 0), Number(point.contacted || 0)),
+        replies: Math.max(Number(existing?.replies || 0), Number(point.replies || 0)),
+        meetingsBooked: Math.max(
+          Number(existing?.meetingsBooked || 0),
+          Number(point.meetingsBooked || 0),
+        ),
+        updatedAt: nowIso(),
+      };
+      if (
+        existing &&
+        Number(existing.found || 0) === next.found &&
+        Number(existing.contacted || 0) === next.contacted &&
+        Number(existing.replies || 0) === next.replies &&
+        Number(existing.meetingsBooked || 0) === next.meetingsBooked
+      ) {
+        return;
+      }
+      transaction.set(ref, next, { merge: true });
+      didWrite = true;
     });
-    written += 1;
-  }
+    if (didWrite) written += 1;
+  });
   return written;
 }
 
