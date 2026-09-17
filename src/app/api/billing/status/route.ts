@@ -1,7 +1,7 @@
 import { auth } from "@/lib/server/auth";
 import { NextResponse } from "next/server";
 import { getWorkspace } from "@/lib/server/data";
-import { syncWorkspaceBillingIfInactive } from "@/lib/server/billing-sync";
+import { syncHostedWorkspaceBilling } from "@/lib/server/billing-sync";
 import { hasActiveSubscription } from "@/lib/server/subscription";
 import { isLocalMode } from "@/lib/runtime-mode";
 
@@ -14,7 +14,7 @@ export async function GET() {
     return NextResponse.json({ active: false }, { status: 401 });
   }
 
-  const workspace = await syncWorkspaceBillingIfInactive(await getWorkspace(userId));
+  const workspace = await syncHostedWorkspaceBilling(await getWorkspace(userId));
   const active = hasActiveSubscription(workspace);
 
   return NextResponse.json({

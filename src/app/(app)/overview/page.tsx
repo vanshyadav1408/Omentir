@@ -2,7 +2,7 @@ import { auth } from "@/lib/server/auth";
 import { redirect } from "next/navigation";
 import { saveProductProfileAction } from "@/app/actions";
 import { resolveActiveWorkspace } from "@/lib/server/active-workspace";
-import { syncWorkspaceBillingIfInactive } from "@/lib/server/billing-sync";
+import { syncHostedWorkspaceBilling } from "@/lib/server/billing-sync";
 import { hasActiveSubscription } from "@/lib/server/subscription";
 import { getWorkspaceSetup } from "@/lib/server/workspace-setup";
 import OverviewSetup from "./overview-setup";
@@ -38,7 +38,7 @@ export default async function HomePage({
 
   const loadedWorkspace = await resolveActiveWorkspace(userId);
   const setup = await getWorkspaceSetup(loadedWorkspace.id);
-  const workspace = await syncWorkspaceBillingIfInactive(loadedWorkspace);
+  const workspace = await syncHostedWorkspaceBilling(loadedWorkspace);
 
   if (!setup.productProfile) {
     redirect(workspace.onboarding ? "/workspace" : "/onboarding");

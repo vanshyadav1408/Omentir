@@ -1,7 +1,7 @@
 import { clerkClient } from "@clerk/nextjs/server";
 import { isLocalMode } from "@/lib/runtime-mode";
 import { NextResponse, type NextRequest } from "next/server";
-import { getWorkspace, listWorkspacesForOwner, logAutomationRun, updateWorkspaceBilling, updateWorkspaceLinkedInSeats } from "@/lib/server/data";
+import { getWorkspace, listWorkspacesForOwner, logAutomationRun, ownerWorkspaceForBilling, updateWorkspaceBilling, updateWorkspaceLinkedInSeats } from "@/lib/server/data";
 import { enforceLinkedInAccountCap, purgeWorkspaceUnipileAccounts } from "@/lib/server/linkedin-accounts";
 import { syncMailingListPlan } from "@/lib/server/mailing-list";
 import { readTextBody, RequestBodyTooLargeError } from "@/lib/server/request-body";
@@ -185,15 +185,21 @@ async function applyLinkedInSeatPurchase(
     });
     return { ok: true as const, ignored: "no_subscription" };
   }
-  const previousSeatMembershipId = workspace.billing?.seatMembershipId;
-  await updateWorkspaceLinkedInSeats(workspaceId, {
-    extraLinkedInSeats: extraSeats,
-    seatMembershipId: membershipId || previousSeatMembershipId,
-  });
+  const owner = await ownerWorkspaceForBilling(workspace);
+  const ownerId = owner.id;
+  const previousSeatMembershipId = owner.billing?.seatMembershipId;
+  await updateWorkspaceLinkedInSeats(
+    workspace.id,
+    {
+      extraLinkedInSeats: extraSeats,
+      seatMembershipId: membershipId || previousSeatMembershipId,
+    },
+    { ownerId },
+  );
   if (previousSeatMembershipId && previousSeatMembershipId !== membershipId) {
     await cancelWhopSeatMembership(previousSeatMembershipId);
   }
-  const trimmed = await enforceLinkedInAccountCap(workspaceId);
+  const trimmed = await enforceLinkedInAccountCap(ownerId);
   await logAutomationRun({
     workspaceId,
     kind: "webhook",
@@ -208,8 +214,10 @@ async function applyLinkedInSeatPurchase(
 }
 
 async function clearLinkedInSeats(workspaceId: string, sourceId: string) {
-  await updateWorkspaceLinkedInSeats(workspaceId, { extraLinkedInSeats: 0 });
-  const trimmed = await enforceLinkedInAccountCap(workspaceId);
+  const workspace = await getWorkspace(workspaceId).catch(() => null);
+  const ownerId = workspace?.ownerId || workspaceId;
+  await updateWorkspaceLinkedInSeats(workspace?.id || workspaceId, { extraLinkedInSeats: 0 }, { ownerId });
+  const trimmed = await enforceLinkedInAccountCap(ownerId);
   await logAutomationRun({
     workspaceId,
     kind: "webhook",
@@ -499,7 +507,18 @@ export async function POST(request: NextRequest) {
   }
 
   const payment = event.data;
-  const extraSeats = await extraLinkedInSeatsFromWhopSource(payment);
+  let extraSeats = await extraLinkedInSeatsFromWhopSource(payment);
+  const membershipId = payloadMembershipId(payment);
+  if (!extraSeats && membershipId) {
+    try {
+      extraSeats = await extraLinkedInSeatsFromWhopSource(
+        await whop.memberships.retrieve(membershipId),
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Whop membership retrieve failed.";
+      console.error("[whop webhook] extra-seat membership retrieve failed:", message);
+    }
+  }
   if (extraSeats) {
     const workspaceId =
       metadataString(payment.metadata, "workspaceId") ||
@@ -516,7 +535,7 @@ export async function POST(request: NextRequest) {
     const result = await applyLinkedInSeatPurchase(
       workspaceId,
       extraSeats,
-      payloadMembershipId(payment),
+      membershipId,
       `payment ${payment.id}`,
     );
     await capturePostHogEvent({

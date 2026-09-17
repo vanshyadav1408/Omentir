@@ -6,12 +6,17 @@ import {
   extraLinkedInSeatsFromMetadata,
   extraLinkedInSeatsFromPlanTitle,
   extraLinkedInSeatsFromWhopFields,
+  extraSeatBuyerEmails,
+  extraSeatWhopMembershipMatchesBuyer,
+  isAlreadyTerminatedWhopMembershipError,
+  overlayOwnerExtraLinkedInSeats,
   isLinkedInSeatCheckoutMetadata,
   isLinkedInSeatProduct,
   isLinkedInSeatWhopObject,
   LINKEDIN_SEAT_PRODUCT_TITLE,
   mergeLinkedInSeatFields,
   parseExtraLinkedInSeatCount,
+  selectExtraSeatMembership,
 } from "./linkedin-seat-pricing";
 
 describe("extra LinkedIn seat pricing", () => {
@@ -100,5 +105,103 @@ describe("Whop extra-seat metadata", () => {
         { extraLinkedInSeats: 0 },
       ),
     ).toEqual({ extraLinkedInSeats: 0, seatMembershipId: "mem_seats" });
+  });
+
+  test("matches Extra Seats bought while logged into Whop as the company admin so production can copy the add-on", () => {
+    const membership = {
+      metadata: {
+        kind: "linkedin_seats",
+        extraSeats: "15",
+        email: "buyer@example.com",
+        workspaceId: "user_workspace",
+      },
+      userEmail: "owner@whop-company.example",
+    };
+    expect(
+      extraSeatWhopMembershipMatchesBuyer(membership, {
+        workspaceId: "user_workspace",
+        emails: ["buyer@example.com"],
+      }),
+    ).toBe(true);
+    expect(
+      extraSeatWhopMembershipMatchesBuyer(membership, {
+        emails: ["buyer@example.com"],
+      }),
+    ).toBe(true);
+    expect(
+      extraSeatWhopMembershipMatchesBuyer(membership, {
+        emails: ["someone-else@example.com"],
+      }),
+    ).toBe(false);
+  });
+
+  test("matches Extra Seats when any of the buyer's emails is on the membership", () => {
+    expect(
+      extraSeatWhopMembershipMatchesBuyer(
+        { metadata: { kind: "linkedin_seats", emails: "work@example.com,personal@example.com" } },
+        { emails: ["personal@example.com", "other@example.com"] },
+      ),
+    ).toBe(true);
+    expect(extraSeatBuyerEmails(["Work@example.com, personal@example.com"])).toEqual([
+      "work@example.com",
+      "personal@example.com",
+    ]);
+  });
+
+  test("uses Extra Seats from the original account so an extra workspace can connect the paid LinkedIn accounts", () => {
+    const extra = overlayOwnerExtraLinkedInSeats(
+      {
+        id: "ws_extra",
+        billing: { extraLinkedInSeats: 0, seatMembershipId: undefined },
+      },
+      {
+        id: "user_1",
+        billing: { extraLinkedInSeats: 15, seatMembershipId: "mem_fifteen" },
+      },
+    );
+    expect(extra.billing).toEqual({ extraLinkedInSeats: 15, seatMembershipId: "mem_fifteen" });
+  });
+
+  test("keeps leftover Extra Seats on an extra workspace until they are stored on the original account", () => {
+    const extra = overlayOwnerExtraLinkedInSeats(
+      {
+        id: "ws_extra",
+        billing: { extraLinkedInSeats: 15, seatMembershipId: "mem_fifteen" },
+      },
+      {
+        id: "user_1",
+        billing: { extraLinkedInSeats: 0 },
+      },
+    );
+    expect(extra.billing?.extraLinkedInSeats).toBe(15);
+  });
+
+  test("matches Extra Seats onto an extra workspace when checkout stored the original account id", () => {
+    expect(
+      extraSeatWhopMembershipMatchesBuyer(
+        { metadata: { workspaceId: "user_1", kind: "linkedin_seats" } },
+        { workspaceIds: ["ws_extra", "user_1"], emails: [] },
+      ),
+    ).toBe(true);
+  });
+
+  test("keeps the 15-seat add-on when a later 1-seat membership is still active because cancel never ran", () => {
+    const selected = selectExtraSeatMembership([
+      { extraSeats: 1, membershipId: "mem_one" },
+      { extraSeats: 15, membershipId: "mem_fifteen" },
+    ]);
+    expect(selected?.winner).toEqual({ extraSeats: 15, membershipId: "mem_fifteen" });
+    expect(selected?.duplicates).toEqual([{ extraSeats: 1, membershipId: "mem_one" }]);
+  });
+
+  test("does not treat a leftover Extra Seats membership as a cancel failure once Whop has already terminated it", () => {
+    expect(
+      isAlreadyTerminatedWhopMembershipError(
+        new Error(
+          '400 {"error":{"type":"bad_request","message":"This membership has already been terminated."}}',
+        ),
+      ),
+    ).toBe(true);
+    expect(isAlreadyTerminatedWhopMembershipError(new Error("Whop API 500"))).toBe(false);
   });
 });

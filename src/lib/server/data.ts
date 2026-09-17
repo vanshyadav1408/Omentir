@@ -27,8 +27,12 @@ import {
   linkedInAccountIsOnOwnedWorkspace,
 } from "@/lib/linkedin-account-sharing";
 import { entitlementsFor } from "./entitlements";
-import { isOriginalWorkspace } from "@/lib/workspace-ownership";
-import { mergeLinkedInSeatFields } from "@/lib/linkedin-seat-pricing";
+import { isOriginalWorkspace, ownerBillingWorkspaceIds } from "@/lib/workspace-ownership";
+import {
+  extraLinkedInSeatsCount,
+  mergeLinkedInSeatFields,
+  overlayOwnerExtraLinkedInSeats,
+} from "@/lib/linkedin-seat-pricing";
 import { httpsAvatarUrl } from "@/lib/lead-avatar";
 import {
   canEnrollLeadForOutreach,
@@ -310,10 +314,10 @@ export async function findOwnedWorkspace(ownerId: string, workspaceId: string) {
   return workspace;
 }
 
-async function workspaceIdsForOwner(ownerId: string) {
+async function workspaceIdsForOwner(ownerId: string, workspaceId?: string) {
   const snap = await collection<Workspace>("workspaces").where("ownerId", "==", ownerId).get();
-  const ids = new Set(snap.docs.map((doc) => doc.id));
-  ids.add(ownerId);
+  const ids = new Set(ownerBillingWorkspaceIds(ownerId, workspaceId));
+  for (const doc of snap.docs) ids.add(doc.id);
   return [...ids];
 }
 
@@ -331,7 +335,18 @@ function chunkIds(ids: string[]) {
 export async function listWorkspaceIdsSharingLinkedIn(workspaceId: string) {
   const workspace = await findWorkspace(workspaceId);
   if (!workspace) return [workspaceId];
-  return workspaceIdsForOwner(workspace.ownerId || workspace.id);
+  return workspaceIdsForOwner(workspace.ownerId || workspace.id, workspaceId);
+}
+
+export async function ownerWorkspaceForBilling(workspace: Workspace) {
+  const ownerId = workspace.ownerId || workspace.id;
+  if (ownerId === workspace.id) return workspace;
+  return (await findWorkspace(ownerId)) || workspace;
+}
+
+export async function workspaceForLinkedInAccountCap(workspaceId: string) {
+  const workspace = (await findWorkspace(workspaceId)) || (await getWorkspace(workspaceId));
+  return overlayOwnerExtraLinkedInSeats(workspace, await ownerWorkspaceForBilling(workspace));
 }
 
 async function listLinkedInAccountDocs(workspaceIds: string[], connectedOnly: boolean) {
@@ -378,7 +393,15 @@ export async function createOwnedWorkspace(
     ...(input.faviconUrl ? { faviconUrl: input.faviconUrl } : {}),
     ...(primary.notificationEmail ? { notificationEmail: primary.notificationEmail } : {}),
     ...(primary.timezone ? { timezone: primary.timezone } : {}),
-    ...(primary.billing ? { billing: primary.billing } : {}),
+    ...(primary.billing
+      ? {
+          billing: omitUndefined({
+            ...primary.billing,
+            extraLinkedInSeats: undefined,
+            seatMembershipId: undefined,
+          }) as WorkspaceBilling,
+        }
+      : {}),
     ...(primary.onboarding ? { onboarding: primary.onboarding } : {}),
     settings: withDefaultSettings(primary.settings),
     createdAt: timestamp,
@@ -386,7 +409,7 @@ export async function createOwnedWorkspace(
   };
 
   await ref.set(workspace);
-  return workspace;
+  return overlayOwnerExtraLinkedInSeats(workspace, primary);
 }
 
 const WORKSPACE_SCOPED_COLLECTIONS = [
@@ -750,27 +773,42 @@ export async function updateWorkspaceOwnerImage(workspaceId: string, imageUrl: s
 export async function updateWorkspaceBilling(
   workspaceId: string,
   billing: Omit<WorkspaceBilling, "updatedAt">,
+  options?: { ownerId?: string },
 ) {
   const target = await findWorkspace(workspaceId);
-  const ownerId = target?.ownerId || workspaceId;
+  const ownerId = options?.ownerId || target?.ownerId || workspaceId;
   await ensureWorkspace(ownerId);
-  const workspaceIds = await workspaceIdsForOwner(ownerId);
+  const owner = ownerId === workspaceId ? target : await findWorkspace(ownerId);
+  const workspaceIds = await workspaceIdsForOwner(ownerId, workspaceId);
+  const extraSeatSource =
+    extraLinkedInSeatsCount(owner?.billing?.extraLinkedInSeats) >=
+    extraLinkedInSeatsCount(target?.billing?.extraLinkedInSeats)
+      ? owner?.billing
+      : target?.billing;
   const next = omitUndefined({
     ...billing,
-    ...mergeLinkedInSeatFields(target?.billing, billing),
+    ...mergeLinkedInSeatFields(extraSeatSource, billing),
     updatedAt: nowIso(),
   }) as WorkspaceBilling;
 
   await Promise.all(
-    workspaceIds.map((id) =>
-      collection<Workspace>("workspaces").doc(id).set(
+    workspaceIds.map((id) => {
+      const billingForDoc =
+        id === ownerId
+          ? next
+          : (omitUndefined({
+              ...next,
+              extraLinkedInSeats: undefined,
+              seatMembershipId: undefined,
+            }) as WorkspaceBilling);
+      return collection<Workspace>("workspaces").doc(id).set(
         {
-          billing: next,
+          billing: billingForDoc,
           updatedAt: next.updatedAt,
         },
         { merge: true },
-      ),
-    ),
+      );
+    }),
   );
 
   return next;
@@ -779,21 +817,30 @@ export async function updateWorkspaceBilling(
 export async function updateWorkspaceLinkedInSeats(
   workspaceId: string,
   input: { extraLinkedInSeats: number; seatMembershipId?: string | null },
+  options?: { ownerId?: string },
 ) {
   const workspace = await findWorkspace(workspaceId);
-  if (!workspace?.billing) {
+  const ownerId = options?.ownerId || workspace?.ownerId || workspaceId;
+  const owner =
+    ownerId === workspace?.id ? workspace : (await findWorkspace(ownerId)) || workspace;
+  const source = owner?.billing || workspace?.billing;
+  if (!source) {
     throw new Error("Workspace billing is missing.");
   }
 
-  return updateWorkspaceBilling(workspaceId, {
-    provider: workspace.billing.provider,
-    plan: workspace.billing.plan,
-    status: workspace.billing.status,
-    payerEmail: workspace.billing.payerEmail,
-    currentPeriodEnd: workspace.billing.currentPeriodEnd,
-    extraLinkedInSeats: input.extraLinkedInSeats,
-    seatMembershipId: input.seatMembershipId || undefined,
-  });
+  return updateWorkspaceBilling(
+    ownerId,
+    {
+      provider: source.provider,
+      plan: source.plan,
+      status: source.status,
+      payerEmail: source.payerEmail,
+      currentPeriodEnd: source.currentPeriodEnd,
+      extraLinkedInSeats: input.extraLinkedInSeats,
+      seatMembershipId: input.seatMembershipId || undefined,
+    },
+    { ownerId },
+  );
 }
 
 export async function updateWorkspaceOnboarding(
@@ -1003,7 +1050,7 @@ export async function saveLinkedInAccount(
     avatarUrl?: string;
   },
 ) {
-  const workspace = await getWorkspace(workspaceId);
+  const workspace = await workspaceForLinkedInAccountCap(workspaceId);
   const limit = linkedInAccountLimit(workspace.billing);
   const timestamp = nowIso();
   const allowedWorkspaceIds = await listWorkspaceIdsSharingLinkedIn(workspaceId);

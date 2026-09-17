@@ -6,8 +6,10 @@ import {
   ensureWorkspace,
   findOwnedWorkspace,
   listWorkspacesForOwner,
+  ownerWorkspaceForBilling,
 } from "./data";
 import type { Workspace } from "./types";
+import { overlayOwnerExtraLinkedInSeats } from "@/lib/linkedin-seat-pricing";
 
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
@@ -36,13 +38,17 @@ export async function clearActiveWorkspaceCookie() {
 export async function resolveActiveWorkspace(userId: string): Promise<Workspace> {
   const primary = await ensureWorkspace(userId);
   const requestedId = await readActiveWorkspaceCookie();
-  if (!requestedId || requestedId === primary.id) return primary;
+  if (!requestedId || requestedId === primary.id) {
+    return overlayOwnerExtraLinkedInSeats(primary, primary);
+  }
 
   const selected = await findOwnedWorkspace(userId, requestedId);
-  if (selected) return selected;
+  if (selected) {
+    return overlayOwnerExtraLinkedInSeats(selected, await ownerWorkspaceForBilling(selected));
+  }
 
   await clearActiveWorkspaceCookie();
-  return primary;
+  return overlayOwnerExtraLinkedInSeats(primary, primary);
 }
 
 export async function listOwnedWorkspaces(userId: string) {

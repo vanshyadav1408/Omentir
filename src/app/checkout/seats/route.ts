@@ -8,7 +8,7 @@ import { capturePostHogEvent } from "@/lib/posthog-server";
 import { resolveActiveWorkspace } from "@/lib/server/active-workspace";
 import { hasActiveSubscription } from "@/lib/server/subscription";
 import { commercialPlanLimits } from "@/lib/plan-limits";
-import { extraLinkedInSeatsCount, parseExtraLinkedInSeatCount } from "@/lib/linkedin-seat-pricing";
+import { extraLinkedInSeatsCount, extraSeatBuyerEmails, parseExtraLinkedInSeatCount } from "@/lib/linkedin-seat-pricing";
 
 export const dynamic = "force-dynamic";
 
@@ -40,12 +40,19 @@ export async function GET(request: NextRequest) {
     }
 
     const user = await currentUser();
-    const email = user?.primaryEmailAddress?.emailAddress;
+    const emails = extraSeatBuyerEmails([
+      user?.primaryEmailAddress?.emailAddress,
+      ...(user?.emailAddresses?.map((item) => item.emailAddress) ?? []),
+      workspace.notificationEmail,
+      workspace.billing?.payerEmail,
+    ]);
+    const email = emails[0];
     const attribution = attributionFromCookieHeader(request.headers.get("cookie"));
     const { purchaseUrl, checkoutId, monthlyTotal } = await createLinkedInSeatCheckout({
       extraSeats,
       workspaceId: workspace.ownerId || userId,
       email,
+      emails,
       redirectUrl: settingsUrl.toString(),
       metadata: attributionMetadata(attribution),
     });

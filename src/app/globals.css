@@ -2296,6 +2296,34 @@ html[data-theme="dark"] .recommended-badge {
     padding: 16px !important;
   }
 
+  /* Short confirmations: centered card (not a tall bottom sheet). */
+  .m3-dialog-scrim.m3-dialog-scrim--compact-mobile,
+  .m3-modal-scrim.m3-dialog-scrim--compact-mobile {
+    align-items: center !important;
+    padding: 16px !important;
+    overflow-y: auto;
+  }
+
+  .m3-dialog-surface.m3-dialog-surface--compact-mobile,
+  .m3-modal-surface.m3-dialog-surface--compact-mobile {
+    width: calc(100% - 32px) !important;
+    max-width: 400px !important;
+    height: auto !important;
+    max-height: min(80dvh, calc(100dvh - 32px)) !important;
+    flex: none !important;
+    align-self: center !important;
+    padding: 16px !important;
+    overflow: auto;
+    border-radius: 12px !important;
+    animation: m3-modal-enter var(--md-sys-motion-duration-long)
+      var(--md-sys-motion-easing-standard) both;
+  }
+
+  .m3-dialog-surface.m3-dialog-surface--compact-mobile::before,
+  .m3-modal-surface.m3-dialog-surface--compact-mobile::before {
+    display: none;
+  }
+
   /* Short new-agent chooser: centered card (not a bottom sheet). */
   .m3-modal-scrim.new-agent-choice-mobile-scrim {
     align-items: center !important;

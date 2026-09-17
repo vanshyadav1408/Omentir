@@ -30,7 +30,7 @@ export default function DeleteWorkspaceDialog({
 
   return createPortal(
     <div
-      className="app-compact m3-dialog-scrim z-[220]"
+      className="app-compact m3-dialog-scrim m3-dialog-scrim--compact-mobile z-[220]"
       role="presentation"
       onClick={onClose}
     >
@@ -38,7 +38,7 @@ export default function DeleteWorkspaceDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby="delete-workspace-title"
-        className="m3-dialog-surface"
+        className="m3-dialog-surface m3-dialog-surface--compact-mobile"
         onClick={(event) => event.stopPropagation()}
       >
         <h2 id="delete-workspace-title" className="m3-dialog-title">
@@ -55,7 +55,10 @@ export default function DeleteWorkspaceDialog({
             value={confirmation}
             onChange={(event) => onConfirmationChange(event.target.value)}
             autoComplete="off"
-            autoFocus
+            autoFocus={
+              typeof window !== "undefined" &&
+              window.matchMedia("(min-width: 768px)").matches
+            }
           />
         </div>
         {error ? (

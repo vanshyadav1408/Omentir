@@ -3,11 +3,11 @@ import "server-only";
 import { isUnipileAccountUsable } from "@/lib/unipile-account-status";
 import {
   disconnectLinkedInAccount,
-  getWorkspace,
   listAllLinkedInAccounts,
   listLinkedInAccounts,
   markLinkedInAccountDisconnected,
   saveLinkedInAccount,
+  workspaceForLinkedInAccountCap,
 } from "./data";
 import { deleteLinkedInAccount, listUnipileLinkedInAccounts, retrieveOwnLinkedInProfile } from "./unipile";
 import { entitlementsFor } from "./entitlements";
@@ -104,7 +104,7 @@ export async function purgeWorkspaceUnipileAccounts(workspaceId: string) {
 // After extra seats drop, Unipile still bills every connected account. Keep
 // the oldest accounts that fit the paid cap and delete the rest on Unipile.
 export async function enforceLinkedInAccountCap(workspaceId: string) {
-  const workspace = await getWorkspace(workspaceId);
+  const workspace = await workspaceForLinkedInAccountCap(workspaceId);
   const cap = entitlementsFor(workspace).limits.linkedInAccounts;
   if (!Number.isFinite(cap)) return { kept: 0, removed: 0 };
 

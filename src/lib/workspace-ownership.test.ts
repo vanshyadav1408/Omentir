@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   isOriginalWorkspace,
+  ownerBillingWorkspaceIds,
   workspaceBelongsToOwner,
   workspaceDisplayName,
   workspaceIsRemovedOnDelete,
@@ -40,5 +41,12 @@ describe("workspaceDisplayName", () => {
   test("falls back to Workspace when the stored name is blank", () => {
     expect(workspaceDisplayName({ id: "ws", name: "Harborline" })).toBe("Harborline");
     expect(workspaceDisplayName({ id: "ws", name: "  " })).toBe("Workspace");
+  });
+});
+
+describe("ownerBillingWorkspaceIds", () => {
+  test("includes the original account and the extra workspace so Extra Seats checkout metadata can match either id", () => {
+    expect(ownerBillingWorkspaceIds("user_1", "ws_extra").sort()).toEqual(["user_1", "ws_extra"]);
+    expect(ownerBillingWorkspaceIds("user_1")).toEqual(["user_1"]);
   });
 });

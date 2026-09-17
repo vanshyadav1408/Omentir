@@ -1,29 +1,32 @@
 import "server-only";
 
 import { currentUser } from "./auth";
-import { logAutomationRun, updateWorkspaceBilling, updateWorkspaceLinkedInSeats } from "./data";
+import {
+  logAutomationRun,
+  ownerWorkspaceForBilling,
+  updateWorkspaceBilling,
+  updateWorkspaceLinkedInSeats,
+} from "./data";
 import { hasActiveSubscription } from "./subscription";
-import { findActiveLinkedInSeatMembershipByEmail, findActiveWhopMembershipByEmail } from "./whop";
-import { extraLinkedInSeatsCount } from "@/lib/linkedin-seat-pricing";
+import {
+  cancelWhopSeatMembership,
+  findActiveLinkedInSeatMembership,
+  findActiveWhopMembershipByEmail,
+} from "./whop";
+import {
+  extraLinkedInSeatsCount,
+  extraSeatBuyerEmails,
+  overlayOwnerExtraLinkedInSeats,
+} from "@/lib/linkedin-seat-pricing";
 import { commercialPlanLimits } from "@/lib/plan-limits";
 import { isLocalMode } from "@/lib/runtime-mode";
+import { ownerBillingWorkspaceIds } from "@/lib/workspace-ownership";
 import type { Workspace } from "./types";
 
-function normalizeEmail(email?: string | null) {
-  const normalized = email?.trim().toLowerCase();
-  return normalized || null;
-}
-
-function uniqueEmails(emails: Array<string | null | undefined>) {
-  return Array.from(
-    new Set(emails.map(normalizeEmail).filter((email): email is string => Boolean(email))),
-  );
-}
-
 function emailsForWorkspace(workspace: Workspace, user: Awaited<ReturnType<typeof currentUser>>) {
-  return uniqueEmails([
+  return extraSeatBuyerEmails([
     user?.primaryEmailAddress?.emailAddress,
-    ...(user?.emailAddresses.map((item) => item.emailAddress) ?? []),
+    ...(user?.emailAddresses?.map((item) => item.emailAddress) ?? []),
     workspace.notificationEmail,
     workspace.billing?.payerEmail,
   ]);
@@ -61,7 +64,12 @@ export async function syncWorkspaceBillingIfInactive(workspace: Workspace): Prom
   return workspace;
 }
 
-/** Copy a paid Extra Seats membership onto the workspace when the webhook never stored it. */
+export async function syncHostedWorkspaceBilling(workspace: Workspace): Promise<Workspace> {
+  const billed = await syncWorkspaceBillingIfInactive(workspace);
+  return syncWorkspaceLinkedInSeatsFromWhop(billed);
+}
+
+/** Store Extra Seats on the original account so every owned workspace can use the LinkedIn cap. */
 export async function syncWorkspaceLinkedInSeatsFromWhop(workspace: Workspace): Promise<Workspace> {
   if (isLocalMode() || !hasActiveSubscription(workspace)) return workspace;
   if (!Number.isFinite(commercialPlanLimits(workspace.billing?.plan).linkedInAccounts)) {
@@ -69,30 +77,66 @@ export async function syncWorkspaceLinkedInSeatsFromWhop(workspace: Workspace): 
   }
 
   const user = await currentUser();
-  for (const email of emailsForWorkspace(workspace, user)) {
-    try {
-      const seats = await findActiveLinkedInSeatMembershipByEmail(email);
-      if (!seats) continue;
-      const current = extraLinkedInSeatsCount(workspace.billing?.extraLinkedInSeats);
-      if (current === seats.extraSeats && workspace.billing?.seatMembershipId === seats.membershipId) {
-        return workspace;
-      }
-      const billing = await updateWorkspaceLinkedInSeats(workspace.id, {
-        extraLinkedInSeats: seats.extraSeats,
-        seatMembershipId: seats.membershipId,
-      });
+  const ownerId = workspace.ownerId || user?.id || workspace.id;
+  const owner = await ownerWorkspaceForBilling(workspace);
+  const emails = extraSeatBuyerEmails([
+    ...emailsForWorkspace(workspace, user),
+    ...emailsForWorkspace(owner, user),
+  ]);
+  try {
+    const seats = await findActiveLinkedInSeatMembership({
+      emails,
+      workspaceId: ownerId,
+      workspaceIds: ownerBillingWorkspaceIds(ownerId, workspace.id),
+    });
+    const extraSeats = Math.max(
+      seats?.extraSeats || 0,
+      extraLinkedInSeatsCount(owner.billing?.extraLinkedInSeats),
+      extraLinkedInSeatsCount(workspace.billing?.extraLinkedInSeats),
+    );
+    const membershipId =
+      seats?.membershipId || owner.billing?.seatMembershipId || workspace.billing?.seatMembershipId;
+    if (!extraSeats && !seats) return overlayOwnerExtraLinkedInSeats(workspace, owner);
+
+    const current = extraLinkedInSeatsCount(owner.billing?.extraLinkedInSeats);
+    const sameMembership = owner.billing?.seatMembershipId === membershipId;
+    if (
+      current === extraSeats &&
+      sameMembership &&
+      !(seats?.duplicateMembershipIds.length)
+    ) {
+      return overlayOwnerExtraLinkedInSeats(workspace, owner);
+    }
+    const billing = await updateWorkspaceLinkedInSeats(
+      workspace.id,
+      {
+        extraLinkedInSeats: extraSeats,
+        seatMembershipId: membershipId,
+      },
+      { ownerId },
+    );
+    const previousSeatMembershipId = owner.billing?.seatMembershipId;
+    const staleIds = new Set(seats?.duplicateMembershipIds || []);
+    if (previousSeatMembershipId && membershipId && previousSeatMembershipId !== membershipId) {
+      staleIds.add(previousSeatMembershipId);
+    }
+    await Promise.all([...staleIds].map((id) => cancelWhopSeatMembership(id)));
+    if (seats) {
       await logAutomationRun({
-        workspaceId: workspace.id,
+        workspaceId: ownerId,
         kind: "webhook",
         status: "completed",
         message: `Set ${seats.extraSeats} extra LinkedIn seat${seats.extraSeats === 1 ? "" : "s"} from Whop membership check ${seats.membershipId}.`,
       });
-      return { ...workspace, billing };
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Whop extra-seat membership check failed.";
-      console.error("[billing sync] Whop extra-seat membership check failed:", message);
     }
+    const billedOwner = { ...owner, billing };
+    return overlayOwnerExtraLinkedInSeats(
+      ownerId === workspace.id ? billedOwner : { ...workspace, billing },
+      billedOwner,
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Whop extra-seat membership check failed.";
+    console.error("[billing sync] Whop extra-seat membership check failed:", message);
+    return overlayOwnerExtraLinkedInSeats(workspace, owner);
   }
-
-  return workspace;
 }

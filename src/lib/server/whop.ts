@@ -6,10 +6,15 @@ import {
   extraLinkedInSeatMonthlyTotalUsd,
   extraLinkedInSeatPlanTitle,
   extraLinkedInSeatsFromWhopFields,
+  extraSeatBuyerEmails,
+  extraSeatWhopMembershipMatchesBuyer,
+  isAlreadyTerminatedWhopMembershipError,
+  isLinkedInSeatCheckoutMetadata,
   isLinkedInSeatProduct,
   LINKEDIN_SEAT_CHECKOUT_KIND,
   LINKEDIN_SEAT_PRODUCT_TITLE,
   parseExtraLinkedInSeatCount,
+  selectExtraSeatMembership,
 } from "@/lib/linkedin-seat-pricing";
 
 let client: Whop | null = null;
@@ -231,6 +236,7 @@ export async function cancelWhopSeatMembership(membershipId: string | undefined 
   try {
     await getWhopClient().memberships.cancel(id, { cancellation_mode: "immediate" });
   } catch (error) {
+    if (isAlreadyTerminatedWhopMembershipError(error)) return;
     console.error(
       "[whop] failed to cancel extra LinkedIn seat membership",
       id,
@@ -255,6 +261,7 @@ function objectMetadata(
 export async function extraLinkedInSeatsFromWhopSource(source: {
   metadata?: { [key: string]: unknown } | null;
   plan?: { id?: string | null; metadata?: { [key: string]: unknown } | null; title?: string | null } | null;
+  plan_id?: string | null;
   product?: { title?: string | null; metadata?: { [key: string]: unknown } | null } | null;
 }) {
   const direct = extraLinkedInSeatsFromWhopFields({
@@ -265,9 +272,10 @@ export async function extraLinkedInSeatsFromWhopSource(source: {
   });
   if (direct) return direct;
 
-  const productLooksLikeSeats = isLinkedInSeatProduct(source.product || {});
-  const planId = source.plan?.id?.trim();
-  if (!productLooksLikeSeats || !planId) return null;
+  const looksLikeSeats =
+    isLinkedInSeatProduct(source.product || {}) || isLinkedInSeatCheckoutMetadata(source.metadata);
+  const planId = source.plan?.id?.trim() || source.plan_id?.trim();
+  if (!looksLikeSeats || !planId) return null;
 
   const plan = await getWhopClient().plans.retrieve(planId);
   return extraLinkedInSeatsFromWhopFields({
@@ -278,44 +286,65 @@ export async function extraLinkedInSeatsFromWhopSource(source: {
   });
 }
 
-export async function findActiveLinkedInSeatMembershipByEmail(email: string) {
+export type WhopMatchedLinkedInSeatMembership = WhopActiveLinkedInSeatMembership & {
+  duplicateMembershipIds: string[];
+};
+
+export async function findActiveLinkedInSeatMembership(input: {
+  emails?: Array<string | null | undefined>;
+  workspaceId?: string | null;
+  workspaceIds?: Array<string | null | undefined>;
+}) {
   const companyId = process.env.WHOP_COMPANY_ID?.trim();
   if (!companyId) return null;
 
-  const normalizedEmail = email.trim().toLowerCase();
-  if (!normalizedEmail) return null;
+  const productId = await getLinkedInSeatProductId().catch(() => null);
+  if (!productId) return null;
 
-  const whop = getWhopClient();
-  const members = await whop.members.list({
+  const matches: WhopActiveLinkedInSeatMembership[] = [];
+  const memberships = await getWhopClient().memberships.list({
     company_id: companyId,
-    query: normalizedEmail,
-    access_level: "customer",
-    statuses: ["joined"],
-    first: 10,
-  });
-  const member = members.data.find(
-    (item) => item.user?.email?.trim().toLowerCase() === normalizedEmail,
-  );
-  if (!member?.user?.id) return null;
-
-  const memberships = await whop.memberships.list({
-    company_id: companyId,
-    user_ids: [member.user.id],
+    product_ids: [productId],
     statuses: ["active", "trialing"],
-    first: 20,
+    first: 50,
+    order: "created_at",
+    direction: "desc",
   });
 
   for (const membership of memberships.data) {
+    if (
+      !extraSeatWhopMembershipMatchesBuyer(
+        {
+          metadata: membership.metadata,
+          userEmail: membership.user?.email,
+        },
+        { workspaceId: input.workspaceId, workspaceIds: input.workspaceIds, emails: input.emails },
+      )
+    ) {
+      continue;
+    }
     const extraSeats = await extraLinkedInSeatsFromWhopSource(membership);
     if (!extraSeats) continue;
-    return {
+    matches.push({
       extraSeats,
       membershipId: membership.id,
-      payerEmail: membership.user?.email?.trim().toLowerCase() || normalizedEmail,
-    } satisfies WhopActiveLinkedInSeatMembership;
+      payerEmail:
+        membership.user?.email?.trim().toLowerCase() ||
+        input.emails?.map((email) => email?.trim().toLowerCase()).find(Boolean) ||
+        "",
+    });
   }
 
-  return null;
+  const selected = selectExtraSeatMembership(matches);
+  if (!selected) return null;
+  return {
+    ...selected.winner,
+    duplicateMembershipIds: selected.duplicates.map((item) => item.membershipId),
+  } satisfies WhopMatchedLinkedInSeatMembership;
+}
+
+export async function findActiveLinkedInSeatMembershipByEmail(email: string) {
+  return findActiveLinkedInSeatMembership({ emails: [email] });
 }
 
 async function getLinkedInSeatProductId() {
@@ -374,6 +403,7 @@ export async function createLinkedInSeatCheckout(input: {
   extraSeats: number;
   workspaceId: string;
   email?: string;
+  emails?: Array<string | null | undefined>;
   redirectUrl: string;
   metadata?: Record<string, string>;
 }) {
@@ -388,16 +418,18 @@ export async function createLinkedInSeatCheckout(input: {
     throw new Error("WHOP_COMPANY_ID is required to start extra LinkedIn seat checkout.");
   }
   const productId = await getLinkedInSeatProductId();
+  const buyerEmails = extraSeatBuyerEmails([input.email, ...(input.emails || [])]);
   const checkout = await getWhopClient().checkoutConfigurations.create({
     account_id: companyId,
     redirect_url: input.redirectUrl,
     metadata: {
       workspaceId: input.workspaceId,
       clerkUserId: input.workspaceId,
-      email: input.email,
+      email: buyerEmails[0] || input.email,
       kind: LINKEDIN_SEAT_CHECKOUT_KIND,
       extraSeats: String(extraSeats),
       ...input.metadata,
+      ...(buyerEmails.length ? { emails: buyerEmails.join(",") } : {}),
     },
     plan: {
       account_id: companyId,
