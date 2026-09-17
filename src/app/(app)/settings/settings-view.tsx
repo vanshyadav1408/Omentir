@@ -11,7 +11,7 @@ import { TextField } from "@/app/ui/text-field";
 import { useWorkspaceTimeZone } from "@/app/workspace-time-zone";
 import { formatZonedDate } from "@/lib/time-zone";
 import { billedLinkedInAccountLimit, formatPlanLimit } from "@/lib/plan-limits";
-import { extraLinkedInSeatMonthlyTotalUsd, extraLinkedInSeatsCount } from "@/lib/linkedin-seat-pricing";
+import { extraLinkedInSeatsCount, extraSeatMonthlyPriceLabel } from "@/lib/linkedin-seat-pricing";
 import { WHOP_MEMBERSHIPS_URL } from "@/lib/whop-billing-url";
 import LinkedInSeatsCard from "./linkedin-seats-card";
 import DeleteWorkspaceCard from "@/app/delete-workspace-card";
@@ -974,7 +974,10 @@ export default function SettingsView({
                   {extraLinkedInSeats > 0 ? (
                     <SubscriptionCard
                       name="Extra Seats"
-                      price={`$${extraLinkedInSeatMonthlyTotalUsd(extraLinkedInSeats)}/month`}
+                      price={extraSeatMonthlyPriceLabel(
+                        workspace.billing?.extraSeatMonthlyUsd,
+                        extraLinkedInSeats,
+                      )}
                       status={billing}
                       manageHref={WHOP_MEMBERSHIPS_URL}
                       manageHint="Cancel extra seats without cancelling Pro"

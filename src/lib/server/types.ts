@@ -25,6 +25,7 @@ export type WorkspaceBilling = {
   // as a separate Whop membership so cancelling seats never cancels Pro.
   extraLinkedInSeats?: number;
   seatMembershipId?: string;
+  extraSeatMonthlyUsd?: number;
   updatedAt: string;
 };
 

@@ -324,7 +324,7 @@ export default function AgentsView({
   if (!isInitialLoading && visibleAgents.length === 0) {
     return (
       <CompleteSetupPrompt
-        emoji="🤖"
+        icon="smart_toy"
         message="Finish the 4 steps on Overview, then start an AI agent."
       />
     );

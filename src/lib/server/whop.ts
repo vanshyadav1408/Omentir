@@ -7,6 +7,8 @@ import {
   extraLinkedInSeatPlanTitle,
   extraLinkedInSeatsFromWhopFields,
   extraSeatBuyerEmails,
+  extraSeatMonthlyUsdFromWhopMoney,
+  extraSeatMonthlyUsdFromWhopSources,
   extraSeatWhopMembershipMatchesBuyer,
   isAlreadyTerminatedWhopMembershipError,
   isLinkedInSeatCheckoutMetadata,
@@ -249,6 +251,7 @@ export type WhopActiveLinkedInSeatMembership = {
   extraSeats: number;
   membershipId: string;
   payerEmail: string;
+  monthlyUsd?: number;
 };
 
 function objectMetadata(
@@ -290,6 +293,67 @@ export type WhopMatchedLinkedInSeatMembership = WhopActiveLinkedInSeatMembership
   duplicateMembershipIds: string[];
 };
 
+export async function extraSeatMonthlyUsdForMembership(input: {
+  id: string;
+  planId?: string | null;
+  promo?: unknown;
+  payment?: unknown;
+}) {
+  const payment = input.payment ?? (await latestPaidPaymentForMembership(input.id));
+  let planId = input.planId?.trim() || "";
+  let promo = input.promo;
+  if (!planId) {
+    try {
+      const membership = await getWhopClient().memberships.retrieve(input.id);
+      planId = membership.plan?.id || "";
+      promo = promo ?? membership.promo_code;
+    } catch {
+      // Payment total still works when a promo is on the receipt.
+    }
+  }
+  let planRenewal = extraSeatMonthlyUsdFromWhopMoney(
+    payment && typeof payment === "object" && "plan" in payment
+      ? (payment as { plan?: { renewal_price?: unknown } }).plan?.renewal_price
+      : undefined,
+  );
+  if (planRenewal == null && planId) {
+    const plan = await getWhopClient().plans.retrieve(planId);
+    planRenewal = extraSeatMonthlyUsdFromWhopMoney(plan.renewal_price);
+  }
+  return extraSeatMonthlyUsdFromWhopSources({
+    payment,
+    planRenewalPrice: planRenewal,
+    membershipPromo: promo,
+  });
+}
+
+async function latestPaidPaymentForMembership(membershipId: string) {
+  const companyId = process.env.WHOP_COMPANY_ID?.trim();
+  if (!companyId) return null;
+  try {
+    const payments = await getWhopClient().payments.list({
+      company_id: companyId,
+      query: membershipId,
+      include_free: true,
+      first: 5,
+      order: "created_at",
+      direction: "desc",
+    });
+    return (
+      payments.data.find((payment) => payment.membership?.id === membershipId) ||
+      payments.data[0] ||
+      null
+    );
+  } catch (error) {
+    console.error(
+      "[whop] failed to load Extra Seats payment total",
+      membershipId,
+      error instanceof Error ? error.message : error,
+    );
+    return null;
+  }
+}
+
 export async function findActiveLinkedInSeatMembership(input: {
   emails?: Array<string | null | undefined>;
   workspaceId?: string | null;
@@ -302,6 +366,7 @@ export async function findActiveLinkedInSeatMembership(input: {
   if (!productId) return null;
 
   const matches: WhopActiveLinkedInSeatMembership[] = [];
+  const membershipBilling = new Map<string, { planId?: string; promo?: unknown }>();
   const memberships = await getWhopClient().memberships.list({
     company_id: companyId,
     product_ids: [productId],
@@ -325,6 +390,10 @@ export async function findActiveLinkedInSeatMembership(input: {
     }
     const extraSeats = await extraLinkedInSeatsFromWhopSource(membership);
     if (!extraSeats) continue;
+    membershipBilling.set(membership.id, {
+      planId: membership.plan?.id,
+      promo: membership.promo_code,
+    });
     matches.push({
       extraSeats,
       membershipId: membership.id,
@@ -337,8 +406,15 @@ export async function findActiveLinkedInSeatMembership(input: {
 
   const selected = selectExtraSeatMembership(matches);
   if (!selected) return null;
+  const billing = membershipBilling.get(selected.winner.membershipId);
+  const monthlyUsd = await extraSeatMonthlyUsdForMembership({
+    id: selected.winner.membershipId,
+    planId: billing?.planId,
+    promo: billing?.promo,
+  }).catch(() => null);
   return {
     ...selected.winner,
+    monthlyUsd: monthlyUsd ?? undefined,
     duplicateMembershipIds: selected.duplicates.map((item) => item.membershipId),
   } satisfies WhopMatchedLinkedInSeatMembership;
 }

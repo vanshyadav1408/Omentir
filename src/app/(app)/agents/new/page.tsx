@@ -104,7 +104,7 @@ export default async function NewAgentPage({
   if (!hasActiveSubscription(workspace) || !linkedInAccounts.length) {
     return (
       <CompleteSetupPrompt
-        emoji="🤖"
+        icon="smart_toy"
         message="Finish the 4 steps on Overview, then start an AI agent."
       />
     );

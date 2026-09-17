@@ -399,6 +399,7 @@ export async function createOwnedWorkspace(
             ...primary.billing,
             extraLinkedInSeats: undefined,
             seatMembershipId: undefined,
+            extraSeatMonthlyUsd: undefined,
           }) as WorkspaceBilling,
         }
       : {}),
@@ -800,6 +801,7 @@ export async function updateWorkspaceBilling(
               ...next,
               extraLinkedInSeats: undefined,
               seatMembershipId: undefined,
+              extraSeatMonthlyUsd: undefined,
             }) as WorkspaceBilling);
       return collection<Workspace>("workspaces").doc(id).set(
         {
@@ -816,7 +818,11 @@ export async function updateWorkspaceBilling(
 
 export async function updateWorkspaceLinkedInSeats(
   workspaceId: string,
-  input: { extraLinkedInSeats: number; seatMembershipId?: string | null },
+  input: {
+    extraLinkedInSeats: number;
+    seatMembershipId?: string | null;
+    extraSeatMonthlyUsd?: number;
+  },
   options?: { ownerId?: string },
 ) {
   const workspace = await findWorkspace(workspaceId);
@@ -838,6 +844,7 @@ export async function updateWorkspaceLinkedInSeats(
       currentPeriodEnd: source.currentPeriodEnd,
       extraLinkedInSeats: input.extraLinkedInSeats,
       seatMembershipId: input.seatMembershipId || undefined,
+      extraSeatMonthlyUsd: input.extraSeatMonthlyUsd,
     },
     { ownerId },
   );

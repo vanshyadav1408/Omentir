@@ -8,6 +8,7 @@ import { readTextBody, RequestBodyTooLargeError } from "@/lib/server/request-bod
 import {
   cancelWhopSeatMembership,
   extraLinkedInSeatsFromWhopSource,
+  extraSeatMonthlyUsdForMembership,
   getConfiguredWhopPlanIds,
   getWhopClient,
   isLifetimePlan,
@@ -16,6 +17,7 @@ import {
 } from "@/lib/server/whop";
 import {
   extraLinkedInSeatMonthlyTotalUsd,
+  extraSeatMonthlyUsdFromWhopSources,
   isLinkedInSeatCheckoutMetadata,
   isLinkedInSeatWhopObject,
 } from "@/lib/linkedin-seat-pricing";
@@ -174,6 +176,7 @@ async function applyLinkedInSeatPurchase(
   extraSeats: number,
   membershipId: string | undefined,
   sourceId: string,
+  extraSeatMonthlyUsd?: number | null,
 ) {
   const workspace = await getWorkspace(workspaceId);
   if (!hasActiveSubscription(workspace)) {
@@ -188,11 +191,16 @@ async function applyLinkedInSeatPurchase(
   const owner = await ownerWorkspaceForBilling(workspace);
   const ownerId = owner.id;
   const previousSeatMembershipId = owner.billing?.seatMembershipId;
+  let monthlyUsd = extraSeatMonthlyUsd;
+  if (monthlyUsd == null && membershipId) {
+    monthlyUsd = await extraSeatMonthlyUsdForMembership({ id: membershipId }).catch(() => null);
+  }
   await updateWorkspaceLinkedInSeats(
     workspace.id,
     {
       extraLinkedInSeats: extraSeats,
       seatMembershipId: membershipId || previousSeatMembershipId,
+      extraSeatMonthlyUsd: monthlyUsd ?? undefined,
     },
     { ownerId },
   );
@@ -439,6 +447,11 @@ export async function POST(request: NextRequest) {
         extraSeats,
         membership.id,
         `membership ${membership.id}`,
+        await extraSeatMonthlyUsdForMembership({
+          id: membership.id,
+          planId: membership.plan?.id,
+          promo: membership.promo_code,
+        }).catch(() => null),
       );
       return NextResponse.json(result);
     }
@@ -537,6 +550,7 @@ export async function POST(request: NextRequest) {
       extraSeats,
       membershipId,
       `payment ${payment.id}`,
+      extraSeatMonthlyUsdFromWhopSources({ payment }),
     );
     await capturePostHogEvent({
       event: "payment_succeeded",

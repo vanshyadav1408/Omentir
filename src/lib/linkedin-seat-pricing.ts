@@ -21,6 +21,84 @@ export function extraLinkedInSeatMonthlyTotalUsd(extraSeats: number) {
   return count * extraLinkedInSeatUnitPriceUsd(count);
 }
 
+function roundUsd(value: number) {
+  return Math.round(value * 100) / 100;
+}
+
+function asMoneyRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+}
+
+// Whop money is a number, a "0.00" string, or `{ amount: "0.00" }`. Keep 0 so
+// a 100% promo is not treated as a missing price.
+export function extraSeatMonthlyUsdFromWhopMoney(value: unknown): number | null {
+  if (value == null || value === "") return null;
+  if (typeof value === "number") {
+    if (!Number.isFinite(value) || value < 0) return null;
+    return roundUsd(value);
+  }
+  if (typeof value === "string") {
+    const parsed = Number(value.replace(/[$,]/g, "").trim());
+    if (!Number.isFinite(parsed) || parsed < 0) return null;
+    return roundUsd(parsed);
+  }
+  const record = asMoneyRecord(value);
+  if (!record) return null;
+  if ("amount" in record) return extraSeatMonthlyUsdFromWhopMoney(record.amount);
+  if ("usd_total" in record) return extraSeatMonthlyUsdFromWhopMoney(record.usd_total);
+  if ("total" in record) return extraSeatMonthlyUsdFromWhopMoney(record.total);
+  if ("renewal_price" in record) return extraSeatMonthlyUsdFromWhopMoney(record.renewal_price);
+  return null;
+}
+
+function extraSeatHasPromo(value: unknown) {
+  const record = asMoneyRecord(value);
+  if (!record) return false;
+  if (typeof record.promo_code_id === "string" && record.promo_code_id.trim()) return true;
+  if (typeof record.promo_code === "string" && record.promo_code.trim()) return true;
+  const promo = asMoneyRecord(record.promo_code);
+  return Boolean(typeof promo?.id === "string" && promo.id.trim());
+}
+
+// Promo-discounted receipts store the list price on subtotal and the amount
+// charged on total. A first invoice can also be $0 from initial_price, so only
+// use that total when a promo is on the payment or membership.
+export function extraSeatMonthlyUsdFromWhopSources(input: {
+  payment?: unknown;
+  planRenewalPrice?: unknown;
+  membershipPromo?: unknown;
+}): number | null {
+  const payment = asMoneyRecord(input.payment);
+  const charged = extraSeatMonthlyUsdFromWhopMoney(
+    payment?.usd_total ?? payment?.total ?? payment?.presentment_total,
+  );
+  if (
+    (extraSeatHasPromo(input.payment) || extraSeatHasPromo({ promo_code: input.membershipPromo })) &&
+    charged != null
+  ) {
+    return charged;
+  }
+  const renewal = extraSeatMonthlyUsdFromWhopMoney(input.planRenewalPrice);
+  if (renewal != null) return renewal;
+  return charged;
+}
+
+export function formatExtraSeatMonthlyPriceUsd(monthlyUsd: number) {
+  const amount = Number.isInteger(monthlyUsd) ? String(monthlyUsd) : monthlyUsd.toFixed(2);
+  return `$${amount}/month`;
+}
+
+export function extraSeatMonthlyPriceLabel(
+  billedUsd: number | undefined,
+  extraSeats: number,
+) {
+  if (typeof billedUsd === "number" && Number.isFinite(billedUsd) && billedUsd >= 0) {
+    return formatExtraSeatMonthlyPriceUsd(billedUsd);
+  }
+  return formatExtraSeatMonthlyPriceUsd(extraLinkedInSeatMonthlyTotalUsd(extraSeats));
+}
+
 export function extraLinkedInSeatsCount(value: unknown) {
   const count = typeof value === "number" ? value : Number(value);
   if (!Number.isFinite(count) || count <= 0) return 0;
@@ -44,6 +122,7 @@ export function extraSeatBuyerEmails(emails: Array<string | null | undefined> = 
 type ExtraSeatBillingFields = {
   extraLinkedInSeats?: number;
   seatMembershipId?: string;
+  extraSeatMonthlyUsd?: number;
 };
 
 // Extra LinkedIn seats live on the original owner account. Other workspaces
@@ -59,9 +138,11 @@ export function overlayOwnerExtraLinkedInSeats<
   if (ownerSeats < localSeats) return workspace;
   const extraLinkedInSeats = ownerSeats;
   const seatMembershipId = owner.billing?.seatMembershipId;
+  const extraSeatMonthlyUsd = owner.billing?.extraSeatMonthlyUsd;
   if (
     extraLinkedInSeatsCount(workspace.billing.extraLinkedInSeats) === extraLinkedInSeats &&
-    workspace.billing.seatMembershipId === seatMembershipId
+    workspace.billing.seatMembershipId === seatMembershipId &&
+    workspace.billing.extraSeatMonthlyUsd === extraSeatMonthlyUsd
   ) {
     return workspace;
   }
@@ -71,6 +152,7 @@ export function overlayOwnerExtraLinkedInSeats<
       ...workspace.billing,
       extraLinkedInSeats: extraLinkedInSeats || undefined,
       seatMembershipId,
+      ...(typeof extraSeatMonthlyUsd === "number" ? { extraSeatMonthlyUsd } : {}),
     },
   };
 }
@@ -206,13 +288,21 @@ export function isAlreadyTerminatedWhopMembershipError(error: unknown) {
 // Firestore `set({ billing }, { merge: true })` replaces the whole billing map.
 // Pro renewals omit these fields, so copy them forward unless the caller sets them.
 export function mergeLinkedInSeatFields(
-  existing: { extraLinkedInSeats?: number; seatMembershipId?: string } | undefined,
-  patch: { extraLinkedInSeats?: number; seatMembershipId?: string },
+  existing:
+    | { extraLinkedInSeats?: number; seatMembershipId?: string; extraSeatMonthlyUsd?: number }
+    | undefined,
+  patch: { extraLinkedInSeats?: number; seatMembershipId?: string; extraSeatMonthlyUsd?: number },
 ) {
+  const extraLinkedInSeats = patch.extraLinkedInSeats ?? existing?.extraLinkedInSeats;
+  const extraSeatMonthlyUsd =
+    extraLinkedInSeatsCount(extraLinkedInSeats) === 0
+      ? undefined
+      : patch.extraSeatMonthlyUsd ?? existing?.extraSeatMonthlyUsd;
   return {
-    extraLinkedInSeats: patch.extraLinkedInSeats ?? existing?.extraLinkedInSeats,
+    extraLinkedInSeats,
     seatMembershipId:
       patch.seatMembershipId !== undefined ? patch.seatMembershipId : existing?.seatMembershipId,
+    ...(typeof extraSeatMonthlyUsd === "number" ? { extraSeatMonthlyUsd } : {}),
   };
 }
 

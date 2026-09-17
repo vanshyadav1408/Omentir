@@ -26,7 +26,7 @@ export default async function LeadsPage() {
   const setup = await getWorkspaceSetup(workspace.id);
   if (!setup.hasAgent) {
     return (
-      <CompleteSetupPrompt emoji="👤" message="Start an AI agent on Overview first." />
+      <CompleteSetupPrompt icon="identity_platform" message="Start an AI agent on Overview first." />
     );
   }
 

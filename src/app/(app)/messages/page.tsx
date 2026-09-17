@@ -33,7 +33,7 @@ export default async function MessagesPage() {
   const setup = await getWorkspaceSetup(workspace.id);
   if (!setup.linkedInConnected) {
     return (
-      <CompleteSetupPrompt emoji="💬" message="Connect LinkedIn on Overview to see messages." />
+      <CompleteSetupPrompt icon="inbox" message="Connect LinkedIn on Overview to see messages." />
     );
   }
 

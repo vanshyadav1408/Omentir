@@ -98,11 +98,15 @@ export async function syncWorkspaceLinkedInSeatsFromWhop(workspace: Workspace): 
       seats?.membershipId || owner.billing?.seatMembershipId || workspace.billing?.seatMembershipId;
     if (!extraSeats && !seats) return overlayOwnerExtraLinkedInSeats(workspace, owner);
 
+    const monthlyUsd = seats?.monthlyUsd;
     const current = extraLinkedInSeatsCount(owner.billing?.extraLinkedInSeats);
     const sameMembership = owner.billing?.seatMembershipId === membershipId;
+    const samePrice = owner.billing?.extraSeatMonthlyUsd === monthlyUsd;
     if (
       current === extraSeats &&
       sameMembership &&
+      samePrice &&
+      typeof monthlyUsd === "number" &&
       !(seats?.duplicateMembershipIds.length)
     ) {
       return overlayOwnerExtraLinkedInSeats(workspace, owner);
@@ -112,6 +116,7 @@ export async function syncWorkspaceLinkedInSeatsFromWhop(workspace: Workspace): 
       {
         extraLinkedInSeats: extraSeats,
         seatMembershipId: membershipId,
+        extraSeatMonthlyUsd: monthlyUsd,
       },
       { ownerId },
     );

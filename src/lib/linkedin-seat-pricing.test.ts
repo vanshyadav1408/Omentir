@@ -7,6 +7,9 @@ import {
   extraLinkedInSeatsFromPlanTitle,
   extraLinkedInSeatsFromWhopFields,
   extraSeatBuyerEmails,
+  extraSeatMonthlyPriceLabel,
+  extraSeatMonthlyUsdFromWhopMoney,
+  extraSeatMonthlyUsdFromWhopSources,
   extraSeatWhopMembershipMatchesBuyer,
   isAlreadyTerminatedWhopMembershipError,
   overlayOwnerExtraLinkedInSeats,
@@ -107,6 +110,15 @@ describe("Whop extra-seat metadata", () => {
     ).toEqual({ extraLinkedInSeats: 0, seatMembershipId: "mem_seats" });
   });
 
+  test("keeps a $0 Extra Seats price from Whop so a discounted add-on does not jump back to list price", () => {
+    expect(
+      mergeLinkedInSeatFields(
+        { extraLinkedInSeats: 15, extraSeatMonthlyUsd: 0 },
+        { extraLinkedInSeats: 15 },
+      ),
+    ).toEqual({ extraLinkedInSeats: 15, extraSeatMonthlyUsd: 0 });
+  });
+
   test("matches Extra Seats bought while logged into Whop as the company admin so production can copy the add-on", () => {
     const membership = {
       metadata: {
@@ -156,10 +168,14 @@ describe("Whop extra-seat metadata", () => {
       },
       {
         id: "user_1",
-        billing: { extraLinkedInSeats: 15, seatMembershipId: "mem_fifteen" },
+        billing: { extraLinkedInSeats: 15, seatMembershipId: "mem_fifteen", extraSeatMonthlyUsd: 0 },
       },
     );
-    expect(extra.billing).toEqual({ extraLinkedInSeats: 15, seatMembershipId: "mem_fifteen" });
+    expect(extra.billing).toEqual({
+      extraLinkedInSeats: 15,
+      seatMembershipId: "mem_fifteen",
+      extraSeatMonthlyUsd: 0,
+    });
   });
 
   test("keeps leftover Extra Seats on an extra workspace until they are stored on the original account", () => {
@@ -203,5 +219,29 @@ describe("Whop extra-seat metadata", () => {
       ),
     ).toBe(true);
     expect(isAlreadyTerminatedWhopMembershipError(new Error("Whop API 500"))).toBe(false);
+  });
+
+  test("reads a $0 Extra Seats receipt so Settings can show the discounted Whop price", () => {
+    expect(extraSeatMonthlyUsdFromWhopMoney("0.00")).toBe(0);
+    expect(extraSeatMonthlyUsdFromWhopMoney({ amount: "0.00" })).toBe(0);
+    expect(
+      extraSeatMonthlyUsdFromWhopSources({
+        payment: {
+          promo_code_id: "promo_demo100",
+          subtotal: { amount: "150.00" },
+          total: { amount: "0.00" },
+          usd_total: { amount: "0.00" },
+        },
+        planRenewalPrice: 150,
+      }),
+    ).toBe(0);
+    expect(
+      extraSeatMonthlyUsdFromWhopSources({
+        payment: { total: 0 },
+        planRenewalPrice: 150,
+      }),
+    ).toBe(150);
+    expect(extraSeatMonthlyPriceLabel(0, 15)).toBe("$0/month");
+    expect(extraSeatMonthlyPriceLabel(undefined, 15)).toBe("$150/month");
   });
 });

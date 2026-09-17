@@ -1,10 +1,10 @@
 import Link from "next/link";
 
 export default function CompleteSetupPrompt({
-  emoji,
+  icon,
   message,
 }: {
-  emoji: string;
+  icon: string;
   message: string;
 }) {
   return (
@@ -12,11 +12,10 @@ export default function CompleteSetupPrompt({
       <div className="max-w-md text-center">
         <p className="text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)]">
           <span
-            className="mr-1.5 inline-block text-[13px] grayscale"
-            aria-hidden
-            style={{ fontVariantEmoji: "text" }}
+            className="material-symbols-outlined ms-size-16 mr-1.5 align-middle"
+            aria-hidden="true"
           >
-            {emoji}
+            {icon}
           </span>
           {message}
         </p>
