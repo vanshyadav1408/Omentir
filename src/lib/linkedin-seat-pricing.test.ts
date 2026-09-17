@@ -116,7 +116,7 @@ describe("Whop extra-seat metadata", () => {
         { extraLinkedInSeats: 15, extraSeatMonthlyUsd: 0 },
         { extraLinkedInSeats: 15 },
       ),
-    ).toEqual({ extraLinkedInSeats: 15, extraSeatMonthlyUsd: 0 });
+    ).toEqual({ extraLinkedInSeats: 15, extraSeatMonthlyUsd: 0, seatMembershipId: undefined });
   });
 
   test("matches Extra Seats bought while logged into Whop as the company admin so production can copy the add-on", () => {
