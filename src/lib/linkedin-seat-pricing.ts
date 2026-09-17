@@ -29,7 +29,7 @@ export function extraLinkedInSeatsCount(value: unknown) {
 
 // Extra seats are extra LinkedIn accounts for the buyer. Checkout and Whop
 // payloads may send one address or a comma-separated list; keep every email.
-export function extraSeatBuyerEmails(emails: Array<string | null | undefined>) {
+export function extraSeatBuyerEmails(emails: Array<string | null | undefined> = []) {
   const unique = new Set<string>();
   for (const value of emails) {
     if (!value) continue;
