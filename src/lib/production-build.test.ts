@@ -58,4 +58,15 @@ describe("production VPS build", () => {
     expect(vpsBranch).toContain("Restarting the previous .next");
     expect(vpsBranch).toContain("restart_app || true");
   });
+
+  test("installs a CI-prebuilt .next on the VPS so the box never runs next build", () => {
+    // e297965 still SIGKILLed at "Generating static pages using 1 worker
+    // (0/52)". The 7GB GitHub runner already compiled successfully. The VPS
+    // must unpack that artifact instead of compiling again.
+    const vpsBranch = script.split("if [ -f .env.production ]")[1] ?? "";
+    expect(script).toContain("install_ci_prebuilt_next");
+    expect(script).toContain("next-build");
+    expect(vpsBranch).toContain("GH_TOKEN");
+    expect(vpsBranch.split("GH_TOKEN")[1] ?? "").toContain("install_ci_prebuilt_next");
+  });
 });

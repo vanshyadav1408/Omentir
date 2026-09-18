@@ -15,6 +15,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: omentir-production
@@ -33,6 +34,14 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bunx tsc --noEmit --pretty false
       - run: bun run build
+      - name: Pack .next for the VPS
+        run: tar -C .next --exclude=cache -czf next-build.tgz .
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: next-build
+          path: next-build.tgz
+          if-no-files-found: error
+          retention-days: 1
 
   deploy:
     needs: verify
@@ -40,6 +49,7 @@ jobs:
     environment: production
     permissions:
       contents: read
+      actions: read
     steps:
       - name: Deploy to VPS
         env:
@@ -49,6 +59,8 @@ jobs:
           VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
           APP_COMMIT_SHA: ${{ github.sha }}
           APP_REPOSITORY: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          GH_RUN_ID: ${{ github.run_id }}
         run: |
           set -euo pipefail
           for required in VPS_HOST VPS_USER VPS_SSH_KEY; do
@@ -73,13 +85,15 @@ jobs:
           chmod 600 ~/.ssh/known_hosts
 
           # The VPS key wrapper only runs ~/scripts/deploy-omentir.sh. Extra
-          # SSH sessions are rewritten into another rebuild. production-build.sh
-          # compiles into a sidecar so the live process keeps serving until the
-          # new build is ready, then swaps and restarts.
+          # SSH sessions are rewritten into another rebuild. The VPS cannot
+          # next build (kernel SIGKILL), so production-build.sh downloads the
+          # .next artifact compiled in verify.
+          remote_cmd=$(printf 'APP_COMMIT_SHA=%q APP_REPOSITORY=%q GH_TOKEN=%q GH_RUN_ID=%q bash ~/scripts/deploy-omentir.sh' \
+            "$APP_COMMIT_SHA" "$APP_REPOSITORY" "$GH_TOKEN" "$GH_RUN_ID")
           ssh -i ~/.ssh/omentir_vps -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
             -o ServerAliveInterval=15 -o ServerAliveCountMax=40 \
             "$VPS_USER@$VPS_HOST" \
-            "APP_COMMIT_SHA=$APP_COMMIT_SHA APP_REPOSITORY=$APP_REPOSITORY bash ~/scripts/deploy-omentir.sh"
+            "$remote_cmd"
 
           # Cutover is a short pm2 reload after the sidecar compile. Give the
           # first check retries in case the new process is still booting.
