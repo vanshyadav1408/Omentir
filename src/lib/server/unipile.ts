@@ -146,6 +146,8 @@ export type UnipileProfile = {
   profile_picture_url?: string;
   profile_picture_url_large?: string;
   public_picture_url?: string;
+  public_picture_url_large?: string;
+  private_picture_download_url?: string;
   profile_image_url?: string;
   picture_url?: string;
   avatar_url?: string;
@@ -181,6 +183,7 @@ export type UnipileProfile = {
   linkedin?: unknown;
   linkedin_specific?: unknown;
   provider_data?: unknown;
+  specifics?: unknown;
 };
 
 export type UnipilePost = {
@@ -305,6 +308,9 @@ type UnipileChatAttendee = {
   profilePictureUrl?: string;
   profile_picture_url_large?: string;
   profilePictureUrlLarge?: string;
+  public_picture_url?: string;
+  public_picture_url_large?: string;
+  private_picture_download_url?: string;
   profile_image_url?: string;
   profileImageUrl?: string;
   picture_url?: string;
@@ -587,8 +593,12 @@ function recordAvatarUrl(record: RecordLike | null | undefined) {
   return firstAvatarUrl(
     record.profile_picture_url_large,
     record.profilePictureUrlLarge,
+    record.public_picture_url_large,
+    record.publicPictureUrlLarge,
     record.public_picture_url,
     record.publicPictureUrl,
+    record.private_picture_download_url,
+    record.privatePictureDownloadUrl,
     record.profile_picture_url,
     record.profilePictureUrl,
     record.profile_image_url,
@@ -619,6 +629,7 @@ function recordAvatarUrl(record: RecordLike | null | undefined) {
         "linkedin",
         "linkedin_specific",
         "provider_data",
+        "specifics",
         "urls",
       ],
       [
@@ -629,7 +640,9 @@ function recordAvatarUrl(record: RecordLike | null | undefined) {
         "small",
         "profile_picture_url_large",
         "profilePictureUrlLarge",
+        "public_picture_url_large",
         "public_picture_url",
+        "private_picture_download_url",
         "profile_picture_url",
         "profilePictureUrl",
         "profile_image_url",
@@ -648,12 +661,15 @@ function recordAvatarUrl(record: RecordLike | null | undefined) {
 function profileAvatarUrl(profile: UnipileProfile) {
   return firstAvatarUrl(
     profile.profile_picture_url_large,
+    profile.public_picture_url_large,
     profile.public_picture_url,
     profile.profile_picture_url,
     profile.profile_image_url,
     profile.picture_url,
     profile.avatar_url,
+    profile.private_picture_download_url,
     recordAvatarUrl(asRecord(profile)),
+    recordAvatarUrl(asRecord(profile.specifics)),
   );
 }
 

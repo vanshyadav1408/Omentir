@@ -1,7 +1,7 @@
 import "server-only";
 
 import { getDb, nowIso } from "./firebase";
-import { httpsAvatarUrl, isExpiredLinkedInMediaUrl } from "../lead-avatar";
+import { httpsAvatarUrl } from "../lead-avatar";
 import { fetchLeadAvatarBytes } from "./lead-avatar-fetch";
 
 const COLLECTION = "leadAvatars";
@@ -24,13 +24,25 @@ function asBuffer(value: unknown): Buffer | null {
   if (!value) return null;
   if (Buffer.isBuffer(value)) return value;
   if (value instanceof Uint8Array) return Buffer.from(value);
-  if (
-    typeof value === "object" &&
-    value &&
-    "toUint8Array" in value &&
-    typeof (value as { toUint8Array?: unknown }).toUint8Array === "function"
-  ) {
-    return Buffer.from((value as { toUint8Array: () => Uint8Array }).toUint8Array());
+  if (Array.isArray(value) && value.every((byte) => typeof byte === "number")) {
+    return Buffer.from(value);
+  }
+  if (typeof value !== "object") return null;
+
+  const blob = value as {
+    toUint8Array?: unknown;
+    toBuffer?: unknown;
+    data?: unknown;
+  };
+  if (typeof blob.toUint8Array === "function") {
+    return Buffer.from((blob.toUint8Array as () => Uint8Array)());
+  }
+  if (typeof blob.toBuffer === "function") {
+    const body = (blob.toBuffer as () => Buffer)();
+    return Buffer.isBuffer(body) ? body : Buffer.from(body);
+  }
+  if (Array.isArray(blob.data) && blob.data.every((byte) => typeof byte === "number")) {
+    return Buffer.from(blob.data);
   }
   return null;
 }
@@ -71,7 +83,7 @@ export async function persistLeadAvatarFromUrl(
   rawUrl: string | undefined,
 ) {
   const url = httpsAvatarUrl(rawUrl);
-  if (!url || isExpiredLinkedInMediaUrl(url)) return false;
+  if (!url) return false;
 
   const existing = persistInflight.get(leadId);
   if (existing) return existing;

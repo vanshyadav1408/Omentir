@@ -8,7 +8,7 @@ import {
   leadAvatarCacheBytes,
   persistLeadAvatarFromUrl,
 } from "@/lib/server/lead-avatar-cache";
-import { httpsAvatarUrl, isExpiredLinkedInMediaUrl, isLinkedInMediaUrl } from "@/lib/lead-avatar";
+import { httpsAvatarUrl, isLinkedInMediaUrl } from "@/lib/lead-avatar";
 import { rateLimitRequest } from "@/lib/request-rate-limit";
 
 export const dynamic = "force-dynamic";
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
     if (cached) return imageResponse(cached.body, cached.contentType);
 
     const liveUrl = httpsAvatarUrl(lead.avatarUrl);
-    if (liveUrl && !isExpiredLinkedInMediaUrl(liveUrl)) {
+    if (liveUrl) {
       await persistLeadAvatarFromUrl(lead.id, workspace.id, liveUrl);
       const next = leadAvatarCacheBytes(await getLeadAvatarCache(leadId));
       if (next) return imageResponse(next.body, next.contentType);
@@ -63,7 +63,6 @@ export async function GET(request: NextRequest) {
 
   const url = httpsAvatarUrl(request.nextUrl.searchParams.get("u"));
   if (!url || !isLinkedInMediaUrl(url)) return emptyImage(400);
-  if (isExpiredLinkedInMediaUrl(url)) return emptyImage(404);
 
   const avatar = await fetchLeadAvatarBytes(url);
   if (!avatar) return emptyImage(404);

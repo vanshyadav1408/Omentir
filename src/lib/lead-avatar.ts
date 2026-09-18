@@ -6,8 +6,12 @@
 const AVATAR_KEYS = [
   "profile_picture_url_large",
   "profilePictureUrlLarge",
+  "public_picture_url_large",
+  "publicPictureUrlLarge",
   "public_picture_url",
   "publicPictureUrl",
+  "private_picture_download_url",
+  "privatePictureDownloadUrl",
   "profile_picture_url",
   "profilePictureUrl",
   "profile_image_url",
@@ -35,12 +39,35 @@ function looksLikeHttpsUrl(value: string) {
   }
 }
 
+function looksLikeAvatarUrl(value: string) {
+  if (!looksLikeHttpsUrl(value)) return false;
+  try {
+    const host = new URL(value).hostname.toLowerCase().replace(/\.$/, "");
+    // Profile pages are https and used to be stored as avatarUrl, so every
+    // <img> 404ed. Headshots live on licdn (or another image host), not linkedin.com.
+    if (host === "linkedin.com" || host.endsWith(".linkedin.com")) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function cleanedAvatarString(value: string) {
+  let cleaned = value.replace(/&amp;/gi, "&").trim();
+  if (cleaned.startsWith("//") && !cleaned.startsWith("///")) {
+    cleaned = `https:${cleaned}`;
+  } else if (/^http:\/\/(?:[\w.-]+\.)?licdn\.com\b/i.test(cleaned)) {
+    cleaned = `https:${cleaned.slice("http:".length)}`;
+  }
+  return cleaned;
+}
+
 export function httpsAvatarUrl(value: unknown, depth = 0): string | undefined {
   if (value == null || depth > 3) return undefined;
 
   if (typeof value === "string") {
-    const cleaned = value.replace(/&amp;/gi, "&").trim();
-    return looksLikeHttpsUrl(cleaned) ? cleaned : undefined;
+    const cleaned = cleanedAvatarString(value);
+    return looksLikeAvatarUrl(cleaned) ? cleaned : undefined;
   }
 
   if (Array.isArray(value)) {
@@ -60,7 +87,14 @@ export function httpsAvatarUrl(value: unknown, depth = 0): string | undefined {
     if (found) return found;
   }
 
-  const nestedContainers = [record.urls, record.picture, record.avatar, record.image, record.profile_picture];
+  const nestedContainers = [
+    record.urls,
+    record.picture,
+    record.avatar,
+    record.image,
+    record.profile_picture,
+    record.specifics,
+  ];
   for (const nested of nestedContainers) {
     if (nested === value) continue;
     const found = httpsAvatarUrl(nested, depth + 1);
@@ -80,7 +114,8 @@ export function isLinkedInMediaUrl(url: string) {
 }
 
 // LinkedIn signs media URLs with `e=` (unix seconds, sometimes ms). After that
-// instant the CDN 404s, and hitting our proxy just repeats the miss.
+// instant the CDN often 404s. Still try the proxy: the parser false-positives,
+// and LinkedIn sometimes keeps serving the file past e=.
 export function linkedInMediaExpirySeconds(url: string) {
   try {
     const raw = new URL(url).searchParams.get("e");
@@ -98,8 +133,8 @@ export function isExpiredLinkedInMediaUrl(url: string, nowMs = Date.now()) {
   return expiry != null && expiry * 1000 <= nowMs;
 }
 
-export function proxiedAvatarUrl(url: string, nowMs = Date.now()) {
-  if (!isLinkedInMediaUrl(url) || isExpiredLinkedInMediaUrl(url, nowMs)) return undefined;
+export function proxiedAvatarUrl(url: string) {
+  if (!isLinkedInMediaUrl(url)) return undefined;
   return `/api/app/avatar?u=${encodeURIComponent(url)}`;
 }
 
@@ -109,6 +144,29 @@ export function durableLeadAvatarUrl(leadId?: string) {
   const id = leadId?.trim();
   if (!id) return undefined;
   return `/api/app/avatar?leadId=${encodeURIComponent(id)}`;
+}
+
+// Live CDN first when the token is still valid, then the same-origin proxy
+// (including URLs our e= parser already called expired; LinkedIn often still
+// serves them), then the lead-keyed cache. Durable-first 404s blanked every
+// row for six seconds and never tried the photo the browser could load.
+export function avatarImgCandidates(
+  input: { leadId?: string; avatarUrl?: string },
+  nowMs = Date.now(),
+) {
+  const raw = httpsAvatarUrl(input.avatarUrl);
+  const durable = durableLeadAvatarUrl(input.leadId);
+  const direct =
+    raw && (!isLinkedInMediaUrl(raw) || !isExpiredLinkedInMediaUrl(raw, nowMs)) ? raw : undefined;
+  const proxy = raw ? proxiedAvatarUrl(raw) : undefined;
+  const seen = new Set<string>();
+  const candidates: string[] = [];
+  for (const src of [direct, proxy, durable]) {
+    if (!src || seen.has(src)) continue;
+    seen.add(src);
+    candidates.push(src);
+  }
+  return candidates;
 }
 
 export function personInitials(name: string) {
