@@ -52,6 +52,13 @@ restore_previous() {
   fi
 }
 
+run_sidecar_next_build() {
+  RAYON_NUM_THREADS=1 \
+    TOKIO_WORKER_THREADS=1 \
+    NEXT_DIST_DIR="$INCOMING" \
+    bun --bun next build --webpack --experimental-build-mode "$1"
+}
+
 # The VPS SSH wrapper only runs ~/scripts/deploy-omentir.sh. Extra SSH sessions
 # are rewritten into another rebuild, so cutover has to happen here.
 # GitHub CI, Docker, and local builds have neither .env.production nor pm2.
@@ -65,20 +72,26 @@ if [ -f .env.production ] && command -v pm2 >/dev/null 2>&1; then
   # Turbopack plus the live process SIGKILLs this VPS (kernel OOM) during
   # "Creating an optimized production build". Webpack in-process with one
   # worker is the compile that still fits next to the running server.
-  if RAYON_NUM_THREADS=1 \
-    TOKIO_WORKER_THREADS=1 \
-    NEXT_DIST_DIR="$INCOMING" bun --bun next build --webpack; then
-    copy_standalone_assets "$INCOMING"
-    # Stop only for the swap. Leaving the old process up across the mv would
-    # serve new hashed chunks from HTML that still names the old ones.
+  if run_sidecar_next_build compile; then
+    # Static generation of ~900 SEO pages then SIGKILLs next to the live
+    # process. Compile already finished; stop only for generate + swap.
     pm2 stop omentir || true
-    swap_incoming_into_place
-    if restart_app && wait_for_app; then
-      rm -rf "$PREVIOUS"
-      exit 0
+    if run_sidecar_next_build generate; then
+      copy_standalone_assets "$INCOMING"
+      # Leaving the old process up across the mv would serve new hashed
+      # chunks from HTML that still names the old ones.
+      swap_incoming_into_place
+      if restart_app && wait_for_app; then
+        rm -rf "$PREVIOUS"
+        exit 0
+      fi
+      echo "New build did not become healthy. Restoring the previous .next." >&2
+      restore_previous
+      restart_app || true
+      exit 1
     fi
-    echo "New build did not become healthy. Restoring the previous .next." >&2
-    restore_previous
+    echo "Static generation failed. Restarting the previous .next." >&2
+    rm -rf "$INCOMING"
     restart_app || true
     exit 1
   fi

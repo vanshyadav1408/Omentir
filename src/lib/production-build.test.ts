@@ -22,15 +22,15 @@ describe("production VPS build", () => {
     expect(tsconfig.exclude).toContain(".next/types/validator.ts");
   });
 
-  test("keeps the live process on the old .next until the new compile is finished", () => {
+  test("keeps the live process on the old .next until compile is finished", () => {
     // Visitors get 502 for the whole VPS compile when PM2 is stopped first.
     // The sidecar distDir is what lets next build wipe output without taking
-    // down the running server. The later pm2 stop is only the cutover swap.
+    // down the running server. Static generation still has to stop PM2; that
+    // is the phase that SIGKILLs next to the live process.
     const vpsBranch = script.split("if [ -f .env.production ]")[1] ?? "";
-    const beforeCompile = vpsBranch.split("bun --bun next build")[0] ?? "";
-    const afterCompile = vpsBranch.split("bun --bun next build")[1] ?? "";
-    expect(beforeCompile).not.toMatch(/\bpm2\s+stop\b/);
-    expect(afterCompile).toMatch(/\bpm2\s+stop\b/);
+    const [beforeCompile, afterCompile] = vpsBranch.split("run_sidecar_next_build compile");
+    expect(beforeCompile ?? "").not.toMatch(/\bpm2\s+stop\b/);
+    expect(afterCompile ?? "").toMatch(/\bpm2\s+stop\b/);
     expect(script).toContain('NEXT_DIST_DIR="$INCOMING"');
     expect(script).toContain('INCOMING=".next-incoming"');
     expect(nextConfig).toMatch(/distDir:\s*process\.env\.NEXT_DIST_DIR/);
@@ -41,11 +41,19 @@ describe("production VPS build", () => {
     // Turbopack "Creating an optimized production build" while PM2 still
     // served the previous .next. GitHub CI has enough RAM for Turbopack;
     // the VPS does not once the running server is counted.
-    const vpsBranch = script.split("if [ -f .env.production ]")[1] ?? "";
-    expect(vpsBranch).toContain("bun --bun next build --webpack");
-    expect(vpsBranch).toContain("RAYON_NUM_THREADS=1");
-    expect(nextConfig).toContain("process.env.NEXT_DIST_DIR");
+    expect(script).toContain("bun --bun next build --webpack --experimental-build-mode");
+    expect(script).toContain("RAYON_NUM_THREADS=1");
     expect(nextConfig).toContain("webpackBuildWorker: false");
     expect(nextConfig).toContain("cpus: 1");
+  });
+
+  test("stops PM2 before static generation so 900 SEO pages do not SIGKILL next to the live process", () => {
+    // 1825d72 compiled with webpack, then died at "Generating static pages
+    // using 1 worker (0/889)". Compile can share RAM with PM2; generate cannot.
+    const vpsBranch = script.split("if [ -f .env.production ]")[1] ?? "";
+    const afterStop = vpsBranch.split("pm2 stop omentir")[1] ?? "";
+    expect(vpsBranch).toContain("run_sidecar_next_build compile");
+    expect(afterStop).toContain("run_sidecar_next_build generate");
+    expect(afterStop).toContain("Restarting the previous .next");
   });
 });
