@@ -10,7 +10,7 @@ export async function GET() {
     schemaVersion: "1.0",
     name: "Omentir",
     description:
-      "Workspace-scoped AI sales outreach software for product setup, LinkedIn lead discovery, outreach planning, and replies in existing conversations.",
+      "Workspace-scoped AI sales outreach software for product setup, LinkedIn lead discovery, custom outreach sequences, live inbox replies, and send-queue control.",
     discovery: {
       machineGuide: `${siteUrl}/agents.md`,
       subscriptionPlaybook: `${siteUrl}/blogs/how-to-make-the-best-of-your-omentir-subscription.md`,
@@ -56,7 +56,7 @@ export async function GET() {
           { path: "/agents", use: "omentir_list_agents" },
           { path: "/agents/new", use: "omentir_create_agent" },
           { path: "/leads", use: "omentir_list_leads and omentir_get_lead" },
-          { path: "/messages", use: "omentir_list_conversations" },
+          { path: "/messages", use: "omentir_list_conversations, omentir_list_inbox, omentir_reply_to_chat" },
           { path: "/workspace", use: "omentir_get_product_profile" },
           { path: "/settings", use: "omentir_get_context" },
         ],
@@ -64,15 +64,19 @@ export async function GET() {
     },
     actions: {
       available: [
-        "read workspace context, Overview metrics, and connected LinkedIn accounts",
-        "read and update Workspace",
-        "create, update, pause, resume, and delete lead-finding agents",
+        "read workspace context, Overview metrics (including 7d/30d/3m/month), connected LinkedIn accounts, and owned workspaces",
+        "switch the same Bearer token to another workspace the owner already has",
+        "read and update Workspace, including website analysis",
+        "draft, create, update, pause, resume, and delete lead finders, Steal Customers, and outreach-only CSV agents",
+        "attach custom sequences, tone, and campaign goal; attach outreach to a leads-only finder when asked",
         "read lead groups, qualified leads, discovery activity, and scheduled outreach",
-        "read existing conversations and reply in existing conversations",
+        "export or delete a lead group, import a LinkedIn CSV, send a queued action now, or stop one lead",
+        "read captured conversations and the live LinkedIn inbox, reply with text or attachments, mark follow-up done",
         "update workspace outreach limits, delays, follow-up settings, and time zone",
       ],
       requiresExplicitUserApproval: [
         "create, update, pause, resume, or delete an agent",
+        "switch the token to another workspace",
         "raise outreach limits or widen a send window",
         "send a reply",
       ],
@@ -84,6 +88,14 @@ export async function GET() {
         {
           action: "buy or change a subscription",
           routes: ["/pricing", "/checkout", "/upgrade", "/billing/manage"],
+        },
+        {
+          action: "create or delete a workspace",
+          routes: ["/overview"],
+        },
+        {
+          action: "connect LinkedIn or mint an API key",
+          routes: ["/connect", "/api-keys"],
         },
       ],
     },

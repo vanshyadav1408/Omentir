@@ -1,7 +1,7 @@
 import "server-only";
 
 import { NextResponse, type NextRequest } from "next/server";
-import { authenticateAgentApiToken } from "./data";
+import { authenticateAgentApiToken, ownerWorkspaceForBilling } from "./data";
 import { hasActiveSubscription } from "./subscription";
 import type { Workspace } from "./types";
 import { isLocalMode } from "@/lib/runtime-mode";
@@ -20,7 +20,9 @@ export type AgentApiContext = {
   tokenId: string;
 };
 
-const AGENT_API_JSON_MAX_BYTES = 256 * 1024;
+// Large enough for a 1 MB outreach CSV or one 15 MB chat attachment (base64)
+// plus JSON. The per-token rate limit still caps how often this can land.
+const AGENT_API_JSON_MAX_BYTES = 16 * 1024 * 1024;
 
 export function agentApiError(message: string, status: number) {
   // A bare 401 tells an AI app nothing about how to authenticate, so hosted
@@ -65,11 +67,12 @@ export async function requireAgentApiContext(request: NextRequest): Promise<
     return { ok: false, response: agentApiError("Too many agent API requests.", 429) };
   }
 
-  if (!hasActiveSubscription(authenticated.workspace)) {
+  const billed = await ownerWorkspaceForBilling(authenticated.workspace);
+  if (!hasActiveSubscription(billed)) {
     return { ok: false, response: agentApiError("Active subscription required.", 402) };
   }
 
-  if (!planHasApiAccess(authenticated.workspace.billing?.plan)) {
+  if (!planHasApiAccess(billed.billing?.plan)) {
     return {
       ok: false,
       response: agentApiError("API access is available on every paid Omentir plan.", 403),

@@ -4,9 +4,35 @@ export const agentToolInputSchemas = {
     properties: {},
     additionalProperties: false,
   },
-  omentir_get_stats: {
+  omentir_list_workspaces: {
     type: "object",
     properties: {},
+    additionalProperties: false,
+    description:
+      "List workspaces the token owner already has. The same Bearer token can be rebound with omentir_switch_workspace.",
+  },
+  omentir_switch_workspace: {
+    type: "object",
+    required: ["workspaceId"],
+    properties: {
+      workspaceId: {
+        type: "string",
+        description:
+          "Id from omentir_list_workspaces. Rebinds this token. Later calls use the new workspace. Does not mint a new key or create a workspace.",
+      },
+    },
+    additionalProperties: false,
+  },
+  omentir_get_stats: {
+    type: "object",
+    properties: {
+      range: {
+        type: "string",
+        enum: ["all", "7d", "30d", "3m", "month"],
+        description:
+          "Overview window. all (default) is lifetime. 7d/30d/3m/month match the dashboard picker. Invites and messages are windowed; accepted connections and pipeline stay lifetime.",
+      },
+    },
     additionalProperties: false,
   },
   omentir_list_agents: {
@@ -63,10 +89,41 @@ export const agentToolInputSchemas = {
         description: "Optional connected LinkedIn account id; defaults to the workspace's first account.",
       },
       mode: {
-        enum: ["signals", "filters", "prompt", "steal_customers"],
+        enum: ["signals", "filters", "prompt", "steal_customers", "outreach"],
         default: "signals",
         description:
-          "signals/filters/prompt: classic ICP lead discovery (needs prompt+filters). steal_customers (Steal Customers): no ICP; Workspace defines buyers; requires competitorUrls and/or founderUrls; finds employees at competitor companies, scans company+employee posts, promotes commenters as leads; AI outreach attached automatically.",
+          "signals/filters/prompt: classic ICP lead discovery (needs prompt+filters). steal_customers: no ICP; Workspace defines buyers; requires competitorUrls and/or founderUrls; AI outreach attached automatically. outreach: CSV import only, no discovery.",
+      },
+      csvContents: {
+        type: "string",
+        description:
+          "Raw CSV text of LinkedIn profile URLs. Only valid with mode=outreach. Same 1 MB / 500-lead limits as the app importer.",
+      },
+      steps: {
+        type: "array",
+        description:
+          "Custom outreach sequence (same actions as the agent wizard). When omitted and outreach is requested, the default AI sequence is attached. Steal Customers rejects manual copy.",
+        items: {
+          type: "object",
+          properties: {
+            id: { type: "string" },
+            kind: { enum: ["connect", "message", "follow"] },
+            enabled: { type: "boolean" },
+            mode: { enum: ["ai", "manual"] },
+            manualMessage: { type: "string" },
+            waitValue: { type: "number" },
+            waitUnit: { enum: ["minutes", "hours", "days"] },
+            includeNote: { type: "boolean" },
+          },
+        },
+      },
+      messageTone: {
+        enum: ["professional", "conversational", "direct"],
+        description: "Voice for AI-written messages. Default conversational for new sequences.",
+      },
+      campaignGoal: {
+        enum: ["warm", "demo"],
+        description: "warm = conversations; demo = book meetings. Fed into AI message prompts.",
       },
       prompt: {
         type: "string",
@@ -151,10 +208,30 @@ export const agentToolInputSchemas = {
         description: "Switch the connected LinkedIn account the agent discovers from.",
       },
       mode: {
-        enum: ["signals", "filters", "prompt", "steal_customers"],
+        enum: ["signals", "filters", "prompt", "steal_customers", "outreach"],
         description:
-          "signals/filters/prompt: classic ICP lead finder. steal_customers (Steal Customers): competitor post commenters only; no ICP; Workspace defines buyer fit; AI outreach required.",
+          "signals/filters/prompt: classic ICP lead finder. steal_customers: competitor post commenters only. outreach: CSV import, no discovery.",
       },
+      steps: {
+        type: "array",
+        description:
+          "Replace the outreach sequence. Steal Customers rejects manual templates.",
+        items: {
+          type: "object",
+          properties: {
+            id: { type: "string" },
+            kind: { enum: ["connect", "message", "follow"] },
+            enabled: { type: "boolean" },
+            mode: { enum: ["ai", "manual"] },
+            manualMessage: { type: "string" },
+            waitValue: { type: "number" },
+            waitUnit: { enum: ["minutes", "hours", "days"] },
+            includeNote: { type: "boolean" },
+          },
+        },
+      },
+      messageTone: { enum: ["professional", "conversational", "direct"] },
+      campaignGoal: { enum: ["warm", "demo"] },
       prompt: {
         type: "string",
         description:
@@ -273,6 +350,11 @@ export const agentToolInputSchemas = {
         enum: ["fit_score_desc", "fit_score_asc", "newest", "oldest"],
       },
       limit: { type: "integer", minimum: 1, maximum: 200 },
+      offset: {
+        type: "integer",
+        minimum: 0,
+        description: "Skip this many matched leads. Use with totalMatched to page past the first 200.",
+      },
     },
     additionalProperties: false,
   },
@@ -286,6 +368,12 @@ export const agentToolInputSchemas = {
     type: "object",
     properties: {
       limit: { type: "integer", minimum: 1, maximum: 100 },
+      filter: {
+        type: "string",
+        enum: ["all", "successful", "booked", "interested", "follow", "denied"],
+        description: "Same tabs as Messages.",
+      },
+      query: { type: "string", description: "Match sender name or message body." },
     },
     additionalProperties: false,
   },
@@ -344,18 +432,134 @@ export const agentToolInputSchemas = {
     },
     additionalProperties: false,
   },
+  omentir_draft_agent_setup: {
+    type: "object",
+    properties: {},
+    additionalProperties: false,
+  },
+  omentir_analyze_website: {
+    type: "object",
+    required: ["websiteUrl"],
+    properties: {
+      websiteUrl: { type: "string" },
+    },
+    additionalProperties: false,
+  },
+  omentir_import_csv_leads: {
+    type: "object",
+    required: ["agentId", "csvContents"],
+    properties: {
+      agentId: { type: "string" },
+      csvContents: { type: "string" },
+    },
+    additionalProperties: false,
+  },
+  omentir_export_leads: {
+    type: "object",
+    required: ["groupId"],
+    properties: { groupId: { type: "string" } },
+    additionalProperties: false,
+  },
+  omentir_delete_group: {
+    type: "object",
+    required: ["groupId"],
+    properties: { groupId: { type: "string" } },
+    additionalProperties: false,
+  },
+  omentir_run_scheduled_action_now: {
+    type: "object",
+    required: ["enrollmentId"],
+    properties: {
+      enrollmentId: {
+        type: "string",
+        description: "Scheduled action id from omentir_list_scheduled_actions.",
+      },
+    },
+    additionalProperties: false,
+  },
+  omentir_stop_lead_outreach: {
+    type: "object",
+    required: ["leadId"],
+    properties: { leadId: { type: "string" } },
+    additionalProperties: false,
+  },
+  omentir_list_inbox: {
+    type: "object",
+    properties: {
+      accountId: { type: "string", description: "Unipile account id. Defaults to every connected seat." },
+      query: { type: "string" },
+      limit: { type: "integer", minimum: 1, maximum: 50 },
+    },
+    additionalProperties: false,
+  },
+  omentir_get_chat_messages: {
+    type: "object",
+    required: ["chatId"],
+    properties: {
+      chatId: { type: "string" },
+      accountId: { type: "string" },
+      cursor: { type: "string" },
+      limit: { type: "integer", minimum: 1, maximum: 50 },
+    },
+    additionalProperties: false,
+  },
+  omentir_reply_to_chat: {
+    type: "object",
+    required: ["chatId"],
+    properties: {
+      chatId: { type: "string" },
+      accountId: { type: "string" },
+      message: { type: "string" },
+      leadId: {
+        type: "string",
+        description: "Optional Omentir lead id so the reply is also stored on that thread.",
+      },
+      attachments: {
+        type: "array",
+        items: {
+          type: "object",
+          required: ["filename", "contentBase64"],
+          properties: {
+            filename: { type: "string" },
+            mimeType: { type: "string" },
+            contentBase64: { type: "string" },
+          },
+        },
+      },
+    },
+    additionalProperties: false,
+  },
+  omentir_complete_follow_up: {
+    type: "object",
+    required: ["leadId"],
+    properties: { leadId: { type: "string" } },
+    additionalProperties: false,
+  },
 } as const;
 
 const agentMcpToolDefinitions = [
   {
     name: "omentir_get_context",
     description:
-      "Read workspace readiness, product profile, setup status, counts, API resources, the workspace time zone, and how much of today's invite and message allowance is left.",
+      "Read workspace readiness, product profile, setup status, counts, owned workspaces, API resources, the workspace time zone, and how much of today's invite and message allowance is left.",
     inputSchema: agentToolInputSchemas.omentir_get_context,
   },
   {
+    name: "omentir_list_workspaces",
+    description:
+      "List workspaces the token owner already has, and mark which one this token is bound to.",
+    inputSchema: agentToolInputSchemas.omentir_list_workspaces,
+  },
+  {
+    name: "omentir_switch_workspace",
+    description:
+      "Rebind this Bearer token to another owned workspace. Later MCP and REST calls on the same token hit that workspace. Cannot create or delete a workspace.",
+    inputSchema: agentToolInputSchemas.omentir_switch_workspace,
+  },
+  {
     name: "omentir_get_stats",
-    description: "Read the Overview headline metrics: total leads, hot opportunities, accepted connections, invitations sent, messages sent, replies received, and pipeline generated.",
+    description:
+      "Read the Overview headline metrics. Optional range (all/7d/30d/3m/month) windows invites and messages the same way the dashboard picker does.",
     inputSchema: agentToolInputSchemas.omentir_get_stats,
   },
   {
@@ -378,13 +582,13 @@ const agentMcpToolDefinitions = [
   {
     name: "omentir_create_agent",
     description:
-      "Create an agent. Classic (signals/filters/prompt): prompt + titles/industries/locations/keywords; optional setupOutreach/replyHandling. Steal Customers (mode=steal_customers): groupName + signalSources.competitorUrls and/or founderUrls only (no ICP); Workspace required; finds competitor employees, scans company+employee posts, scores commenters as buyers, AI outreach automatic; optional replyHandling/bookingLink/sendWindow. Returns agent + leadGroup for omentir_list_leads. Full lifecycle: list/update/pause/resume/delete also work for steal_customers.",
+      "Create an agent. Classic: prompt + filters; optional setupOutreach, custom steps, tone, campaignGoal. Steal Customers: groupName + competitor/founder URLs; AI outreach automatic. Outreach-only: mode=outreach plus optional csvContents and steps. Returns agent + leadGroup.",
     inputSchema: agentToolInputSchemas.omentir_create_agent,
   },
   {
     name: "omentir_update_agent",
     description:
-      "Update any agent including Steal Customers (steal_customers): rename, mode, signalSources (competitor + founder/employee URLs), LinkedIn account, lead group, send window, replyHandling, bookingLink, notifyOnReply, setupOutreach, or status active/paused. For steal_customers, prompt/filters are refilled from Workspace on save; competitor/founder URLs remain required. Daily discovery time is fixed at creation. Only provided fields change.",
+      "Update any agent: targeting, outreach sequence (steps, tone, campaignGoal), reply policy, send window, or status. A leads-only agent can gain outreach when setupOutreach or steps is set. Steal Customers still rejects manual templates. Only provided fields change.",
     inputSchema: agentToolInputSchemas.omentir_update_agent,
   },
   {
@@ -407,7 +611,8 @@ const agentMcpToolDefinitions = [
   },
   {
     name: "omentir_list_conversations",
-    description: "List recent LinkedIn reply conversations captured by Omentir.",
+    description:
+      "List LinkedIn reply threads captured by Omentir. Filter with the same Messages tabs (all/successful/booked/interested/follow/denied) and optional text search.",
     inputSchema: agentToolInputSchemas.omentir_list_conversations,
   },
   {
@@ -454,10 +659,71 @@ const agentMcpToolDefinitions = [
     description: "Reply to a lead in an existing LinkedIn conversation. This cannot start a new conversation and counts against the daily message quota.",
     inputSchema: agentToolInputSchemas.omentir_reply_to_lead,
   },
+  {
+    name: "omentir_draft_agent_setup",
+    description:
+      "Fill-with-AI for a new agent: titles, industries, locations, keywords, prompt, and starter message templates from Workspace. Does not create the agent.",
+    inputSchema: agentToolInputSchemas.omentir_draft_agent_setup,
+  },
+  {
+    name: "omentir_analyze_website",
+    description:
+      "Fetch a website and write the Workspace product profile from it (same as AI Analyse on Workspace).",
+    inputSchema: agentToolInputSchemas.omentir_analyze_website,
+  },
+  {
+    name: "omentir_import_csv_leads",
+    description: "Import LinkedIn profile URLs from CSV into an outreach-only agent.",
+    inputSchema: agentToolInputSchemas.omentir_import_csv_leads,
+  },
+  {
+    name: "omentir_export_leads",
+    description: "Export one lead group as CSV (same columns as the Leads download).",
+    inputSchema: agentToolInputSchemas.omentir_export_leads,
+  },
+  {
+    name: "omentir_delete_group",
+    description:
+      "Delete a lead group that no agent or campaign still uses. Delete or reassign the agent first if this fails.",
+    inputSchema: agentToolInputSchemas.omentir_delete_group,
+  },
+  {
+    name: "omentir_run_scheduled_action_now",
+    description:
+      "Send the next queued outreach action for an enrollment immediately (Send now on Leads / Actions).",
+    inputSchema: agentToolInputSchemas.omentir_run_scheduled_action_now,
+  },
+  {
+    name: "omentir_stop_lead_outreach",
+    description: "Stop automated outreach for one lead. Already-sent invites and messages stay.",
+    inputSchema: agentToolInputSchemas.omentir_stop_lead_outreach,
+  },
+  {
+    name: "omentir_list_inbox",
+    description: "List live LinkedIn DM threads from connected seats (the Messages inbox, not only Omentir-captured replies).",
+    inputSchema: agentToolInputSchemas.omentir_list_inbox,
+  },
+  {
+    name: "omentir_get_chat_messages",
+    description: "Load older messages for one live LinkedIn chat. Pass the cursor from the previous page.",
+    inputSchema: agentToolInputSchemas.omentir_get_chat_messages,
+  },
+  {
+    name: "omentir_reply_to_chat",
+    description:
+      "Reply in a live LinkedIn chat, optionally with attachments (base64, 15MB each). Counts against the daily message quota and the 5-minute send slot.",
+    inputSchema: agentToolInputSchemas.omentir_reply_to_chat,
+  },
+  {
+    name: "omentir_complete_follow_up",
+    description: "Mark a manual follow-up done on a conversation (same as Messages).",
+    inputSchema: agentToolInputSchemas.omentir_complete_follow_up,
+  },
 ] as const;
 
 const readOnlyTools = new Set([
   "omentir_get_context",
+  "omentir_list_workspaces",
   "omentir_get_stats",
   "omentir_get_product_profile",
   "omentir_list_agents",
@@ -468,9 +734,13 @@ const readOnlyTools = new Set([
   "omentir_list_linkedin_accounts",
   "omentir_list_activity",
   "omentir_list_scheduled_actions",
+  "omentir_draft_agent_setup",
+  "omentir_export_leads",
+  "omentir_list_inbox",
+  "omentir_get_chat_messages",
 ]);
 
-const destructiveTools = new Set(["omentir_delete_agent"]);
+const destructiveTools = new Set(["omentir_delete_agent", "omentir_delete_group"]);
 
 export const agentMcpTools = agentMcpToolDefinitions.map((tool) => ({
   ...tool,
@@ -488,10 +758,21 @@ export const agentMcpTools = agentMcpToolDefinitions.map((tool) => ({
         "omentir_update_product_profile",
         "omentir_update_agent",
         "omentir_update_settings",
+        "omentir_switch_workspace",
         "omentir_pause_agent",
         "omentir_resume_agent",
         "omentir_delete_agent",
+        "omentir_delete_group",
+        "omentir_stop_lead_outreach",
+        "omentir_complete_follow_up",
+        "omentir_analyze_website",
       ].includes(tool.name),
-    openWorldHint: ["omentir_create_agent", "omentir_reply_to_lead"].includes(tool.name),
+    openWorldHint: [
+      "omentir_create_agent",
+      "omentir_reply_to_lead",
+      "omentir_reply_to_chat",
+      "omentir_run_scheduled_action_now",
+      "omentir_import_csv_leads",
+    ].includes(tool.name),
   },
 }));

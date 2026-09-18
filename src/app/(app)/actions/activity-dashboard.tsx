@@ -26,6 +26,7 @@ function Avatar({ lead, size = "md" }: { lead: Lead; size?: "sm" | "md" | "lg" }
     <LeadAvatar
       name={lead.name}
       avatarUrl={lead.avatarUrl}
+      leadId={lead.id}
       className={`${classes} bg-[#f8e8ef]`}
       initialsClassName={`${text} font-bold text-[#ba3871]`}
     />

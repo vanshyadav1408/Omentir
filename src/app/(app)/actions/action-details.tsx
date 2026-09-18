@@ -43,6 +43,7 @@ function Avatar({ lead, size = "md" }: { lead: Lead; size?: "sm" | "md" | "lg" }
     <LeadAvatar
       name={lead.name}
       avatarUrl={lead.avatarUrl}
+      leadId={lead.id}
       className={`${classes} bg-[#f8e8ef]`}
       initialsClassName={`${text} font-bold text-[#ba3871]`}
     />
@@ -71,18 +72,22 @@ function TimelineRow({ item, timeZone }: { item: ScheduledAction["timeline"][num
         ? { className: "bg-[#ba3871] text-white", icon: "event_upcoming" }
         : item.status === "waiting"
           ? { className: "bg-amber-100 text-amber-700", icon: "lock_clock" }
-          : { className: "border border-zinc-300 bg-white", icon: null };
+          : item.status === "cancelled"
+            ? { className: "bg-zinc-200 text-zinc-500", icon: "close" }
+            : { className: "border border-zinc-300 bg-white", icon: null };
   const stamp = item.at ? `${dateLabel(item.at, timeZone, true)} · ${timeLabel(item.at, timeZone)}` : "";
   const detail =
     item.status === "completed"
       ? stamp
         ? `Done · ${stamp}`
         : "Done"
-      : item.status === "scheduled"
-        ? stamp
-        : item.at
-          ? `Estimated ${stamp}`
-          : item.note || "";
+      : item.status === "cancelled"
+        ? item.note || "Stopped"
+        : item.status === "scheduled"
+          ? stamp
+          : item.at
+            ? `Estimated ${stamp}`
+            : item.note || "";
 
   return (
     <div className="relative flex w-full gap-3 py-2">
@@ -93,7 +98,7 @@ function TimelineRow({ item, timeZone }: { item: ScheduledAction["timeline"][num
       </span>
       <span className="min-w-0 flex-1">
         <span className="flex items-center gap-2">
-          <span className={`truncate text-xs font-semibold leading-4 ${item.status === "scheduled" ? "text-[#ba3871]" : item.status === "completed" ? "text-zinc-800" : "text-zinc-500"}`}>{item.title}</span>
+          <span className={`truncate text-xs font-semibold leading-4 ${item.status === "scheduled" ? "text-[#ba3871]" : item.status === "completed" ? "text-zinc-800" : item.status === "cancelled" ? "text-zinc-400 line-through" : "text-zinc-500"}`}>{item.title}</span>
           {item.status === "scheduled" ? (
             <span className="shrink-0 rounded-full bg-[#f8e8ef] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[#ba3871]">Next</span>
           ) : null}
@@ -261,14 +266,14 @@ export function ActionDetails({ action, siblings, onSelectSibling, timeZone, pen
             <div className={`flex items-start gap-3 ${showTimeline && !inline ? "mt-5" : showTimeline && inline ? "" : "mt-5"}`}>
               <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[#f8e8ef] text-[#ba3871]"><span className="material-symbols-outlined text-[18px]">{action.kind === "connection" ? "person_add" : "chat_bubble"}</span></span>
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-zinc-400">Next action</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-zinc-400">{action.isReply ? "Their reply" : "Next action"}</p>
                 <p className="mt-1 text-sm font-semibold text-zinc-950">{action.title}</p>
                 <p className="mt-1 text-xs text-zinc-500">{action.awaitingConnection ? "Waiting on the connection request" : `${dateLabel(action.at, timeZone, true)} · ${timeLabel(action.at, timeZone)}`}</p>
               </div>
             </div>
 
             <div className="m3-card m3-card-filled mt-4 p-4">
-              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-zinc-400">{action.kind === "connection" ? "Connection note" : "Message"}</p>
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-zinc-400">{action.kind === "connection" ? "Connection note" : action.isReply ? "Latest reply" : "Message"}</p>
               <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-zinc-700">{action.message}</p>
             </div>
 
@@ -293,7 +298,7 @@ export function ActionDetails({ action, siblings, onSelectSibling, timeZone, pen
                 <div className="mt-3 flex gap-2"><button type="button" onClick={onRun} disabled={pending} className="dark-keep-brand h-8 rounded-md bg-[#ba3871] px-3 text-xs font-semibold text-white disabled:opacity-60">{pending ? "Sending…" : "Yes, send now"}</button><button type="button" onClick={onCancel} disabled={pending} className="h-8 rounded-md border border-zinc-200 bg-white px-3 text-xs font-semibold text-zinc-700">Cancel</button></div>
               </div>
             ) : (
-              <button type="button" onClick={onConfirm} disabled={!action.canRunNow || pending} className={`dark-keep-brand mt-4 flex h-10 items-center justify-center gap-2 rounded-lg bg-[#ba3871] text-sm font-semibold text-white transition hover:bg-[#a92f65] disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-500 ${inline ? "min-w-[10rem] px-3" : "w-full"}`}><span className="material-symbols-outlined text-[17px]">send</span>{action.kind === "connection" ? "Send connection now" : "Send message now"}</button>
+              <button type="button" onClick={onConfirm} disabled={!action.canRunNow || pending} className={`dark-keep-brand mt-4 flex h-10 items-center justify-center gap-2 rounded-lg bg-[#ba3871] text-sm font-semibold text-white transition hover:bg-[#a92f65] disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-500 ${inline ? "min-w-[10rem] px-3" : "w-full"}`}><span className="material-symbols-outlined text-[17px]">send</span>{action.kind === "connection" ? "Send connection now" : action.isReply ? "Send reply now" : "Send message now"}</button>
             )}
           </div>
         </div>

@@ -13,7 +13,7 @@ import {
   listCampaignEnrollments,
   listCampaigns,
   getLeadsByIds,
-  getOutboundMessageTimesByLeadIds,
+  getOutreachConversationFactsByLeadIds,
   listGroups,
 } from "./data";
 import { enrollmentIsTerminalForSequence } from "./reply-automation-policy";
@@ -30,6 +30,7 @@ export type ScheduledAction = {
   group?: string;
   groupId?: string;
   canRunNow: boolean;
+  isReply?: boolean;
   blockedReason?: string;
   // True when the step is a message the connection has not been accepted for.
   // `at` is meaningless then: the automation parks the enrollment on the
@@ -72,14 +73,18 @@ export async function listScheduledActions(
   // Only enrollments that already sent a message have a send time to look up,
   // and this page auto-refreshes every minute - reading a conversation for
   // every enrolled lead would double the page's Firestore reads for nothing.
-  const messagedLeadIds = enrollments.flatMap((enrollment) => {
+  const conversationLeadIds = enrollments.flatMap((enrollment) => {
     const campaign = campaignsById.get(enrollment.campaignId);
     if (!campaign) return [];
+    if (enrollment.status === "reply_received") return [enrollment.leadId];
     const stepIndex = findNextScheduledStepIndex(campaign.steps, enrollment.currentStepIndex);
     const doneSteps = stepIndex === -1 ? campaign.steps : campaign.steps.slice(0, stepIndex);
     return doneSteps.some((step) => step.type === "message") ? [enrollment.leadId] : [];
   });
-  const outboundMessageTimes = await getOutboundMessageTimesByLeadIds(workspaceId, messagedLeadIds);
+  const conversationFacts = await getOutreachConversationFactsByLeadIds(
+    workspaceId,
+    conversationLeadIds,
+  );
 
   const outreach = enrollments.flatMap((enrollment): ScheduledAction[] => {
     if (enrollmentIsTerminalForSequence(enrollment.status)) return [];
@@ -87,21 +92,31 @@ export async function listScheduledActions(
     const campaign = campaignsById.get(enrollment.campaignId);
     const lead = leadsById.get(enrollment.leadId);
     if (!campaign || campaign.status !== "active" || !lead) return [];
+    // A stored reply must hide the next canned step even if the enrollment
+    // has not been armed yet. Showing that step is how /leads stayed stale.
+    if (lead.outreachStatus === "replied" && enrollment.status !== "reply_received") return [];
     if (filters.agentId && lead.sourceAgentId !== filters.agentId) return [];
     // Leads-only agents must not surface connect/message rows: automation will
     // stop those enrollments, and the Actions UI should match that contract.
     if (isSourcedByLeadsOnlyAgent(lead, agents)) return [];
+    const facts = conversationFacts.get(lead.id);
+    const isReply = enrollment.status === "reply_received";
     const stepIndex = findNextScheduledStepIndex(campaign.steps, enrollment.currentStepIndex);
     const step = stepIndex === -1 ? undefined : campaign.steps[stepIndex];
-    if (!step || step.type === "wait") return [];
+    if (!isReply && (!step || step.type === "wait")) return [];
     const agent = lead.sourceAgentId ? agentsById.get(lead.sourceAgentId) : undefined;
     const group = groupsById.get(campaign.groupId);
-    const isConnection = step.type === "connect";
+    const isConnection = !isReply && step?.type === "connect";
     const connectionAccepted = canSendCampaignMessage(enrollment, lead);
-    const awaitingConnection = !isConnection && !connectionAccepted;
+    const awaitingConnection = !isReply && !isConnection && !connectionAccepted;
     const canRunNow = !enrollment.pendingAction;
-    const template = isConnection ? step.noteTemplate : step.messageTemplate;
-    const rendered = template.trim() ? renderTemplate(template, lead) : null;
+    const template =
+      step?.type === "connect"
+        ? step.noteTemplate
+        : step?.type === "message"
+          ? step.messageTemplate
+          : undefined;
+    const rendered = template?.trim() ? renderTemplate(template, lead) : null;
     // AI messages are pre-drafted the moment the connection is accepted (see
     // draftUpcomingMessagePreview in automation.ts) so the user can read the
     // exact outgoing text here before it is sent.
@@ -111,22 +126,31 @@ export async function listScheduledActions(
         : undefined;
     // Connection requests never get AI-drafted notes: either the user's
     // template renders cleanly or the invite goes out bare.
-    const message = isConnection
-      ? step.includeNote && rendered?.natural && rendered.text
-        ? rendered.text
-        : "No note — LinkedIn connection request only."
-      : rendered?.natural && rendered.text
-        ? rendered.text
-        : storedDraft || "AI-personalized message will be generated at send time.";
+    const message = isReply
+      ? facts?.lastInboundBody ||
+        storedDraft ||
+        "AI-personalized reply will be generated at send time."
+      : isConnection
+        ? step?.type === "connect" && step.includeNote && rendered?.natural && rendered.text
+          ? rendered.text
+          : "No note. LinkedIn connection request only."
+        : rendered?.natural && rendered.text
+          ? rendered.text
+          : storedDraft || "AI-personalized message will be generated at send time.";
 
     return [{
       id: enrollment.id,
       at: enrollment.nextActionAt,
       kind: isConnection ? "connection" : "message",
-      title: isConnection ? "Send connection request" : "Send LinkedIn message",
+      title: isReply
+        ? "Reply to their message"
+        : isConnection
+          ? "Send connection request"
+          : "Send LinkedIn message",
       message,
       method: isConnection ? "LinkedIn connection request" : "LinkedIn message",
       canRunNow,
+      isReply,
       awaitingConnection,
       blockedReason: enrollment.pendingAction
         ? "This action is already being processed."
@@ -139,11 +163,13 @@ export async function listScheduledActions(
               : undefined,
       timeline: buildActionTimeline({
         steps: campaign.steps,
-        stepIndex,
+        stepIndex: stepIndex === -1 ? campaign.steps.length : stepIndex,
         scheduledAt: enrollment.nextActionAt,
         connectionSentAt: enrollment.connectionSentAt,
-        sentMessageAts: outboundMessageTimes.get(lead.id),
+        sentMessageAts: facts?.sequenceOutboundAts,
         connectionAccepted,
+        sequenceStopped: isReply,
+        repliedAt: facts?.lastInboundAt,
       }),
       campaign: campaign.name,
       agent: agent?.name,

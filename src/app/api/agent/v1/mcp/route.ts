@@ -127,7 +127,7 @@ async function handleGet(request: NextRequest) {
     name: "omentir-agent-mcp",
     title: "Omentir Lead Discovery",
     description:
-      "Workspace-scoped Streamable HTTP MCP endpoint for configuring Omentir lead finders, inspecting discovered leads, and reading the planned outreach schedule.",
+      "Workspace-scoped Streamable HTTP MCP endpoint for configuring Omentir lead finders, inspecting discovered leads, reading the planned outreach schedule, and switching the token to another owned workspace.",
     endpoint: "/api/agent/v1/mcp",
     transport: "streamable-http",
     protocolVersion: CURRENT_PROTOCOL_VERSION,
@@ -186,13 +186,13 @@ async function handlePost(request: NextRequest) {
       serverInfo: {
         name: "omentir-agent-mcp",
         title: "Omentir Agent MCP",
-        version: "1.4.0",
+        version: "1.7.0",
         description:
-          "Configure classic lead finders and Steal Customers agents, monitor discovery and outreach, inspect leads (including post+comment engagementContext), and work with existing Omentir conversations.",
+          "Configure classic lead finders and Steal Customers agents, monitor discovery and outreach, inspect leads (including post+comment engagementContext), work with existing Omentir conversations, and switch the same token to another owned workspace.",
         websiteUrl: `${getAppBaseUrl()}/integrations/mcp`,
       },
       instructions:
-        "Call omentir_get_context first (time zone + remaining send allowance). Call omentir_get_product_profile and ensure Workspace is set before Steal Customers. List agents before create. Classic lead finders need mode signals/filters/prompt plus prompt and filters. Steal Customers: mode steal_customers, groupName, signalSources.competitorUrls and/or founderUrls (company pages and optional founder/employee profiles); no ICP; AI outreach attaches automatically; discovery finds competitor employees, scans their posts and company posts, and promotes commenters who look like buyers. Lead discovery is asynchronous: use list_activity before treating empty leads as final. Use list_leads/get_lead for engagementContext. Use list_scheduled_actions for exact outreach send times.",
+        "Call omentir_get_context first (time zone + remaining send allowance + owned workspaces). Switch with omentir_switch_workspace only after the user picks another owned workspace; the same token then hits that workspace. Call omentir_get_product_profile and ensure Workspace is set before Steal Customers. List agents before create. Classic lead finders need mode signals/filters/prompt plus prompt and filters. Steal Customers: mode steal_customers, groupName, signalSources.competitorUrls and/or founderUrls (company pages and optional founder/employee profiles); no ICP; AI outreach attaches automatically; discovery finds competitor employees, scans their posts and company posts, and promotes commenters who look like buyers. Lead discovery is asynchronous: use list_activity before treating empty leads as final. Use list_leads/get_lead for engagementContext. Use list_scheduled_actions for exact outreach send times.",
     };
     const minted = posthog
       ? mintMcpSession({ ...clientInfo, protocolVersion })

@@ -249,6 +249,7 @@ export default function OverviewView({
           title: lead?.title ?? thread.profileHeadline ?? "",
           company: lead?.company ?? "",
           avatarUrl: lead?.avatarUrl || thread.avatarUrl,
+          leadId: lead?.id,
           body: inbound.body,
           when: inbound.createdAt,
         };
@@ -465,6 +466,7 @@ export default function OverviewView({
                     <LeadAvatar
                       name={lead.name}
                       avatarUrl={lead.avatarUrl}
+                      leadId={lead.id}
                       className="h-8 w-8 bg-[#1f1f1f]"
                       initialsClassName="text-[10px] font-medium text-[var(--md-sys-color-on-surface)]"
                     />
@@ -540,6 +542,7 @@ export default function OverviewView({
                     <LeadAvatar
                       name={reply.leadName}
                       avatarUrl={reply.avatarUrl}
+                      leadId={reply.leadId}
                       className="h-8 w-8 bg-[#1f1f1f]"
                       initialsClassName="text-[10px] font-medium text-[var(--md-sys-color-on-surface)]"
                     />

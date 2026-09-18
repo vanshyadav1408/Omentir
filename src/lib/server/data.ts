@@ -34,6 +34,8 @@ import {
   overlayOwnerExtraLinkedInSeats,
 } from "@/lib/linkedin-seat-pricing";
 import { httpsAvatarUrl } from "@/lib/lead-avatar";
+import { lastInboundMessage, sequenceOutboundMessageTimes } from "./action-timeline";
+import { queueLeadAvatarPersist } from "./lead-avatar-cache";
 import {
   canEnrollLeadForOutreach,
   leadOutcomeNotificationLockId,
@@ -632,6 +634,26 @@ export async function revokeAgentApiKey(workspaceId: string, keyId: string) {
 
   await ref.update({
     status: "revoked",
+    updatedAt: nowIso(),
+  });
+}
+
+export async function setAgentApiKeyWorkspace(
+  keyId: string,
+  currentWorkspaceId: string,
+  targetWorkspaceId: string,
+) {
+  const ref = collection<AgentApiKey>("agentApiKeys").doc(keyId);
+  const snap = await ref.get();
+  const key = snap.data();
+
+  if (!key || key.status !== "active" || key.workspaceId !== currentWorkspaceId) {
+    throw new Error("Agent token not found.");
+  }
+  if (key.workspaceId === targetWorkspaceId) return;
+
+  await ref.update({
+    workspaceId: targetWorkspaceId,
     updatedAt: nowIso(),
   });
 }
@@ -1315,8 +1337,8 @@ export async function updateAgent(
     // without a selection should keep the agent's current account.
     ...(input.linkedInAccountId ? { linkedInAccountId: input.linkedInAccountId } : {}),
     mode,
-    // Only ever set, never cleared: re-preparing a leads-only agent must not
-    // drop the flag, and a full agent never sends it in the first place.
+    // Only ever set here, never cleared: re-preparing a leads-only agent must
+    // not drop the flag. Clearing is explicit via allowOutreachOnAgent.
     ...(input.leadsOnly ? { leadsOnly: true } : {}),
     prompt: input.prompt,
     filters: input.filters,
@@ -1330,6 +1352,27 @@ export async function updateAgent(
 
   await ref.update(patch);
   return { ...agent, ...patch } as Agent;
+}
+
+// The UI can launch a second outreach agent. MCP/API attach outreach to the
+// same finder when asked, so the leads-only lock has to come off first or
+// createCampaign refuses the group.
+export async function allowOutreachOnAgent(workspaceId: string, agentId: string) {
+  const ref = collection<Agent>("agents").doc(agentId);
+  const snap = await ref.get();
+  const agent = snap.data();
+  if (!agent || agent.workspaceId !== workspaceId) {
+    throw new Error("Agent not found.");
+  }
+  if (!agent.leadsOnly) return agent;
+
+  const timestamp = nowIso();
+  await ref.update({
+    leadsOnly: FieldValue.delete(),
+    updatedAt: timestamp,
+  });
+  const { leadsOnly: _removed, ...rest } = agent;
+  return { ...rest, updatedAt: timestamp } as Agent;
 }
 
 // Tomorrow's occurrence of the agent's daily discovery time: the wall-clock
@@ -2090,6 +2133,7 @@ export async function upsertLead(workspaceId: string, groupId: string, lead: Par
       },
     });
   }
+  queueLeadAvatarPersist(result.id, workspaceId, result.avatarUrl);
   return result;
 }
 
@@ -2114,6 +2158,7 @@ export async function updateLead(workspaceId: string, id: string, patch: Partial
       updatedAt: nowIso(),
     }));
   });
+  queueLeadAvatarPersist(id, workspaceId, patch.avatarUrl);
 }
 
 export async function upsertLeadSignal(input: UpsertLeadSignalInput) {
@@ -2298,6 +2343,7 @@ export async function updateCampaign(
       | "sendWindow"
       | "notifyOnReply"
       | "messageTone"
+      | "campaignGoal"
     >
   >,
 ) {
@@ -2348,7 +2394,17 @@ export async function setSendWindowForGroup(
 export async function setOutreachPolicyForGroup(
   workspaceId: string,
   groupId: string,
-  patch: Partial<Pick<Campaign, "replyHandling" | "bookingLink" | "notifyOnReply" | "sendWindow">>,
+  patch: Partial<
+    Pick<
+      Campaign,
+      | "replyHandling"
+      | "bookingLink"
+      | "notifyOnReply"
+      | "sendWindow"
+      | "messageTone"
+      | "campaignGoal"
+    >
+  >,
 ) {
   if (!groupId) return 0;
   const campaigns = (await listCampaigns(workspaceId)).filter(
@@ -3489,16 +3545,22 @@ export async function getConversation(workspaceId: string, leadId: string) {
   return snap.exists ? snap.data() || null : null;
 }
 
-// When a message actually went out, per lead. The Actions page marks completed
-// steps with their real send time, and the conversation is the only record of
-// it (enrollments keep just connectionSentAt). Batched by doc id so it reads
-// exactly the enrolled leads instead of scanning the collection.
-export async function getOutboundMessageTimesByLeadIds(
+// Sequence sends and the latest inbound, per lead. The Actions / Leads
+// schedule marks completed steps with real send times, and must ignore
+// outbound rows after the first reply so an AI answer cannot look like the
+// next canned follow-up already went out.
+export type OutreachConversationFacts = {
+  sequenceOutboundAts: string[];
+  lastInboundAt?: string;
+  lastInboundBody?: string;
+};
+
+export async function getOutreachConversationFactsByLeadIds(
   workspaceId: string,
   leadIds: string[],
-): Promise<Map<string, string[]>> {
+): Promise<Map<string, OutreachConversationFacts>> {
   const unique = [...new Set(leadIds.filter(Boolean))];
-  const out = new Map<string, string[]>();
+  const out = new Map<string, OutreachConversationFacts>();
   if (!unique.length) return out;
 
   const conversations = collection<Conversation>("conversations");
@@ -3508,13 +3570,12 @@ export async function getOutboundMessageTimesByLeadIds(
     for (const snap of snaps) {
       const data = snap.data() as Conversation | undefined;
       if (!data || data.workspaceId !== workspaceId) continue;
-      out.set(
-        data.leadId,
-        (data.messages || [])
-          .filter((message) => message.direction === "outbound")
-          .map((message) => message.createdAt)
-          .sort((a, b) => a.localeCompare(b)),
-      );
+      const inbound = lastInboundMessage(data.messages || []);
+      out.set(data.leadId, {
+        sequenceOutboundAts: sequenceOutboundMessageTimes(data.messages || []),
+        lastInboundAt: inbound?.createdAt,
+        lastInboundBody: inbound?.body,
+      });
     }
   }
   return out;
@@ -4057,6 +4118,16 @@ function inviteSafetyLockId(
   return `${kind}-${workspaceId}-${cleanId(linkedInAccountId)}`;
 }
 
+export type InviteCooldownRecord = {
+  until: string;
+  stage: number;
+  active: boolean;
+};
+
+function inviteCooldownStage(value: unknown) {
+  return typeof value === "number" && value >= 1 ? Math.min(value, 2) : 1;
+}
+
 // LinkedIn invitation restrictions are per connected account, not per
 // workspace. Keeping the breaker account-scoped prevents one restricted
 // account from freezing outreach on every other connected account.
@@ -4064,22 +4135,41 @@ export async function setInviteCooldown(
   workspaceId: string,
   linkedInAccountId: string,
   until: string,
+  stage = 1,
 ) {
   // Full replace so a new window wipes probedAt and the next pause gets one
   // fresh probe.
   await getDb()
     .collection("automationLocks")
     .doc(inviteSafetyLockId("invite-cooldown", workspaceId, linkedInAccountId))
-    .set({ workspaceId, linkedInAccountId, until, updatedAt: nowIso() });
+    .set({
+      workspaceId,
+      linkedInAccountId,
+      until,
+      stage: inviteCooldownStage(stage),
+      updatedAt: nowIso(),
+    });
 }
 
-export async function getInviteCooldown(workspaceId: string, linkedInAccountId: string) {
+// Includes an expired window so the next arm can escalate from 6 hours to
+// 3 days / next Monday instead of repeating the short pause forever.
+export async function getInviteCooldownRecord(workspaceId: string, linkedInAccountId: string) {
   const snap = await getDb()
     .collection("automationLocks")
     .doc(inviteSafetyLockId("invite-cooldown", workspaceId, linkedInAccountId))
     .get();
   const until = snap.data()?.until;
-  return typeof until === "string" && until > nowIso() ? until : null;
+  if (typeof until !== "string") return null;
+  return {
+    until,
+    stage: inviteCooldownStage(snap.data()?.stage),
+    active: until > nowIso(),
+  } satisfies InviteCooldownRecord;
+}
+
+export async function getInviteCooldown(workspaceId: string, linkedInAccountId: string) {
+  const record = await getInviteCooldownRecord(workspaceId, linkedInAccountId);
+  return record?.active ? record.until : null;
 }
 
 // One live invite attempt per cooldown window. A successful probe clears the

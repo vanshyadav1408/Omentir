@@ -17,6 +17,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       await listConversationResources(auth.context, {
         limit: Number.isFinite(rawLimit) ? rawLimit : 50,
+        filter: request.nextUrl.searchParams.get("filter") || undefined,
+        query: request.nextUrl.searchParams.get("query") || undefined,
       }),
     );
   } catch (error) {

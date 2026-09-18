@@ -30,6 +30,7 @@ import {
   consumeDailyQuota,
   deferAgentRun,
   getInviteCooldown,
+  getInviteCooldownRecord,
   claimInviteCooldownProbe,
   clearInviteCooldown,
   hasDailyQuotaRemaining,
@@ -103,7 +104,7 @@ import {
   shouldStopForReply,
   USER_STOPPED_OUTREACH_ERROR,
 } from "./reply-automation-policy";
-import { localDayAndHour } from "./scheduling";
+import { localDayAndHour, nextInviteLimitRetryAt } from "./scheduling";
 import { isWithinSendWindow, SPACING_MINUTES, type SendActionKind } from "./send-schedule";
 import { hasActiveSubscription } from "./subscription";
 import { shouldMarkBillingExpired, shouldPurgeUnipileAccounts } from "@/lib/unipile-billing-purge";
@@ -174,14 +175,14 @@ const CONNECTION_SWEEP_INTERVAL_MS = 2 * 60 * 60 * 1000;
 const CONNECTION_SWEEP_CHECK_LIMIT = 20;
 // Reply-sync fallback cadence per account. Webhooks deliver replies instantly;
 // this bounds how stale a reply can go unnoticed when webhooks are down.
-const REPLY_SYNC_INTERVAL_MS = 45 * 60 * 1000;
+const REPLY_SYNC_INTERVAL_MS = 5 * 60 * 1000;
 // Overlap window when filtering provider messages against the last sync
 // cursor, so boundary messages are never skipped (dedupe drops re-reads).
 const REPLY_SYNC_OVERLAP_MS = 10 * 60 * 1000;
 const REPLY_SYNC_MESSAGE_LIMIT = 100;
 // The full account enumeration only runs every cycle claim, keeping the claim
 // reads off the per-tick hot path.
-const PROVIDER_SYNC_CYCLE_MS = 15 * 60 * 1000;
+const PROVIDER_SYNC_CYCLE_MS = 5 * 60 * 1000;
 const WEBHOOK_REGISTRATION_INTERVAL_MS = 6 * 60 * 60 * 1000;
 const UNIPILE_BILLING_PURGE_INTERVAL_MS = 30 * 60 * 1000;
 const UNIPILE_WORKSPACE_PURGE_INTERVAL_MS = 6 * 60 * 60 * 1000;
@@ -219,13 +220,12 @@ const PACING_FALLBACK_MINUTES = 10;
 // deferred, for the full block window - a shorter defer just fails again. The
 // account-level circuit breaker needs INVITE_LIMIT_SIGNAL_THRESHOLD distinct
 // recipients rejected with no success in between. Because the provider error
-// cannot distinguish those cases, the breaker rechecks after a few hours
-// instead of claiming a weekly limit and parking the account for days. One
-// live probe is allowed inside that window, and parked enrollments wake on
-// this shorter cadence so a successful probe/manual send can resume the rest
-// of the queue without waiting out the full breaker.
+// cannot distinguish those cases, the first pause is 6 hours with one live
+// probe. A failed retry after that waits 3 days or next Monday, whichever
+// comes first, instead of probing a real weekly cap every few hours. Parked
+// enrollments wake on a short cadence so a successful probe/manual send can
+// resume the rest of the queue without waiting out the full breaker.
 const RESEND_BLOCKED_DEFER_MINUTES = 21 * 24 * 60;
-const INVITE_RECHECK_MINUTES = 6 * 60;
 const INVITE_COOLDOWN_WAKE_MINUTES = 30;
 
 // Daily digest email: 9am in the workspace's local timezone, every day. Ticks
@@ -2033,31 +2033,48 @@ async function runCampaigns(mode: AutomationSafetyMode) {
           enrollment.leadId,
         );
         if (distinctRejections >= INVITE_LIMIT_SIGNAL_THRESHOLD) {
-          const until = addMinutes(INVITE_RECHECK_MINUTES);
-          const alreadyCoolingDown = Boolean(
-            await getInviteCooldown(enrollment.workspaceId, rejectedAccount.id),
+          const prior = await getInviteCooldownRecord(
+            enrollment.workspaceId,
+            rejectedAccount.id,
           );
-          // Do not replace an active window. A failed probe would otherwise
-          // wipe probedAt and let the next tick send again, hammering a real
-          // weekly cap. One live attempt per window is the whole point.
-          if (!alreadyCoolingDown) {
-            await setInviteCooldown(enrollment.workspaceId, rejectedAccount.id, until);
-          }
           const budget = budgetForAccount(rejectedAccount.id);
           budget.connects = 0;
-          budget.inviteCooldownUntil ??= until;
-          await logAutomationRun({
-            workspaceId: enrollment.workspaceId,
-            kind: "campaign",
-            status: "error",
-            message: alreadyCoolingDown
-              ? `${distinctRejections} recipients were rejected within a day on ${rejectedAccount.displayName}; invite pause already active until ${budget.inviteCooldownUntil}.`
-              : `${distinctRejections} recipients were rejected within a day on ${rejectedAccount.displayName}; pausing invites for this LinkedIn account until ${until}, then automatically probing again.`,
-          });
-          if (!alreadyCoolingDown) {
+          if (prior?.active) {
+            // Do not replace an active window. A failed probe would otherwise
+            // wipe probedAt and let the next tick send again, hammering a real
+            // weekly cap. One live attempt per window is the whole point.
+            budget.inviteCooldownUntil ??= prior.until;
+            await logAutomationRun({
+              workspaceId: enrollment.workspaceId,
+              kind: "campaign",
+              status: "error",
+              message: `${distinctRejections} recipients were rejected within a day on ${rejectedAccount.displayName}; invite pause already active until ${budget.inviteCooldownUntil}.`,
+            });
+          } else {
+            const workspace = await getWorkspace(enrollment.workspaceId).catch(() => null);
+            const next = nextInviteLimitRetryAt({
+              previousStage: prior?.stage ?? 0,
+              timezone: workspace?.timezone,
+            });
+            await setInviteCooldown(
+              enrollment.workspaceId,
+              rejectedAccount.id,
+              next.until,
+              next.stage,
+            );
+            budget.inviteCooldownUntil = next.until;
+            await logAutomationRun({
+              workspaceId: enrollment.workspaceId,
+              kind: "campaign",
+              status: "error",
+              message:
+                next.stage === 1
+                  ? `${distinctRejections} recipients were rejected within a day on ${rejectedAccount.displayName}; pausing invites for this LinkedIn account until ${next.until}, then automatically probing again.`
+                  : `${distinctRejections} recipients were rejected within a day on ${rejectedAccount.displayName}; first retry still failed, pausing invites until ${next.until} (3 days or next Monday, whichever is sooner).`,
+            });
             await notifyInvitePause(
               enrollment.workspaceId,
-              until,
+              next.until,
               rejectedAccount.id,
               rejectedAccount.displayName,
             );

@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
   const outreachStatus = request.nextUrl.searchParams.get("outreachStatus") || undefined;
   const sortBy = request.nextUrl.searchParams.get("sortBy") || undefined;
   const rawLimit = Number(request.nextUrl.searchParams.get("limit") || "100");
+  const rawOffset = Number(request.nextUrl.searchParams.get("offset") || "0");
 
   try {
     return NextResponse.json(
@@ -27,6 +28,7 @@ export async function GET(request: NextRequest) {
         outreachStatus,
         sortBy,
         limit: Number.isFinite(rawLimit) ? rawLimit : 100,
+        offset: Number.isFinite(rawOffset) ? rawOffset : 0,
       }),
     );
   } catch (error) {

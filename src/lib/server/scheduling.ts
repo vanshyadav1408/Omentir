@@ -65,9 +65,38 @@ export function localDayAndHour(timezone: string | undefined, nowMs = Date.now()
   };
 }
 
+export const INVITE_LIMIT_FIRST_RETRY_MS = 6 * 60 * 60 * 1000;
+export const INVITE_LIMIT_SECOND_RETRY_MS = 3 * 24 * 60 * 60 * 1000;
+
+// First account-wide invite pause waits 6 hours. A failed retry after that
+// waits until 3 days or next local Monday 9am, whichever comes first, so a
+// real weekly cap is not probed every few hours and a mid-week lift is not
+// left sitting until the following Monday.
+export function nextInviteLimitRetryAt(input: {
+  previousStage?: number;
+  timezone?: string;
+  nowMs?: number;
+}) {
+  const nowMs = input.nowMs ?? Date.now();
+  const previousStage = input.previousStage ?? 0;
+  if (previousStage < 1) {
+    return {
+      until: new Date(nowMs + INVITE_LIMIT_FIRST_RETRY_MS).toISOString(),
+      stage: 1,
+    };
+  }
+  const inThreeDays = nowMs + INVITE_LIMIT_SECOND_RETRY_MS;
+  const nextMonday = Date.parse(nextLocalMondayAt(input.timezone, nowMs));
+  return {
+    until: new Date(Math.min(inThreeDays, nextMonday)).toISOString(),
+    stage: 2,
+  };
+}
+
 // LinkedIn's weekly invitation limit is retried at the start of the next
 // workweek, rather than repeatedly probing the restricted account. Monday at
 // 9am is interpreted in the workspace timezone, including DST transitions.
+// If it is already Monday and 9am has not arrived, that is the next Monday.
 export function nextLocalMondayAt(timezone: string | undefined, nowMs = Date.now()) {
   let timeZone = timezone || "UTC";
   try {
@@ -105,7 +134,12 @@ export function nextLocalMondayAt(timezone: string | undefined, nowMs = Date.now
   const weekday = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(
     localNow.weekday,
   );
-  const daysUntilMonday = (8 - weekday) % 7 || 7;
+  let daysUntilMonday = (8 - weekday) % 7;
+  if (daysUntilMonday === 0) {
+    const alreadyPastNine =
+      localNow.hour > 9 || (localNow.hour === 9 && (localNow.minute > 0 || localNow.second > 0));
+    daysUntilMonday = alreadyPastNine ? 7 : 0;
+  }
   const targetLocalMs = Date.UTC(
     localNow.year,
     localNow.month - 1,

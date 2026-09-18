@@ -103,6 +103,14 @@ export function proxiedAvatarUrl(url: string, nowMs = Date.now()) {
   return `/api/app/avatar?u=${encodeURIComponent(url)}`;
 }
 
+// Same-origin photo keyed by lead, so the UI still has a headshot after the
+// LinkedIn CDN token in avatarUrl expires.
+export function durableLeadAvatarUrl(leadId?: string) {
+  const id = leadId?.trim();
+  if (!id) return undefined;
+  return `/api/app/avatar?leadId=${encodeURIComponent(id)}`;
+}
+
 export function personInitials(name: string) {
   const initials = name
     .split(" ")

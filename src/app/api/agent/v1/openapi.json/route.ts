@@ -41,9 +41,28 @@ const signalSources = {
 } as const;
 
 const agentMode = {
-  enum: ["signals", "filters", "prompt", "steal_customers"],
+  enum: ["signals", "filters", "prompt", "steal_customers", "outreach"],
   description:
-    "signals/filters/prompt: classic ICP lead discovery (needs prompt + filters). steal_customers (Steal Customers): no ICP; Workspace required; discovers competitor employees, scans their posts and company posts, finds commenters who can be customers, AI outreach with post+comment context.",
+    "signals/filters/prompt: classic ICP lead discovery (needs prompt + filters). steal_customers: competitor commenters, AI outreach. outreach: CSV import, no discovery.",
+} as const;
+
+const outreachSteps = {
+  type: "array",
+  description:
+    "Custom outreach sequence using the same connect/message/follow actions as the agent wizard.",
+  items: {
+    type: "object",
+    properties: {
+      id: { type: "string" },
+      kind: { enum: ["connect", "message", "follow"] },
+      enabled: { type: "boolean" },
+      mode: { enum: ["ai", "manual"] },
+      manualMessage: { type: "string" },
+      waitValue: { type: "number" },
+      waitUnit: { enum: ["minutes", "hours", "days"] },
+      includeNote: { type: "boolean" },
+    },
+  },
 } as const;
 
 const sendWindow = {
@@ -76,6 +95,9 @@ const agentOutreachProperties = {
       "For handoff mode: email when the first reply arrives (default true). Other modes email on interest or meeting booked instead.",
   },
   sendWindow,
+  steps: outreachSteps,
+  messageTone: { enum: ["professional", "conversational", "direct"] },
+  campaignGoal: { enum: ["warm", "demo"] },
 } as const;
 
 export async function GET() {
@@ -84,9 +106,9 @@ export async function GET() {
     openapi: "3.1.0",
     info: {
       title: "Omentir Agent API",
-      version: "1.5.2",
+      version: "1.7.0",
       description:
-        "Workspace-scoped API for AI assistants that configure classic lead finders and Steal Customers (steal_customers) agents, set up AI outreach (reply handling and booking links), inspect leads (including post+comment engagementContext), monitor discovery and the outreach send schedule, and work with existing LinkedIn conversations. Every timestamp is a UTC ISO instant; the workspace reads and counts them in its own time zone, returned as `timeZone` by /context.",
+        "Workspace-scoped API for AI assistants that configure lead finders, Steal Customers, and outreach-only CSV agents, attach custom sequences, inspect leads, run or stop queued outreach, read the live LinkedIn inbox, reply in existing threads, and switch the same token to another owned workspace. Account, billing, LinkedIn connect, workspace create/delete, and API-key minting stay in the app. Every timestamp is a UTC ISO instant; the workspace reads and counts them in its own time zone, returned as `timeZone` by /context.",
     },
     servers: [{ url: siteUrl }],
     security: [{ bearerAuth: [] }],
@@ -115,6 +137,10 @@ export async function GET() {
                 "Required for classic lead finders. Optional for steal_customers (ignored; Workspace defines buyer fit).",
             },
             signalSources,
+            csvContents: {
+              type: "string",
+              description: "Raw LinkedIn CSV. Only valid with mode=outreach.",
+            },
             ...agentOutreachProperties,
             sendWindow: { ...sendWindow, default: NEW_AGENT_SEND_WINDOW },
           },
@@ -163,7 +189,7 @@ export async function GET() {
         get: {
           operationId: "getWorkspaceContext",
           summary:
-            "Read workspace readiness, product context, lead counts, settings, the workspace time zone, today's remaining invite and message allowance, and API entrypoints.",
+            "Read workspace readiness, product context, lead counts, owned workspaces, settings, the workspace time zone, today's remaining invite and message allowance, and API entrypoints.",
           responses: { "200": { description: "Workspace context" } },
         },
       },
@@ -171,6 +197,14 @@ export async function GET() {
         get: {
           operationId: "getWorkspaceStats",
           summary: "Read lead, discovery-agent, and existing outreach metrics.",
+          parameters: [
+            {
+              name: "range",
+              in: "query",
+              required: false,
+              schema: { type: "string", enum: ["all", "7d", "30d", "3m", "month"], default: "all" },
+            },
+          ],
           responses: { "200": { description: "Workspace stats" } },
         },
       },
@@ -309,6 +343,148 @@ export async function GET() {
           summary: "List lead groups created by lead-finding agents.",
           responses: { "200": { description: "Lead group list" } },
         },
+        delete: {
+          operationId: "deleteLeadGroup",
+          summary: "Delete a lead group that no agent or campaign still uses.",
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["groupId"],
+                  properties: { groupId: { type: "string" } },
+                },
+              },
+            },
+          },
+          responses: { "200": { description: "Deleted group" }, "409": { description: "Group still in use" } },
+        },
+      },
+      "/api/agent/v1/agents/draft": {
+        get: {
+          operationId: "draftAgentSetup",
+          summary: "Fill-with-AI draft for a new agent from Workspace. Does not create the agent.",
+          responses: { "200": { description: "Draft targeting and templates" } },
+        },
+      },
+      "/api/agent/v1/product-profile/analyze": {
+        post: {
+          operationId: "analyzeWebsite",
+          summary: "Fetch a website and write the Workspace product profile from it.",
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["websiteUrl"],
+                  properties: { websiteUrl: { type: "string" } },
+                },
+              },
+            },
+          },
+          responses: { "200": { description: "Updated product profile" } },
+        },
+      },
+      "/api/agent/v1/scheduled-actions/run": {
+        post: {
+          operationId: "runScheduledActionNow",
+          summary: "Send the next queued outreach action immediately.",
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["enrollmentId"],
+                  properties: { enrollmentId: { type: "string" } },
+                },
+              },
+            },
+          },
+          responses: { "200": { description: "Action ran" }, "409": { description: "Nothing to send" } },
+        },
+      },
+      "/api/agent/v1/inbox": {
+        get: {
+          operationId: "listInbox",
+          summary: "List live LinkedIn DM threads from connected seats.",
+          parameters: [
+            { name: "accountId", in: "query", required: false, schema: { type: "string" } },
+            { name: "query", in: "query", required: false, schema: { type: "string" } },
+            { name: "limit", in: "query", required: false, schema: { type: "integer", minimum: 1, maximum: 50, default: 30 } },
+          ],
+          responses: { "200": { description: "Inbox threads" } },
+        },
+      },
+      "/api/agent/v1/inbox/messages": {
+        get: {
+          operationId: "getChatMessages",
+          summary: "Load a page of messages for one live LinkedIn chat.",
+          parameters: [
+            { name: "chatId", in: "query", required: true, schema: { type: "string" } },
+            { name: "accountId", in: "query", required: false, schema: { type: "string" } },
+            { name: "cursor", in: "query", required: false, schema: { type: "string" } },
+            { name: "limit", in: "query", required: false, schema: { type: "integer", minimum: 1, maximum: 50, default: 30 } },
+          ],
+          responses: { "200": { description: "Chat messages" }, "404": { description: "Chat not found" } },
+        },
+      },
+      "/api/agent/v1/inbox/reply": {
+        post: {
+          operationId: "replyToChat",
+          summary: "Reply in a live LinkedIn chat, optionally with base64 attachments.",
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["chatId"],
+                  properties: {
+                    chatId: { type: "string" },
+                    accountId: { type: "string" },
+                    message: { type: "string" },
+                    leadId: { type: "string" },
+                    attachments: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        required: ["filename", "contentBase64"],
+                        properties: {
+                          filename: { type: "string" },
+                          mimeType: { type: "string" },
+                          contentBase64: { type: "string" },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          responses: { "200": { description: "Reply sent" }, "404": { description: "Chat not found" }, "429": { description: "Daily limit or send slot" } },
+        },
+      },
+      "/api/agent/v1/conversations/complete-follow-up": {
+        post: {
+          operationId: "completeFollowUp",
+          summary: "Mark a manual follow-up done.",
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["leadId"],
+                  properties: { leadId: { type: "string" } },
+                },
+              },
+            },
+          },
+          responses: { "200": { description: "Follow-up completed" } },
+        },
       },
       "/api/agent/v1/leads": {
         get: {
@@ -321,8 +497,57 @@ export async function GET() {
             { name: "outreachStatus", in: "query", required: false, schema: { type: "string", enum: ["new", "invited", "connected", "messaged", "replied", "declined", "stopped"] } },
             { name: "sortBy", in: "query", required: false, schema: { type: "string", enum: ["fit_score_desc", "fit_score_asc", "newest", "oldest"], default: "fit_score_desc" } },
             { name: "limit", in: "query", required: false, schema: { type: "integer", minimum: 1, maximum: 200, default: 100 } },
+            { name: "offset", in: "query", required: false, schema: { type: "integer", minimum: 0, default: 0 } },
           ],
           responses: { "200": { description: "Lead list" } },
+        },
+      },
+      "/api/agent/v1/leads/import": {
+        post: {
+          operationId: "importCsvLeads",
+          summary: "Import LinkedIn profile URLs from CSV into an outreach-only agent.",
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["agentId", "csvContents"],
+                  properties: { agentId: { type: "string" }, csvContents: { type: "string" } },
+                },
+              },
+            },
+          },
+          responses: { "201": { description: "Imported leads" }, "404": { description: "Outreach agent not found" } },
+        },
+      },
+      "/api/agent/v1/leads/export": {
+        get: {
+          operationId: "exportLeads",
+          summary: "Export one lead group as CSV.",
+          parameters: [
+            { name: "groupId", in: "query", required: true, schema: { type: "string" } },
+          ],
+          responses: { "200": { description: "CSV text and filename" } },
+        },
+      },
+      "/api/agent/v1/leads/stop-outreach": {
+        post: {
+          operationId: "stopLeadOutreach",
+          summary: "Stop automated outreach for one lead.",
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["leadId"],
+                  properties: { leadId: { type: "string" } },
+                },
+              },
+            },
+          },
+          responses: { "200": { description: "Outreach stopped" } },
         },
       },
       "/api/agent/v1/leads/{leadId}": {
@@ -344,6 +569,8 @@ export async function GET() {
           summary: "List existing LinkedIn conversations captured by Omentir.",
           parameters: [
             { name: "limit", in: "query", required: false, schema: { type: "integer", minimum: 1, maximum: 100, default: 50 } },
+            { name: "filter", in: "query", required: false, schema: { type: "string", enum: ["all", "successful", "booked", "interested", "follow", "denied"] } },
+            { name: "query", in: "query", required: false, schema: { type: "string" } },
           ],
           responses: { "200": { description: "Conversation list" } },
         },
@@ -365,6 +592,38 @@ export async function GET() {
             },
           },
           responses: { "200": { description: "Reply sent" }, "409": { description: "No existing conversation" }, "429": { description: "Daily message limit reached" } },
+        },
+      },
+      "/api/agent/v1/workspaces": {
+        get: {
+          operationId: "listWorkspaces",
+          summary:
+            "List workspaces the token owner already has, and mark which one this token is bound to.",
+          responses: { "200": { description: "Owned workspace list" } },
+        },
+      },
+      "/api/agent/v1/workspaces/switch": {
+        post: {
+          operationId: "switchWorkspace",
+          summary:
+            "Rebind this Bearer token to another owned workspace. Later calls on the same token hit that workspace. Does not mint a new key or create a workspace.",
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["workspaceId"],
+                  properties: { workspaceId: { type: "string" } },
+                },
+              },
+            },
+          },
+          responses: {
+            "200": { description: "Token rebound to the target workspace" },
+            "403": { description: "Local mode or plan does not allow the target" },
+            "404": { description: "Workspace not found" },
+          },
         },
       },
       "/api/agent/v1/settings": {

@@ -169,10 +169,12 @@ function timeAgo(iso?: string) {
 function Avatar({
   name,
   avatarUrl,
+  leadId,
   size = "md",
 }: {
   name: string;
   avatarUrl?: string;
+  leadId?: string;
   size?: "sm" | "md" | "lg";
 }) {
   const sizeClass =
@@ -191,6 +193,7 @@ function Avatar({
     <LeadAvatar
       name={name}
       avatarUrl={avatarUrl}
+      leadId={leadId}
       className={`${sizeClass} bg-[#0a66c2]`}
       initialsClassName={`${textClass} font-semibold text-white`}
     />
@@ -639,6 +642,7 @@ export default function MessagesView({
                         <Avatar
                           name={thread.profileName}
                           avatarUrl={thread.avatarUrl}
+                          leadId={thread.lead?.id}
                           size="md"
                         />
                         <div className="min-w-0 flex-1">
@@ -706,6 +710,7 @@ export default function MessagesView({
                       <Avatar
                         name={selected.profileName}
                         avatarUrl={selected.avatarUrl}
+                        leadId={selected.lead?.id}
                         size="md"
                       />
                       <div className="min-w-0 flex-1">
@@ -782,6 +787,7 @@ export default function MessagesView({
                                 <Avatar
                                   name={selected.profileName}
                                   avatarUrl={selected.avatarUrl}
+                                  leadId={selected.lead?.id}
                                   size="sm"
                                 />
                               ) : null}

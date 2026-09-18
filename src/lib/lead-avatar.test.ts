@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+  durableLeadAvatarUrl,
   httpsAvatarUrl,
   isExpiredLinkedInMediaUrl,
   isLinkedInMediaUrl,
@@ -56,6 +57,13 @@ describe("proxiedAvatarUrl", () => {
     const source = "https://media.licdn.com/dms/image/v2/abc.jpg?e=1784764800&t=2";
     expect(isExpiredLinkedInMediaUrl(source, 1_789_600_000_000)).toBe(true);
     expect(proxiedAvatarUrl(source, 1_789_600_000_000)).toBeUndefined();
+  });
+});
+
+describe("durableLeadAvatarUrl", () => {
+  test("keys the same-origin photo by lead id so an expired LinkedIn token does not blank every page", () => {
+    expect(durableLeadAvatarUrl("lead-1")).toBe("/api/app/avatar?leadId=lead-1");
+    expect(durableLeadAvatarUrl("")).toBeUndefined();
   });
 });
 

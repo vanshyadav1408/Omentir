@@ -1,5 +1,8 @@
 import { auth } from "@/lib/server/auth";
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
+import { httpsAvatarUrl, isExpiredLinkedInMediaUrl } from "@/lib/lead-avatar";
+import { queueLeadAvatarPersist } from "@/lib/server/lead-avatar-cache";
+import { syncLeadAvatarsFromInboxThreads } from "@/lib/server/lead-avatar-sync";
 import {
   getLeadsByIds,
   listActivityDays,
@@ -78,7 +81,20 @@ async function loadFirestoreResource(
   if (resource === "agents") return { agents: await listAgents(workspaceId) };
   if (resource === "agentApiKeys") return { agentApiKeys: await listAgentApiKeys(workspaceId) };
   if (resource === "groups") return { groups: await listGroups(workspaceId) };
-  if (resource === "leadPreviews") return { leads: await listLeadPreviews(workspaceId) };
+  if (resource === "leadPreviews") {
+    const leads = await listLeadPreviews(workspaceId);
+    after(() => {
+      let warmed = 0;
+      for (const lead of leads) {
+        if (warmed >= 50) break;
+        const url = httpsAvatarUrl(lead.avatarUrl);
+        if (!url || isExpiredLinkedInMediaUrl(url)) continue;
+        queueLeadAvatarPersist(lead.id, workspaceId, url);
+        warmed += 1;
+      }
+    });
+    return { leads };
+  }
   if (resource === "leadDashboardPreviews") {
     return { leads: await cachedLeadDashboardPreviews(workspaceId, cache) };
   }
@@ -327,10 +343,19 @@ export async function GET(request: Request) {
         }
       }),
     );
+    const threads = inboxes
+      .flat()
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+    after(() =>
+      syncLeadAvatarsFromInboxThreads(workspace.id, threads).catch((error) => {
+        console.error(
+          "[sidebar-data] lead avatar sync failed:",
+          error instanceof Error ? error.message : error,
+        );
+      }),
+    );
     return NextResponse.json({
-      threads: inboxes
-        .flat()
-        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()),
+      threads,
       senderAccounts: uniqueAccounts.map((account) => ({
         accountId: account.accountId,
         displayName: account.displayName,

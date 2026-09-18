@@ -42,52 +42,65 @@ function waitMinutesFromAction(action: CampaignSequenceAction) {
   return Math.min(10_080, minutes);
 }
 
+export const outreachSequenceActionSchema = campaignSequenceActionSchema;
+
+export function campaignStepsFromActions(actions: unknown): CampaignStep[] | null {
+  const parsed = z.array(campaignSequenceActionSchema).min(1).max(20).safeParse(actions);
+  if (!parsed.success) return null;
+
+  const steps: CampaignStep[] = [];
+  parsed.data
+    .filter((action) => action.enabled !== false)
+    .forEach((action, index) => {
+      const id = String(action.id || `${action.kind || "step"}-${index}`).trim();
+      if (index > 0) {
+        steps.push({
+          id: `wait-${id}`,
+          type: "wait",
+          delayMinutes: waitMinutesFromAction(action),
+        });
+      }
+
+      if (action.kind === "connect") {
+        // AI outreach never attaches an invitation note: bare connection
+        // requests only. Notes are sent solely when the user wrote one.
+        const noteTemplate =
+          action.mode === "ai" || action.includeNote === false
+            ? ""
+            : String(action.manualMessage || "").trim();
+        steps.push({
+          id,
+          type: "connect",
+          includeNote: Boolean(noteTemplate),
+          noteTemplate,
+        });
+        return;
+      }
+
+      steps.push({
+        id,
+        type: "message",
+        messageTemplate:
+          action.mode === "ai" ? "" : String(action.manualMessage || "").trim(),
+      });
+    });
+
+  return steps.length ? steps : null;
+}
+
+export function sequenceHasManualCopy(steps: CampaignStep[]) {
+  return steps.some((step) => {
+    if (step.type === "connect") return step.includeNote && Boolean(step.noteTemplate.trim());
+    if (step.type === "message") return Boolean(step.messageTemplate.trim());
+    return false;
+  });
+}
+
 export function parseCampaignSequence(value: FormDataEntryValue | null): CampaignStep[] | null {
   if (typeof value !== "string" || !value.trim()) return null;
 
   try {
-    const parsed = z.array(campaignSequenceActionSchema).safeParse(JSON.parse(value));
-    if (!parsed.success) return null;
-    const actions = parsed.data;
-
-    const steps: CampaignStep[] = [];
-    actions
-      .filter((action) => action.enabled !== false)
-      .forEach((action, index) => {
-        const id = String(action.id || `${action.kind || "step"}-${index}`).trim();
-        if (index > 0) {
-          steps.push({
-            id: `wait-${id}`,
-            type: "wait",
-            delayMinutes: waitMinutesFromAction(action),
-          });
-        }
-
-        if (action.kind === "connect") {
-          // AI outreach never attaches an invitation note: bare connection
-          // requests only. Notes are sent solely when the user wrote one.
-          const noteTemplate =
-            action.mode === "ai" || action.includeNote === false
-              ? ""
-              : String(action.manualMessage || "").trim();
-          steps.push({
-            id,
-            type: "connect",
-            includeNote: Boolean(noteTemplate),
-            noteTemplate,
-          });
-          return;
-        }
-
-        steps.push({
-          id,
-          type: "message",
-          messageTemplate:
-            action.mode === "ai" ? "" : String(action.manualMessage || "").trim(),
-        });
-      });
-
-    return steps.length ? steps : null;
+    return campaignStepsFromActions(JSON.parse(value));
   } catch {
     return null;
   }

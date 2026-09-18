@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import {
   getLinkedInAccountByAccountId,
@@ -13,7 +13,8 @@ import {
   applyConnectionAccepted,
   enrollmentCanReceiveAcceptance,
   findLeadForInboundEvent,
-  processInboundMessage,
+  finishInboundReplyClassification,
+  persistInboundReply,
 } from "@/lib/server/inbound";
 import { passwordsMatch } from "@/lib/local-session";
 import { unipileWebhookProvidedSecret } from "@/lib/unipile-webhook-auth";
@@ -330,7 +331,7 @@ export async function POST(request: NextRequest) {
   const providerMessageId =
     payload.message_id || (typeof payload.message === "object" ? payload.message.id : undefined);
 
-  const result = await processInboundMessage({
+  const persisted = await persistInboundReply({
     workspaceId,
     lead,
     body,
@@ -340,15 +341,17 @@ export async function POST(request: NextRequest) {
     account,
     notifyEmailOverride: payload.user_email,
   });
-  if (result.duplicate) {
-    revalidateWorkspaceDataPages();
+  revalidateWorkspaceDataPages();
+  if (persisted.skip) {
     return NextResponse.json({ ok: true, duplicate: true });
   }
-  revalidateWorkspaceDataPages();
+  after(async () => {
+    await finishInboundReplyClassification(persisted);
+    revalidateWorkspaceDataPages();
+  });
 
   return NextResponse.json({
     ok: true,
-    intent: result.intent,
-    confidence: result.confidence,
+    duplicate: persisted.duplicate,
   });
 }

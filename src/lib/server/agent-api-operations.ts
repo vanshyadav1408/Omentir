@@ -3,6 +3,7 @@ import "server-only";
 import { z } from "zod";
 export { agentMcpTools, agentToolInputSchemas } from "@/lib/agent-tools";
 import {
+  allowOutreachOnAgent,
   claimActionSlot,
   consumeDailyQuota,
   hasDailyQuotaRemaining,
@@ -31,6 +32,7 @@ import {
   setOutreachPolicyForGroup,
   setSendWindowForGroup,
   updateAgent,
+  updateCampaign,
   updateLead,
   updateWorkspaceSettings,
   updateWorkspaceTimezone,
@@ -38,7 +40,12 @@ import {
 } from "./data";
 import { sumAgentLeadTotals } from "@/lib/agent-lead-totals";
 import { NEW_AGENT_MESSAGE_TONE, sendWindowForOutreachAttach } from "@/lib/agent-setup-defaults";
-import { buildDefaultAiOutreachSteps } from "./campaign-sequence";
+import {
+  buildDefaultAiOutreachSteps,
+  campaignStepsFromActions,
+  outreachSequenceActionSchema,
+  sequenceHasManualCopy,
+} from "./campaign-sequence";
 import { listScheduledActions } from "./scheduled-actions";
 import { SPACING_MINUTES } from "./send-schedule";
 import {
@@ -49,7 +56,31 @@ import {
 import { sendLinkedInMessage } from "./unipile";
 import { isValidTimeZone, resolveTimeZone } from "@/lib/time-zone";
 import type { AgentApiContext } from "./agent-api";
-import type { Agent, Campaign, CampaignReplyHandling, SendWindow } from "./types";
+import type { Agent, Campaign, CampaignReplyHandling, CampaignStep, SendWindow } from "./types";
+import {
+  conversationCategory,
+  conversationHasMeetingBooked,
+} from "@/lib/conversation-category";
+import {
+  isInStatsRange,
+  statsRangeStartMs,
+  WORKSPACE_STATS_RANGES,
+} from "@/lib/workspace-stats-range";
+import {
+  analyzeWebsiteResource,
+  completeFollowUpResource,
+  deleteGroupResource,
+  draftAgentSetupResource,
+  exportLeadsResource,
+  getChatMessagesResource,
+  importCsvLeadsResource,
+  listInboxResource,
+  listWorkspaceResources,
+  replyToChatResource,
+  runScheduledActionNowResource,
+  stopLeadOutreachResource,
+  switchWorkspaceResource,
+} from "./agent-api-actions";
 import {
   productProfileIsReadyForSteal,
   targetingFromProductProfile,
@@ -115,6 +146,9 @@ const agentOutreachFields = {
   // Default true so the user is emailed when the first reply lands.
   notifyOnReply: z.boolean().optional(),
   sendWindow: sendWindowSchema.optional(),
+  steps: z.array(outreachSequenceActionSchema).min(1).max(20).optional(),
+  messageTone: z.enum(["professional", "conversational", "direct"]).optional(),
+  campaignGoal: z.enum(["warm", "demo"]).optional(),
 } as const;
 
 export const createAgentPayloadSchema = z
@@ -123,9 +157,10 @@ export const createAgentPayloadSchema = z
     groupName: z.string().trim().min(1).max(120),
     linkedInAccountId: z.string().trim().min(1).optional(),
     mode: z
-      .enum(["prompt", "filters", "signals", "steal_customers"])
+      .enum(["prompt", "filters", "signals", "steal_customers", "outreach"])
       .default("signals"),
     // Optional for steal_customers: My Product fills prompt/filters server-side.
+    // Optional for outreach: CSV import supplies the people.
     prompt: z.string().trim().max(4000).optional(),
     filters: agentFiltersSchema.optional(),
     signalSources: agentSignalSourcesSchema.default({
@@ -133,6 +168,7 @@ export const createAgentPayloadSchema = z
       founderUrls: [],
       keywords: [],
     }),
+    csvContents: z.string().max(1_000_000).optional(),
     ...agentOutreachFields,
   })
   .superRefine((value, ctx) => {
@@ -145,6 +181,16 @@ export const createAgentPayloadSchema = z
           path: ["signalSources"],
           message:
             "Steal Customers requires at least one competitorUrls or founderUrls LinkedIn URL (company, founder, or employee profile).",
+        });
+      }
+      return;
+    }
+    if (value.mode === "outreach") {
+      if (value.csvContents !== undefined && !value.csvContents.trim()) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["csvContents"],
+          message: "csvContents is empty",
         });
       }
       return;
@@ -172,7 +218,7 @@ export const updateAgentPayloadSchema = z.object({
   name: z.string().trim().min(1).max(120).optional(),
   groupName: z.string().trim().min(1).max(120).optional(),
   linkedInAccountId: z.string().trim().min(1).optional(),
-  mode: z.enum(["prompt", "filters", "signals", "steal_customers"]).optional(),
+  mode: z.enum(["prompt", "filters", "signals", "steal_customers", "outreach"]).optional(),
   prompt: z.string().trim().min(1).max(4000).optional(),
   filters: agentFiltersSchema.optional(),
   signalSources: agentSignalSourcesSchema.optional(),
@@ -232,6 +278,7 @@ export const listLeadsPayloadSchema = z.object({
   outreachStatus: z.enum(["new", "invited", "connected", "messaged", "replied", "declined", "stopped"]).optional(),
   sortBy: z.enum(["fit_score_desc", "fit_score_asc", "newest", "oldest"]).default("fit_score_desc"),
   limit: z.number().int().min(1).max(200).default(100),
+  offset: z.number().int().min(0).default(0),
 });
 
 export const getLeadPayloadSchema = z.object({
@@ -240,6 +287,12 @@ export const getLeadPayloadSchema = z.object({
 
 export const listConversationsPayloadSchema = z.object({
   limit: z.number().int().min(1).max(100).default(50),
+  filter: z.enum(["all", "successful", "booked", "interested", "follow", "denied"]).default("all"),
+  query: z.string().trim().max(200).optional(),
+});
+
+export const getStatsPayloadSchema = z.object({
+  range: z.enum(WORKSPACE_STATS_RANGES).default("all"),
 });
 
 export const listActivityPayloadSchema = z.object({
@@ -254,7 +307,7 @@ export const listScheduledActionsPayloadSchema = z.object({
 
 export async function getAgentWorkspaceContext(context: AgentApiContext) {
   const workspaceId = context.workspace.id;
-  const [profile, linkedInAccounts, agents, groups, leads, quotaUsage] =
+  const [profile, linkedInAccounts, agents, groups, leads, quotaUsage, workspaces] =
     await Promise.all([
       getProductProfile(workspaceId),
       listLinkedInAccounts(workspaceId),
@@ -262,6 +315,7 @@ export async function getAgentWorkspaceContext(context: AgentApiContext) {
       listGroups(workspaceId),
       listLeads(workspaceId),
       getDailyQuotaUsage(workspaceId, context.workspace.timezone),
+      listWorkspaceResources(context),
     ]);
 
   const timeZone = resolveTimeZone(context.workspace.timezone);
@@ -281,6 +335,8 @@ export async function getAgentWorkspaceContext(context: AgentApiContext) {
       timeZone,
       settings: context.workspace.settings,
     },
+    currentWorkspaceId: workspaces.currentWorkspaceId,
+    workspaces: workspaces.workspaces,
     // What the scheduler will actually allow today, so progress can be
     // explained without guessing why a queue is not moving.
     sending: {
@@ -339,6 +395,7 @@ export async function getAgentWorkspaceContext(context: AgentApiContext) {
     },
     resources: {
       mcp: "/api/agent/v1/mcp",
+      workspaces: "/api/agent/v1/workspaces",
       productProfile: "/api/agent/v1/product-profile",
       linkedinAccounts: "/api/agent/v1/linkedin-accounts",
       agents: "/api/agent/v1/agents",
@@ -347,6 +404,7 @@ export async function getAgentWorkspaceContext(context: AgentApiContext) {
       activity: "/api/agent/v1/activity",
       scheduledActions: "/api/agent/v1/scheduled-actions",
       conversations: "/api/agent/v1/conversations",
+      inbox: "/api/agent/v1/inbox",
       stats: "/api/agent/v1/stats",
       settings: "/api/agent/v1/settings",
       openapi: "/api/agent/v1/openapi.json",
@@ -357,9 +415,16 @@ export async function getAgentWorkspaceContext(context: AgentApiContext) {
 
 // Headline numbers shown on the Omentir dashboard, computed with the exact
 // same rules as overview-view.tsx so the API and the UI never disagree.
-// Unlike the dashboard, these are all-time totals (the API has no range picker).
-export async function getWorkspaceStatsResource(context: AgentApiContext) {
+// range defaults to all-time so existing callers keep the lifetime totals.
+export async function getWorkspaceStatsResource(context: AgentApiContext, payload?: unknown) {
+  const parsed = getStatsPayloadSchema.safeParse(payload || {});
+  if (!parsed.success) {
+    throw new AgentApiOperationError("Invalid stats payload.", 400, parsed.error.flatten());
+  }
+
   const workspaceId = context.workspace.id;
+  const timeZone = resolveTimeZone(context.workspace.timezone);
+  const rangeStart = statsRangeStartMs(parsed.data.range, timeZone);
   const [profile, leads, enrollments, agents, groups] = await Promise.all([
     getProductProfile(workspaceId),
     listLeads(workspaceId),
@@ -374,20 +439,28 @@ export async function getWorkspaceStatsResource(context: AgentApiContext) {
   const leadStatusById = new Map(leads.map((lead) => [lead.id, lead.outreachStatus]));
   const stageOf = (enrollment: (typeof enrollments)[number]) =>
     combinedOutreachStage(enrollment.status, leadStatusById.get(enrollment.leadId));
+  // Overview only windows invites and messages. Pipeline and accepted
+  // connections stay lifetime so a 7-day view does not shrink deal size.
   const invitationsSent = enrollments.filter(
-    (enrollment) => stageOf(enrollment) >= STAGE_CONTACTED,
+    (enrollment) =>
+      stageOf(enrollment) >= STAGE_CONTACTED &&
+      isInStatsRange(enrollment.connectionSentAt, rangeStart),
   ).length;
   const messagesSent = enrollments.filter(
-    (enrollment) => stageOf(enrollment) >= STAGE_MESSAGED,
+    (enrollment) =>
+      stageOf(enrollment) >= STAGE_MESSAGED && isInStatsRange(enrollment.updatedAt, rangeStart),
   ).length;
   const repliesReceived = enrollments.filter(
-    (enrollment) => stageOf(enrollment) >= STAGE_REPLIED,
+    (enrollment) =>
+      stageOf(enrollment) >= STAGE_REPLIED && isInStatsRange(enrollment.updatedAt, rangeStart),
   ).length;
   const averageTicketSize = profile?.averageTicketSize;
   const pipelineGenerated =
     averageTicketSize !== undefined ? acceptedConnections * averageTicketSize : null;
 
   return {
+    range: parsed.data.range,
+    timeZone,
     stats: {
       totalLeads,
       hotOpportunities,
@@ -422,6 +495,9 @@ function agentOutreachSummary(agent: Agent, campaigns: Campaign[]) {
       replyHandling: primary?.replyHandling || null,
       bookingLink: primary?.bookingLink || null,
       notifyOnReply: primary?.notifyOnReply ?? null,
+      messageTone: primary?.messageTone || null,
+      campaignGoal: primary?.campaignGoal || null,
+      stepCount: primary?.steps?.length || 0,
     },
   };
 }
@@ -449,7 +525,26 @@ async function resolveBookingLinkForMode(
   );
 }
 
-async function ensureDefaultOutreachCampaign(input: {
+function parseOutreachSteps(value: unknown): CampaignStep[] | undefined {
+  if (value === undefined) return undefined;
+  const steps = campaignStepsFromActions(value);
+  if (!steps) {
+    throw new AgentApiOperationError(
+      "Invalid outreach steps. Pass 1-20 connect/message/follow actions.",
+      400,
+    );
+  }
+  return steps;
+}
+
+const EMPTY_OUTREACH_FILTERS = {
+  titles: [] as string[],
+  industries: [] as string[],
+  locations: [] as string[],
+  keywords: [] as string[],
+};
+
+async function ensureOutreachCampaign(input: {
   workspaceId: string;
   agent: Agent;
   linkedInAccountId: string;
@@ -457,14 +552,23 @@ async function ensureDefaultOutreachCampaign(input: {
   bookingLink: string;
   notifyOnReply: boolean;
   sendWindow: SendWindow;
+  steps?: CampaignStep[];
+  messageTone?: string;
+  campaignGoal?: "warm" | "demo";
 }) {
-  const profile = await getProductProfile(input.workspaceId);
-  // AI-written messages need product context, same gate as the app launch path.
-  if (!(profile?.description || profile?.painPointsText)) {
-    throw new AgentApiOperationError(
-      "Add a product profile (description or pain points) before setting up AI outreach.",
-      409,
-    );
+  const steps = input.steps ?? buildDefaultAiOutreachSteps();
+  const usesAiMessages = steps.some(
+    (step) => step.type === "message" && !step.messageTemplate.trim(),
+  );
+  if (usesAiMessages) {
+    const profile = await getProductProfile(input.workspaceId);
+    // AI-written messages need product context, same gate as the app launch path.
+    if (!(profile?.description || profile?.painPointsText)) {
+      throw new AgentApiOperationError(
+        "Add a product profile (description or pain points) before setting up AI outreach.",
+        409,
+      );
+    }
   }
 
   const campaign = await createCampaign(input.workspaceId, {
@@ -472,12 +576,13 @@ async function ensureDefaultOutreachCampaign(input: {
     groupId: input.agent.targetGroupId,
     linkedInAccountId: input.linkedInAccountId,
     status: "active",
-    steps: buildDefaultAiOutreachSteps(),
+    steps,
     replyHandling: input.replyHandling,
     ...(input.bookingLink ? { bookingLink: input.bookingLink } : {}),
     notifyOnReply: input.notifyOnReply,
     sendWindow: input.sendWindow,
-    messageTone: NEW_AGENT_MESSAGE_TONE,
+    messageTone: input.messageTone || NEW_AGENT_MESSAGE_TONE,
+    ...(input.campaignGoal ? { campaignGoal: input.campaignGoal } : {}),
   });
   await enrollGroupInCampaign(input.workspaceId, campaign);
   return campaign;
@@ -574,6 +679,18 @@ export async function createAgentResource(context: AgentApiContext, payload: unk
     );
   }
 
+  const isOutreachOnly = input.mode === "outreach";
+  const customSteps = parseOutreachSteps(input.steps);
+  if (isStealCustomers && customSteps && sequenceHasManualCopy(customSteps)) {
+    throw new AgentApiOperationError(
+      "Steal Customers cannot use manual templates. Post and comment context only work with AI outreach.",
+      400,
+    );
+  }
+  if (input.csvContents && !isOutreachOnly) {
+    throw new AgentApiOperationError("csvContents is only valid for mode=outreach.", 400);
+  }
+
   let prompt = input.prompt?.trim() || "";
   let filters = input.filters;
   if (isStealCustomers) {
@@ -587,13 +704,17 @@ export async function createAgentResource(context: AgentApiContext, payload: unk
     const targeting = targetingFromProductProfile(productProfile);
     prompt = targeting.prompt;
     filters = targeting.filters;
+  } else if (isOutreachOnly) {
+    filters = filters || EMPTY_OUTREACH_FILTERS;
   } else if (!filters) {
     throw new AgentApiOperationError("filters are required.", 400);
   }
 
   const wantsOutreach =
     isStealCustomers ||
+    isOutreachOnly ||
     input.setupOutreach === true ||
+    customSteps !== undefined ||
     input.replyHandling !== undefined ||
     input.bookingLink !== undefined ||
     input.notifyOnReply !== undefined;
@@ -619,8 +740,29 @@ export async function createAgentResource(context: AgentApiContext, payload: unk
     leadsOnly: wantsOutreach ? undefined : true,
   });
 
+  let imported = 0;
+  if (isOutreachOnly && input.csvContents) {
+    try {
+      const result = await importCsvLeadsResource(context, {
+        agentId: agent.id,
+        csvContents: input.csvContents,
+      });
+      imported = result.imported;
+    } catch (error) {
+      try {
+        await deleteAgent(context.workspace.id, agent.id);
+      } catch (cleanupError) {
+        console.error(
+          "[agent-api] failed to clean up agent after CSV import error:",
+          cleanupError,
+        );
+      }
+      throw error;
+    }
+  }
+
   // Same launch path as the app: when the caller asks for outreach (or picks a
-  // reply mode), attach the default AI sequence and reply policy immediately.
+  // reply mode), attach the sequence and reply policy immediately.
   // Steal customers always needs AI outreach (comment/post context).
   let outreachConfigured = false;
   let outreachSummary: {
@@ -628,6 +770,8 @@ export async function createAgentResource(context: AgentApiContext, payload: unk
     bookingLink: string | null;
     notifyOnReply: boolean;
     sendWindow: SendWindow;
+    messageTone: string;
+    campaignGoal: "warm" | "demo" | null;
   } | null = null;
 
   if (wantsOutreach) {
@@ -640,7 +784,7 @@ export async function createAgentResource(context: AgentApiContext, payload: unk
     const notifyOnReply = input.notifyOnReply ?? true;
     const sendWindow = sendWindowForOutreachAttach(input.sendWindow, undefined);
     try {
-      await ensureDefaultOutreachCampaign({
+      await ensureOutreachCampaign({
         workspaceId: context.workspace.id,
         agent,
         linkedInAccountId: account.id,
@@ -648,6 +792,9 @@ export async function createAgentResource(context: AgentApiContext, payload: unk
         bookingLink,
         notifyOnReply,
         sendWindow,
+        steps: customSteps,
+        messageTone: input.messageTone,
+        campaignGoal: input.campaignGoal,
       });
       outreachConfigured = true;
       outreachSummary = {
@@ -655,6 +802,8 @@ export async function createAgentResource(context: AgentApiContext, payload: unk
         bookingLink: bookingLink || null,
         notifyOnReply,
         sendWindow,
+        messageTone: input.messageTone || NEW_AGENT_MESSAGE_TONE,
+        campaignGoal: input.campaignGoal || null,
       };
     } catch (error) {
       // Roll back the agent so a failed outreach attach does not leave a
@@ -675,6 +824,7 @@ export async function createAgentResource(context: AgentApiContext, payload: unk
   return {
     agent,
     leadGroup: { id: agent.targetGroupId, name: agent.targetGroupName },
+    ...(imported ? { imported } : {}),
     discovery: {
       status: "scheduled",
       // The first run is due immediately - discovery is not scheduled for some
@@ -685,7 +835,9 @@ export async function createAgentResource(context: AgentApiContext, payload: unk
       mode: agent.mode,
       guidance: isSteal
         ? "Steal Customers: scans recent competitor and founder/employee posts, keeps fresh intent-bearing comments (max ~7 days), scores likely buyers from Workspace, and stores post URL + post text + comment + profile. Use omentir_list_leads / omentir_get_lead on this lead group."
-        : "Use omentir_list_leads with this lead group id to inspect results.",
+        : isOutreachOnly
+          ? "Outreach-only: no discovery run. Import more profiles with omentir_import_csv_leads."
+          : "Use omentir_list_leads with this lead group id to inspect results.",
     },
     outreach: outreachConfigured
       ? {
@@ -693,12 +845,14 @@ export async function createAgentResource(context: AgentApiContext, payload: unk
           ...outreachSummary,
           guidance: isSteal
             ? "AI outreach is required for Steal Customers (manual templates cannot carry post+comment context). replyHandling controls when you are emailed. omentir_list_scheduled_actions shows planned sends."
-            : "Default AI outreach is active. replyHandling controls when you are emailed: handoff = first reply, ai_until_interest = qualified interest, ai_until_booked = meeting confirmed. omentir_list_scheduled_actions shows planned sends.",
+            : customSteps
+              ? "Custom outreach sequence is active. omentir_list_scheduled_actions shows planned sends."
+              : "Default AI outreach is active. replyHandling controls when you are emailed: handoff = first reply, ai_until_interest = qualified interest, ai_until_booked = meeting confirmed. omentir_list_scheduled_actions shows planned sends.",
         }
       : {
           configured: false,
           guidance:
-            "This lead finder discovers and scores leads only. Call omentir_update_agent with setupOutreach true (and optional replyHandling / bookingLink), or set up outreach in the Omentir app.",
+            "This lead finder discovers and scores leads only. Call omentir_update_agent with setupOutreach true, steps, or replyHandling to attach outreach.",
         },
   };
 }
@@ -806,16 +960,26 @@ export async function updateAgentResource(context: AgentApiContext, payload: unk
       ? 0
       : await setSendWindowForGroup(context.workspace.id, updated.targetGroupId, input.sendWindow);
 
-  // Reply mode, calendar link, and handoff email preference. If the agent has
-  // no sequence yet and the caller asks for outreach policy, create the default
-  // AI sequence first so MCP can finish a full launch without the GUI.
-  // Steal customers always needs AI outreach (post + comment context).
+  const customSteps = parseOutreachSteps(input.steps);
+  if (updated.mode === "steal_customers" && customSteps && sequenceHasManualCopy(customSteps)) {
+    throw new AgentApiOperationError(
+      "Steal Customers cannot use manual templates. Post and comment context only work with AI outreach.",
+      400,
+    );
+  }
+
+  // Reply mode, calendar link, sequence, and tone. If the agent has no sequence
+  // yet and the caller asks for outreach, attach one. A leads-only finder can
+  // gain outreach when the caller asks for it (same as launching outreach in UI).
   const wantsOutreachPolicy =
     updated.mode === "steal_customers" ||
     input.setupOutreach === true ||
+    customSteps !== undefined ||
     input.replyHandling !== undefined ||
     input.bookingLink !== undefined ||
-    input.notifyOnReply !== undefined;
+    input.notifyOnReply !== undefined ||
+    input.messageTone !== undefined ||
+    input.campaignGoal !== undefined;
 
   let outreach: {
     configured: boolean;
@@ -824,6 +988,8 @@ export async function updateAgentResource(context: AgentApiContext, payload: unk
     replyHandling?: CampaignReplyHandling | null;
     bookingLink?: string | null;
     notifyOnReply?: boolean | null;
+    messageTone?: string | null;
+    campaignGoal?: "warm" | "demo" | null;
   } | undefined;
 
   if (wantsOutreachPolicy) {
@@ -852,15 +1018,14 @@ export async function updateAgentResource(context: AgentApiContext, payload: unk
     // Missing stored window only applies when creating outreach on an agent
     // that has none yet. Existing campaigns keep their own sendWindow above.
     const sendWindow = sendWindowForOutreachAttach(input.sendWindow, existing?.sendWindow);
+    const messageTone = input.messageTone ?? existing?.messageTone ?? NEW_AGENT_MESSAGE_TONE;
+    const campaignGoal = input.campaignGoal ?? existing?.campaignGoal;
 
     let created = false;
     let sequencesUpdated = 0;
     if (!campaigns.length) {
       if (updated.leadsOnly) {
-        throw new AgentApiOperationError(
-          "This agent is leads-only and cannot run outreach. Create a normal lead finder instead.",
-          409,
-        );
+        updated = await allowOutreachOnAgent(context.workspace.id, updated.id);
       }
       const accountId =
         linkedInAccountId ||
@@ -872,7 +1037,7 @@ export async function updateAgentResource(context: AgentApiContext, payload: unk
           409,
         );
       }
-      await ensureDefaultOutreachCampaign({
+      await ensureOutreachCampaign({
         workspaceId: context.workspace.id,
         agent: updated,
         linkedInAccountId: accountId,
@@ -880,6 +1045,9 @@ export async function updateAgentResource(context: AgentApiContext, payload: unk
         bookingLink,
         notifyOnReply,
         sendWindow,
+        steps: customSteps,
+        messageTone,
+        campaignGoal,
       });
       created = true;
       sequencesUpdated = 1;
@@ -891,9 +1059,18 @@ export async function updateAgentResource(context: AgentApiContext, payload: unk
           replyHandling,
           bookingLink,
           notifyOnReply,
+          messageTone,
+          ...(campaignGoal ? { campaignGoal } : {}),
           ...(input.sendWindow !== undefined ? { sendWindow: input.sendWindow } : {}),
         },
       );
+      if (customSteps) {
+        await Promise.all(
+          campaigns.map((campaign) =>
+            updateCampaign(context.workspace.id, campaign.id, { steps: customSteps }),
+          ),
+        );
+      }
     }
 
     outreach = {
@@ -903,6 +1080,8 @@ export async function updateAgentResource(context: AgentApiContext, payload: unk
       replyHandling,
       bookingLink: bookingLink || null,
       notifyOnReply,
+      messageTone,
+      campaignGoal: campaignGoal || null,
     };
   }
 
@@ -958,8 +1137,9 @@ export async function listLeadResources(context: AgentApiContext, payload: unkno
     throw new AgentApiOperationError("Invalid leads payload.", 400, parsed.error.flatten());
   }
 
-  const { groupId, query, minFitScore, outreachStatus, sortBy, limit } = parsed.data;
-  let leads = await listLeads(context.workspace.id, groupId, 500);
+  const { groupId, query, minFitScore, outreachStatus, sortBy, limit, offset } = parsed.data;
+  // No 500 cap: the Leads page loads every row, and agents need the same set.
+  let leads = await listLeads(context.workspace.id, groupId);
   const normalizedQuery = query?.toLocaleLowerCase();
 
   if (normalizedQuery) {
@@ -978,7 +1158,13 @@ export async function listLeadResources(context: AgentApiContext, payload: unkno
     return b.fitScore - a.fitScore;
   });
 
-  return { leads: leads.slice(0, limit), totalMatched: leads.length, returned: Math.min(leads.length, limit) };
+  const page = leads.slice(offset, offset + limit);
+  return {
+    leads: page,
+    totalMatched: leads.length,
+    returned: page.length,
+    offset,
+  };
 }
 
 export async function getLeadResource(context: AgentApiContext, payload: unknown) {
@@ -1000,8 +1186,27 @@ export async function listConversationResources(context: AgentApiContext, payloa
     throw new AgentApiOperationError("Invalid conversations payload.", 400, parsed.error.flatten());
   }
 
+  const { limit, filter, query } = parsed.data;
+  const conversations = await listConversations(context.workspace.id, 500);
+  const normalizedQuery = query?.toLocaleLowerCase();
+  const filtered = conversations.filter((conversation) => {
+    if (filter === "booked" && !conversationHasMeetingBooked(conversation)) return false;
+    if (filter !== "all" && filter !== "booked" && conversationCategory(conversation) !== filter) {
+      return false;
+    }
+    if (!normalizedQuery) return true;
+    return (conversation.messages || []).some((message) =>
+      [message.body, message.senderName].some((value) =>
+        (value || "").toLocaleLowerCase().includes(normalizedQuery),
+      ),
+    );
+  });
+
   return {
-    conversations: await listConversations(context.workspace.id, parsed.data.limit),
+    filter,
+    conversations: filtered.slice(0, limit),
+    totalMatched: filtered.length,
+    returned: Math.min(filtered.length, limit),
   };
 }
 
@@ -1183,7 +1388,9 @@ export async function callAgentTool(
   args: unknown,
 ) {
   if (name === "omentir_get_context") return getAgentWorkspaceContext(context);
-  if (name === "omentir_get_stats") return getWorkspaceStatsResource(context);
+  if (name === "omentir_list_workspaces") return listWorkspaceResources(context);
+  if (name === "omentir_switch_workspace") return switchWorkspaceResource(context, args);
+  if (name === "omentir_get_stats") return getWorkspaceStatsResource(context, args);
   if (name === "omentir_list_agents") return listAgentResources(context);
   if (name === "omentir_get_product_profile") return getProductProfileResource(context);
   if (name === "omentir_update_product_profile") return updateProductProfileResource(context, args);
@@ -1202,5 +1409,18 @@ export async function callAgentTool(
   if (name === "omentir_resume_agent") return resumeAgentResource(context, args);
   if (name === "omentir_delete_agent") return deleteAgentResource(context, args);
   if (name === "omentir_reply_to_lead") return replyToLeadResource(context, args);
+  if (name === "omentir_draft_agent_setup") return draftAgentSetupResource(context);
+  if (name === "omentir_analyze_website") return analyzeWebsiteResource(context, args);
+  if (name === "omentir_import_csv_leads") return importCsvLeadsResource(context, args);
+  if (name === "omentir_export_leads") return exportLeadsResource(context, args);
+  if (name === "omentir_delete_group") return deleteGroupResource(context, args);
+  if (name === "omentir_run_scheduled_action_now") {
+    return runScheduledActionNowResource(context, args);
+  }
+  if (name === "omentir_stop_lead_outreach") return stopLeadOutreachResource(context, args);
+  if (name === "omentir_list_inbox") return listInboxResource(context, args);
+  if (name === "omentir_get_chat_messages") return getChatMessagesResource(context, args);
+  if (name === "omentir_reply_to_chat") return replyToChatResource(context, args);
+  if (name === "omentir_complete_follow_up") return completeFollowUpResource(context, args);
   throw new AgentApiOperationError(`Unknown tool: ${name}`, 404);
 }

@@ -92,7 +92,7 @@ The product is open source under the MIT license: https://github.com/vanshyadav1
 - OpenAPI: ${siteUrl}/api/agent/v1/openapi.json
 - Canonical URL list: ${siteUrl}/sitemap.xml
 
-Agents cannot create Omentir accounts or buy or change subscriptions.
+Agents can switch the same token to another workspace the owner already has. They cannot create Omentir accounts, buy or change subscriptions, connect LinkedIn, create or delete workspaces, or mint API keys.
 
 ## Product facts
 

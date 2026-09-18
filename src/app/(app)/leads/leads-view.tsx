@@ -20,7 +20,7 @@ import {
 } from "@/app/toast";
 import MobileHeaderPortal from "@/app/mobile-header-portal";
 import { useWorkspaceTimeZone } from "@/app/workspace-time-zone";
-import { zonedDayKey } from "@/lib/time-zone";
+import { buildLeadsCsv } from "@/lib/leads-csv";
 import type { ScheduledAction } from "@/lib/server/scheduled-actions";
 import { ActionDetails, resultMessage } from "@/app/(app)/actions/action-details";
 import { LeadAvatar } from "@/app/lead-avatar";
@@ -48,16 +48,6 @@ function LinkedInProfileLink({ href }: { href: string }) {
 
 const ALL_CONTACTS_TAB = "all";
 
-const OUTREACH_STATUS_LABELS: Record<LeadPreview["outreachStatus"], string> = {
-  new: "New",
-  invited: "Invited",
-  connected: "Connected",
-  messaged: "Messaged",
-  replied: "Replied",
-  declined: "Declined",
-  stopped: "Stopped",
-};
-
 function outreachEmptyCopy(status: LeadPreview["outreachStatus"]) {
   if (status === "replied") return "They replied. Continue the thread in Messages.";
   if (status === "stopped") return "Outreach is stopped.";
@@ -74,6 +64,7 @@ function LeadContact({ lead }: { lead: LeadPreview }) {
       <LeadAvatar
         name={lead.name}
         avatarUrl={lead.avatarUrl}
+        leadId={lead.id}
         className="h-10 w-10 bg-[#ba3871]"
         initialsClassName="text-[12px] font-semibold text-white"
       />
@@ -147,50 +138,6 @@ function LeadSignal({
   );
 }
 
-function csvCell(value: string) {
-  // Prefix cells that Excel/Sheets would evaluate as formulas.
-  const guarded = /^[=+\-@]/.test(value) ? `'${value}` : value;
-  return /[",\n\r]/.test(guarded) ? `"${guarded.replace(/"/g, '""')}"` : guarded;
-}
-
-function buildLeadsCsv(rows: LeadPreview[], timeZone: string) {
-  const header = [
-    "Name",
-    "Title",
-    "Company",
-    "Location",
-    "LinkedIn URL",
-    "AI Fit Score",
-    "Why They're a Great Fit",
-    "Summary",
-    "Signal",
-    "Signal URL",
-    "Outreach Status",
-    "Added",
-  ];
-  const lines = rows.map((lead) =>
-    [
-      lead.name,
-      lead.title,
-      lead.company,
-      lead.location,
-      lead.linkedInUrl,
-      String(lead.fitScore || 0),
-      (lead.scoreReasons || []).join("; "),
-      lead.summary,
-      lead.signalText || "",
-      lead.signalUrl || "",
-      OUTREACH_STATUS_LABELS[lead.outreachStatus] || lead.outreachStatus,
-      // The workspace's calendar day, not UTC's - a lead added at 11pm local
-      // otherwise exports under tomorrow's date.
-      zonedDayKey(lead.createdAt, timeZone),
-    ]
-      .map(csvCell)
-      .join(","),
-  );
-  return [header.map(csvCell).join(","), ...lines].join("\r\n");
-}
-
 function downloadCsv(filename: string, csv: string) {
   // UTF-8 BOM so Excel opens accented names correctly.
   const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
@@ -252,18 +199,22 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
   );
   const openAction = actionsForOpenLead.find((action) => action.id === openActionId) || actionsForOpenLead[0];
 
-  async function loadScheduledActions() {
-    setScheduledLoading(true);
-    setScheduledError("");
+  async function loadScheduledActions(options?: { quiet?: boolean }) {
+    if (!options?.quiet) {
+      setScheduledLoading(true);
+      setScheduledError("");
+    }
     try {
       const items = await listScheduledActionsAction();
       setScheduledActions(items);
       return items;
     } catch (error) {
-      setScheduledError(userFacingError(error, "Outreach details could not be loaded."));
+      if (!options?.quiet) {
+        setScheduledError(userFacingError(error, "Outreach details could not be loaded."));
+      }
       return [];
     } finally {
-      setScheduledLoading(false);
+      if (!options?.quiet) setScheduledLoading(false);
     }
   }
 
@@ -337,6 +288,21 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
       void loadScheduledActions();
     }
   }, [isInitialLoading]);
+
+  useEffect(() => {
+    const refresh = () => {
+      void loadScheduledActions({ quiet: true });
+      leadsResource.reload();
+    };
+    const interval = window.setInterval(refresh, 5000);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [leadsResource.reload]);
 
   // Leads-only agents land here after launch. Show the same started card.
   useEffect(() => {

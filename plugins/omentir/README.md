@@ -47,13 +47,14 @@ You need an [Omentir](https://omentir.com) workspace with LinkedIn connected and
 
 | Category | Capabilities |
 | --- | --- |
-| Workspace | Read setup status, send allowance, and the product profile |
-| Agents | List, create, pause, resume, or delete lead finders and Steal Customers agents |
-| Leads | List scored people, including comment-level context on Steal Customers leads |
-| Outreach | Inspect the planned send queue. Draft notes. Send only when the user asks |
-| Replies | List existing threads and reply in those threads |
+| Workspace | Read setup status, send allowance, and the product profile. Analyze a website into Workspace |
+| Agents | Draft, list, create, pause, resume, or delete lead finders, Steal Customers, and outreach-only CSV agents. Custom sequences, tone, and campaign goal |
+| Leads | List and export scored people, including comment-level context on Steal Customers leads. Import a LinkedIn CSV |
+| Outreach | Inspect the planned send queue. Send a due action now. Stop one lead. Delete an unused group |
+| Replies | List captured threads and the live inbox. Reply with text or attachments. Mark follow-up done |
+| Workspaces | List the owner's workspaces. Rebind this token to another one they already created |
 
-They cannot create an Omentir account, change billing, or use LinkedIn outside the account already connected in Omentir.
+They cannot create an Omentir account, change billing, connect LinkedIn, create or delete a workspace, or mint API keys. LinkedIn stays on the account already connected in Omentir.
 
 ## Grok Bot notes
 

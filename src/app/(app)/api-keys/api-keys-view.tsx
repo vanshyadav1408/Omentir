@@ -114,7 +114,7 @@ const CONNECT_METHODS: ConnectMethod[] = [
     details: [
       "Use this when an autonomous agent is coordinating the workflow instead of a built-in MCP connector.",
       "The agent should read /agents.md and /api/agent/v1/openapi.json before calling workspace tools.",
-      "Keep approval boundaries explicit before creating, changing, pausing, resuming, or deleting a lead finder.",
+      "Keep approval boundaries explicit before creating, changing, pausing, resuming, or deleting a lead finder, or switching workspaces.",
     ],
     steps: [
       {
