@@ -17,6 +17,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    env:
+      NEXT_PUBLIC_SANITY_PROJECT_ID: xatqbx3d
+      NEXT_PUBLIC_SANITY_DATASET: production
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -30,8 +33,12 @@ jobs:
           bun-version: 1.3.14
       - run: bun install --frozen-lockfile
       - run: bunx tsc --noEmit --pretty false
-      - run: bun run build
-      - run: docker build -t omentir-ci .
+      - name: bun run build
+        run: |
+          set -o pipefail
+          bun run build 2>&1 | tee next-build.log
+      - run: sh scripts/require-cms-prerender.sh next-build.log
+      - run: docker build --build-arg NEXT_PUBLIC_SANITY_PROJECT_ID --build-arg NEXT_PUBLIC_SANITY_DATASET -t omentir-ci .
       - uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
