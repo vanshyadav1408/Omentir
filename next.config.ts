@@ -63,6 +63,14 @@ const nextConfig: NextConfig = {
     // Message attachments post through a server action; the default 1MB
     // body limit rejects them.
     serverActions: { bodySizeLimit: "20mb" },
+    ...(process.env.NEXT_DIST_DIR
+      ? {
+          // Sidecar compiles share RAM with the live process. Default worker
+          // pools SIGKILL the VPS during next build.
+          cpus: 1,
+          webpackBuildWorker: false,
+        }
+      : {}),
   },
   // Next's app router does not serve a `.well-known` directory, but OAuth
   // discovery is defined at fixed well-known paths and clients will not look

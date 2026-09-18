@@ -35,4 +35,17 @@ describe("production VPS build", () => {
     expect(script).toContain('INCOMING=".next-incoming"');
     expect(nextConfig).toMatch(/distDir:\s*process\.env\.NEXT_DIST_DIR/);
   });
+
+  test("compiles the VPS sidecar with webpack and one worker so next build cannot SIGKILL the live process", () => {
+    // 3d57653's production deploy died here: bun reported SIGKILL during
+    // Turbopack "Creating an optimized production build" while PM2 still
+    // served the previous .next. GitHub CI has enough RAM for Turbopack;
+    // the VPS does not once the running server is counted.
+    const vpsBranch = script.split("if [ -f .env.production ]")[1] ?? "";
+    expect(vpsBranch).toContain("bun --bun next build --webpack");
+    expect(vpsBranch).toContain("RAYON_NUM_THREADS=1");
+    expect(nextConfig).toContain("process.env.NEXT_DIST_DIR");
+    expect(nextConfig).toContain("webpackBuildWorker: false");
+    expect(nextConfig).toContain("cpus: 1");
+  });
 });

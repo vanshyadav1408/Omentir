@@ -62,7 +62,12 @@ if [ -f .env.production ] && command -v pm2 >/dev/null 2>&1; then
   rm -rf .next/types .next/dev/types
   # next build wipes its distDir. Compile into a sidecar so the live process
   # keeps serving the previous output until this compile finishes.
-  if NEXT_DIST_DIR="$INCOMING" bun --bun next build; then
+  # Turbopack plus the live process SIGKILLs this VPS (kernel OOM) during
+  # "Creating an optimized production build". Webpack in-process with one
+  # worker is the compile that still fits next to the running server.
+  if RAYON_NUM_THREADS=1 \
+    TOKIO_WORKER_THREADS=1 \
+    NEXT_DIST_DIR="$INCOMING" bun --bun next build --webpack; then
     copy_standalone_assets "$INCOMING"
     # Stop only for the swap. Leaving the old process up across the mv would
     # serve new hashed chunks from HTML that still names the old ones.
