@@ -52,27 +52,64 @@ restore_previous() {
   fi
 }
 
-try_enable_build_swap() {
-  [ -r /proc/meminfo ] || return 0
-  swap_kb=$(awk '/SwapTotal:/{print $2}' /proc/meminfo)
-  if [ "${swap_kb:-0}" -gt 500000 ]; then
+incoming_ready() {
+  [ -d "$INCOMING/static" ]
+}
+
+unpack_prebuilt_tgz() {
+  rm -rf "$INCOMING"
+  mkdir -p "$INCOMING"
+  tar xzf "$1" -C "$INCOMING"
+  incoming_ready
+}
+
+# authorized_keys force-command runs ~/scripts/deploy-omentir.sh and drops the
+# env prefix from the SSH command. OpenSSH still sets SSH_ORIGINAL_COMMAND.
+apply_forced_command_env() {
+  cmd="${SSH_ORIGINAL_COMMAND:-}"
+  [ -n "$cmd" ] || return 0
+  for key in GH_TOKEN GH_RUN_ID APP_COMMIT_SHA APP_REPOSITORY; do
+    eval "current=\${$key:-}"
+    [ -z "$current" ] || continue
+    val=$(
+      printf '%s\n' "$cmd" | awk -v key="$key" '
+        {
+          prefix = key "="
+          start = index($0, prefix)
+          if (!start) next
+          rest = substr($0, start + length(prefix))
+          first = substr(rest, 1, 1)
+          if (first == "'\''") {
+            rest = substr(rest, 2)
+            end = index(rest, "'\''")
+            if (end) print substr(rest, 1, end - 1)
+          } else if (first == "\"") {
+            rest = substr(rest, 2)
+            end = index(rest, "\"")
+            if (end) print substr(rest, 1, end - 1)
+          } else {
+            end = index(rest, " ")
+            if (end) print substr(rest, 1, end - 1)
+            else print rest
+          }
+        }
+      '
+    )
+    [ -n "$val" ] || continue
+    case "$val" in
+      *[!A-Za-z0-9_.:/=+-]*) continue ;;
+    esac
+    export "$key=$val"
+  done
+}
+
+resolve_github_repo() {
+  if [ -n "${APP_REPOSITORY:-}" ]; then
     return 0
   fi
-  swapfile="$HOME/.omentir-build.swap"
-  if [ ! -f "$swapfile" ]; then
-    echo "Creating 2G build swap at $swapfile" >&2
-    if command -v fallocate >/dev/null 2>&1; then
-      fallocate -l 2G "$swapfile" || return 0
-    else
-      dd if=/dev/zero of="$swapfile" bs=1M count=2048 2>/dev/null || return 0
-    fi
-    chmod 600 "$swapfile"
-    mkswap "$swapfile" >/dev/null 2>&1 || {
-      rm -f "$swapfile"
-      return 0
-    }
-  fi
-  swapon "$swapfile" 2>/dev/null || true
+  url=$(git remote get-url origin 2>/dev/null || true)
+  APP_REPOSITORY=$(printf '%s' "$url" | sed -n 's#.*github.com[:/]\([^/]*/[^/.]*\).*#\1#p')
+  export APP_REPOSITORY
 }
 
 cutover_incoming() {
@@ -90,9 +127,32 @@ cutover_incoming() {
 }
 
 # GitHub Actions compiles on a 7GB runner. This VPS SIGKILLs during next build
-# even after dropping CMS prerender to 52 pages. Unpack that artifact instead.
+# even after dropping CMS prerender to 52 pages. Unpack that prebuilt instead.
 install_ci_prebuilt_next() {
-  if [ -z "${GH_TOKEN:-}" ] || [ -z "${GH_RUN_ID:-}" ] || [ -z "${APP_REPOSITORY:-}" ]; then
+  apply_forced_command_env
+  resolve_github_repo
+  if [ -z "${APP_COMMIT_SHA:-}" ]; then
+    APP_COMMIT_SHA=$(git rev-parse HEAD)
+    export APP_COMMIT_SHA
+  fi
+  if [ -z "${APP_REPOSITORY:-}" ]; then
+    echo "Cannot resolve GitHub repository for the prebuilt .next." >&2
+    return 1
+  fi
+
+  tgz=/tmp/omentir-prebuilt.tgz
+  rm -f "$tgz"
+  echo "Downloading CI-prebuilt .next from release vps-next-$APP_COMMIT_SHA" >&2
+  if curl -fL --retry 5 --retry-delay 2 -A omentir-deploy -o "$tgz" \
+    "https://github.com/${APP_REPOSITORY}/releases/download/vps-next-${APP_COMMIT_SHA}/next-build.tgz" \
+    && unpack_prebuilt_tgz "$tgz"
+  then
+    rm -f "$tgz"
+    return 0
+  fi
+  rm -f "$tgz"
+
+  if [ -z "${GH_TOKEN:-}" ] || [ -z "${GH_RUN_ID:-}" ]; then
     return 1
   fi
   echo "Downloading CI-prebuilt .next for run $GH_RUN_ID" >&2
@@ -131,18 +191,7 @@ PY
   fi
   tar xzf /tmp/omentir-prebuilt-zip/next-build.tgz -C "$INCOMING"
   rm -rf /tmp/omentir-prebuilt.zip /tmp/omentir-prebuilt-zip
-  if [ ! -d "$INCOMING/static" ]; then
-    echo "CI-prebuilt .next is missing static assets." >&2
-    return 1
-  fi
-  return 0
-}
-
-run_sidecar_next_build() {
-  RAYON_NUM_THREADS=1 \
-    TOKIO_WORKER_THREADS=1 \
-    NEXT_DIST_DIR="$INCOMING" \
-    bun --bun next build --webpack
+  incoming_ready
 }
 
 # The VPS SSH wrapper only runs ~/scripts/deploy-omentir.sh. Extra SSH sessions
@@ -153,25 +202,11 @@ if [ -f .env.production ] && command -v pm2 >/dev/null 2>&1; then
   # Live `.next/types` still lists routes this commit deleted. tsconfig includes
   # that path, so tsc fails before the sidecar compile. Those files are not served.
   rm -rf .next/types .next/dev/types
-  if [ -n "${GH_TOKEN:-}" ] && [ -n "${GH_RUN_ID:-}" ]; then
-    if install_ci_prebuilt_next; then
-      cutover_incoming
-    fi
-    echo "CI-prebuilt .next is required because this VPS cannot next build." >&2
-    exit 1
-  fi
-  try_enable_build_swap
-  # Webpack compile fits next to the live process. File tracing and the ~900
-  # SEO pages do not: bun gets SIGKILL from the kernel. Stop PM2 first so
-  # those phases have the RAM, and keep the sidecar so a failed compile can
-  # restart the previous .next.
-  pm2 stop omentir || true
-  if run_sidecar_next_build; then
+  if install_ci_prebuilt_next; then
     cutover_incoming
   fi
-  echo "next build failed. Restarting the previous .next." >&2
+  echo "CI-prebuilt .next is required because this VPS cannot next build." >&2
   rm -rf "$INCOMING"
-  restart_app || true
   exit 1
 fi
 

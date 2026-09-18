@@ -14,7 +14,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   actions: read
 
 concurrency:
@@ -25,7 +25,7 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
@@ -42,6 +42,21 @@ jobs:
           path: next-build.tgz
           if-no-files-found: error
           retention-days: 1
+      - name: Publish .next release for the VPS
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag="vps-next-${GITHUB_SHA}"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" next-build.tgz --clobber
+          else
+            gh release create "$tag" next-build.tgz \
+              --title "VPS prebuilt ${GITHUB_SHA}" \
+              --notes "Prebuilt .next for production deploy. Not an app release." \
+              --prerelease \
+              --latest=false
+          fi
 
   deploy:
     needs: verify

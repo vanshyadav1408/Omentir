@@ -22,51 +22,25 @@ describe("production VPS build", () => {
     expect(tsconfig.exclude).toContain(".next/types/validator.ts");
   });
 
-  test("stops the live process before next build so file tracing cannot SIGKILL the VPS", () => {
-    // Webpack compile finished with PM2 still up. The kernel then SIGKILLed
-    // bun during "Collecting build traces" and "Generating static pages
-    // (0/889)". Sidecar output is still required so a failed compile can
-    // restart the previous .next.
-    const vpsBranch = script.split("if [ -f .env.production ]")[1] ?? "";
-    const [beforeBuild, afterBuild] = vpsBranch.split("run_sidecar_next_build");
-    expect(beforeBuild ?? "").toMatch(/\bpm2\s+stop\b/);
-    expect(afterBuild ?? "").not.toMatch(/\bpm2\s+stop\b/);
-    expect(script).toContain('NEXT_DIST_DIR="$INCOMING"');
+  test("keeps the live process up until a CI-prebuilt .next is ready to swap", () => {
+    // 2b6d2eb still compiled on the box because GH_TOKEN never arrived, then
+    // SIGKILLed at "Generating static pages using 1 worker (0/52)" with PM2
+    // already stopped. Unpack first; only then stop the live process.
+    const vpsBranch = (script.split("if [ -f .env.production ]")[1] ?? "").split("\nbun --bun next build\n")[0] ?? "";
+    expect(vpsBranch.split("cutover_incoming")[0] ?? "").not.toMatch(/\bpm2\s+stop\b/);
+    expect(script).toContain("pm2 stop omentir");
     expect(script).toContain('INCOMING=".next-incoming"');
     expect(nextConfig).toMatch(/distDir:\s*process\.env\.NEXT_DIST_DIR/);
   });
 
-  test("compiles the VPS sidecar with webpack and one worker so next build cannot SIGKILL the box", () => {
-    // 3d57653's production deploy died here: bun reported SIGKILL during
-    // Turbopack "Creating an optimized production build" while PM2 still
-    // served the previous .next. GitHub CI has enough RAM for Turbopack;
-    // the VPS does not once the running server is counted.
-    expect(script).toContain("bun --bun next build --webpack");
-    expect(script).not.toContain("--experimental-build-mode");
-    expect(script).toContain("RAYON_NUM_THREADS=1");
-    expect(nextConfig).toContain("webpackBuildWorker: false");
-    expect(nextConfig).toContain("cpus: 1");
-  });
-
-  test("adds build swap and restarts the previous .next if compile is killed", () => {
-    // Stopping PM2 frees the live server. Swap covers tracing ~900 SEO pages
-    // if the remaining RAM is still too small. A killed compile must bring
-    // the previous process back.
-    const vpsBranch = script.split("if [ -f .env.production ]")[1] ?? "";
-    expect(script).toContain("try_enable_build_swap");
-    expect(script).toContain("swapon");
-    expect(vpsBranch).toContain("Restarting the previous .next");
-    expect(vpsBranch).toContain("restart_app || true");
-  });
-
-  test("installs a CI-prebuilt .next on the VPS so the box never runs next build", () => {
-    // e297965 still SIGKILLed at "Generating static pages using 1 worker
-    // (0/52)". The 7GB GitHub runner already compiled successfully. The VPS
-    // must unpack that artifact instead of compiling again.
-    const vpsBranch = script.split("if [ -f .env.production ]")[1] ?? "";
+  test("installs a public CI-prebuilt .next on the VPS so the box never runs next build", () => {
+    // The SSH wrapper drops GH_TOKEN. The repo is public, so verify publishes
+    // next-build.tgz as release vps-next-$SHA and the VPS curls that URL.
+    const vpsBranch = (script.split("if [ -f .env.production ]")[1] ?? "").split("\nbun --bun next build\n")[0] ?? "";
+    expect(vpsBranch).not.toContain("bun --bun next build");
     expect(script).toContain("install_ci_prebuilt_next");
-    expect(script).toContain("next-build");
-    expect(vpsBranch).toContain("GH_TOKEN");
-    expect(vpsBranch.split("GH_TOKEN")[1] ?? "").toContain("install_ci_prebuilt_next");
+    expect(script).toContain("releases/download/vps-next-");
+    expect(script).toContain("SSH_ORIGINAL_COMMAND");
+    expect(script).toContain("CI-prebuilt .next is required because this VPS cannot next build.");
   });
 });
