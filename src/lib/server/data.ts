@@ -3986,6 +3986,50 @@ export async function consumeProfileViewBudget(accountId: string, limit: number)
   }
 }
 
+const AVATAR_VIEW_MIN_SPACING_MS = 2_000;
+
+export type AvatarViewBudgetResult = "ok" | "throttled" | "exhausted";
+
+export async function consumeAvatarViewBudget(
+  accountId: string,
+  limit: number,
+): Promise<AvatarViewBudgetResult> {
+  const today = new Date().toISOString().slice(0, 10);
+  const ref = getDb()
+    .collection("usageDays")
+    .doc(`account-${cleanId(accountId)}-${today}`);
+
+  try {
+    return await getDb().runTransaction(async (transaction) => {
+      const snap = await transaction.get(ref);
+      const current = Number(snap.data()?.avatarViews || 0);
+      if (current >= limit) return "exhausted";
+
+      const now = Date.now();
+      const lastAt = Number(snap.data()?.lastAvatarViewAt || 0);
+      // In-process waits do not serialize across PM2 workers. Opening /leads
+      // used to fire dozens of Unipile profile visits at once on production.
+      if (lastAt && now - lastAt < AVATAR_VIEW_MIN_SPACING_MS) return "throttled";
+
+      transaction.set(
+        ref,
+        {
+          accountId,
+          day: today,
+          avatarViews: current + 1,
+          lastAvatarViewAt: now,
+          updatedAt: nowIso(),
+        },
+        { merge: true },
+      );
+      return "ok";
+    });
+  } catch (error) {
+    console.error("[data] avatar view budget check failed:", error);
+    return "throttled";
+  }
+}
+
 // Interval claim for recurring background tasks (webhook registration, the
 // per-account acceptance sweep, reply sync). Returns null while the interval
 // since the last run has not elapsed; on a successful claim returns the

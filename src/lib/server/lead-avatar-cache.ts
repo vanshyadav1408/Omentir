@@ -1,7 +1,7 @@
 import "server-only";
 
 import { getDb, nowIso } from "./firebase";
-import { httpsAvatarUrl } from "../lead-avatar";
+import { httpsAvatarUrl, leadAvatarUrlCanBePersisted } from "../lead-avatar";
 import { fetchLeadAvatarBytes } from "./lead-avatar-fetch";
 
 const COLLECTION = "leadAvatars";
@@ -71,7 +71,7 @@ export async function saveLeadAvatarCache(input: {
     leadId: input.leadId,
     workspaceId: input.workspaceId,
     contentType: input.contentType,
-    body: input.body,
+    body: Uint8Array.from(input.body),
     ...(input.sourceUrl ? { sourceUrl: input.sourceUrl } : {}),
     updatedAt: nowIso(),
   });
@@ -83,7 +83,7 @@ export async function persistLeadAvatarFromUrl(
   rawUrl: string | undefined,
 ) {
   const url = httpsAvatarUrl(rawUrl);
-  if (!url) return false;
+  if (!url || !leadAvatarUrlCanBePersisted(url)) return false;
 
   const existing = persistInflight.get(leadId);
   if (existing) return existing;

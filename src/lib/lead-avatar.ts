@@ -146,6 +146,48 @@ export function durableLeadAvatarUrl(leadId?: string) {
   return `/api/app/avatar?leadId=${encodeURIComponent(id)}`;
 }
 
+export function durableLeadAvatarUrlWithRetry(leadId: string | undefined, retry: number) {
+  const base = durableLeadAvatarUrl(leadId);
+  if (!base) return undefined;
+  if (retry <= 0) return base;
+  return `${base}&r=${retry}`;
+}
+
+// Unipile GET /users/{id} accepts a provider id (ACo...) or a profile URL.
+export function leadAvatarRefreshIdentifier(input: {
+  providerProfileId?: string;
+  linkedInUrl?: string;
+}) {
+  const providerId = input.providerProfileId?.trim();
+  if (providerId && !providerId.includes("/")) return providerId;
+  return input.linkedInUrl?.trim() || "";
+}
+
+// Provider ids go stale (Unipile 422 invalid_recipient). Keep the public
+// profile URL as a second try so production can still pull a headshot.
+export function leadAvatarRefreshIdentifiers(input: {
+  providerProfileId?: string;
+  linkedInUrl?: string;
+}) {
+  const seen = new Set<string>();
+  const identifiers: string[] = [];
+  for (const candidate of [leadAvatarRefreshIdentifier(input), input.linkedInUrl?.trim() || ""]) {
+    if (!candidate || seen.has(candidate)) continue;
+    seen.add(candidate);
+    identifiers.push(candidate);
+  }
+  return identifiers;
+}
+
+// Server-side fetch of media.licdn.com. Expired e= tokens 404 from the VPS
+// the same as from the browser; do not spend a request on a URL we already
+// know is dead.
+export function leadAvatarUrlCanBePersisted(rawUrl: string | undefined, nowMs = Date.now()) {
+  const url = httpsAvatarUrl(rawUrl);
+  if (!url) return false;
+  return !isLinkedInMediaUrl(url) || !isExpiredLinkedInMediaUrl(url, nowMs);
+}
+
 // Live CDN first when the token is still valid, then the same-origin proxy
 // (including URLs our e= parser already called expired; LinkedIn often still
 // serves them), then the lead-keyed cache. Durable-first 404s blanked every

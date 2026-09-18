@@ -7,7 +7,7 @@ import type {
   LinkedInInboxThread,
   LinkedInProfileContext,
 } from "./types";
-import { consumeProfileViewBudget, listLinkedInAccounts } from "./data";
+import { consumeAvatarViewBudget, consumeProfileViewBudget, listLinkedInAccounts } from "./data";
 import { searchableLocationNames } from "./geo";
 import {
   firstDegreeFromUnipileProfile,
@@ -43,6 +43,9 @@ let linkedInSearchThrottle = Promise.resolve();
 // (persisted in Firestore - restarts and multiple processes must not reset or
 // multiply it) and human-like in-process spacing.
 const PROFILE_VIEW_DAILY_LIMIT = 75;
+// Headshot refreshes share the same daily counter as discovery, but stop
+// earlier so opening /leads cannot spend the views the people engine needs.
+const AVATAR_PROFILE_VIEW_DAILY_LIMIT = 50;
 const PROFILE_VIEW_MIN_SPACING_MS = 2_000;
 // At most this many chats get a profile lookup per inbox load, and only when
 // the chat itself carries no usable attendee name.
@@ -51,6 +54,14 @@ let nextProfileViewAt = 0;
 
 function takeProfileViewBudget(accountId: string) {
   return consumeProfileViewBudget(accountId, PROFILE_VIEW_DAILY_LIMIT);
+}
+
+function takeAvatarViewBudget(accountId: string) {
+  return consumeAvatarViewBudget(accountId, AVATAR_PROFILE_VIEW_DAILY_LIMIT);
+}
+
+function isInvalidRecipientError(error: unknown) {
+  return error instanceof UnipileResponseError && error.errorType === "errors/invalid_recipient";
 }
 
 function waitForProfileViewSlot() {
@@ -670,6 +681,18 @@ function profileAvatarUrl(profile: UnipileProfile) {
     profile.private_picture_download_url,
     recordAvatarUrl(asRecord(profile)),
     recordAvatarUrl(asRecord(profile.specifics)),
+  );
+}
+
+// The VPS cannot always fetch media.licdn.com (datacenter IP, expired e=).
+// Unipile's private download URL is on Unipile's host and accepts the API key.
+function profileAvatarPersistUrl(profile: UnipileProfile, displayUrl: string | undefined) {
+  const specifics = asRecord(profile.specifics);
+  return firstAvatarUrl(
+    profile.private_picture_download_url,
+    specifics?.private_picture_download_url,
+    specifics?.privatePictureDownloadUrl,
+    displayUrl,
   );
 }
 
@@ -1967,6 +1990,61 @@ export async function retrieveLinkedInProfile(input: {
   );
 
   return normalizeUnipileProfile(profile);
+}
+
+export type LinkedInAvatarRetrieveResult =
+  | { ok: true; url: string; persistUrl: string }
+  | { ok: false; reason: "unconfigured" | "throttled" | "exhausted" | "missing" };
+
+// Picture-capable profile read. LinkedIn omits headshot fields unless
+// linkedin_sections=* is set. One daily avatar-view is spent for the whole
+// identifier list so a stale ACo... fallback does not burn a second visit.
+export async function retrieveLinkedInProfileAvatar(input: {
+  accountId: string;
+  identifiers: string[];
+}): Promise<LinkedInAvatarRetrieveResult> {
+  if (!isUnipileConfigured()) return { ok: false, reason: "unconfigured" };
+
+  const tried = new Set<string>();
+  const identifiers: string[] = [];
+  for (const raw of input.identifiers) {
+    const identifier = linkedInIdentifier(raw.trim());
+    if (!identifier || tried.has(identifier)) continue;
+    tried.add(identifier);
+    identifiers.push(identifier);
+  }
+  if (!identifiers.length) return { ok: false, reason: "missing" };
+
+  const budget = await takeAvatarViewBudget(input.accountId);
+  if (budget !== "ok") return { ok: false, reason: budget };
+
+  for (const identifier of identifiers) {
+    try {
+      const profile = await request<UnipileProfile>(
+        withQuery(`/api/v1/users/${encodeURIComponent(identifier)}`, {
+          account_id: input.accountId,
+          linkedin_sections: "*",
+        }),
+      );
+      const url = profileAvatarUrl(profile);
+      const persistUrl = profileAvatarPersistUrl(profile, url);
+      const resolved = url || persistUrl;
+      if (!resolved) {
+        console.error(`[unipile] profile ${identifier} returned no headshot fields`);
+        continue;
+      }
+      return { ok: true, url: url || resolved, persistUrl: persistUrl || resolved };
+    } catch (error) {
+      console.error(
+        `[unipile] avatar retrieve failed for ${identifier}:`,
+        error instanceof Error ? error.message : error,
+      );
+      if (isInvalidRecipientError(error)) continue;
+      break;
+    }
+  }
+
+  return { ok: false, reason: "missing" };
 }
 
 async function fetchLinkedInChatMessages(input: {

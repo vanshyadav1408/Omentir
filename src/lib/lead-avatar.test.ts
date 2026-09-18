@@ -2,7 +2,11 @@ import { describe, expect, test } from "bun:test";
 import {
   avatarImgCandidates,
   durableLeadAvatarUrl,
+  durableLeadAvatarUrlWithRetry,
   httpsAvatarUrl,
+  leadAvatarRefreshIdentifier,
+  leadAvatarRefreshIdentifiers,
+  leadAvatarUrlCanBePersisted,
   isExpiredLinkedInMediaUrl,
   isLinkedInMediaUrl,
   personInitials,
@@ -112,6 +116,53 @@ describe("durableLeadAvatarUrl", () => {
   test("keys the same-origin photo by lead id so an expired LinkedIn token does not blank every page", () => {
     expect(durableLeadAvatarUrl("lead-1")).toBe("/api/app/avatar?leadId=lead-1");
     expect(durableLeadAvatarUrl("")).toBeUndefined();
+  });
+
+  test("cache-busts retries so a 404 from a still-running refresh is not stuck as initials", () => {
+    expect(durableLeadAvatarUrlWithRetry("lead-1", 0)).toBe("/api/app/avatar?leadId=lead-1");
+    expect(durableLeadAvatarUrlWithRetry("lead-1", 2)).toBe("/api/app/avatar?leadId=lead-1&r=2");
+  });
+});
+
+describe("leadAvatarRefreshIdentifier", () => {
+  test("prefers a LinkedIn provider id over a profile URL so Unipile can fetch a fresh headshot", () => {
+    expect(
+      leadAvatarRefreshIdentifier({
+        providerProfileId: "ACoAAAEkwwAB9KEc2TrQgOLEQ-vzRyZeCDyc6DQ",
+        linkedInUrl: "https://www.linkedin.com/in/ada-lovelace",
+      }),
+    ).toBe("ACoAAAEkwwAB9KEc2TrQgOLEQ-vzRyZeCDyc6DQ");
+    expect(
+      leadAvatarRefreshIdentifier({
+        linkedInUrl: "https://www.linkedin.com/in/ada-lovelace",
+      }),
+    ).toBe("https://www.linkedin.com/in/ada-lovelace");
+    expect(leadAvatarRefreshIdentifier({})).toBe("");
+  });
+
+  test("keeps the profile URL as a second identifier when the provider id is stale", () => {
+    expect(
+      leadAvatarRefreshIdentifiers({
+        providerProfileId: "ACoAAAEkwwAB9KEc2TrQgOLEQ-vzRyZeCDyc6DQ",
+        linkedInUrl: "https://www.linkedin.com/in/ada-lovelace",
+      }),
+    ).toEqual([
+      "ACoAAAEkwwAB9KEc2TrQgOLEQ-vzRyZeCDyc6DQ",
+      "https://www.linkedin.com/in/ada-lovelace",
+    ]);
+  });
+});
+
+describe("leadAvatarUrlCanBePersisted", () => {
+  test("refuses expired LinkedIn CDN tokens so the production VPS does not fetch a URL that already 404s", () => {
+    const live = "https://media.licdn.com/dms/image/v2/abc.jpg?e=2000000000&t=2";
+    const expired = "https://media.licdn.com/dms/image/v2/abc.jpg?e=1784764800&t=2";
+    expect(leadAvatarUrlCanBePersisted(live, 1_780_000_000_000)).toBe(true);
+    expect(leadAvatarUrlCanBePersisted(expired, 1_789_600_000_000)).toBe(false);
+    expect(leadAvatarUrlCanBePersisted("https://api.unipile.com/pictures/1", 1_789_600_000_000)).toBe(
+      true,
+    );
+    expect(leadAvatarUrlCanBePersisted("", 1_789_600_000_000)).toBe(false);
   });
 });
 

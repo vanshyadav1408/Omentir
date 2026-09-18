@@ -86,7 +86,7 @@ async function loadFirestoreResource(
     after(() => {
       let warmed = 0;
       for (const lead of leads) {
-        if (warmed >= 50) break;
+        if (warmed >= 100) break;
         const url = httpsAvatarUrl(lead.avatarUrl);
         if (!url || isExpiredLinkedInMediaUrl(url)) continue;
         queueLeadAvatarPersist(lead.id, workspaceId, url);
