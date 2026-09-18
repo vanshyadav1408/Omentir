@@ -20,6 +20,7 @@ jobs:
     env:
       NEXT_PUBLIC_SANITY_PROJECT_ID: xatqbx3d
       NEXT_PUBLIC_SANITY_DATASET: production
+      SANITY_API_READ_TOKEN: ${{ secrets.SANITY_API_READ_TOKEN }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

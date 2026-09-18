@@ -22,8 +22,8 @@ describe("GitHub CMS prerender", () => {
   test("configure Sanity on GitHub verify so production ships ~889 pages instead of 69", () => {
     // 892df9b compiled on the runner with no Sanity project id, so generateStaticParams
     // returned [] for every CMS family. The VPS then installed that 69-page .next.
-    expect(deploy).toContain("NEXT_PUBLIC_SANITY_PROJECT_ID: xatqbx3d");
-    expect(ci).toContain("NEXT_PUBLIC_SANITY_PROJECT_ID: xatqbx3d");
+    expect(deploy).toContain("SANITY_API_READ_TOKEN: ${{ secrets.SANITY_API_READ_TOKEN }}");
+    expect(ci).toContain("SANITY_API_READ_TOKEN: ${{ secrets.SANITY_API_READ_TOKEN }}");
     expect(deploy).toContain("scripts/require-cms-prerender.sh");
     expect(ci).toContain("scripts/require-cms-prerender.sh");
     expect(dockerfile).toContain("ARG NEXT_PUBLIC_SANITY_PROJECT_ID");
