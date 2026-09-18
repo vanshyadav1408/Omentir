@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createPageMetadata } from "../../seo";
 import BlogPostTemplate from "../blog-post-template";
 import { getBlog, getBlogSlugs, getLiveBlogs, isBlogLive } from "@/lib/cms";
+import { skipStaticParamsOnVpsSidecar } from "@/lib/vps-sidecar-build";
 import { BlogPortableText } from "@/lib/cms/portable-text";
 import { tocFromBody, withoutFaqHeadings } from "@/lib/cms/portable-text-toc";
 
@@ -12,6 +13,7 @@ type PageProps = {
 export const dynamicParams = true;
 
 export async function generateStaticParams() {
+  if (skipStaticParamsOnVpsSidecar()) return [];
   const slugs = await getBlogSlugs();
   return slugs.map((slug) => ({ slug }));
 }

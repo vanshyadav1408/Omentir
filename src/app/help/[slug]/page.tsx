@@ -3,6 +3,7 @@ import { createPageMetadata } from "../../seo";
 import HelpArticle from "../help-page";
 import { isSeoPageLive } from "../../seo-content/types";
 import { getHelpPage, getHelpSlugs } from "@/lib/cms";
+import { skipStaticParamsOnVpsSidecar } from "@/lib/vps-sidecar-build";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -11,6 +12,7 @@ type PageProps = {
 export const dynamicParams = true;
 
 export async function generateStaticParams() {
+  if (skipStaticParamsOnVpsSidecar()) return [];
   const slugs = await getHelpSlugs();
   return slugs.map((slug) => ({ slug }));
 }

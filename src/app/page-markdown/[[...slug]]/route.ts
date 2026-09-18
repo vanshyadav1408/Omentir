@@ -4,11 +4,13 @@ import {
   listPublicMarkdownPages,
   renderPublicMarkdown,
 } from "@/lib/public-page-markdown";
+import { skipStaticParamsOnVpsSidecar } from "@/lib/vps-sidecar-build";
 
 export const revalidate = 300;
 export const dynamicParams = true;
 
 export async function generateStaticParams() {
+  if (skipStaticParamsOnVpsSidecar()) return [];
   const pages = await listPublicMarkdownPages();
   return pages.map((page) => ({
     slug: page.htmlPath === "/" ? [] : page.htmlPath.slice(1).split("/"),
