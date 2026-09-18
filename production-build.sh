@@ -52,51 +52,65 @@ restore_previous() {
   fi
 }
 
+try_enable_build_swap() {
+  [ -r /proc/meminfo ] || return 0
+  swap_kb=$(awk '/SwapTotal:/{print $2}' /proc/meminfo)
+  if [ "${swap_kb:-0}" -gt 500000 ]; then
+    return 0
+  fi
+  swapfile="$HOME/.omentir-build.swap"
+  if [ ! -f "$swapfile" ]; then
+    echo "Creating 2G build swap at $swapfile" >&2
+    if command -v fallocate >/dev/null 2>&1; then
+      fallocate -l 2G "$swapfile" || return 0
+    else
+      dd if=/dev/zero of="$swapfile" bs=1M count=2048 2>/dev/null || return 0
+    fi
+    chmod 600 "$swapfile"
+    mkswap "$swapfile" >/dev/null 2>&1 || {
+      rm -f "$swapfile"
+      return 0
+    }
+  fi
+  swapon "$swapfile" 2>/dev/null || true
+}
+
 run_sidecar_next_build() {
   RAYON_NUM_THREADS=1 \
     TOKIO_WORKER_THREADS=1 \
     NEXT_DIST_DIR="$INCOMING" \
-    bun --bun next build --webpack --experimental-build-mode "$1"
+    bun --bun next build --webpack
 }
 
 # The VPS SSH wrapper only runs ~/scripts/deploy-omentir.sh. Extra SSH sessions
 # are rewritten into another rebuild, so cutover has to happen here.
 # GitHub CI, Docker, and local builds have neither .env.production nor pm2.
 if [ -f .env.production ] && command -v pm2 >/dev/null 2>&1; then
+  try_enable_build_swap
   rm -rf "$INCOMING"
   # Live `.next/types` still lists routes this commit deleted. tsconfig includes
   # that path, so tsc fails before the sidecar compile. Those files are not served.
   rm -rf .next/types .next/dev/types
-  # next build wipes its distDir. Compile into a sidecar so the live process
-  # keeps serving the previous output until this compile finishes.
-  # Turbopack plus the live process SIGKILLs this VPS (kernel OOM) during
-  # "Creating an optimized production build". Webpack in-process with one
-  # worker is the compile that still fits next to the running server.
-  if run_sidecar_next_build compile; then
-    # Static generation of ~900 SEO pages then SIGKILLs next to the live
-    # process. Compile already finished; stop only for generate + swap.
-    pm2 stop omentir || true
-    if run_sidecar_next_build generate; then
-      copy_standalone_assets "$INCOMING"
-      # Leaving the old process up across the mv would serve new hashed
-      # chunks from HTML that still names the old ones.
-      swap_incoming_into_place
-      if restart_app && wait_for_app; then
-        rm -rf "$PREVIOUS"
-        exit 0
-      fi
-      echo "New build did not become healthy. Restoring the previous .next." >&2
-      restore_previous
-      restart_app || true
-      exit 1
+  # Webpack compile fits next to the live process. File tracing and the ~900
+  # SEO pages do not: bun gets SIGKILL from the kernel. Stop PM2 first so
+  # those phases have the RAM, and keep the sidecar so a failed compile can
+  # restart the previous .next.
+  pm2 stop omentir || true
+  if run_sidecar_next_build; then
+    copy_standalone_assets "$INCOMING"
+    swap_incoming_into_place
+    if restart_app && wait_for_app; then
+      rm -rf "$PREVIOUS"
+      exit 0
     fi
-    echo "Static generation failed. Restarting the previous .next." >&2
-    rm -rf "$INCOMING"
+    echo "New build did not become healthy. Restoring the previous .next." >&2
+    restore_previous
     restart_app || true
     exit 1
   fi
-  echo "next build failed. Live process was left on the previous .next." >&2
+  echo "next build failed. Restarting the previous .next." >&2
   rm -rf "$INCOMING"
+  restart_app || true
   exit 1
 fi
 

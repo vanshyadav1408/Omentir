@@ -77,7 +77,7 @@ jobs:
           # compiles into a sidecar so the live process keeps serving until the
           # new build is ready, then swaps and restarts.
           ssh -i ~/.ssh/omentir_vps -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
-            -o ServerAliveInterval=15 -o ServerAliveCountMax=8 \
+            -o ServerAliveInterval=15 -o ServerAliveCountMax=40 \
             "$VPS_USER@$VPS_HOST" \
             "APP_COMMIT_SHA=$APP_COMMIT_SHA APP_REPOSITORY=$APP_REPOSITORY bash ~/scripts/deploy-omentir.sh"
 

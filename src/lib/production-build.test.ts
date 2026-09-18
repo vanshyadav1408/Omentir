@@ -22,38 +22,40 @@ describe("production VPS build", () => {
     expect(tsconfig.exclude).toContain(".next/types/validator.ts");
   });
 
-  test("keeps the live process on the old .next until compile is finished", () => {
-    // Visitors get 502 for the whole VPS compile when PM2 is stopped first.
-    // The sidecar distDir is what lets next build wipe output without taking
-    // down the running server. Static generation still has to stop PM2; that
-    // is the phase that SIGKILLs next to the live process.
+  test("stops the live process before next build so file tracing cannot SIGKILL the VPS", () => {
+    // Webpack compile finished with PM2 still up. The kernel then SIGKILLed
+    // bun during "Collecting build traces" and "Generating static pages
+    // (0/889)". Sidecar output is still required so a failed compile can
+    // restart the previous .next.
     const vpsBranch = script.split("if [ -f .env.production ]")[1] ?? "";
-    const [beforeCompile, afterCompile] = vpsBranch.split("run_sidecar_next_build compile");
-    expect(beforeCompile ?? "").not.toMatch(/\bpm2\s+stop\b/);
-    expect(afterCompile ?? "").toMatch(/\bpm2\s+stop\b/);
+    const [beforeBuild, afterBuild] = vpsBranch.split("run_sidecar_next_build");
+    expect(beforeBuild ?? "").toMatch(/\bpm2\s+stop\b/);
+    expect(afterBuild ?? "").not.toMatch(/\bpm2\s+stop\b/);
     expect(script).toContain('NEXT_DIST_DIR="$INCOMING"');
     expect(script).toContain('INCOMING=".next-incoming"');
     expect(nextConfig).toMatch(/distDir:\s*process\.env\.NEXT_DIST_DIR/);
   });
 
-  test("compiles the VPS sidecar with webpack and one worker so next build cannot SIGKILL the live process", () => {
+  test("compiles the VPS sidecar with webpack and one worker so next build cannot SIGKILL the box", () => {
     // 3d57653's production deploy died here: bun reported SIGKILL during
     // Turbopack "Creating an optimized production build" while PM2 still
     // served the previous .next. GitHub CI has enough RAM for Turbopack;
     // the VPS does not once the running server is counted.
-    expect(script).toContain("bun --bun next build --webpack --experimental-build-mode");
+    expect(script).toContain("bun --bun next build --webpack");
+    expect(script).not.toContain("--experimental-build-mode");
     expect(script).toContain("RAYON_NUM_THREADS=1");
     expect(nextConfig).toContain("webpackBuildWorker: false");
     expect(nextConfig).toContain("cpus: 1");
   });
 
-  test("stops PM2 before static generation so 900 SEO pages do not SIGKILL next to the live process", () => {
-    // 1825d72 compiled with webpack, then died at "Generating static pages
-    // using 1 worker (0/889)". Compile can share RAM with PM2; generate cannot.
+  test("adds build swap and restarts the previous .next if compile is killed", () => {
+    // Stopping PM2 frees the live server. Swap covers tracing ~900 SEO pages
+    // if the remaining RAM is still too small. A killed compile must bring
+    // the previous process back.
     const vpsBranch = script.split("if [ -f .env.production ]")[1] ?? "";
-    const afterStop = vpsBranch.split("pm2 stop omentir")[1] ?? "";
-    expect(vpsBranch).toContain("run_sidecar_next_build compile");
-    expect(afterStop).toContain("run_sidecar_next_build generate");
-    expect(afterStop).toContain("Restarting the previous .next");
+    expect(script).toContain("try_enable_build_swap");
+    expect(script).toContain("swapon");
+    expect(vpsBranch).toContain("Restarting the previous .next");
+    expect(vpsBranch).toContain("restart_app || true");
   });
 });
