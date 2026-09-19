@@ -4,51 +4,43 @@ import { useEffect } from "react";
 import { prefetchSidebarResource, whenSidebarRequestsSettle } from "@/app/use-sidebar-resource";
 import { ACTIVITY_DAYS_RESOURCE, LINKEDIN_INBOX_RESOURCE } from "@/app/sidebar-early-fetch";
 
-// Every resource the main app pages read, in the order they are most likely to
-// be visited. useSidebarResource caches per resource name (and lets a heavier
-// projection stand in for a lighter one), so this list is deduped against
-// whatever the current page already loaded:
-//
-//   /leads      groups, leadPreviews
-//   /agents     agents, groups, leadAgentRefs*, enrollmentPreviews
-//   /messages   conversations, leadPreviews, linkedinInbox
-//   /overview  agents, groups, leadDashboardPreviews*, enrollmentPreviews,
-//               conversations, activityDays, linkedinInbox
-//   /settings   linkedinAccounts
-//   /api-keys   agentApiKeys
-//
-// (*) satisfied by a cached leadPreviews, so the one lead query below warms the
-// lead reads on all three of Leads, Agents and Overview.
-//
-// /campaigns is deliberately absent: it redirects to /agents. Outreach details
-// now live on /leads rather than a separate Actions page.
-const PAGE_RESOURCES = [
+// /leads and /messages first. Overview's dashboard projection cannot fill
+// leadPreviews, so that query is the one that makes those two pages instant.
+const FIRESTORE_WARMUP = [
   "groups,leadPreviews",
-  "agents,enrollmentPreviews",
   "conversations",
+  "agents,enrollmentPreviews",
   ACTIVITY_DAYS_RESOURCE,
-  LINKEDIN_INBOX_RESOURCE,
-  "linkedinAccounts",
   "agentApiKeys",
 ];
 
+// Unipile calls. Kept off the Firestore warmup so a 3s inbox fetch on
+// Overview does not delay /leads, and so we never start a second Unipile
+// request while one is already in flight.
+const UNIPILE_WARMUP = [LINKEDIN_INBOX_RESOURCE, "linkedinAccounts"];
+
+export async function warmOtherPageData(options: { cancelled?: () => boolean } = {}) {
+  const cancelled = options.cancelled ?? (() => false);
+  await whenSidebarRequestsSettle(15_000, { ignoreNames: UNIPILE_WARMUP });
+  for (const resource of FIRESTORE_WARMUP) {
+    if (cancelled()) return;
+    await prefetchSidebarResource(resource);
+  }
+  await whenSidebarRequestsSettle();
+  for (const resource of UNIPILE_WARMUP) {
+    if (cancelled()) return;
+    await prefetchSidebarResource(resource);
+  }
+}
+
 // Warms the sidebar-data cache for every main app page while the user sits on
-// whichever page they landed on, so navigating to the others feels instant.
-// Renders nothing and runs once per app session.
+// whichever page they landed on, so navigating to /leads or /messages feels
+// instant. Renders nothing and runs once per app session.
 export default function AppDataPrefetch() {
   useEffect(() => {
     let cancelled = false;
-    // Let the current page's own hooks register their requests, wait for those
-    // to finish, and only then warm anything. Starting on a fixed timer alone
-    // used to overlap them, so the page the user is staring at had to share
-    // bandwidth with - and sometimes duplicate - the background reads. The
-    // warming itself stays one request at a time to keep server load gentle.
-    const timer = setTimeout(async () => {
-      await whenSidebarRequestsSettle();
-      for (const resource of PAGE_RESOURCES) {
-        if (cancelled) return;
-        await prefetchSidebarResource(resource);
-      }
+    const timer = setTimeout(() => {
+      void warmOtherPageData({ cancelled: () => cancelled });
     }, 500);
     return () => {
       cancelled = true;
