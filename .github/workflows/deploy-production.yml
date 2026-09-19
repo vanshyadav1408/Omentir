@@ -32,11 +32,13 @@ jobs:
       NEXT_PUBLIC_SANITY_PROJECT_ID: xatqbx3d
       NEXT_PUBLIC_SANITY_DATASET: production
       SANITY_API_READ_TOKEN: ${{ secrets.SANITY_API_READ_TOKEN }}
-      # Public PostHog project key. Inlined into the client bundle at build.
-      # The VPS ships this prebuilt .next; VPS runtime env cannot fill
-      # NEXT_PUBLIC_* in browser code. Without this, posthog-js never inits,
-      # Web Analytics unique users freeze, and only server events still flow.
-      NEXT_PUBLIC_POSTHOG_KEY: phc_yRBhf8gqXLmHqJNYSPxoyfEnUjp8BoZopsU94aNnz3RJ
+      # PostHog project key. Inlined into the client bundle at build.
+      # Keep the value in GitHub secrets: gitleaks treats the project key as a
+      # hosted account identifier and must not see it in this public repo. The VPS
+      # ships this prebuilt .next; VPS runtime env cannot fill NEXT_PUBLIC_*
+      # in browser code. Without this, posthog-js never inits, Web Analytics
+      # unique users freeze, and only server events still flow.
+      NEXT_PUBLIC_POSTHOG_KEY: ${{ secrets.NEXT_PUBLIC_POSTHOG_KEY }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0

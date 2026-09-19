@@ -33,8 +33,11 @@ describe("GitHub CMS prerender", () => {
     // The VPS unpacks this job's .next. NEXT_PUBLIC_* is baked at compile time,
     // so a missing key means posthog-js never inits. Server events keep flowing
     // from VPS env, which is why AI citations still move while unique users freeze.
-    expect(deploy).toMatch(/NEXT_PUBLIC_POSTHOG_KEY:\s*phc_/);
-    expect(ci).toMatch(/NEXT_PUBLIC_POSTHOG_KEY:\s*phc_/);
+    // The value lives in GitHub secrets: a literal phc_ in yaml trips gitleaks.
+    expect(deploy).toContain("NEXT_PUBLIC_POSTHOG_KEY: ${{ secrets.NEXT_PUBLIC_POSTHOG_KEY }}");
+    expect(ci).toContain("NEXT_PUBLIC_POSTHOG_KEY: ${{ secrets.NEXT_PUBLIC_POSTHOG_KEY }}");
+    expect(deploy).not.toMatch(/NEXT_PUBLIC_POSTHOG_KEY:\s*phc_/);
+    expect(ci).not.toMatch(/NEXT_PUBLIC_POSTHOG_KEY:\s*phc_/);
     expect(deploy).toContain("Require PostHog project key");
   });
 
