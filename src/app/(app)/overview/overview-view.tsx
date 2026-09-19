@@ -6,7 +6,11 @@ import { createPortal } from "react-dom";
 import { setAverageTicketSizeAction } from "@/app/actions";
 import AnalysisChart from "@/app/analysis-chart";
 import { useSidebarResource } from "@/app/use-sidebar-resource";
-import { DASHBOARD_RESOURCE, LINKEDIN_INBOX_RESOURCE } from "@/app/sidebar-early-fetch";
+import {
+  ACTIVITY_DAYS_RESOURCE,
+  DASHBOARD_RESOURCE,
+  LINKEDIN_INBOX_RESOURCE,
+} from "@/app/sidebar-early-fetch";
 import NewAgentButton from "@/app/(app)/agents/new-agent-button";
 import { Skeleton } from "@/app/app-skeletons";
 import { useBodyScrollLock } from "@/app/use-body-scroll-lock";
@@ -68,8 +72,9 @@ const selectDashboardData = (data: Record<string, unknown>) => ({
   leads: data.leads as LeadDashboardPreview[] || [],
   enrollments: data.enrollments as CampaignEnrollmentPreview[] || [],
   conversations: data.conversations as Conversation[] || [],
-  activityDays: data.activityDays as ActivityDay[] || [],
 });
+const selectActivityDays = (data: Record<string, unknown>) =>
+  data.activityDays as ActivityDay[] || [];
 
 function timeAgo(iso?: string) {
   if (!iso) return "";
@@ -110,7 +115,6 @@ export default function OverviewView({
       leads,
       enrollments,
       conversations,
-      activityDays: [] as ActivityDay[],
     },
     selectDashboardData,
   );
@@ -120,10 +124,18 @@ export default function OverviewView({
     leads: loadedLeads,
     enrollments: loadedEnrollments,
     conversations: loadedConversations,
-    activityDays: loadedActivityDays,
   } = dashboardResource.value;
   const reloadDashboard = dashboardResource.reload;
   const dashboardLoading = dashboardResource.loading;
+  const activityDaysResource = useSidebarResource(
+    ACTIVITY_DAYS_RESOURCE,
+    [] as ActivityDay[],
+    selectActivityDays,
+  );
+  const loadedActivityDays = activityDaysResource.value;
+  const reloadActivityDays = activityDaysResource.reload;
+  const activityDaysLoading = activityDaysResource.loading;
+  const chartLoading = dashboardLoading || activityDaysLoading;
   const linkedInInboxResource = useSidebarResource(
     LINKEDIN_INBOX_RESOURCE,
     linkedInThreads,
@@ -133,8 +145,10 @@ export default function OverviewView({
   const reloadLinkedInInbox = linkedInInboxResource.reload;
   const repliesLoading = linkedInInboxResource.loading || dashboardLoading;
   const dashboardLoadingRef = useRef(dashboardLoading);
+  const activityDaysLoadingRef = useRef(activityDaysLoading);
   const inboxLoadingRef = useRef(linkedInInboxResource.loading);
   dashboardLoadingRef.current = dashboardLoading;
+  activityDaysLoadingRef.current = activityDaysLoading;
   inboxLoadingRef.current = linkedInInboxResource.loading;
   const [range, setRange] = useState<RangeKey>("30d");
   const [now, setNow] = useState(() => Date.now());
@@ -154,10 +168,11 @@ export default function OverviewView({
     const interval = window.setInterval(() => {
       setNow(Date.now());
       if (!dashboardLoadingRef.current) reloadDashboard();
+      if (!activityDaysLoadingRef.current) reloadActivityDays();
       if (!inboxLoadingRef.current) reloadLinkedInInbox();
     }, 15_000);
     return () => window.clearInterval(interval);
-  }, [reloadDashboard, reloadLinkedInInbox]);
+  }, [reloadDashboard, reloadActivityDays, reloadLinkedInInbox]);
 
   // Average ticket size lives on the product profile. Mirror it locally so the
   // pipeline card updates instantly when set from the modal, before the server
@@ -354,7 +369,7 @@ export default function OverviewView({
           </div>
 
           <div className="mt-4">
-            {dashboardLoading ? (
+            {chartLoading ? (
               <div
                 className="analysis-chart"
                 aria-label="Loading activity"
@@ -405,7 +420,7 @@ export default function OverviewView({
 
         <div className="m3-card m3-card-outlined mt-5 min-w-0 px-5 py-4 sm:px-6 sm:py-5">
           <p className="text-[12px] text-[var(--md-sys-color-on-surface-variant)]">Outreach</p>
-          {dashboardLoading ? (
+          {activityDaysLoading ? (
             <Skeleton className="mt-2 h-8 w-24" />
           ) : (
             <p className="stat-value mt-1 text-[var(--md-sys-color-on-surface)]">
@@ -413,7 +428,7 @@ export default function OverviewView({
             </p>
           )}
           <div className="mt-4 min-w-0">
-            {dashboardLoading ? (
+            {activityDaysLoading ? (
               <Skeleton className="h-28 w-full" />
             ) : (
               <ActivityHeatmap days={loadedActivityDays} timeZone={timeZone} />

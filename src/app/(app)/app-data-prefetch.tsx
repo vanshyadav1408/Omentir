@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { prefetchSidebarResource, whenSidebarRequestsSettle } from "@/app/use-sidebar-resource";
-import { LINKEDIN_INBOX_RESOURCE } from "@/app/sidebar-early-fetch";
+import { ACTIVITY_DAYS_RESOURCE, LINKEDIN_INBOX_RESOURCE } from "@/app/sidebar-early-fetch";
 
 // Every resource the main app pages read, in the order they are most likely to
 // be visited. useSidebarResource caches per resource name (and lets a heavier
@@ -13,7 +13,7 @@ import { LINKEDIN_INBOX_RESOURCE } from "@/app/sidebar-early-fetch";
 //   /agents     agents, groups, leadAgentRefs*, enrollmentPreviews
 //   /messages   conversations, leadPreviews, linkedinInbox
 //   /overview  agents, groups, leadDashboardPreviews*, enrollmentPreviews,
-//               conversations, linkedinInbox
+//               conversations, activityDays, linkedinInbox
 //   /settings   linkedinAccounts
 //   /api-keys   agentApiKeys
 //
@@ -26,6 +26,7 @@ const PAGE_RESOURCES = [
   "groups,leadPreviews",
   "agents,enrollmentPreviews",
   "conversations",
+  ACTIVITY_DAYS_RESOURCE,
   LINKEDIN_INBOX_RESOURCE,
   "linkedinAccounts",
   "agentApiKeys",

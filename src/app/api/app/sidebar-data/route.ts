@@ -27,6 +27,7 @@ import {
 import { hasActiveSubscription } from "@/lib/server/subscription";
 import { listLinkedInInbox } from "@/lib/server/unipile";
 import { resolveActiveWorkspace } from "@/lib/server/active-workspace";
+import { loadDurableActivityDays } from "@/lib/server/sidebar-activity-days";
 
 type SidebarFetchCache = {
   leadDashboardPreviews?: ReturnType<typeof listLeadDashboardPreviews>;
@@ -106,19 +107,26 @@ async function loadFirestoreResource(
   if (resource === "conversations") return { conversations: await listConversations(workspaceId) };
   if (resource === "automationRuns") return { runs: await listAutomationRuns(workspaceId) };
   if (resource === "activityDays") {
-    // Refresh durable history from whatever CRM rows still exist, then return
-    // the full series. max-merge never shrinks days already frozen by deletes.
-    const [leads, enrollments, conversations] = await Promise.all([
-      cachedLeadDashboardPreviews(workspaceId, cache),
-      cachedEnrollmentPreviews(workspaceId, cache),
-      listConversationsForActivity(workspaceId),
-    ]);
-    await reconcileActivityForSidebar(workspaceId, {
-      leads,
-      enrollments,
-      conversations,
+    // Durable days are enough for first paint. Live CRM paging and persist
+    // run after the response; max-merge never shrinks days frozen by deletes.
+    return loadDurableActivityDays({
+      listDays: () => listActivityDays(workspaceId),
+      scheduleAfter: (work) => {
+        after(work);
+      },
+      reconcileLive: async () => {
+        const [leads, enrollments, conversations] = await Promise.all([
+          cachedLeadDashboardPreviews(workspaceId, cache),
+          cachedEnrollmentPreviews(workspaceId, cache),
+          listConversationsForActivity(workspaceId),
+        ]);
+        await reconcileActivityForSidebar(workspaceId, {
+          leads,
+          enrollments,
+          conversations,
+        });
+      },
     });
-    return { activityDays: await listActivityDays(workspaceId) };
   }
   if (resource === "linkedinConnected") {
     return { connected: Boolean(await getVerifiedLinkedInAccount(workspaceId)) };

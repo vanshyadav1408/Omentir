@@ -26,7 +26,8 @@ type EarlyFetchStore = Record<string, Promise<Record<string, unknown> | null>>;
 
 /** Resource strings shared by the Overview page (script) and its view (hook). */
 export const DASHBOARD_RESOURCE =
-  "agents,groups,leadDashboardPreviews,enrollmentPreviews,conversations,activityDays";
+  "agents,groups,leadDashboardPreviews,enrollmentPreviews,conversations";
+export const ACTIVITY_DAYS_RESOURCE = "activityDays";
 export const LINKEDIN_INBOX_RESOURCE = "linkedinInbox";
 
 /**
@@ -39,7 +40,7 @@ export const LINKEDIN_INBOX_RESOURCE = "linkedinInbox";
  * app-data-prefetch.
  */
 export const EARLY_FETCH_ROUTES: Record<string, string[]> = {
-  "/overview": [DASHBOARD_RESOURCE, LINKEDIN_INBOX_RESOURCE],
+  "/overview": [DASHBOARD_RESOURCE, ACTIVITY_DAYS_RESOURCE, LINKEDIN_INBOX_RESOURCE],
 };
 
 export function buildEarlyFetchScript(routes: Record<string, string[]> = EARLY_FETCH_ROUTES): string {
