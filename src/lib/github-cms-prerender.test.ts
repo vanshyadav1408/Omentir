@@ -29,6 +29,15 @@ describe("GitHub CMS prerender", () => {
     expect(dockerfile).toContain("ARG NEXT_PUBLIC_SANITY_PROJECT_ID");
   });
 
+  test("inlines the PostHog project key so Web Analytics pageviews survive VPS deploys", () => {
+    // The VPS unpacks this job's .next. NEXT_PUBLIC_* is baked at compile time,
+    // so a missing key means posthog-js never inits. Server events keep flowing
+    // from VPS env, which is why AI citations still move while unique users freeze.
+    expect(deploy).toMatch(/NEXT_PUBLIC_POSTHOG_KEY:\s*phc_/);
+    expect(ci).toMatch(/NEXT_PUBLIC_POSTHOG_KEY:\s*phc_/);
+    expect(deploy).toContain("Require PostHog project key");
+  });
+
   test("rejects a 69-page build because that means Sanity was not queried", () => {
     const result = checkLog("  Generating static pages using 3 workers (69/69) in 1335ms\n");
     expect(result.exitCode).not.toBe(0);

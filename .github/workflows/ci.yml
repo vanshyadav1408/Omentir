@@ -21,6 +21,9 @@ jobs:
       NEXT_PUBLIC_SANITY_PROJECT_ID: xatqbx3d
       NEXT_PUBLIC_SANITY_DATASET: production
       SANITY_API_READ_TOKEN: ${{ secrets.SANITY_API_READ_TOKEN }}
+      # Same public PostHog key as deploy-production.yml. CI does not ship
+      # this .next, but the check must fail if the key is dropped.
+      NEXT_PUBLIC_POSTHOG_KEY: phc_yRBhf8gqXLmHqJNYSPxoyfEnUjp8BoZopsU94aNnz3RJ
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
