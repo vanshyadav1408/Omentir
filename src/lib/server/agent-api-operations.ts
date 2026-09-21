@@ -265,6 +265,8 @@ export const updateSettingsPayloadSchema = z.object({
   firstMessageDelayMinutes: z.number().int().min(5).max(10080).optional(),
   aiFollowUpDelayMinutes: z.number().int().min(0).max(10080).optional(),
   aiFollowUpEnabled: z.boolean().optional(),
+  dailyDigestEmailEnabled: z.boolean().optional(),
+  dailyDigestHour: z.number().int().min(0).max(23).optional(),
   // Stored on the workspace rather than in settings, but it is the same picker
   // on the same Settings page - and it decides which local day the daily caps
   // reset on and when each send window opens.

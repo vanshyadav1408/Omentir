@@ -327,6 +327,18 @@ export const agentToolInputSchemas = {
       },
       aiFollowUpDelayMinutes: { type: "integer", minimum: 0, maximum: 10080 },
       aiFollowUpEnabled: { type: "boolean" },
+      dailyDigestEmailEnabled: {
+        type: "boolean",
+        description:
+          "Send a daily email of the last 24 hours of outreach. Off by default. Requires an active subscription, and turns off when the subscription ends.",
+      },
+      dailyDigestHour: {
+        type: "integer",
+        minimum: 0,
+        maximum: 23,
+        description:
+          "Local clock hour (0-23) in the workspace time zone when the daily outreach summary is sent.",
+      },
       timeZone: {
         type: "string",
         description:

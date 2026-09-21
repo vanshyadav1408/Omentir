@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { extraLinkedInSeatMonthlyTotalUsd, extraLinkedInSeatUnitPriceUsd } from "@/lib/linkedin-seat-pricing";
+import {
+  extraLinkedInSeatMonthlyTotalUsd,
+  extraLinkedInSeatRateDescription,
+} from "@/lib/linkedin-seat-pricing";
 import { TextField } from "@/app/ui/text-field";
 
 export default function LinkedInSeatsCard({
@@ -13,7 +16,6 @@ export default function LinkedInSeatsCard({
 }) {
   const [count, setCount] = useState(1);
   const selected = Number.isFinite(count) && count >= 1 ? Math.min(100, Math.floor(count)) : 1;
-  const unit = extraLinkedInSeatUnitPriceUsd(selected);
   const total = extraLinkedInSeatMonthlyTotalUsd(selected);
   const noun = selected === 1 ? "account" : "accounts";
 
@@ -22,7 +24,7 @@ export default function LinkedInSeatsCard({
       <div className="text-[14px] font-semibold text-zinc-950">Extra LinkedIn accounts</div>
       <p className="mt-2 text-[13px] font-medium leading-5 text-zinc-700">
         Your plan includes {totalAccounts} LinkedIn account
-        {totalAccounts === 1 ? "" : "s"}.
+        {totalAccounts === 1 ? "" : "s"}. {extraLinkedInSeatRateDescription()}
       </p>
       {subscribed ? (
         <>
@@ -37,7 +39,7 @@ export default function LinkedInSeatsCard({
             />
           </div>
           <p className="mt-2 text-[13px] font-medium text-zinc-700">
-            {selected} extra {noun} at ${unit}/month each. ${total}/month total.
+            {selected} extra {noun}: ${total}/month.
           </p>
           <a
             href={`/checkout/seats?count=${selected}`}

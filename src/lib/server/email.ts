@@ -11,6 +11,9 @@ import {
 } from "@/lib/hosted-identity";
 import { isLocalMode } from "@/lib/runtime-mode";
 import { getAppBaseUrl } from "./runtime-config";
+import { dailyDigestBarRows, type DailyDigestStats } from "@/lib/daily-digest";
+
+export type { DailyDigestStats };
 
 function getResend() {
   const apiKey = process.env.RESEND_API_KEY;
@@ -366,29 +369,51 @@ export async function sendReplyNotification(input: {
 }
 
 // -----------------------------------------------------------------------------
-// 1. Daily digest: last 24 hours summary (HTML table)
+// 1. Daily digest: last 24 hours as white bars on the dark canvas
 // -----------------------------------------------------------------------------
 
-export type DailyDigestStats = {
-  newLeads: number;
-  invitesSent: number;
-  connectionsAccepted: number;
-  messagesSent: number;
-  repliesReceived: number;
-};
+function dailyDigestChartHtml(stats: DailyDigestStats) {
+  const rows = dailyDigestBarRows(stats);
+  return `
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" bgcolor="${MAIL.surfaceLow}" style="border:1px solid ${MAIL.border};border-radius:6px;border-collapse:collapse;background:${MAIL.surfaceLow};">
+                  ${rows
+                    .map((row, index) => {
+                      const fill = Math.min(100, Math.max(0, row.percent));
+                      const rest = 100 - fill;
+                      const bar =
+                        fill <= 0
+                          ? `<td width="100%" height="8" bgcolor="${MAIL.surfaceHigh}" style="height:8px;font-size:0;line-height:0;border-radius:4px;">&nbsp;</td>`
+                          : rest <= 0
+                            ? `<td width="100%" height="8" bgcolor="${MAIL.primary}" style="height:8px;font-size:0;line-height:0;border-radius:4px;">&nbsp;</td>`
+                            : `<td width="${fill}%" height="8" bgcolor="${MAIL.primary}" style="height:8px;font-size:0;line-height:0;border-radius:4px 0 0 4px;">&nbsp;</td>
+                          <td width="${rest}%" height="8" bgcolor="${MAIL.surfaceHigh}" style="height:8px;font-size:0;line-height:0;border-radius:0 4px 4px 0;">&nbsp;</td>`;
+                      return `
+                  <tr>
+                    <td style="padding:${index === 0 ? "12px 12px 10px" : index === rows.length - 1 ? "0 12px 12px" : "0 12px 10px"};">
+                      <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                        <tr>
+                          <td style="color:${MAIL.text};font-family:${MAIL_FONT};font-size:13px;line-height:1.4;">${escapeHtml(row.label)}</td>
+                          <td align="right" style="color:${MAIL.text};font-family:${MAIL_FONT};font-size:13px;line-height:1.4;font-weight:600;padding-left:12px;white-space:nowrap;">${row.value}</td>
+                        </tr>
+                      </table>
+                      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-top:6px;">
+                        <tr>
+                          ${bar}
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>`;
+                    })
+                    .join("")}
+                </table>`;
+}
 
 function buildDailyDigestEmail(input: {
   stats: DailyDigestStats;
   notes?: string[];
 }) {
   const { stats } = input;
-  const rows: Array<[string, string]> = [
-    ["New leads discovered", String(stats.newLeads)],
-    ["Connection invitations sent", String(stats.invitesSent)],
-    ["Connections accepted", String(stats.connectionsAccepted)],
-    ["Messages sent", String(stats.messagesSent)],
-    ["Replies received", String(stats.repliesReceived)],
-  ];
+  const rows = dailyDigestBarRows(stats);
 
   const notesHtml = input.notes?.length
     ? input.notes
@@ -411,21 +436,7 @@ function buildDailyDigestEmail(input: {
             </tr>
             <tr>
               <td style="padding:12px 22px 6px;">
-                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" bgcolor="${MAIL.surfaceLow}" style="border:1px solid ${MAIL.border};border-radius:6px;border-collapse:collapse;background:${MAIL.surfaceLow};">
-                  <tr>
-                    <th align="left" style="padding:9px 10px;background:${MAIL.surfaceHigh};border-bottom:1px solid ${MAIL.border};color:${MAIL.textMuted};font-family:${MAIL_FONT};font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.03em;">Metric</th>
-                    <th align="right" style="padding:9px 10px;background:${MAIL.surfaceHigh};border-bottom:1px solid ${MAIL.border};color:${MAIL.textMuted};font-family:${MAIL_FONT};font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.03em;">Count</th>
-                  </tr>
-                  ${rows
-                    .map(
-                      ([label, value], index) => `
-                  <tr>
-                    <td style="padding:10px;border-bottom:${index === rows.length - 1 ? "0" : `1px solid ${MAIL.border}`};color:${MAIL.text};font-family:${MAIL_FONT};font-size:13px;">${escapeHtml(label)}</td>
-                    <td align="right" style="padding:10px;border-bottom:${index === rows.length - 1 ? "0" : `1px solid ${MAIL.border}`};color:${MAIL.text};font-family:${MAIL_FONT};font-size:13px;font-weight:600;">${escapeHtml(value)}</td>
-                  </tr>`,
-                    )
-                    .join("")}
-                </table>
+                ${dailyDigestChartHtml(stats)}
                 ${notesHtml}
               </td>
             </tr>
@@ -442,7 +453,7 @@ function buildDailyDigestEmail(input: {
     [
       "Last 24 hours on Omentir",
       "",
-      ...rows.map(([label, value]) => `${label}: ${value}`),
+      ...rows.map((row) => `${row.label}: ${row.value}`),
       ...(input.notes?.length ? ["", ...input.notes.map((note) => `Note: ${note}`)] : []),
       "",
       `Open overview: ${overviewUrl()}`,

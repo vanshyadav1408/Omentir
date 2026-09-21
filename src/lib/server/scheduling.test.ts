@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+  localDayAndHour,
   nextInviteLimitRetryAt,
   nextLocalMondayAt,
 } from "./scheduling";
@@ -43,5 +44,29 @@ describe("nextLocalMondayAt", () => {
     expect(nextLocalMondayAt("UTC", Date.parse("2026-09-21T10:00:00.000Z"))).toBe(
       "2026-09-28T09:00:00.000Z",
     );
+  });
+});
+
+describe("localDayAndHour", () => {
+  test("reads the hour on the workspace clock so a 9am IST digest does not fire at 9am UTC", () => {
+    const nowMs = Date.parse("2026-09-21T03:30:00.000Z");
+    expect(localDayAndHour("Asia/Kolkata", nowMs)).toEqual({ day: "2026-09-21", hour: 9 });
+    expect(localDayAndHour("UTC", nowMs)).toEqual({ day: "2026-09-21", hour: 3 });
+  });
+
+  test("treats Asia/Calcutta as the same zone as Kolkata so a Darwin picker still sends on IST", () => {
+    const nowMs = Date.parse("2026-09-21T03:30:00.000Z");
+    expect(localDayAndHour("Asia/Calcutta", nowMs)).toEqual(
+      localDayAndHour("Asia/Kolkata", nowMs),
+    );
+  });
+
+  test("uses Eastern 9am, not UTC 9am, when the workspace zone is America/New_York", () => {
+    const nowMs = Date.parse("2026-09-21T13:00:00.000Z");
+    expect(localDayAndHour("America/New_York", nowMs)).toEqual({
+      day: "2026-09-21",
+      hour: 9,
+    });
+    expect(localDayAndHour("UTC", nowMs).hour).toBe(13);
   });
 });

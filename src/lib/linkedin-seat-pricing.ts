@@ -1,24 +1,44 @@
-export const EXTRA_LINKEDIN_SEAT_SMALL_PRICE_USD = 20;
-export const EXTRA_LINKEDIN_SEAT_BULK_PRICE_USD = 10;
-export const EXTRA_LINKEDIN_SEAT_BULK_AFTER = 10;
+export const EXTRA_LINKEDIN_SEAT_BAND1_COUNT = 5;
+export const EXTRA_LINKEDIN_SEAT_BAND1_PRICE_USD = 40;
+export const EXTRA_LINKEDIN_SEAT_BAND2_COUNT = 5;
+export const EXTRA_LINKEDIN_SEAT_BAND2_PRICE_USD = 30;
+export const EXTRA_LINKEDIN_SEAT_BAND3_PRICE_USD = 25;
 export const MAX_EXTRA_LINKEDIN_SEATS = 100;
 export const LINKEDIN_SEAT_CHECKOUT_KIND = "linkedin_seats";
 export const LINKEDIN_SEAT_PRODUCT_TITLE = "Omentir Extra Seats";
 const LEGACY_LINKEDIN_SEAT_PRODUCT_TITLES = ["Omentir extra LinkedIn accounts"];
 
-// Extra seats sit on top of the one LinkedIn account included in Pro. 1-10
-// extra accounts are $20/month each. Buying more than 10 drops every extra
-// seat to $10/month.
+const EXTRA_LINKEDIN_SEAT_BAND2_END =
+  EXTRA_LINKEDIN_SEAT_BAND1_COUNT + EXTRA_LINKEDIN_SEAT_BAND2_COUNT;
+
+// Extra seats sit on top of the one LinkedIn account included in Pro. Rates
+// stack by band: first 5 extra accounts are $40/month each, the next 5 are
+// $30/month each, then $25/month each. Only seats in a band get that rate.
+// Do not multiply the cart size by the last band's rate.
 export function extraLinkedInSeatUnitPriceUsd(extraSeats: number) {
   if (extraSeats <= 0) return 0;
-  return extraSeats <= EXTRA_LINKEDIN_SEAT_BULK_AFTER
-    ? EXTRA_LINKEDIN_SEAT_SMALL_PRICE_USD
-    : EXTRA_LINKEDIN_SEAT_BULK_PRICE_USD;
+  if (extraSeats <= EXTRA_LINKEDIN_SEAT_BAND1_COUNT) return EXTRA_LINKEDIN_SEAT_BAND1_PRICE_USD;
+  if (extraSeats <= EXTRA_LINKEDIN_SEAT_BAND2_END) return EXTRA_LINKEDIN_SEAT_BAND2_PRICE_USD;
+  return EXTRA_LINKEDIN_SEAT_BAND3_PRICE_USD;
 }
 
 export function extraLinkedInSeatMonthlyTotalUsd(extraSeats: number) {
   const count = extraLinkedInSeatsCount(extraSeats);
-  return count * extraLinkedInSeatUnitPriceUsd(count);
+  const band1 = Math.min(count, EXTRA_LINKEDIN_SEAT_BAND1_COUNT);
+  const band2 = Math.min(
+    Math.max(count - EXTRA_LINKEDIN_SEAT_BAND1_COUNT, 0),
+    EXTRA_LINKEDIN_SEAT_BAND2_COUNT,
+  );
+  const band3 = Math.max(count - EXTRA_LINKEDIN_SEAT_BAND2_END, 0);
+  return (
+    band1 * EXTRA_LINKEDIN_SEAT_BAND1_PRICE_USD +
+    band2 * EXTRA_LINKEDIN_SEAT_BAND2_PRICE_USD +
+    band3 * EXTRA_LINKEDIN_SEAT_BAND3_PRICE_USD
+  );
+}
+
+export function extraLinkedInSeatRateDescription() {
+  return `Extra accounts are $${EXTRA_LINKEDIN_SEAT_BAND1_PRICE_USD}/month each for the first ${EXTRA_LINKEDIN_SEAT_BAND1_COUNT}, $${EXTRA_LINKEDIN_SEAT_BAND2_PRICE_USD}/month each for the next ${EXTRA_LINKEDIN_SEAT_BAND2_COUNT}, then $${EXTRA_LINKEDIN_SEAT_BAND3_PRICE_USD}/month each.`;
 }
 
 function roundUsd(value: number) {

@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import {
   extraLinkedInSeatMonthlyTotalUsd,
   extraLinkedInSeatPlanTitle,
+  extraLinkedInSeatRateDescription,
   extraLinkedInSeatUnitPriceUsd,
   extraLinkedInSeatsFromMetadata,
   extraLinkedInSeatsFromPlanTitle,
@@ -23,14 +24,34 @@ import {
 } from "./linkedin-seat-pricing";
 
 describe("extra LinkedIn seat pricing", () => {
-  test("charges $20 per extra account through 10 so ten extra seats checkout at $200", () => {
-    expect(extraLinkedInSeatUnitPriceUsd(1)).toBe(20);
-    expect(extraLinkedInSeatMonthlyTotalUsd(10)).toBe(200);
+  test("stacks extra-seat bands so six extra accounts cost more than five instead of rewriting the cart", () => {
+    expect(extraLinkedInSeatUnitPriceUsd(5)).toBe(40);
+    expect(extraLinkedInSeatUnitPriceUsd(6)).toBe(30);
+    expect(extraLinkedInSeatMonthlyTotalUsd(5)).toBe(200);
+    expect(extraLinkedInSeatMonthlyTotalUsd(6)).toBe(230);
   });
 
-  test("drops every extra seat to $10/month once the buyer adds more than 10", () => {
-    expect(extraLinkedInSeatUnitPriceUsd(11)).toBe(10);
-    expect(extraLinkedInSeatMonthlyTotalUsd(11)).toBe(110);
+  test("keeps the first ten extra seats billed when the eleventh is added at $25", () => {
+    expect(extraLinkedInSeatUnitPriceUsd(10)).toBe(30);
+    expect(extraLinkedInSeatUnitPriceUsd(11)).toBe(25);
+    expect(extraLinkedInSeatMonthlyTotalUsd(10)).toBe(350);
+    expect(extraLinkedInSeatMonthlyTotalUsd(11)).toBe(375);
+  });
+
+  test("never lowers the extra-seat bill when the buyer adds one more account", () => {
+    for (let extraSeats = 2; extraSeats <= 100; extraSeats += 1) {
+      expect(extraLinkedInSeatMonthlyTotalUsd(extraSeats)).toBeGreaterThan(
+        extraLinkedInSeatMonthlyTotalUsd(extraSeats - 1),
+      );
+    }
+  });
+
+  test("describes stacked extra-seat rates so Settings cannot show one rewritten unit price", () => {
+    expect(extraLinkedInSeatMonthlyTotalUsd(1)).toBe(40);
+    expect(extraLinkedInSeatMonthlyTotalUsd(15)).toBe(475);
+    expect(extraLinkedInSeatRateDescription()).toBe(
+      "Extra accounts are $40/month each for the first 5, $30/month each for the next 5, then $25/month each.",
+    );
   });
 
   test("rejects a zero or junk seat count so checkout cannot start an empty add-on", () => {
@@ -242,6 +263,6 @@ describe("Whop extra-seat metadata", () => {
       }),
     ).toBe(150);
     expect(extraSeatMonthlyPriceLabel(0, 15)).toBe("$0/month");
-    expect(extraSeatMonthlyPriceLabel(undefined, 15)).toBe("$150/month");
+    expect(extraSeatMonthlyPriceLabel(undefined, 15)).toBe("$475/month");
   });
 });

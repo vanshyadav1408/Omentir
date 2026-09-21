@@ -4,6 +4,11 @@ export type WorkspaceSettings = {
   firstMessageDelayMinutes: number;
   aiFollowUpEnabled: boolean;
   aiFollowUpDelayMinutes: number;
+  // Daily outreach summary email. Off until the workspace turns it on.
+  // Requires an active subscription. Cancel and expiry turn it back off.
+  dailyDigestEmailEnabled: boolean;
+  // Local clock hour (0-23) in the workspace time zone.
+  dailyDigestHour: number;
 };
 
 export type WorkspaceBilling = {

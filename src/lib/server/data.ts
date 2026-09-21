@@ -74,6 +74,7 @@ import {
   buildActivityTotalsFromLive,
   type ActivityDayTotals,
 } from "@/lib/activity-overview";
+import { DEFAULT_DAILY_DIGEST_EMAIL_ENABLED, DEFAULT_DAILY_DIGEST_HOUR, billingAllowsDailyDigestEmail } from "@/lib/daily-digest";
 
 const DEFAULT_SETTINGS: WorkspaceSettings = {
   dailyInviteLimit: 10,
@@ -81,6 +82,8 @@ const DEFAULT_SETTINGS: WorkspaceSettings = {
   firstMessageDelayMinutes: 60,
   aiFollowUpEnabled: true,
   aiFollowUpDelayMinutes: 30,
+  dailyDigestEmailEnabled: DEFAULT_DAILY_DIGEST_EMAIL_ENABLED,
+  dailyDigestHour: DEFAULT_DAILY_DIGEST_HOUR,
 };
 
 function collection<T>(name: string) {
@@ -125,7 +128,13 @@ function withDefaultSettings(settings?: Partial<WorkspaceSettings>) {
     dailyLeadLimit?: unknown;
   };
   delete next.dailyLeadLimit;
-  return { ...DEFAULT_SETTINGS, ...next };
+  return {
+    ...DEFAULT_SETTINGS,
+    ...next,
+    // Missing or inherited junk must not count as opted in. Coming workspaces
+    // start off until someone turns the digest on.
+    dailyDigestEmailEnabled: next.dailyDigestEmailEnabled === true,
+  };
 }
 
 function hasAllSettings(settings?: Partial<WorkspaceSettings>) {
@@ -406,7 +415,10 @@ export async function createOwnedWorkspace(
         }
       : {}),
     ...(primary.onboarding ? { onboarding: primary.onboarding } : {}),
-    settings: withDefaultSettings(primary.settings),
+    settings: {
+      ...withDefaultSettings(primary.settings),
+      dailyDigestEmailEnabled: DEFAULT_DAILY_DIGEST_EMAIL_ENABLED,
+    },
     createdAt: timestamp,
     updatedAt: timestamp,
   };
@@ -834,6 +846,15 @@ export async function updateWorkspaceBilling(
       );
     }),
   );
+
+  // Digest opt-in is paid-only. Writing inactive billing here (Whop cancel,
+  // period-end expiry, purge) must clear it so a later resubscribe does not
+  // inherit a leftover on switch.
+  if (!billingAllowsDailyDigestEmail(next.status)) {
+    await Promise.all(
+      workspaceIds.map((id) => updateWorkspaceSettings(id, { dailyDigestEmailEnabled: false })),
+    );
+  }
 
   return next;
 }

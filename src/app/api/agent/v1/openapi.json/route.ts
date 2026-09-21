@@ -643,6 +643,8 @@ export async function GET() {
                     firstMessageDelayMinutes: { type: "integer", minimum: 5, maximum: 10080 },
                     aiFollowUpDelayMinutes: { type: "integer", minimum: 0, maximum: 10080 },
                     aiFollowUpEnabled: { type: "boolean" },
+                    dailyDigestEmailEnabled: { type: "boolean" },
+                    dailyDigestHour: { type: "integer", minimum: 0, maximum: 23 },
                     timeZone: {
                       type: "string",
                       description:

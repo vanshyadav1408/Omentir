@@ -67,7 +67,7 @@ import {
 import { executeScheduledActionNow } from "@/lib/server/automation";
 import { listScheduledActions } from "@/lib/server/scheduled-actions";
 import { analyzeWebsiteOrSearch, draftAgentSetupWithGemini } from "@/lib/server/gemini";
-import { requireActiveSubscription } from "@/lib/server/subscription";
+import { hasActiveSubscription, requireActiveSubscription } from "@/lib/server/subscription";
 import { deleteLinkedInAccount, sendLinkedInChatMessage } from "@/lib/server/unipile";
 import type { CampaignReplyHandling, CampaignStep, ProductProfile, SendWindow } from "@/lib/server/types";
 import { isLocalMode } from "@/lib/runtime-mode";
@@ -708,6 +708,8 @@ export async function saveSettingsAction(formData: FormData) {
     firstMessageDelayMinutes: z.coerce.number().int().min(5).max(10080),
     aiFollowUpDelayMinutes: z.coerce.number().int().min(0).max(10080),
     aiFollowUpEnabled: z.boolean(),
+    dailyDigestEmailEnabled: z.boolean(),
+    dailyDigestHour: z.coerce.number().int().min(0).max(23),
   });
 
   const parsed = schema.parse({
@@ -716,6 +718,9 @@ export async function saveSettingsAction(formData: FormData) {
     firstMessageDelayMinutes: formData.get("firstMessageDelayMinutes"),
     aiFollowUpDelayMinutes: formData.get("aiFollowUpDelayMinutes"),
     aiFollowUpEnabled: formData.get("aiFollowUpEnabled") === "on",
+    dailyDigestEmailEnabled:
+      formData.get("dailyDigestEmailEnabled") === "on" && hasActiveSubscription(workspace),
+    dailyDigestHour: formData.get("dailyDigestHour"),
   });
 
   const timezone = String(formData.get("timezone") || "").trim();

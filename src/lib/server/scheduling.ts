@@ -1,4 +1,5 @@
 import type { Agent } from "./types";
+import { zonedParts } from "./send-schedule";
 
 export const STUCK_AGENT_RUN_MS = 30 * 60 * 1000;
 
@@ -36,32 +37,17 @@ export function hasIntervalElapsed(
 }
 
 // Local calendar day (YYYY-MM-DD) and hour-of-day for a workspace's IANA
-// timezone - drives local-time features like the 9am daily digest. An unset
+// timezone - drives local-time features like the daily digest send hour. An unset
 // or invalid timezone falls back to UTC so a bad value degrades to "wrong
-// hour" rather than "never sends".
+// hour" rather than "never sends". Same clock as send windows (zonedParts).
 export function localDayAndHour(timezone: string | undefined, nowMs = Date.now()) {
-  const format = (timeZone: string) =>
-    new Intl.DateTimeFormat("en-CA", {
-      timeZone,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      hourCycle: "h23",
-    }).formatToParts(new Date(nowMs));
-
-  let parts: Intl.DateTimeFormatPart[];
-  try {
-    parts = format(timezone || "UTC");
-  } catch {
-    parts = format("UTC");
-  }
-
-  const get = (type: Intl.DateTimeFormatPart["type"]) =>
-    parts.find((part) => part.type === type)?.value || "";
+  const parts = zonedParts(timezone, nowMs);
+  // Intl can report midnight as 24 under hourCycle h23. Fold that onto 0 so a
+  // midnight digest is not skipped.
+  const hour = Number(parts.hour);
   return {
-    day: `${get("year")}-${get("month")}-${get("day")}`,
-    hour: Number(get("hour")),
+    day: parts.dayKey,
+    hour: Number.isFinite(hour) ? ((hour % 24) + 24) % 24 : hour,
   };
 }
 

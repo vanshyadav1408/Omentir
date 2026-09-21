@@ -104,6 +104,7 @@ import {
   shouldStopForReply,
   USER_STOPPED_OUTREACH_ERROR,
 } from "./reply-automation-policy";
+import { shouldSendDailyDigest } from "@/lib/daily-digest";
 import { localDayAndHour, nextInviteLimitRetryAt } from "./scheduling";
 import { isWithinSendWindow, SPACING_MINUTES, type SendActionKind } from "./send-schedule";
 import { hasActiveSubscription } from "./subscription";
@@ -228,19 +229,17 @@ const PACING_FALLBACK_MINUTES = 10;
 const RESEND_BLOCKED_DEFER_MINUTES = 21 * 24 * 60;
 const INVITE_COOLDOWN_WAKE_MINUTES = 30;
 
-// Daily digest email: 9am in the workspace's local timezone, every day. Ticks
-// run every couple of minutes, so the 9am hour is what normally sends; the
-// catch-up hours only exist so an outage across 9am still gets the digest out
-// that morning instead of at whatever hour the tick recovered. Past that it is
-// skipped - a "your last 24 hours" mail at 11pm is worse than none.
-const DIGEST_LOCAL_HOUR = 9;
-const DIGEST_LAST_CATCH_UP_HOUR = 11;
-// Trailing period the digest reports on.
+// Daily digest email: the workspace's chosen local hour, when they have turned
+// the summary on. Ticks run every couple of minutes, so that hour is what
+// normally sends; the next two hours the same day exist so an outage across
+// the chosen hour still gets the digest out instead of at whatever hour the
+// tick recovered. Past that it is skipped - a "your last 24 hours" mail late
+// at night is worse than none.
 const DIGEST_WINDOW_MS = 24 * 60 * 60 * 1000;
 // Guard against a second digest inside one local day, without pinning the send
-// to yesterday's clock time: a catch-up send at 11:59 is still >= 20h before
-// the next 9am, so tomorrow's digest lands back on 9am instead of drifting
-// later every day (which a strict 24h interval did).
+// to yesterday's clock time: a catch-up send later the same day is still
+// >= 20h before tomorrow's send hour, so the next digest does not drift later
+// every day (which a strict 24h interval did).
 const DIGEST_MIN_INTERVAL_MS = 20 * 60 * 60 * 1000;
 
 type TickBudget = {
@@ -2506,8 +2505,8 @@ async function collectDigestStats(workspaceId: string) {
   };
 }
 
-// Sends each workspace one summary email at 9am in its local timezone,
-// covering the trailing 24 hours.
+// Sends each workspace one summary email at its chosen local hour, covering
+// the trailing 24 hours, only when the workspace has turned the summary on.
 async function sendDailyDigests(mode: AutomationSafetyMode) {
   let sent = 0;
   const workspaces = await listWorkspaces();
@@ -2517,11 +2516,20 @@ async function sendDailyDigests(mode: AutomationSafetyMode) {
     let notificationDay = "";
     try {
       const email = workspace.notificationEmail;
-      if (!email || !hasActiveSubscription(workspace)) continue;
+      if (!email) continue;
 
       const { day, hour } = localDayAndHour(workspace.timezone);
       notificationDay = day;
-      if (hour < DIGEST_LOCAL_HOUR || hour > DIGEST_LAST_CATCH_UP_HOUR) continue;
+      if (
+        !shouldSendDailyDigest({
+          enabled: workspace.settings?.dailyDigestEmailEnabled,
+          subscriptionActive: hasActiveSubscription(workspace),
+          localHour: hour,
+          digestHour: workspace.settings?.dailyDigestHour,
+        })
+      ) {
+        continue;
+      }
       // Dry-run must not consume the day claim, or the real tick stays silent.
       if (mode.dryRun) continue;
       claimed = await claimNotificationAfterInterval(

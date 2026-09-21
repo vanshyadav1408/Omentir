@@ -11,6 +11,10 @@ import { TextField } from "@/app/ui/text-field";
 import { useWorkspaceTimeZone } from "@/app/workspace-time-zone";
 import { formatZonedDate } from "@/lib/time-zone";
 import { billedLinkedInAccountLimit, formatPlanLimit } from "@/lib/plan-limits";
+import {
+  DAILY_DIGEST_HOUR_OPTIONS,
+  normalizeDailyDigestHour,
+} from "@/lib/daily-digest";
 import { extraLinkedInSeatsCount, extraSeatMonthlyPriceLabel } from "@/lib/linkedin-seat-pricing";
 import { WHOP_MEMBERSHIPS_URL } from "@/lib/whop-billing-url";
 import LinkedInSeatsCard from "./linkedin-seats-card";
@@ -393,11 +397,13 @@ function ToggleRow({
   description,
   enabled,
   onChange,
+  disabled = false,
 }: {
   title: string;
   description: string;
   enabled: boolean;
   onChange: (next: boolean) => void;
+  disabled?: boolean;
 }) {
   return (
     <div className="flex items-center justify-between gap-4 py-3">
@@ -412,12 +418,17 @@ function ToggleRow({
       </div>
       <button
         type="button"
-        onClick={() => onChange(!enabled)}
+        disabled={disabled}
+        onClick={() => {
+          if (disabled) return;
+          onChange(!enabled);
+        }}
         aria-pressed={enabled}
+        aria-disabled={disabled}
         aria-label={title}
-        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ${
-          enabled ? "bg-emerald-500" : "bg-zinc-200"
-        }`}
+        className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-200 ${
+          disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"
+        } ${enabled ? "bg-emerald-500" : "bg-zinc-200"}`}
       >
         <span
           className={`inline-block h-5 w-5 transform rounded-full bg-white shadow ring-1 ring-black/5 transition-transform duration-200 ${
@@ -467,6 +478,10 @@ export default function SettingsView({
     Math.max(1, Math.round(workspace.settings.firstMessageDelayMinutes / 60)),
   );
   const [aiFollowUp, setAiFollowUp] = useState(workspace.settings.aiFollowUpEnabled);
+  const [dailyDigest, setDailyDigest] = useState(workspace.settings.dailyDigestEmailEnabled === true);
+  const [digestHour, setDigestHour] = useState(
+    normalizeDailyDigestHour(workspace.settings.dailyDigestHour),
+  );
   const [notifEmail, setNotifEmail] = useState(workspace.notificationEmail || user.email);
   const plan = workspace.billing?.plan || "solo";
   const planName =
@@ -496,7 +511,7 @@ export default function SettingsView({
   const linkedInIsUnlimited = !Number.isFinite(linkedInAccountCap);
   const subscriptionActive =
     workspace.billing?.status === "active" || workspace.billing?.status === "bypassed";
-  const [notifFlags, setNotifFlags] = useState({ campaign: true, weekly: true, product: false });
+  const [notifFlags, setNotifFlags] = useState({ campaign: true, product: false });
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -507,6 +522,8 @@ export default function SettingsView({
     formData.set("aiFollowUpDelayMinutes", String(workspace.settings.aiFollowUpDelayMinutes));
     formData.set("timezone", timezoneName(timezone));
     if (aiFollowUp) formData.set("aiFollowUpEnabled", "on");
+    if (dailyDigest && subscriptionActive) formData.set("dailyDigestEmailEnabled", "on");
+    formData.set("dailyDigestHour", String(digestHour));
     startTransition(() => saveAction(formData));
   }
 
@@ -782,11 +799,36 @@ export default function SettingsView({
                       supportingText="We'll send important updates to this email."
                     />
 
+                    <div className="mt-2">
+                      <ToggleRow
+                        title="Daily outreach summary"
+                        description={
+                          subscriptionActive
+                            ? "Email the last 24 hours of invites, messages, and replies. Off until you turn it on."
+                            : "Requires an active subscription."
+                        }
+                        enabled={dailyDigest && subscriptionActive}
+                        disabled={!subscriptionActive}
+                        onChange={setDailyDigest}
+                      />
+                      <div className="max-w-sm pb-1">
+                        <SelectField
+                          label="Send time"
+                          options={DAILY_DIGEST_HOUR_OPTIONS}
+                          value={String(digestHour)}
+                          onChange={(value) => setDigestHour(normalizeDailyDigestHour(value))}
+                          clearable={false}
+                        />
+                        <p className="mt-1.5 text-[11px] font-medium text-zinc-600">
+                          Uses your workspace time zone ({timezoneName(timezone)}).
+                        </p>
+                      </div>
+                    </div>
+
                     <div className="mt-4 divide-y divide-zinc-100 rounded-md border border-zinc-200 bg-white px-4">
                       {(
                         [
                           ["campaign", "Campaign activity", "New replies, accepts, and important events"],
-                          ["weekly", "Weekly performance summary", "Campaign and agent performance overview"],
                           ["product", "Product updates", "New features and product announcements"],
                         ] as const
                       ).map(([id, title, sub]) => (
