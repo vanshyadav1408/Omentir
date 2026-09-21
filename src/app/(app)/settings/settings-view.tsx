@@ -511,7 +511,7 @@ export default function SettingsView({
   const linkedInIsUnlimited = !Number.isFinite(linkedInAccountCap);
   const subscriptionActive =
     workspace.billing?.status === "active" || workspace.billing?.status === "bypassed";
-  const [notifFlags, setNotifFlags] = useState({ campaign: true, product: false });
+  const [notifFlags, setNotifFlags] = useState({ campaign: true, product: true });
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
