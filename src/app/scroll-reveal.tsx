@@ -50,6 +50,8 @@ export default function Reveal({
       if (done) return;
       done = true;
       node.removeAttribute("data-reveal-pending");
+      // Lets CSS start in-content motion only once the section is on screen.
+      node.setAttribute("data-revealed", "");
       observer?.disconnect();
       observer = null;
       if (fallbackTimer) window.clearTimeout(fallbackTimer);

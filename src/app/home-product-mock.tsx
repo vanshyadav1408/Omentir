@@ -428,6 +428,27 @@ export function MockProductScreen() {
   );
 }
 
+type PhoneView = "list" | "detail";
+
+/** Phones show the list and the detail one at a time; this returns to the list. */
+function BackButton({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button type="button" className="home-mock-back" onClick={onClick}>
+      <svg viewBox="0 0 12 12" aria-hidden="true">
+        <path
+          d="M7.5 2.5 4 6l3.5 3.5"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+      {label}
+    </button>
+  );
+}
+
 function pickLeadKey(event: KeyboardEvent<HTMLLIElement>, pick: () => void) {
   if (event.key === "Enter" || event.key === " ") {
     event.preventDefault();
@@ -450,6 +471,7 @@ export function MockLeadsScreen({
 }) {
   const [selectedName, setSelectedName] = useState<(typeof LEADS)[number]["name"]>(LEADS[2].name);
   const selected = LEADS.find((lead) => lead.name === selectedName) ?? LEADS[2];
+  const [view, setView] = useState<PhoneView>("list");
   return (
     <Shell page="leads" title="Leads" action="Add leads" compact={compact} live={interactive}>
       {funnel ? <ScanStrip /> : null}
@@ -464,11 +486,16 @@ export function MockLeadsScreen({
         <span>All contacts</span>
         <span className="is-on">{groupName}</span>
       </div>
-      <div className="home-mock-split">
+      <div className="home-mock-split" data-view={interactive ? view : undefined}>
         <ul className="home-mock-people">
           {LEADS.map((lead) => {
             const on = lead.name === selected.name;
-            const pick = interactive ? () => setSelectedName(lead.name) : undefined;
+            const pick = interactive
+              ? () => {
+                  setSelectedName(lead.name);
+                  setView("detail");
+                }
+              : undefined;
             return (
               <li
                 key={lead.name}
@@ -494,7 +521,8 @@ export function MockLeadsScreen({
             );
           })}
         </ul>
-        <div className="home-mock-detail is-fill">
+        <div key={selected.name} className="home-mock-detail is-fill">
+          {interactive ? <BackButton label="All leads" onClick={() => setView("list")} /> : null}
           <div className="home-mock-person">
             <Face name={selected.name} />
             <div>
@@ -572,6 +600,8 @@ function InboxBody({
     : THREADS;
   const [selectedName, setSelectedName] = useState(threads[0].name);
   const selected = threads.find((thread) => thread.name === selectedName) ?? threads[0];
+  const [view, setView] = useState<PhoneView>("detail");
+  const phoneViews = interactive && !focus;
   const bookedCount = threads.filter((thread) => thread.booked).length;
   const interestedCount = threads.filter((thread) => thread.interested).length;
 
@@ -591,13 +621,21 @@ function InboxBody({
           </span>
         ))}
       </div>
-      <div className={`home-mock-split is-inbox${focus ? " is-focus" : ""}`}>
+      <div
+        className={`home-mock-split is-inbox${focus ? " is-focus" : ""}`}
+        data-view={phoneViews ? view : undefined}
+      >
         {focus ? null : (
           <div className="home-mock-threadcol">
             <ul className="home-mock-threads">
               {threads.map((thread) => {
                 const on = thread.name === selected.name;
-                const pick = interactive ? () => setSelectedName(thread.name) : undefined;
+                const pick = interactive
+                  ? () => {
+                      setSelectedName(thread.name);
+                      setView("detail");
+                    }
+                  : undefined;
                 return (
                   <li
                     key={thread.name}
@@ -631,6 +669,7 @@ function InboxBody({
         )}
         <div className="home-mock-chat">
           <header>
+            {phoneViews ? <BackButton label="Inbox" onClick={() => setView("list")} /> : null}
             <Face name={selected.name} />
             <div>
               <strong>

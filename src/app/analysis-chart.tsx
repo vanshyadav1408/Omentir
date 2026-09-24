@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type {
   ActivityDay,
   CampaignEnrollmentPreview,
@@ -29,21 +29,25 @@ type AnalysisChartProps = {
   endDateKey?: string;
 };
 
-/** Muted gem tones so stacked areas read on a near-black canvas. */
+/** Categorical slots 1-4, validated for the dark chart well (CVD + normal-vision separation). */
 const series = [
-  { key: "found", label: "Leads found", color: "#3f8f6b" },
-  { key: "contacted", label: "People contacted", color: "#5b7cbf" },
-  { key: "replies", label: "Replies received", color: "#8b6bb5" },
-  { key: "meetingsBooked", label: "Meetings booked", color: "#c4a35a" },
+  { key: "found", label: "Leads found", color: "#3987e5" },
+  { key: "contacted", label: "People contacted", color: "#d95926" },
+  { key: "replies", label: "Replies received", color: "#199e70" },
+  { key: "meetingsBooked", label: "Meetings booked", color: "#c98500" },
 ] as const;
 
+/** Pixel layout; the SVG is drawn at its real width so text never scales. */
 const chart = {
-  left: 40,
-  right: 1080,
-  top: 16,
-  bottom: 200,
-  height: 232,
-  width: 1120,
+  height: 240,
+  left: 36,
+  right: 8,
+  top: 12,
+  bottom: 28,
+  maxBar: 24,
+  gap: 2,
+  radius: 4,
+  minSegment: 2,
 };
 
 function buildChartData({
@@ -74,74 +78,72 @@ function buildChartData({
   });
 }
 
-/** Zero-baseline scale; nice steps so labels stay sparse. */
+/** Zero-baseline scale split into 4 whole-number steps of 1, 2, or 5 x 10^n. */
 function getScaleMax(maxValue: number) {
-  if (maxValue <= 0) return 4;
-  if (maxValue <= 4) return 4;
-  if (maxValue <= 8) return 8;
-  if (maxValue <= 20) return 20;
-  if (maxValue <= 40) return 40;
-  if (maxValue <= 80) return 80;
-  if (maxValue <= 120) return 120;
-  return Math.ceil(maxValue / 50) * 50;
+  const raw = Math.max(1, maxValue / 4);
+  const magnitude = 10 ** Math.floor(Math.log10(raw));
+  const step = [1, 2, 5, 10].map((m) => m * magnitude).find((m) => m >= raw) ?? raw;
+  return step * 4;
 }
 
-/** Skip x-axis labels so they stay horizontal and uncluttered. */
-function shouldShowXLabel(index: number, total: number) {
-  if (total <= 6) return true;
-  if (total <= 11) return index % 2 === 0 || index === total - 1;
-  const step = Math.ceil(total / 5);
-  return index % step === 0 || index === total - 1;
+/** Bar with a rounded data-end and a square base. */
+function roundedTopBar(x: number, y: number, width: number, height: number) {
+  const r = Math.min(chart.radius, width / 2, height);
+  return `M${x},${y + height}V${y + r}A${r},${r} 0 0 1 ${x + r},${y}H${x + width - r}A${r},${r} 0 0 1 ${x + width},${y + r}V${y + height}Z`;
 }
 
 export default function AnalysisChart(props: AnalysisChartProps) {
   const chartData = useMemo(() => buildChartData(props), [props]);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(0);
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
 
-  const stacked = useMemo(() => {
-    return chartData.map((item) => {
-      let y = 0;
-      const layers: Record<(typeof series)[number]["key"], { y0: number; y1: number }> = {
-        found: { y0: 0, y1: 0 },
-        contacted: { y0: 0, y1: 0 },
-        replies: { y0: 0, y1: 0 },
-        meetingsBooked: { y0: 0, y1: 0 },
-      };
-      for (const itemSeries of series) {
-        const y0 = y;
-        y += item[itemSeries.key];
-        layers[itemSeries.key] = { y0, y1: y };
-      }
-      return layers;
+  useEffect(() => {
+    const node = wrapRef.current;
+    if (!node) return;
+    const observer = new ResizeObserver(([entry]) => {
+      setWidth(Math.floor(entry.contentRect.width));
     });
-  }, [chartData]);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [chartData.length]);
 
-  const maxObserved = Math.max(0, ...stacked.map((item) => item.meetingsBooked.y1));
+  const maxObserved = Math.max(
+    0,
+    ...chartData.map((item) => series.reduce((sum, s) => sum + item[s.key], 0)),
+  );
   const scaleMax = getScaleMax(maxObserved);
   const hoverPoint =
     hoverIndex != null ? chartData[Math.min(hoverIndex, chartData.length - 1)] : null;
 
-  function getX(index: number) {
-    if (chartData.length <= 1) return (chart.left + chart.right) / 2;
-    return chart.left + (index * (chart.right - chart.left)) / (chartData.length - 1);
-  }
+  const baseline = chart.height - chart.bottom;
+  const plotWidth = Math.max(0, width - chart.left - chart.right);
+  const slot = chartData.length ? plotWidth / chartData.length : 0;
+  const barWidth = Math.max(1, Math.min(chart.maxBar, slot - chart.gap));
+  const pxPerUnit = (baseline - chart.top) / scaleMax;
+  /* Label every Nth day so labels keep ~72px apart; the latest day always shows. */
+  const labelEvery = Math.max(1, Math.ceil(72 / Math.max(slot, 1)));
 
   function getY(value: number) {
-    return chart.bottom - (value / scaleMax) * (chart.bottom - chart.top);
+    return baseline - value * pxPerUnit;
   }
 
-  function buildBand(key: (typeof series)[number]["key"]) {
-    if (chartData.length === 0) return "";
-    const top = chartData
-      .map((_, index) => `${index === 0 ? "M" : "L"} ${getX(index)} ${getY(stacked[index][key].y1)}`)
-      .join(" ");
-    const bottom = chartData
-      .map((_, index) => chartData.length - 1 - index)
-      .map((index) => `L ${getX(index)} ${getY(stacked[index][key].y0)}`)
-      .join(" ");
-    return `${top} ${bottom} Z`;
+  /* Stack from the baseline with a 2px surface gap between segments; tiny
+     non-zero counts keep a 2px sliver so a single reply is still visible. */
+  function buildSegments(item: ChartPoint) {
+    const segments: Array<{ key: string; color: string; y: number; height: number }> = [];
+    let cursor = baseline;
+    for (const s of series) {
+      const value = item[s.key];
+      if (value <= 0) continue;
+      if (segments.length) cursor -= chart.gap;
+      const height = Math.max(chart.minSegment, value * pxPerUnit);
+      const y = Math.max(chart.top, cursor - height);
+      segments.push({ key: s.key, color: s.color, y, height: cursor - y });
+      cursor = y;
+    }
+    return segments;
   }
 
   /* Hard zero baseline + 4 interval grid (horizontal only). */
@@ -178,13 +180,16 @@ export default function AnalysisChart(props: AnalysisChartProps) {
   return (
     <div className="analysis-chart">
       {chartData.length ? (
-        <div ref={wrapRef} className="relative min-w-0">
+        <div ref={wrapRef} className="relative min-w-0" style={{ height: chart.height }}>
+          {width > 0 ? (
           <svg
-            viewBox={`0 0 ${chart.width} ${chart.height}`}
+            width={width}
+            height={chart.height}
+            viewBox={`0 0 ${width} ${chart.height}`}
             role="img"
-            aria-label="Leads found, people contacted, replies received, and meetings booked over time"
-            className="h-56 w-full sm:h-64"
-            onMouseLeave={() => setHoverIndex(null)}
+            aria-label="Leads found, people contacted, replies received, and meetings booked per day"
+            className="block"
+            onPointerLeave={() => setHoverIndex(null)}
           >
             {gridValues.map((value) => {
               const y = getY(value);
@@ -192,18 +197,19 @@ export default function AnalysisChart(props: AnalysisChartProps) {
                 <g key={value}>
                   <line
                     x1={chart.left}
-                    x2={chart.right}
+                    x2={width - chart.right}
                     y1={y}
                     y2={y}
                     className="analysis-chart__grid"
                     strokeWidth="1"
                   />
                   <text
-                    x={8}
+                    x={chart.left - 8}
                     y={y + 4}
                     className="analysis-chart__label"
                     fontSize="11"
                     fontWeight="400"
+                    textAnchor="end"
                     style={{ fontFamily: "var(--font-roboto), sans-serif" }}
                   >
                     {Math.round(value)}
@@ -212,60 +218,73 @@ export default function AnalysisChart(props: AnalysisChartProps) {
               );
             })}
 
-            {series.map((item) => (
-              <path
-                key={item.key}
-                d={buildBand(item.key)}
-                fill={item.color}
-                fillOpacity={0.82}
-                stroke="none"
-              />
-            ))}
-
-            {hoverIndex != null && hoverPoint ? (
-              <line
-                x1={getX(hoverIndex)}
-                x2={getX(hoverIndex)}
-                y1={chart.top}
-                y2={chart.bottom}
-                className="analysis-chart__hover-rule"
-                strokeWidth="1"
-              />
-            ) : null}
-
             {chartData.map((item, index) => {
-              const x = getX(index);
-              const showLabel = shouldShowXLabel(index, chartData.length);
+              const slotX = chart.left + index * slot;
+              const center = slotX + slot / 2;
+              const barX = center - barWidth / 2;
+              const segments = buildSegments(item);
+              const fromEnd = chartData.length - 1 - index;
+              const showLabel = fromEnd % labelEvery === 0;
+              const anchor =
+                center - chart.left < 28 ? "start" : width - chart.right - center < 28 ? "end" : "middle";
 
               return (
                 <g key={item.dateKey}>
-                  <rect
-                    x={x - 20}
-                    y={chart.top}
-                    width="40"
-                    height={chart.bottom - chart.top}
-                    fill="transparent"
-                    className="cursor-crosshair"
-                    onMouseEnter={(e) => updateHover(index, e.clientX, e.clientY)}
-                    onMouseMove={(e) => updateHover(index, e.clientX, e.clientY)}
-                  />
+                  {hoverIndex === index ? (
+                    <rect
+                      x={slotX}
+                      y={chart.top}
+                      width={slot}
+                      height={baseline - chart.top}
+                      className="analysis-chart__hover-band"
+                    />
+                  ) : null}
+                  {segments.map((segment, segmentIndex) =>
+                    segmentIndex === segments.length - 1 ? (
+                      <path
+                        key={segment.key}
+                        d={roundedTopBar(barX, segment.y, barWidth, segment.height)}
+                        fill={segment.color}
+                      />
+                    ) : (
+                      <rect
+                        key={segment.key}
+                        x={barX}
+                        y={segment.y}
+                        width={barWidth}
+                        height={segment.height}
+                        fill={segment.color}
+                      />
+                    ),
+                  )}
                   {showLabel ? (
                     <text
-                      x={x}
+                      x={anchor === "start" ? slotX : anchor === "end" ? slotX + slot : center}
                       y={chart.height - 8}
                       className="analysis-chart__label"
                       fontSize="11"
                       fontWeight="400"
-                      textAnchor="middle"
+                      textAnchor={anchor}
                       style={{ fontFamily: "var(--font-roboto), sans-serif" }}
                     >
                       {item.date}
                     </text>
                   ) : null}
+                  <rect
+                    x={slotX}
+                    y={chart.top}
+                    width={slot}
+                    height={baseline - chart.top}
+                    fill="transparent"
+                    className="cursor-crosshair"
+                    onPointerEnter={(e) => updateHover(index, e.clientX, e.clientY)}
+                    onPointerMove={(e) => updateHover(index, e.clientX, e.clientY)}
+                  />
                 </g>
               );
             })}
           </svg>
+          ) : null}
 
           {hoverPoint && hoverIndex != null ? (
             <div

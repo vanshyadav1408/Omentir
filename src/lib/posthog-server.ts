@@ -4,6 +4,8 @@ type CaptureInput = {
   properties?: Record<string, unknown>;
   insertId?: string;
   timeoutMs?: number;
+  // Backdated events (daily platform history). Defaults to now.
+  timestamp?: string;
 };
 
 export function posthogIngestHost(): string {
@@ -28,7 +30,7 @@ export async function capturePostHogEvent(input: CaptureInput): Promise<void> {
         api_key: apiKey,
         event: input.event,
         distinct_id: input.distinctId,
-        timestamp: new Date().toISOString(),
+        timestamp: input.timestamp ?? new Date().toISOString(),
         properties: {
           $lib: "omentir-server",
           ...(input.insertId ? { $insert_id: input.insertId } : {}),

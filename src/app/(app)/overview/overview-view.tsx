@@ -12,7 +12,7 @@ import {
   LINKEDIN_INBOX_RESOURCE,
 } from "@/app/sidebar-early-fetch";
 import NewAgentButton from "@/app/(app)/agents/new-agent-button";
-import { Skeleton } from "@/app/app-skeletons";
+import { HotLeadSkeletonRows, ReplySkeletonRows, Skeleton } from "@/app/app-skeletons";
 import { useBodyScrollLock } from "@/app/use-body-scroll-lock";
 import { useHydrated } from "@/app/use-hydrated";
 import type {
@@ -375,7 +375,7 @@ export default function OverviewView({
                 aria-label="Loading activity"
                 role="status"
               >
-                <Skeleton className="h-48 w-full rounded-lg sm:h-56" />
+                <Skeleton className="h-[240px] w-full rounded-lg" />
               </div>
             ) : (
               <AnalysisChart
@@ -455,16 +455,7 @@ export default function OverviewView({
 
             <ul className="divide-y divide-[var(--md-sys-color-outline-variant)]">
               {dashboardLoading ? (
-                [0, 1, 2, 3, 4].map((item) => (
-                  <li key={item} className="flex items-center gap-3 p-4" aria-label="Loading leads" role="status">
-                    <Skeleton className="h-10 w-10 shrink-0 rounded-full" />
-                    <div className="min-w-0 flex-1">
-                      <Skeleton className="h-4 w-36" />
-                      <Skeleton className="mt-2 h-3 w-52 max-w-full" />
-                    </div>
-                    <Skeleton className="h-4 w-12 shrink-0" />
-                  </li>
-                ))
+                <HotLeadSkeletonRows />
               ) : hotLeads.length === 0 ? (
                 <li className="flex flex-col items-center justify-center px-6 py-10 text-center">
                   <span className="material-symbols-outlined text-3xl text-[var(--md-sys-color-on-surface-variant)]">local_fire_department</span>
@@ -525,21 +516,7 @@ export default function OverviewView({
             </header>
 
             {repliesLoading ? (
-              <ul className="divide-y divide-[var(--md-sys-color-outline-variant)]" aria-label="Loading replies" role="status">
-                {[0, 1, 2].map((item) => (
-                  <li key={item} className="flex items-start gap-3 p-4">
-                    <Skeleton className="h-10 w-10 shrink-0 rounded-full" />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-baseline justify-between gap-2">
-                        <Skeleton className="h-4 w-36" />
-                        <Skeleton className="h-3 w-12 shrink-0" />
-                      </div>
-                      <Skeleton className="mt-2 h-3 w-48 max-w-full" />
-                      <Skeleton className="mt-2 h-3 w-full max-w-sm" />
-                    </div>
-                  </li>
-                ))}
-              </ul>
+              <ReplySkeletonRows />
             ) : recentReplies.length === 0 ? (
               <div className="flex flex-col items-center justify-center px-6 py-10 text-center">
                 <span className="material-symbols-outlined text-3xl text-[var(--md-sys-color-on-surface-variant)]">forum</span>

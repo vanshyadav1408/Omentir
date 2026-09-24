@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, type CSSProperties } from "react";
 import type { ActivityDay } from "@/lib/server/types";
 import { zonedDayKey } from "@/lib/time-zone";
 
@@ -153,9 +153,17 @@ export default function ActivityHeatmap({
     };
   }, [days, timeZone]);
 
+  /* On narrow screens the board scrolls; open on the latest weeks, not a year ago. */
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const node = scrollRef.current;
+    if (node) node.scrollLeft = node.scrollWidth;
+  }, [model.weeks.length]);
+
   return (
     <div>
       <div
+        ref={scrollRef}
         className="heatmap-scroll"
         style={{ "--heatmap-weeks": model.weeks.length } as CSSProperties}
       >

@@ -37,8 +37,12 @@ export default async function HomePage({
   const linkedinParam = Array.isArray(params.linkedin) ? params.linkedin[0] : params.linkedin;
 
   const loadedWorkspace = await resolveActiveWorkspace(userId);
-  const setup = await getWorkspaceSetup(loadedWorkspace.id);
-  const workspace = await syncHostedWorkspaceBilling(loadedWorkspace);
+  // Independent: setup reads Firestore + Unipile, billing reads Clerk + Whop.
+  // Running them back to back put both on the critical path of every visit.
+  const [setup, workspace] = await Promise.all([
+    getWorkspaceSetup(loadedWorkspace.id),
+    syncHostedWorkspaceBilling(loadedWorkspace),
+  ]);
 
   if (!setup.productProfile) {
     redirect(workspace.onboarding ? "/workspace" : "/onboarding");

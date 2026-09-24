@@ -249,7 +249,7 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
     } catch (error) {
       setFeedback((current) => ({
         ...current,
-        [action.id]: { ok: false, text: error instanceof Error ? error.message : "The action could not be sent." },
+        [action.id]: { ok: false, text: userFacingError(error, "The action could not be sent.") },
       }));
     } finally {
       setPendingId("");
@@ -275,7 +275,7 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
     } catch (error) {
       setFeedback((current) => ({
         ...current,
-        [action.id]: { ok: false, text: error instanceof Error ? error.message : "Outreach could not be stopped." },
+        [action.id]: { ok: false, text: userFacingError(error, "Outreach could not be stopped.") },
       }));
     } finally {
       setPendingId("");

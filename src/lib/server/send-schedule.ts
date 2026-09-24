@@ -53,6 +53,16 @@ export function aiReplyIsDue(nextActionAt: string, nowMs = Date.now()) {
   return dueAt - nowMs > REPLY_DELAY_MAX_MINUTES * 60 * 1000;
 }
 
+// Where an invite goes while its LinkedIn account's invite breaker is armed:
+// asleep until the breaker ends. The old 30-minute recheck cycled every parked
+// invite through the tick's due page all day (thousands of no-op runs), which
+// pushed real follow-ups an hour behind schedule. The marker lets
+// clearInviteCooldown wake exactly these if the breaker lifts early.
+export function inviteCooldownPark(until: string, nowMs = Date.now()) {
+  const now = new Date(nowMs).toISOString();
+  return { nextActionAt: until > now ? until : now, inviteCooldownParkedAt: now };
+}
+
 // Reply > follow-up > invite. A reply has a human waiting and is rare, so it
 // takes its earliestAt immediately and later invites in the same batch yield.
 // An invite has no deadline and always yields. Cascading bumps terminate

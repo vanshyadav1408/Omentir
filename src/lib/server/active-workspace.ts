@@ -1,6 +1,7 @@
 import "server-only";
 
 import { cookies } from "next/headers";
+import { cache } from "react";
 import { ACTIVE_WORKSPACE_COOKIE } from "@/lib/workspace-ownership";
 import {
   ensureWorkspace,
@@ -35,7 +36,11 @@ export async function clearActiveWorkspaceCookie() {
   (await cookies()).delete(ACTIVE_WORKSPACE_COOKIE);
 }
 
-export async function resolveActiveWorkspace(userId: string): Promise<Workspace> {
+// Layout and page both resolve the workspace on a full load; cache per request
+// so that costs one Firestore read, not two.
+export const resolveActiveWorkspace = cache(async function resolveActiveWorkspace(
+  userId: string,
+): Promise<Workspace> {
   const primary = await ensureWorkspace(userId);
   const requestedId = await readActiveWorkspaceCookie();
   if (!requestedId || requestedId === primary.id) {
@@ -49,7 +54,7 @@ export async function resolveActiveWorkspace(userId: string): Promise<Workspace>
 
   await clearActiveWorkspaceCookie();
   return overlayOwnerExtraLinkedInSeats(primary, primary);
-}
+});
 
 export async function listOwnedWorkspaces(userId: string) {
   return listWorkspacesForOwner(userId);

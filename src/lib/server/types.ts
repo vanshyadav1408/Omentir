@@ -442,6 +442,9 @@ export type CampaignEnrollment = {
   // paused - marks it safe to wake immediately on resume without disturbing
   // enrollments whose nextActionAt is a real wait-step / pacing schedule.
   pausedDeferredAt?: string;
+  // Set when the tick parked this invite until its LinkedIn account's invite
+  // breaker ends. clearInviteCooldown wakes these if the breaker lifts early.
+  inviteCooldownParkedAt?: string;
   lastError?: string;
   retryCount?: number;
   connectionSentAt?: string;

@@ -904,7 +904,7 @@ export default function AgentSetup({
         setCompanySize(payload.companySize || "");
         setCompanyPainPoints(payload.painPointsText || "");
       } catch (error) {
-        setCompanyAnalyzeError(error instanceof Error ? error.message : "Website analysis failed.");
+        setCompanyAnalyzeError(userFacingError(error, "Website analysis failed."));
       }
     });
   }
@@ -1280,7 +1280,7 @@ export default function AgentSetup({
         setCampaignGoal(draft.campaignGoal);
         setMessageTone(draft.messageTone);
       } catch (error) {
-        setDraftError(error instanceof Error ? error.message : "Gemini could not fill the setup.");
+        setDraftError(userFacingError(error, "Could not fill the setup automatically. Try again, or fill it in yourself."));
       } finally {
         setDrafting(false);
       }
@@ -1354,12 +1354,12 @@ export default function AgentSetup({
           </div>
           <p className="text-[13px] font-medium leading-5 text-zinc-600">
             Buyer fit uses your company profile in{" "}
-            <a
+            <Link
               href="/workspace"
               className="font-semibold text-zinc-900 underline decoration-zinc-400 underline-offset-2 hover:text-zinc-950"
             >
               Workspace
-            </a>
+            </Link>
             . Description, use cases, pain points, and keywords there decide who
             among commenters is likely to buy. Keep that workspace page current so
             similar-product posts and comments are ranked correctly. No separate
@@ -1587,9 +1587,9 @@ export default function AgentSetup({
               <p>
                 Scans competitor post comments and AI-reaches out with post +
                 comment context. Likely buyers are judged from{" "}
-                <a href="/workspace" className="font-semibold text-[#ba3871] underline">
+                <Link href="/workspace" className="font-semibold text-[#ba3871] underline">
                   Workspace
-                </a>
+                </Link>
                 , not a separate ICP form.
               </p>
               {competitorUrls.length ? (

@@ -1,11 +1,10 @@
 import { auth } from "@/lib/server/auth";
 import { listAgents } from "@/lib/server/data";
 import { resolveActiveWorkspace } from "@/lib/server/active-workspace";
-import { getWorkspaceSetup } from "@/lib/server/workspace-setup";
 import { isAtPlanLimit } from "@/lib/agent-limit";
 import { planLimits, serializablePlanLimit } from "@/lib/plan-limits";
 import CompleteSetupPrompt from "@/app/(app)/complete-setup-prompt";
-import AgentsView from "./agents-view";
+import AgentsView from "../agents-view";
 import { createPageMetadata } from "@/app/seo";
 
 export const metadata = createPageMetadata({
@@ -26,8 +25,9 @@ export default async function AgentsPage() {
   }
 
   const workspace = await resolveActiveWorkspace(userId);
-  const setup = await getWorkspaceSetup(workspace.id);
-  if (!setup.hasAgent) {
+  // One read answers both the setup gate and the plan-limit count.
+  const agents = await listAgents(workspace.id);
+  if (!agents.length) {
     return (
       <CompleteSetupPrompt
         icon="smart_toy"
@@ -36,7 +36,6 @@ export default async function AgentsPage() {
     );
   }
 
-  const agents = await listAgents(workspace.id);
   const agentLimit = planLimits(workspace.billing?.plan).agents;
 
   return (

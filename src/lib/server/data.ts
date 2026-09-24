@@ -1184,6 +1184,15 @@ export async function listAgents(workspaceId: string) {
   return snap.docs.map((doc) => doc.data());
 }
 
+// Page gates only need existence; reading one doc keeps them off the full scan.
+export async function hasAnyAgent(workspaceId: string) {
+  const snap = await collection<Agent>("agents")
+    .where("workspaceId", "==", workspaceId)
+    .limit(1)
+    .get();
+  return !snap.empty;
+}
+
 export async function getAgent(workspaceId: string, agentId: string) {
   if (!agentId) return null;
   const snap = await collection<Agent>("agents").doc(agentId).get();
@@ -4257,12 +4266,43 @@ export async function claimInviteCooldownProbe(workspaceId: string, linkedInAcco
 
 export async function clearInviteCooldown(workspaceId: string, linkedInAccountId: string) {
   try {
-    await getDb()
+    const ref = getDb()
       .collection("automationLocks")
-      .doc(inviteSafetyLockId("invite-cooldown", workspaceId, linkedInAccountId))
-      .delete();
+      .doc(inviteSafetyLockId("invite-cooldown", workspaceId, linkedInAccountId));
+    // Runs after every successful invite, so only pay for the wake when a
+    // breaker was actually lifted early.
+    const snap = await ref.get();
+    if (!snap.exists) return;
+    await ref.delete();
+    const until = snap.data()?.until;
+    if (typeof until === "string" && until > nowIso()) {
+      await wakeInviteCooldownParkedEnrollments(workspaceId);
+    }
   } catch (error) {
     console.error("[automation] failed to clear invite cooldown:", error);
+  }
+}
+
+// Invites parked until a breaker's end (inviteCooldownParkedAt) come back into
+// the due window as soon as the breaker lifts. Enrollments on another account
+// that is still cooling just re-park on their next run.
+async function wakeInviteCooldownParkedEnrollments(workspaceId: string) {
+  const snap = await collection<CampaignEnrollment>("campaignEnrollments")
+    .where("workspaceId", "==", workspaceId)
+    .where("status", "in", DUE_ENROLLMENT_STATUSES)
+    .get();
+  const now = nowIso();
+  const parked = snap.docs.filter((doc) => doc.data().inviteCooldownParkedAt);
+  for (let index = 0; index < parked.length; index += 400) {
+    const batch = getDb().batch();
+    for (const doc of parked.slice(index, index + 400)) {
+      batch.update(doc.ref, {
+        nextActionAt: now,
+        inviteCooldownParkedAt: FieldValue.delete(),
+        updatedAt: now,
+      });
+    }
+    await batch.commit();
   }
 }
 

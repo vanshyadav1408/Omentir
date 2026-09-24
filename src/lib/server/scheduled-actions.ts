@@ -156,6 +156,8 @@ export async function listScheduledActions(
         ? "This action is already being processed."
         : awaitingConnection
           ? "The connection must be accepted before this message can be sent."
+          : isConnection && enrollment.inviteCooldownParkedAt
+            ? "LinkedIn turned down several recent connection requests from this account, so Omentir paused invites to protect it. Sending resumes at the scheduled time."
           : hasInviteResendBlockedError(enrollment.lastError)
             ? "LinkedIn says this person was invited recently. Omentir will wait through LinkedIn's cooldown before trying again."
             : enrollment.lastError

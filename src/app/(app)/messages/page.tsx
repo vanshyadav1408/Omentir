@@ -1,6 +1,6 @@
 import { auth } from "@/lib/server/auth";
 import MessagesView from "./messages-view";
-import { getWorkspaceSetup } from "@/lib/server/workspace-setup";
+import { listLinkedInAccounts } from "@/lib/server/data";
 import { resolveActiveWorkspace } from "@/lib/server/active-workspace";
 import CompleteSetupPrompt from "@/app/(app)/complete-setup-prompt";
 import { createPageMetadata } from "@/app/seo";
@@ -30,8 +30,10 @@ export default async function MessagesPage() {
     throw new Error("Unauthorized");
   }
   const workspace = await resolveActiveWorkspace(userId);
-  const setup = await getWorkspaceSetup(workspace.id);
-  if (!setup.linkedInConnected) {
+  // Stored connection state is enough for this gate; the inbox fetch itself
+  // talks to Unipile, so verifying here only delayed the page.
+  const linkedInAccounts = await listLinkedInAccounts(workspace.id);
+  if (!linkedInAccounts.length) {
     return (
       <CompleteSetupPrompt icon="inbox" message="Connect LinkedIn on Overview to see messages." />
     );

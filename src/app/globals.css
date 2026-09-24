@@ -3747,20 +3747,67 @@ html[data-theme="dark"] .hero-grid-bg {
   }
 }
 
-@media (max-width: 639px) {
-  .home-mock-app.is-live .home-mock-split.is-inbox:not(.is-focus) {
-    grid-template-rows: auto minmax(0, 1fr);
+.home-mock-back {
+  display: none;
+}
+
+@media (max-width: 639.98px) {
+  .home-mock-split[data-view="list"] > .home-mock-detail,
+  .home-mock-split[data-view="list"] > .home-mock-chat,
+  .home-mock-split[data-view="detail"] > .home-mock-people,
+  .home-mock-split[data-view="detail"] > .home-mock-threadcol {
+    display: none;
   }
 
-  .home-mock-app.is-live .home-mock-threadcol {
+  .home-mock-split[data-view="list"] > .home-mock-threadcol {
     display: flex;
-    max-height: 8.5rem;
     border-right: 0;
-    border-bottom: 1px solid #262626;
   }
 
-  .home-mock-app.is-compact.is-live .home-mock-threadcol {
-    max-height: 7.25rem;
+  .home-mock-split[data-view] .home-mock-people {
+    border-right: 0;
+  }
+
+  .home-mock-split[data-view] .home-mock-people li {
+    flex: 0 0 auto;
+  }
+
+  .home-mock-chips.is-bar {
+    flex-wrap: nowrap;
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(to right, #000 80%, transparent);
+    mask-image: linear-gradient(to right, #000 80%, transparent);
+  }
+
+  .home-mock-chips.is-bar li {
+    flex-shrink: 0;
+  }
+
+  .home-mock-back {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-self: flex-start;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.2rem 0.45rem 0.2rem 0.25rem;
+    border: 1px solid #262626;
+    border-radius: 999px;
+    background: #141414;
+    font: inherit;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.72);
+    cursor: pointer;
+    pointer-events: auto;
+  }
+
+  .home-mock-back svg {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+
+  .home-mock-back:focus-visible {
+    outline: 1px solid rgba(194, 208, 170, 0.55);
+    outline-offset: 1px;
   }
 }
 
@@ -4506,92 +4553,42 @@ html[data-theme="dark"] .m3-btn-pair > .m3-btn-outlined:hover:not(:disabled) {
 }
 
 @media (max-width: 767.98px) {
-  /* Keep the product mock readable on phones; the frame scrolls instead of
-     stacking every app panel into a tall card. */
-  .hero-app-stage {
-    height: 26rem;
-    min-height: 26rem;
-    max-height: 26rem;
-    overflow-x: auto;
-    overflow-y: hidden;
-    overscroll-behavior-x: contain;
-    scrollbar-width: thin;
-  }
-
+  /* Phones get the mock's own narrow layout at full width (list first, tap
+     for detail) instead of a desktop-sized window that scrolls sideways. */
   .hero-app {
-    height: 24rem;
-    min-height: 24rem;
-    max-height: 24rem;
-    width: 44rem;
-    max-width: none;
-    flex-shrink: 0;
+    height: 28rem;
+    min-height: 28rem;
   }
 
   .home-slide-draw {
-    height: 22rem;
-    min-height: 22rem;
-    max-height: 22rem;
-    overflow-x: auto;
-    overflow-y: hidden;
-    overscroll-behavior-x: contain;
-    scrollbar-width: thin;
+    height: 26rem;
+    min-height: 26rem;
+  }
+}
+
+@media (max-width: 559.98px) {
+  .home-mock-product {
+    grid-template-rows: auto minmax(0, 1fr);
   }
 
-  .hero-app .home-mock-rail,
-  .home-slide-draw .home-mock-rail {
-    display: flex;
-  }
-
-  .hero-app .home-mock-product,
-  .home-slide-draw .home-mock-product {
-    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.9fr);
-  }
-
-  .hero-app .home-mock-fields,
-  .home-slide-draw .home-mock-fields {
+  .home-mock-product .home-mock-fields {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: auto;
   }
 
-  .hero-app .home-mock-split,
-  .home-slide-draw .home-mock-split {
-    grid-template-columns: minmax(14rem, 0.95fr) minmax(0, 1.15fr);
+  /* Keep the fields that tell the story; the rest would push the scoring
+     preview out of the frame. */
+  .home-mock-product .home-mock-fields label:nth-child(3),
+  .home-mock-product .home-mock-fields label:nth-child(4),
+  .home-mock-product .home-mock-fields label:nth-child(6),
+  .home-mock-product .home-mock-fields label:nth-child(7),
+  .home-mock-target > :nth-child(-n + 2) {
+    display: none;
   }
 
-  .hero-app .home-mock-split.is-inbox,
-  .home-slide-draw .home-mock-split.is-inbox {
-    grid-template-columns: minmax(12rem, 0.82fr) minmax(0, 1.35fr);
-  }
-
-  .hero-app .home-mock-split.is-steal,
-  .home-slide-draw .home-mock-split.is-steal {
-    grid-template-columns: minmax(0, 1.1fr) minmax(13rem, 0.95fr);
-  }
-
-  .hero-app .home-mock-split.is-focus,
-  .home-slide-draw .home-mock-split.is-focus {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .hero-app .home-mock-app.is-live .home-mock-split.is-inbox:not(.is-focus),
-  .home-slide-draw .home-mock-app.is-live .home-mock-split.is-inbox:not(.is-focus) {
-    grid-template-rows: minmax(0, 1fr);
-  }
-
-  .hero-app .home-mock-app.is-live .home-mock-threadcol,
-  .home-slide-draw .home-mock-app.is-live .home-mock-threadcol {
-    display: flex;
-    max-height: none;
-    border-right: 1px solid #262626;
-    border-bottom: 0;
-  }
-
-  .home-slide-draw .home-mock-app {
-    width: 44rem;
-    min-width: 44rem;
-    height: 100%;
-    min-height: 0;
-    max-height: 100%;
-    flex: 0 0 44rem;
+  .home-mock-preview .home-mock-ring {
+    width: 2.2rem;
+    height: 2.2rem;
   }
 }
 
@@ -4606,50 +4603,230 @@ html[data-theme="dark"] .m3-btn-pair > .m3-btn-outlined:hover:not(:disabled) {
 
 .hero-app-navigation {
   margin-top: 1rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
 .hero-app-navigation-list {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  max-width: 40rem;
+  margin: 0 auto;
 }
 
 .hero-app-navigation button {
-  position: relative;
-  display: inline-block;
-  width: 0.5rem;
-  height: 0.5rem;
-  padding: 0;
-  border: none;
-  border-radius: 9999px;
-  background: rgba(154, 170, 134, 0.35);
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.35rem 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  text-align: left;
+  color: var(--md-sys-color-on-surface-variant);
   cursor: pointer;
-  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease, opacity 0.3s ease;
-}
-
-.hero-app-navigation button::before {
-  content: "";
-  position: absolute;
-  inset: -8px;
+  transition: color 0.2s ease;
 }
 
 .hero-app-navigation button.is-active,
-.hero-app-navigation button[aria-selected="true"] {
-  width: 1.75rem;
-  background: #c2d0aa;
-}
-
-.hero-app-navigation button:hover:not(.is-active) {
-  background: rgba(194, 208, 170, 0.65);
+.hero-app-navigation button:hover {
+  color: var(--md-sys-color-on-surface);
 }
 
 .hero-app-navigation button:focus-visible {
   outline: 2px solid #c2d0aa;
-  outline-offset: 2px;
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.hero-app-navigation-track {
+  position: relative;
+  display: block;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(154, 170, 134, 0.28);
+  transition: background-color 0.3s ease;
+}
+
+.hero-app-navigation button.is-done .hero-app-navigation-track,
+.hero-app-navigation button:hover .hero-app-navigation-track {
+  background: rgba(154, 170, 134, 0.55);
+}
+
+.hero-app-navigation-fill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: #c2d0aa;
+  transform-origin: left center;
+  animation: hero-progress var(--hero-slide-ms, 7500ms) linear forwards;
+}
+
+.hero-app-navigation-list.is-paused .hero-app-navigation-fill {
+  animation-play-state: paused;
+}
+
+.hero-app-navigation-list.is-stopped .hero-app-navigation-fill {
+  animation: none;
+}
+
+@keyframes hero-progress {
+  from {
+    transform: scaleX(0);
+  }
+
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.hero-app-navigation-caption {
+  display: flex;
+  gap: 0.4rem;
+  font-size: 12.5px;
+  line-height: 1.3;
+}
+
+.hero-app-navigation-caption b {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.55;
+}
+
+@media (min-width: 768px) {
+  .hero-app-navigation {
+    margin-top: 1.25rem;
+  }
+
+  .hero-app-navigation-caption {
+    font-size: 13.5px;
+  }
+}
+
+/* Mock motion. The hero runs it on every slide change; the How it works
+   panels wait for Reveal to mark them on screen. Reduced motion skips all of
+   it, and without an animation end the slideshow never auto-advances. */
+@media (prefers-reduced-motion: reduce) {
+  .hero-app-navigation-fill {
+    animation: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hero-app-canvas {
+    animation: hero-canvas-in 480ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  :is(.hero-app, .reveal[data-revealed]) :is(
+      .home-mock-people li,
+      .home-mock-threads li,
+      .home-mock-fields > *,
+      .home-mock-preview li,
+      .home-mock-detail > *
+    ) {
+    animation: home-mock-rise 420ms cubic-bezier(0.2, 0.8, 0.2, 1) var(--d, 0ms) both;
+  }
+
+  :is(.hero-app, .reveal[data-revealed]) :is(
+      .home-mock-log-stack > *,
+      .home-mock-chips li,
+      .home-mock-scan-faces > *
+    ) {
+    animation: home-mock-pop 380ms cubic-bezier(0.2, 0.8, 0.2, 1) var(--d, 0ms) both;
+  }
+
+  :is(.hero-app, .reveal[data-revealed]) .home-mock-log-stack > * {
+    animation-duration: 460ms;
+  }
+
+  :is(.hero-app, .reveal[data-revealed]) .home-mock-scorebar b {
+    transform-origin: left center;
+    animation: home-mock-grow 800ms cubic-bezier(0.2, 0.8, 0.2, 1) 200ms both;
+  }
+
+  :is(.hero-app, .reveal[data-revealed]) .home-mock-ring circle + circle {
+    animation: home-mock-ring 900ms cubic-bezier(0.2, 0.8, 0.2, 1) 150ms both;
+  }
+
+  :is(.hero-app, .reveal[data-revealed]) :is(
+      .home-mock-threads strong em,
+      .home-mock-chat > header strong em,
+      .home-mock-connected em
+    ) {
+    animation: home-mock-pop 420ms cubic-bezier(0.3, 1.4, 0.5, 1) 700ms both;
+  }
+
+  :is(.home-mock-people li, .home-mock-threads li, .home-mock-fields > *, .home-mock-chips li, .home-mock-scan-faces > *, .home-mock-detail > *, .home-mock-preview li):nth-child(2) { --d: 45ms; }
+  :is(.home-mock-people li, .home-mock-threads li, .home-mock-fields > *, .home-mock-chips li, .home-mock-scan-faces > *, .home-mock-detail > *, .home-mock-preview li):nth-child(3) { --d: 90ms; }
+  :is(.home-mock-people li, .home-mock-threads li, .home-mock-fields > *, .home-mock-chips li, .home-mock-scan-faces > *, .home-mock-detail > *, .home-mock-preview li):nth-child(4) { --d: 135ms; }
+  :is(.home-mock-people li, .home-mock-threads li, .home-mock-fields > *, .home-mock-chips li, .home-mock-scan-faces > *, .home-mock-detail > *, .home-mock-preview li):nth-child(5) { --d: 180ms; }
+  :is(.home-mock-people li, .home-mock-threads li, .home-mock-fields > *, .home-mock-chips li, .home-mock-scan-faces > *, .home-mock-detail > *, .home-mock-preview li):nth-child(6) { --d: 225ms; }
+  :is(.home-mock-people li, .home-mock-threads li, .home-mock-fields > *, .home-mock-scan-faces > *):nth-child(7) { --d: 270ms; }
+  :is(.home-mock-people li, .home-mock-fields > *):nth-child(8) { --d: 315ms; }
+  .home-mock-people li:nth-child(9) { --d: 360ms; }
+
+  /* Chat lines land one after another, like the thread is being replayed. */
+  .home-mock-log-stack > :nth-child(2) { --d: 140ms; }
+  .home-mock-log-stack > :nth-child(3) { --d: 280ms; }
+  .home-mock-log-stack > :nth-child(4) { --d: 420ms; }
+  .home-mock-log-stack > :nth-child(5) { --d: 560ms; }
+  .home-mock-log-stack > :nth-child(6) { --d: 700ms; }
+  .home-mock-log-stack > :nth-child(7) { --d: 840ms; }
+  .home-mock-log-stack > :nth-child(8) { --d: 980ms; }
+  .home-mock-log-stack > :nth-child(9) { --d: 1120ms; }
+
+  .home-mock-preview li:nth-child(1) { --d: 300ms; }
+  .home-mock-preview li:nth-child(2) { --d: 380ms; }
+  .home-mock-preview li:nth-child(3) { --d: 460ms; }
+}
+
+@keyframes hero-canvas-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes home-mock-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes home-mock-pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.94);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes home-mock-grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes home-mock-ring {
+  from {
+    stroke-dasharray: 0 100;
+  }
 }
 
 /* Closing CTA banner: white slab, black ink. */
@@ -6176,6 +6353,11 @@ html.dark .analysis-chart {
 
 .analysis-chart__hover-rule {
   stroke: var(--analysis-chart-hover-rule);
+}
+
+.analysis-chart__hover-band {
+  fill: var(--analysis-chart-hover-rule);
+  opacity: 0.5;
 }
 
 .analysis-chart__point-fill {

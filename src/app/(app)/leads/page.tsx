@@ -1,5 +1,5 @@
 import { auth } from "@/lib/server/auth";
-import { getWorkspaceSetup } from "@/lib/server/workspace-setup";
+import { hasAnyAgent } from "@/lib/server/data";
 import { resolveActiveWorkspace } from "@/lib/server/active-workspace";
 import CompleteSetupPrompt from "@/app/(app)/complete-setup-prompt";
 import LeadsView from "./leads-view";
@@ -23,8 +23,9 @@ export default async function LeadsPage() {
     throw new Error("Unauthorized");
   }
   const workspace = await resolveActiveWorkspace(userId);
-  const setup = await getWorkspaceSetup(workspace.id);
-  if (!setup.hasAgent) {
+  // Only the agent gate matters here. The full setup check also verifies
+  // LinkedIn with Unipile, which put seconds on every visit to this page.
+  if (!(await hasAnyAgent(workspace.id))) {
     return (
       <CompleteSetupPrompt icon="identity_platform" message="Start an AI agent on Overview first." />
     );

@@ -106,11 +106,17 @@ import {
 } from "./reply-automation-policy";
 import { shouldSendDailyDigest } from "@/lib/daily-digest";
 import { localDayAndHour, nextInviteLimitRetryAt } from "./scheduling";
-import { isWithinSendWindow, SPACING_MINUTES, type SendActionKind } from "./send-schedule";
+import {
+  inviteCooldownPark,
+  isWithinSendWindow,
+  SPACING_MINUTES,
+  type SendActionKind,
+} from "./send-schedule";
 import { hasActiveSubscription } from "./subscription";
 import { shouldMarkBillingExpired, shouldPurgeUnipileAccounts } from "@/lib/unipile-billing-purge";
 import { purgeWorkspaceUnipileAccounts } from "./linkedin-accounts";
 import { cancelWhopSeatMembership } from "./whop";
+import { sendPlatformStatsSnapshot } from "./platform-stats";
 import { capturePostHogEvent } from "@/lib/posthog-server";
 import { getAppBaseUrl } from "./runtime-config";
 import {
@@ -224,10 +230,9 @@ const PACING_FALLBACK_MINUTES = 10;
 // cannot distinguish those cases, the first pause is 6 hours with one live
 // probe. A failed retry after that waits 3 days or next Monday, whichever
 // comes first, instead of probing a real weekly cap every few hours. Parked
-// enrollments wake on a short cadence so a successful probe/manual send can
-// resume the rest of the queue without waiting out the full breaker.
+// enrollments sleep until the breaker ends (inviteCooldownPark); a successful
+// probe/manual send wakes them early via clearInviteCooldown.
 const RESEND_BLOCKED_DEFER_MINUTES = 21 * 24 * 60;
-const INVITE_COOLDOWN_WAKE_MINUTES = 30;
 
 // Daily digest email: the workspace's chosen local hour, when they have turned
 // the summary on. Ticks run every couple of minutes, so that hour is what
@@ -1071,17 +1076,19 @@ async function runEnrollment(
     // Account under a LinkedIn invite breaker: skip bulk sends, but allow one
     // live probe (or Send connection now) because cannot_resend_yet is also
     // what LinkedIn returns when a note quota is spent and a bare Connect still
-    // works. Parked enrollments wake on a short cadence so a successful probe
-    // can resume the queue without waiting out the full breaker window.
+    // works. Parked enrollments sleep until the breaker ends; a successful
+    // probe or manual send wakes them early (see clearInviteCooldown).
     if (budget.inviteCooldownUntil === undefined) {
       budget.inviteCooldownUntil = await getInviteCooldown(enrollment.workspaceId, account.id);
     }
     if (budget.inviteCooldownUntil && !options.ignoreInviteCooldown) {
       if (budget.inviteProbeUsed) {
-        await updateCurrentEnrollment({ nextActionAt: addMinutes(INVITE_COOLDOWN_WAKE_MINUTES) });
+        await updateCurrentEnrollment(inviteCooldownPark(budget.inviteCooldownUntil));
         return "invite-cooldown";
       }
       budget.inviteProbeUsed = true;
+    } else if (enrollment.inviteCooldownParkedAt) {
+      await updateCurrentEnrollment({ inviteCooldownParkedAt: undefined });
     }
 
     // Outside this campaign's send window: reschedule to the next opening
@@ -1213,7 +1220,7 @@ async function runEnrollment(
         if (stillCooling) {
           budget.inviteCooldownUntil = stillCooling;
           await updateCurrentEnrollment({
-            nextActionAt: addMinutes(INVITE_COOLDOWN_WAKE_MINUTES),
+            ...inviteCooldownPark(stillCooling),
             pendingAction: undefined,
           });
           return "invite-cooldown";
@@ -1882,7 +1889,9 @@ async function runCampaigns(mode: AutomationSafetyMode) {
         ? await previewEnrollment(enrollment, campaign, sourceAgentBlock)
         : await runEnrollment(enrollment, campaign, budgetForAccount, sourceAgentBlock);
       if (result !== "stopped") actions += 1;
-      await safeLogAutomationRun({
+      // A parked invite is not news: the breaker logs once when it arms, and a
+      // row per parked lead buried the Activity feed in thousands of repeats.
+      if (result !== "invite-cooldown") await safeLogAutomationRun({
         workspaceId: enrollment.workspaceId,
         kind: "campaign",
         status: "completed",
@@ -2732,6 +2741,13 @@ async function runAutomationTickInner(
     const message = error instanceof Error ? error.message : "Unipile billing purge failed";
     errors.push(`unipile-purge: ${message}`);
     console.error("[automation] Unipile billing purge failed:", error);
+  }
+
+  try {
+    await sendPlatformStatsSnapshot(mode);
+  } catch (error) {
+    // Analytics only; never counted as a tick failure.
+    console.error("[automation] platform stats snapshot failed:", error);
   }
 
   // After the action phases so today's activity is included in the summary.

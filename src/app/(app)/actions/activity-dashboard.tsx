@@ -1,5 +1,6 @@
 "use client";
 
+import { userFacingError } from "@/app/toast";
 import { useEffect, useMemo, useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { runScheduledActionNowAction, stopLeadOutreachAction } from "@/app/actions";
@@ -137,7 +138,7 @@ export default function ActionsDashboard({ items, title, serverNow, timezone, he
       setConfirmingId("");
       router.refresh();
     } catch (error) {
-      setFeedback((current) => ({ ...current, [action.id]: { ok: false, text: error instanceof Error ? error.message : "The action could not be sent." } }));
+      setFeedback((current) => ({ ...current, [action.id]: { ok: false, text: userFacingError(error, "The action could not be sent.") } }));
     } finally {
       setPendingId("");
     }
@@ -156,7 +157,7 @@ export default function ActionsDashboard({ items, title, serverNow, timezone, he
       setMobileDetailsOpen(false);
       router.refresh();
     } catch (error) {
-      setFeedback((current) => ({ ...current, [action.id]: { ok: false, text: error instanceof Error ? error.message : "Outreach could not be stopped." } }));
+      setFeedback((current) => ({ ...current, [action.id]: { ok: false, text: userFacingError(error, "Outreach could not be stopped.") } }));
     } finally {
       setPendingId("");
     }

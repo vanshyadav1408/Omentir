@@ -1097,13 +1097,15 @@ function messageTimestamp(message: UnipileMessage) {
   );
 }
 
+const UNKNOWN_SENDER_NAME = "LinkedIn";
+
 function normalizeChatMessage(message: UnipileMessage, chatId: string): LinkedInInboxMessage {
   const outbound = Boolean(message.is_sender);
   const senderName =
     message.sender_name ||
     attendeeName(message.sender) ||
     attendeeName(message.from) ||
-    "LinkedIn";
+    UNKNOWN_SENDER_NAME;
 
   return {
     id: message.id || `${chatId}-${messageTimestamp(message)}`,
@@ -2377,14 +2379,20 @@ export async function listLinkedInInbox(input: {
       const messageAttendees = rawMessages
         .map(messageSenderAttendee)
         .filter((attendee): attendee is UnipileChatAttendee => Boolean(attendee));
-      const inboundSenderName = messages.find((message) => message.direction === "inbound")
-        ?.senderName;
+      // "LinkedIn" is normalizeChatMessage's placeholder, not a name; using it
+      // titled threads "LinkedIn" and signed inbound messages that way.
+      const inboundSenderName = messages.find(
+        (message) => message.direction === "inbound" && message.senderName !== UNKNOWN_SENDER_NAME,
+      )?.senderName;
       const baseAttendee = primaryChatAttendee(
         chat,
         [...detailedAttendees, ...messageAttendees],
         inboundSenderName,
       );
-      const needsEnrichment = !attendeeName(baseAttendee) && !inboundSenderName;
+      // Enrichment spends the shared daily profile-view budget, so it stays
+      // limited to threads with no inbound message at all, as before.
+      const needsEnrichment =
+        !attendeeName(baseAttendee) && !messages.some((message) => message.direction === "inbound");
       let primaryAttendee = baseAttendee;
       if (needsEnrichment && enrichmentBudget.left > 0) {
         enrichmentBudget.left -= 1;
@@ -2403,6 +2411,14 @@ export async function listLinkedInInbox(input: {
 
       if (profileName === "LinkedIn" && fallbackTitle !== "LinkedIn chat") {
         profileName = fallbackTitle;
+      }
+
+      if (profileName && profileName !== UNKNOWN_SENDER_NAME) {
+        messages = messages.map((message) =>
+          message.direction === "inbound" && message.senderName === UNKNOWN_SENDER_NAME
+            ? { ...message, senderName: profileName }
+            : message,
+        );
       }
 
       if (!messages.length && lastMessage) {

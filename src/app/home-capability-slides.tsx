@@ -3,6 +3,7 @@ import {
   MockInboxScreen,
   MockLeadsScreen,
 } from "./home-product-mock";
+import Reveal from "./scroll-reveal";
 
 export const homeSlides = [
   {
@@ -57,17 +58,23 @@ export default function HomeCapabilitySlides() {
         How it works
       </p>
       <div className="home-green-panels mt-8 md:mt-10">
-        <Slide
-          copy={homeSlides[0]}
-          live
-          draw={<MockLeadsScreen funnel compact interactive />}
-        />
-        <Slide copy={homeSlides[1]} flip draw={<MockInboxScreen compact focus />} />
-        <Slide
-          copy={homeSlides[2]}
-          live
-          draw={<MockInboxScreen booked compact interactive />}
-        />
+        <Reveal>
+          <Slide
+            copy={homeSlides[0]}
+            live
+            draw={<MockLeadsScreen funnel compact interactive />}
+          />
+        </Reveal>
+        <Reveal>
+          <Slide copy={homeSlides[1]} flip draw={<MockInboxScreen compact focus />} />
+        </Reveal>
+        <Reveal>
+          <Slide
+            copy={homeSlides[2]}
+            live
+            draw={<MockInboxScreen booked compact interactive />}
+          />
+        </Reveal>
       </div>
     </section>
   );

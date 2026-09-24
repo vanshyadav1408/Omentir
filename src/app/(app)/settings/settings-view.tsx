@@ -1,5 +1,6 @@
 "use client";
 
+import { userFacingError } from "@/app/toast";
 import { useEffect, useRef, useState, useTransition } from "react";
 import type { LinkedInAccount, Workspace } from "@/lib/server/types";
 import { ContentReveal, LinkedInAccountsSkeleton } from "@/app/app-skeletons";
@@ -540,7 +541,7 @@ export default function SettingsView({
         try {
           await uploadImageAction(formData);
         } catch (err) {
-          setPhotoError(err instanceof Error ? err.message : "Could not update the photo.");
+          setPhotoError(userFacingError(err, "Could not update the photo."));
         }
       });
     } catch {
