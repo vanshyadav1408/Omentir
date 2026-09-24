@@ -2823,6 +2823,15 @@ export async function listCampaignEnrollments(workspaceId: string) {
   return snap.docs.map((doc) => doc.data());
 }
 
+export async function listLeadEnrollments(workspaceId: string, leadId: string) {
+  const snap = await collection<CampaignEnrollment>("campaignEnrollments")
+    .where("leadId", "==", leadId)
+    .get();
+  return snap.docs
+    .map((doc) => doc.data())
+    .filter((enrollment) => enrollment.workspaceId === workspaceId);
+}
+
 export async function getCampaignEnrollment(workspaceId: string, enrollmentId: string) {
   if (!enrollmentId) return null;
   const snap = await collection<CampaignEnrollment>("campaignEnrollments").doc(enrollmentId).get();

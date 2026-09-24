@@ -64,52 +64,131 @@ export function resultMessage(result: string, kind: ScheduledAction["kind"]) {
   return { ok: false, text: `${kind === "connection" ? "Connection request" : "Message"} was not sent yet (${result.replaceAll("-", " ")}).` };
 }
 
-function TimelineRow({ item, timeZone }: { item: ScheduledAction["timeline"][number]; timeZone: string }) {
-  const marker =
+function shortStamp(value: string, timeZone: string) {
+  return new Intl.DateTimeFormat("en-US", { timeZone, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(value));
+}
+
+function TimelineRow({ item, label, timeZone }: { item: ScheduledAction["timeline"][number]; label: string; timeZone: string }) {
+  const dot =
     item.status === "completed"
-      ? { className: "bg-emerald-500 text-white", icon: "check" }
+      ? "bg-emerald-500"
       : item.status === "scheduled"
-        ? { className: "bg-[#ba3871] text-white", icon: "event_upcoming" }
-        : item.status === "waiting"
-          ? { className: "bg-amber-100 text-amber-700", icon: "lock_clock" }
-          : item.status === "cancelled"
-            ? { className: "bg-zinc-200 text-zinc-500", icon: "close" }
-            : { className: "border border-zinc-300 bg-white", icon: null };
-  const stamp = item.at ? `${dateLabel(item.at, timeZone, true)} · ${timeLabel(item.at, timeZone)}` : "";
-  const detail =
-    item.status === "completed"
-      ? stamp
-        ? `Done · ${stamp}`
-        : "Done"
-      : item.status === "cancelled"
-        ? item.note || "Stopped"
-        : item.status === "scheduled"
-          ? stamp
-          : item.at
-            ? `Estimated ${stamp}`
-            : item.note || "";
+        ? "bg-[#ba3871] ring-4 ring-[#ba3871]/15"
+        : item.status === "cancelled"
+          ? "bg-zinc-300"
+          : "border border-zinc-300 bg-white";
+  const when = item.at
+    ? item.status === "scheduled"
+      ? shortStamp(item.at, timeZone)
+      : item.estimated
+        ? `~${dateLabel(item.at, timeZone)}`
+        : item.status === "completed"
+          ? shortStamp(item.at, timeZone)
+          : ""
+    : item.status === "completed"
+      ? "Done"
+      : "";
+  const note = item.status === "completed" || item.status === "scheduled" ? "" : item.note || "";
 
   return (
-    <div className="relative flex w-full gap-3 py-2">
-      <span className={`relative z-10 grid h-[1.1rem] w-[1.1rem] shrink-0 place-items-center overflow-hidden rounded-full ${marker.className}`}>
-        {marker.icon ? (
-          <span className="material-symbols-outlined ms-size-16" aria-hidden="true">{marker.icon}</span>
-        ) : null}
-      </span>
+    <li className="flex items-start gap-3 py-2" title={item.at ? `${dateLabel(item.at, timeZone, true)} · ${timeLabel(item.at, timeZone)}` : undefined}>
+      <span className={`mt-[5px] h-2 w-2 shrink-0 rounded-full ${dot}`} aria-hidden="true" />
       <span className="min-w-0 flex-1">
-        <span className="flex items-center gap-2">
-          <span className={`truncate text-xs font-semibold leading-4 ${item.status === "scheduled" ? "text-[#ba3871]" : item.status === "completed" ? "text-zinc-800" : item.status === "cancelled" ? "text-zinc-400 line-through" : "text-zinc-500"}`}>{item.title}</span>
-          {item.status === "scheduled" ? (
-            <span className="shrink-0 rounded-full bg-[#f8e8ef] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[#ba3871]">Next</span>
-          ) : null}
+        <span className={`block truncate text-[13px] leading-[18px] ${item.status === "completed" ? "text-zinc-900" : item.status === "scheduled" ? "font-medium text-[#ba3871]" : "text-zinc-400"}`}>
+          {label}
+          {item.status === "scheduled" ? <span className="ml-1.5 text-[11px] font-normal text-[#ba3871]/70">Next</span> : null}
         </span>
-        {detail ? <span className="mt-0.5 block text-[11px] leading-4 text-zinc-400">{detail}</span> : null}
+        {note ? <span className="block text-[11px] leading-4 text-zinc-400">{note}</span> : null}
       </span>
+      {when ? <span className={`shrink-0 text-[11px] leading-[18px] tabular-nums ${item.status === "scheduled" ? "text-[#ba3871]" : "text-zinc-400"}`}>{when}</span> : null}
+    </li>
+  );
+}
+
+const PROGRESS_STEPS = ["Invited", "Accepted", "Messaged", "Replied"];
+
+function OutreachProgress({ stage }: { stage: number }) {
+  return (
+    <div className="grid grid-cols-4 gap-1.5" aria-label={`Outreach progress: ${PROGRESS_STEPS[stage - 1] || "not contacted"}`}>
+      {PROGRESS_STEPS.map((step, index) => {
+        const reached = index < stage;
+        return (
+          <div key={step}>
+            <div className={`h-1 rounded-full ${reached ? (stage === 4 ? "bg-emerald-500" : "bg-[#ba3871]") : "bg-zinc-200"}`} />
+            <p className={`mt-1.5 text-[11px] ${reached ? "font-medium text-zinc-800" : "text-zinc-400"}`}>{step}</p>
+          </div>
+        );
+      })}
     </div>
   );
 }
 
-export function ActionDetails({ action, siblings, onSelectSibling, timeZone, pending, confirming, confirmingStop, feedback, onConfirm, onCancel, onRun, onConfirmStop, onCancelStop, onStop, onClose, bare, showTimeline, variant = "panel", hideCompany, intro }: {
+export function OutreachPanelHeader({ lead, subtitle, actions }: {
+  lead: Lead;
+  subtitle: string;
+  actions?: ReactNode;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <Avatar lead={lead} size="lg" />
+      <div className="min-w-0 flex-1">
+        <h2 className="flex items-center gap-2 text-[15px] font-semibold leading-5 text-zinc-950">
+          <span className="truncate">{lead.name}</span>
+          <span className="shrink-0 text-[11px] font-medium tabular-nums text-zinc-400" aria-label={`Fit score ${lead.fitScore || 0}`}>
+            Fit {lead.fitScore || 0}
+          </span>
+        </h2>
+        <p className="mt-0.5 truncate text-xs text-zinc-500">{subtitle}</p>
+      </div>
+      {actions ? <div className="flex shrink-0 items-center gap-1">{actions}</div> : null}
+    </div>
+  );
+}
+
+export function OutreachSection({ title, children, first }: { title: string; children: ReactNode; first?: boolean }) {
+  return (
+    <section className={first ? "" : "mt-5 border-t border-zinc-100 pt-5"}>
+      <h3 className="text-xs font-semibold text-zinc-900">{title}</h3>
+      <div className="mt-2">{children}</div>
+    </section>
+  );
+}
+
+export function OutreachTimeline({ items, timeZone, stage }: { items: ScheduledAction["timeline"]; timeZone: string; stage?: number }) {
+  let messageNumber = 0;
+  const labels = items.map((item) =>
+    item.id === "lead-replied"
+      ? "They replied"
+      : item.kind === "connection"
+        ? "Connection request"
+        : `Message ${++messageNumber}`,
+  );
+  return (
+    <div>
+      {stage !== undefined ? <OutreachProgress stage={stage} /> : null}
+      <ol className={stage !== undefined && items.length ? "mt-3" : ""}>
+        {items.map((item, index) => (
+          <TimelineRow key={item.id} item={item} label={labels[index]} timeZone={timeZone} />
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+export function CloseButton({ onClose, label }: { onClose: () => void; label: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClose}
+      aria-label={label}
+      className="grid h-8 w-8 cursor-pointer place-items-center text-zinc-400 transition-colors hover:text-zinc-900"
+    >
+      <span className="material-symbols-outlined ms-size-20" aria-hidden="true">close</span>
+    </button>
+  );
+}
+
+export function ActionDetails({ action, siblings, onSelectSibling, timeZone, pending, confirming, confirmingStop, feedback, onConfirm, onCancel, onRun, onConfirmStop, onCancelStop, onStop, onClose, bare, showTimeline, variant = "panel", hideCompany, intro, stage }: {
   action: ScheduledAction;
   siblings: ScheduledAction[];
   onSelectSibling: (action: ScheduledAction) => void;
@@ -130,83 +209,43 @@ export function ActionDetails({ action, siblings, onSelectSibling, timeZone, pen
   variant?: "panel" | "inline";
   hideCompany?: boolean;
   intro?: ReactNode;
+  // 0 not contacted, 1 invited, 2 accepted, 3 messaged, 4 replied.
+  stage?: number;
 }) {
   if (!action.lead) return null;
   const inline = variant === "inline";
   const showIdentity = !inline;
+  const firstName = action.lead.name.split(" ")[0] || "this lead";
+  const stopButton = !confirmingStop ? (
+    <button
+      type="button"
+      onClick={onConfirmStop}
+      disabled={pending}
+      className="h-8 cursor-pointer rounded-lg px-2.5 text-xs font-medium text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-60"
+    >
+      Stop outreach
+    </button>
+  ) : null;
 
   return (
     <aside className={`flex min-h-0 flex-col overflow-hidden ${inline ? "" : bare ? "h-full max-h-full" : "m3-card m3-card-elevated m3-card-lg h-full"}`}>
       <div className={`min-h-0 flex-1 ${inline ? "" : "overflow-y-auto p-5"}`}>
         {showIdentity ? (
-          <div className="flex items-center gap-3 border-b border-zinc-100 pb-4">
-            <Avatar lead={action.lead} size="lg" />
-            <div className="min-w-0 flex-1">
-              <h2 className="flex items-center gap-2 text-base font-semibold text-zinc-950">
-                <span className="truncate">{action.lead.name}</span>
-                <span className="shrink-0 rounded-full bg-zinc-100 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-zinc-600" aria-label={`Fit score ${action.lead.fitScore || 0}`}>
-                  {action.lead.fitScore || 0}
-                </span>
-              </h2>
-              <p className="truncate text-xs text-zinc-500">
-                {hideCompany ? action.lead.title : [action.lead.title, action.lead.company].filter(Boolean).join(" · ")}
-              </p>
-            </div>
-            <div className="flex shrink-0 items-center gap-1">
-              {!confirmingStop ? (
-                <button
-                  type="button"
-                  onClick={onConfirmStop}
-                  disabled={pending}
-                  className="flex h-8 items-center rounded-lg border border-zinc-200 bg-white px-3 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  Stop outreach
-                </button>
-              ) : null}
-              {onClose ? (
-                <button
-                  type="button"
-                  onClick={onClose}
-                  aria-label="Close action details"
-                  className="grid h-8 w-8 cursor-pointer place-items-center text-zinc-500 transition-colors hover:text-zinc-900"
-                >
-                  <span className="material-symbols-outlined ms-size-20" aria-hidden="true">
-                    close
-                  </span>
-                </button>
-              ) : null}
-            </div>
-          </div>
+          <OutreachPanelHeader
+            lead={action.lead}
+            subtitle={hideCompany ? action.lead.title : [action.lead.title, action.lead.company].filter(Boolean).join(" · ")}
+            actions={<>{stopButton}{onClose ? <CloseButton onClose={onClose} label="Close action details" /> : null}</>}
+          />
         ) : (
           <div className="mb-2 flex justify-end gap-1">
-            {!confirmingStop ? (
-              <button
-                type="button"
-                onClick={onConfirmStop}
-                disabled={pending}
-                className="flex h-8 items-center rounded-lg border border-zinc-200 bg-white px-3 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                Stop outreach
-              </button>
-            ) : null}
-            {onClose ? (
-              <button
-                type="button"
-                onClick={onClose}
-                aria-label="Hide outreach details"
-                className="grid h-8 w-8 shrink-0 cursor-pointer place-items-center text-zinc-400 transition-colors hover:text-zinc-800"
-              >
-                <span className="material-symbols-outlined ms-size-18" aria-hidden="true">
-                  close
-                </span>
-              </button>
-            ) : null}
+            {stopButton}
+            {onClose ? <CloseButton onClose={onClose} label="Hide outreach details" /> : null}
           </div>
         )}
 
         {confirmingStop ? (
-          <div className="mt-4 rounded-lg border border-zinc-200 bg-zinc-50 p-3">
-            <p className="text-xs font-semibold text-zinc-900">Stop outreach for {action.lead.name.split(" ")[0] || "this lead"}?</p>
+          <div className="mt-4 rounded-lg border border-zinc-200 bg-white p-3">
+            <p className="text-xs font-semibold text-zinc-900">Stop outreach for {firstName}?</p>
             <p className="mt-1 text-[11px] leading-4 text-zinc-500">
               {siblings.length > 1
                 ? "Nothing else will be sent in any campaign for this person."
@@ -222,8 +261,6 @@ export function ActionDetails({ action, siblings, onSelectSibling, timeZone, pen
             </div>
           </div>
         ) : null}
-
-        {intro ? <div className={showIdentity ? "mt-4" : ""}>{intro}</div> : null}
 
         {siblings.length > 1 ? (
           <div className={`${showIdentity ? "mt-4" : ""} flex flex-wrap gap-1.5`}>
@@ -244,63 +281,37 @@ export function ActionDetails({ action, siblings, onSelectSibling, timeZone, pen
           </div>
         ) : null}
 
+        {intro ? <div className="mt-5">{intro}</div> : null}
+
         <div className={inline ? "grid gap-4 lg:grid-cols-2" : ""}>
           {showTimeline ? (
-            <div className={`${showIdentity || siblings.length > 1 ? "mt-5" : ""} ${inline ? "" : "border-b border-zinc-100 pb-5"}`}>
-              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-zinc-400">Schedule</p>
-              <div className="relative mt-3 before:absolute before:bottom-4 before:left-[0.55rem] before:top-4 before:w-px before:-translate-x-1/2 before:bg-zinc-200">
-                {action.timeline.map((timelineItem) => (
-                  <TimelineRow key={timelineItem.id} item={timelineItem} timeZone={timeZone} />
-                ))}
-              </div>
-              {action.awaitingConnection ? (
-                <p className="mt-1 flex gap-2 rounded-lg bg-amber-50 px-3 py-2.5 text-[11px] leading-4 text-amber-800">
-                  <span className="material-symbols-outlined mt-px text-[14px]">lock_clock</span>
-                  LinkedIn only allows messages between connections. The connection request is still pending, so the messages below get their send times the moment {action.lead.name.split(" ")[0] || "this lead"} accepts.
-                </p>
-              ) : null}
-            </div>
+            <OutreachSection title="Progress" first={inline}>
+              <OutreachTimeline items={action.timeline} timeZone={timeZone} stage={stage} />
+            </OutreachSection>
           ) : null}
 
-          <div>
-            <div className={`flex items-start gap-3 ${showTimeline && !inline ? "mt-5" : showTimeline && inline ? "" : "mt-5"}`}>
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[#f8e8ef] text-[#ba3871]"><span className="material-symbols-outlined text-[18px]">{action.kind === "connection" ? "person_add" : "chat_bubble"}</span></span>
-              <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-zinc-400">{action.isReply ? "Their reply" : "Next action"}</p>
-                <p className="mt-1 text-sm font-semibold text-zinc-950">{action.title}</p>
-                <p className="mt-1 text-xs text-zinc-500">{action.awaitingConnection ? "Waiting on the connection request" : `${dateLabel(action.at, timeZone, true)} · ${timeLabel(action.at, timeZone)}`}</p>
-              </div>
-            </div>
+          <OutreachSection title={action.isReply ? "Their reply" : "Next up"} first={inline || (!showTimeline && !intro)}>
+            <p className="text-sm font-medium text-zinc-900">{action.title}</p>
+            <p className="mt-0.5 text-xs text-zinc-500">
+              {action.awaitingConnection ? "When they accept the connection request" : `${dateLabel(action.at, timeZone, true)} · ${timeLabel(action.at, timeZone)}`}
+            </p>
+            <p className="mt-3 whitespace-pre-wrap rounded-lg border border-zinc-200 bg-white p-3 text-[13px] leading-5 text-zinc-700">{action.message}</p>
 
-            <div className="m3-card m3-card-filled mt-4 p-4">
-              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-zinc-400">{action.kind === "connection" ? "Connection note" : action.isReply ? "Latest reply" : "Message"}</p>
-              <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-zinc-700">{action.message}</p>
-            </div>
+            {inline ? <p className="mt-3 text-xs text-zinc-500">{action.campaign || "Campaign"}</p> : null}
 
-            {inline ? (
-              <p className="mt-3 text-xs text-zinc-500">
-                {action.campaign || "Campaign"}
-              </p>
-            ) : (
-              <dl className="mt-4 grid grid-cols-2 gap-3 text-xs">
-                <div><dt className="text-zinc-400">Campaign</dt><dd className="mt-1 font-medium text-zinc-800">{action.campaign || "Campaign"}</dd></div>
-                <div><dt className="text-zinc-400">Channel</dt><dd className="mt-1 font-medium text-zinc-800">LinkedIn</dd></div>
-              </dl>
-            )}
-
-            {feedback ? <p className={`mt-4 rounded-lg px-3 py-2.5 text-xs leading-5 ${feedback.ok ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-800"}`}>{feedback.text}</p> : null}
-            {action.blockedReason ? <p className="mt-4 flex gap-2 rounded-lg bg-amber-50 px-3 py-2.5 text-xs leading-5 text-amber-800"><span className="material-symbols-outlined mt-0.5 text-[15px]">lock_clock</span>{action.blockedReason}</p> : null}
+            {feedback ? <p className={`mt-3 rounded-lg px-3 py-2 text-xs leading-5 ${feedback.ok ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-800"}`}>{feedback.text}</p> : null}
+            {action.blockedReason ? <p className="mt-3 text-xs leading-5 text-amber-700">{action.blockedReason}</p> : null}
 
             {confirming ? (
-              <div className="mt-4 rounded-lg border border-[#eac4d5] bg-[#fff7fa] p-3">
+              <div className="mt-3 rounded-lg border border-[#eac4d5] bg-[#fff7fa] p-3">
                 <p className="text-xs font-semibold text-zinc-900">Send this live on LinkedIn now?</p>
                 <p className="mt-1 text-[11px] leading-4 text-zinc-500">This skips the timer and cannot be undone.</p>
                 <div className="mt-3 flex gap-2"><button type="button" onClick={onRun} disabled={pending} className="dark-keep-brand h-8 rounded-md bg-[#ba3871] px-3 text-xs font-semibold text-white disabled:opacity-60">{pending ? "Sending…" : "Yes, send now"}</button><button type="button" onClick={onCancel} disabled={pending} className="h-8 rounded-md border border-zinc-200 bg-white px-3 text-xs font-semibold text-zinc-700">Cancel</button></div>
               </div>
             ) : (
-              <button type="button" onClick={onConfirm} disabled={!action.canRunNow || pending} className={`dark-keep-brand mt-4 flex h-10 items-center justify-center gap-2 rounded-lg bg-[#ba3871] text-sm font-semibold text-white transition hover:bg-[#a92f65] disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-500 ${inline ? "min-w-[10rem] px-3" : "w-full"}`}><span className="material-symbols-outlined text-[17px]">send</span>{action.kind === "connection" ? "Send connection now" : action.isReply ? "Send reply now" : "Send message now"}</button>
+              <button type="button" onClick={onConfirm} disabled={!action.canRunNow || pending} className={`dark-keep-brand mt-3 flex h-9 items-center justify-center gap-2 rounded-lg bg-[#ba3871] text-[13px] font-semibold text-white transition hover:bg-[#a92f65] disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-500 ${inline ? "min-w-[10rem] px-3" : "w-full"}`}><span className="material-symbols-outlined text-[16px]">send</span>{action.kind === "connection" ? "Send connection now" : action.isReply ? "Send reply now" : "Send message now"}</button>
             )}
-          </div>
+          </OutreachSection>
         </div>
       </div>
     </aside>

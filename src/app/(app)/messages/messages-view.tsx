@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useRef, useState, useTransition } from "
 import { useRouter } from "next/navigation";
 import {
   completeConversationManualFollowUpAction,
+  sendLeadReplyAction,
   sendLinkedInChatMessageAction,
 } from "@/app/actions";
 import { useSidebarResource } from "@/app/use-sidebar-resource";
@@ -445,11 +446,11 @@ export default function MessagesView({
     messagesEndRef.current?.scrollIntoView({ block: "end" });
   }, [selected?.id, selected?.messages.length]);
 
-  function addLocalMessage(thread: Extract<InboxThread, { kind: "linkedin" }>, body: string) {
+  function addLocalMessage(thread: InboxThread, body: string) {
     const createdAt = new Date().toISOString();
     const message: LocalMessage = {
       id: `local:${thread.id}:${createdAt}`,
-      chatId: thread.chatId,
+      chatId: thread.chatId || "",
       direction: "outbound",
       senderName: "You",
       body,
@@ -834,7 +835,7 @@ export default function MessagesView({
                     <div ref={messagesEndRef} />
                   </div>
 
-                  {selected.kind === "linkedin" ? (
+                  {selected.kind === "linkedin" || selected.lead ? (
                     <Composer
                       selected={selected}
                       onSent={(body) => {
@@ -844,7 +845,7 @@ export default function MessagesView({
                     />
                   ) : (
                     <div className="border-t border-zinc-200 bg-zinc-50/60 px-5 py-3 text-center text-[12px] font-medium text-zinc-700">
-                      Replies sync from LinkedIn - open this thread there to reply.
+                      This lead was deleted, so replies can only be sent from LinkedIn.
                     </div>
                   )}
                 </>
@@ -865,9 +866,12 @@ function Composer({
   selected,
   onSent,
 }: {
-  selected: Extract<InboxThread, { kind: "linkedin" }>;
+  selected: InboxThread;
   onSent: (body: string) => void;
 }) {
+  // Threads outside the live LinkedIn inbox list have no chat id. They reply
+  // through the lead instead, which only carries text.
+  const canAttach = selected.kind === "linkedin";
   const [body, setBody] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [isSending, setIsSending] = useState(false);
@@ -883,15 +887,19 @@ function Composer({
     setIsSending(true);
     void (async () => {
       const formData = new FormData();
-      formData.set("chatId", selected.chatId);
-      formData.set("accountId", selected.accountId);
       if (selected.lead?.id) formData.set("leadId", selected.lead.id);
       formData.set("body", message);
-      for (const file of attachments) {
-        formData.append("attachments", file);
-      }
       try {
-        await sendLinkedInChatMessageAction(formData);
+        if (selected.kind === "linkedin") {
+          formData.set("chatId", selected.chatId);
+          formData.set("accountId", selected.accountId);
+          for (const file of attachments) {
+            formData.append("attachments", file);
+          }
+          await sendLinkedInChatMessageAction(formData);
+        } else {
+          await sendLeadReplyAction(formData);
+        }
         onSent(message || `📎 ${attachments.map((file) => file.name).join(", ")}`);
       } catch (caught) {
         // Restore the draft so nothing is lost; keep the failure out of the UI.
@@ -960,25 +968,27 @@ function Composer({
             event.target.value = "";
           }}
         />
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={isSending}
-          aria-label="Attach file"
-          className="grid h-8 w-8 shrink-0 cursor-pointer place-items-center rounded-md text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-800 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          <svg
-            className="h-4 w-4"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+        {canAttach ? (
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isSending}
+            aria-label="Attach file"
+            className="grid h-8 w-8 shrink-0 cursor-pointer place-items-center rounded-md text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-800 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" />
-          </svg>
-        </button>
+            <svg
+              className="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+            </svg>
+          </button>
+        ) : null}
         <textarea
           value={body}
           onChange={(event) => setBody(event.target.value)}
@@ -996,20 +1006,16 @@ function Composer({
         <button
           type="submit"
           disabled={isSending || (!body.trim() && !files.length)}
-          className="grid h-8 w-8 shrink-0 cursor-pointer place-items-center rounded-md bg-[#0a66c2] text-white transition-colors hover:bg-[#004182] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-[#0a66c2]"
+          className="grid h-7 w-7 shrink-0 cursor-pointer place-items-center rounded-full bg-[#0a66c2] text-white transition-colors hover:bg-[#004182] disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-400"
           aria-label="Send"
         >
           <svg
-            className="h-4 w-4"
+            className="h-3.5 w-3.5 translate-x-px"
             viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+            fill="currentColor"
+            aria-hidden="true"
           >
-            <path d="M12 19V5" />
-            <path d="m5 12 7-7 7 7" />
+            <path d="M3.714 3.048a.498.498 0 0 0-.683.627l2.843 7.627a2 2 0 0 1 0 1.396l-2.842 7.627a.498.498 0 0 0 .682.627l18-8.5a.5.5 0 0 0 0-.904z" />
           </svg>
         </button>
       </div>

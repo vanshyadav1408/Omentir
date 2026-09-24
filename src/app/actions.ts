@@ -65,7 +65,7 @@ import {
   onboardingSurveySentProperties,
 } from "@/lib/posthog-onboarding";
 import { executeScheduledActionNow } from "@/lib/server/automation";
-import { listScheduledActions } from "@/lib/server/scheduled-actions";
+import { getLeadOutreach } from "@/lib/server/scheduled-actions";
 import { analyzeWebsiteOrSearch, draftAgentSetupWithGemini } from "@/lib/server/gemini";
 import { hasActiveSubscription, requireActiveSubscription } from "@/lib/server/subscription";
 import { deleteLinkedInAccount, sendLinkedInChatMessage } from "@/lib/server/unipile";
@@ -803,10 +803,10 @@ export async function runScheduledActionNowAction(formData: FormData) {
   return { result };
 }
 
-export async function listScheduledActionsAction() {
+export async function getLeadOutreachAction(leadId: string) {
   const workspace = await requireWorkspace();
   requireActiveSubscription(workspace);
-  return listScheduledActions(workspace.id);
+  return getLeadOutreach(workspace.id, String(leadId || "").trim());
 }
 
 export async function stopLeadOutreachAction(formData: FormData) {
@@ -1350,6 +1350,21 @@ export async function launchExistingAgentFromSetupAction(formData: FormData) {
 
   await createCampaignAction(formData);
   redirect("/agents");
+}
+
+// Threads that are not in the live LinkedIn inbox list have no chat id, so the
+// reply goes to the lead directly (LinkedIn reuses the existing 1:1 chat).
+export async function sendLeadReplyAction(formData: FormData) {
+  const workspace = await requireWorkspace();
+  requireActiveSubscription(workspace);
+  const leadId = String(formData.get("leadId") || "").trim();
+  const body = String(formData.get("body") || "").trim();
+  if (!leadId) throw new Error("Lead id is required.");
+  if (!body) throw new Error("Message cannot be empty.");
+  if (body.length > 4000) throw new Error("Message is too long.");
+  const { sendReplyToLead } = await import("@/lib/server/agent-api-operations");
+  await sendReplyToLead(workspace, leadId, body);
+  revalidatePath("/messages");
 }
 
 export async function sendLinkedInChatMessageAction(formData: FormData) {

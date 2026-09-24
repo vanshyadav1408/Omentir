@@ -15,8 +15,18 @@ import {
   getLeadsByIds,
   getOutreachConversationFactsByLeadIds,
   listGroups,
+  listLeadEnrollments,
 } from "./data";
-import { enrollmentIsTerminalForSequence } from "./reply-automation-policy";
+import {
+  enrollmentIsTerminalForSequence,
+  USER_STOPPED_OUTREACH_ERROR,
+} from "./reply-automation-policy";
+import {
+  combinedOutreachStage,
+  STAGE_CONTACTED,
+  STAGE_MESSAGED,
+  STAGE_REPLIED,
+} from "@/lib/outreach-stage";
 
 export type ScheduledAction = {
   id: string;
@@ -50,18 +60,24 @@ export type ScheduledAction = {
 
 export async function listScheduledActions(
   workspaceId: string,
-  filters: { campaignId?: string; agentId?: string } = {},
+  filters: { campaignId?: string; agentId?: string; leadId?: string } = {},
 ) {
-  const [campaigns, enrollments, agents, groups] = await Promise.all([
+  // One lead (the /leads panel) reads only its own docs, all in parallel. The
+  // workspace-wide path reads every enrolled lead and took 14-60s on big
+  // workspaces, which is what left /leads stuck on "Loading outreach".
+  const leadId = filters.leadId;
+  const [campaigns, enrollments, agents, groups, leadOnly, leadFacts] = await Promise.all([
     listCampaigns(workspaceId),
-    listCampaignEnrollments(workspaceId),
+    leadId ? listLeadEnrollments(workspaceId, leadId) : listCampaignEnrollments(workspaceId),
     listAgents(workspaceId),
     listGroups(workspaceId),
+    leadId ? getLeadsByIds(workspaceId, [leadId]) : undefined,
+    leadId ? getOutreachConversationFactsByLeadIds(workspaceId, [leadId]) : undefined,
   ]);
   // Only enrolled leads can produce an action, and there are at most as many of
   // them as there are enrollments. Scanning the whole leads collection here used
   // to pull 500 full documents and push this call past Firestore's 60s deadline.
-  const leads = await getLeadsByIds(
+  const leads = leadOnly ?? await getLeadsByIds(
     workspaceId,
     enrollments.map((enrollment) => enrollment.leadId),
   );
@@ -81,7 +97,7 @@ export async function listScheduledActions(
     const doneSteps = stepIndex === -1 ? campaign.steps : campaign.steps.slice(0, stepIndex);
     return doneSteps.some((step) => step.type === "message") ? [enrollment.leadId] : [];
   });
-  const conversationFacts = await getOutreachConversationFactsByLeadIds(
+  const conversationFacts = leadFacts ?? await getOutreachConversationFactsByLeadIds(
     workspaceId,
     conversationLeadIds,
   );
@@ -190,4 +206,121 @@ export async function listScheduledActions(
   });
 
   return outreach.sort((a, b) => a.at.localeCompare(b.at));
+}
+
+// What /leads shows for a lead with nothing queued: how far outreach got, why
+// it is not moving, and the steps that did or did not go out.
+export type LeadOutreachSummary = {
+  detail: string;
+  // 0 not contacted, 1 invited, 2 accepted, 3 messaged, 4 replied.
+  stage: number;
+  timeline: ActionTimelineItem[];
+};
+
+export async function getLeadOutreachSummary(
+  workspaceId: string,
+  leadId: string,
+): Promise<LeadOutreachSummary | null> {
+  const [[lead], enrollments, campaigns, agents, conversationFacts] = await Promise.all([
+    getLeadsByIds(workspaceId, [leadId]),
+    listLeadEnrollments(workspaceId, leadId),
+    listCampaigns(workspaceId),
+    listAgents(workspaceId),
+    getOutreachConversationFactsByLeadIds(workspaceId, [leadId]),
+  ]);
+  if (!lead) return null;
+  const campaignsById = new Map(campaigns.map((campaign) => [campaign.id, campaign]));
+  const enrollment = enrollments
+    .filter((item) => campaignsById.has(item.campaignId))
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
+  const campaign = enrollment ? campaignsById.get(enrollment.campaignId) : undefined;
+  const facts = conversationFacts.get(leadId);
+
+  // Both stored statuses get written back down, so the steps that provably went
+  // out set the floor: a sent invite is contact, a sent message is messaged.
+  const doneSteps = campaign && enrollment
+    ? campaign.steps.slice(0, Math.min(enrollment.currentStepIndex, campaign.steps.length))
+    : [];
+  const stage = Math.max(
+    combinedOutreachStage(undefined, lead.outreachStatus),
+    ...enrollments.map((item) => combinedOutreachStage(item.status)),
+    enrollments.some((item) => item.connectionSentAt) ? STAGE_CONTACTED : 0,
+    facts?.sequenceOutboundAts.length && doneSteps.some((step) => step.type === "message")
+      ? STAGE_MESSAGED
+      : 0,
+  );
+  const paused = Boolean(
+    enrollment &&
+      !enrollmentIsTerminalForSequence(enrollment.status) &&
+      (campaign?.status !== "active" || enrollment.pausedDeferredAt),
+  );
+  const replied = stage >= STAGE_REPLIED;
+
+  const summary = ((): Pick<LeadOutreachSummary, "detail"> => {
+    if (replied) {
+      return { detail: "They replied. Continue the conversation in Messages." };
+    }
+    if (lead.outreachStatus === "declined") {
+      return { detail: "They declined the connection request." };
+    }
+    if (enrollment?.lastError === USER_STOPPED_OUTREACH_ERROR || lead.outreachStatus === "stopped") {
+      return { detail: "You stopped outreach for this person." };
+    }
+    if (isSourcedByLeadsOnlyAgent(lead, agents)) {
+      return { detail: "A leads-only agent found this person, so Omentir will not contact them." };
+    }
+    if (!enrollment) {
+      return {
+        detail: stage === 0 ? "Not in an outreach sequence yet." : "Nothing is scheduled for this person.",
+      };
+    }
+    if (paused) {
+      return { detail: "The agent is paused. Outreach continues when you resume it." };
+    }
+    if (enrollment.status === "error") {
+      return { detail: enrollment.lastError || "The last attempt failed." };
+    }
+    if (enrollment.lastError) {
+      return { detail: enrollment.lastError };
+    }
+    if (stage === 1) {
+      return { detail: "They have not accepted the connection request, so no follow-up will go out." };
+    }
+    return { detail: "The sequence ended with no reply yet. Nothing else is scheduled." };
+  })();
+
+  if (!enrollment || !campaign) return { ...summary, stage, timeline: [] };
+
+  const timeline = buildActionTimeline({
+    steps: campaign.steps,
+    stepIndex: Math.min(enrollment.currentStepIndex, campaign.steps.length),
+    scheduledAt: enrollment.nextActionAt,
+    connectionSentAt: enrollment.connectionSentAt,
+    sentMessageAts: facts?.sequenceOutboundAts,
+    connectionAccepted: canSendCampaignMessage(enrollment, lead),
+    sequenceStopped: replied,
+    repliedAt: facts?.lastInboundAt,
+  }).map((item) =>
+    replied || item.status === "completed"
+      ? item
+      : {
+          ...item,
+          status: paused ? ("upcoming" as const) : ("cancelled" as const),
+          at: undefined,
+          estimated: undefined,
+          note: paused ? "Waits for the agent to resume" : "Not sent",
+        },
+  );
+
+  return { ...summary, stage, timeline };
+}
+
+// Everything the /leads panel needs for one lead: its queued actions, and the
+// status summary it falls back to when nothing is queued.
+export async function getLeadOutreach(workspaceId: string, leadId: string) {
+  const [actions, summary] = await Promise.all([
+    listScheduledActions(workspaceId, { leadId }),
+    getLeadOutreachSummary(workspaceId, leadId),
+  ]);
+  return { actions, summary };
 }

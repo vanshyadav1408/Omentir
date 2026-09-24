@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Group, LeadPreview } from "@/lib/server/types";
 import {
   deleteGroupAction,
-  listScheduledActionsAction,
+  getLeadOutreachAction,
   runScheduledActionNowAction,
   stopLeadOutreachAction,
 } from "@/app/actions";
@@ -21,8 +21,15 @@ import {
 import MobileHeaderPortal from "@/app/mobile-header-portal";
 import { useWorkspaceTimeZone } from "@/app/workspace-time-zone";
 import { buildLeadsCsv } from "@/lib/leads-csv";
-import type { ScheduledAction } from "@/lib/server/scheduled-actions";
-import { ActionDetails, resultMessage } from "@/app/(app)/actions/action-details";
+import type { LeadOutreachSummary, ScheduledAction } from "@/lib/server/scheduled-actions";
+import {
+  ActionDetails,
+  CloseButton,
+  OutreachPanelHeader,
+  OutreachSection,
+  OutreachTimeline,
+  resultMessage,
+} from "@/app/(app)/actions/action-details";
 import { LeadAvatar } from "@/app/lead-avatar";
 
 type LeadsViewProps = {
@@ -99,42 +106,36 @@ function LeadSignal({
   groupName?: string;
 }) {
   const signalKeyword = lead.signalText || (groupName ? `"${groupName.toLowerCase()}"` : "");
+  const postUrl = lead.signalUrl || lead.engagementContext?.postUrl;
+  const quote = lead.engagementContext?.commentText || lead.engagementContext?.postText;
   return (
-    <div className="min-w-0 text-[12px] font-medium text-zinc-800">
-      <div>
+    <OutreachSection title="Why they're a lead" first>
+      <p className="text-[13px] leading-5 text-zinc-700">
         {lead.leadReason || "Engaged with a LinkedIn post"}
-        {lead.signalUrl || lead.engagementContext?.postUrl ? (
+        {postUrl ? (
           <>
             {" · "}
             <a
-              href={lead.signalUrl || lead.engagementContext?.postUrl}
+              href={postUrl}
               target="_blank"
               rel="noopener noreferrer"
               onClick={(event) => event.stopPropagation()}
-              className="text-[#0a66c2] underline"
+              className="text-[#0a66c2] hover:underline"
             >
               View post
             </a>
           </>
         ) : null}
-      </div>
-      {lead.engagementContext?.postText ? (
-        <div className="line-clamp-2 text-[11px] font-medium text-zinc-700">
-          <span className="font-bold text-zinc-800">Post:</span>{" "}
-          {lead.engagementContext.postText}
-        </div>
+      </p>
+      {quote ? (
+        <p className="mt-2 line-clamp-3 border-l-2 border-zinc-200 pl-3 text-xs leading-5 text-zinc-500">
+          {lead.engagementContext?.commentText ? "Their comment: " : "Post: "}
+          {quote}
+        </p>
+      ) : signalKeyword ? (
+        <p className="mt-2 line-clamp-2 whitespace-pre-wrap text-xs leading-5 text-zinc-500">Signal: {signalKeyword}</p>
       ) : null}
-      {lead.engagementContext?.commentText ? (
-        <div className="line-clamp-2 text-[11px] font-medium text-zinc-700">
-          <span className="font-bold text-zinc-800">Their comment:</span>{" "}
-          {lead.engagementContext.commentText}
-        </div>
-      ) : !lead.engagementContext?.postText && signalKeyword ? (
-        <div className="line-clamp-2 whitespace-pre-wrap text-[11px] font-medium text-zinc-700">
-          <span className="font-bold text-zinc-800">Signal:</span> {signalKeyword}
-        </div>
-      ) : null}
-    </div>
+    </OutreachSection>
   );
 }
 
@@ -182,9 +183,12 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
   const [deletedGroupIds, setDeletedGroupIds] = useState<Set<string>>(new Set());
   const [openLeadId, setOpenLeadId] = useState("");
   const [openActionId, setOpenActionId] = useState("");
-  const [scheduledActions, setScheduledActions] = useState<ScheduledAction[] | undefined>(undefined);
-  const [scheduledLoading, setScheduledLoading] = useState(false);
-  const [scheduledError, setScheduledError] = useState("");
+  // Outreach is loaded per lead as it opens. The workspace-wide action list
+  // took 14-60s on large workspaces and held the whole panel on "Loading".
+  const [outreachByLead, setOutreachByLead] = useState<
+    Record<string, { actions: ScheduledAction[]; summary: LeadOutreachSummary | null }>
+  >({});
+  const [outreachErrors, setOutreachErrors] = useState<Record<string, string>>({});
   const [confirmingId, setConfirmingId] = useState("");
   const [confirmingStopLeadId, setConfirmingStopLeadId] = useState("");
   const [pendingId, setPendingId] = useState("");
@@ -193,28 +197,33 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
   const { showError, showAgentStarted } = useToast();
   useBodyScrollLock(Boolean(mobileGroupMenu || deleteGroup || exportGroup || mobilePreviewOpen));
 
+  const openOutreach = outreachByLead[openLeadId];
   const actionsForOpenLead = useMemo(
-    () => (scheduledActions || []).filter((action) => action.lead?.id === openLeadId).sort((a, b) => a.at.localeCompare(b.at)),
-    [scheduledActions, openLeadId],
+    () => [...(openOutreach?.actions || [])].sort((a, b) => a.at.localeCompare(b.at)),
+    [openOutreach],
   );
   const openAction = actionsForOpenLead.find((action) => action.id === openActionId) || actionsForOpenLead[0];
+  const openLeadIdRef = useRef(openLeadId);
+  openLeadIdRef.current = openLeadId;
 
-  async function loadScheduledActions(options?: { quiet?: boolean }) {
-    if (!options?.quiet) {
-      setScheduledLoading(true);
-      setScheduledError("");
-    }
+  async function loadLeadOutreach(leadId: string, options?: { quiet?: boolean }) {
+    if (!leadId) return;
     try {
-      const items = await listScheduledActionsAction();
-      setScheduledActions(items);
-      return items;
+      const outreach = await getLeadOutreachAction(leadId);
+      setOutreachByLead((current) => ({ ...current, [leadId]: outreach }));
+      setOutreachErrors((current) => {
+        if (!(leadId in current)) return current;
+        const next = { ...current };
+        delete next[leadId];
+        return next;
+      });
     } catch (error) {
       if (!options?.quiet) {
-        setScheduledError(userFacingError(error, "Outreach details could not be loaded."));
+        setOutreachErrors((current) => ({
+          ...current,
+          [leadId]: userFacingError(error, "Outreach details could not be loaded."),
+        }));
       }
-      return [];
-    } finally {
-      if (!options?.quiet) setScheduledLoading(false);
     }
   }
 
@@ -225,9 +234,6 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
     setOpenActionId("");
     if (typeof window !== "undefined" && window.matchMedia("(max-width: 767.98px)").matches) {
       setMobilePreviewOpen(true);
-    }
-    if (scheduledActions === undefined && !scheduledLoading) {
-      void loadScheduledActions();
     }
   }
 
@@ -244,7 +250,7 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
       const { result } = await runScheduledActionNowAction(formData);
       setFeedback((current) => ({ ...current, [action.id]: resultMessage(result, action.kind) }));
       setConfirmingId("");
-      await loadScheduledActions();
+      await loadLeadOutreach(action.lead?.id || openLeadId);
       leadsResource.reload();
     } catch (error) {
       setFeedback((current) => ({
@@ -270,7 +276,7 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
     try {
       await stopLeadOutreachAction(formData);
       setConfirmingStopLeadId("");
-      await loadScheduledActions();
+      await loadLeadOutreach(leadId);
       leadsResource.reload();
     } catch (error) {
       setFeedback((current) => ({
@@ -282,16 +288,14 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
     }
   }
 
+  // Cached leads show instantly and refresh quietly behind the panel.
   useEffect(() => {
-    if (isInitialLoading) return;
-    if (scheduledActions === undefined && !scheduledLoading) {
-      void loadScheduledActions();
-    }
-  }, [isInitialLoading]);
+    void loadLeadOutreach(openLeadId, { quiet: openLeadId in outreachByLead });
+  }, [openLeadId]);
 
   useEffect(() => {
     const refresh = () => {
-      void loadScheduledActions({ quiet: true });
+      void loadLeadOutreach(openLeadIdRef.current, { quiet: true });
       leadsResource.reload();
     };
     const interval = window.setInterval(refresh, 5000);
@@ -367,20 +371,8 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
       );
     }
     const group = loadedGroups.find((item) => openLead.groupIds.includes(item.id));
-    if (scheduledLoading && scheduledActions === undefined) {
-      return (
-        <div className="grid h-full place-items-center p-6 text-center">
-          <p className="text-xs text-zinc-500">Loading outreach…</p>
-        </div>
-      );
-    }
-    if (scheduledError) {
-      return (
-        <div className="grid h-full place-items-center p-6 text-center">
-          <p className="text-xs text-amber-800">{scheduledError}</p>
-        </div>
-      );
-    }
+    const outreach = outreachByLead[openLead.id];
+    const summary = outreach?.summary;
     if (openAction) {
       return (
         <ActionDetails
@@ -409,30 +401,35 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
           onStop={() => stopOutreach(openAction)}
           onClose={onClose}
           intro={<LeadSignal lead={openLead} groupName={group?.name} />}
+          stage={Math.max(summary?.stage ?? 0, openAction.isReply ? 4 : 0)}
         />
       );
     }
     return (
-      <div className="relative grid h-full place-items-center p-6 text-center">
-        {onClose ? (
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close outreach preview"
-            className="absolute right-3 top-3 grid h-8 w-8 cursor-pointer place-items-center text-zinc-500 hover:text-zinc-900"
-          >
-            <span className="material-symbols-outlined ms-size-20" aria-hidden="true">close</span>
-          </button>
-        ) : null}
-        <div>
-          <span className="material-symbols-outlined text-3xl text-white" aria-hidden="true">
-            chat_bubble
-          </span>
-          <p className="mt-4 text-sm font-medium text-zinc-500">
-            {outreachEmptyCopy(openLead.outreachStatus)}
+      <aside className="flex h-full min-h-0 flex-col overflow-hidden">
+        <div className="min-h-0 flex-1 overflow-y-auto p-5">
+          <OutreachPanelHeader
+            lead={openLead}
+            subtitle={openLead.title}
+            actions={onClose ? <CloseButton onClose={onClose} label="Close outreach preview" /> : null}
+          />
+          <p className={`mt-4 text-[13px] leading-5 ${outreachErrors[openLead.id] && !outreach ? "text-amber-800" : "text-zinc-600"}`}>
+            {summary
+              ? summary.detail
+              : outreach
+                ? outreachEmptyCopy(openLead.outreachStatus)
+                : outreachErrors[openLead.id] || "Loading outreach…"}
           </p>
+          <div className="mt-5">
+            <LeadSignal lead={openLead} groupName={group?.name} />
+          </div>
+          {summary ? (
+            <OutreachSection title="Progress">
+              <OutreachTimeline items={summary.timeline} timeZone={timeZone} stage={summary.stage} />
+            </OutreachSection>
+          ) : null}
         </div>
-      </div>
+      </aside>
     );
   }
 

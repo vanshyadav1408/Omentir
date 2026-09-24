@@ -1310,15 +1310,25 @@ export async function replyToLeadResource(context: AgentApiContext, payload: unk
   if (!parsed.success) {
     throw new AgentApiOperationError("Invalid reply payload.", 400, parsed.error.flatten());
   }
+  await sendReplyToLead(context.workspace, parsed.data.leadId, parsed.data.message);
+  // Kept from the original agent API contract. The /messages composer does not
+  // touch outreachStatus, matching sendLinkedInChatMessageAction.
+  await updateLead(context.workspace.id, parsed.data.leadId, { outreachStatus: "replied" });
+  return { ok: true, leadId: parsed.data.leadId, sent: true };
+}
 
-  const lead = await findLeadForWorkspace({
-    workspaceId: context.workspace.id,
-    leadId: parsed.data.leadId,
-  });
+// Continues a conversation that already exists in Omentir, from the campaign's
+// LinkedIn account. Shared by the agent API and the /messages composer for
+// threads that are not in the live LinkedIn inbox list.
+export async function sendReplyToLead(
+  workspace: AgentApiContext["workspace"],
+  leadId: string,
+  message: string,
+) {
+  const lead = await findLeadForWorkspace({ workspaceId: workspace.id, leadId });
   if (!lead) throw new AgentApiOperationError("Lead not found.", 404);
 
-  // Agents may only continue conversations that already exist in Omentir.
-  const conversation = await getConversation(context.workspace.id, lead.id);
+  const conversation = await getConversation(workspace.id, lead.id);
   if (!conversation?.messages?.length) {
     throw new AgentApiOperationError(
       "No existing conversation with this lead.",
@@ -1327,10 +1337,10 @@ export async function replyToLeadResource(context: AgentApiContext, payload: unk
   }
 
   const campaign = conversation.campaignId
-    ? await getCampaign(context.workspace.id, conversation.campaignId)
+    ? await getCampaign(workspace.id, conversation.campaignId)
     : null;
   const account = await getLinkedInAccountForWorkspace(
-    context.workspace.id,
+    workspace.id,
     campaign?.linkedInAccountId,
     { fallbackToDefault: true },
   );
@@ -1340,15 +1350,15 @@ export async function replyToLeadResource(context: AgentApiContext, payload: unk
 
   if (
     !(await hasDailyQuotaRemaining(
-      context.workspace.id,
+      workspace.id,
       "messages",
-      context.workspace.settings.dailyMessageLimit,
-      context.workspace.timezone,
+      workspace.settings.dailyMessageLimit,
+      workspace.timezone,
     ))
   ) {
     throw new AgentApiOperationError("Daily message limit reached. Try again tomorrow.", 429);
   }
-  const nextSlotAllowedAt = await claimActionSlot(context.workspace.id, account.id);
+  const nextSlotAllowedAt = await claimActionSlot(workspace.id, account.id);
   if (nextSlotAllowedAt) {
     throw new AgentApiOperationError(
       `This LinkedIn account can send again at ${nextSlotAllowedAt}.`,
@@ -1360,28 +1370,25 @@ export async function replyToLeadResource(context: AgentApiContext, payload: unk
     accountId: account.accountId,
     providerProfileId: lead.providerProfileId,
     linkedInUrl: lead.linkedInUrl,
-    body: parsed.data.message,
+    body: message,
   });
   // Count only after Unipile accepts so rejected sends don't burn the budget.
   await consumeDailyQuota(
-    context.workspace.id,
+    workspace.id,
     "messages",
-    context.workspace.settings.dailyMessageLimit,
-    context.workspace.timezone,
+    workspace.settings.dailyMessageLimit,
+    workspace.timezone,
   );
   await createConversationMessage({
-    workspaceId: context.workspace.id,
+    workspaceId: workspace.id,
     leadId: lead.id,
     campaignId: conversation.campaignId,
-    userId: context.workspace.id,
+    userId: workspace.id,
     senderName: "You",
-    body: parsed.data.message,
+    body: message,
     direction: "outbound",
     providerMessageId: sendResult.id,
   });
-  await updateLead(context.workspace.id, lead.id, { outreachStatus: "replied" });
-
-  return { ok: true, leadId: lead.id, sent: true };
 }
 
 export async function callAgentTool(
