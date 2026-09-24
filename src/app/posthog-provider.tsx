@@ -14,6 +14,7 @@ import {
 import { googleClickSignals } from '@/lib/referral-channel'
 import { watchSupportWidgetGreeting } from '@/lib/posthog-support'
 import { isLocalDevHost } from '@/lib/posthog-local'
+import { CookieBanner } from './cookie-banner'
 
 const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY
 let posthogInitialized = false
@@ -27,6 +28,11 @@ function ensurePostHog() {
     ui_host: 'https://us.posthog.com',
     capture_pageview: false,
     capture_pageleave: true,
+    // No cookies or storage until the visitor accepts the banner. Until then
+    // (and after a decline) events still arrive, identified by a server-side
+    // hash instead. Needs cookieless mode enabled in the PostHog project.
+    cookieless_mode: 'on_reject',
+    opt_out_capturing_by_default: true,
   })
   posthogInitialized = true
 }
@@ -57,8 +63,10 @@ function PostHogPageView() {
 
     const pageUrl = window.location.href
     const attribution = rememberVisit(pageUrl, document.referrer, readAttributionCookie())
-    document.cookie =
-      cookieHeaderValue(attribution) + (window.location.protocol === "https:" ? "; Secure" : "")
+    if (posthogClient.get_explicit_consent_status() === 'granted') {
+      document.cookie =
+        cookieHeaderValue(attribution) + (window.location.protocol === "https:" ? "; Secure" : "")
+    }
     const properties = attributionProperties(attribution)
     const googleSignals = googleClickSignals(pageUrl, document.referrer)
 
@@ -128,6 +136,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
         <PostHogIdentify />
       </Suspense>
       {children}
+      {posthogInitialized && <CookieBanner />}
     </PHProvider>
   )
 }
