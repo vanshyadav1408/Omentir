@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useBodyScrollLock } from "@/app/use-body-scroll-lock";
+import { clearStoredResources } from "@/app/sidebar-resource-store";
 
 export default function SignOutButton({ localMode = false }: { localMode?: boolean }) {
   const [open, setOpen] = useState(false);
@@ -34,6 +35,8 @@ export default function SignOutButton({ localMode = false }: { localMode?: boole
     setLoading(true);
     setError("");
     try {
+      // Remembered page data must not outlive the session on this device.
+      await clearStoredResources();
       // Clear session then hard-navigate so no stale app shell stays mounted.
       if (localMode) {
         const response = await fetch("/api/local-auth/logout", { method: "POST" });

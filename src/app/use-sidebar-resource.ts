@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { createContext, createElement, useCallback, useContext, useEffect, useState } from "react";
 import { adoptEarlyFetch } from "@/app/sidebar-early-fetch";
+import { pruneOtherUsers, readStoredResource, storeResource } from "@/app/sidebar-resource-store";
 
 // Session-wide cache of /api/app/sidebar-data responses, split by resource so
 // overlapping pages can reuse data. For example, dashboard lead previews can
@@ -147,6 +148,26 @@ export async function whenSidebarRequestsSettle(
   }
 }
 
+// `${userId}:${workspaceId}` for the signed-in app shell; empty elsewhere, which
+// turns off the persisted (cross-visit) layer.
+const SidebarCacheScopeContext = createContext("");
+
+export function SidebarCacheScope({
+  userId,
+  workspaceId,
+  children,
+}: {
+  userId: string;
+  workspaceId: string;
+  children: React.ReactNode;
+}) {
+  const scope = userId && workspaceId ? `${userId}:${workspaceId}` : "";
+  useEffect(() => {
+    if (userId) void pruneOtherUsers(userId);
+  }, [userId]);
+  return createElement(SidebarCacheScopeContext.Provider, { value: scope }, children);
+}
+
 export function useSidebarResource<T>(
   resource: string,
   initialValue: T,
@@ -159,25 +180,42 @@ export function useSidebarResource<T>(
   });
   const [loading, setLoading] = useState(enabled && !readCachedResponse(resource));
   const [reloadCount, setReloadCount] = useState(0);
+  const scope = useContext(SidebarCacheScopeContext);
 
   useEffect(() => {
     if (!enabled) return;
     let cancelled = false;
+    let fresh = false;
     const pick = (data: Record<string, unknown>) => select(data);
+
+    // Nothing in memory (reload or new visit): paint the last visit's data from
+    // IndexedDB while the request runs. A slow disk read must never overwrite
+    // the fresh response, hence the `fresh` guard.
+    if (scope && !readCachedResponse(resource)) {
+      void readStoredResource(scope, resource).then((stored) => {
+        if (cancelled || fresh || !stored) return;
+        setValue(pick(stored));
+        setLoading(false);
+      });
+    }
 
     // Initial state already serves cached data without a skeleton. Revalidate
     // asynchronously while keeping that value visible instead of flashing a
     // loading state again on refresh/reload.
     void loadSidebarResource(resource).then((data) => {
       if (cancelled) return;
-      if (data) setValue(pick(data));
+      fresh = true;
+      if (data) {
+        setValue(pick(data));
+        if (scope) storeResource(scope, resource, data);
+      }
       setLoading(false);
     });
 
     return () => {
       cancelled = true;
     };
-  }, [enabled, reloadCount, resource, select]);
+  }, [enabled, reloadCount, resource, scope, select]);
 
   const reload = useCallback(() => {
     setReloadCount((current) => current + 1);
