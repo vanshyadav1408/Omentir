@@ -1720,37 +1720,10 @@ html.dark .m3-ai-loading-surface {
    Pattern A Fade-Through · Pattern C Lateral · Pattern D Drawer/Menu/Modal
    No spring physics on web — cubic-bezier only. Reduced motion → 150ms fade. */
 
-/* Pattern C: peer tab / lateral enter (from right) */
+/* Pattern C: peer tab viewport */
 .m3-lateral-viewport {
   overflow: hidden;
   min-height: 0;
-}
-.m3-lateral-panel {
-  animation: m3-lateral-enter var(--md-sys-motion-duration-lateral)
-    var(--md-sys-motion-easing-lateral) both;
-}
-.m3-lateral-panel--from-left {
-  animation-name: m3-lateral-enter-from-left;
-}
-@keyframes m3-lateral-enter {
-  from {
-    opacity: 0;
-    transform: translateX(100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-@keyframes m3-lateral-enter-from-left {
-  from {
-    opacity: 0;
-    transform: translateX(-100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
 }
 
 /* Pattern D: side drawer (edge origin) */
@@ -2385,8 +2358,6 @@ html[data-theme="dark"] .recommended-badge {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .m3-lateral-panel,
-  .m3-lateral-panel--from-left,
   .m3-menu-enter,
   .m3-modal-scrim,
   .m3-modal-surface,
@@ -2481,7 +2452,7 @@ html[data-theme="dark"] .recommended-badge {
   }
 }
 
-/* Messages paints without motion, so its placeholders hold still. */
+/* Messages and Leads paint without motion, so their placeholders hold still. */
 .skeleton-static .skeleton {
   animation: none;
   background-image: none;

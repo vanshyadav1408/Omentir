@@ -574,7 +574,7 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
           tab's white fill erases the border segment beneath it. */}
       <div className="flex min-h-0 flex-1 flex-col">
         <div
-          className="relative z-10 -mb-px flex min-w-0 shrink-0 touch-pan-x items-end gap-1 overflow-x-auto px-2 thin-scroll-overlay"
+          className="skeleton-static relative z-10 -mb-px flex min-w-0 shrink-0 touch-pan-x items-end gap-1 overflow-x-auto px-2 thin-scroll-overlay"
           onScroll={() => setDesktopGroupMenu(null)}
         >
           {[{ id: ALL_CONTACTS_TAB, name: "All contacts" }, ...loadedGroups]
@@ -584,7 +584,7 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
             return (
               <div
                 key={item.id}
-                className={`group relative flex shrink-0 items-center rounded-t-lg border transition-colors ${
+                className={`group relative flex shrink-0 items-center rounded-t-lg border ${
                   active
                     ? "border-zinc-200 border-b-transparent bg-white text-zinc-950"
                     : "border-transparent text-zinc-600 hover:bg-zinc-950/[0.04] hover:text-zinc-900"
@@ -603,7 +603,7 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
                   <span className="block max-w-[220px] translate-y-px truncate whitespace-nowrap">{item.name}</span>
                 </button>
                 {item.id !== ALL_CONTACTS_TAB ? (
-                  <div className="group/dots relative mr-1 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
+                  <div className="group/dots relative mr-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
                     <button
                       type="button"
                       aria-haspopup="menu"
@@ -632,7 +632,7 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
                         className="fixed z-50 hidden pt-1 group-focus-within/dots:block group-hover/dots:block"
                         style={{ left: desktopGroupMenu.left, top: desktopGroupMenu.top }}
                       >
-                        <div className="m3-menu m3-menu-enter m3-menu--origin-top-right m3-menu--compact w-36">
+                        <div className="m3-menu m3-menu--origin-top-right m3-menu--compact w-36">
                           <button
                             type="button"
                             onClick={() => {
@@ -671,7 +671,7 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
         {isInitialLoading ? (
           <LeadsTableSkeleton />
         ) : (
-          <ContentReveal key={selectedGroupId} className="m3-lateral-panel grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[minmax(22rem,2fr)_minmax(0,3fr)]">
+          <ContentReveal key={selectedGroupId} className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[minmax(22rem,2fr)_minmax(0,3fr)]">
             <div className="flex min-h-0 min-w-0 flex-col md:border-r md:border-zinc-200">
               <div className="m3-table-grid-header hidden shrink-0 grid-cols-[40px_minmax(0,1fr)] items-center gap-3 md:grid">
                 <span>

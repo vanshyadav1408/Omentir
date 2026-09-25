@@ -76,7 +76,7 @@ export function OutreachListSkeleton({ label }: { label: string }) {
 export function LeadsTableSkeleton() {
   return (
     <div
-      className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[minmax(22rem,2fr)_minmax(0,3fr)]"
+      className="skeleton-static grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[minmax(22rem,2fr)_minmax(0,3fr)]"
       aria-label="Loading leads"
       role="status"
     >
@@ -389,7 +389,7 @@ function PageHeaderSkeleton({ title, children }: { title: string; children?: Rea
 
 export function LeadsPageSkeleton() {
   return (
-    <div className={PAGE_FRAME_CLASS}>
+    <div className={`${PAGE_FRAME_CLASS} skeleton-static`}>
       <PageHeaderSkeleton title="Leads">
         <Skeleton className="h-8 w-24" />
         <Skeleton className="h-7 w-56" />
