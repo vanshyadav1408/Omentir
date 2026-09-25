@@ -82,6 +82,8 @@ export type StatsResponse<T> = {
   /** When PostHog was last queried for this answer. */
   updatedAt: string;
   data: T;
+  /** From an earlier 5-minute window; the server is refreshing it in the background. */
+  stale?: boolean;
 };
 
 /** Stats refresh on 5-minute clock boundaries (server cache window and page timer). */

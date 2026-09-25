@@ -14,7 +14,33 @@ export function statsBackendConfigured() {
   return Boolean(process.env.POSTHOG_PERSONAL_API_KEY);
 }
 
-export async function runHogQL(
+// The page asks for ~15 queries at once. Past a few concurrent queries PostHog
+// answers 429 and the retries back off for seconds, so queue them here instead.
+const MAX_CONCURRENT = 3;
+let running = 0;
+const waiting: (() => void)[] = [];
+
+async function withSlot<T>(task: () => Promise<T>): Promise<T> {
+  if (running >= MAX_CONCURRENT) await new Promise<void>((resolve) => waiting.push(resolve));
+  else running++;
+  try {
+    return await task();
+  } finally {
+    const next = waiting.shift();
+    if (next) next();
+    else running--;
+  }
+}
+
+export function runHogQL(
+  query: string,
+  range: { from: Date; to: Date },
+  filters: StatsPropertyFilter[] = [],
+): Promise<HogQLResult> {
+  return withSlot(() => queryPostHog(query, range, filters));
+}
+
+async function queryPostHog(
   query: string,
   range: { from: Date; to: Date },
   filters: StatsPropertyFilter[] = [],

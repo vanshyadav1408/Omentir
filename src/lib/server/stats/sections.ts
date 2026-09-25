@@ -1,6 +1,6 @@
 import "server-only";
 
-import { payerKey, revenueByBucket, sumPayments, type LinkedPayment } from "@/lib/stats-money";
+import { payerKey, revenueByBucket, sumPayments, type LinkedPayment, type StatsPayment } from "@/lib/stats-money";
 import { bucketKey, type StatsInterval } from "@/lib/stats-periods";
 import type {
   StatsAiData,
@@ -36,25 +36,44 @@ const str = (value: unknown) => (value == null ? "" : String(value));
 // Person ids come back from PostHog and are pasted into the next query.
 const PERSON_ID = /^[0-9a-f-]{36}$/i;
 
-/**
- * Whop payments paid in [fromMs, range.to), each linked to the payer's PostHog
- * person. With filters active, only payers whose visits match count.
- */
-async function paymentsInScope(range: Range, fromMs: number, filters: StatsPropertyFilter[]): Promise<LinkedPayment[]> {
-  const payments = (await loadWhopPayments()).filter((p) => p.at >= fromMs && p.at < range.to.getTime());
+let linkCache: { payments: StatsPayment[]; linked: Promise<LinkedPayment[]> } | null = null;
+
+/** Every Whop payment with its payer's PostHog person, looked up once per Whop listing. */
+function linkedPayments(range: Range): Promise<LinkedPayment[]> {
+  return loadWhopPayments().then((payments) => {
+    if (linkCache?.payments === payments) return linkCache.linked;
+    const linked = linkPayments(payments, range);
+    linkCache = { payments, linked };
+    linked.catch(() => {
+      if (linkCache?.linked === linked) linkCache = null;
+    });
+    return linked;
+  });
+}
+
+async function linkPayments(payments: StatsPayment[], range: Range): Promise<LinkedPayment[]> {
   const ids = [...new Set(payments.flatMap((p) => p.distinctIds))];
   const people = new Map<string, string>();
   if (ids.length) {
+    // personMapQuery looks back 400 days from now and ignores the range.
     const map = await runHogQL(personMapQuery(ids), range);
     for (const row of map.results) {
       const person = str(row[1]);
       if (PERSON_ID.test(person)) people.set(str(row[0]), person);
     }
   }
-  const linked = payments.map((payment) => ({
+  return payments.map((payment) => ({
     payment,
     personId: payment.distinctIds.map((id) => people.get(id)).find(Boolean) ?? null,
   }));
+}
+
+/**
+ * Whop payments paid in [fromMs, range.to), each linked to the payer's PostHog
+ * person. With filters active, only payers whose visits match count.
+ */
+async function paymentsInScope(range: Range, fromMs: number, filters: StatsPropertyFilter[]): Promise<LinkedPayment[]> {
+  const linked = (await linkedPayments(range)).filter((l) => l.payment.at >= fromMs && l.payment.at < range.to.getTime());
   if (!filters.length) return linked;
   const persons = [...new Set(linked.map((l) => l.personId).filter((p): p is string => !!p))];
   if (!persons.length) return [];

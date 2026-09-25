@@ -55,16 +55,41 @@ function writeQuery(query: Query, view: StatsView) {
   window.history.replaceState(null, "", `${window.location.pathname}${search ? `?${search}` : ""}`);
 }
 
-type SectionState<T> = { data?: StatsResponse<T>; loading: boolean; error?: string };
+type SectionState<T> = { data?: StatsResponse<T>; loading: boolean; refreshing: boolean; error?: string };
+
+// While the server refreshes a stale answer, ask again every few seconds (about a minute at most).
+const STALE_POLL_MS = 3_000;
+const STALE_POLLS = 20;
+
+// The last answer for the default views (no filters, current period) is kept in
+// this browser, so a reload paints numbers at once while the server catches up.
+const savedKey = (queryKey: string) => `omentir-stats:${queryKey}`;
+function readSaved<T>(queryKey: string): StatsResponse<T> | undefined {
+  try {
+    const raw = window.localStorage.getItem(savedKey(queryKey));
+    return raw ? (JSON.parse(raw) as StatsResponse<T>) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+function writeSaved(queryKey: string, body: unknown) {
+  try {
+    window.localStorage.setItem(savedKey(queryKey), JSON.stringify(body));
+  } catch {
+    // Storage full or blocked: the page still works, it just starts empty next time.
+  }
+}
 
 function useSection<T>(section: StatsSection, query: Query, refresh: number, tick: number, enabled = true): SectionState<T> {
   const queryKey = JSON.stringify([section, query.period, query.offset, query.interval, query.filters.map(({ key, value }) => [key, value])]);
   const requestKey = enabled ? `${queryKey}#${refresh}#${tick}` : "off";
+  const saveable = query.offset === 0 && query.filters.length === 0;
   const lastRefresh = useRef(refresh);
-  const [state, setState] = useState<{ key?: string; data?: StatsResponse<T>; error?: string }>({});
+  const [state, setState] = useState<{ key?: string; data?: StatsResponse<T>; error?: string; stale?: boolean }>({});
   useEffect(() => {
     if (!enabled) return;
     const controller = new AbortController();
+    let timer: number | undefined;
     const params = new URLSearchParams({
       section,
       period: query.period,
@@ -73,24 +98,53 @@ function useSection<T>(section: StatsSection, query: Query, refresh: number, tic
       filters: JSON.stringify(query.filters.map(({ key, value }) => ({ key, value }))),
     });
     // Only a refresh-button press skips the server's 5-minute cache window.
-    if (refresh !== lastRefresh.current) params.set("fresh", "1");
+    const forced = refresh !== lastRefresh.current;
+    if (forced) params.set("fresh", "1");
     lastRefresh.current = refresh;
-    fetch(`/api/stats?${params}`, { signal: controller.signal, cache: "no-store" })
-      .then(async (response) => {
-        const body = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(body.error || `Request failed (${response.status})`);
-        setState({ key: requestKey, data: body as StatsResponse<T> });
-      })
-      .catch((error: Error) => {
-        if (error.name === "AbortError") return;
-        setState((s) => ({ key: requestKey, data: s.data, error: error.message }));
+    if (!forced && saveable) {
+      queueMicrotask(() => {
+        const saved = readSaved<T>(queryKey);
+        if (!saved || controller.signal.aborted) return;
+        // A server answer that already arrived is newer than the saved copy.
+        setState((s) => (s.key === requestKey ? s : { key: requestKey, data: saved, stale: true }));
       });
-    return () => controller.abort();
+    }
+    const load = (polls: number) => {
+      fetch(`/api/stats?${params}`, { signal: controller.signal, cache: "no-store" })
+        .then(async (response) => {
+          const body = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(body.error || `Request failed (${response.status})`);
+          const data = body as StatsResponse<T>;
+          const stale = data.stale === true && polls < STALE_POLLS;
+          setState({ key: requestKey, data, stale });
+          if (!data.stale && saveable) writeSaved(queryKey, data);
+          if (stale) {
+            params.delete("fresh");
+            timer = window.setTimeout(() => load(polls + 1), STALE_POLL_MS);
+          }
+        })
+        .catch((error: Error) => {
+          if (error.name === "AbortError") return;
+          setState((s) => ({ key: requestKey, data: s.data, error: error.message }));
+        });
+    };
+    load(0);
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+    };
     // requestKey captures every query field, the refresh button and the 5-minute tick.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requestKey]);
-  // Keep showing the last data (dimmed) while a new request is in flight.
-  return { data: state.data, loading: enabled && state.key !== requestKey, error: state.key === requestKey ? state.error : undefined };
+  // Keep showing the last data (dimmed) while a new request is in flight. Stale
+  // numbers stay undimmed while newer ones load; only the refresh icon spins.
+  const settled = state.key === requestKey;
+  return {
+    data: state.data,
+    loading: enabled && !settled,
+    refreshing: enabled && settled && state.stale === true,
+    error: settled ? state.error : undefined,
+  };
 }
 
 function Menu({ trigger, children, className }: { trigger: ReactNode; children: (close: () => void) => ReactNode; className?: string }) {
@@ -203,7 +257,7 @@ export default function StatsDashboard({ initialQuery, initialView }: { initialQ
   const productApp = useSection<ProductAppData>("product-app", productQuery, refresh, tick, !web);
 
   const buckets = useMemo(() => bucketsBetween(range.from, range.to, interval), [range, interval]);
-  const anyLoading = [overview, sources, pages, location, tech, ai, product, productApp].some((s) => s.loading);
+  const anyLoading = [overview, sources, pages, location, tech, ai, product, productApp].some((s) => s.loading || s.refreshing);
   const stamp = web ? overview.data?.updatedAt : product.data?.updatedAt;
   const updatedAt = stamp ? new Date(stamp) : null;
   const periodLabel = STATS_PERIODS.find((p) => p.key === query.period)?.label ?? "";
