@@ -8,6 +8,7 @@ import HeaderAuth from "./header-auth";
 import LogoMark from "./logo-mark";
 import MarketingHeaderFrame from "./marketing-header-frame";
 import { MarketingMobileMenuButton } from "./marketing-mobile-nav";
+import SiteThemeToggle from "./site-theme-toggle";
 
 export function MarketingHeader({ transparentAtTop = false }: { transparentAtTop?: boolean }) {
   return (
@@ -227,7 +228,7 @@ function ConnectColumn() {
   );
 }
 
-/** Laid out like cursor.com's footer. The theme is chosen in app Settings. */
+/** Laid out like cursor.com's footer, theme toggle bottom right. */
 export function MarketingFooter() {
   return (
     <footer className="site-footer pb-10 pt-14 md:pt-16">
@@ -244,11 +245,12 @@ export function MarketingFooter() {
           ))}
           <ConnectColumn />
         </div>
-        <div className="mt-14">
+        <div className="mt-14 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="site-footer-muted flex select-none items-center gap-2">
             <LogoMark className="h-4 w-4" />
             &copy; {new Date().getFullYear()} Omentir. Open Source, MIT licensed.
           </p>
+          <SiteThemeToggle />
         </div>
       </div>
     </footer>
