@@ -1,14 +1,15 @@
 import { describe, expect, test } from "bun:test";
 import { allowedIntervals, bucketsBetween, parseStatsQuery, resolveStatsRange } from "./stats-periods";
 
-// 2026-09-25 14:30 UTC, a Friday.
+// 2026-09-25 14:30 UTC = 20:00 IST, a Friday. Periods follow India time.
 const NOW = Date.UTC(2026, 8, 25, 14, 30);
 const DAY = 86_400_000;
 
 describe("resolveStatsRange", () => {
   test("Last 7 days includes today, so the KPI strip covers the same days the chart shows", () => {
     const { from, to } = resolveStatsRange("7d", 0, NOW);
-    expect(from.toISOString()).toBe("2026-09-19T00:00:00.000Z");
+    // Sep 19 00:00 IST
+    expect(from.toISOString()).toBe("2026-09-18T18:30:00.000Z");
     expect(to.getTime()).toBe(NOW);
   });
 
@@ -19,24 +20,30 @@ describe("resolveStatsRange", () => {
     expect(previous.to.getTime() - previous.from.getTime()).toBe(30 * DAY);
   });
 
-  test("yesterday is one closed UTC day, never the partial current day", () => {
+  test("yesterday is one closed India-time day, never the partial current day", () => {
     const { from, to } = resolveStatsRange("yesterday", 0, NOW);
-    expect(from.toISOString()).toBe("2026-09-24T00:00:00.000Z");
+    // Sep 24 00:00 IST
+    expect(from.toISOString()).toBe("2026-09-23T18:30:00.000Z");
     expect(to.getTime() - from.getTime()).toBe(DAY);
   });
 
-  test("week to date starts on Monday, matching toStartOfWeek(ts, 1) in the SQL", () => {
-    expect(resolveStatsRange("wtd", 0, NOW).from.toISOString()).toBe("2026-09-21T00:00:00.000Z");
+  test("week to date starts on Monday in India time, matching toStartOfWeek(ts, 1) in the SQL", () => {
+    expect(resolveStatsRange("wtd", 0, NOW).from.toISOString()).toBe("2026-09-20T18:30:00.000Z");
+  });
+
+  test("today starts at midnight IST, not 05:30 IST (UTC midnight)", () => {
+    expect(resolveStatsRange("today", 0, NOW).from.toISOString()).toBe("2026-09-24T18:30:00.000Z");
   });
 });
 
 describe("bucketsBetween", () => {
   // Chart points are matched to SQL rows by key; a format drift would silently draw zeros.
-  test("hour keys use the SQL formatDateTime shape and cover every hour so empty hours draw as zero", () => {
-    const keys = bucketsBetween(new Date(Date.UTC(2026, 8, 25)), new Date(NOW), "hour");
+  test("hour keys are India-time hours in the SQL formatDateTime shape, with no gaps", () => {
+    const today = resolveStatsRange("today", 0, NOW);
+    const keys = bucketsBetween(today.from, today.to, "hour");
     expect(keys[0]).toBe("2026-09-25 00:00");
-    expect(keys.at(-1)).toBe("2026-09-25 14:00");
-    expect(keys).toHaveLength(15);
+    expect(keys.at(-1)).toBe("2026-09-25 19:00");
+    expect(keys).toHaveLength(20);
   });
 
   test("week keys are Mondays and month keys are the 1st, like toStartOfWeek/toStartOfMonth", () => {

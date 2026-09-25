@@ -146,8 +146,17 @@ describe("mergeAttribution", () => {
 
 describe("revenueFromWhopPayment", () => {
   test("converts Whop cent amounts so revenue by channel is dollars not 4900", () => {
-    expect(revenueFromWhopPayment({ amount: 4900 }, "solo")).toBe(49);
-    expect(revenueFromWhopPayment({}, "solo")).toBe(49);
-    expect(revenueFromWhopPayment({ amount: 0 }, "lifetime")).toBeUndefined();
+    expect(revenueFromWhopPayment({ amount: 4900 })).toBe(49);
+  });
+
+  test("keeps usd_total as dollars, so a $149 payment is not recorded as $1.49", () => {
+    expect(revenueFromWhopPayment({ usd_total: 149 })).toBe(149);
+    expect(revenueFromWhopPayment({ usd_total: 44.1 })).toBe(44.1);
+  });
+
+  test("never invents revenue: a $0 trial start or an amount-less payload is not $49", () => {
+    expect(revenueFromWhopPayment({ usd_total: 0 })).toBeUndefined();
+    expect(revenueFromWhopPayment({})).toBeUndefined();
+    expect(revenueFromWhopPayment({ amount: 0 })).toBeUndefined();
   });
 });

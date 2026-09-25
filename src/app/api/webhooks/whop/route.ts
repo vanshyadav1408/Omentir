@@ -52,18 +52,66 @@ function metadataAttribution(metadata: { [key: string]: unknown } | null | undef
   return properties;
 }
 
+/** Dollars actually charged: the payload's amount, or Whop's own record when the payload has none. */
+async function chargedUsd(payment: { id: string }) {
+  const fromPayload = revenueFromWhopPayment(payment);
+  if (fromPayload) return fromPayload;
+  try {
+    return revenueFromWhopPayment(await getWhopClient().payments.retrieve(payment.id));
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Whop payment retrieve failed.";
+    console.error("[whop webhook] payment amount lookup failed:", message);
+    return undefined;
+  }
+}
+
 async function capturePaymentSucceeded(
   workspaceId: string,
   payment: { id: string; metadata?: { [key: string]: unknown } | null; user?: { email?: string | null } | null },
   plan: BillingPlan,
 ) {
-  const revenue = revenueFromWhopPayment(payment, plan);
+  const revenue = await chargedUsd(payment);
+  // A $0 payment (trial start, full promo) is not revenue; the activation is tracked elsewhere.
+  if (!revenue) return;
   await capturePostHogEvent({
     event: "payment_succeeded",
     distinctId: workspaceId,
     insertId: `payment_succeeded:${payment.id}`,
     properties: {
       plan,
+      email: payment.user?.email || undefined,
+      revenue,
+      currency: "USD",
+      ...metadataAttribution(payment.metadata),
+    },
+  });
+}
+
+/**
+ * Analytics only: a paid payment on a plan we do not activate (the legacy
+ * "Omentir Monthly" plan, one-off products) is recorded with its real amount
+ * and product so PostHog revenue matches Whop. No workspace changes happen here.
+ */
+async function captureOtherPayment(
+  whop: ReturnType<typeof getWhopClient>,
+  payment: {
+    id: string;
+    metadata?: { [key: string]: unknown } | null;
+    user?: { email?: string | null } | null;
+    member?: { id?: string | null } | null;
+  },
+) {
+  const revenue = await chargedUsd(payment);
+  if (!revenue) return;
+  const workspaceId = await resolveWorkspaceId(whop, payment).catch(() => null);
+  const product = (payment as { product?: { title?: string | null } | null }).product?.title;
+  await capturePostHogEvent({
+    event: "payment_succeeded",
+    distinctId: workspaceId || `whop_payment:${payment.id}`,
+    insertId: `payment_succeeded:${payment.id}`,
+    properties: {
+      plan: "other",
+      product: product || undefined,
       email: payment.user?.email || undefined,
       revenue,
       currency: "USD",
@@ -560,7 +608,7 @@ export async function POST(request: NextRequest) {
         plan: "linkedin_seats",
         extraSeats,
         email: payment.user?.email || undefined,
-        revenue: revenueFromWhopPayment(payment, null) ?? extraLinkedInSeatMonthlyTotalUsd(extraSeats),
+        revenue: revenueFromWhopPayment(payment) ?? extraLinkedInSeatMonthlyTotalUsd(extraSeats),
         currency: "USD",
         ...metadataAttribution(payment.metadata),
       },
@@ -570,6 +618,8 @@ export async function POST(request: NextRequest) {
 
   const plan = await expectedWhopPlan(payment, `payment ${payment.id}`, payment.metadata);
   if (!plan) {
+    // Nothing to activate, but legacy-plan renewals and one-off products are still revenue.
+    await captureOtherPayment(whop, payment);
     return NextResponse.json({ ok: true, ignored: "wrong_plan" });
   }
 

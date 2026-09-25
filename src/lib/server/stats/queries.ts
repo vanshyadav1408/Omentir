@@ -1,11 +1,13 @@
 import "server-only";
 
-import type { StatsInterval } from "@/lib/stats-periods";
+import { STATS_TIMEZONE, type StatsInterval } from "@/lib/stats-periods";
 
 // HogQL for stats.omentir.com. Every query binds every filter key the page can
 // set: PostHog rejects a query when an active filter key has no binding.
-// Signups and payments are credited to the person's pageviews (90-day
-// lookback) because server events carry no attribution and a server geo-IP.
+// Signups are credited to the person's pageviews (90-day lookback) because
+// server events carry no attribution and a server geo-IP. Money is not read
+// from PostHog at all: see whop-payments.ts (PostHog payment events were
+// incomplete and one was invented, and single events cannot be deleted).
 
 const F = "{filters.dateRange.from}";
 const T = "{filters.dateRange.to}";
@@ -64,7 +66,9 @@ function aiFilters(bindings: string) {
     )}`;
 }
 
-export function bucketExpr(interval: StatsInterval, column = "timestamp") {
+/** Bucket key in India time, matching bucketKey() in stats-periods.ts. */
+export function bucketExpr(interval: StatsInterval, timestamp = "timestamp") {
+  const column = `toTimeZone(${timestamp}, '${STATS_TIMEZONE}')`;
   switch (interval) {
     case "hour":
       return `formatDateTime(toStartOfHour(${column}), '%Y-%m-%d %H:00')`;
@@ -89,12 +93,9 @@ function pageviews(start: string, columns = "person_id, timestamp") {
 
 // ------------------------------------------------------------------ overview
 
-/** One row: current and previous-period values for the KPI strip. */
+/** One row: current and previous-period traffic values for the KPI strip. */
 export function kpiQuery() {
   return `WITH
-lookback AS (
-  ${pageviews(PREV, "DISTINCT person_id")}
-),
 pv AS (
   SELECT person_id, \`$session_id\` AS sid, timestamp, toFloat(session.$is_bounce) AS bounce, toFloat(session.$session_duration) AS dur
   FROM events
@@ -120,56 +121,20 @@ s AS (
     WHERE sid IS NOT NULL AND sid != ''
     GROUP BY sid
   )
-),
-cv AS (
-  SELECT
-    sumIf(toFloat(properties.revenue), timestamp >= ${F}) AS rc,
-    sumIf(toFloat(properties.revenue), timestamp < ${F}) AS rp,
-    uniqIf(person_id, timestamp >= ${F}) AS pc,
-    uniqIf(person_id, timestamp < ${F}) AS pp
-  FROM events
-  WHERE event = 'payment_succeeded'
-    AND timestamp >= ${PREV}
-    AND timestamp < ${T}
-    AND person_id IN (SELECT person_id FROM lookback)
 )
-SELECT v.c, v.p, cv.rc, cv.rp, cv.pc, cv.pp, s.bc, s.bp, s.dc, s.dp
-FROM v CROSS JOIN s CROSS JOIN cv`;
+SELECT v.c, v.p, s.bc, s.bp, s.dc, s.dp
+FROM v CROSS JOIN s`;
 }
 
-/** Visitors per bucket plus revenue split into first payments and renewals. */
+/** Visitors per bucket. Revenue per bucket comes from Whop. */
 export function chartQuery(interval: StatsInterval) {
-  return `WITH
-pv AS (
-  ${pageviews(F)}
-),
-firsts AS (
-  SELECT person_id, min(timestamp) AS first_ts
-  FROM events
-  WHERE event = 'payment_succeeded'
-  GROUP BY person_id
-)
-SELECT bucket, sum(visitors) AS visitors, sum(new_revenue) AS new_revenue,
-  sum(renewal_revenue) AS renewal_revenue, sum(customers) AS customers
-FROM (
-  SELECT ${bucketExpr(interval)} AS bucket, uniq(person_id) AS visitors,
-    toFloat(0) AS new_revenue, toFloat(0) AS renewal_revenue, 0 AS customers
-  FROM pv
-  WHERE timestamp >= ${F}
-  GROUP BY bucket
-  UNION ALL
-  SELECT ${bucketExpr(interval, "e.timestamp")} AS bucket, 0 AS visitors,
-    sumIf(toFloat(e.properties.revenue), e.timestamp <= f.first_ts) AS new_revenue,
-    sumIf(toFloat(e.properties.revenue), e.timestamp > f.first_ts) AS renewal_revenue,
-    uniq(e.person_id) AS customers
-  FROM events e
-  LEFT JOIN firsts f ON f.person_id = e.person_id
-  WHERE e.event = 'payment_succeeded'
-    AND e.timestamp >= ${F}
-    AND e.timestamp < ${T}
-    AND e.person_id IN (SELECT person_id FROM pv)
-  GROUP BY bucket
-)
+  return `SELECT ${bucketExpr(interval)} AS bucket, uniq(person_id) AS visitors
+FROM events
+WHERE event = '$pageview'
+  AND ${LIVE_SITE}
+  AND timestamp >= ${F}
+  AND timestamp < ${T}
+  AND ${WEB_FILTERS}
 GROUP BY bucket
 ORDER BY bucket
 LIMIT 5000`;
@@ -212,7 +177,8 @@ export type BreakdownCard = keyof typeof BREAKDOWNS;
 
 /**
  * Rows: tab index, value, label (country code for locations), visitors,
- * signups, paid, revenue. One scan of pageviews covers all tabs of a card.
+ * signups. One scan of pageviews covers all tabs of a card. Paid and revenue
+ * per row are added from Whop (see payerFirstTouchQuery).
  */
 export function breakdownQuery(card: BreakdownCard, top = 50) {
   const dims = BREAKDOWNS[card] as Dimension[];
@@ -235,41 +201,33 @@ per AS (
   GROUP BY person_id
 ),
 cv AS (
-  SELECT person_id,
-    max(event = 'signed_up') AS su,
-    max(event = 'payment_succeeded') AS pd,
-    sumIf(toFloat(properties.revenue), event = 'payment_succeeded') AS rev
+  SELECT DISTINCT person_id
   FROM events
-  WHERE event IN ('signed_up', 'payment_succeeded') AND timestamp >= ${F} AND timestamp < ${T}
-  GROUP BY person_id
+  WHERE event = 'signed_up' AND timestamp >= ${F} AND timestamp < ${T}
 ),
 grouped AS (
   SELECT
     g.2 AS tab, g.3 AS val, g.4 AS lbl,
     countIf(g.1 = 'v') AS visitors,
-    countIf(g.1 = 'c' AND su) AS signups,
-    countIf(g.1 = 'c' AND pd) AS paid,
-    sumIf(rev, g.1 = 'c') AS revenue
+    countIf(g.1 = 'c') AS signups
   FROM (
     SELECT
       arrayJoin(arrayConcat(
         arrayMap(x -> ('v', x.1, x.2, x.3), per.seen),
-        if(cv.su OR cv.pd, ${credited}, [])
-      )) AS g,
-      coalesce(cv.su, 0) AS su, coalesce(cv.pd, 0) AS pd, coalesce(cv.rev, 0) AS rev
+        if(per.person_id IN (SELECT person_id FROM cv), ${credited}, [])
+      )) AS g
     FROM per
-    LEFT JOIN cv ON cv.person_id = per.person_id
   )
   WHERE val IS NOT NULL AND val != ''
   GROUP BY tab, val, lbl
 )
-SELECT tab, val, lbl, visitors, signups, paid, revenue
+SELECT tab, val, lbl, visitors, signups
 FROM (
-  SELECT *, row_number() OVER (PARTITION BY tab ORDER BY visitors DESC, revenue DESC, val) AS rn
+  SELECT *, row_number() OVER (PARTITION BY tab ORDER BY visitors DESC, signups DESC, val) AS rn
   FROM grouped
 )
 WHERE rn <= ${top}
-ORDER BY tab, visitors DESC, revenue DESC, val
+ORDER BY tab, visitors DESC, signups DESC, val
 LIMIT 1000`;
 }
 
@@ -293,10 +251,16 @@ LIMIT 50`;
 
 // ------------------------------------------------------------------ goals
 
+// "Paid" is added from Whop, so PostHog's payment events are left out here.
 const GOAL_EVENTS = `event NOT LIKE '$%'
-    AND event NOT IN ('platform_daily', 'platform_stats', 'posthog_setup_check', 'survey shown', 'survey dismissed')`;
+    AND event NOT IN ('platform_daily', 'platform_stats', 'posthog_setup_check', 'survey shown', 'survey dismissed', 'payment_succeeded')`;
 
-function goalBase() {
+/**
+ * Goal events in range. With no filters every completion counts (a signup with
+ * no tracked visit still happened); with filters only people whose visits
+ * match can be credited.
+ */
+function goalBase(filtered: boolean) {
   return `pv AS (
   ${pageviews(F)}
 ),
@@ -306,14 +270,14 @@ g AS (
   WHERE ${GOAL_EVENTS}
     AND timestamp >= ${F}
     AND timestamp < ${T}
-    AND person_id IN (SELECT person_id FROM pv)
+    ${filtered ? "AND person_id IN (SELECT person_id FROM pv)" : ""}
 )`;
 }
 
 /** Rows: event, people, completions. */
-export function goalTotalsQuery() {
+export function goalTotalsQuery(filtered: boolean) {
   return `WITH
-${goalBase()}
+${goalBase(filtered)}
 SELECT event, uniq(person_id) AS people, count() AS completions
 FROM g
 GROUP BY event
@@ -322,9 +286,9 @@ LIMIT 100`;
 }
 
 /** Rows: event, bucket, people. */
-export function goalSeriesQuery(interval: StatsInterval) {
+export function goalSeriesQuery(interval: StatsInterval, filtered: boolean) {
   return `WITH
-${goalBase()}
+${goalBase(filtered)}
 SELECT event, ${bucketExpr(interval)} AS bucket, uniq(person_id) AS people
 FROM g
 GROUP BY event, bucket
@@ -385,4 +349,47 @@ WHERE ai IS NOT NULL AND ai != ''
 GROUP BY bucket, ai, kind
 ORDER BY bucket
 LIMIT 20000`;
+}
+
+// ------------------------------------------------------------------ Whop payers
+
+const quoted = (ids: string[]) => ids.map((id) => `'${id}'`).join(", ");
+
+/**
+ * Rows: distinct_id, person_id. Server events use the workspace id as the
+ * distinct id, which PostHog merges with that person's browser visits.
+ * Ids must already be validated as [A-Za-z0-9_-] (whop-payments.ts).
+ */
+export function personMapQuery(distinctIds: string[]) {
+  return `SELECT distinct_id, toString(argMax(person_id, timestamp))
+FROM events
+WHERE distinct_id IN (${quoted(distinctIds)}) AND timestamp > now() - INTERVAL 400 DAY
+GROUP BY distinct_id`;
+}
+
+/** Rows: person_id of payers whose visits match the active filters (previous period included). */
+export function payersMatchingFiltersQuery(personIds: string[]) {
+  return `SELECT DISTINCT toString(person_id)
+FROM events
+WHERE event = '$pageview'
+  AND ${LIVE_SITE}
+  AND timestamp >= ${PREV} - ${LOOKBACK}
+  AND timestamp < ${T}
+  AND ${WEB_FILTERS}
+  AND toString(person_id) IN (${quoted(personIds)})`;
+}
+
+/** Rows: person_id, first-touch tuple (v0, l0, v1, l1, ...) for a card's tabs, filter-aware. */
+export function payerFirstTouchQuery(card: BreakdownCard, personIds: string[]) {
+  const dims = BREAKDOWNS[card] as Dimension[];
+  const columns = dims
+    .flatMap((dim, i) => [`toString(${dim.value}) AS v${i}`, `toString(${dim.label ?? dim.value}) AS l${i}`])
+    .join(", ");
+  const first = `tuple(${dims.map((_, i) => `v${i}, l${i}`).join(", ")})`;
+  return `SELECT toString(person_id), argMin(${first}, timestamp)
+FROM (
+  ${pageviews(F, `person_id, timestamp, ${columns}`)}
+)
+WHERE toString(person_id) IN (${quoted(personIds)})
+GROUP BY person_id`;
 }

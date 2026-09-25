@@ -1,6 +1,7 @@
 import "server-only";
 
-import type { StatsInterval } from "@/lib/stats-periods";
+import { payerKey, revenueByBucket, sumPayments, type LinkedPayment } from "@/lib/stats-money";
+import { bucketKey, type StatsInterval } from "@/lib/stats-periods";
 import type {
   StatsAiData,
   StatsBreakdownData,
@@ -18,8 +19,12 @@ import {
   goalTotalsQuery,
   kpiQuery,
   onlineQuery,
+  payerFirstTouchQuery,
+  payersMatchingFiltersQuery,
+  personMapQuery,
   type BreakdownCard,
 } from "./queries";
+import { loadWhopPayments } from "./whop-payments";
 
 type Range = { from: Date; to: Date };
 
@@ -28,29 +33,68 @@ const num = (value: unknown) => {
   return Number.isFinite(n) ? n : 0;
 };
 const str = (value: unknown) => (value == null ? "" : String(value));
+// Person ids come back from PostHog and are pasted into the next query.
+const PERSON_ID = /^[0-9a-f-]{36}$/i;
+
+/**
+ * Whop payments paid in [fromMs, range.to), each linked to the payer's PostHog
+ * person. With filters active, only payers whose visits match count.
+ */
+async function paymentsInScope(range: Range, fromMs: number, filters: StatsPropertyFilter[]): Promise<LinkedPayment[]> {
+  const payments = (await loadWhopPayments()).filter((p) => p.at >= fromMs && p.at < range.to.getTime());
+  const ids = [...new Set(payments.flatMap((p) => p.distinctIds))];
+  const people = new Map<string, string>();
+  if (ids.length) {
+    const map = await runHogQL(personMapQuery(ids), range);
+    for (const row of map.results) {
+      const person = str(row[1]);
+      if (PERSON_ID.test(person)) people.set(str(row[0]), person);
+    }
+  }
+  const linked = payments.map((payment) => ({
+    payment,
+    personId: payment.distinctIds.map((id) => people.get(id)).find(Boolean) ?? null,
+  }));
+  if (!filters.length) return linked;
+  const persons = [...new Set(linked.map((l) => l.personId).filter((p): p is string => !!p))];
+  if (!persons.length) return [];
+  const matching = await runHogQL(payersMatchingFiltersQuery(persons), range, filters);
+  const allowed = new Set(matching.results.map((row) => str(row[0])));
+  return linked.filter((l) => l.personId && allowed.has(l.personId));
+}
 
 export async function loadOverview(range: Range, interval: StatsInterval, filters: StatsPropertyFilter[]): Promise<StatsOverviewData> {
-  const [kpi, chart, online] = await Promise.all([
+  const fromMs = range.from.getTime();
+  const previousFrom = fromMs - (range.to.getTime() - fromMs);
+  const [kpi, chart, online, money] = await Promise.all([
     runHogQL(kpiQuery(), range, filters),
     runHogQL(chartQuery(interval), range, filters),
     runHogQL(onlineQuery(), range, filters),
+    paymentsInScope(range, previousFrom, filters),
   ]);
-  const [vc, vp, rc, rp, pc, pp, bc, bp, dc, dp] = (kpi.results[0] ?? []).map(num);
+  const [vc, vp, bc, bp, dc, dp] = (kpi.results[0] ?? []).map(num);
+  const current = money.filter((l) => l.payment.at >= fromMs);
+  const previous = money.filter((l) => l.payment.at < fromMs);
+  const now = sumPayments(current);
+  const before = sumPayments(previous);
+  const revenue = revenueByBucket(current, interval);
+  const visitors = new Map(chart.results.map((row) => [str(row[0]), num(row[1])]));
+  const buckets = [...new Set([...visitors.keys(), ...revenue.keys()])].sort();
   return {
     kpis: {
       visitors: { current: vc ?? 0, previous: vp ?? 0 },
-      revenue: { current: rc ?? 0, previous: rp ?? 0 },
-      customers: { current: pc ?? 0, previous: pp ?? 0 },
+      revenue: { current: now.usd, previous: before.usd },
+      customers: { current: now.customers, previous: before.customers },
       bounceRate: { current: bc ?? 0, previous: bp ?? 0 },
       sessionSeconds: { current: dc ?? 0, previous: dp ?? 0 },
     },
     online: num(online.results[0]?.[0]),
-    series: chart.results.map((row) => ({
-      bucket: str(row[0]),
-      visitors: num(row[1]),
-      newRevenue: num(row[2]),
-      renewalRevenue: num(row[3]),
-      customers: num(row[4]),
+    series: buckets.map((bucket) => ({
+      bucket,
+      visitors: visitors.get(bucket) ?? 0,
+      newRevenue: revenue.get(bucket)?.newRevenue ?? 0,
+      renewalRevenue: revenue.get(bucket)?.renewalRevenue ?? 0,
+      customers: revenue.get(bucket)?.payers.size ?? 0,
     })),
   };
 }
@@ -60,22 +104,52 @@ export async function loadBreakdown(
   range: Range,
   filters: StatsPropertyFilter[],
 ): Promise<StatsBreakdownData> {
-  const [rows, exits] = await Promise.all([
+  const [rows, exits, money] = await Promise.all([
     runHogQL(breakdownQuery(card), range, filters),
     card === "pages" ? runHogQL(exitLinksQuery(), range, filters) : Promise.resolve(null),
+    paymentsInScope(range, range.from.getTime(), filters),
   ]);
   const tabs: StatsBreakdownRow[][] = [[], [], []];
   for (const row of rows.results) {
-    const tab = num(row[0]);
-    tabs[tab]?.push({
+    tabs[num(row[0])]?.push({
       value: str(row[1]),
       label: str(row[2]),
       visitors: num(row[3]),
       signups: num(row[4]),
-      paid: num(row[5]),
-      revenue: num(row[6]),
+      paid: 0,
+      revenue: 0,
     });
   }
+
+  // Credit each payment to where the payer first came from (90-day lookback).
+  const persons = [...new Set(money.map((l) => l.personId).filter((p): p is string => !!p))];
+  if (persons.length) {
+    const firstTouch = await runHogQL(payerFirstTouchQuery(card, persons), range, filters);
+    const touch = new Map(firstTouch.results.map((row) => [str(row[0]), (row[1] as unknown[]).map(str)]));
+    tabs.forEach((tab, i) => {
+      const credit = new Map<string, { label: string; usd: number; payers: Set<string> }>();
+      for (const { payment, personId } of money) {
+        const dims = personId ? touch.get(personId) : undefined;
+        const value = dims?.[2 * i];
+        if (!value) continue;
+        const entry = credit.get(value) ?? { label: dims[2 * i + 1] ?? value, usd: 0, payers: new Set<string>() };
+        entry.usd += payment.usd;
+        entry.payers.add(payerKey(payment, personId));
+        credit.set(value, entry);
+      }
+      for (const [value, entry] of credit) {
+        const row = tab.find((r) => r.value === value);
+        const usd = Math.round(entry.usd * 100) / 100;
+        if (row) {
+          row.revenue = usd;
+          row.paid = entry.payers.size;
+        } else {
+          tab.push({ value, label: entry.label, visitors: 0, signups: 0, paid: entry.payers.size, revenue: usd });
+        }
+      }
+    });
+  }
+
   if (exits) {
     tabs.push(
       exits.results.map((row) => ({
@@ -93,14 +167,29 @@ export async function loadBreakdown(
 }
 
 export async function loadGoals(range: Range, interval: StatsInterval, filters: StatsPropertyFilter[]): Promise<StatsGoalsData> {
-  const [totals, series] = await Promise.all([
-    runHogQL(goalTotalsQuery(), range, filters),
-    runHogQL(goalSeriesQuery(interval), range, filters),
+  const filtered = filters.length > 0;
+  const [totals, series, money] = await Promise.all([
+    runHogQL(goalTotalsQuery(filtered), range, filters),
+    runHogQL(goalSeriesQuery(interval, filtered), range, filters),
+    paymentsInScope(range, range.from.getTime(), filters),
   ]);
-  return {
+  const goals: StatsGoalsData = {
     totals: totals.results.map((row) => ({ event: str(row[0]), people: num(row[1]), completions: num(row[2]) })),
     series: series.results.map((row) => ({ event: str(row[0]), bucket: str(row[1]), people: num(row[2]) })),
   };
+  // "Paid" comes from Whop, the same payments as the revenue numbers.
+  if (money.length) {
+    const paid = sumPayments(money);
+    goals.totals.push({ event: "payment_succeeded", people: paid.customers, completions: paid.count });
+    const perBucket = new Map<string, Set<string>>();
+    for (const { payment, personId } of money) {
+      const key = bucketKey(payment.at, interval);
+      perBucket.set(key, (perBucket.get(key) ?? new Set()).add(payerKey(payment, personId)));
+    }
+    for (const [bucket, payers] of perBucket) goals.series.push({ event: "payment_succeeded", bucket, people: payers.size });
+    goals.totals.sort((a, b) => b.people - a.people);
+  }
+  return goals;
 }
 
 export async function loadAi(range: Range, interval: StatsInterval, filters: StatsPropertyFilter[]): Promise<StatsAiData> {

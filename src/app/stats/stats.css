@@ -405,8 +405,7 @@ button.stats-pill:hover,
 .stats-kpis {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 4px;
-  padding: 14px 14px 6px;
+  padding: 14px 6px 6px;
 }
 
 @media (max-width: 860px) {
@@ -418,13 +417,27 @@ button.stats-pill:hover,
 
 .stats-kpi {
   min-width: 0;
-  padding: 6px 8px;
-  border-radius: 10px;
+  padding: 2px 12px 4px;
   text-align: left;
 }
 
-.stats-kpi.is-toggle:hover {
-  background: #2c2c2c;
+/* Thin rules between the numbers, like DataFast. */
+.stats-kpi + .stats-kpi {
+  border-left: 1px solid var(--st-border);
+}
+
+@media (max-width: 860px) {
+  .stats-kpi + .stats-kpi {
+    border-left: 0;
+  }
+}
+
+.stats-kpi.is-toggle:hover .stats-kpi-label {
+  color: var(--st-text);
+}
+
+.stats-kpi.is-off {
+  opacity: 0.45;
 }
 
 .stats-kpi-label {
@@ -566,11 +579,12 @@ button.stats-pill:hover,
 
 /* ------------------------------------------------------------ lists */
 
+/* Bars run edge to edge from the card's left side, as in DataFast. */
 .stats-list {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  padding: 4px 8px 4px;
+  gap: 2px;
+  padding: 4px 0;
   min-height: 336px;
 }
 
@@ -580,9 +594,8 @@ button.stats-pill:hover,
   align-items: center;
   gap: 8px;
   width: 100%;
-  height: 30px;
-  padding: 0 8px;
-  border-radius: 7px;
+  height: 31px;
+  padding: 0 14px;
   text-align: left;
   isolation: isolate;
 }
@@ -593,7 +606,7 @@ button.stats-pill:hover,
   left: 0;
   top: 0;
   bottom: 0;
-  border-radius: 7px;
+  border-radius: 0 5px 5px 0;
   z-index: -1;
 }
 

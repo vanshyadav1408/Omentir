@@ -1,6 +1,11 @@
 // Date ranges and chart buckets for stats.omentir.com. Shared by the API route
-// and the client so both agree on bucket keys. PostHog's project timezone is
-// UTC, so every boundary here is computed in UTC.
+// and the client so both agree on bucket keys. Days, weeks and months follow
+// India time (Asia/Kolkata, UTC+5:30, no daylight saving), and the SQL buckets
+// use the same zone (see STATS_TIMEZONE in queries.ts).
+
+export const STATS_TIMEZONE = "Asia/Kolkata";
+export const STATS_TIMEZONE_LABEL = "IST";
+const ZONE_OFFSET_MS = 330 * 60_000;
 
 export const STATS_PERIODS = [
   { key: "today", label: "Today" },
@@ -33,7 +38,7 @@ export const STATS_INTERVALS: { key: StatsInterval; label: string }[] = [
 ];
 
 // PostHog product events start in 2026; nothing older exists.
-const ALL_TIME_START = Date.UTC(2026, 0, 1);
+const ALL_TIME_START = Date.UTC(2026, 0, 1) - ZONE_OFFSET_MS;
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
 
@@ -45,25 +50,30 @@ export function isStatsInterval(value: string | null | undefined): value is Stat
   return STATS_INTERVALS.some((interval) => interval.key === value);
 }
 
+// Calendar math runs on "zone time": the instant shifted by the IST offset and
+// read with UTC getters, then shifted back.
+const toZone = (ms: number) => ms + ZONE_OFFSET_MS;
+const fromZone = (ms: number) => ms - ZONE_OFFSET_MS;
+
 function startOfDay(ms: number) {
-  const d = new Date(ms);
-  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+  const d = new Date(toZone(ms));
+  return fromZone(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
 }
 
 function startOfWeek(ms: number) {
   const day = startOfDay(ms);
-  const weekday = (new Date(day).getUTCDay() + 6) % 7; // Monday = 0
+  const weekday = (new Date(toZone(day)).getUTCDay() + 6) % 7; // Monday = 0
   return day - weekday * DAY;
 }
 
 function addMonths(ms: number, months: number) {
-  const d = new Date(ms);
-  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + months, d.getUTCDate(), d.getUTCHours());
+  const d = new Date(toZone(ms));
+  return fromZone(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + months, d.getUTCDate(), d.getUTCHours(), d.getUTCMinutes()));
 }
 
 function startOfMonth(ms: number) {
-  const d = new Date(ms);
-  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1);
+  const d = new Date(toZone(ms));
+  return fromZone(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1));
 }
 
 /**
@@ -108,9 +118,9 @@ export function resolveStatsRange(period: StatsPeriod, offset = 0, nowMs = Date.
       to = back ? addMonths(from, 1) : nowMs;
       break;
     case "ytd": {
-      const year = new Date(nowMs).getUTCFullYear() - back;
-      from = Date.UTC(year, 0, 1);
-      to = back ? Date.UTC(year + 1, 0, 1) : nowMs;
+      const year = new Date(toZone(nowMs)).getUTCFullYear() - back;
+      from = fromZone(Date.UTC(year, 0, 1));
+      to = back ? fromZone(Date.UTC(year + 1, 0, 1)) : nowMs;
       break;
     }
     case "all":
@@ -145,14 +155,15 @@ function pad(n: number) {
 
 /** Bucket key in the same format the SQL emits (see bucketExpr in queries.ts). */
 export function bucketKey(ms: number, interval: StatsInterval) {
-  const d = new Date(ms);
+  const d = new Date(toZone(ms));
   const ymd = `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
   if (interval === "hour") return `${ymd} ${pad(d.getUTCHours())}:00`;
   return ymd;
 }
 
 function bucketStart(ms: number, interval: StatsInterval) {
-  if (interval === "hour") return Math.floor(ms / HOUR) * HOUR;
+  // IST is a whole number of half hours off UTC, so hours are floored in zone time.
+  if (interval === "hour") return fromZone(Math.floor(toZone(ms) / HOUR) * HOUR);
   if (interval === "week") return startOfWeek(ms);
   if (interval === "month") return startOfMonth(ms);
   return startOfDay(ms);

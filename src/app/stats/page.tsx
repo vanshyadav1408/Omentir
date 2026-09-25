@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { statsAccess } from "@/lib/server/stats/access";
 import { parseStatsQuery } from "@/lib/stats-periods";
@@ -20,7 +21,9 @@ export default async function StatsPage({
   const access = await statsAccess();
   if (access === "denied") notFound();
   if (access === "signed-out") {
-    const base = (process.env.APP_BASE_URL || "").replace(/\/$/, "");
+    // stats.omentir.com has no /login of its own; sign-in lives on the main site.
+    const host = (await headers()).get("host") ?? "";
+    const base = host.startsWith("stats.") ? `https://${host.slice("stats.".length)}` : "";
     return (
       <div className="stats-root">
         <div className="stats-signin">

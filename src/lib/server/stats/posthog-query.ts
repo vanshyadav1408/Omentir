@@ -24,35 +24,44 @@ export async function runHogQL(
   const host = (process.env.POSTHOG_API_HOST || DEFAULT_HOST).replace(/\/$/, "");
   const project = process.env.POSTHOG_PROJECT_ID || DEFAULT_PROJECT_ID;
 
-  const response = await fetch(`${host}/api/projects/${project}/query/`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    cache: "no-store",
-    signal: AbortSignal.timeout(90_000),
-    body: JSON.stringify({
-      query: {
-        kind: "HogQLQuery",
-        query,
-        filters: {
-          dateRange: {
-            date_from: range.from.toISOString(),
-            date_to: range.to.toISOString(),
-            explicitDate: true,
-          },
-          properties: filters.map((filter) => ({
-            type: "event",
-            key: filter.key,
-            operator: "exact",
-            value: [filter.value],
-          })),
+  const request = JSON.stringify({
+    query: {
+      kind: "HogQLQuery",
+      query,
+      filters: {
+        dateRange: {
+          date_from: range.from.toISOString(),
+          date_to: range.to.toISOString(),
+          explicitDate: true,
         },
+        properties: filters.map((filter) => ({
+          type: "event",
+          key: filter.key,
+          operator: "exact",
+          value: [filter.value],
+        })),
       },
-    }),
+    },
   });
 
-  if (!response.ok) {
-    const detail = await response.text().catch(() => "");
-    throw new Error(`PostHog query failed (${response.status}): ${detail.slice(0, 300)}`);
+  // PostHog answers 429 (concurrency_limit_exceeded) when too many queries run
+  // at once, and the occasional 5xx; both clear up after a short wait.
+  let response: Response | null = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt > 0) await new Promise((resolve) => setTimeout(resolve, 1500 * attempt));
+    response = await fetch(`${host}/api/projects/${project}/query/`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      cache: "no-store",
+      signal: AbortSignal.timeout(90_000),
+      body: request,
+    });
+    if (response.status !== 429 && response.status < 500) break;
+  }
+
+  if (!response || !response.ok) {
+    const detail = response ? await response.text().catch(() => "") : "";
+    throw new Error(`PostHog query failed (${response?.status ?? "no response"}): ${detail.slice(0, 300)}`);
   }
   const body = (await response.json()) as Partial<HogQLResult>;
   return { columns: body.columns ?? [], results: body.results ?? [] };

@@ -48,16 +48,21 @@ export async function capturePostHogEvent(input: CaptureInput): Promise<void> {
   }
 }
 
-export function revenueFromWhopPayment(payment: unknown, plan: string | null): number | undefined {
+/**
+ * Dollars actually charged, or undefined when the payload carries no positive
+ * amount. Never guess: a $0 trial start used to be recorded as $49 of revenue.
+ */
+export function revenueFromWhopPayment(payment: unknown): number | undefined {
   if (payment && typeof payment === "object") {
     const record = payment as Record<string, unknown>;
     for (const key of ["usd_total", "final_amount", "amount", "subtotal", "total"]) {
       const raw = record[key];
       const amount = typeof raw === "string" ? Number(raw) : typeof raw === "number" ? raw : NaN;
       if (!Number.isFinite(amount) || amount <= 0) continue;
+      // usd_total is always dollars; the older fields may arrive in cents.
+      if (key === "usd_total") return amount;
       return Number.isInteger(amount) && amount >= 100 ? amount / 100 : amount;
     }
   }
-  if (plan === "solo") return 49;
   return undefined;
 }

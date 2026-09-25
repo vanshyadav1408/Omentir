@@ -37,7 +37,7 @@ type Kpi = {
   live?: boolean;
 };
 
-const HEIGHT = 270;
+const HEIGHT = 300;
 const PAD = { top: 14, right: 46, bottom: 26, left: 44 };
 
 export function StatsMainCard({ data, loading, error, buckets, interval, live }: Props) {
@@ -100,7 +100,7 @@ export function StatsMainCard({ data, loading, error, buckets, interval, live }:
   // so the solid and dashed parts share one curve).
   const dashFrom = live && n > 1 ? linePoints[n - 2][0] : width;
   const labelEvery = Math.max(1, Math.ceil(n / Math.max(2, Math.floor(plotW / 78))));
-  const barW = Math.max(2, Math.min(22, band * 0.62));
+  const barW = Math.max(2, Math.min(34, band * 0.72));
 
   const hovered = hover != null ? points[hover] : null;
 
@@ -121,15 +121,6 @@ export function StatsMainCard({ data, loading, error, buckets, interval, live }:
             const content = (
               <>
                 <div className="stats-kpi-label">
-                  {kpi.toggle && (
-                    <span
-                      className="stats-kpi-check"
-                      style={{
-                        color: kpi.toggle === "visitors" ? "var(--st-visitors)" : "var(--st-renewal)",
-                        background: show[kpi.toggle] ? "currentColor" : "transparent",
-                      }}
-                    />
-                  )}
                   {kpi.label}
                   {kpi.live && <span className="stats-live-dot" aria-hidden />}
                 </div>
@@ -143,8 +134,9 @@ export function StatsMainCard({ data, loading, error, buckets, interval, live }:
               <button
                 key={kpi.label}
                 type="button"
-                className="stats-kpi is-toggle"
+                className={`stats-kpi is-toggle${show[kpi.toggle] ? "" : " is-off"}`}
                 aria-pressed={show[kpi.toggle]}
+                title={show[kpi.toggle] ? `Hide ${kpi.label.toLowerCase()} on the chart` : `Show ${kpi.label.toLowerCase()} on the chart`}
                 onClick={() => setShow((s) => ({ ...s, [kpi.toggle as "visitors"]: !s[kpi.toggle as "visitors"] }))}
               >
                 {content}

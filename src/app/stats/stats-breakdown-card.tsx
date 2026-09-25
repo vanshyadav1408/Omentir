@@ -3,6 +3,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import type { StatsBreakdownData, StatsBreakdownRow, StatsFilter } from "@/lib/stats-types";
 import { formatCompact, formatMoney, formatMoneyCompact, formatNumber, formatPercent } from "./stats-format";
+import { StatsDonut } from "./stats-donut";
 import { Glyph } from "./stats-icons";
 
 export type BreakdownTab = {
@@ -14,6 +15,8 @@ export type BreakdownTab = {
   display?: (row: StatsBreakdownRow) => string;
   /** Rows open this URL instead of filtering (exit links). */
   href?: (row: StatsBreakdownRow) => string;
+  /** Draw a donut instead of the bar list (DataFast's Channel view). */
+  donut?: boolean;
 };
 
 type Props = {
@@ -23,12 +26,13 @@ type Props = {
   loading: boolean;
   error?: string;
   onFilter: (filter: StatsFilter) => void;
+  initialTab?: number;
 };
 
 const VISIBLE = 10;
 
-export function StatsBreakdownCard({ title, tabs, data, loading, error, onFilter }: Props) {
-  const [tab, setTab] = useState(0);
+export function StatsBreakdownCard({ title, tabs, data, loading, error, onFilter, initialTab = 0 }: Props) {
+  const [tab, setTab] = useState(initialTab);
   const [metric, setMetric] = useState<"visitors" | "revenue">("visitors");
   const [hover, setHover] = useState<number | null>(null);
   const [details, setDetails] = useState(false);
@@ -82,6 +86,8 @@ export function StatsBreakdownCard({ title, tabs, data, loading, error, onFilter
           <div className="stats-empty stats-error">{error}</div>
         ) : rows.length === 0 ? (
           <div className="stats-empty" style={{ minHeight: 336 }}>{loading ? "" : "No data"}</div>
+        ) : active.donut ? (
+          <StatsDonut rows={rows.slice(0, 7)} display={(row) => active.display?.(row) ?? row.value} onSelect={activate} />
         ) : (
           <div className="stats-list" onMouseLeave={() => setHover(null)}>
             {rows.slice(0, VISIBLE).map((row, i) => (

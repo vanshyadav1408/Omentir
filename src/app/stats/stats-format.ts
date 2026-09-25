@@ -67,7 +67,7 @@ export function axisLabel(bucket: string, interval: StatsInterval) {
 export function tooltipLabel(bucket: string, interval: StatsInterval) {
   const d = parseBucket(bucket);
   const day = `${WEEKDAYS[d.getUTCDay()]}, ${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`;
-  if (interval === "hour") return `${day}, ${String(d.getUTCHours()).padStart(2, "0")}:00 UTC`;
+  if (interval === "hour") return `${day}, ${String(d.getUTCHours()).padStart(2, "0")}:00 IST`;
   if (interval === "week") return `Week of ${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`;
   if (interval === "month") return `${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
   return day;

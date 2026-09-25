@@ -113,7 +113,7 @@ function Menu({ trigger, children, className }: { trigger: ReactNode; children: 
 }
 
 const SOURCE_TABS: BreakdownTab[] = [
-  { label: "Channel", filterKey: "channel_name", filterLabel: "Channel", icon: (r) => channelIcon(r.value) },
+  { label: "Channel", filterKey: "channel_name", filterLabel: "Channel", icon: (r) => channelIcon(r.value), donut: true },
   { label: "Referrer", filterKey: "referring_domain", filterLabel: "Referrer", icon: (r) => referrerIcon(r.value), display: (r) => (r.value === "(direct)" ? "Direct/None" : r.value) },
   { label: "Campaign", filterKey: "utm_campaign", filterLabel: "Campaign", icon: () => <span className="stats-row-icon">{Glyph.tag}</span> },
 ];
@@ -282,7 +282,7 @@ export default function StatsDashboard({ initialQuery }: { initialQuery: Query }
 
         <div className="stats-grid">
           <StatsBreakdownCard title="Sources" tabs={SOURCE_TABS} data={sources.data?.data} loading={sources.loading} error={sources.error} onFilter={addFilter} />
-          <StatsBreakdownCard title="Pages" tabs={PAGE_TABS} data={pages.data?.data} loading={pages.loading} error={pages.error} onFilter={addFilter} />
+          <StatsBreakdownCard title="Pages" tabs={PAGE_TABS} initialTab={1} data={pages.data?.data} loading={pages.loading} error={pages.error} onFilter={addFilter} />
           <StatsBreakdownCard title="Location" tabs={LOCATION_TABS} data={location.data?.data} loading={location.loading} error={location.error} onFilter={addFilter} />
           <StatsBreakdownCard title="Tech" tabs={TECH_TABS} data={tech.data?.data} loading={tech.loading} error={tech.error} onFilter={addFilter} />
         </div>

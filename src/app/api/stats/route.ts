@@ -76,6 +76,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(body);
   } catch (error) {
     console.error("[stats] query failed", section, error);
-    return NextResponse.json({ error: "Could not load this section from PostHog." }, { status: 502 });
+    // Only the allowlisted owner reaches this point, so the real reason is safe to show.
+    const reason = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: `Could not load this section. ${reason}` }, { status: 502 });
   }
 }
