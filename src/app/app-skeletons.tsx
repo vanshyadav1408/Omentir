@@ -125,7 +125,7 @@ export function LeadsTableSkeleton() {
 export function MessagesInboxSkeleton() {
   return (
     <div
-      className="grid min-h-[460px] flex-1 grid-cols-1 lg:min-h-0 lg:grid-cols-[320px_1fr]"
+      className="skeleton-static grid min-h-[460px] flex-1 grid-cols-1 lg:min-h-0 lg:grid-cols-[320px_1fr]"
       aria-label="Loading conversations"
       role="status"
     >
@@ -417,7 +417,7 @@ const MESSAGE_TABS = ["All", "Successful", "Meetings booked", "Interested", "Nee
 
 export function MessagesPageSkeleton() {
   return (
-    <div className={PAGE_FRAME_CLASS}>
+    <div className={`${PAGE_FRAME_CLASS} skeleton-static`}>
       <PageHeaderSkeleton title="Messages">
         <Skeleton className="h-7 w-52" />
       </PageHeaderSkeleton>

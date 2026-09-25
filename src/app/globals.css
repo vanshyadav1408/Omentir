@@ -2481,6 +2481,12 @@ html[data-theme="dark"] .recommended-badge {
   }
 }
 
+/* Messages paints without motion, so its placeholders hold still. */
+.skeleton-static .skeleton {
+  animation: none;
+  background-image: none;
+}
+
 /* Mobile full-screen nav: keep marketing header solid while the sheet is open */
 html.marketing-menu-open [data-marketing-header] {
   background-color: color-mix(

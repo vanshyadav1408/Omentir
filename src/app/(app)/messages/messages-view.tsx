@@ -8,11 +8,7 @@ import {
   sendLinkedInChatMessageAction,
 } from "@/app/actions";
 import { useSidebarResource } from "@/app/use-sidebar-resource";
-import {
-  ContentReveal,
-  MessageBubblesSkeleton,
-  MessagesInboxSkeleton,
-} from "@/app/app-skeletons";
+import { ContentReveal, MessagesInboxSkeleton } from "@/app/app-skeletons";
 import type {
   Conversation,
   ConversationMessage,
@@ -73,6 +69,15 @@ type InboxThread =
     };
 
 type LocalMessage = LinkedInInboxMessage & { local: true };
+
+// Chat history fetched this session. Kept outside the component so returning
+// to Messages paints each opened chat in full at once, instead of the preview
+// line first and the history popping in after a refetch.
+const chatHistoryCache = {
+  messages: {} as Record<string, LinkedInInboxMessage[]>,
+  cursors: {} as Record<string, string | undefined>,
+  settledIds: new Set<string>(),
+};
 
 function mergeMessagesById(messages: LinkedInInboxMessage[], incoming: LinkedInInboxMessage[]) {
   return Array.from(new Map([...messages, ...incoming].map((message) => [message.id, message])).values())
@@ -300,13 +305,22 @@ export default function MessagesView({
   const [localMessages, setLocalMessages] = useState<Record<string, LocalMessage[]>>({});
   const [hydratedMessages, setHydratedMessages] = useState<
     Record<string, LinkedInInboxMessage[]>
-  >({});
-  const [historyCursors, setHistoryCursors] = useState<Record<string, string | undefined>>({});
+  >(chatHistoryCache.messages);
+  const [historyCursors, setHistoryCursors] = useState<Record<string, string | undefined>>(
+    chatHistoryCache.cursors,
+  );
   const [historyLoadingIds, setHistoryLoadingIds] = useState<Set<string>>(new Set());
   // LinkedIn threads whose message-history fetch has completed (even if it came
-  // back empty). Until a thread has settled, the detail pane shows a loading
-  // indicator instead of "No messages yet".
-  const [hydrationSettledIds, setHydrationSettledIds] = useState<Set<string>>(new Set());
+  // back empty). Until a thread has settled, the detail pane stays blank
+  // instead of showing "No messages yet".
+  const [hydrationSettledIds, setHydrationSettledIds] = useState<Set<string>>(
+    chatHistoryCache.settledIds,
+  );
+  useEffect(() => {
+    chatHistoryCache.messages = hydratedMessages;
+    chatHistoryCache.cursors = historyCursors;
+    chatHistoryCache.settledIds = hydrationSettledIds;
+  }, [hydratedMessages, historyCursors, hydrationSettledIds]);
   const threads = useMemo(
     () =>
       buildThreads(
@@ -578,7 +592,7 @@ export default function MessagesView({
               key={item.id}
               type="button"
               onClick={() => setTab(item.id)}
-              className={`relative -mb-px flex cursor-pointer items-center gap-1.5 pb-2.5 text-[13px] font-semibold transition-colors ${
+              className={`relative -mb-px flex cursor-pointer items-center gap-1.5 pb-2.5 text-[13px] font-semibold ${
                 active ? "text-zinc-950" : "text-zinc-600 hover:text-zinc-900"
               }`}
             >
@@ -662,7 +676,7 @@ export default function MessagesView({
                           setSelectedId(thread.id);
                           setIsMobileConversationOpen(true);
                         }}
-                        className={`flex w-full items-start gap-3 border-b border-zinc-100 px-4 py-3.5 text-left transition-colors ${
+                        className={`flex w-full items-start gap-3 border-b border-zinc-100 px-4 py-3.5 text-left ${
                           isActive
                             ? "bg-[#fff5f6]/60 dark:bg-[var(--google-surface-high)]"
                             : "hover:bg-zinc-50/70"
@@ -783,9 +797,7 @@ export default function MessagesView({
 
                   <div className="min-h-0 flex-1 space-y-3 overflow-y-auto bg-[#fbfaf6] p-4 sm:p-5">
                     {selected.messages.length === 0 ? (
-                      selected.kind === "linkedin" && !hydrationSettledIds.has(selected.id) ? (
-                        <MessageBubblesSkeleton />
-                      ) : (
+                      selected.kind === "linkedin" && !hydrationSettledIds.has(selected.id) ? null : (
                         <p className="text-center text-[12px] font-medium text-zinc-700">No messages yet.</p>
                       )
                     ) : (
