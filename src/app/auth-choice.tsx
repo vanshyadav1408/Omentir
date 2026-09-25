@@ -108,7 +108,7 @@ type ClerkBrowser = {
       }>;
     };
   };
-  load?: () => Promise<void>;
+  status?: string;
   setActive?: (params: { session: string; redirectUrl: string }) => Promise<void>;
 };
 
@@ -152,25 +152,34 @@ function getErrorMessage(error: unknown) {
   return "Something went wrong. Please try again.";
 }
 
-async function getLoadedClerk(): Promise<LoadedClerkBrowser | null> {
-  if (typeof window === "undefined") return null;
+const CLERK_LOAD_TIMEOUT_MS = 15_000;
 
-  // Clerk injects window.Clerk from the async clerk-js script. Wait briefly so a
-  // fast click right after first paint does not race the script tag.
-  const deadline = Date.now() + 8_000;
-  let clerk = window.Clerk;
-  while (!clerk && Date.now() < deadline) {
+/**
+ * ClerkProvider injects window.Clerk from the async clerk-js script, then runs
+ * clerk.load() with its own options. Wait for that load to finish. Never call
+ * clerk.load() here: a second, option-less load while the provider's is in
+ * flight re-initializes Clerk and can leave clerk.client unset. Each failure
+ * throws its own message so a report says which step broke.
+ */
+export async function getLoadedClerk(
+  timeoutMs = CLERK_LOAD_TIMEOUT_MS,
+): Promise<LoadedClerkBrowser> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const clerk = window.Clerk;
+    if (clerk?.status === "error") {
+      throw new Error("Sign in failed to start. Refresh the page and try again.");
+    }
+    if (clerk?.loaded && clerk.client && clerk.setActive) {
+      return clerk as LoadedClerkBrowser;
+    }
     await new Promise((resolve) => window.setTimeout(resolve, 50));
-    clerk = window.Clerk;
   }
-  if (!clerk) return null;
-
-  if (!clerk.loaded && clerk.load) {
-    await clerk.load();
-  }
-
-  if (!clerk.client || !clerk.setActive) return null;
-  return clerk as LoadedClerkBrowser;
+  throw new Error(
+    window.Clerk
+      ? "Sign in is taking too long to start. Check your connection and refresh the page."
+      : "Sign in could not load. An ad blocker or network filter may be blocking it. Refresh the page or try another network.",
+  );
 }
 
 async function activateSession(
@@ -235,10 +244,6 @@ export default function AuthChoice({
 
     try {
       const clerk = await getLoadedClerk();
-      if (!clerk) {
-        setError("Authentication did not load. Refresh the page and try again.");
-        return;
-      }
 
       if (isSignup) {
         await clerk.client.signUp.authenticateWithRedirect({
@@ -378,10 +383,6 @@ export default function AuthChoice({
 
     try {
       const clerk = await getLoadedClerk();
-      if (!clerk) {
-        setError("Authentication did not load. Refresh the page and try again.");
-        return;
-      }
 
       const password = String(formData.get("password") || "");
       const result = await clerk.client.signIn.create({
@@ -409,10 +410,6 @@ export default function AuthChoice({
 
     try {
       const clerk = await getLoadedClerk();
-      if (!clerk) {
-        setError("Authentication did not load. Refresh the page and try again.");
-        return;
-      }
 
       const result = await clerk.client.signUp.create({
         firstName: String(formData.get("firstName") || ""),
@@ -452,10 +449,6 @@ export default function AuthChoice({
 
     try {
       const clerk = await getLoadedClerk();
-      if (!clerk) {
-        setError("Authentication did not load. Refresh the page and try again.");
-        return;
-      }
 
       const code = String(formData.get("code") || "");
 
@@ -512,10 +505,6 @@ export default function AuthChoice({
 
     try {
       const clerk = await getLoadedClerk();
-      if (!clerk) {
-        setError("Authentication did not load. Refresh the page and try again.");
-        return;
-      }
 
       await clerk.client.signIn.create({
         strategy: "reset_password_email_code",
@@ -543,10 +532,6 @@ export default function AuthChoice({
 
     try {
       const clerk = await getLoadedClerk();
-      if (!clerk) {
-        setError("Authentication did not load. Refresh the page and try again.");
-        return;
-      }
 
       const result = await clerk.client.signIn.attemptFirstFactor({
         strategy: "reset_password_email_code",
