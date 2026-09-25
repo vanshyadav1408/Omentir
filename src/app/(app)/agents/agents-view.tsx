@@ -4,7 +4,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import type { Agent, CampaignEnrollmentPreview, Group, LeadAgentRef } from "@/lib/server/types";
-import { deleteAgentAction, pauseAgentAction, resumeAgentAction } from "@/app/actions";
+import {
+  deleteAgentAction,
+  pauseAgentAction,
+  resumeAgentAction,
+  setAgentLeadsOnlyAction,
+} from "@/app/actions";
 import { useSidebarResource } from "@/app/use-sidebar-resource";
 import { ContentReveal, OutreachListSkeleton } from "@/app/app-skeletons";
 import NewAgentButton from "./new-agent-button";
@@ -18,7 +23,13 @@ import {
 import CompleteSetupPrompt from "@/app/(app)/complete-setup-prompt";
 import MobileHeaderPortal from "@/app/mobile-header-portal";
 import { useWorkspaceTimeZone } from "@/app/workspace-time-zone";
-import { formatZonedDate } from "@/lib/time-zone";
+import { formatZonedDate, zonedDayKey } from "@/lib/time-zone";
+import { useHydrated } from "@/app/use-hydrated";
+import {
+  describeAgentStatus,
+  type AgentStatusFacts,
+  type AgentStatusLine,
+} from "@/lib/agent-status";
 import {
   STAGE_ACCEPTED,
   STAGE_CONTACTED,
@@ -36,6 +47,9 @@ type AgentsViewProps = {
   /** Finite plan cap, or null when the plan has unlimited agents. */
   agentLimit: number | null;
   atAgentLimit: boolean;
+  // Sidebar reads refuse unpaid workspaces, so for those the page passes the
+  // agents it already loaded and every card says outreach has stopped.
+  subscriptionActive: boolean;
 };
 
 const selectAgentsData = (data: Record<string, unknown>) => ({
@@ -72,6 +86,41 @@ function statusPill(status: Agent["status"]) {
       Draft
     </span>
   );
+}
+
+const selectAgentStatus = (data: Record<string, unknown>) =>
+  (data.agentStatus as Record<string, AgentStatusFacts>) || {};
+
+const STATUS_DOT: Record<AgentStatusLine["tone"], string> = {
+  active: "bg-emerald-500",
+  waiting: "bg-amber-500",
+  paused: "bg-zinc-400",
+  stopped: "bg-red-500",
+};
+
+const STATUS_LABEL: Record<AgentStatusLine["tone"], string> = {
+  active: "text-emerald-700",
+  waiting: "text-amber-700",
+  paused: "text-zinc-800",
+  stopped: "text-red-700",
+};
+
+// "in 25 min", "today at 3:40 PM", "tomorrow at 8:00 AM", "Tue at 9:40 AM",
+// "Oct 3 at 9:40 AM", all on the workspace's clock.
+function formatStatusTime(iso: string, timeZone: string | undefined, nowMs: number) {
+  const diffMs = Date.parse(iso) - nowMs;
+  if (diffMs > 0 && diffMs < 60 * 60 * 1000) {
+    return `in ${Math.max(1, Math.round(diffMs / 60000))} min`;
+  }
+  const time = formatZonedDate(iso, timeZone, { hour: "numeric", minute: "2-digit" });
+  const day = zonedDayKey(iso, timeZone);
+  if (day === zonedDayKey(nowMs, timeZone)) return `today at ${time}`;
+  if (day === zonedDayKey(nowMs + 24 * 60 * 60 * 1000, timeZone)) return `tomorrow at ${time}`;
+  const dayLabel =
+    diffMs > 0 && diffMs < 6 * 24 * 60 * 60 * 1000
+      ? formatZonedDate(iso, timeZone, { weekday: "short" })
+      : formatZonedDate(iso, timeZone, { month: "short", day: "numeric" });
+  return `${dayLabel} at ${time}`;
 }
 
 function modeLabel(agent: Agent) {
@@ -114,13 +163,22 @@ export default function AgentsView({
   enrollments,
   agentLimit,
   atAgentLimit,
+  subscriptionActive,
 }: AgentsViewProps) {
   const router = useRouter();
   const timeZone = useWorkspaceTimeZone();
+  const hydrated = useHydrated();
   const agentsResource = useSidebarResource(
     "agents,groups,leadAgentRefs,enrollmentPreviews",
     { agents, groups, leads, enrollments },
     selectAgentsData,
+    subscriptionActive,
+  );
+  const statusResource = useSidebarResource(
+    "agentStatus",
+    {} as Record<string, AgentStatusFacts>,
+    selectAgentStatus,
+    subscriptionActive,
   );
   const {
     agents: loadedAgents,
@@ -132,9 +190,26 @@ export default function AgentsView({
   const [pendingToggleIds, setPendingToggleIds] = useState<Set<string>>(new Set());
   const [optimisticStatuses, setOptimisticStatuses] = useState<Record<string, Agent["status"]>>({});
   const [deleteAgent, setDeleteAgent] = useState<{ id: string; name: string } | null>(null);
+  const [leadsOnlyTarget, setLeadsOnlyTarget] = useState<{
+    agent: Agent;
+    leadsOnly: boolean;
+  } | null>(null);
+  const [savingLeadsOnly, setSavingLeadsOnly] = useState(false);
+  // Keeps "in 25 min" honest while the page sits open. The facts behind the
+  // line are re-read less often: each read queries every campaign's queue.
+  const [now, setNow] = useState(() => Date.now());
+  const reloadStatus = statusResource.reload;
+  useEffect(() => {
+    const clock = window.setInterval(() => setNow(Date.now()), 30_000);
+    const refresh = window.setInterval(() => reloadStatus(), 5 * 60_000);
+    return () => {
+      window.clearInterval(clock);
+      window.clearInterval(refresh);
+    };
+  }, [reloadStatus]);
   const { showError, showAgentStarted } = useToast();
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
-  useBodyScrollLock(Boolean(deleteAgent));
+  useBodyScrollLock(Boolean(deleteAgent || leadsOnlyTarget));
 
   // After launch, setup redirects here for full / steal / outreach agents.
   useEffect(() => {
@@ -253,6 +328,58 @@ export default function AgentsView({
       });
       showError(userFacingError(error, "Agent could not be deleted."));
     }
+  }
+
+  async function confirmLeadsOnly() {
+    const target = leadsOnlyTarget;
+    if (!target || savingLeadsOnly) return;
+    const formData = new FormData();
+    formData.set("agentId", target.agent.id);
+    formData.set("leadsOnly", String(target.leadsOnly));
+    setSavingLeadsOnly(true);
+    try {
+      await setAgentLeadsOnlyAction(formData);
+      setLeadsOnlyTarget(null);
+      agentsResource.reload();
+      statusResource.reload();
+      router.refresh();
+    } catch (error) {
+      if (isNextNavigationError(error)) {
+        setLeadsOnlyTarget(null);
+        agentsResource.reload();
+        statusResource.reload();
+        router.refresh();
+        return;
+      }
+      showError(userFacingError(error, "The agent could not be updated."));
+    } finally {
+      setSavingLeadsOnly(false);
+    }
+  }
+
+  function agentStatusLine(agent: Agent, displayStatus: Agent["status"]) {
+    const facts = statusResource.value[agent.id];
+    const options = {
+      subscriptionActive,
+      nowMs: now,
+      formatAt: (iso: string) => formatStatusTime(iso, timeZone, now),
+    };
+    if (!subscriptionActive && !facts) {
+      return describeAgentStatus(
+        {
+          agentStatus: displayStatus,
+          leadsOnly: Boolean(agent.leadsOnly),
+          findsLeads: agent.mode !== "outreach",
+          accountConnected: true,
+          automationPaused: false,
+          awaitingAcceptance: 0,
+        },
+        options,
+      );
+    }
+    if (!facts) return null;
+    // The switch updates the card before the status read comes back.
+    return describeAgentStatus({ ...facts, agentStatus: displayStatus }, options);
   }
 
   const agentMetrics = useMemo(() => {
@@ -468,6 +595,17 @@ export default function AgentsView({
                           >
                             Edit
                           </Link>
+                          {agent.mode !== "outreach" ? (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setLeadsOnlyTarget({ agent, leadsOnly: !agent.leadsOnly })
+                              }
+                              className="m3-menu-item"
+                            >
+                              {agent.leadsOnly ? "Allow outreach" : "Leads only"}
+                            </button>
+                          ) : null}
                           <button
                             type="button"
                             onClick={() => setDeleteAgent({ id: agent.id, name: agentTitle(agent) })}
@@ -479,6 +617,35 @@ export default function AgentsView({
                       </details>
                     </div>
                   </div>
+
+                  {(() => {
+                    const line = hydrated ? agentStatusLine(agent, displayStatus) : null;
+                    if (!line) {
+                      return <div className="mt-3 h-5" aria-hidden="true" />;
+                    }
+                    return (
+                      <p className="mt-3 flex items-start gap-2 text-[13px] leading-5 text-zinc-700">
+                        <span
+                          className={`mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full ${STATUS_DOT[line.tone]}`}
+                          aria-hidden="true"
+                        />
+                        <span className="min-w-0">
+                          <span className={`font-semibold ${STATUS_LABEL[line.tone]}`}>
+                            {line.label}:
+                          </span>{" "}
+                          {line.text}
+                          {!subscriptionActive ? (
+                            <>
+                              {" "}
+                              <Link href="/overview" className="font-semibold text-[#ba3871] underline-offset-2 hover:underline">
+                                Renew
+                              </Link>
+                            </>
+                          ) : null}
+                        </span>
+                      </p>
+                    );
+                  })()}
 
                   {/* Stats row */}
                   <div className="mt-5 grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-4">
@@ -585,6 +752,53 @@ export default function AgentsView({
         )}
         </div>
       </div>
+
+      {leadsOnlyTarget ? (
+        <div
+          className="m3-dialog-scrim z-[95]"
+          role="presentation"
+          onClick={() => (savingLeadsOnly ? undefined : setLeadsOnlyTarget(null))}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="leads-only-title"
+            className="m3-dialog-surface"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2 id="leads-only-title" className="m3-dialog-title">
+              {leadsOnlyTarget.leadsOnly ? "Make this agent leads only?" : "Allow outreach?"}
+            </h2>
+            <p className="m3-dialog-body">
+              {leadsOnlyTarget.leadsOnly
+                ? `${agentTitle(leadsOnlyTarget.agent)} keeps finding leads, but Omentir stops contacting anyone it found, in every lead group. Sequences and AI replies already running for those people end, and they do not restart if you allow outreach again later.`
+                : `People ${agentTitle(leadsOnlyTarget.agent)} finds can be contacted again by outreach on their lead group. If the agent has no outreach sequence yet, edit it to add one.`}
+            </p>
+            <div className="m3-dialog-actions">
+              <button
+                type="button"
+                disabled={savingLeadsOnly}
+                onClick={() => setLeadsOnlyTarget(null)}
+                className="m3-dialog-btn m3-dialog-btn--text"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={savingLeadsOnly}
+                onClick={confirmLeadsOnly}
+                className="m3-dialog-btn m3-dialog-btn--filled"
+              >
+                {savingLeadsOnly
+                  ? "Saving..."
+                  : leadsOnlyTarget.leadsOnly
+                    ? "Make leads only"
+                    : "Allow outreach"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {deleteAgent ? (
         <div

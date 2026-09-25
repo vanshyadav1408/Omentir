@@ -9,6 +9,10 @@ export type WorkspaceSettings = {
   dailyDigestEmailEnabled: boolean;
   // Local clock hour (0-23) in the workspace time zone.
   dailyDigestHour: number;
+  // Withdraw LinkedIn invitations still pending after this many days. Unset
+  // means 28 (on for every workspace by default); 0 is off. Withdrawing cannot
+  // be undone and LinkedIn blocks re-inviting the person for about three weeks.
+  inviteWithdrawAfterDays?: number;
 };
 
 export type WorkspaceBilling = {

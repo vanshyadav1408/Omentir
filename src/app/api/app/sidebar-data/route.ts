@@ -25,6 +25,8 @@ import {
   listVerifiedLinkedInAccounts,
 } from "@/lib/server/linkedin-accounts";
 import { hasActiveSubscription } from "@/lib/server/subscription";
+import { loadAgentStatusFacts } from "@/lib/server/agent-status";
+import { loadLinkedInHealth } from "@/lib/server/linkedin-health";
 import { listLinkedInInbox } from "@/lib/server/unipile";
 import { resolveActiveWorkspace } from "@/lib/server/active-workspace";
 import { loadDurableActivityDays } from "@/lib/server/sidebar-activity-days";
@@ -80,6 +82,7 @@ async function loadFirestoreResource(
   cache: SidebarFetchCache,
 ) {
   if (resource === "agents") return { agents: await listAgents(workspaceId) };
+  if (resource === "agentStatus") return { agentStatus: await loadAgentStatusFacts(workspaceId) };
   if (resource === "agentApiKeys") return { agentApiKeys: await listAgentApiKeys(workspaceId) };
   if (resource === "groups") return { groups: await listGroups(workspaceId) };
   if (resource === "leadPreviews") {
@@ -311,6 +314,11 @@ export async function GET(request: Request) {
     ].filter((item): item is NonNullable<typeof item> => Boolean(item))
       .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
     return NextResponse.json({ items });
+  }
+  if (resource === "linkedinHealth") {
+    const workspace = await workspacePromise;
+    if (!(await subscribedPromise)) return subscriptionRequired();
+    return NextResponse.json({ health: await loadLinkedInHealth(workspace) });
   }
   if (resource === "linkedinAccounts") {
     const workspace = await workspacePromise;

@@ -2632,6 +2632,52 @@ export async function listSentInvitationProviderIds(accountId: string) {
   }
 }
 
+export type SentInvitation = {
+  id: string;
+  // Unipile derives this from LinkedIn's relative label ("Sent 3 weeks ago"),
+  // so it is only as precise as that label: days, then weeks, then months.
+  sentAt?: string;
+};
+
+// The account's pending sent invitations with their ids and dates, for the
+// health meter and auto-withdraw. `complete` is false when the list ran past
+// the page cap or a page failed; callers must not read a partial list as the
+// whole pending pool.
+export async function listSentInvitations(accountId: string, maxPages = 10) {
+  if (!isUnipileConfigured()) return { invitations: [] as SentInvitation[], complete: false };
+
+  const invitations: SentInvitation[] = [];
+  let cursor: string | undefined;
+  try {
+    for (let page = 0; page < maxPages; page += 1) {
+      const result = await request<
+        UnipileListResponse<{ id?: string; parsed_datetime?: string }>
+      >(withQuery("/api/v1/users/invite/sent", { account_id: accountId, limit: 100, cursor }));
+      const items = getListItems<{ id?: string; parsed_datetime?: string }>(result);
+      for (const item of items) {
+        if (item.id) invitations.push({ id: item.id, sentAt: item.parsed_datetime });
+      }
+      cursor = getListCursor(result);
+      if (!cursor || !items.length) return { invitations, complete: true };
+    }
+    return { invitations, complete: false };
+  } catch {
+    return { invitations, complete: false };
+  }
+}
+
+// Cancels one pending invitation. LinkedIn blocks re-inviting that person for
+// about three weeks afterwards.
+export async function withdrawSentInvitation(accountId: string, invitationId: string) {
+  requireUnipileConfigured();
+  await request(
+    withQuery(`/api/v1/users/invite/sent/${encodeURIComponent(invitationId)}`, {
+      account_id: accountId,
+    }),
+    { method: "DELETE" },
+  );
+}
+
 type UnipileRelation = {
   first_name?: string;
   last_name?: string;

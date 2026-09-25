@@ -6,6 +6,7 @@ import { headers } from "next/headers";
 import { after } from "next/server";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { normalizeInviteWithdrawAfterDays } from "@/lib/linkedin-health";
 import { buildCampaignSteps } from "@/lib/server/campaign-sequence";
 import {
   createAgent,
@@ -33,6 +34,7 @@ import {
   listCampaigns,
   listLeads,
   pauseAgent,
+  setAgentLeadsOnly,
   resumeAgent,
   revokeAgentApiKey,
   setAverageTicketSize,
@@ -710,6 +712,7 @@ export async function saveSettingsAction(formData: FormData) {
     aiFollowUpEnabled: z.boolean(),
     dailyDigestEmailEnabled: z.boolean(),
     dailyDigestHour: z.coerce.number().int().min(0).max(23),
+    inviteWithdrawAfterDays: z.unknown().transform(normalizeInviteWithdrawAfterDays),
   });
 
   const parsed = schema.parse({
@@ -721,6 +724,7 @@ export async function saveSettingsAction(formData: FormData) {
     dailyDigestEmailEnabled:
       formData.get("dailyDigestEmailEnabled") === "on" && hasActiveSubscription(workspace),
     dailyDigestHour: formData.get("dailyDigestHour"),
+    inviteWithdrawAfterDays: formData.get("inviteWithdrawAfterDays"),
   });
 
   const timezone = String(formData.get("timezone") || "").trim();
@@ -1174,6 +1178,17 @@ export async function resumeAgentAction(formData: FormData) {
   if (!agentId) throw new Error("Agent id is required.");
 
   await resumeAgent(workspace.id, agentId);
+  revalidateWorkspaceDataPages();
+}
+
+export async function setAgentLeadsOnlyAction(formData: FormData) {
+  const workspace = await requireWorkspace();
+  const agentId = String(formData.get("agentId") || "").trim();
+  const leadsOnly = formData.get("leadsOnly") === "true";
+
+  if (!agentId) throw new Error("Agent id is required.");
+
+  await setAgentLeadsOnly(workspace.id, agentId, leadsOnly);
   revalidateWorkspaceDataPages();
 }
 

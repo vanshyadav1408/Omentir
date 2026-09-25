@@ -113,6 +113,7 @@ import {
   type SendActionKind,
 } from "./send-schedule";
 import { hasActiveSubscription } from "./subscription";
+import { runInviteWithdrawals } from "./linkedin-health";
 import { shouldMarkBillingExpired, shouldPurgeUnipileAccounts } from "@/lib/unipile-billing-purge";
 import { purgeWorkspaceUnipileAccounts } from "./linkedin-accounts";
 import { cancelWhopSeatMembership } from "./whop";
@@ -2734,6 +2735,15 @@ async function runAutomationTickInner(
     console.error("[automation] provider sync phase failed:", error);
   }
 
+  let invitesWithdrawn = 0;
+  try {
+    invitesWithdrawn = await runInviteWithdrawals(mode);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "runInviteWithdrawals failed";
+    errors.push(`invite-withdraw: ${message}`);
+    console.error("[automation] invite withdrawal phase failed:", error);
+  }
+
   let unipilePurge = { workspaces: 0, deleted: 0 };
   try {
     unipilePurge = await purgeExpiredUnipileAccounts(mode);
@@ -2763,7 +2773,7 @@ async function runAutomationTickInner(
   await safeLogAutomationRun({
     kind: "cron",
     status: errors.length ? "error" : "completed",
-    message: `${mode.dryRun ? "DRY RUN " : ""}Agents: ${agentResult.agents}, signal agents: ${agentResult.signalAgents}, signals: ${agentResult.signalsObserved}, leads: ${agentResult.leadsAdded}, time-expired runs: ${agentResult.timeBudgetExpiredRuns}, newly enrolled: ${campaignResult.newlyEnrolled}, campaign actions: ${campaignResult.actions}${providerSync.sweptAccounts ? `, sweeps: ${providerSync.sweptAccounts} (accepted: ${providerSync.acceptedViaSweep})` : ""}${providerSync.syncedReplies ? `, synced replies: ${providerSync.syncedReplies}` : ""}${unipilePurge.deleted ? `, unipile purged: ${unipilePurge.deleted} from ${unipilePurge.workspaces} workspace${unipilePurge.workspaces === 1 ? "" : "s"}` : ""}${digestsSent ? `, digests: ${digestsSent}` : ""}${errors.length ? ` | errors: ${errors.join("; ")}` : ""}`,
+    message: `${mode.dryRun ? "DRY RUN " : ""}Agents: ${agentResult.agents}, signal agents: ${agentResult.signalAgents}, signals: ${agentResult.signalsObserved}, leads: ${agentResult.leadsAdded}, time-expired runs: ${agentResult.timeBudgetExpiredRuns}, newly enrolled: ${campaignResult.newlyEnrolled}, campaign actions: ${campaignResult.actions}${providerSync.sweptAccounts ? `, sweeps: ${providerSync.sweptAccounts} (accepted: ${providerSync.acceptedViaSweep})` : ""}${providerSync.syncedReplies ? `, synced replies: ${providerSync.syncedReplies}` : ""}${invitesWithdrawn ? `, invites withdrawn: ${invitesWithdrawn}` : ""}${unipilePurge.deleted ? `, unipile purged: ${unipilePurge.deleted} from ${unipilePurge.workspaces} workspace${unipilePurge.workspaces === 1 ? "" : "s"}` : ""}${digestsSent ? `, digests: ${digestsSent}` : ""}${errors.length ? ` | errors: ${errors.join("; ")}` : ""}`,
   });
 
   return { agentResult, campaignResult, errors, dryRun: mode.dryRun };

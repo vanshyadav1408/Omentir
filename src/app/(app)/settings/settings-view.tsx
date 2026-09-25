@@ -19,6 +19,14 @@ import {
 import { extraLinkedInSeatsCount, extraSeatMonthlyPriceLabel } from "@/lib/linkedin-seat-pricing";
 import { WHOP_MEMBERSHIPS_URL } from "@/lib/whop-billing-url";
 import LinkedInSeatsCard from "./linkedin-seats-card";
+import LinkedInHealthCard, {
+  INVITE_WITHDRAW_HELP,
+  INVITE_WITHDRAW_SELECT_OPTIONS,
+} from "./linkedin-health-card";
+import {
+  normalizeInviteWithdrawAfterDays,
+  type LinkedInAccountHealth,
+} from "@/lib/linkedin-health";
 import DeleteWorkspaceCard from "@/app/delete-workspace-card";
 
 type SettingsViewProps = {
@@ -38,6 +46,8 @@ type Tab = (typeof TABS)[number];
 
 const selectLinkedInAccounts = (data: Record<string, unknown>) =>
   (data.accounts as LinkedInAccount[]) || [];
+const selectLinkedInHealth = (data: Record<string, unknown>) =>
+  (data.health as LinkedInAccountHealth[]) || [];
 
 const LANGUAGES = ["English", "Spanish", "French", "German", "Portuguese"];
 const COMMON_TIMEZONES = ["UTC", "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles", "America/Anchorage", "Pacific/Honolulu", "Europe/London", "Europe/Berlin", "Europe/Paris", "Europe/Moscow", "Asia/Dubai", "Asia/Kolkata", "Asia/Shanghai", "Asia/Tokyo", "Australia/Sydney", "Pacific/Auckland"];
@@ -464,6 +474,16 @@ export default function SettingsView({
   );
   const loadedLinkedInAccounts = linkedInAccountsResource.value;
   const linkedInAccountsLoading = linkedInAccountsResource.loading;
+  // Reads the pending-invite list from LinkedIn, so only on the tab that shows it.
+  const linkedInHealthResource = useSidebarResource(
+    "linkedinHealth",
+    [] as LinkedInAccountHealth[],
+    selectLinkedInHealth,
+    tab === "Connected Accounts",
+  );
+  const [withdrawAfterDays, setWithdrawAfterDays] = useState(
+    normalizeInviteWithdrawAfterDays(workspace.settings.inviteWithdrawAfterDays),
+  );
 
   const [language, setLanguage] = useState("English");
   // Follows the workspace zone (detected on first load when none is stored)
@@ -525,6 +545,7 @@ export default function SettingsView({
     if (aiFollowUp) formData.set("aiFollowUpEnabled", "on");
     if (dailyDigest && subscriptionActive) formData.set("dailyDigestEmailEnabled", "on");
     formData.set("dailyDigestHour", String(digestHour));
+    formData.set("inviteWithdrawAfterDays", String(withdrawAfterDays));
     startTransition(() => saveAction(formData));
   }
 
@@ -968,6 +989,49 @@ export default function SettingsView({
                     accounts below to connect more.
                   </p>
                 )}
+
+                {loadedLinkedInAccounts.length ? (
+                  <>
+                    <div className="my-8 h-px bg-zinc-200" />
+                    <SectionHeader
+                      title="Account health"
+                      description="LinkedIn restricts accounts that pile up unanswered invites or get few accepts. These numbers show how close you are."
+                    />
+                    {linkedInHealthResource.loading ? (
+                      <LinkedInAccountsSkeleton />
+                    ) : (
+                      <ContentReveal className="space-y-3">
+                        {linkedInHealthResource.value.map((health) => (
+                          <LinkedInHealthCard
+                            key={health.linkedInAccountId}
+                            health={health}
+                            accountName={
+                              loadedLinkedInAccounts.length > 1
+                                ? loadedLinkedInAccounts.find(
+                                    (account) => account.id === health.linkedInAccountId,
+                                  )?.displayName
+                                : undefined
+                            }
+                          />
+                        ))}
+                      </ContentReveal>
+                    )}
+                    <div className="mt-5 max-w-sm">
+                      <SelectField
+                        label="Withdraw unanswered invites"
+                        options={INVITE_WITHDRAW_SELECT_OPTIONS}
+                        value={String(withdrawAfterDays)}
+                        onChange={(value) =>
+                          setWithdrawAfterDays(normalizeInviteWithdrawAfterDays(value))
+                        }
+                        clearable={false}
+                      />
+                      <p className="mt-1.5 text-[11px] font-medium text-zinc-600">
+                        {INVITE_WITHDRAW_HELP} Save settings to apply.
+                      </p>
+                    </div>
+                  </>
+                ) : null}
 
                 {localMode || linkedInIsUnlimited ? null : (
                   <div className="mt-8">

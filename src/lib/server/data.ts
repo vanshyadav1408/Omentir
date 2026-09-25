@@ -1405,6 +1405,34 @@ export async function allowOutreachOnAgent(workspaceId: string, agentId: string)
   return { ...rest, updatedAt: timestamp } as Agent;
 }
 
+// The agent card's "Leads only" switch. Turning it on skips assertAgentMayUseGroup
+// on purpose: an existing full agent always has a campaign on its group, which
+// that check exists to refuse. It is safe anyway because the send paths key on
+// the lead's source agent (isSourcedByLeadsOnlyAgent), not on the group, so the
+// agent's leads stop being contacted in every group on the next tick.
+export async function setAgentLeadsOnly(
+  workspaceId: string,
+  agentId: string,
+  leadsOnly: boolean,
+) {
+  if (!leadsOnly) return allowOutreachOnAgent(workspaceId, agentId);
+
+  const ref = collection<Agent>("agents").doc(agentId);
+  const snap = await ref.get();
+  const agent = snap.data();
+  if (!agent || agent.workspaceId !== workspaceId) {
+    throw new Error("Agent not found.");
+  }
+  if (agent.mode === "outreach") {
+    throw new Error("Outreach-only agents do not find leads, so they cannot be leads only.");
+  }
+  if (agent.leadsOnly) return agent;
+
+  const patch = { leadsOnly: true, updatedAt: nowIso() };
+  await ref.update(patch);
+  return { ...agent, ...patch } as Agent;
+}
+
 // Tomorrow's occurrence of the agent's daily discovery time: the wall-clock
 // time it was created at, or - for agents from when setup asked for one - the
 // hour their owner picked. Falls back to the old "+24h from the last slot"

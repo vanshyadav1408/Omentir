@@ -44,7 +44,7 @@ export const EARLY_FETCH_ROUTES: Record<string, string[]> = {
   "/overview": [DASHBOARD_RESOURCE, ACTIVITY_DAYS_RESOURCE, LINKEDIN_INBOX_RESOURCE],
   "/leads": ["groups,leadPreviews"],
   "/messages": ["conversations,leadPreviews", LINKEDIN_INBOX_RESOURCE],
-  "/agents": ["agents,groups,leadAgentRefs,enrollmentPreviews"],
+  "/agents": ["agents,groups,leadAgentRefs,enrollmentPreviews", "agentStatus"],
   "/settings": ["linkedinAccounts"],
   "/api-keys": ["agentApiKeys"],
 };

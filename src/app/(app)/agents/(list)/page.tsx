@@ -1,6 +1,7 @@
 import { auth } from "@/lib/server/auth";
 import { listAgents } from "@/lib/server/data";
 import { resolveActiveWorkspace } from "@/lib/server/active-workspace";
+import { hasActiveSubscription } from "@/lib/server/subscription";
 import { isAtPlanLimit } from "@/lib/agent-limit";
 import { planLimits, serializablePlanLimit } from "@/lib/plan-limits";
 import CompleteSetupPrompt from "@/app/(app)/complete-setup-prompt";
@@ -37,15 +38,19 @@ export default async function AgentsPage() {
   }
 
   const agentLimit = planLimits(workspace.billing?.plan).agents;
+  const subscriptionActive = hasActiveSubscription(workspace);
 
   return (
     <AgentsView
-      agents={[]}
+      // The client read is refused without a plan, so these are the only agents
+      // an unpaid workspace gets to see, each marked as stopped.
+      agents={subscriptionActive ? [] : agents}
       groups={[]}
       leads={[]}
       enrollments={[]}
       agentLimit={serializablePlanLimit(agentLimit)}
       atAgentLimit={isAtPlanLimit(agents.length, agentLimit)}
+      subscriptionActive={subscriptionActive}
     />
   );
 }
