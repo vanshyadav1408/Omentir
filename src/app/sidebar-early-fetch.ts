@@ -35,12 +35,18 @@ export const LINKEDIN_INBOX_RESOURCE = "linkedinInbox";
  * runs from the root layout, which has no idea which route it is wrapping — the
  * match happens in the browser against location.pathname.
  *
- * Deliberately short: this only pays off for pages whose first paint is blocked
- * on a large sidebar-data read. Everything else is warmed after the fact by
- * app-data-prefetch.
+ * Every app page whose first paint waits on a sidebar-data read is listed, so a
+ * refresh or a typed URL starts its data at once instead of after hydration.
+ * Each string must match that page's useSidebarResource key exactly, or the
+ * hook will not adopt the promise and fires a second request.
  */
 export const EARLY_FETCH_ROUTES: Record<string, string[]> = {
   "/overview": [DASHBOARD_RESOURCE, ACTIVITY_DAYS_RESOURCE, LINKEDIN_INBOX_RESOURCE],
+  "/leads": ["groups,leadPreviews"],
+  "/messages": ["conversations,leadPreviews", LINKEDIN_INBOX_RESOURCE],
+  "/agents": ["agents,groups,leadAgentRefs,enrollmentPreviews"],
+  "/settings": ["linkedinAccounts"],
+  "/api-keys": ["agentApiKeys"],
 };
 
 export function buildEarlyFetchScript(routes: Record<string, string[]> = EARLY_FETCH_ROUTES): string {

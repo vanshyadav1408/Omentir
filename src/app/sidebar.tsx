@@ -188,6 +188,7 @@ export default function Sidebar({
     ) : (
       <Link
         href="/workspace"
+        prefetch
         onClick={onNavigate}
         title={isRowCollapsed ? "Workspace" : undefined}
         aria-current={workspaceActive ? "page" : undefined}
@@ -203,6 +204,7 @@ export default function Sidebar({
       {!localMode && showApi ? (
         <Link
           href="/api-keys"
+          prefetch
           onClick={onClick}
           aria-current={apiActive ? "page" : undefined}
           className={`mb-0.5 last:mb-0 ${navClassName(apiActive)}`}
@@ -213,6 +215,7 @@ export default function Sidebar({
       ) : null}
       <Link
         href="/settings"
+        prefetch
         onClick={onClick}
         aria-current={settingsActive ? "page" : undefined}
         className={`mb-0.5 last:mb-0 ${navClassName(settingsActive)}`}
@@ -274,6 +277,7 @@ export default function Sidebar({
         <div className="flex h-12 shrink-0 items-center px-2">
           <Link
             href="/overview"
+            prefetch
             onClick={() => setMobileOpen(false)}
             className="flex min-w-0 flex-1 items-center gap-2.5 px-2 text-[13px] font-medium text-[var(--md-sys-color-on-surface)]"
           >
@@ -314,6 +318,7 @@ export default function Sidebar({
           {isCollapsed ? null : (
             <Link
               href="/overview"
+              prefetch
               className="flex min-w-0 flex-1 items-center gap-2.5 overflow-hidden px-2 text-[13px] font-medium text-[var(--md-sys-color-on-surface)]"
             >
               <LogoMark className="h-5 w-5 shrink-0" />
@@ -362,6 +367,7 @@ export default function Sidebar({
           {!localMode && showApi ? (
             <Link
               href="/api-keys"
+              prefetch
               title={isCollapsed ? "API" : undefined}
               aria-current={apiActive ? "page" : undefined}
               className={`mb-0.5 last:mb-0 ${desktopNavClassName(apiActive, isCollapsed)}`}
@@ -372,6 +378,7 @@ export default function Sidebar({
           ) : null}
           <Link
             href="/settings"
+            prefetch
             title={isCollapsed ? "Settings" : undefined}
             aria-current={settingsActive ? "page" : undefined}
             className={`mb-0.5 last:mb-0 ${desktopNavClassName(settingsActive, isCollapsed)}`}

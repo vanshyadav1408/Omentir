@@ -63,6 +63,11 @@ const nextConfig: NextConfig = {
     // Message attachments post through a server action; the default 1MB
     // body limit rejects them.
     serverActions: { bodySizeLimit: "20mb" },
+    // App pages are force-dynamic, and Next's default of 0s re-rendered them on
+    // the server (behind loading.tsx) on every sidebar click. Keep a visited or
+    // prefetched page for 5 minutes; server actions that revalidatePath and
+    // router.refresh() still clear it after a change.
+    staleTimes: { dynamic: 300, static: 300 },
     ...(process.env.NEXT_DIST_DIR
       ? {
           // Sidecar compiles share RAM with the live process. Default worker
