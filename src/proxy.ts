@@ -62,6 +62,23 @@ const hostedMiddleware = clerkMiddleware(async (auth, req) => {
   }
 });
 
+// stats.omentir.com serves only the owner analytics page (/stats) and its API.
+// Clerk still runs so the page can check who is signed in.
+const STATS_HOST = "stats.omentir.com";
+const statsHostMiddleware = clerkMiddleware(async (_auth, req) => {
+  const path = req.nextUrl.pathname;
+  if (path === "/api/stats" || path === "/stats") return NextResponse.next();
+  if (path === "/") {
+    const destination = req.nextUrl.clone();
+    destination.pathname = "/stats";
+    return NextResponse.rewrite(destination);
+  }
+  return new NextResponse("Not found\n", {
+    status: 404,
+    headers: { "content-type": "text/plain; charset=utf-8" },
+  });
+});
+
 const RETIRED_PUBLIC_REDIRECTS: Record<string, string> = {
   "/for-agents": "/features/agent-api-and-mcp",
   "/mcp-server": "/integrations/mcp",
@@ -137,6 +154,8 @@ export default function proxy(request: NextRequest, event: NextFetchEvent) {
   event.waitUntil(captureAiPageFetch(request));
 
   const hostname = requestHostname(request);
+
+  if (hostname === STATS_HOST) return statsHostMiddleware(request, event);
 
   if (isSanityStudioHost(hostname)) {
     const path = request.nextUrl.pathname;
