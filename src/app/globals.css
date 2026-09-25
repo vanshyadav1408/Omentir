@@ -813,40 +813,40 @@ h6 {
 }
 
 /* Portaled menus/dialogs sit on document.body; keep the same density. */
-html:has(.app-compact:not(:has(.auth-shell))) {
+html:has(> body.app-compact):not(:has(.auth-shell)) {
   --md-sys-menu-item-height: 36px;
   --md-sys-menu-item-height-compact: 32px;
   --md-sys-menu-item-padding-x: 12px;
 }
-html:has(.app-compact:not(:has(.auth-shell))) .m3-menu-item {
+html:has(> body.app-compact):not(:has(.auth-shell)) .m3-menu-item {
   min-height: 36px;
   font-size: 13px;
   gap: 8px;
 }
-html:has(.app-compact:not(:has(.auth-shell))) .m3-menu--compact .m3-menu-item {
+html:has(> body.app-compact):not(:has(.auth-shell)) .m3-menu--compact .m3-menu-item {
   min-height: 32px;
   font-size: 12px;
 }
-html:has(.app-compact:not(:has(.auth-shell))) .m3-dialog-scrim,
-html:has(.app-compact:not(:has(.auth-shell))) .m3-modal-scrim {
+html:has(> body.app-compact):not(:has(.auth-shell)) .m3-dialog-scrim,
+html:has(> body.app-compact):not(:has(.auth-shell)) .m3-modal-scrim {
   padding: 16px;
 }
-html:has(.app-compact:not(:has(.auth-shell))) .m3-dialog-surface:not(.m3-dialog-surface--wide),
-html:has(.app-compact:not(:has(.auth-shell))) .m3-modal-surface:not(.m3-modal-surface--wide) {
+html:has(> body.app-compact):not(:has(.auth-shell)) .m3-dialog-surface:not(.m3-dialog-surface--wide),
+html:has(> body.app-compact):not(:has(.auth-shell)) .m3-modal-surface:not(.m3-modal-surface--wide) {
   padding: 16px;
 }
-html:has(.app-compact:not(:has(.auth-shell))) .m3-dialog-title {
+html:has(> body.app-compact):not(:has(.auth-shell)) .m3-dialog-title {
   font-size: 1.0625rem;
   line-height: 1.3;
 }
-html:has(.app-compact:not(:has(.auth-shell))) .m3-dialog-body {
+html:has(> body.app-compact):not(:has(.auth-shell)) .m3-dialog-body {
   margin-top: 10px;
   font-size: 0.8125rem;
 }
-html:has(.app-compact:not(:has(.auth-shell))) .m3-dialog-actions {
+html:has(> body.app-compact):not(:has(.auth-shell)) .m3-dialog-actions {
   margin-top: 16px;
 }
-html:has(.app-compact:not(:has(.auth-shell))) .m3-dialog-btn {
+html:has(> body.app-compact):not(:has(.auth-shell)) .m3-dialog-btn {
   min-height: 32px;
   padding-inline: 10px;
   font-size: 0.75rem;
