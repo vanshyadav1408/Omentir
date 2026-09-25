@@ -47,6 +47,10 @@ export default function NavigationFeedback() {
   }, [clearPressedElement]);
 
   const startNavigation = useCallback((element: HTMLElement | null) => {
+    // App pages are prefetched and paint from cache, so a progress bar there
+    // only adds flicker. Keep it for the marketing site.
+    if (document.querySelector(".dashboard-shell")) return;
+
     if (fallbackTimerRef.current !== null) window.clearTimeout(fallbackTimerRef.current);
     if (finishTimerRef.current !== null) window.clearTimeout(finishTimerRef.current);
 
