@@ -7178,8 +7178,9 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
 
 /* Light tiles: the logo files are drawn for the dark olive tile (light marks,
    or dark plates like dibe's), so inverting turns marks dark and plates
-   white, and multiply drops the white. BlockSkunk ships its own light frame,
-   so it keeps its colours, in greyscale. */
+   white, and multiply drops the white. Logos with their own filled tile
+   (data-own-plate) keep their tones in greyscale, and a solid one-colour
+   mark (data-silhouette) turns black. */
 :root[data-site-theme="light"] .customer-logo-img {
   filter: grayscale(1) invert(1) contrast(1.15);
   mix-blend-mode: multiply;
@@ -7190,9 +7191,22 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
   filter: grayscale(1);
 }
 
+:root[data-site-theme="light"] .customer-logo-img[data-silhouette] {
+  filter: brightness(0);
+}
+
+/* Hover shows the real colours. Several files carry white text, so the
+   tile switches to the dark tile to keep them readable. */
+:root[data-site-theme="light"] .customer-logo-item:hover,
+:root[data-site-theme="light"] .customer-logo-item:focus-visible {
+  background: #12160f;
+}
+
 :root[data-site-theme="light"] .customer-logo-item:hover .customer-logo-img,
 :root[data-site-theme="light"] .customer-logo-item:focus-visible .customer-logo-img {
   opacity: 1;
+  filter: none;
+  mix-blend-mode: normal;
 }
 
 /* Feature cards: copy column left, product on the right, no divider. */

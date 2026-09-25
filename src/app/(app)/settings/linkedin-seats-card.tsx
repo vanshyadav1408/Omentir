@@ -1,10 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  extraLinkedInSeatMonthlyTotalUsd,
-  extraLinkedInSeatRateDescription,
-} from "@/lib/linkedin-seat-pricing";
+import { extraLinkedInSeatMonthlyTotalUsd } from "@/lib/linkedin-seat-pricing";
 import { TextField } from "@/app/ui/text-field";
 
 export default function LinkedInSeatsCard({
@@ -24,7 +21,7 @@ export default function LinkedInSeatsCard({
       <div className="text-[14px] font-semibold text-zinc-950">Extra LinkedIn accounts</div>
       <p className="mt-2 text-[13px] font-medium leading-5 text-zinc-700">
         Your plan includes {totalAccounts} LinkedIn account
-        {totalAccounts === 1 ? "" : "s"}. {extraLinkedInSeatRateDescription()}
+        {totalAccounts === 1 ? "" : "s"}.
       </p>
       {subscribed ? (
         <>

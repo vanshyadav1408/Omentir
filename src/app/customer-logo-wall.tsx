@@ -8,6 +8,9 @@ import Image from "next/image";
  * border. Light treatment so mixed assets read on that fill.
  * OutreachPanda and Dibe Agency get slight optical-size tweaks
  * (thin / small / stacked marks).
+ * Light theme: ownPlate icons (their own filled tile) keep their tones in
+ * greyscale instead of being inverted; silhouette marks (one solid colour)
+ * render black.
  */
 const CUSTOMERS = [
   {
@@ -16,6 +19,7 @@ const CUSTOMERS = [
     src: "/customer-logos/outreachpanda.svg",
     width: 40,
     height: 40,
+    ownPlate: true,
     size: "panda" as const,
   },
   {
@@ -39,6 +43,7 @@ const CUSTOMERS = [
     src: "/customer-logos/scalee.svg",
     width: 40,
     height: 40,
+    ownPlate: true,
   },
   {
     name: "MarvelX",
@@ -46,6 +51,7 @@ const CUSTOMERS = [
     src: "/customer-logos/marvelx.png",
     width: 40,
     height: 40,
+    ownPlate: true,
   },
   {
     name: "Codi",
@@ -53,6 +59,7 @@ const CUSTOMERS = [
     src: "/customer-logos/codi.png",
     width: 40,
     height: 40,
+    silhouette: true,
   },
   {
     name: "Nunar",
@@ -97,6 +104,7 @@ function LogoLink({ customer }: { customer: (typeof CUSTOMERS)[number] }) {
         unoptimized
         draggable={false}
         data-own-plate={"ownPlate" in customer ? "" : undefined}
+        data-silhouette={"silhouette" in customer ? "" : undefined}
         className={`customer-logo-img block ${LOGO_SIZE[sizeKey]} w-auto object-contain object-center`}
         style={{ width: "auto", maxWidth: "100%" }}
       />
