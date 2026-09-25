@@ -28,7 +28,7 @@ export default async function SignupPage({
   }
 
   return (
-    <AuthShell footer={<AuthLegalFooter mode="signup" />}>
+    <AuthShell footer={<AuthLegalFooter />}>
       <AuthChoice
         primary="signup"
         initialWebsite={website || ""}

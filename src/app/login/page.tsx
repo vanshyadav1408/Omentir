@@ -24,7 +24,7 @@ export default async function LoginPage({
   if (isLocalMode()) {
     const { next } = await searchParams;
     return (
-      <AuthShell footer={<AuthLegalFooter mode="login" />}>
+      <AuthShell footer={<AuthLegalFooter />}>
         <LocalLoginForm
           returnTo={safeReturnPath(next)}
           passwordRequired={isLocalPasswordRequired()}
@@ -33,7 +33,7 @@ export default async function LoginPage({
     );
   }
   return (
-    <AuthShell footer={<AuthLegalFooter mode="login" />}>
+    <AuthShell footer={<AuthLegalFooter />}>
       <AuthChoice primary="login" />
     </AuthShell>
   );

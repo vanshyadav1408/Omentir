@@ -4,7 +4,15 @@ import { useEffect, useMemo, useRef, type CSSProperties } from "react";
 import type { ActivityDay } from "@/lib/server/types";
 import { zonedDayKey } from "@/lib/time-zone";
 
-const LEVELS = ["#1c1c1c", "#0e4429", "#006d32", "#26a641", "#39d353"] as const;
+// Per-theme ramps live in globals.css (.heatmap-cell): light runs white to
+// dark green, dark runs charcoal to bright green.
+const LEVELS = [
+  "var(--heatmap-level-0)",
+  "var(--heatmap-level-1)",
+  "var(--heatmap-level-2)",
+  "var(--heatmap-level-3)",
+  "var(--heatmap-level-4)",
+] as const;
 const MONTH_LETTERS = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"];
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTH_NAMES = [

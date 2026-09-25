@@ -47,7 +47,7 @@ export default function AuthShell({
   );
 }
 
-export function AuthLegalFooter({ mode }: { mode: "login" | "signup" }) {
+export function AuthLegalFooter() {
   const terms = (
     <Link href="/terms-of-service" className="auth-link">
       Terms of Service
@@ -58,14 +58,6 @@ export function AuthLegalFooter({ mode }: { mode: "login" | "signup" }) {
       Privacy Policy
     </Link>
   );
-
-  if (mode === "signup") {
-    return (
-      <p>
-        By creating an account, you agree to the {terms} and {privacy}.
-      </p>
-    );
-  }
 
   return (
     <p>

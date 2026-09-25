@@ -78,10 +78,10 @@ function PricingCard({
   // Legacy lifetime members remain covered by the Pro feature set, so the
   // card must never offer them a redundant monthly subscription.
   const isCoveredByLegacyPlan = currentPlan === "lifetime" && planKey === "solo";
-  // Marketing /pricing uses Cursor-style pills; the in-app upgrade screens
+  // Marketing /pricing uses Cursor's 44px pills; the in-app upgrade screens
   // keep the full-width Material buttons.
   const ctaClass = site
-    ? `site-btn site-btn-sm ${plan.featured ? "site-btn-primary" : "site-btn-secondary"}`
+    ? `site-btn ${plan.featured ? "site-btn-primary" : "site-btn-secondary"}`
     : `m3-btn h-11 w-full cursor-pointer text-sm ${
         plan.featured ? "m3-btn-filled" : "m3-btn-outlined"
       }`;
@@ -117,7 +117,13 @@ function PricingCard({
       )}
 
       {plan.includes ? (
-        <p className="mb-4 mt-8 text-sm font-medium text-[var(--md-sys-color-on-surface)]">
+        <p
+          className={`mb-4 mt-8 text-sm ${
+            site
+              ? "text-[var(--md-sys-color-on-surface-variant)]"
+              : "font-medium text-[var(--md-sys-color-on-surface)]"
+          }`}
+        >
           {plan.includes}
         </p>
       ) : (
@@ -128,7 +134,9 @@ function PricingCard({
         {plan.features.map((feature) => (
           <li
             key={feature}
-            className="flex items-start gap-3 text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)]"
+            className={`flex items-start gap-3 text-sm leading-6 ${
+              site ? "text-[var(--md-sys-color-on-surface)]" : "text-[var(--md-sys-color-on-surface-variant)]"
+            }`}
           >
             <CheckIcon />
             <span>{feature}</span>
@@ -141,7 +149,7 @@ function PricingCard({
           <span
             className={
               site
-                ? "site-btn site-btn-sm site-btn-outline cursor-default"
+                ? "site-btn site-btn-outline cursor-default"
                 : "m3-btn m3-btn-outlined h-11 w-full cursor-default border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface-container-high)] text-sm text-[var(--md-sys-color-on-surface-variant)]"
             }
           >

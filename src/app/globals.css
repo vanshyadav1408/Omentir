@@ -4911,6 +4911,13 @@ select.auth-input {
   color: var(--site-text);
 }
 
+/* Small helper actions under the form (Forgot password?, Back). The
+   `font: inherit` above beats the text-xs utilities on them. */
+button.auth-link {
+  font-size: 12px;
+  line-height: 16px;
+}
+
 .auth-error {
   font-size: 13px;
   color: var(--google-error);
@@ -6719,9 +6726,25 @@ html:has(.dashboard-shell) .m3-dialog-btn {
 }
 
 .heatmap-cell {
+  --heatmap-level-0: #1c1c1c;
+  --heatmap-level-1: #0e4429;
+  --heatmap-level-2: #006d32;
+  --heatmap-level-3: #26a641;
+  --heatmap-level-4: #39d353;
   width: 11px;
   height: 11px;
   border-radius: 2px;
+}
+
+/* Light: no activity is white (with a hairline so it reads on a white card),
+   the busiest days are the darkest green. */
+:root[data-site-theme="light"] .heatmap-cell {
+  --heatmap-level-0: #ffffff;
+  --heatmap-level-1: #9be9a8;
+  --heatmap-level-2: #40c463;
+  --heatmap-level-3: #30a14e;
+  --heatmap-level-4: #216e39;
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--site-text) 8%, transparent);
 }
 
 .heatmap-weeks .heatmap-cell {
@@ -6867,16 +6890,19 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
    palette. <html> keeps the `dark` class in both, so the `html.dark` rules
    below stay active and must read tokens rather than hardcoded white. */
 :root {
-  --site-bg: #0d110b;
-  --site-card: #12160f;
-  --site-card-2: #171c13;
-  --site-card-3: #1d2318;
-  --site-card-4: #232a1d;
-  --site-text: #eceee8;
-  --site-border: #262c22;
+  /* cursor.com's values (bg #14120b, cards #1b1913 / #201e18 / #26241e /
+     #2b2923, ink #edecec, 60% / 40% secondary ink, 10% hairlines) with the
+     red and green channels swapped, so the same tones read green, not brown. */
+  --site-bg: #12140b;
+  --site-card: #191b13;
+  --site-card-2: #1e2018;
+  --site-card-3: #24261e;
+  --site-card-4: #292b23;
+  --site-text: #ecedec;
+  --site-border: color-mix(in oklab, var(--site-text) 10%, transparent);
   --site-accent: #c2d0aa;
-  --site-text-2: color-mix(in oklab, var(--site-text) 62%, transparent);
-  --site-text-3: color-mix(in oklab, var(--site-text) 42%, transparent);
+  --site-text-2: color-mix(in oklab, var(--site-text) 60%, transparent);
+  --site-text-3: color-mix(in oklab, var(--site-text) 40%, transparent);
 
   /* Muted ink steps for the legacy zinc text rules (same alphas as before on
      dark; the light theme raises them so grey text stays dark). */
@@ -6925,18 +6951,18 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
 
 :root[data-site-theme="light"] {
   color-scheme: light;
-  --site-bg: #f6f7f2;
-  --site-card: #eff1ea;
-  --site-card-2: #e9ece3;
-  --site-card-3: #e3e7dc;
-  --site-card-4: #dde2d5;
-  --site-text: #000000;
-  /* Neutral black borders and ink in light: no green in text or rules. */
-  --site-border: rgba(0, 0, 0, 0.22);
-  --site-accent: #000000;
-  /* Secondary text stays dark in light: 80% / 62% black, not 62% / 42%. */
-  --site-text-2: color-mix(in oklab, var(--site-text) 80%, transparent);
-  --site-text-3: color-mix(in oklab, var(--site-text) 62%, transparent);
+  /* cursor.com light (bg #f7f7f4, cards #f2f1ed / #ebeae5 / #e6e5e0 /
+     #e1e0db, ink #26251e) with the same channel swap; ink stays neutral. */
+  --site-bg: #f7f7f4;
+  --site-card: #f1f2ed;
+  --site-card-2: #eaebe5;
+  --site-card-3: #e5e6e0;
+  --site-card-4: #e0e1db;
+  --site-text: #252525;
+  --site-border: color-mix(in oklab, var(--site-text) 10%, transparent);
+  --site-accent: #252525;
+  --site-text-2: color-mix(in oklab, var(--site-text) 60%, transparent);
+  --site-text-3: color-mix(in oklab, var(--site-text) 40%, transparent);
   --ink-soft: color-mix(in oklab, var(--site-text) 85%, transparent);
   --ink-faint: color-mix(in oklab, var(--site-text) 68%, transparent);
 
@@ -7047,7 +7073,7 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
   padding: 0 1.375rem;
   border: 1px solid transparent;
   border-radius: 9999px;
-  font-size: 1rem;
+  font-size: 0.9375rem;
   font-weight: 400;
   line-height: 1;
   white-space: nowrap;
@@ -7057,8 +7083,8 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
 }
 
 .site-btn-sm {
-  height: 1.875rem;
-  padding: 0 0.75rem;
+  height: 1.6875rem;
+  padding: 0 0.65625rem;
   font-size: 0.875rem;
 }
 
@@ -7074,7 +7100,7 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
 
 .site-btn-secondary {
   background-color: var(--site-card-3);
-  border-color: color-mix(in oklab, var(--site-text) 4%, transparent);
+  border-color: color-mix(in oklab, var(--site-text) 2.5%, transparent);
   color: var(--site-text);
 }
 
@@ -7084,7 +7110,7 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
 
 .site-btn-outline {
   background-color: transparent;
-  border-color: var(--site-border);
+  border-color: color-mix(in oklab, var(--site-text) 20%, transparent);
   color: var(--site-text);
 }
 
@@ -7140,7 +7166,8 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
 
 /* Logo wall: small centered caption over card-tone tiles. */
 .site-theme .customer-logo-item {
-  border-color: var(--site-border);
+  border-color: transparent;
+  border-radius: 4px;
   background: var(--site-card);
 }
 
@@ -7170,7 +7197,8 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
 
 /* Feature cards: copy column left, product on the right, no divider. */
 .site-theme .home-green-panel {
-  border-color: var(--site-border);
+  border-color: transparent;
+  border-radius: 4px;
   background: var(--site-card);
 }
 
@@ -7244,10 +7272,16 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
 }
 
 /* Footer: page canvas, quiet column headings, legal row at the bottom. */
+/* A shade lighter than the page: the card tone on dark, near-white on light
+   (the light card tone is darker than the canvas). */
 .site-footer {
   border-top: 1px solid var(--md-sys-color-outline-variant);
-  background-color: var(--md-sys-color-surface);
+  background-color: var(--site-card);
   color: var(--md-sys-color-on-surface);
+}
+
+:root[data-site-theme="light"] .site-footer {
+  background-color: #fcfcfb;
 }
 
 .site-footer-heading {
@@ -7309,8 +7343,7 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
   flex-direction: column;
   height: 100%;
   padding: 1.25rem;
-  border: 1px solid var(--site-border);
-  border-radius: 16px;
+  border-radius: 4px;
   background: var(--site-card);
   color: var(--site-text);
 }
@@ -7337,22 +7370,10 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
   text-underline-offset: 3px;
 }
 
-/* Blog index, cursor.com/blog layout: featured cards, then a post table. */
-.blog-card {
-  border: 1px solid var(--site-border);
-  border-radius: 16px;
-  background: var(--site-card);
-  transition: background-color 150ms ease;
-}
-
-.blog-card:hover {
-  background: var(--site-card-2);
-}
-
+/* Blog index: one post table, newest first. */
 .blog-table {
   overflow: hidden;
-  border: 1px solid var(--site-border);
-  border-radius: 16px;
+  border-radius: 4px;
   background: var(--site-card);
 }
 
@@ -7391,8 +7412,7 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
 
 /* Landing stat cards under the hero demo. */
 .home-stat {
-  /* Slightly sharper than the 16px feature panels. */
-  border-radius: 6px;
+  border-radius: 4px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -7423,8 +7443,7 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
 /* Blog post: Cursor-style contents card and calmer body rhythm. */
 .blog-toc {
   padding: 0.75rem 1rem;
-  border: 1px solid var(--site-border);
-  border-radius: 16px;
+  border-radius: 4px;
   background: var(--site-card);
   font-size: 0.875rem;
 }
@@ -7486,4 +7505,164 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
 :root textarea,
 :root .m3-text-field__shell:has(textarea) {
   border-radius: 16px !important;
+}
+
+/* ── App: cursor.com/dashboard ──────────────────────────────────────────────
+   Measured from cursor.com/dashboard (2026-09-25). Dark: canvas #141414,
+   sidebar and cards #181818, ink #f0f0f0. Light: canvas #f5f5f5, sidebar
+   #f3f3f3, cards #fcfcfc, ink #141414. Secondary ink 74% / 60%, hairlines 8%
+   (inputs 12%), 28px controls with 6px corners, 12px cards. Cursor's greys
+   are neutral; ours keep a slight olive tint instead of brown.
+   :root:has() rather than .dashboard-shell so portalled menus, dialogs and
+   toasts match the app. The marketing site keeps the palette above. */
+:root:has(.dashboard-shell) {
+  --site-bg: #131510;
+  --site-card: #181a15;
+  --site-card-2: #1e211b;
+  --site-card-3: #252821;
+  --site-card-4: #2c2f28;
+  --site-text: #eff1eb;
+  --site-border: color-mix(in oklab, var(--site-text) 8%, transparent);
+  --site-text-2: color-mix(in oklab, var(--site-text) 74%, transparent);
+  --site-text-3: color-mix(in oklab, var(--site-text) 60%, transparent);
+  --app-field-border: color-mix(in oklab, var(--site-text) 12%, transparent);
+  --app-field-border-focus: color-mix(in oklab, var(--site-text) 28%, transparent);
+  --md-sys-color-field-outline: var(--app-field-border);
+  --md-sys-color-field-outline-hover: color-mix(in oklab, var(--site-text) 20%, transparent);
+}
+
+:root[data-site-theme="light"]:has(.dashboard-shell) {
+  --site-bg: #f4f5f2;
+  --site-card: #fbfcfa;
+  --site-card-2: #eef0eb;
+  --site-card-3: #e7e9e3;
+  --site-card-4: #dfe2da;
+  --site-text: #141414;
+  --site-sidebar: #f2f3ef;
+  --color-zinc-300: var(--app-field-border);
+  --ink-soft: color-mix(in oklab, var(--site-text) 74%, transparent);
+  --ink-faint: color-mix(in oklab, var(--site-text) 60%, transparent);
+}
+
+/* Cards sit one step above the canvas, like Cursor's elevated tiles. */
+:root .dashboard-shell {
+  --google-surface: var(--site-card);
+  --google-surface-high: var(--site-card-2);
+  --google-surface-highest: var(--site-card-3);
+  --md-sys-color-surface-container: var(--google-surface);
+  --md-sys-color-surface-container-high: var(--google-surface-high);
+  --md-sys-color-surface-container-highest: var(--google-surface-highest);
+  --md-sys-nav-item-active: color-mix(in oklab, var(--site-text) 6%, transparent);
+  --md-sys-color-field-fill: transparent;
+  --md-sys-shape-corner-large: 12px;
+  --md-sys-shape-corner-extra-large: 12px;
+}
+
+/* Sidebar: elevated tone with a hairline edge. The global `html.dark aside`
+   rule paints asides from --google-surface, so the tone goes through it. */
+:root .dashboard-shell > aside {
+  --google-surface: var(--site-sidebar, var(--site-card));
+  background-color: var(--google-surface);
+  border-right: 1px solid var(--site-border);
+}
+
+/* Controls are 6px rectangles in the app, not the site's pills. Same
+   selector list as the pill rule, one :has() stronger. */
+:root:has(.dashboard-shell) {
+  --md-sys-text-field-radius: 6px;
+}
+
+:root:has(.dashboard-shell) :is(.dashboard-shell, .m3-text-field--compact) {
+  --md-sys-text-field-radius: 6px;
+}
+
+:root:has(.dashboard-shell) .m3-btn,
+:root:has(.dashboard-shell) .m3-btn-pair > .m3-btn,
+:root:has(.dashboard-shell) input:is([type="submit"], [type="button"]),
+:root:has(.dashboard-shell) :is(button, a):is([class~="h-6"], [class~="h-7"], [class~="h-8"], [class~="h-9"], [class~="h-10"], [class~="h-11"], [class~="h-12"]),
+:root:has(.dashboard-shell) button:is([class~="py-0.5"], [class~="py-1"], [class~="py-1.5"], [class~="py-2"], [class~="py-2.5"]):is([class*="bg-"], [class~="border"]),
+:root:has(.dashboard-shell) :is(button, a):is([class~="bg-[#ba3871]"], [class~="bg-[#e85e6b]"], [class~="bg-zinc-900"], [class~="bg-[#0a66c2]"], [class~="bg-black"]),
+:root:has(.dashboard-shell) :is(button, a)[class~="border"]:is([class~="bg-white"], [class~="bg-transparent"])[class*="px-"],
+:root:has(.dashboard-shell) input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="hidden"]):not([type="color"]),
+:root:has(.dashboard-shell) select,
+:root:has(.dashboard-shell) .m3-text-field__shell,
+:root:has(.dashboard-shell) textarea,
+:root:has(.dashboard-shell) .m3-text-field__shell:has(textarea) {
+  border-radius: 6px !important;
+}
+
+/* Rounded-full chips, avatars and toggles stay round. */
+:root:root:has(.dashboard-shell) :is(button, a, input)[class*="rounded-full"] {
+  border-radius: 9999px !important;
+}
+
+/* Buttons: 13px regular, like Cursor's 28px controls. */
+body.app-compact:has(.dashboard-shell) .m3-btn:not(.m3-btn--hero):not(.m3-btn-field):not(.m3-btn-pair *),
+:root .dashboard-shell .m3-btn:not(.m3-btn-field),
+:root:has(.dashboard-shell) .m3-dialog-btn {
+  padding-inline: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 400;
+}
+
+/* Secondary buttons: a 1px ink hairline, no fill. The inset ring on hover
+   from the older app rule is replaced by a faint fill. */
+:root:has(.dashboard-shell) :is(.m3-btn-outlined, .m3-btn-pair > .m3-btn-outlined) {
+  border-color: var(--app-field-border) !important;
+}
+
+:root .dashboard-shell main :is(button, a).m3-btn-outlined:hover:not(:disabled),
+:root .dashboard-shell main :is(button, a)[class~="border"][class~="bg-white"]:hover:not(:disabled),
+:root .dashboard-shell main :is(button, a)[class~="border"][class~="bg-transparent"]:hover:not(:disabled) {
+  box-shadow: none;
+  background-color: color-mix(in oklab, var(--site-text) 6%, transparent) !important;
+}
+
+/* Fields: transparent, 1px hairline at 12% ink, 32px with the border,
+   13px text. */
+body.app-compact:has(.dashboard-shell) .m3-text-field:not(.m3-text-field--dense):not(.m3-text-field--compact):not(.m3-text-field--hero) {
+  --md-sys-text-field-height: 30px;
+}
+
+body.app-compact:has(.dashboard-shell) .m3-text-field:not(.m3-text-field--dense):not(.m3-text-field--compact):not(.m3-text-field--hero):not(.m3-text-field--textarea) .m3-text-field__input {
+  height: 30px;
+  padding: 0 10px;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+body.app-compact:has(.dashboard-shell) .m3-text-field--textarea .m3-text-field__input {
+  padding: 8px 10px;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+:root:has(.dashboard-shell) .m3-text-field--outlined[data-focused="true"] .m3-text-field__shell {
+  border-color: var(--app-field-border-focus);
+}
+
+:root:has(.dashboard-shell) .m3-text-field__input::placeholder {
+  color: var(--site-text-3);
+}
+
+/* Segmented switches (Settings > Appearance): Cursor's All / Tab / Agent
+   control, 6px frame with 4px plates. */
+:root:has(.dashboard-shell) .site-theme-toggle {
+  border-radius: 6px;
+  padding: 2px;
+}
+
+:root:has(.dashboard-shell) .site-theme-toggle button {
+  height: 1.5rem;
+  padding: 0 0.5rem;
+  border-radius: 4px;
+}
+
+:root:has(.dashboard-shell) .site-theme-toggle button[aria-pressed="true"] {
+  background-color: color-mix(in oklab, var(--site-text) 8%, transparent);
+}
+
+/* Cursor's fields have no fill; the global `html.dark input` rule paints one. */
+html.dark:has(.dashboard-shell) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="hidden"]), textarea, select) {
+  background-color: transparent !important;
 }

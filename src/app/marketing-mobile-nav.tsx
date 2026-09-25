@@ -62,7 +62,7 @@ function MobileMenuSheet({
       aria-modal="true"
       aria-label="Menu"
     >
-      <div className="relative z-[210] flex h-16 shrink-0 items-center justify-end px-4">
+      <div className="relative z-[210] flex h-[52px] shrink-0 items-center justify-end px-4">
         <button type="button" aria-label="Close menu" onClick={onClose} className={CLOSE_BUTTON_CLASS}>
           <svg
             viewBox="0 0 24 24"

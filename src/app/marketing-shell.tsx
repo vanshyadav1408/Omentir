@@ -14,13 +14,13 @@ export function MarketingHeader({ transparentAtTop = false }: { transparentAtTop
     <MarketingHeaderFrame transparentAtTop={transparentAtTop}>
       {/* Width + gutters from .omentir-primary-width.
           Desktop: logo | nav centered in full header | actions */}
-      <header className="omentir-primary-width relative flex h-16 min-w-0 items-center gap-2 md:gap-4">
+      <header className="omentir-primary-width relative flex h-[52px] min-w-0 items-center gap-2 md:gap-4">
         <div className="flex min-w-0 shrink-0 items-center gap-2 md:gap-3">
           <Link
             href="/"
-            className="flex min-w-0 shrink-0 select-none items-center gap-1.5 text-[20px] font-medium leading-none tracking-tight text-[var(--md-sys-color-on-surface)] md:gap-2 md:text-[24px]"
+            className="flex min-w-0 shrink-0 select-none items-center gap-1.5 text-[18px] font-medium leading-none tracking-tight text-[var(--md-sys-color-on-surface)] md:gap-2 md:text-[20px]"
           >
-            <LogoMark className="h-6 w-6 md:h-7 md:w-7" />
+            <LogoMark className="h-5 w-5 md:h-6 md:w-6" />
             <span className="truncate">Omentir</span>
           </Link>
           {/* Remote GitHub data is cosmetic. Render the link immediately so a
@@ -216,25 +216,9 @@ function ConnectColumn() {
             <a
               href={item.href}
               {...(item.href.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-              className="site-footer-link inline-flex items-center gap-1"
+              className="site-footer-link"
             >
               {item.label}
-              {item.href.startsWith("http") ? (
-                <svg
-                  viewBox="0 0 12 12"
-                  aria-hidden="true"
-                  className="h-2.5 w-2.5 shrink-0 text-[var(--md-sys-color-on-surface-variant)]"
-                >
-                  <path
-                    d="M3.5 8.5 8.5 3.5M4.25 3.5H8.5v4.25"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              ) : null}
             </a>
           </li>
         ))}

@@ -405,6 +405,18 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
         />
       );
     }
+    if (!outreach && !outreachErrors[openLead.id]) {
+      return (
+        <div className="relative grid h-full place-items-center" role="status" aria-label="Loading outreach">
+          {onClose ? (
+            <div className="absolute right-3 top-3">
+              <CloseButton onClose={onClose} label="Close outreach preview" />
+            </div>
+          ) : null}
+          <span className="h-5 w-5 animate-spin rounded-full border-2 border-[var(--md-sys-color-outline-variant)] border-t-[var(--md-sys-color-on-surface)]" />
+        </div>
+      );
+    }
     return (
       <aside className="flex h-full min-h-0 flex-col overflow-hidden">
         <div className="min-h-0 flex-1 overflow-y-auto p-5">
@@ -418,7 +430,7 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
               ? summary.detail
               : outreach
                 ? outreachEmptyCopy(openLead.outreachStatus)
-                : outreachErrors[openLead.id] || "Loading outreach…"}
+                : outreachErrors[openLead.id]}
           </p>
           <div className="mt-5">
             <LeadSignal lead={openLead} groupName={group?.name} />
