@@ -8,7 +8,7 @@ export default function ToolProTips({ tips }: { tips: readonly string[] }) {
       aria-labelledby="pro-tips-heading"
       className="omentir-primary-width relative z-10 min-w-0 pt-12 md:pt-16"
     >
-      <div className="rounded-2xl border border-[#2a3324] bg-[#12160f] px-6 py-8 md:px-10 md:py-10">
+      <div className="rounded-2xl border border-[var(--site-border)] bg-[var(--site-card)] px-6 py-8 md:px-10 md:py-10">
         <h2
           id="pro-tips-heading"
           className="flex items-center justify-center gap-2 text-center text-xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] md:text-2xl"
@@ -38,7 +38,7 @@ export default function ToolProTips({ tips }: { tips: readonly string[] }) {
                   className="flex items-start gap-3 text-sm leading-6 text-[var(--md-sys-color-on-surface)]"
                 >
                   <span
-                    className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[#c2d0aa]"
+                    className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[var(--site-accent)]"
                     aria-hidden="true"
                   />
                   <span>{tip}</span>

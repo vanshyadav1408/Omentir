@@ -1,11 +1,5 @@
 import JsonLd from "../json-ld";
-import {
-  ArticleCrumbs,
-  articlePathCrumbs,
-  HeroGridBackdrop,
-  MarketingHeader,
-  MarketingFooter,
-} from "../marketing-shell";
+import { MarketingFooter, MarketingHeader } from "../marketing-shell";
 import BlogsList from "./blogs-list";
 import { getLiveBlogs } from "@/lib/cms";
 import { createBlogCollectionJsonLd, createPageMetadata } from "../seo";
@@ -34,25 +28,13 @@ export default async function BlogsIndexPage() {
   return (
     <>
       <JsonLd id="blogs-jsonld" data={jsonLd} />
-      <main className="min-h-screen overflow-x-hidden bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)]">
-        <MarketingHeader transparentAtTop />
-        <div className="relative">
-          <HeroGridBackdrop height="h-[60vh]" />
-          <div className="omentir-secondary-width relative z-10 min-w-0 pb-16 pt-28 md:pb-24 md:pt-32">
-            <ArticleCrumbs crumbs={articlePathCrumbs("blogs")} />
-
-            <h1
-              style={{ fontFamily: "var(--font-varta)" }}
-              className="text-2xl font-semibold leading-snug tracking-tight text-[var(--md-sys-color-on-surface)] md:text-3xl"
-            >
-              {title}
-            </h1>
-            <p className="mt-12 max-w-2xl text-base font-medium leading-8 text-[var(--md-sys-color-on-surface)] md:mt-16">
-              {description}
-            </p>
-
-            <BlogsList blogs={blogs} />
-          </div>
+      <main className="site-theme min-h-screen overflow-x-hidden">
+        <MarketingHeader />
+        <div className="omentir-primary-width min-w-0 pb-20 pt-24 md:pb-28 md:pt-28">
+          {/* cursor.com/blog opens straight on the posts; the heading stays for
+              screen readers and search engines. */}
+          <h1 className="sr-only">{title}</h1>
+          <BlogsList blogs={blogs} />
         </div>
         <MarketingFooter />
       </main>

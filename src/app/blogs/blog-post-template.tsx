@@ -3,16 +3,18 @@ import Image from "next/image";
 import Link from "next/link";
 import FaqAccordion from "../faq-accordion";
 import JsonLd from "../json-ld";
-import {
-  ArticleCrumbs,
-  articlePathCrumbs,
-  HeroGridBackdrop,
-  MarketingHeader,
-  MarketingFooter,
-} from "../marketing-shell";
+import { MarketingFooter, MarketingHeader } from "../marketing-shell";
 import { createBlogJsonLd, createBreadcrumbJsonLd, createFAQJsonLd, normalizeDate, siteUrl, absoluteAssetUrl } from "../seo";
 import { MarkdownTwinLink } from "../seo-content/shared";
 import { isSanityCdnUrl } from "@/sanity/lib/image";
+
+/** Every post is written by the founder unless a post says otherwise. */
+export const DEFAULT_BLOG_AUTHOR = { name: "Vansh Yadav", avatarUrl: "/founder.jpg" };
+
+/** "September 20, 2026" → "Sep 20, 2026", the way cursor.com/blog prints dates. */
+export function shortBlogDate(date: string) {
+  return date.replace(/^([A-Za-z]{3})[A-Za-z]*(\s)/, "$1$2");
+}
 
 export interface TocItem {
   id: string;
@@ -57,7 +59,7 @@ export default function BlogPostTemplate({
   title,
   description,
   slug,
-  author = { name: "Vansh Yadav", avatarUrl: "/founder.jpg" },
+  author = DEFAULT_BLOG_AUTHOR,
   bannerSrc,
   bannerAlt = "Blog post banner image",
   bannerAspectRatio,
@@ -104,49 +106,44 @@ export default function BlogPostTemplate({
   return (
     <>
       <JsonLd id={`blog-jsonld-${slug}`} data={jsonLd} />
-      <main className="blog-post-page min-h-screen overflow-x-hidden bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)]">
-        <MarketingHeader transparentAtTop />
-        <div className="relative">
-          <HeroGridBackdrop height="h-[60vh]" />
-          <article className="omentir-secondary-width relative z-10 min-w-0 pb-16 pt-28 md:pb-24 md:pt-32">
-            <ArticleCrumbs crumbs={articlePathCrumbs("blogs", slug)} />
+      <main className="blog-post-page site-theme min-h-screen overflow-x-hidden">
+        <MarketingHeader />
+        {/* cursor.com blog post layout: crumb on the left, one reading column. */}
+        <div className="omentir-primary-width grid min-w-0 gap-6 pb-20 pt-28 md:grid-cols-[12rem_minmax(0,42rem)] md:gap-16 md:pb-28 md:pt-32 lg:grid-cols-[14rem_minmax(0,42rem)] lg:gap-24">
+          <nav aria-label="Breadcrumb" className="text-sm text-[var(--site-text-2)] md:sticky md:top-28 md:self-start">
+            <Link href="/blogs" className="transition-colors hover:text-[var(--site-text)]">
+              Blog
+            </Link>{" "}
+            / {category}
+          </nav>
 
-            <h1
-              style={{ fontFamily: "var(--font-varta)" }}
-              className="max-w-2xl text-2xl font-semibold leading-snug tracking-tight text-[var(--md-sys-color-on-surface)] md:text-3xl md:leading-snug"
-            >
+          <article className="min-w-0">
+            <p className="text-sm text-[var(--site-text-2)]">
+              <time dateTime={normalizeDate(publishedDate)}>{shortBlogDate(publishedDate)}</time>
+              {updatedDate !== publishedDate ? (
+                <>
+                  {" "}
+                  &middot; Updated <time dateTime={normalizeDate(updatedDate)}>{shortBlogDate(updatedDate)}</time>
+                </>
+              ) : null}
+            </p>
+            <h1 className="mt-1 text-[1.75rem] leading-tight tracking-[-0.0125em] text-[var(--site-text)] md:text-[2rem]">
               {canonicalTitle}
             </h1>
-
-            <div className="mt-6 flex items-center gap-3">
-              <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-low)]">
-                <Image
-                  src={author.avatarUrl}
-                  alt={author.name}
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <div>
-                <div className="text-sm font-semibold text-[var(--md-sys-color-on-surface)]">
-                  {author.name}
-                </div>
-                <div className="text-xs text-[var(--md-sys-color-on-surface-variant)]">
-                  Published <time dateTime={normalizeDate(publishedDate)}>{publishedDate}</time>
-                  {updatedDate !== publishedDate ? (
-                    <>
-                      {" "}
-                      <span aria-hidden="true">&bull;</span> Updated{" "}
-                      <time dateTime={normalizeDate(updatedDate)}>{updatedDate}</time>
-                    </>
-                  ) : null}
-                </div>
-              </div>
-            </div>
+            <p className="mt-3 flex items-center gap-2 text-sm text-[var(--site-text-2)]">
+              <Image
+                src={author.avatarUrl}
+                alt=""
+                width={20}
+                height={20}
+                className="h-5 w-5 rounded-full object-cover"
+              />
+              {author.name}
+            </p>
 
             {canonicalBannerSrc ? (
               <div
-                className={`relative z-0 mt-8 w-full overflow-hidden rounded-xl bg-[var(--md-sys-color-surface-container-low)] ${
+                className={`relative z-0 mt-8 w-full overflow-hidden rounded-[16px] border border-[var(--site-border)] bg-[var(--site-card)] ${
                   bannerAspectRatio === "3/2" ? "aspect-[3/2]" : "aspect-[2/1]"
                 }`}
               >
@@ -156,48 +153,51 @@ export default function BlogPostTemplate({
                   fill
                   className="object-cover"
                   priority
-                  sizes="(max-width: 768px) 100vw, 768px"
+                  sizes="(max-width: 768px) 100vw, 672px"
                   unoptimized={isSanityCdnUrl(canonicalBannerSrc)}
                 />
               </div>
             ) : null}
 
+            {tocItems.length > 0 ? (
+              <details open className="blog-toc mt-8">
+                <summary>Table of Contents</summary>
+                <ol>
+                  {tocItems.map((item) => (
+                    <li key={item.id} className={item.level === 2 ? "pl-4" : undefined}>
+                      <a href={`#${item.id}`}>{item.label}</a>
+                    </li>
+                  ))}
+                </ol>
+              </details>
+            ) : null}
+
             <div
-              className="blog-article prose prose-zinc mt-12 max-w-none space-y-6 text-left text-base font-medium leading-8 text-[var(--md-sys-color-on-surface)] md:mt-16"
+              className="blog-article prose prose-zinc mt-10 max-w-none space-y-6 text-left text-base leading-7 text-[var(--site-text)]"
               data-blog-link-tone="olive"
             >
               {children}
             </div>
 
             {faqItems.length > 0 && !hasVisibleFaqs ? (
-              <section id={faqSectionId} className="mt-16 md:mt-20">
-                <h2
-                  style={{ fontFamily: "var(--font-varta)" }}
-                  className="text-[1.75rem] font-semibold leading-tight tracking-tight text-[var(--md-sys-color-on-surface)] md:text-3xl"
-                >
-                  Frequently asked <span className="text-gradient-brand">questions</span>
+              <section id={faqSectionId} className="mt-16">
+                <h2 className="text-[1.375rem] leading-tight text-[var(--site-text)]">
+                  Frequently asked questions
                 </h2>
-                <div className="mt-6 md:mt-8">
+                <div className="mt-6">
                   <FaqAccordion items={renderedFaqItems} />
                 </div>
               </section>
             ) : null}
 
             {relatedBlogs.length > 0 ? (
-              <section id="related" className="mt-16 md:mt-20">
-                <h2
-                  style={{ fontFamily: "var(--font-varta)" }}
-                  className="border-b border-[var(--md-sys-color-outline-variant)] pb-2 text-xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)]"
-                >
-                  Related articles
-                </h2>
-                <ul className="divide-y divide-[var(--md-sys-color-outline-variant)] border-b border-[var(--md-sys-color-outline-variant)]">
+              <section id="related" className="mt-16">
+                <h2 className="text-sm text-[var(--site-text-2)]">Related articles</h2>
+                <ul className="blog-table mt-4">
                   {relatedBlogs.map((blog) => (
                     <li key={blog.slug}>
-                      <Link href={`/blogs/${blog.slug}`} className="group block py-4">
-                        <span className="font-semibold text-[var(--md-sys-color-on-surface)] transition-colors group-hover:text-[var(--md-sys-color-primary)]">
-                          {blog.title}
-                        </span>
+                      <Link href={`/blogs/${blog.slug}`} className="block px-4 py-3 text-sm text-[var(--site-text)] transition-colors hover:bg-[var(--site-card-2)]">
+                        {blog.title}
                       </Link>
                     </li>
                   ))}
@@ -207,18 +207,15 @@ export default function BlogPostTemplate({
 
             <MarkdownTwinLink path={`/blogs/${slug}`} title={canonicalTitle} />
 
-            <div className="mt-16 rounded-3xl border-2 border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface-container)] px-6 py-8 text-center md:mt-20 md:px-10 md:py-10">
-              <p className="text-lg font-semibold tracking-tight text-[var(--md-sys-color-on-surface)]">
+            <div className="mt-16 rounded-[16px] border border-[var(--site-border)] bg-[var(--site-card)] px-6 py-8 md:px-8">
+              <p className="text-lg text-[var(--site-text)]">
                 Run the outreach from your own LinkedIn account
               </p>
-              <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)]">
+              <p className="mt-2 max-w-lg text-sm leading-6 text-[var(--site-text-2)]">
                 Omentir finds ICP-fit buyers, drafts connection notes and messages, and keeps
                 replies in one inbox. You still choose the daily send limits.
               </p>
-              <Link
-                href="/signup"
-                className="m3-btn m3-btn-filled-secondary mt-6 inline-flex h-11 cursor-pointer px-6 text-sm"
-              >
+              <Link href="/signup" className="site-btn site-btn-sm site-btn-primary mt-6">
                 Try Omentir
               </Link>
             </div>

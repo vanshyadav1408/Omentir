@@ -15,7 +15,6 @@ import JsonLd from "../json-ld";
 import {
   ArticleCrumbs,
   articlePathCrumbs,
-  HeroGridBackdrop,
   MarketingFooter,
   MarketingHeader,
   type ArticleCrumb,
@@ -76,7 +75,7 @@ export function SeoPageChrome({
   return (
     <>
       <JsonLd id={jsonLdId} data={jsonLd} />
-      <main className="min-h-screen overflow-x-hidden bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)]">
+      <main className="site-theme min-h-screen overflow-x-hidden">
         <MarketingHeader transparentAtTop />
         {children}
         <MarketingFooter />
@@ -134,35 +133,44 @@ export function SeoDocLayout({
   path?: string;
   width?: "primary" | "moderate" | "secondary";
 }) {
-  const widthClass =
-    width === "primary"
-      ? "omentir-primary-width"
-      : width === "moderate"
-        ? "omentir-moderate-width"
-        : "omentir-secondary-width";
-  return (
-    <div className="relative">
-      <HeroGridBackdrop height="h-[60vh]" />
-      <Tag className={`${widthClass} relative z-10 min-w-0 pb-16 pt-28 text-left md:pb-24 md:pt-32`}>
-        <SeoHeroCrumbs crumbs={crumbs} className="mb-8" />
-        <h1
-          style={{ fontFamily: "var(--font-varta)" }}
-          className="max-w-2xl text-2xl font-semibold leading-snug tracking-tight text-[var(--md-sys-color-on-surface)] md:text-3xl md:leading-snug"
-        >
-          {title}
-        </h1>
-        {afterTitle}
-        {description ? (
-          <p className="mt-12 max-w-2xl text-base font-medium leading-8 text-[var(--md-sys-color-on-surface)] md:mt-16">
-            {description}
-          </p>
-        ) : null}
-        <div className={description ? "mt-16 space-y-14 md:mt-20" : "mt-12 space-y-12 md:mt-16"}>
-          {children}
+  const heading = (
+    <>
+      <h1 className="text-[1.75rem] leading-tight tracking-[-0.0125em] text-[var(--site-text)] md:text-[2rem]">
+        {title}
+      </h1>
+      {afterTitle}
+      {description ? (
+        <p className="mt-3 max-w-2xl text-base leading-7 text-[var(--site-text-2)]">{description}</p>
+      ) : null}
+    </>
+  );
+
+  // Reading pages take cursor.com's article layout: crumbs in a sticky left
+  // column, one text column beside them. Wider directory pages keep a single
+  // full-width column with the same heading.
+  if (width === "secondary") {
+    return (
+      <div className="omentir-primary-width grid min-w-0 gap-6 pb-20 pt-28 md:grid-cols-[12rem_minmax(0,42rem)] md:gap-16 md:pb-28 md:pt-32 lg:grid-cols-[14rem_minmax(0,42rem)] lg:gap-24">
+        <div className="md:sticky md:top-28 md:self-start">
+          <SeoHeroCrumbs crumbs={crumbs} className="" />
         </div>
-        {path ? <MarkdownTwinLink path={path} title={title} /> : null}
-      </Tag>
-    </div>
+        <Tag className="min-w-0 text-left">
+          {heading}
+          <div className="mt-10 space-y-12 md:mt-12">{children}</div>
+          {path ? <MarkdownTwinLink path={path} title={title} /> : null}
+        </Tag>
+      </div>
+    );
+  }
+
+  const widthClass = width === "primary" ? "omentir-primary-width" : "omentir-moderate-width";
+  return (
+    <Tag className={`${widthClass} min-w-0 pb-20 pt-28 text-left md:pb-28 md:pt-32`}>
+      <SeoHeroCrumbs crumbs={crumbs} className="mb-8" />
+      {heading}
+      <div className="mt-10 space-y-12 md:mt-12">{children}</div>
+      {path ? <MarkdownTwinLink path={path} title={title} /> : null}
+    </Tag>
   );
 }
 
@@ -213,7 +221,6 @@ export function SeoHero({
   if (fullHeight) {
     return (
       <section className="relative w-full">
-        <HeroGridBackdrop height="h-[130vh]" />
         <div
           className={`relative z-10 mx-auto grid min-h-[100svh] w-full min-w-0 content-center items-center gap-10 px-4 pt-28 pb-16 sm:px-8 sm:pt-32 ${
             media
@@ -251,7 +258,6 @@ export function SeoHero({
 
   return (
     <section className="relative w-full border-b border-[var(--md-sys-color-outline-variant)]">
-      <HeroGridBackdrop height="h-full" />
       <div
         className={`grid w-full ${compact ? "" : "min-h-[52vh] sm:min-h-[58vh]"}`}
         style={{ gridTemplate: '"hero" 1fr / 1fr' }}

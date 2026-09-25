@@ -176,6 +176,11 @@ function nextBucket(ms: number, interval: StatsInterval) {
   return ms + DAY;
 }
 
+/** Key of the bucket that contains `ms` (a week's Monday, a month's 1st). */
+export function bucketFor(ms: number, interval: StatsInterval) {
+  return bucketKey(bucketStart(ms, interval), interval);
+}
+
 /** Every bucket key from `from` to `to`, so charts show zero days instead of skipping them. */
 export function bucketsBetween(from: Date, to: Date, interval: StatsInterval) {
   const keys: string[] = [];

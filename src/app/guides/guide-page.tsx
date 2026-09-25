@@ -6,7 +6,6 @@ import { PromptCopyBox } from "../grok-bot-setup-block";
 import JsonLd from "../json-ld";
 import MarketingClosingCta from "../marketing-closing-cta";
 import {
-  HeroGridBackdrop,
   MarketingFooter,
   MarketingHeader,
 } from "../marketing-shell";
@@ -126,10 +125,9 @@ export default function GuidePageView({ page }: { page: GuidePage }) {
   return (
     <>
       <JsonLd id={`guide-${page.slug}-jsonld`} data={jsonLd} />
-      <main className="min-h-screen overflow-x-hidden bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)]">
+      <main className="site-theme min-h-screen overflow-x-hidden">
         <MarketingHeader transparentAtTop />
         <div className="relative">
-          <HeroGridBackdrop height="h-[80vh]" />
           <section className="omentir-moderate-width relative z-10 min-w-0 pb-12 pt-36 text-center md:pb-16 md:pt-48">
             <h1
               style={{ fontFamily: "var(--font-varta)" }}

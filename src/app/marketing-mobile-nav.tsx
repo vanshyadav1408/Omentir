@@ -112,7 +112,7 @@ function MobileMenuSheet({
                   onClick={onClose}
                   className="flex min-h-16 items-center gap-2 rounded-xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container)] px-2.5 py-2 text-sm font-semibold leading-5 text-[var(--md-sys-color-on-surface)] transition hover:bg-[var(--md-sys-state-hover)]"
                 >
-                  <span className="grid h-6 w-6 shrink-0 place-items-center text-black dark:text-white">
+                  <span className="grid h-6 w-6 shrink-0 place-items-center text-[var(--md-sys-color-on-surface)]">
                     <FeatureIcon icon={item.icon} />
                   </span>
                   <span>{item.label}</span>
@@ -174,12 +174,12 @@ function MobileMenuSheet({
           ) : null}
         </nav>
 
-        <div className="m3-btn-pair m3-btn-pair--xl mt-auto flex w-full flex-col gap-3 pt-10">
+        <div className="mt-auto flex w-full flex-col gap-3 pt-10">
           {isSignedIn ? (
             <Link
               href="/overview"
               onClick={onClose}
-              className="m3-btn m3-btn-filled-secondary"
+              className="site-btn site-btn-primary"
             >
               Overview
             </Link>
@@ -188,14 +188,14 @@ function MobileMenuSheet({
               <Link
                 href="/login"
                 onClick={onClose}
-                className="m3-btn m3-btn-outlined"
+                className="site-btn site-btn-secondary"
               >
                 Sign in
               </Link>
               <Link
                 href="/signup"
                 onClick={onClose}
-                className="m3-btn m3-btn-filled"
+                className="site-btn site-btn-primary"
               >
                 Get started
               </Link>

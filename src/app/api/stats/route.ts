@@ -10,11 +10,12 @@ import { STATS_REFRESH_MS, type StatsSection } from "@/lib/stats-types";
 import { statsAccess } from "@/lib/server/stats/access";
 import { statsBackendConfigured, type StatsPropertyFilter } from "@/lib/server/stats/posthog-query";
 import { STATS_FILTER_KEYS } from "@/lib/server/stats/queries";
+import { loadProductApp, loadProductOverview } from "@/lib/server/stats/product";
 import { loadAi, loadBreakdown, loadGoals, loadOverview } from "@/lib/server/stats/sections";
 
 export const dynamic = "force-dynamic";
 
-const SECTIONS = new Set<StatsSection>(["overview", "sources", "pages", "location", "tech", "goals", "ai"]);
+const SECTIONS = new Set<StatsSection>(["overview", "sources", "pages", "location", "tech", "goals", "ai", "product", "product-app"]);
 // Stats update every 5 minutes, on the clock (:00, :05, :10, ...). Results are
 // cached per window; the page refetches when a new window starts. The refresh
 // button (?fresh=1) is the only way to get newer numbers inside a window.
@@ -51,8 +52,11 @@ export async function GET(request: NextRequest) {
   const range = resolveStatsRange(period, offset);
   const requested = params.get("interval");
   const allowed = allowedIntervals(range.from, range.to);
-  const interval = isStatsInterval(requested) && allowed.includes(requested) ? requested : defaultInterval(period);
-  const filters = parseFilters(params.get("filters"));
+  let interval = isStatsInterval(requested) && allowed.includes(requested) ? requested : defaultInterval(period);
+  const product = section === "product" || section === "product-app";
+  // Product numbers are daily counters, so the Product view has no hourly buckets.
+  if (product && interval === "hour") interval = "day";
+  const filters = product ? [] : parseFilters(params.get("filters"));
 
   const cacheWindow = Math.floor(Date.now() / STATS_REFRESH_MS);
   const key = JSON.stringify([section, period, offset, interval, filters, cacheWindow]);
@@ -61,7 +65,9 @@ export async function GET(request: NextRequest) {
 
   try {
     const data =
-      section === "overview" ? await loadOverview(range, interval, filters)
+      section === "product" ? await loadProductOverview(range, interval)
+      : section === "product-app" ? await loadProductApp(range, interval)
+      : section === "overview" ? await loadOverview(range, interval, filters)
       : section === "goals" ? await loadGoals(range, interval, filters)
       : section === "ai" ? await loadAi(range, interval, filters)
       : await loadBreakdown(section, range, filters);

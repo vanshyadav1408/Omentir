@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import JsonLd from "@/app/json-ld";
-import { MarketingArticle } from "@/app/marketing-shell";
+import { MarketingFooter, MarketingHeader } from "@/app/marketing-shell";
 import {
   createBreadcrumbJsonLd,
   createWebPageJsonLd,
@@ -18,28 +18,23 @@ function renderInline(text: string): ReactNode[] {
     const external = href.startsWith("http://") || href.startsWith("https://");
     if (external) {
       return (
-        <a
-          key={index}
-          href={href}
-          target="_blank"
-          rel="noopener"
-          className="font-medium text-[var(--md-sys-color-primary)] underline underline-offset-4"
-        >
+        <a key={index} href={href} target="_blank" rel="noopener">
           {match[1]}
         </a>
       );
     }
     return (
-      <Link
-        key={index}
-        href={href}
-        className="font-medium text-[var(--md-sys-color-primary)] underline underline-offset-4"
-      >
+      <Link key={index} href={href}>
         {match[1]}
       </Link>
     );
   });
 }
+
+const LEGAL_LINKS = [
+  { label: "Terms of Service", href: "/terms-of-service" },
+  { label: "Privacy Policy", href: "/privacy-policy" },
+];
 
 export function LegalPageView({ page }: { page: CmsLegalPage }) {
   const path = `/${page.slug}`;
@@ -59,28 +54,51 @@ export function LegalPageView({ page }: { page: CmsLegalPage }) {
   return (
     <>
       <JsonLd id={`${page.slug}-jsonld`} data={jsonLd} />
-      <MarketingArticle
-        path={page.slug}
-        title={page.title}
-        description={page.lede || page.description}
-        updated={page.updatedDate}
-      >
-        <div className="space-y-10">
-          {page.sections.map((section) => (
-            <section key={section.title}>
-              <h2
-                style={{ fontFamily: "var(--font-varta)" }}
-                className="text-xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)]"
-              >
-                {section.title}
-              </h2>
-              <p className="mt-4 text-base font-medium leading-8 text-[var(--md-sys-color-on-surface)]">
-                {renderInline(section.body)}
-              </p>
-            </section>
-          ))}
+      {/* Laid out like cursor.com's legal pages: document list on the left,
+          one plain reading column, no hero or sign-up box. */}
+      <main className="site-theme min-h-screen overflow-x-hidden">
+        <MarketingHeader />
+        <div className="omentir-primary-width grid min-w-0 gap-10 pb-20 pt-28 md:grid-cols-[12rem_minmax(0,40rem)] md:gap-16 md:pb-28 md:pt-32 lg:grid-cols-[14rem_minmax(0,40rem)] lg:gap-24">
+          <nav aria-label="Legal" className="md:sticky md:top-28 md:self-start">
+            <ul className="flex gap-4 text-sm md:flex-col md:gap-1.5">
+              {LEGAL_LINKS.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    aria-current={link.href === path ? "page" : undefined}
+                    className={
+                      link.href === path
+                        ? "text-[var(--site-text)]"
+                        : "text-[var(--site-text-2)] transition-colors hover:text-[var(--site-text)]"
+                    }
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          <article className="site-legal-body min-w-0">
+            <h1 className="text-[1.75rem] font-normal leading-tight tracking-[-0.0125em] md:text-[2rem]">
+              {page.title}
+            </h1>
+            {page.updatedDate ? (
+              <p className="mt-2 text-sm text-[var(--site-text-2)]">Last updated {page.updatedDate}</p>
+            ) : null}
+            {page.lede || page.description ? (
+              <p className="mt-8">{page.lede || page.description}</p>
+            ) : null}
+            {page.sections.map((section) => (
+              <section key={section.title} className="mt-8">
+                <h2>{section.title}</h2>
+                <p className="mt-3">{renderInline(section.body)}</p>
+              </section>
+            ))}
+          </article>
         </div>
-      </MarketingArticle>
+        <MarketingFooter />
+      </main>
     </>
   );
 }

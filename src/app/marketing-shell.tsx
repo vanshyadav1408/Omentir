@@ -8,7 +8,7 @@ import HeaderAuth from "./header-auth";
 import LogoMark from "./logo-mark";
 import MarketingHeaderFrame from "./marketing-header-frame";
 import { MarketingMobileMenuButton } from "./marketing-mobile-nav";
-import { brandTagline } from "./seo";
+import SiteThemeToggle from "./site-theme-toggle";
 
 export function MarketingHeader({ transparentAtTop = false }: { transparentAtTop?: boolean }) {
   return (
@@ -31,10 +31,10 @@ export function MarketingHeader({ transparentAtTop = false }: { transparentAtTop
           </Suspense>
         </div>
 
-        <nav className="hidden min-w-0 flex-1 items-center justify-center gap-1 text-sm font-medium text-[var(--md-sys-color-on-surface-variant)] md:flex lg:absolute lg:left-1/2 lg:flex-none lg:-translate-x-1/2">
+        <nav className="hidden min-w-0 flex-1 items-center justify-center gap-1 text-sm font-normal text-[var(--md-sys-color-on-surface)] md:flex lg:absolute lg:left-1/2 lg:flex-none lg:-translate-x-1/2">
           <FeatureMenu />
-          <Link href="/integrations" className="m3-state-layer rounded-md px-3 py-2 transition-colors hover:text-[var(--md-sys-color-on-surface)]">Integrations</Link>
-          <Link href="/pricing" className="m3-state-layer rounded-md px-3 py-2 transition-colors hover:text-[var(--md-sys-color-on-surface)]">Pricing</Link>
+          <Link href="/integrations" className="site-nav-link">Integrations</Link>
+          <Link href="/pricing" className="site-nav-link">Pricing</Link>
           <AskAiMenu />
         </nav>
 
@@ -80,35 +80,16 @@ function GithubStarButtonFallback() {
 function HeaderAuthFallback() {
   return (
     <>
-      <Link
-        href="/login"
-        className="m3-btn h-9 px-4 text-sm font-medium text-[var(--md-sys-color-on-surface-variant)] transition-colors hover:bg-[var(--md-sys-state-hover)] hover:text-[var(--md-sys-color-on-surface)]"
-      >
+      <Link href="/login" className="site-nav-link">
         Sign in
       </Link>
-      <Link href="/signup" className="m3-btn m3-btn-filled h-9 cursor-pointer px-4 text-sm">
+      <Link href="/demo" className="site-btn site-btn-sm site-btn-outline">
+        Book a demo
+      </Link>
+      <Link href="/signup" className="site-btn site-btn-sm site-btn-primary">
         Get started
       </Link>
     </>
-  );
-}
-
-/**
- * The diamond-grid hero backdrop (`.hero-grid-bg` in globals.css). Shared so
- * every marketing hero draws the same pattern at the same intensity instead of
- * each page keeping its own copy of the positioning.
- *
- * Drop it as the first child of a `relative` wrapper around the hero. It is
- * taller than the hero on purpose: its mask fades the lines out across the
- * section below, so that section belongs inside the wrapper too. Because it is
- * positioned, siblings that must paint above the lines need `relative z-10`.
- */
-export function HeroGridBackdrop({ height = "h-[175vh]" }: { height?: string }) {
-  return (
-    <div
-      aria-hidden
-      className={`hero-grid-bg pointer-events-none absolute inset-x-0 top-0 z-0 ${height}`}
-    />
   );
 }
 
@@ -202,130 +183,75 @@ const mobileFooterColumns = footerColumns
 // Hosted product brand links — intentional in source (public website identity).
 // Local mode never renders marketing shell (non-app routes 404).
 const footerSocialLinks = [
-  { label: "Email", href: `mailto:${hostedContactEmail()}`, orderClassName: "order-3" },
-  { label: "LinkedIn", href: "https://www.linkedin.com/company/121943897", orderClassName: "order-1" },
-  { label: "Twitter", href: "https://x.com/OmentirAI", orderClassName: "order-2" },
-  { label: "GitHub", href: `https://github.com/${hostedGithubRepo()}`, orderClassName: "order-4" },
-  { label: "Product Hunt", href: "https://www.producthunt.com/products/omentir", orderClassName: "order-5" },
+  { label: "LinkedIn", href: "https://www.linkedin.com/company/121943897" },
+  { label: "X", href: "https://x.com/OmentirAI" },
+  { label: "GitHub", href: `https://github.com/${hostedGithubRepo()}` },
+  { label: "Product Hunt", href: "https://www.producthunt.com/products/omentir" },
+  { label: "Email", href: `mailto:${hostedContactEmail()}` },
 ];
 
-function FooterSocialIcon({ label }: { label: string }) {
-  if (label === "LinkedIn") {
-    return (
-      <svg viewBox="0 0 24 24" className="h-7 w-7" fill="currentColor" aria-hidden="true">
-        <path d="M5.4 8.7h3.3V19H5.4V8.7Zm1.7-5A1.9 1.9 0 1 1 7 7.5a1.9 1.9 0 0 1 .1-3.8ZM10.7 8.7h3.1v1.4h.1a3.4 3.4 0 0 1 3.1-1.7c3.3 0 3.9 2.2 3.9 5V19h-3.3v-5c0-1.2 0-2.7-1.7-2.7s-1.9 1.3-1.9 2.7v5h-3.3V8.7Z" />
-      </svg>
-    );
-  }
-
-  if (label === "Twitter") {
-    return (
-      <svg viewBox="0 0 24 24" className="h-7 w-7" fill="currentColor" aria-hidden="true">
-        <path d="m14.2 10.6 6.6-7.6h-1.6l-5.7 6.6L8.9 3H3.6l6.9 10-6.9 8h1.6l6-7 4.8 7h5.3l-7.1-10.4Zm-2.1 2.5-.7-1L5.9 4.2h2.2l4.5 6.4.7 1 5.8 8.2h-2.2l-4.8-6.7Z" />
-      </svg>
-    );
-  }
-
-  if (label === "Product Hunt") {
-    return (
-      <svg viewBox="0 0 24 24" className="h-7 w-7" fill="currentColor" aria-hidden="true">
-        <path d="M13.604 8.4h-3.405V12h3.405c.995 0 1.801-.806 1.801-1.801 0-.993-.805-1.799-1.801-1.799zM12 0C5.372 0 0 5.372 0 12s5.372 12 12 12 12-5.372 12-12S18.628 0 12 0zm1.604 14.4h-3.405V18H7.801V6h5.804c2.319 0 4.2 1.88 4.2 4.199 0 2.321-1.881 4.201-4.201 4.201z" />
-      </svg>
-    );
-  }
-
-  if (label === "GitHub") {
-    return (
-      <svg viewBox="0 0 16 16" className="h-7 w-7" fill="currentColor" aria-hidden="true">
-        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z" />
-      </svg>
-    );
-  }
-
+function FooterColumn({ heading, links }: { heading: string; links: Array<[string, string]> }) {
   return (
-    <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <rect x="3" y="5" width="18" height="14" rx="2" />
-      <path d="m3 7 9 6 9-6" />
-    </svg>
+    <div className="min-w-0">
+      <h3 className="site-footer-heading mb-4">{heading}</h3>
+      <ul className="space-y-2.5">
+        {links.map(([label, href]) => (
+          <li key={label}>
+            <Link href={href} className="site-footer-link">
+              {label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
-export function MarketingFooter() {
-  // Always the same near-black “light-theme” footer in light and dark site themes.
+function ConnectColumn() {
   return (
-    <footer className="marketing-footer overflow-hidden border-t border-white/20 bg-[#111111] pb-0 pt-14 text-white">
-      <div className="omentir-primary-width flex flex-col gap-10 md:flex-row md:items-start md:gap-12 lg:gap-16">
-        <div className="min-w-0 md:w-56 md:shrink-0 lg:w-64">
-          <div className="flex select-none items-center gap-3 text-xl font-normal text-white md:text-2xl">
-            <LogoMark className="h-9 w-9 text-white md:h-10 md:w-10" />
-            Omentir
-          </div>
-          {/* The headline itself, not a paraphrase of it: the footer is the
-              last thing on every marketing page, so it repeats the one line the
-              tab title and social cards carry. */}
-          <p className="mt-4 max-w-sm text-sm leading-6 text-zinc-400">
-            {brandTagline}.
-            <span className="block">Open Source. MIT licensed.</span>
-          </p>
-          <div className="mt-5 flex items-center gap-6">
-            {footerSocialLinks.map((item) => (
-              <a
-                key={item.label}
-                href={item.href}
-                aria-label={item.label}
-                className={`${item.orderClassName} grid h-8 w-8 place-items-center text-zinc-400 transition hover:text-white`}
-              >
-                <FooterSocialIcon label={item.label} />
-              </a>
-            ))}
-          </div>
-        </div>
-        <div className="grid min-w-0 grid-cols-2 gap-x-6 gap-y-8 md:hidden">
-          {mobileFooterColumns.map(([heading, ...links]) => {
-            const fullRow = heading === "Integrations";
-            return (
-              <div key={heading} className={fullRow ? "col-span-2 min-w-0" : "min-w-0"}>
-                <h3 className="mb-4 text-sm font-semibold text-white">{heading}</h3>
-                <div
-                  className={`text-sm text-zinc-400 ${
-                    fullRow ? "grid grid-cols-2 gap-x-6 gap-y-3" : "space-y-3"
-                  }`}
-                >
-                  {links.map(([label, href]) => (
-                    <div key={label}>
-                      <Link href={href} className="transition-colors hover:text-white">
-                        {label}
-                      </Link>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        <div className="hidden min-w-0 flex-1 grid-cols-1 gap-8 md:grid md:grid-cols-2 lg:grid-cols-4">
-          {footerColumns.map(([heading, ...links]) => (
-            <div key={heading} className="min-w-0">
-              <h3 className="mb-4 text-sm font-semibold text-white">{heading}</h3>
-              <div className="space-y-3 text-sm text-zinc-400">
-                {links.map(([label, href]) => (
-                  <div key={label}>
-                    <Link href={href} className="transition-colors hover:text-white">
-                      {label}
-                    </Link>
-                  </div>
-                ))}
-              </div>
-            </div>
+    <div className="min-w-0">
+      <h3 className="site-footer-heading mb-4">Connect</h3>
+      <ul className="space-y-2.5">
+        {footerSocialLinks.map((item) => (
+          <li key={item.label}>
+            <a
+              href={item.href}
+              {...(item.href.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+              className="site-footer-link"
+            >
+              {item.label}
+              {item.href.startsWith("http") ? " \u2197" : ""}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** Laid out like cursor.com's footer, theme toggle bottom right. */
+export function MarketingFooter() {
+  return (
+    <footer className="site-footer pb-10 pt-14 md:pt-16">
+      <div className="omentir-primary-width">
+        <div className="grid min-w-0 grid-cols-2 gap-x-6 gap-y-10 md:hidden">
+          {mobileFooterColumns.map(([heading, ...links]) => (
+            <FooterColumn key={heading} heading={heading} links={links} />
           ))}
+          <ConnectColumn />
         </div>
-      </div>
-      <div
-        aria-hidden="true"
-        className="omentir-primary-width mt-10 h-[18vw] max-h-52 select-none overflow-hidden sm:h-[16vw]"
-      >
-        <div className="bg-[linear-gradient(180deg,#8f8f8f_0%,#d6d6d6_45%,#ffffff_100%)] bg-clip-text text-center text-[23vw] font-semibold leading-[0.78] tracking-tight text-transparent sm:text-[21vw] lg:text-[17rem]">
-          Omentir
+        <div className="hidden min-w-0 grid-cols-5 gap-8 md:grid">
+          {footerColumns.map(([heading, ...links]) => (
+            <FooterColumn key={heading} heading={heading} links={links} />
+          ))}
+          <ConnectColumn />
+        </div>
+        <div className="mt-14 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="site-footer-muted flex select-none items-center gap-2">
+            <LogoMark className="h-4 w-4" />
+            &copy; {new Date().getFullYear()} Omentir. Open Source, MIT licensed.
+          </p>
+          <SiteThemeToggle />
         </div>
       </div>
     </footer>
@@ -387,12 +313,10 @@ export function MarketingPage({
   );
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)]">
+    <main className="site-theme min-h-screen overflow-x-hidden">
       <MarketingHeader transparentAtTop />
       {heroFullHeight ? (
         <div className="relative">
-          {/* Diamond grid behind the full-height hero, fading into the content. */}
-          <HeroGridBackdrop height="h-[130vh]" />
           <section
             className={`relative z-10 mx-auto flex min-h-[100svh] w-full ${contentClassName} min-w-0 flex-col justify-center px-4 pt-14 pb-16 md:px-8`}
           >
@@ -405,10 +329,7 @@ export function MarketingPage({
           </section>
         </div>
       ) : (
-        // Short hero: the grid covers the heading block and fades before the
-        // body copy starts, so long legal text never reads through the lines.
         <div className="relative">
-          <HeroGridBackdrop height="h-[60vh]" />
           <section
             className={`relative z-10 mx-auto w-full ${contentClassName} min-w-0 px-4 pb-16 pt-28 md:px-8 md:pb-24 md:pt-32`}
           >
@@ -445,7 +366,7 @@ export function ArticleCrumbs({
   return (
     <nav
       aria-label="Breadcrumb"
-      className={`flex flex-wrap items-center gap-2 text-xs font-semibold lowercase text-[var(--md-sys-color-on-surface-variant)] ${className}`}
+      className={`flex flex-wrap items-center gap-2 text-sm lowercase text-[var(--md-sys-color-on-surface-variant)] ${className}`}
     >
       {crumbs.map((crumb, index) => (
         <span key={`${crumb.label}-${index}`} className="flex items-center gap-2">
@@ -485,44 +406,35 @@ export function MarketingArticle({
 }) {
   const trail = crumbs ?? articlePathCrumbs(path);
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)]">
+    <main className="site-theme min-h-screen overflow-x-hidden">
       <MarketingHeader transparentAtTop />
-      <div className="relative">
-        <HeroGridBackdrop height="h-[60vh]" />
-        <article className="omentir-secondary-width relative z-10 min-w-0 pb-16 pt-28 md:pb-24 md:pt-32">
-          <ArticleCrumbs crumbs={trail} />
-
-          <h1
-            style={{ fontFamily: "var(--font-varta)" }}
-            className="max-w-2xl text-2xl font-semibold leading-snug tracking-tight text-[var(--md-sys-color-on-surface)] md:text-3xl md:leading-snug"
-          >
+      {/* cursor.com article layout: crumbs in a sticky left column. */}
+      <div className="omentir-primary-width grid min-w-0 gap-6 pb-20 pt-28 md:grid-cols-[12rem_minmax(0,42rem)] md:gap-16 md:pb-28 md:pt-32 lg:grid-cols-[14rem_minmax(0,42rem)] lg:gap-24">
+        <div className="md:sticky md:top-28 md:self-start">
+          <ArticleCrumbs crumbs={trail} className="" />
+        </div>
+        <article className="min-w-0">
+          <h1 className="text-[1.75rem] leading-tight tracking-[-0.0125em] text-[var(--site-text)] md:text-[2rem]">
             {title}
           </h1>
-          {description ? (
-            <p className="mt-5 max-w-2xl text-base leading-8 text-[var(--md-sys-color-on-surface-variant)]">
-              {description}
-            </p>
-          ) : null}
           {updated ? (
-            <p className="mt-4 text-sm text-[var(--md-sys-color-on-surface-variant)]">
-              Last updated: {updated}
-            </p>
+            <p className="mt-2 text-sm text-[var(--site-text-2)]">Last updated {updated}</p>
+          ) : null}
+          {description ? (
+            <p className="mt-6 text-base leading-7 text-[var(--site-text-2)]">{description}</p>
           ) : null}
 
-          <div className="mt-12 md:mt-16">{children}</div>
+          <div className="mt-10 md:mt-12">{children}</div>
 
-          <div className="mt-16 rounded-3xl border-2 border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface-container)] px-6 py-8 text-center md:mt-20 md:px-10 md:py-10">
-            <p className="text-lg font-semibold tracking-tight text-[var(--md-sys-color-on-surface)]">
+          <div className="mt-16 rounded-[16px] border border-[var(--site-border)] bg-[var(--site-card)] px-6 py-8 md:px-8">
+            <p className="text-lg text-[var(--site-text)]">
               Run the outreach from your own LinkedIn account
             </p>
-            <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)]">
+            <p className="mt-2 max-w-lg text-sm leading-6 text-[var(--site-text-2)]">
               Omentir finds ICP-fit buyers, drafts connection notes and messages, and keeps
               replies in one inbox. You still choose the daily send limits.
             </p>
-            <Link
-              href="/signup"
-              className="m3-btn m3-btn-filled-secondary mt-6 inline-flex h-11 cursor-pointer px-6 text-sm"
-            >
+            <Link href="/signup" className="site-btn site-btn-sm site-btn-primary mt-6">
               Try Omentir
             </Link>
           </div>

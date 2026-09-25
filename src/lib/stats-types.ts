@@ -45,7 +45,36 @@ export type StatsAiData = {
   rows: { bucket: string; ai: string; kind: string; fetches: number }[];
 };
 
-export type StatsSection = "overview" | "sources" | "pages" | "location" | "tech" | "goals" | "ai";
+export type StatsSection = "overview" | "sources" | "pages" | "location" | "tech" | "goals" | "ai" | "product" | "product-app";
+
+// ------------------------------------------------------------------ Product analytics
+
+/** One row of a Product analytics list card. `tip` lines show on hover. */
+export type ProductListRow = { key: string; label: string; sub?: string; value: number; tip?: [label: string, value: number][] };
+export type ProductListTab = { label: string; unit: string; rows: ProductListRow[] };
+
+export type ProductMetric = "newUsers" | "agentsCreated" | "leadsFound" | "leadsContacted" | "replies" | "meetings";
+
+/** Firestore side: what the product did in the period. */
+export type ProductOverviewData = {
+  kpis: Record<ProductMetric, StatsComparison>;
+  series: ({ bucket: string } & Record<ProductMetric, number>)[];
+  users: ProductListTab[];
+  agents: ProductListTab[];
+  outreach: ProductListTab[];
+  customers: ProductListTab[];
+  linkedin: ProductListTab[];
+};
+
+/** PostHog side: who used the app (pageviews on app paths). */
+export type ProductAppData = {
+  activeUsers: StatsComparison;
+  activeNow: number;
+  series: { bucket: string; activeUsers: number }[];
+  users: ProductListRow[];
+  pages: ProductListRow[];
+  events: ProductListRow[];
+};
 
 export type StatsResponse<T> = {
   range: { from: string; to: string };

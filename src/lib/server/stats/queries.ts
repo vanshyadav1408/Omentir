@@ -15,7 +15,7 @@ const T = "{filters.dateRange.to}";
 const PREV = `${F} - toIntervalSecond(dateDiff('second', ${F}, ${T}))`;
 const LOOKBACK = "INTERVAL 90 DAY";
 // Dev servers, the tunnel and Sanity also send pageviews; only the live site counts.
-const LIVE_SITE = "properties.$host IN ('omentir.com', 'www.omentir.com')";
+export const LIVE_SITE = "properties.$host IN ('omentir.com', 'www.omentir.com')";
 
 export const CHANNEL = `coalesce(
     nullIf(toString(properties.channel_name), ''),

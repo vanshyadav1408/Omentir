@@ -2,7 +2,7 @@ import CustomerLogoWall from "../customer-logo-wall";
 import FaqSplitSection from "../faq-split-section";
 import JsonLd from "../json-ld";
 import MarketingClosingCta from "../marketing-closing-cta";
-import { HeroGridBackdrop, MarketingFooter, MarketingHeader } from "../marketing-shell";
+import { MarketingFooter, MarketingHeader } from "../marketing-shell";
 import PlanAwarePricingCards from "../plan-aware-pricing-cards";
 import {
   createBreadcrumbJsonLd,
@@ -71,17 +71,15 @@ export default function PricingPage() {
   return (
     <>
       <JsonLd id="pricing-jsonld" data={jsonLd} />
-      <main className="min-h-screen overflow-x-hidden bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)]">
+      <main className="site-theme min-h-screen overflow-x-hidden">
         <MarketingHeader transparentAtTop />
         <div className="relative">
-          <HeroGridBackdrop height="h-[90vh]" />
-
           <section className="omentir-primary-width relative z-10 min-w-0 pt-28 md:pt-36">
-            <h1 className="hero-display text-center text-[var(--md-sys-color-on-surface)]">
+            <h1 className="text-center text-[2.5rem] font-normal leading-[1.15] tracking-[-0.025em] text-[var(--md-sys-color-on-surface)] md:text-[3.25rem]">
               Pricing
             </h1>
-            <PlanAwarePricingCards className="mx-auto mt-12 max-w-4xl md:mt-16" />
-            <p className="mx-auto mt-8 max-w-2xl text-center text-sm font-normal leading-6 text-zinc-500 md:mt-10">
+            <PlanAwarePricingCards site className="mx-auto mt-10 max-w-4xl md:mt-12" />
+            <p className="mx-auto mt-8 max-w-2xl text-center text-sm font-normal leading-6 text-[var(--md-sys-color-on-surface-variant)] md:mt-10">
               LinkedIn provider, billing, and infrastructure limits may apply. Users
               control sending limits from Settings.
             </p>

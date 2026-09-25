@@ -810,7 +810,7 @@ button.stats-pill:hover,
   background: #2c2c2c;
 }
 
-/* ------------------------------------------------------------ goals / AI */
+/* ------------------------------------------------------------ AI */
 
 .stats-split {
   display: grid;
@@ -860,10 +860,6 @@ button.stats-pill:hover,
   font-variant-numeric: tabular-nums;
   font-weight: 600;
   flex: none;
-}
-
-.stats-goal.is-dim {
-  opacity: 0.45;
 }
 
 .stats-goal:hover {
@@ -920,55 +916,6 @@ button.stats-pill:hover,
   color: var(--st-text);
 }
 
-.stats-funnel {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 10px 14px 16px;
-}
-
-.stats-funnel-step {
-  display: grid;
-  grid-template-columns: 170px minmax(0, 1fr) 90px;
-  align-items: center;
-  gap: 12px;
-  font-size: 13px;
-}
-
-.stats-funnel-track {
-  position: relative;
-  height: 28px;
-  border-radius: 8px;
-  background: #1f1f1f;
-  overflow: hidden;
-}
-
-.stats-funnel-fill {
-  position: absolute;
-  inset: 0 auto 0 0;
-  border-radius: 8px;
-  background: linear-gradient(90deg, #3b5a86, #4d74aa);
-}
-
-.stats-funnel-num {
-  position: absolute;
-  inset: 0 auto 0 10px;
-  display: flex;
-  align-items: center;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-
-.stats-funnel-rate {
-  text-align: right;
-  color: var(--st-muted);
-  font-variant-numeric: tabular-nums;
-}
-
-.stats-funnel-rate b {
-  color: var(--st-text);
-}
-
 .stats-signin {
   display: grid;
   place-items: center;
@@ -986,4 +933,12 @@ button.stats-pill:hover,
   color: #fff;
   font-weight: 600;
   text-decoration: none;
+}
+
+/* Product analytics: second line (workspace, account status, conversion) next to a row label. */
+.stats-row-label .stats-row-sub {
+  flex: none;
+  max-width: 45%;
+  color: var(--st-muted);
+  font-size: 12px;
 }

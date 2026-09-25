@@ -2,9 +2,10 @@ import FaqSplitSection from "./faq-split-section";
 import HeroCopy from "./hero-copy";
 import HeroCta from "./hero-cta";
 import HeroProductStage from "./hero-product-stage";
+import HomeStats from "./home-stats";
 import HomeCapabilitySlides from "./home-capability-slides";
 import MarketingClosingCta from "./marketing-closing-cta";
-import { HeroGridBackdrop, MarketingFooter, MarketingHeader } from "./marketing-shell";
+import { MarketingFooter, MarketingHeader } from "./marketing-shell";
 import CustomerLogoWall from "./customer-logo-wall";
 import JsonLd from "./json-ld";
 import {
@@ -75,20 +76,20 @@ export default function Home() {
   ];
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)]">
+    <main className="site-theme min-h-screen overflow-x-hidden">
       <JsonLd id="home-jsonld" data={jsonLd} />
       <MarketingHeader transparentAtTop />
 
       <div className="relative">
-        <HeroGridBackdrop height="h-[130vh]" />
         <section className="relative z-10">
-          <div className="omentir-primary-width pt-28 pb-8 md:pt-36 md:pb-10 lg:pt-44">
+          <div className="omentir-primary-width pt-28 pb-8 md:pt-32 md:pb-10 lg:pt-36">
             <div className="flex w-full max-w-3xl min-w-0 flex-col items-start">
               <HeroCopy>
                 <HeroCta />
               </HeroCopy>
             </div>
             <HeroProductStage />
+            <HomeStats />
           </div>
         </section>
 

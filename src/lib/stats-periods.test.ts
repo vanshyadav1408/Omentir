@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { allowedIntervals, bucketsBetween, parseStatsQuery, resolveStatsRange } from "./stats-periods";
+import { allowedIntervals, bucketFor, bucketsBetween, parseStatsQuery, resolveStatsRange } from "./stats-periods";
 
 // 2026-09-25 14:30 UTC = 20:00 IST, a Friday. Periods follow India time.
 const NOW = Date.UTC(2026, 8, 25, 14, 30);
@@ -54,6 +54,17 @@ describe("bucketsBetween", () => {
       "2026-08-01",
       "2026-09-01",
     ]);
+  });
+
+  test("a Friday's product counts land in that week's Monday bucket, or the weekly chart would drop them", () => {
+    const range = resolveStatsRange("30d", 0, NOW);
+    const keys = bucketsBetween(range.from, range.to, "week");
+    const friday = Date.parse("2026-09-25T00:00:00+05:30");
+    expect(bucketFor(friday, "week")).toBe("2026-09-21");
+    expect(keys).toContain(bucketFor(friday, "week"));
+    expect(bucketFor(friday, "month")).toBe("2026-09-01");
+    // Just after midnight IST is still the IST day, not the UTC one.
+    expect(bucketFor(Date.parse("2026-09-25T00:10:00+05:30"), "day")).toBe("2026-09-25");
   });
 });
 

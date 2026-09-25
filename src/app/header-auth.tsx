@@ -8,10 +8,7 @@ export default function HeaderAuth() {
 
   if (isSignedIn) {
     return (
-      <Link
-        href="/overview"
-        className="m3-btn m3-btn-filled-secondary h-9 cursor-pointer px-4 text-sm"
-      >
+      <Link href="/overview" className="site-btn site-btn-sm site-btn-primary">
         Overview
       </Link>
     );
@@ -19,16 +16,13 @@ export default function HeaderAuth() {
 
   return (
     <>
-      <Link
-        href="/login"
-        className="m3-btn h-9 px-4 text-sm font-medium text-[var(--md-sys-color-on-surface-variant)] transition-colors hover:bg-[var(--md-sys-state-hover)] hover:text-[var(--md-sys-color-on-surface)]"
-      >
+      <Link href="/login" className="site-nav-link">
         Sign in
       </Link>
-      <Link
-        href="/signup"
-        className="m3-btn m3-btn-filled h-9 cursor-pointer px-4 text-sm"
-      >
+      <Link href="/demo" className="site-btn site-btn-sm site-btn-outline">
+        Book a demo
+      </Link>
+      <Link href="/signup" className="site-btn site-btn-sm site-btn-primary">
         Get started
       </Link>
     </>

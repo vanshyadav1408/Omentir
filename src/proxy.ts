@@ -170,6 +170,16 @@ export default function proxy(request: NextRequest, event: NextFetchEvent) {
     return NextResponse.redirect(destination);
   }
 
+  // The analytics page and its API live only on stats.omentir.com (and
+  // localhost for development).
+  const isLocalhost = hostname === "localhost" || hostname === "127.0.0.1";
+  if (!isLocalhost && (request.nextUrl.pathname === "/stats" || request.nextUrl.pathname === "/api/stats")) {
+    return new NextResponse("Not found\n", {
+      status: 404,
+      headers: { "content-type": "text/plain; charset=utf-8" },
+    });
+  }
+
   const retiredDestination = RETIRED_PUBLIC_REDIRECTS[request.nextUrl.pathname];
   if (retiredDestination) {
     const destination = request.nextUrl.clone();

@@ -22,12 +22,15 @@ function CheckIcon() {
   );
 }
 
-function PlanPrice({ price, cadence }: { price: string; cadence: string }) {
+function PlanPrice({ price, cadence, site }: { price: string; cadence: string; site?: boolean }) {
+  const amountClass = site
+    ? "text-[1.75rem] font-normal tracking-tight text-[var(--md-sys-color-on-surface)] md:text-[2rem]"
+    : "text-4xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] md:text-5xl";
   const monthly = price.match(/^(\$\d+)(\/month)$/);
   if (monthly) {
     return (
       <div className="mt-3 flex items-baseline gap-0.5">
-        <span className="text-4xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] md:text-5xl">
+        <span className={amountClass}>
           {monthly[1]}
         </span>
         <span className="text-base font-medium text-[var(--md-sys-color-on-surface-variant)] md:text-lg">
@@ -39,7 +42,7 @@ function PlanPrice({ price, cadence }: { price: string; cadence: string }) {
 
   return (
     <div className="mt-3 flex items-baseline gap-1">
-      <span className="text-4xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] md:text-5xl">
+      <span className={amountClass}>
         {price}
       </span>
       {cadence ? (
@@ -62,10 +65,12 @@ function PricingCard({
   plan,
   currentPlan,
   subscribeCta,
+  site,
 }: {
   plan: PricingPlan;
   currentPlan?: CurrentPlan;
   subscribeCta?: string;
+  site?: boolean;
 }) {
   const planKey = planKeyFromHref(plan.href);
   const cta = planKey === "solo" && subscribeCta ? subscribeCta : plan.cta;
@@ -73,17 +78,33 @@ function PricingCard({
   // Legacy lifetime members remain covered by the Pro feature set, so the
   // card must never offer them a redundant monthly subscription.
   const isCoveredByLegacyPlan = currentPlan === "lifetime" && planKey === "solo";
-  const ctaClass = `m3-btn h-11 w-full cursor-pointer text-sm ${
-    plan.featured ? "m3-btn-filled" : "m3-btn-outlined"
-  }`;
+  // Marketing /pricing uses Cursor-style pills; the in-app upgrade screens
+  // keep the full-width Material buttons.
+  const ctaClass = site
+    ? `site-btn site-btn-sm ${plan.featured ? "site-btn-primary" : "site-btn-secondary"}`
+    : `m3-btn h-11 w-full cursor-pointer text-sm ${
+        plan.featured ? "m3-btn-filled" : "m3-btn-outlined"
+      }`;
 
   return (
-    <article className="flex h-full w-full flex-col rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container)] p-5 text-left text-[var(--md-sys-color-on-surface)] md:p-7">
-      <h2 className="text-lg font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] md:text-xl">
+    <article
+      className={
+        site
+          ? "site-price-card w-full text-left"
+          : "flex h-full w-full flex-col rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container)] p-5 text-left text-[var(--md-sys-color-on-surface)] md:p-7"
+      }
+    >
+      <h2
+        className={
+          site
+            ? "text-lg font-normal text-[var(--md-sys-color-on-surface)]"
+            : "text-lg font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] md:text-xl"
+        }
+      >
         {plan.name}
       </h2>
 
-      <PlanPrice price={plan.price} cadence={plan.cadence} />
+      <PlanPrice price={plan.price} cadence={plan.cadence} site={site} />
 
       {planKey === "solo" ? (
         <p className="mt-3 max-w-xs text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)]">
@@ -117,7 +138,13 @@ function PricingCard({
 
       <div className="mt-auto pt-8">
         {isCurrent || isCoveredByLegacyPlan ? (
-          <span className="m3-btn m3-btn-outlined h-11 w-full cursor-default border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface-container-high)] text-sm text-[var(--md-sys-color-on-surface-variant)]">
+          <span
+            className={
+              site
+                ? "site-btn site-btn-sm site-btn-outline cursor-default"
+                : "m3-btn m3-btn-outlined h-11 w-full cursor-default border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface-container-high)] text-sm text-[var(--md-sys-color-on-surface-variant)]"
+            }
+          >
             Your current plan
           </span>
         ) : plan.href.startsWith("http") ? (
@@ -138,16 +165,18 @@ export default function PricingCards({
   className = "",
   currentPlan,
   subscribeCta,
+  site,
 }: {
   className?: string;
   currentPlan?: CurrentPlan;
   subscribeCta?: string;
+  site?: boolean;
 }) {
   return (
     <div className={className}>
       <div className="grid w-full grid-cols-1 items-stretch gap-4 md:grid-cols-2 md:gap-5">
         {plans.map((plan) => (
-          <PricingCard key={plan.name} plan={plan} currentPlan={currentPlan} subscribeCta={subscribeCta} />
+          <PricingCard key={plan.name} plan={plan} currentPlan={currentPlan} subscribeCta={subscribeCta} site={site} />
         ))}
       </div>
     </div>

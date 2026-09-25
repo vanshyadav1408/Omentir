@@ -34,8 +34,10 @@ describe("toStatsPayment", () => {
     expect(toStatsPayment({ ...paid, usd_total: 0 })).toBeNull();
   });
 
-  test("leaves out non-Omentir products sold on the same Whop account", () => {
-    expect(toStatsPayment({ ...paid, product: { title: "2 Backlink Placements" } })).toBeNull();
+  test("counts one-time sales as new revenue, since the page should match everything Whop took in", () => {
+    const oneTime = toStatsPayment({ ...paid, id: "pay_4", usd_total: 45, billing_reason: "one_time", product: { title: "2 Backlink Placements" }, metadata: {} });
+    expect(oneTime?.usd).toBe(45);
+    expect(oneTime?.renewal).toBe(false);
   });
 
   test("drops ids that are not plain id characters, since they are pasted into HogQL", () => {

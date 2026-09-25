@@ -8,7 +8,7 @@ import PricingCards from "./pricing-cards";
 // so the viewer's plan is resolved client-side: signed-out users never fetch
 // and keep the default CTAs; signed-in subscribers get their plan card marked
 // and upgrade/downgrade labels on the others.
-export default function PlanAwarePricingCards({ className }: { className?: string }) {
+export default function PlanAwarePricingCards({ className, site }: { className?: string; site?: boolean }) {
   const { isSignedIn } = useUser();
   const [plan, setPlan] = useState<"solo" | "lifetime" | "enterprise" | undefined>(undefined);
 
@@ -35,5 +35,5 @@ export default function PlanAwarePricingCards({ className }: { className?: strin
     };
   }, [isSignedIn]);
 
-  return <PricingCards className={className} currentPlan={plan} />;
+  return <PricingCards className={className} currentPlan={plan} site={site} />;
 }

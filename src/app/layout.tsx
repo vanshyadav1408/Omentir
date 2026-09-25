@@ -7,6 +7,7 @@ import { defaultDescription, defaultKeywords, defaultOgImage, defaultTitle, site
 import NavigationFeedback from "./navigation-feedback";
 import { PostHogProvider } from "./posthog-provider";
 import { buildEarlyFetchScript } from "./sidebar-early-fetch";
+import { siteThemeScript } from "./site-theme-script";
 import { ToastProvider } from "./toast";
 import { isLocalMode } from "@/lib/runtime-mode";
 import { studioHostRedirectScript } from "@/sanity/studio-host";
@@ -27,6 +28,14 @@ const roboto = localFont({
   src: "./fonts/roboto-latin.woff2",
   variable: "--font-roboto",
   weight: "400 700",
+});
+
+/* Marketing pages (`.site-theme`) swap Google Sans and Roboto for Geist,
+   the closest free match to cursor.com's CursorGothic. See globals.css. */
+const geist = localFont({
+  src: "./fonts/geist-latin.woff2",
+  variable: "--font-site-sans",
+  weight: "100 900",
 });
 
 const geistMono = localFont({
@@ -116,7 +125,7 @@ export default async function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${googleSans.variable} ${roboto.variable} ${geistMono.variable} antialiased dark`}
+      className={`${googleSans.variable} ${roboto.variable} ${geist.variable} ${geistMono.variable} antialiased dark`}
       data-theme="dark"
       style={
         {
@@ -150,6 +159,9 @@ export default async function RootLayout({
             does not execute an inline script it creates on the client, and the
             root layout is the only node guaranteed to be hydrated instead of
             re-created. See sidebar-early-fetch. */}
+        {/* Resolves the marketing light/dark preference before first paint.
+            Only pages with `.site-theme` read the attribute; the app ignores it. */}
+        <script dangerouslySetInnerHTML={{ __html: siteThemeScript() }} />
         <script dangerouslySetInnerHTML={{ __html: studioHostRedirectScript() }} />
         <script dangerouslySetInnerHTML={{ __html: buildEarlyFetchScript() }} />
       </head>

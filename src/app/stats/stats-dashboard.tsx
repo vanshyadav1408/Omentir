@@ -11,10 +11,11 @@ import {
   type StatsQuery,
 } from "@/lib/stats-periods";
 import type {
+  ProductAppData,
+  ProductOverviewData,
   StatsAiData,
   StatsBreakdownData,
   StatsFilter,
-  StatsGoalsData,
   StatsOverviewData,
   StatsResponse,
   StatsSection,
@@ -22,7 +23,6 @@ import type {
 import { STATS_REFRESH_MS } from "@/lib/stats-types";
 import { StatsAiCard } from "./stats-ai-card";
 import { StatsBreakdownCard, type BreakdownTab } from "./stats-breakdown-card";
-import { StatsGoalsCard } from "./stats-goals-card";
 import {
   Favicon,
   Flag,
@@ -35,11 +35,18 @@ import {
   urlDomain,
 } from "./stats-icons";
 import { StatsMainCard } from "./stats-main-card";
+import { ProductView } from "./product-view";
 
 type Query = StatsQuery;
+export type StatsView = "web" | "product";
+const VIEWS: { key: StatsView; label: string }[] = [
+  { key: "web", label: "Web analytics" },
+  { key: "product", label: "Product analytics" },
+];
 
-function writeQuery(query: Query) {
+function writeQuery(query: Query, view: StatsView) {
   const params = new URLSearchParams();
+  if (view !== "web") params.set("view", view);
   if (query.period !== "30d") params.set("period", query.period);
   if (query.offset) params.set("offset", String(query.offset));
   if (query.interval !== defaultInterval(query.period)) params.set("interval", query.interval);
@@ -50,12 +57,13 @@ function writeQuery(query: Query) {
 
 type SectionState<T> = { data?: StatsResponse<T>; loading: boolean; error?: string };
 
-function useSection<T>(section: StatsSection, query: Query, refresh: number, tick: number): SectionState<T> {
+function useSection<T>(section: StatsSection, query: Query, refresh: number, tick: number, enabled = true): SectionState<T> {
   const queryKey = JSON.stringify([section, query.period, query.offset, query.interval, query.filters.map(({ key, value }) => [key, value])]);
-  const requestKey = `${queryKey}#${refresh}#${tick}`;
+  const requestKey = enabled ? `${queryKey}#${refresh}#${tick}` : "off";
   const lastRefresh = useRef(refresh);
   const [state, setState] = useState<{ key?: string; data?: StatsResponse<T>; error?: string }>({});
   useEffect(() => {
+    if (!enabled) return;
     const controller = new AbortController();
     const params = new URLSearchParams({
       section,
@@ -82,7 +90,7 @@ function useSection<T>(section: StatsSection, query: Query, refresh: number, tic
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requestKey]);
   // Keep showing the last data (dimmed) while a new request is in flight.
-  return { data: state.data, loading: state.key !== requestKey, error: state.key === requestKey ? state.error : undefined };
+  return { data: state.data, loading: enabled && state.key !== requestKey, error: state.key === requestKey ? state.error : undefined };
 }
 
 function Menu({ trigger, children, className }: { trigger: ReactNode; children: (close: () => void) => ReactNode; className?: string }) {
@@ -141,8 +149,9 @@ const TECH_TABS: BreakdownTab[] = [
   { label: "Device", filterKey: "$device_type", filterLabel: "Device", icon: (r) => deviceIcon(r.value) },
 ];
 
-export default function StatsDashboard({ initialQuery }: { initialQuery: Query }) {
+export default function StatsDashboard({ initialQuery, initialView }: { initialQuery: Query; initialView: StatsView }) {
   const [query, setQuery] = useState<Query>(initialQuery);
+  const [view, setView] = useState<StatsView>(initialView);
   const [refresh, setRefresh] = useState(0);
   const [tick, setTick] = useState(0);
 
@@ -154,7 +163,7 @@ export default function StatsDashboard({ initialQuery }: { initialQuery: Query }
   }, [tick]);
 
   // Keep the URL in step so a reload or a shared link opens the same view.
-  useEffect(() => writeQuery(query), [query]);
+  useEffect(() => writeQuery(query, view), [query, view]);
 
   const update = useCallback((patch: Partial<Query>) => {
     setQuery((current) => {
@@ -178,19 +187,25 @@ export default function StatsDashboard({ initialQuery }: { initialQuery: Query }
     [],
   );
 
-  const overview = useSection<StatsOverviewData>("overview", query, refresh, tick);
-  const sources = useSection<StatsBreakdownData>("sources", query, refresh, tick);
-  const pages = useSection<StatsBreakdownData>("pages", query, refresh, tick);
-  const location = useSection<StatsBreakdownData>("location", query, refresh, tick);
-  const tech = useSection<StatsBreakdownData>("tech", query, refresh, tick);
-  const goals = useSection<StatsGoalsData>("goals", query, refresh, tick);
-  const ai = useSection<StatsAiData>("ai", query, refresh, tick);
-
+  const web = view === "web";
   const range = useMemo(() => resolveStatsRange(query.period, query.offset), [query]);
-  const buckets = useMemo(() => bucketsBetween(range.from, range.to, query.interval), [range, query]);
-  const intervals = allowedIntervals(range.from, range.to);
-  const anyLoading = [overview, sources, pages, location, tech, goals, ai].some((s) => s.loading);
-  const updatedAt = overview.data?.updatedAt ? new Date(overview.data.updatedAt) : null;
+  // Product numbers are daily counters: no hourly buckets and no web filters there.
+  const intervals = allowedIntervals(range.from, range.to).filter((i) => web || i !== "hour");
+  const interval = web || query.interval !== "hour" ? query.interval : "day";
+  const productQuery = useMemo(() => ({ ...query, interval, filters: [] }), [query, interval]);
+  const overview = useSection<StatsOverviewData>("overview", query, refresh, tick, web);
+  const sources = useSection<StatsBreakdownData>("sources", query, refresh, tick, web);
+  const pages = useSection<StatsBreakdownData>("pages", query, refresh, tick, web);
+  const location = useSection<StatsBreakdownData>("location", query, refresh, tick, web);
+  const tech = useSection<StatsBreakdownData>("tech", query, refresh, tick, web);
+  const ai = useSection<StatsAiData>("ai", query, refresh, tick, web);
+  const product = useSection<ProductOverviewData>("product", productQuery, refresh, tick, !web);
+  const productApp = useSection<ProductAppData>("product-app", productQuery, refresh, tick, !web);
+
+  const buckets = useMemo(() => bucketsBetween(range.from, range.to, interval), [range, interval]);
+  const anyLoading = [overview, sources, pages, location, tech, ai, product, productApp].some((s) => s.loading);
+  const stamp = web ? overview.data?.updatedAt : product.data?.updatedAt;
+  const updatedAt = stamp ? new Date(stamp) : null;
   const periodLabel = STATS_PERIODS.find((p) => p.key === query.period)?.label ?? "";
   const rangeLabel =
     query.offset > 0
@@ -215,6 +230,17 @@ export default function StatsDashboard({ initialQuery }: { initialQuery: Query }
             omentir.com
           </span>
 
+          <Menu className="stats-pill" trigger={<span>{VIEWS.find((v) => v.key === view)?.label}</span>}>
+            {(close) =>
+              VIEWS.map((v) => (
+                <button key={v.key} type="button" role="menuitemradio" aria-checked={v.key === view}
+                  onClick={() => { setView(v.key); close(); }}>
+                  {v.label}
+                </button>
+              ))
+            }
+          </Menu>
+
           <div className="stats-stepper">
             <button type="button" aria-label="Previous period" disabled={query.period === "all"} onClick={() => update({ offset: query.offset + 1 })}>
               <span style={{ width: 16, height: 16, display: "inline-flex" }}>{Glyph.chevronLeft}</span>
@@ -234,10 +260,10 @@ export default function StatsDashboard({ initialQuery }: { initialQuery: Query }
             </button>
           </div>
 
-          <Menu className="stats-pill" trigger={<span>{STATS_INTERVALS.find((i) => i.key === query.interval)?.label}</span>}>
+          <Menu className="stats-pill" trigger={<span>{STATS_INTERVALS.find((i) => i.key === interval)?.label}</span>}>
             {(close) =>
               STATS_INTERVALS.map((i) => (
-                <button key={i.key} type="button" role="menuitemradio" aria-checked={i.key === query.interval}
+                <button key={i.key} type="button" role="menuitemradio" aria-checked={i.key === interval}
                   disabled={!intervals.includes(i.key)} onClick={() => { update({ interval: i.key }); close(); }}>
                   {i.label}
                 </button>
@@ -255,7 +281,7 @@ export default function StatsDashboard({ initialQuery }: { initialQuery: Query }
           )}
         </div>
 
-        {query.filters.length > 0 && (
+        {web && query.filters.length > 0 && (
           <div className="stats-filters">
             {query.filters.map((f) => (
               <span key={f.key} className="stats-chip">
@@ -271,6 +297,8 @@ export default function StatsDashboard({ initialQuery }: { initialQuery: Query }
           </div>
         )}
 
+        {web ? (
+        <>
         <StatsMainCard
           data={overview.data?.data}
           loading={overview.loading}
@@ -287,16 +315,16 @@ export default function StatsDashboard({ initialQuery }: { initialQuery: Query }
           <StatsBreakdownCard title="Tech" tabs={TECH_TABS} data={tech.data?.data} loading={tech.loading} error={tech.error} onFilter={addFilter} />
         </div>
 
-        <StatsGoalsCard
-          data={goals.data?.data}
-          visitors={overview.data?.data.kpis.visitors.current}
-          loading={goals.loading}
-          error={goals.error}
-          buckets={buckets}
-          interval={query.interval}
-        />
-
         <StatsAiCard data={ai.data?.data} loading={ai.loading} error={ai.error} buckets={buckets} interval={query.interval} onFilter={addFilter} />
+        </>
+        ) : (
+          <ProductView
+            overview={{ data: product.data?.data, loading: product.loading, error: product.error }}
+            app={{ data: productApp.data?.data, loading: productApp.loading, error: productApp.error }}
+            buckets={buckets}
+            interval={interval}
+          />
+        )}
       </div>
     </div>
   );

@@ -41,5 +41,5 @@ export default async function StatsPage({
     const value = params[name];
     return Array.isArray(value) ? value[0] : value;
   });
-  return <StatsDashboard initialQuery={initialQuery} />;
+  return <StatsDashboard initialQuery={initialQuery} initialView={params.view === "product" ? "product" : "web"} />;
 }

@@ -20,14 +20,11 @@ function ArrowIcon() {
 export default function HeroCtaControls({ isSignedIn }: { isSignedIn: boolean }) {
   if (isSignedIn) {
     return (
-      <div className="m3-btn-pair mt-4 flex flex-wrap gap-3 md:mt-5">
-        <Link href="/overview" className="m3-btn m3-btn-filled m3-btn--hero">
+      <div className="mt-6 flex flex-wrap gap-3">
+        <Link href="/overview" className="site-btn site-btn-primary">
           Overview
         </Link>
-        <Link
-          href="#features"
-          className="m3-btn m3-btn-outlined m3-btn--hero hero-cta-secondary gap-1.5"
-        >
+        <Link href="#features" className="site-btn site-btn-secondary">
           See how it works
           <ArrowIcon />
         </Link>
@@ -36,14 +33,11 @@ export default function HeroCtaControls({ isSignedIn }: { isSignedIn: boolean })
   }
 
   return (
-    <div className="hero-enter hero-enter-delay-1 m3-btn-pair mt-4 flex flex-wrap gap-3 md:mt-5">
-      <Link href="/signup" className="m3-btn m3-btn-filled m3-btn--hero">
+    <div className="hero-enter hero-enter-delay-1 mt-6 flex flex-wrap gap-3">
+      <Link href="/signup" className="site-btn site-btn-primary">
         Get started
       </Link>
-      <Link
-        href="#features"
-        className="m3-btn m3-btn-outlined m3-btn--hero hero-cta-secondary gap-1.5"
-      >
+      <Link href="#features" className="site-btn site-btn-secondary">
         See how it works
         <ArrowIcon />
       </Link>

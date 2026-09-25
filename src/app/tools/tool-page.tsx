@@ -5,7 +5,6 @@ import MarketingClosingCta from "../marketing-closing-cta";
 import {
   ArticleCrumbs,
   articlePathCrumbs,
-  HeroGridBackdrop,
   MarketingFooter,
   MarketingHeader,
 } from "../marketing-shell";
@@ -81,11 +80,10 @@ export function ToolPageChrome({
   ];
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)]">
+    <main className="site-theme min-h-screen overflow-x-hidden">
       <JsonLd id={`${tool.slug}-jsonld`} data={jsonLd} />
       <MarketingHeader transparentAtTop />
       <div className="relative">
-        <HeroGridBackdrop height="h-[90vh]" />
         <section className="omentir-primary-width relative z-10 min-w-0 pt-28 md:pt-36">
           <ArticleCrumbs
             crumbs={articlePathCrumbs("tools", tool.slug)}

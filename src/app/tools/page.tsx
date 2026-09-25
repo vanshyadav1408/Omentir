@@ -3,7 +3,6 @@ import JsonLd from "../json-ld";
 import {
   ArticleCrumbs,
   articlePathCrumbs,
-  HeroGridBackdrop,
   MarketingFooter,
   MarketingHeader,
 } from "../marketing-shell";
@@ -67,10 +66,9 @@ export default function ToolsIndexPage() {
   return (
     <>
       <JsonLd id="tools-index-jsonld" data={jsonLd} />
-      <main className="min-h-screen overflow-x-hidden bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)]">
+      <main className="site-theme min-h-screen overflow-x-hidden">
         <MarketingHeader transparentAtTop />
         <div className="relative">
-          <HeroGridBackdrop height="h-[60vh]" />
           <div className="omentir-secondary-width relative z-10 min-w-0 pb-16 pt-28 md:pb-24 md:pt-32">
             <ArticleCrumbs crumbs={articlePathCrumbs("tools")} />
             <h1

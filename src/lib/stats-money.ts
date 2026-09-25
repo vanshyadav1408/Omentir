@@ -27,9 +27,6 @@ export type WhopPaymentRecord = {
   metadata?: Record<string, unknown> | null;
 };
 
-// Whop also sells things that are not Omentir (backlink placements). They are
-// in Whop's totals but are not Omentir revenue.
-const NOT_OMENTIR_PRODUCTS = [/backlink/i];
 // Ids are pasted into HogQL, so only plain id characters are accepted.
 const SAFE_ID = /^[A-Za-z0-9_-]{1,80}$/;
 
@@ -40,13 +37,11 @@ function toMs(value: string | number | null | undefined) {
   return Date.parse(String(value));
 }
 
-/** A Whop payment as Omentir revenue, or null when it does not count (same rule as the MRR snapshot). */
+/** A Whop payment as revenue, or null when it does not count. One-time sales (backlink placements) count too. */
 export function toStatsPayment(record: WhopPaymentRecord): StatsPayment | null {
   if (record.status !== "paid" || record.refunded_at) return null;
   const usd = Number(record.usd_total ?? 0);
   if (!Number.isFinite(usd) || usd <= 0) return null;
-  const product = record.product?.title ?? "";
-  if (NOT_OMENTIR_PRODUCTS.some((pattern) => pattern.test(product))) return null;
   const at = toMs(record.paid_at ?? record.created_at);
   if (!Number.isFinite(at) || !record.id) return null;
   const meta = record.metadata ?? {};
