@@ -28,6 +28,7 @@ import {
   type LinkedInAccountHealth,
 } from "@/lib/linkedin-health";
 import DeleteWorkspaceCard from "@/app/delete-workspace-card";
+import SiteThemeToggle from "@/app/site-theme-toggle";
 
 type SettingsViewProps = {
   workspace: Workspace;
@@ -751,6 +752,16 @@ export default function SettingsView({
                     options={DATE_FORMATS}
                   />
                 </div>
+
+                <div className="my-8 h-px bg-zinc-200" />
+
+                {/* Appearance: applies instantly and is stored in this browser, not
+                    saved with the form. */}
+                <SectionHeader
+                  title="Appearance"
+                  description="Pick light or dark, or match your device. This is saved in this browser."
+                />
+                <SiteThemeToggle />
 
                 <div className="my-8 h-px bg-zinc-200" />
 

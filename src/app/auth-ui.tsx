@@ -20,7 +20,7 @@ export function AuthHeading({
 }) {
   return (
     <div className={`mb-8 ${className}`}>
-      <h1 className="text-2xl font-medium tracking-tight text-white">{title}</h1>
+      <h1 className="text-2xl font-medium tracking-tight text-[var(--site-text)]">{title}</h1>
       {subtitle ? <p className="auth-muted mt-1.5 text-[15px] leading-snug">{subtitle}</p> : null}
     </div>
   );

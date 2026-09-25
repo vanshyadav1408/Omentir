@@ -13,29 +13,15 @@ import { isLocalMode } from "@/lib/runtime-mode";
 import { studioHostRedirectScript } from "@/sanity/studio-host";
 import "./globals.css";
 
-/* Primary UI faces: Google Sans (display/UI) + Roboto (body). Geist Mono kept for code.
-   Google Sans has no size-adjust metrics in next/font yet — disable auto fallback
-   override generation so the build doesn't warn on every compile. */
-const googleSans = localFont({
-  src: "./fonts/google-sans-latin.woff2",
-  variable: "--font-google-sans",
-  weight: "400 700",
-  adjustFontFallback: false,
-  fallback: ["Roboto", "Helvetica Neue", "Arial", "sans-serif"],
-});
-
-const roboto = localFont({
-  src: "./fonts/roboto-latin.woff2",
-  variable: "--font-roboto",
-  weight: "400 700",
-});
-
-/* Marketing pages (`.site-theme`) swap Google Sans and Roboto for Geist,
-   the closest free match to cursor.com's CursorGothic. See globals.css. */
+/* Geist is the product face everywhere (closest free match to cursor.com's
+   CursorGothic); Geist Mono for code. The old --font-google-sans and
+   --font-roboto variables point at it in globals.css so existing styles keep
+   working. */
 const geist = localFont({
   src: "./fonts/geist-latin.woff2",
   variable: "--font-site-sans",
   weight: "100 900",
+  fallback: ["Helvetica Neue", "Arial", "sans-serif"],
 });
 
 const geistMono = localFont({
@@ -118,14 +104,13 @@ export default async function RootLayout({
   );
 
   return (
-    // Dark is the only theme: there is no preference to read, nothing to
-    // resolve per request, and no window where an unstyled light paint can
-    // appear. `dark` + data-theme are both set because the stylesheet keys off
-    // either one.
+    // `dark` + data-theme stay on in both themes: the stylesheet's dark rules
+    // read theme tokens, and the head script below sets data-site-theme to
+    // light or dark before first paint (see site-theme-script.ts).
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${googleSans.variable} ${roboto.variable} ${geist.variable} ${geistMono.variable} antialiased dark`}
+      className={`${geist.variable} ${geistMono.variable} antialiased dark`}
       data-theme="dark"
       style={
         {
@@ -159,8 +144,7 @@ export default async function RootLayout({
             does not execute an inline script it creates on the client, and the
             root layout is the only node guaranteed to be hydrated instead of
             re-created. See sidebar-early-fetch. */}
-        {/* Resolves the marketing light/dark preference before first paint.
-            Only pages with `.site-theme` read the attribute; the app ignores it. */}
+        {/* Resolves the light/dark preference before first paint. */}
         <script dangerouslySetInnerHTML={{ __html: siteThemeScript() }} />
         <script dangerouslySetInnerHTML={{ __html: studioHostRedirectScript() }} />
         <script dangerouslySetInnerHTML={{ __html: buildEarlyFetchScript() }} />

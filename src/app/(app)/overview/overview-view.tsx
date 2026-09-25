@@ -473,7 +473,7 @@ export default function OverviewView({
                       name={lead.name}
                       avatarUrl={lead.avatarUrl}
                       leadId={lead.id}
-                      className="h-8 w-8 bg-[#1f1f1f]"
+                      className="h-8 w-8 bg-[var(--site-card-3)]"
                       initialsClassName="text-[10px] font-medium text-[var(--md-sys-color-on-surface)]"
                     />
                     <div className="min-w-0 flex-1">
@@ -535,7 +535,7 @@ export default function OverviewView({
                       name={reply.leadName}
                       avatarUrl={reply.avatarUrl}
                       leadId={reply.leadId}
-                      className="h-8 w-8 bg-[#1f1f1f]"
+                      className="h-8 w-8 bg-[var(--site-card-3)]"
                       initialsClassName="text-[10px] font-medium text-[var(--md-sys-color-on-surface)]"
                     />
                     <div className="min-w-0 flex-1">

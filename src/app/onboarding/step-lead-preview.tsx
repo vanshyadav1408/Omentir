@@ -61,7 +61,7 @@ function LeadIdentity({ lead }: { lead: PreviewLead }) {
           href={lead.linkedInUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex min-w-0 items-center gap-1.5 text-white hover:underline"
+          className="flex min-w-0 items-center gap-1.5 text-[var(--site-text)] hover:underline"
         >
           <span className="truncate text-[13px] font-semibold leading-none">{lead.name}</span>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -126,7 +126,7 @@ function InlineSpinner() {
 function FitScore({ score }: { score: number }) {
   return (
     <span
-      className="shrink-0 text-[15px] font-semibold leading-none tabular-nums text-white"
+      className="shrink-0 text-[15px] font-semibold leading-none tabular-nums text-[var(--site-text)]"
       aria-label={`Fit score ${score}`}
     >
       {score}
@@ -286,19 +286,19 @@ export default function StepLeadPreview({
       {state.status === "ready" ? (
         <>
           {state.upgrading ? (
-            <p className="mb-4 flex items-center gap-2 text-xs text-[#8f8f8f]">
+            <p className="mb-4 flex items-center gap-2 text-xs text-[var(--site-text-2)]">
               <InlineSpinner />
               Checking the web for people who hold these jobs right now
             </p>
           ) : null}
-          <div className="divide-y divide-[#2e2e2e] overflow-hidden rounded-lg border border-[#2e2e2e]">
+          <div className="divide-y divide-[var(--site-border)] overflow-hidden rounded-lg border border-[var(--site-border)]">
             {visibleLeads.map((lead) => (
               <div key={`${lead.name}-${lead.company}`} className="p-4">
                 <div className="flex items-start justify-between gap-3">
                   <LeadIdentity lead={lead} />
                   <FitScore score={lead.fitScore || 0} />
                 </div>
-                <p className="mt-2 text-[13px] leading-5 text-[#c8c8c8]">{lead.reason}</p>
+                <p className="mt-2 text-[13px] leading-5 text-[var(--site-text-2)]">{lead.reason}</p>
               </div>
             ))}
           </div>
@@ -307,7 +307,7 @@ export default function StepLeadPreview({
       ) : null}
 
       {state.status === "error" ? (
-        <div className="rounded-lg border border-[#3a2222] bg-[#1a1010] p-4 text-center text-sm text-[#e8b4b4]">
+        <div className="rounded-lg border border-[color-mix(in_oklab,var(--google-error)_35%,transparent)] bg-[color-mix(in_oklab,var(--google-error)_10%,transparent)] p-4 text-center text-sm text-[var(--google-error)]">
           <p>{state.message}</p>
           <div className="mt-4 grid gap-3">
             <button

@@ -23,7 +23,7 @@ export default function StepUpgrade({ status }: { status?: string }) {
   return (
     <>
       <div className="mx-auto max-w-2xl text-center">
-        <h1 className="text-2xl font-medium tracking-tight text-white">
+        <h1 className="text-2xl font-medium tracking-tight text-[var(--site-text)]">
           Confirm your subscription
         </h1>
         <p className="auth-muted mt-1.5 text-[15px] leading-6">

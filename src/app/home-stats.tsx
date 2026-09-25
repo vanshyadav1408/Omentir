@@ -1,7 +1,7 @@
 const STATS = [
   { value: "300+", label: "Customers" },
   { value: "110k+", label: "Conversations started" },
-  { value: "7,000", label: "Meetings booked" },
+  { value: "7000+", label: "Meetings booked" },
 ];
 
 /** Headline numbers under the hero demo, on the same green panels as the

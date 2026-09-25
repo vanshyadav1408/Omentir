@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
 import { SITE_THEME_STORAGE_KEY as STORAGE_KEY } from "./site-theme-script";
 
 type Preference = "system" | "light" | "dark";
@@ -30,7 +30,11 @@ function applyPreference(preference: Preference) {
         ? "light"
         : "dark"
       : preference;
-  document.documentElement.setAttribute("data-site-theme", resolved);
+  const root = document.documentElement;
+  root.setAttribute("data-site-theme", resolved);
+  // <html> carries an inline `color-scheme: dark`; native controls and
+  // scrollbars follow this, not the stylesheet.
+  root.style.colorScheme = resolved;
 }
 
 function setPreference(preference: Preference) {
@@ -45,7 +49,7 @@ function setPreference(preference: Preference) {
 const OPTIONS: Array<{ value: Preference; label: string; icon: React.ReactNode }> = [
   {
     value: "system",
-    label: "System theme",
+    label: "System",
     icon: (
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" className="h-3.5 w-3.5" aria-hidden="true">
         <rect x="1.75" y="2.5" width="12.5" height="8.5" rx="1.25" />
@@ -55,7 +59,7 @@ const OPTIONS: Array<{ value: Preference; label: string; icon: React.ReactNode }
   },
   {
     value: "light",
-    label: "Light theme",
+    label: "Light",
     icon: (
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" className="h-3.5 w-3.5" aria-hidden="true">
         <circle cx="8" cy="8" r="2.75" />
@@ -65,7 +69,7 @@ const OPTIONS: Array<{ value: Preference; label: string; icon: React.ReactNode }
   },
   {
     value: "dark",
-    label: "Dark theme",
+    label: "Dark",
     icon: (
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" className="h-3.5 w-3.5" aria-hidden="true">
         <path d="M13.25 9.6A5.5 5.5 0 0 1 6.4 2.75a5.5 5.5 0 1 0 6.85 6.85Z" />
@@ -79,27 +83,17 @@ export default function SiteThemeToggle() {
   // preference can be read.
   const preference = useSyncExternalStore(subscribe, readPreference, () => null);
 
-  // "System" has to track OS changes live, the way the head script resolves it once.
-  useEffect(() => {
-    if (preference !== "system") return;
-    const media = window.matchMedia("(prefers-color-scheme: light)");
-    const onChange = () => applyPreference("system");
-    media.addEventListener("change", onChange);
-    return () => media.removeEventListener("change", onChange);
-  }, [preference]);
-
   return (
     <div className="site-theme-toggle" role="group" aria-label="Theme">
       {OPTIONS.map((option) => (
         <button
           key={option.value}
           type="button"
-          aria-label={option.label}
-          title={option.label}
           aria-pressed={preference === option.value}
           onClick={() => setPreference(option.value)}
         >
           {option.icon}
+          {option.label}
         </button>
       ))}
     </div>

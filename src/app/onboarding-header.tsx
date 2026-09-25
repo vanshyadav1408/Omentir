@@ -9,7 +9,7 @@ export default function OnboardingHeader() {
       <div className="omentir-primary-width pointer-events-auto flex h-16 min-w-0 items-center">
         <Link
           href="/"
-          className="flex min-w-0 shrink-0 select-none items-center gap-1.5 text-[20px] font-medium leading-none tracking-tight text-white md:gap-2 md:text-[24px]"
+          className="flex min-w-0 shrink-0 select-none items-center gap-1.5 text-[20px] font-medium leading-none tracking-tight text-[var(--site-text)] md:gap-2 md:text-[24px]"
         >
           <LogoMark className="h-6 w-6 md:h-7 md:w-7" />
           <span className="truncate">Omentir</span>

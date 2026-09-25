@@ -96,7 +96,7 @@ export default function OnboardingProgress({
             </span>
             <span
               className={`w-full px-0.5 text-center text-[10px] leading-tight sm:text-xs ${
-                active ? "font-medium text-white" : "text-[#737373]"
+                active ? "font-medium text-[var(--site-text)]" : "text-[var(--site-text-2)]"
               }`}
             >
               {label}

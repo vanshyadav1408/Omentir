@@ -274,16 +274,10 @@ export default function StatsDashboard({ initialQuery, initialView }: { initialQ
         <div className="stats-brand">
           {/* eslint-disable-next-line @next/next/no-img-element -- same-origin app icon */}
           <img src="/icon.png" alt="" />
-          Omentir <small>stats</small>
+          Omentir
         </div>
 
         <div className="stats-toolbar">
-          <span className="stats-pill">
-            {/* eslint-disable-next-line @next/next/no-img-element -- same-origin app icon */}
-            <img src="/icon.png" alt="" />
-            omentir.com
-          </span>
-
           <Menu className="stats-pill" trigger={<span>{VIEWS.find((v) => v.key === view)?.label}</span>}>
             {(close) =>
               VIEWS.map((v) => (

@@ -37,7 +37,7 @@ export default function AuthShell({
         {children}
       </div>
       {footer ? (
-        <div className="mt-auto px-5 py-6 text-center text-xs leading-5 text-[#737373]">
+        <div className="mt-auto px-5 py-6 text-center text-xs leading-5 text-[var(--site-text-2)]">
           {footer}
         </div>
       ) : (

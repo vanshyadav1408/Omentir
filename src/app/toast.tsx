@@ -247,37 +247,37 @@ function ToastCard({
     return (
       <div
         role="status"
-        className="pointer-events-auto w-[min(calc(100vw-2rem),18rem)] overflow-hidden rounded-xl border border-[rgba(255,255,255,0.12)] bg-[var(--md-sys-color-surface-container-high,var(--google-surface,#1e1f20))] shadow-[0_12px_32px_rgba(0,0,0,0.32)] sm:w-[min(100%,20rem)] sm:rounded-2xl"
+        className="pointer-events-auto w-[min(calc(100vw-2rem),18rem)] overflow-hidden rounded-xl border border-[var(--site-border)] bg-[var(--md-sys-color-surface-container-high,var(--google-surface,#1e1f20))] shadow-[0_12px_32px_rgba(0,0,0,0.32)] sm:w-[min(100%,20rem)] sm:rounded-2xl"
         style={{
           fontFamily: "var(--font-app-sans), var(--font-google-sans), var(--font-roboto), sans-serif",
           animation: `${mobileBottom ? "omentir-toast-agent-mobile" : "omentir-toast-agent"} ${durationMs}ms ease forwards`,
-          color: "#ffffff",
+          color: "var(--site-text)",
         }}
       >
         <div className="flex items-center gap-2.5 px-3 py-2.5 sm:gap-3 sm:px-4 sm:py-3">
           <span
             className="grid h-7 w-7 shrink-0 place-items-center sm:h-8 sm:w-8"
-            style={{ color: "#ffffff" }}
+            style={{ color: "var(--site-text)" }}
             aria-hidden
           >
-            {/* Quiet check — pure white via style so dark theme remaps cannot wash it. */}
+            {/* Quiet check: ink via inline style so the theme remaps cannot wash it. */}
             <span
               className="material-symbols-outlined text-[20px]! font-light leading-none sm:text-[22px]!"
-              style={{ color: "#ffffff" }}
+              style={{ color: "var(--site-text)" }}
             >
               check_circle
             </span>
           </span>
           <div className="min-w-0 flex-1">
             <p
-              style={{ fontFamily: "var(--font-varta)", color: "#ffffff" }}
+              style={{ fontFamily: "var(--font-varta)", color: "var(--site-text)" }}
               className="text-[13px] font-semibold leading-4 sm:text-[14px] sm:leading-5"
             >
               {toast.title || "Agent started"}
             </p>
             <p
               className="mt-0.5 line-clamp-2 text-[11px] font-medium leading-4 sm:text-[12px] sm:leading-[1.35]"
-              style={{ color: "rgba(255,255,255,0.88)" }}
+              style={{ color: "var(--site-text-2)" }}
             >
               {toast.message}
             </p>

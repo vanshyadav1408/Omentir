@@ -4,17 +4,15 @@
    `node scripts/build-icon-font.mjs` after adding a new icon name. */
 @import "./icon-font.css";
 
-/* Dark is the only theme, but the `dark:` variant is deliberately kept and
-   pinned to the `.dark` class instead of being deleted. `<html>` always carries
-   that class, so any surviving or newly written `dark:` utility simply always
-   applies. Dropping this line would hand `dark:` back to Tailwind's default
-   prefers-color-scheme implementation, which would silently reintroduce
-   light-mode branching on devices set to light. */
-@custom-variant dark (&:where(.dark, .dark *));
+/* `dark:` follows the resolved site theme (data-site-theme, set before paint
+   by the head script), not the OS setting and not the `.dark` class, which
+   <html> keeps in both themes for the html.dark token rules below. */
+@custom-variant dark (&:where(:root:not([data-site-theme="light"]), :root:not([data-site-theme="light"]) *));
 
-/* ── Material 3 single-seed tonal system (dark only) ──────────────────────
-   Dark is the only theme, so this is the whole palette — there is no light
-   block to override and no `html.dark` token layer to keep in sync.
+/* ── Material 3 single-seed tonal system (base layer) ─────────────────────
+   These are the original dark values. The "Site theme" block near the end of
+   this file remaps the surface, text and border roles onto the Cursor-style
+   olive palette and supplies the light theme, so new colors belong there.
 
    Seed only: #ffffff. All brand-derived roles come from that one color via
    color-mix (HCT-style tone ladder approximation: T0–T100). Do not invent new
@@ -73,7 +71,7 @@
   --auth-cta-hover: #333b2c;
   --auth-cta-fg: #ffffff;
   --auth-btn-height: 40px;
-  --auth-btn-radius: 8px;
+  --auth-btn-radius: 9999px;
   --auth-btn-font-size: 14px;
   --auth-btn-font-weight: 500;
   --color-auth-cta: var(--auth-cta-bg);
@@ -495,16 +493,12 @@ h6 {
 
 /* The authenticated dashboard uses one warm neutral surface throughout. */
 .dashboard-shell {
-  /* Cursor-like app chrome: near-black canvas, hairline cards, 8px corners.
-     Scoped here so marketing pages keep the existing Material tokens. */
-  --google-bg: #0a0a0a;
-  --google-surface: #0a0a0a;
-  --google-surface-low: #070707;
-  --google-surface-high: #141414;
-  --google-surface-highest: #1c1c1c;
-  --google-border: #262626;
-  --google-text-primary: rgba(255, 255, 255, 0.92);
-  --google-text-secondary: rgba(255, 255, 255, 0.52);
+  /* Cursor-like app chrome on the shared site palette (light or dark):
+     canvas and cards are the same tone, hairline borders, 8px corners. */
+  --google-surface: var(--site-bg);
+  --google-surface-low: var(--site-bg);
+  --google-surface-high: var(--site-card);
+  --google-surface-highest: var(--site-card-2);
   --md-sys-color-surface: var(--google-bg);
   --md-sys-color-surface-container-lowest: var(--google-bg);
   --md-sys-color-surface-container-low: var(--google-surface-low);
@@ -513,7 +507,7 @@ h6 {
   --md-sys-color-surface-container-highest: var(--google-surface-highest);
   --md-sys-color-outline: var(--google-border);
   --md-sys-color-outline-variant: var(--google-border);
-  --md-sys-nav-item-active: #1f1f1f;
+  --md-sys-nav-item-active: var(--site-card-3);
   --md-sys-shape-corner-small: 6px;
   --md-sys-shape-corner-medium: 8px;
   --md-sys-shape-corner-large: 10px;
@@ -1432,14 +1426,14 @@ select:not([class*="border-0"]):not([class*="border-none"]):focus-visible {
 
 .m3-btn-pair > .m3-btn-outlined {
   background: transparent;
-  border-color: rgba(255, 255, 255, 0.28);
-  color: #fff;
+  border-color: color-mix(in oklab, var(--site-text) 28%, transparent);
+  color: var(--site-text);
   box-shadow: none;
 }
 
 .m3-btn-pair > .m3-btn-outlined:hover:not(:disabled) {
-  border-color: rgba(255, 255, 255, 0.5);
-  background: rgba(255, 255, 255, 0.06);
+  border-color: color-mix(in oklab, var(--site-text) 50%, transparent);
+  background: color-mix(in oklab, var(--site-text) 6%, transparent);
   box-shadow: none;
 }
 
@@ -1542,8 +1536,8 @@ button[data-navigation-pending="true"] {
 
 .navigation-feedback-bar {
   transform-origin: left center;
-  background: linear-gradient(90deg, var(--md-sys-color-primary) 48%, #171717 100%);
-  box-shadow: 0 0 14px rgba(255, 255, 255, 0.22);
+  background: linear-gradient(90deg, var(--md-sys-color-primary) 48%, var(--site-card-3) 100%);
+  box-shadow: 0 0 14px color-mix(in oklab, var(--site-text) 22%, transparent);
   animation: omentir-navigation-feedback 920ms ease-in-out infinite;
 }
 
@@ -2353,7 +2347,7 @@ html[data-theme="dark"] .recommended-badge {
 
   html.dark .m3-modal-surface::before,
   html.dark .m3-dialog-surface::before {
-    background-color: rgba(255, 255, 255, 0.24);
+    background-color: color-mix(in oklab, var(--site-text) 24%, transparent);
   }
 }
 
@@ -4394,32 +4388,32 @@ html.marketing-menu-open [data-marketing-header] {
   min-height: 2.25rem;
   padding-block: 0;
   padding-inline: 1.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.28);
+  border: 1px solid color-mix(in oklab, var(--site-text) 28%, transparent);
   background: transparent;
-  color: #fff;
+  color: var(--site-text);
   box-shadow: none;
 }
 
 .hero-cta-secondary:hover:not(:disabled) {
-  border-color: rgba(255, 255, 255, 0.5);
-  background: rgba(255, 255, 255, 0.06);
+  border-color: color-mix(in oklab, var(--site-text) 50%, transparent);
+  background: color-mix(in oklab, var(--site-text) 6%, transparent);
 }
 
 html.dark a.hero-cta-secondary.m3-btn-outlined,
 html[data-theme="dark"] a.hero-cta-secondary.m3-btn-outlined,
 html.dark .m3-btn-pair > .m3-btn-outlined,
 html[data-theme="dark"] .m3-btn-pair > .m3-btn-outlined {
-  border-color: rgba(255, 255, 255, 0.28) !important;
+  border-color: color-mix(in oklab, var(--site-text) 28%, transparent) !important;
   background: transparent !important;
-  color: #fff !important;
+  color: var(--site-text) !important;
 }
 
 html.dark a.hero-cta-secondary.m3-btn-outlined:hover,
 html[data-theme="dark"] a.hero-cta-secondary.m3-btn-outlined:hover,
 html.dark .m3-btn-pair > .m3-btn-outlined:hover:not(:disabled),
 html[data-theme="dark"] .m3-btn-pair > .m3-btn-outlined:hover:not(:disabled) {
-  border-color: rgba(255, 255, 255, 0.5) !important;
-  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: color-mix(in oklab, var(--site-text) 50%, transparent) !important;
+  background: color-mix(in oklab, var(--site-text) 6%, transparent) !important;
 }
 
 .hero-app {
@@ -4768,29 +4762,29 @@ html[data-theme="dark"] .marketing-cta {
   animation: landing-fade-up 500ms ease-out backwards;
 }
 
-/* Auth / onboarding chrome. Explicit hex so the dark-theme zinc/white remaps
-   cannot turn these into elevated cards or inverted ink. */
+/* Auth / onboarding chrome, on the site palette so it follows light/dark.
+   Own classes (not zinc/white utilities) so the dark remaps cannot turn these
+   into elevated cards or inverted ink. */
 .auth-shell {
   min-height: 100vh;
-  background: #000;
-  color: #fff;
-  color-scheme: dark;
+  background: var(--site-bg);
+  color: var(--site-text);
 }
 
 .auth-label {
   display: block;
   margin-bottom: 6px;
   font-size: 13px;
-  color: #a3a3a3;
+  color: var(--site-text-2);
 }
 
 .auth-input,
 .auth-textarea {
   width: 100%;
-  border: 1px solid #333;
+  border: 1px solid var(--site-border);
   border-radius: 8px;
   background: transparent;
-  color: #fff;
+  color: var(--site-text);
   font-size: 14px;
   outline: none;
 }
@@ -4808,17 +4802,17 @@ html[data-theme="dark"] .marketing-cta {
 
 .auth-input::placeholder,
 .auth-textarea::placeholder {
-  color: #737373;
+  color: var(--site-text-3);
 }
 
 .auth-input:focus,
 .auth-textarea:focus {
-  border-color: #555;
+  border-color: color-mix(in oklab, var(--site-text) 40%, transparent);
 }
 
 .auth-input option {
-  background: #111;
-  color: #fff;
+  background: var(--site-card);
+  color: var(--site-text);
 }
 
 select.auth-input {
@@ -4837,9 +4831,9 @@ select.auth-input {
 .auth-input:-webkit-autofill,
 .auth-input:-webkit-autofill:hover,
 .auth-input:-webkit-autofill:focus {
-  -webkit-text-fill-color: #fff;
-  caret-color: #fff;
-  box-shadow: 0 0 0 1000px #000 inset;
+  -webkit-text-fill-color: var(--site-text);
+  caret-color: var(--site-text);
+  box-shadow: 0 0 0 1000px var(--site-bg) inset;
   transition: background-color 9999s ease-out;
 }
 
@@ -4854,17 +4848,18 @@ select.auth-input {
   border-radius: var(--auth-btn-radius);
   font-size: var(--auth-btn-font-size);
   font-weight: var(--auth-btn-font-weight);
-  color: var(--auth-cta-fg);
+  color: var(--site-text);
+  transition: background-color 150ms ease, opacity 150ms ease;
 }
 
 .auth-btn {
-  border: 1px solid #2a2a2a;
-  background: #1a1a1a;
+  border: 1px solid var(--site-border);
+  background: var(--site-card-2);
   text-decoration: none;
 }
 
 .auth-btn:hover:not(:disabled) {
-  background: #222;
+  background: var(--site-card-3);
 }
 
 .auth-btn-signup {
@@ -4889,21 +4884,21 @@ select.auth-input {
 }
 
 .auth-social {
-  border: 1px solid #2e2e2e;
-  background: #0a0a0a;
+  border: 1px solid var(--site-border);
+  background: var(--site-card);
   text-decoration: none;
 }
 
 .auth-social:hover:not(:disabled) {
-  background: #141414;
+  background: var(--site-card-2);
 }
 
 .auth-muted {
-  color: #8f8f8f;
+  color: var(--site-text-2);
 }
 
 .auth-link {
-  color: #c8c8c8;
+  color: var(--site-text-2);
   text-decoration: none;
   cursor: pointer;
   background: none;
@@ -4913,12 +4908,12 @@ select.auth-input {
 }
 
 .auth-link:hover {
-  color: #fff;
+  color: var(--site-text);
 }
 
 .auth-error {
   font-size: 13px;
-  color: #f2b8b5;
+  color: var(--google-error);
 }
 
 .auth-progress-dot {
@@ -4931,14 +4926,14 @@ select.auth-input {
 }
 
 .auth-progress-dot.is-filled {
-  background: #fff;
-  color: #000;
+  background: var(--site-text);
+  color: var(--site-bg);
 }
 
 .auth-progress-dot.is-idle {
-  border: 1px solid #333;
+  border: 1px solid var(--site-border);
   background: transparent;
-  color: #737373;
+  color: var(--site-text-3);
 }
 
 .hero-enter-delay-1 {
@@ -5209,7 +5204,7 @@ html[data-theme="dark"] .blog-article a {
 
 html.dark .blog-article a:hover,
 html[data-theme="dark"] .blog-article a:hover {
-  color: var(--md-ref-primary-80, #ffffff) !important;
+  color: var(--site-accent) !important;
 }
 
 /* Product names (Mintlify, Cursor) are green with no underline.
@@ -5843,11 +5838,11 @@ html.dark [class~="bg-[#e85e6b]"] {
 }
 
 html.dark [class*="bg-[rgba(186,56,113"] {
-  background-color: rgba(255, 255, 255, 0.08) !important;
+  background-color: color-mix(in oklab, var(--site-text) 8%, transparent) !important;
 }
 
 html.dark [class*="hover:bg-[rgba(186,56,113"]:hover {
-  background-color: rgba(255, 255, 255, 0.05) !important;
+  background-color: color-mix(in oklab, var(--site-text) 5%, transparent) !important;
 }
 
 html.dark [class*="file:bg-[#ba3871]"]::file-selector-button {
@@ -5892,13 +5887,13 @@ html.dark [class~="bg-[#171717]"] {
 html.dark [class~="bg-[#ffe1da]"],
 html.dark [class~="bg-[#ff8a73]"] {
   background-color: color-mix(in srgb, #ff8a73 22%, var(--google-surface)) !important;
-  color: #ffb4a4 !important;
+  color: var(--tone-salmon) !important;
 }
 
 html.dark [class~="bg-[#dbeafe]"],
 html.dark [class~="bg-[#ede7ff]"] {
   background-color: color-mix(in srgb, #7c9cff 18%, var(--google-surface)) !important;
-  color: #a8c7fa !important;
+  color: var(--tone-blue) !important;
 }
 
 /* ── Typography hierarchy (90% / 70% / 38%) ────────────────────────────── */
@@ -5950,7 +5945,7 @@ html.dark .hover\:text-blue-700:hover,
 html.dark [class~="text-blue-600"],
 html.dark [class~="text-blue-700"],
 html.dark [class~="hover:text-blue-700"]:hover {
-  color: #a8c7fa !important;
+  color: var(--tone-blue) !important;
 }
 
 html.dark [class~="text-[#ba3871]"],
@@ -5961,21 +5956,21 @@ html.dark .text-gradient-brand {
 }
 
 html.dark [class~="text-[#ff8a73]"] {
-  color: #ffb4a4 !important;
+  color: var(--tone-salmon) !important;
 }
 
 html.dark [class~="text-[#0a66c2]"],
 html.dark [class~="text-[#3b82f6]"],
 html.dark [class~="text-[#1e3a8a]"] {
-  color: #a8c7fa !important;
+  color: var(--tone-blue) !important;
 }
 
 html.dark [class~="text-[#7c5dff]"] {
-  color: #c4b5fd !important;
+  color: var(--tone-violet) !important;
 }
 
 html.dark [class~="text-[#16a34a]"] {
-  color: #6ee7b7 !important;
+  color: var(--tone-green) !important;
 }
 
 /* White text on primary fills keeps high contrast via on-primary when parent remaps */
@@ -6053,7 +6048,7 @@ html.dark [class~="bg-emerald-50"] {
 }
 html.dark .text-emerald-700,
 html.dark [class~="text-emerald-700"] {
-  color: #6ee7b7 !important;
+  color: var(--tone-green) !important;
 }
 html.dark .border-emerald-200,
 html.dark [class~="border-emerald-200"] {
@@ -6068,7 +6063,7 @@ html.dark .text-amber-700,
 html.dark .text-amber-800,
 html.dark [class~="text-amber-700"],
 html.dark [class~="text-amber-800"] {
-  color: #fcd34d !important;
+  color: var(--tone-amber) !important;
 }
 html.dark .border-amber-200,
 html.dark [class~="border-amber-200"] {
@@ -6126,7 +6121,7 @@ html.dark .m3-btn-filled:hover:not(:disabled) {
 html.dark .m3-btn-filled-secondary:hover:not(:disabled) {
   box-shadow: none !important;
   filter: none;
-  background-color: color-mix(in srgb, #fff 8%, var(--md-sys-color-secondary)) !important;
+  background-color: color-mix(in srgb, var(--site-text) 8%, var(--md-sys-color-secondary)) !important;
 }
 
 html.dark .m3-btn-outlined {
@@ -6140,7 +6135,7 @@ html.dark input:-webkit-autofill:hover,
 html.dark input:-webkit-autofill:focus,
 html.dark textarea:-webkit-autofill,
 html.dark textarea:-webkit-autofill:focus {
-  -webkit-text-fill-color: rgba(255, 255, 255, 0.9);
+  -webkit-text-fill-color: var(--site-text);
   -webkit-box-shadow: 0 0 0 1000px var(--google-surface-high) inset;
   caret-color: var(--google-primary);
 }
@@ -6157,15 +6152,15 @@ html[data-theme="dark"] .average-ticket-size-field input:-webkit-autofill:focus 
 
 /* Scrollbars in dark */
 html.dark * {
-  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+  scrollbar-color: color-mix(in oklab, var(--google-text-primary) 24%, transparent) transparent;
 }
 
 html.dark *::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.22);
+  background-color: color-mix(in oklab, var(--site-text) 22%, transparent);
 }
 
 html.dark *::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(255, 255, 255, 0.36);
+  background-color: color-mix(in oklab, var(--site-text) 36%, transparent);
 }
 
 /* ── Activity / analysis chart (Google data-viz) ─────────────────────────
@@ -6182,9 +6177,9 @@ html.dark *::-webkit-scrollbar-thumb:hover {
 }
 
 html.dark .analysis-chart {
-  --analysis-chart-grid: rgba(255, 255, 255, 0.06);
-  --analysis-chart-label: rgba(255, 255, 255, 0.6);
-  --analysis-chart-hover-rule: rgba(255, 255, 255, 0.16);
+  --analysis-chart-grid: color-mix(in oklab, var(--site-text) 10%, transparent);
+  --analysis-chart-label: var(--site-text-2);
+  --analysis-chart-hover-rule: color-mix(in oklab, var(--site-text) 18%, transparent);
   --analysis-chart-point-fill: var(--md-sys-color-surface-container-low);
   --analysis-chart-tooltip-bg: var(--google-surface-highest, #27282b);
   --analysis-chart-tooltip-shadow: none;
@@ -6252,7 +6247,7 @@ html.dark .marketing-cta :where(.text-white, [class~="text-white/90"], [class~="
 
 html.dark .marketing-cta .m3-btn-filled-secondary {
   background-color: var(--google-bg) !important;
-  color: #ffffff !important;
+  color: var(--md-sys-color-on-secondary) !important;
 }
 
 /* Pricing / card shells with black or brand outer frames */
@@ -6272,12 +6267,12 @@ html.dark [class~="border-black"] {
 
 html.dark .thin-scroll,
 html.dark .thin-scroll-overlay {
-  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+  scrollbar-color: color-mix(in oklab, var(--google-text-primary) 24%, transparent) transparent;
 }
 
 html.dark .thin-scroll::-webkit-scrollbar-thumb,
 html.dark .thin-scroll-overlay::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.22);
+  background-color: color-mix(in oklab, var(--site-text) 22%, transparent);
 }
 
 /* Token pills on dark editors */
@@ -6287,13 +6282,13 @@ html.dark .thin-scroll-overlay::-webkit-scrollbar-thumb {
 html.dark body,
 html[data-theme="dark"] body {
   background: var(--google-bg) !important;
-  color: rgba(255, 255, 255, 0.9) !important;
+  color: var(--google-text-primary) !important;
 }
 
 html.dark main,
 html[data-theme="dark"] main {
   background-color: var(--google-bg);
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--google-text-primary);
 }
 
 /* Pure black text utilities (very common on marketing) → near-white */
@@ -6324,7 +6319,7 @@ html.dark [class*="border-black"] {
 
 html.dark [class~="border-black/10"],
 html.dark [class*="border-black/"] {
-  border-color: rgba(255, 255, 255, 0.12) !important;
+  border-color: var(--site-border) !important;
 }
 
 /* Catch-all zinc text (website + app, not only dashboard-shell). The inks
@@ -6341,14 +6336,14 @@ html.dark [class*="text-zinc-7"],
 html.dark [class*="text-zinc-6"],
 html[data-theme="dark"] [class*="text-zinc-7"],
 html[data-theme="dark"] [class*="text-zinc-6"] {
-  color: color-mix(in srgb, var(--google-text-primary) 76%, transparent) !important;
+  color: var(--ink-soft) !important;
 }
 
 html.dark [class*="text-zinc-5"],
 html.dark [class*="text-zinc-4"],
 html.dark [class*="text-zinc-3"],
 html[data-theme="dark"] [class*="text-zinc-5"] {
-  color: color-mix(in srgb, var(--google-text-primary) 49%, transparent) !important;
+  color: var(--ink-faint) !important;
 }
 
 /* Headings without an explicit text-* utility */
@@ -6369,7 +6364,7 @@ html.dark .text-gradient-brand {
 
 /* Marketing header stays readable on dark canvas */
 html.dark [data-marketing-header] {
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--google-text-primary);
 }
 
 /* Pricing / feature cards with black outer frame → soft border, dark fill */
@@ -6463,7 +6458,7 @@ html.dark .font-semibold.text-black {
   height: 5.25rem;
   padding: 0.875rem 1.125rem;
   border: 1px solid #0a0a0a;
-  border-radius: var(--auth-btn-radius);
+  border-radius: 8px;
   background: #12160f;
   transition: background 180ms ease;
 }
@@ -6645,7 +6640,7 @@ html:has(.dashboard-shell) .m3-dialog-btn {
 }
 
 .dashboard-shell .app-seg button[aria-pressed="true"] {
-  background: #1f1f1f;
+  background: var(--site-card-3);
   color: var(--google-text-primary);
 }
 
@@ -6859,20 +6854,18 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
     center / contain no-repeat;
 }
 
-/* ── Site theme (Cursor-style marketing pages) ──────────────────────────────
-   Landing, pricing and legal pages carry `.site-theme` on their <main>. The
-   layout is modelled on cursor.com: its warm brown neutrals are shifted to
-   the olive of our feature panels (#12160f), and cards keep our 1px border
-   and corner radius instead of Cursor's borderless tiles.
+/* ── Site theme (Cursor-style, whole product) ──────────────────────────────
+   Modelled on cursor.com: its warm brown neutrals are shifted to the olive of
+   our feature panels (#12160f), and cards keep our 1px border and corner
+   radius instead of Cursor's borderless tiles. Applies to the marketing site
+   and the app alike.
 
-   Tokens sit on :root (via :has) rather than on <main> so the fixed header,
-   its dropdowns and body overscroll pick them up too, and so the --google-*
-   remap below recomputes every --md-sys-color-* role declared on :root.
-   `data-site-theme` is the resolved theme (light | dark), set before paint by
-   the inline script in layout.tsx and by SiteThemeToggle. Pages without
-   `.site-theme` (the app and the other marketing pages) are untouched: they
-   stay dark-only. The dark --site-* palette is defined on every page because
-   the shared header and footer draw their pills from it. */
+   The --google-* remap below sits on :root, where every --md-sys-color-* role
+   is declared, so all of them recompute from the site palette. Dark is the
+   default; `data-site-theme="light"` (resolved before paint by the inline
+   script in layout.tsx, changed by SiteThemeToggle) swaps in the light
+   palette. <html> keeps the `dark` class in both, so the `html.dark` rules
+   below stay active and must read tokens rather than hardcoded white. */
 :root {
   --site-bg: #0d110b;
   --site-card: #12160f;
@@ -6884,11 +6877,23 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
   --site-accent: #c2d0aa;
   --site-text-2: color-mix(in oklab, var(--site-text) 62%, transparent);
   --site-text-3: color-mix(in oklab, var(--site-text) 42%, transparent);
+
+  /* Muted ink steps for the legacy zinc text rules (same alphas as before on
+     dark; the light theme raises them so grey text stays dark). */
+  --ink-soft: color-mix(in srgb, var(--google-text-primary) 76%, transparent);
+  --ink-faint: color-mix(in srgb, var(--google-text-primary) 49%, transparent);
+
+  /* Status and link tints. Pastel on dark; the light theme darkens them. */
+  --tone-blue: #a8c7fa;
+  --tone-green: #6ee7b7;
+  --tone-amber: #fcd34d;
+  --tone-salmon: #ffb4a4;
+  --tone-violet: #c4b5fd;
 }
 
-:root:has(.site-theme) {
-  /* Geist replaces both app faces, so every var(--font-google-sans),
-     var(--font-roboto) and --font-app-sans use on these pages follows. */
+:root {
+  /* Geist is the only sans face; the old variable names point at it so every
+     var(--font-google-sans), var(--font-roboto) and --font-app-sans follows. */
   --font-google-sans: var(--font-site-sans);
   --font-roboto: var(--font-site-sans);
 
@@ -6909,18 +6914,62 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
   --md-sys-color-on-secondary: var(--site-text);
   --md-sys-state-hover: color-mix(in oklab, var(--site-text) 6%, transparent);
   --md-sys-state-pressed: color-mix(in oklab, var(--site-text) 10%, transparent);
+  --md-sys-nav-item-active: var(--site-card-3);
+  --md-sys-color-skeleton-base: var(--site-card-2);
+  --md-sys-color-skeleton-highlight: var(--site-card-4);
+  --md-sys-color-inverse-surface: var(--site-text);
+  --md-sys-color-inverse-on-surface: var(--site-bg);
+  --md-sys-color-field-outline-hover: color-mix(in oklab, var(--site-text) 40%, var(--site-border));
   background-color: var(--site-bg);
 }
 
-:root[data-site-theme="light"]:has(.site-theme) {
+:root[data-site-theme="light"] {
+  color-scheme: light;
   --site-bg: #f6f7f2;
   --site-card: #eff1ea;
   --site-card-2: #e9ece3;
   --site-card-3: #e3e7dc;
   --site-card-4: #dde2d5;
-  --site-text: #1f241a;
-  --site-border: #dde1d4;
-  --site-accent: #4d6134;
+  --site-text: #000000;
+  /* Neutral black borders and ink in light: no green in text or rules. */
+  --site-border: rgba(0, 0, 0, 0.22);
+  --site-accent: #000000;
+  /* Secondary text stays dark in light: 80% / 62% black, not 62% / 42%. */
+  --site-text-2: color-mix(in oklab, var(--site-text) 80%, transparent);
+  --site-text-3: color-mix(in oklab, var(--site-text) 62%, transparent);
+  --ink-soft: color-mix(in oklab, var(--site-text) 85%, transparent);
+  --ink-faint: color-mix(in oklab, var(--site-text) 68%, transparent);
+
+  /* The Tailwind ink ramp is remapped to white alphas for the dark theme
+     further up; in light it becomes the same steps of dark ink. */
+  --color-black: #000000;
+  --color-zinc-300: rgba(0, 0, 0, 0.22);
+  --color-zinc-400: color-mix(in oklab, var(--site-text) 62%, transparent);
+  --color-zinc-500: color-mix(in oklab, var(--site-text) 74%, transparent);
+  --color-zinc-600: color-mix(in oklab, var(--site-text) 80%, transparent);
+  --color-zinc-700: color-mix(in oklab, var(--site-text) 86%, transparent);
+  --color-zinc-800: color-mix(in oklab, var(--site-text) 90%, transparent);
+  --color-zinc-900: var(--site-text);
+  --color-zinc-950: var(--site-text);
+  --color-neutral-800: color-mix(in oklab, var(--site-text) 90%, transparent);
+  --color-neutral-900: var(--site-text);
+  --color-neutral-950: var(--site-text);
+  --color-stone-800: color-mix(in oklab, var(--site-text) 90%, transparent);
+  --color-stone-900: var(--site-text);
+  --color-stone-950: var(--site-text);
+
+  --tone-blue: #1a56c2;
+  --tone-green: #15803d;
+  --tone-amber: #b45309;
+  --tone-salmon: #c2410c;
+  --tone-violet: #6d28d9;
+  --color-blue-500: #1a56c2;
+  --color-blue-600: #1a56c2;
+  --color-blue-700: #174ea6;
+  --google-error: #b3261e;
+  --google-error-container: #f9dedc;
+  --md-sys-color-on-error: #ffffff;
+  --md-sys-color-on-error-container: #410e0b;
 }
 
 /* :root raises this above the global `html.dark main` rule, which hardcodes
@@ -6930,35 +6979,60 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
   color: var(--site-text);
 }
 
-/* Older Material buttons on marketing pages become Cursor pills. The pair
-   rule hardcodes white ink on the outlined button, so restate it here. */
-.site-theme .m3-btn {
-  border-radius: 9999px;
-}
-
-.site-theme .m3-btn-pair > .m3-btn {
+/* Material buttons everywhere become Cursor pills: regular weight, and hover
+   dims the fill instead of adding a shadow. The pair rule hardcodes white ink
+   on the outlined button, so its colors are restated here. */
+:root .m3-btn {
   border-radius: 9999px;
   font-weight: 400;
 }
 
+:root .m3-btn-pair > .m3-btn {
+  border-radius: 9999px;
+  font-weight: 400;
+}
+
+:root .m3-btn-filled:hover:not(:disabled),
+:root .m3-btn-filled-secondary:hover:not(:disabled) {
+  filter: none;
+  box-shadow: none;
+  opacity: 0.88;
+}
+
 /* !important + :root: the global `html.dark .m3-btn-pair > .m3-btn-outlined`
    rule forces white with !important. */
-:root .site-theme .m3-btn-pair > .m3-btn-outlined,
-:root .site-theme .m3-btn-outlined {
-  border-color: color-mix(in oklab, var(--site-text) 16%, transparent) !important;
+:root .m3-btn-pair > .m3-btn-outlined,
+:root .m3-btn-outlined {
+  border-color: var(--site-border) !important;
   color: var(--site-text) !important;
 }
 
-:root .site-theme .m3-btn-pair > .m3-btn-outlined:hover:not(:disabled),
-:root .site-theme .m3-btn-outlined:hover:not(:disabled) {
+:root .m3-btn-pair > .m3-btn-outlined:hover:not(:disabled),
+:root .m3-btn-outlined:hover:not(:disabled) {
   border-color: color-mix(in oklab, var(--site-text) 28%, transparent) !important;
   background: var(--site-card-2) !important;
 }
 
-/* Cursor sets every heading in the regular weight. The global unlayered
+/* Buttons written with utilities instead of .m3-btn: filled actions (the
+   legacy pink fills, which the theme maps to ink) and bordered white/clear
+   buttons take the same pill and hover dimming. */
+:root :is(button, a):is([class~="bg-[#ba3871]"], [class~="bg-[#e85e6b]"], [class~="bg-zinc-900"], [class~="bg-[#0a66c2]"], [class~="bg-black"]) {
+  border-radius: 9999px;
+  transition: opacity 150ms ease, background-color 150ms ease;
+}
+
+:root :is(button, a):is([class~="bg-[#ba3871]"], [class~="bg-[#e85e6b]"], [class~="bg-zinc-900"], [class~="bg-[#0a66c2]"], [class~="bg-black"]):hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+:root :is(button, a)[class~="border"]:is([class~="bg-white"], [class~="bg-transparent"])[class*="px-"] {
+  border-radius: 9999px;
+}
+
+/* Cursor sets headings in the regular weight. The global unlayered
    `h1…h6 { font-weight: 700 }` rule beats Tailwind's layered font-* utilities,
-   so the weight is set here. The app mocks keep their own weights. */
-.site-theme :is(h1, h2, h3, h4, h5, h6):not(.home-mock-app *) {
+   so the weight is set here. The landing mocks keep their own weights. */
+:is(h1, h2, h3, h4, h5, h6):not(.home-mock-app *) {
   font-weight: 400;
 }
 
@@ -7010,7 +7084,7 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
 
 .site-btn-outline {
   background-color: transparent;
-  border-color: color-mix(in oklab, var(--site-text) 16%, transparent);
+  border-color: var(--site-border);
   color: var(--site-text);
 }
 
@@ -7075,9 +7149,23 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
   background: var(--site-card-2);
 }
 
-:root[data-site-theme="light"] .site-theme .customer-logo-img {
-  filter: grayscale(1) invert(1) brightness(0.55) contrast(1.2);
+/* Light tiles: the logo files are drawn for the dark olive tile (light marks,
+   or dark plates like dibe's), so inverting turns marks dark and plates
+   white, and multiply drops the white. BlockSkunk ships its own light frame,
+   so it keeps its colours, in greyscale. */
+:root[data-site-theme="light"] .customer-logo-img {
+  filter: grayscale(1) invert(1) contrast(1.15);
   mix-blend-mode: multiply;
+  opacity: 0.85;
+}
+
+:root[data-site-theme="light"] .customer-logo-img[data-own-plate] {
+  filter: grayscale(1);
+}
+
+:root[data-site-theme="light"] .customer-logo-item:hover .customer-logo-img,
+:root[data-site-theme="light"] .customer-logo-item:focus-visible .customer-logo-img {
+  opacity: 1;
 }
 
 /* Feature cards: copy column left, product on the right, no divider. */
@@ -7183,21 +7271,24 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
   color: var(--md-sys-color-on-surface-variant);
 }
 
-/* System / light / dark switch, bottom right of the footer like cursor.com. */
+/* System / light / dark switch on the Settings page. */
 .site-theme-toggle {
   display: inline-flex;
   align-items: center;
-  padding: 2px;
+  gap: 2px;
+  padding: 3px;
   border: 1px solid var(--md-sys-color-outline-variant);
   border-radius: 9999px;
 }
 
 .site-theme-toggle button {
-  display: grid;
-  place-items: center;
-  width: 2rem;
-  height: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  height: 1.875rem;
+  padding: 0 0.875rem;
   border-radius: 9999px;
+  font-size: 0.8125rem;
   color: var(--md-sys-color-on-surface-variant);
   cursor: pointer;
   transition: background-color 150ms ease, color 150ms ease;
@@ -7208,7 +7299,7 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
 }
 
 .site-theme-toggle button[aria-pressed="true"] {
-  background-color: var(--site-card-3, var(--md-sys-color-surface-container-highest));
+  background-color: var(--site-card-3);
   color: var(--md-sys-color-on-surface);
 }
 
@@ -7300,6 +7391,8 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
 
 /* Landing stat cards under the hero demo. */
 .home-stat {
+  /* Slightly sharper than the 16px feature panels. */
+  border-radius: 6px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -7364,4 +7457,33 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
 .site-theme .blog-article > div > p,
 .site-theme .blog-article > section > p {
   margin-bottom: 1.25rem !important;
+}
+
+/* Controls are pills everywhere, like the landing CTAs: every button and
+   single-line field. A <button>/<a> counts as a control when it carries a
+   fixed control height (h-6 … h-12), or is a filled/bordered button sized by
+   small vertical padding; clickable cards use neither and keep their corners. Multi-line fields can't be pills, so they get 16px. */
+:root,
+:root .dashboard-shell,
+:root .m3-text-field--hero,
+:root .m3-text-field--compact {
+  --md-sys-text-field-radius: 9999px;
+}
+
+:root .m3-btn,
+:root .site-btn,
+:root input:is([type="submit"], [type="button"]),
+:root :is(button, a):is([class~="h-6"], [class~="h-7"], [class~="h-8"], [class~="h-9"], [class~="h-10"], [class~="h-11"], [class~="h-12"]),
+:root button:is([class~="py-0.5"], [class~="py-1"], [class~="py-1.5"], [class~="py-2"], [class~="py-2.5"]):is([class*="bg-"], [class~="border"]),
+:root input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="hidden"]):not([type="color"]),
+:root select,
+:root .m3-text-field__shell {
+  /* !important: the .app-compact density rules pin .m3-btn to 6px with a
+     long :not() chain that outranks any plain selector. */
+  border-radius: 9999px !important;
+}
+
+:root textarea,
+:root .m3-text-field__shell:has(textarea) {
+  border-radius: 16px !important;
 }

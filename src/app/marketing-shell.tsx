@@ -8,7 +8,6 @@ import HeaderAuth from "./header-auth";
 import LogoMark from "./logo-mark";
 import MarketingHeaderFrame from "./marketing-header-frame";
 import { MarketingMobileMenuButton } from "./marketing-mobile-nav";
-import SiteThemeToggle from "./site-theme-toggle";
 
 export function MarketingHeader({ transparentAtTop = false }: { transparentAtTop?: boolean }) {
   return (
@@ -217,10 +216,25 @@ function ConnectColumn() {
             <a
               href={item.href}
               {...(item.href.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-              className="site-footer-link"
+              className="site-footer-link inline-flex items-center gap-1"
             >
               {item.label}
-              {item.href.startsWith("http") ? " \u2197" : ""}
+              {item.href.startsWith("http") ? (
+                <svg
+                  viewBox="0 0 12 12"
+                  aria-hidden="true"
+                  className="h-2.5 w-2.5 shrink-0 text-[var(--md-sys-color-on-surface-variant)]"
+                >
+                  <path
+                    d="M3.5 8.5 8.5 3.5M4.25 3.5H8.5v4.25"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              ) : null}
             </a>
           </li>
         ))}
@@ -229,7 +243,7 @@ function ConnectColumn() {
   );
 }
 
-/** Laid out like cursor.com's footer, theme toggle bottom right. */
+/** Laid out like cursor.com's footer. The theme is chosen in app Settings. */
 export function MarketingFooter() {
   return (
     <footer className="site-footer pb-10 pt-14 md:pt-16">
@@ -246,12 +260,11 @@ export function MarketingFooter() {
           ))}
           <ConnectColumn />
         </div>
-        <div className="mt-14 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-14">
           <p className="site-footer-muted flex select-none items-center gap-2">
             <LogoMark className="h-4 w-4" />
             &copy; {new Date().getFullYear()} Omentir. Open Source, MIT licensed.
           </p>
-          <SiteThemeToggle />
         </div>
       </div>
     </footer>

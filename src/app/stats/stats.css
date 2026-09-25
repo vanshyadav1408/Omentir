@@ -1,20 +1,21 @@
-/* stats.omentir.com: a dark analytics page modelled on DataFast. Everything is
-   scoped under .stats-root so none of it leaks into the site or the app. */
+/* stats.omentir.com: an analytics page modelled on DataFast, on the shared
+   site palette so it follows light/dark like the rest of the product.
+   Everything is scoped under .stats-root so none of it leaks out. */
 
 .stats-root {
-  --st-bg: #1d1d1d;
-  --st-card: #252525;
-  --st-card-hover: #2c2c2c;
-  --st-border: #323232;
-  --st-border-strong: #3d3d3d;
-  --st-text: #ededed;
-  --st-muted: #9b9b9b;
-  --st-faint: #6f6f6f;
-  --st-visitors: #9cc3ef;
+  --st-bg: var(--site-bg);
+  --st-card: var(--site-card);
+  --st-card-hover: var(--site-card-2);
+  --st-border: var(--site-border);
+  --st-border-strong: color-mix(in oklab, var(--site-text) 18%, transparent);
+  --st-text: var(--site-text);
+  --st-muted: var(--site-text-2);
+  --st-faint: var(--site-text-3);
+  --st-visitors: var(--tone-blue);
   --st-revenue: #5d636e;
   --st-renewal: #858b96;
-  --st-bar: #383838;
-  --st-bar-revenue: #34496a;
+  --st-bar: var(--site-card-3);
+  --st-bar-revenue: color-mix(in oklab, var(--tone-blue) 30%, var(--site-card));
   --st-up: #4ade80;
   --st-down: #f87171;
   --st-accent: #e2703a;
@@ -30,7 +31,6 @@
   font-size: 14px;
   line-height: 1.4;
   -webkit-font-smoothing: antialiased;
-  color-scheme: dark;
 }
 
 :where(.stats-root) *,
@@ -175,7 +175,7 @@ button.stats-pill:hover,
   min-width: 180px;
   padding: 4px;
   border-radius: 12px;
-  background: #2a2a2a;
+  background: var(--site-card-2);
   border: 1px solid var(--st-border-strong);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
 }
@@ -193,11 +193,11 @@ button.stats-pill:hover,
 }
 
 .stats-menu-list button:hover {
-  background: #353535;
+  background: var(--site-card-4);
 }
 
 .stats-menu-list button[aria-checked="true"] {
-  background: #353535;
+  background: var(--site-card-4);
   font-weight: 600;
 }
 
@@ -253,8 +253,8 @@ button.stats-pill:hover,
   height: 28px;
   padding: 0 6px 0 10px;
   border-radius: 8px;
-  background: #2e3a4d;
-  border: 1px solid #3c4d68;
+  background: color-mix(in oklab, var(--tone-blue) 18%, var(--site-card));
+  border: 1px solid color-mix(in oklab, var(--tone-blue) 35%, var(--site-card));
   font-size: 13px;
 }
 
@@ -273,7 +273,7 @@ button.stats-pill:hover,
 }
 
 .stats-chip button:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: color-mix(in oklab, var(--site-text) 8%, transparent);
   color: var(--st-text);
 }
 
@@ -332,7 +332,7 @@ button.stats-pill:hover,
   gap: 2px;
   padding: 2px;
   border-radius: 9px;
-  background: #1f1f1f;
+  background: var(--site-card);
   border: 1px solid var(--st-border);
   overflow-x: auto;
   scrollbar-width: none;
@@ -355,7 +355,7 @@ button.stats-pill:hover,
 }
 
 .stats-tabs button[aria-selected="true"] {
-  background: #353535;
+  background: var(--site-card-4);
   color: var(--st-text);
   font-weight: 600;
 }
@@ -377,7 +377,7 @@ button.stats-pill:hover,
 }
 
 .stats-sort:hover {
-  background: #2f2f2f;
+  background: var(--site-card-3);
 }
 
 .stats-sort svg {
@@ -513,7 +513,7 @@ button.stats-pill:hover,
 }
 
 .stats-gridline {
-  stroke: #303030;
+  stroke: var(--site-border);
   stroke-width: 1;
 }
 
@@ -524,7 +524,7 @@ button.stats-pill:hover,
   min-width: 190px;
   padding: 10px 12px;
   border-radius: 12px;
-  background: #1b1b1b;
+  background: var(--site-card);
   border: 1px solid var(--st-border-strong);
   box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5);
   font-size: 12.5px;
@@ -619,11 +619,11 @@ button.stats-pill:hover,
 }
 
 .stats-row:hover .stats-row-bar {
-  background: #424242;
+  background: var(--site-card-4);
 }
 
 .stats-row:hover .stats-row-rev {
-  background: #3d5780;
+  background: color-mix(in oklab, var(--tone-blue) 45%, var(--site-card));
 }
 
 .stats-row-label {
@@ -712,7 +712,7 @@ button.stats-pill:hover,
 
 .stats-details-btn:hover {
   color: var(--st-text);
-  background: #2f2f2f;
+  background: var(--site-card-3);
 }
 
 /* ------------------------------------------------------------ modal */
@@ -760,7 +760,7 @@ button.stats-pill:hover,
   padding: 0 10px;
   border-radius: 8px;
   border: 1px solid var(--st-border-strong);
-  background: #1e1e1e;
+  background: var(--site-card);
   color: var(--st-text);
   font: inherit;
   font-size: 13px;
@@ -799,7 +799,7 @@ button.stats-pill:hover,
   padding: 7px 8px;
   text-align: right;
   font-variant-numeric: tabular-nums;
-  border-top: 1px solid #2d2d2d;
+  border-top: 1px solid var(--site-border);
 }
 
 .stats-table tr.is-clickable {
@@ -807,7 +807,7 @@ button.stats-pill:hover,
 }
 
 .stats-table tr.is-clickable:hover td {
-  background: #2c2c2c;
+  background: var(--site-card-2);
 }
 
 /* ------------------------------------------------------------ AI */
@@ -833,7 +833,7 @@ button.stats-pill:hover,
   overflow-y: auto;
   padding: 6px;
   border-radius: 12px;
-  background: #1f1f1f;
+  background: var(--site-card);
   border: 1px solid var(--st-border);
 }
 
@@ -863,12 +863,12 @@ button.stats-pill:hover,
 }
 
 .stats-goal:hover {
-  background: #2a2a2a;
+  background: var(--site-card-2);
 }
 
 .stats-goal.is-selected {
-  background: #2e3a4d;
-  border-color: #3c4d68;
+  background: color-mix(in oklab, var(--tone-blue) 18%, var(--site-card));
+  border-color: color-mix(in oklab, var(--tone-blue) 35%, var(--site-card));
 }
 
 .stats-ai-total {
@@ -912,7 +912,7 @@ button.stats-pill:hover,
 }
 
 .stats-ai-filter:hover {
-  background: #3a3a3a;
+  background: var(--site-card-4);
   color: var(--st-text);
 }
 
@@ -941,4 +941,9 @@ button.stats-pill:hover,
   max-width: 45%;
   color: var(--st-muted);
   font-size: 12px;
+}
+
+/* No PostHog support chat bubble on the owner stats page. */
+body:has(.stats-root) #ph-conversations-widget-container {
+  display: none !important;
 }

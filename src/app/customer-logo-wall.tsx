@@ -31,6 +31,7 @@ const CUSTOMERS = [
     src: "/customer-logos/blockskunk.svg",
     width: 40,
     height: 40,
+    ownPlate: true,
   },
   {
     name: "Scalee",
@@ -95,6 +96,7 @@ function LogoLink({ customer }: { customer: (typeof CUSTOMERS)[number] }) {
         height={customer.height}
         unoptimized
         draggable={false}
+        data-own-plate={"ownPlate" in customer ? "" : undefined}
         className={`customer-logo-img block ${LOGO_SIZE[sizeKey]} w-auto object-contain object-center`}
         style={{ width: "auto", maxWidth: "100%" }}
       />

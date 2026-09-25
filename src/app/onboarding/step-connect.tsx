@@ -23,9 +23,9 @@ export default function StepConnect({
       ) : null}
 
       {linkedInAccount ? (
-        <div className="mb-4 rounded-lg border border-[#2e2e2e] px-4 py-3">
-          <p className="text-sm font-medium text-white">{linkedInAccount.displayName}</p>
-          <p className="mt-0.5 text-xs text-[#737373]">Connected</p>
+        <div className="mb-4 rounded-lg border border-[var(--site-border)] px-4 py-3">
+          <p className="text-sm font-medium text-[var(--site-text)]">{linkedInAccount.displayName}</p>
+          <p className="mt-0.5 text-xs text-[var(--site-text-2)]">Connected</p>
         </div>
       ) : null}
 
@@ -38,7 +38,7 @@ export default function StepConnect({
             Continue to overview
           </Link>
         ) : null}
-        <p className="text-center text-[11px] leading-5 text-[#737373]">
+        <p className="text-center text-[11px] leading-5 text-[var(--site-text-2)]">
           You'll briefly leave Omentir to securely connect LinkedIn.
         </p>
       </div>
