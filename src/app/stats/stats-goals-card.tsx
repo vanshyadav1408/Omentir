@@ -22,6 +22,8 @@ const GOAL_NAMES: Record<string, string> = {
 
 const goalName = (event: string) => GOAL_NAMES[event] ?? event;
 
+const PINNED_GOALS = ["signed_up", "checkout_started", "payment_succeeded"];
+
 const FUNNEL = [
   { event: "$visitors", label: "Visited the site" },
   { event: "signed_up", label: "Signed up" },
@@ -42,7 +44,15 @@ export function StatsGoalsCard({ data, visitors, loading, error, buckets, interv
   const [tab, setTab] = useState<"goal" | "funnel">("goal");
   const [selected, setSelected] = useState<string | null>(null);
 
-  const goals = useMemo(() => (data?.totals ?? []).slice(0, 10), [data]);
+  // The funnel goals always lead (Paid must never fall off the list on a tie),
+  // then everything else by people.
+  const goals = useMemo(() => {
+    const rank = (event: string) => {
+      const i = PINNED_GOALS.indexOf(event);
+      return i === -1 ? PINNED_GOALS.length : i;
+    };
+    return [...(data?.totals ?? [])].sort((a, b) => rank(a.event) - rank(b.event) || b.people - a.people).slice(0, 10);
+  }, [data]);
   const colors = useMemo(() => new Map(goals.map((g, i) => [g.event, LINE_COLORS[i % LINE_COLORS.length]])), [goals]);
 
   const series = useMemo(() => {

@@ -866,6 +866,60 @@ button.stats-pill:hover,
   opacity: 0.45;
 }
 
+.stats-goal:hover {
+  background: #2a2a2a;
+}
+
+.stats-goal.is-selected {
+  background: #2e3a4d;
+  border-color: #3c4d68;
+}
+
+.stats-ai-total {
+  font-weight: 600;
+  margin-bottom: 2px;
+  padding-right: 36px;
+}
+
+/* Agent rows: the row selects the agent for the chart; the funnel icon filters the page. */
+.stats-ai-row {
+  position: relative;
+}
+
+.stats-ai-row .stats-goal {
+  width: 100%;
+  padding-right: 36px;
+}
+
+.stats-ai-filter {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  width: 22px;
+  height: 22px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  margin-top: -11px;
+  border-radius: 6px;
+  color: var(--st-muted);
+}
+
+.stats-ai-filter svg {
+  width: 13px;
+  height: 13px;
+}
+
+.stats-ai-row:hover .stats-ai-filter,
+.stats-ai-filter:focus-visible {
+  display: inline-flex;
+}
+
+.stats-ai-filter:hover {
+  background: #3a3a3a;
+  color: var(--st-text);
+}
+
 .stats-funnel {
   display: flex;
   flex-direction: column;
