@@ -37,14 +37,12 @@ import type {
 
 export type { ReplyIntent };
 
-const DEFAULT_MODEL = "gemini-3.8-flash";
-const MODEL = process.env.GEMINI_MODEL || DEFAULT_MODEL;
-// GEMINI_MODEL decides search-grounded calls too; GEMINI_SEARCH_MODEL overrides
-// just those. Keep GEMINI_MODEL current in every environment: measured on
-// gemini-3.5-flash, the lead-preview grounded call failed 3/3 (37.5s deadline,
-// 38.0s abort, 429) where 3.6-flash answers in 15-28s, and a stale pin once broke
-// the onboarding lead preview in production for weeks.
-const SEARCH_MODEL = process.env.GEMINI_SEARCH_MODEL || MODEL;
+// The env decides the model (.env locally, .env.production on the server); there
+// is no default here. GEMINI_SEARCH_MODEL overrides it for search-grounded calls
+// only. Keep GEMINI_MODEL current in every environment: a stale gemini-3.5-flash
+// pin once broke the onboarding lead preview in production for weeks.
+const MODEL = process.env.GEMINI_MODEL?.trim() || "";
+const SEARCH_MODEL = process.env.GEMINI_SEARCH_MODEL?.trim() || MODEL;
 const GEMINI_MAX_RETRIES = 2;
 // Onboarding's 5-person grounded preview finishes in 15-28s. Asking Vertex for
 // 15 people with a 90s client timeout hits 504 DEADLINE_EXCEEDED, then a retry
@@ -300,6 +298,10 @@ export function expandedTargetTitles(agent: Agent, profile: ProductProfile | nul
 }
 
 function getGeminiConfig() {
+  if (!MODEL) {
+    console.error("[gemini] GEMINI_MODEL is not set; AI features are off until it is.");
+    return null;
+  }
   const apiKey = process.env.GEMINI_API_KEY?.trim();
   if (apiKey) return { apiKey, provider: "api-key" as const };
 
@@ -1025,7 +1027,7 @@ export async function runGeminiDiagnostics() {
     return {
       configured: false as const,
       reason:
-        "No Gemini credentials. Set GEMINI_API_KEY, or a service account plus GOOGLE_CLOUD_LOCATION.",
+        "Gemini is not configured. Set GEMINI_MODEL, plus GEMINI_API_KEY or a service account plus GOOGLE_CLOUD_LOCATION.",
     };
   }
 
