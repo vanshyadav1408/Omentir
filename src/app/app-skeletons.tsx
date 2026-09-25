@@ -18,7 +18,8 @@ export function Skeleton({ className = "" }: { className?: string }) {
   return <div className={`skeleton ${radius}${className}`} aria-hidden="true" />;
 }
 
-/** Fade content in after a skeleton unmounts (300–400ms M3 standard curve). */
+/** Wraps content that replaces a skeleton. No entrance animation: data paints
+ * the moment it is ready, including cached data on every page switch. */
 export function ContentReveal({
   children,
   className = "",
@@ -26,7 +27,7 @@ export function ContentReveal({
   children: ReactNode;
   className?: string;
 }) {
-  return <div className={`skeleton-content-enter ${className}`}>{children}</div>;
+  return <div className={className}>{children}</div>;
 }
 
 // Matches the agent/campaign outreach card: title row with status pill and

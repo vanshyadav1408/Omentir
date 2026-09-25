@@ -1720,22 +1720,6 @@ html.dark .m3-ai-loading-surface {
    Pattern A Fade-Through · Pattern C Lateral · Pattern D Drawer/Menu/Modal
    No spring physics on web — cubic-bezier only. Reduced motion → 150ms fade. */
 
-/* Pattern A: top-level route fade-through (no translation) */
-.m3-page-fade-through {
-  height: 100%;
-  min-height: 0;
-  opacity: 1;
-  transition: opacity calc(var(--md-sys-motion-duration-medium) / 2)
-    var(--md-sys-motion-easing-fade-through);
-  will-change: opacity;
-}
-.m3-page-fade-through--out {
-  opacity: 0;
-}
-.m3-page-fade-through--in {
-  opacity: 1;
-}
-
 /* Pattern C: peer tab / lateral enter (from right) */
 .m3-lateral-viewport {
   overflow: hidden;
@@ -2401,10 +2385,6 @@ html[data-theme="dark"] .recommended-badge {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .m3-page-fade-through {
-    transition: opacity var(--md-sys-motion-duration-reduced)
-      var(--md-sys-motion-easing-standard);
-  }
   .m3-lateral-panel,
   .m3-lateral-panel--from-left,
   .m3-menu-enter,
@@ -2487,21 +2467,6 @@ html[data-theme="dark"] .recommended-badge {
   }
 }
 
-/* Fade content in when data resolves (pair with unmounting the skeleton). */
-.skeleton-content-enter {
-  animation: omentir-skeleton-content-enter var(--md-sys-motion-duration-content)
-    var(--md-sys-motion-easing-emphasized) both;
-}
-
-@keyframes omentir-skeleton-content-enter {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .skeleton,
   .google-skeleton {
@@ -2513,10 +2478,6 @@ html[data-theme="dark"] .recommended-badge {
   .skeleton-glare-overlay {
     animation: none;
     opacity: 0;
-  }
-
-  .skeleton-content-enter {
-    animation: none;
   }
 }
 
@@ -5052,18 +5013,6 @@ select.auth-input {
 
 .hero-enter-delay-2 {
   animation-delay: 260ms;
-}
-
-/* App-page entrance: the marketing hero's fade-up, shortened so in-app
-   navigation still feels instant. Applied to each app page's content root. */
-.app-enter {
-  animation: landing-fade-up 380ms ease-out backwards;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .app-enter {
-    animation: none;
-  }
 }
 
 /* Fail-safe entrance: sections are visible by default and only hidden by the

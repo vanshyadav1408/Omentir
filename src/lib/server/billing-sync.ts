@@ -70,13 +70,18 @@ export async function syncHostedWorkspaceBilling(workspace: Workspace): Promise<
 }
 
 /** Store Extra Seats on the original account so every owned workspace can use the LinkedIn cap. */
-export async function syncWorkspaceLinkedInSeatsFromWhop(workspace: Workspace): Promise<Workspace> {
+// Pass `user` when calling from `after()` in a page: request APIs such as the
+// one currentUser() reads are not available there.
+export async function syncWorkspaceLinkedInSeatsFromWhop(
+  workspace: Workspace,
+  knownUser?: Awaited<ReturnType<typeof currentUser>>,
+): Promise<Workspace> {
   if (isLocalMode() || !hasActiveSubscription(workspace)) return workspace;
   if (!Number.isFinite(commercialPlanLimits(workspace.billing?.plan).linkedInAccounts)) {
     return workspace;
   }
 
-  const user = await currentUser();
+  const user = knownUser === undefined ? await currentUser() : knownUser;
   const ownerId = workspace.ownerId || user?.id || workspace.id;
   const owner = await ownerWorkspaceForBilling(workspace);
   const emails = extraSeatBuyerEmails([

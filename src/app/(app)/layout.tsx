@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import { after } from "next/server";
 import Sidebar from "@/app/sidebar";
 import { noIndexRobots } from "@/app/seo";
-import AppPageTransition from "@/app/app-page-transition";
 import AppDataPrefetch from "@/app/(app)/app-data-prefetch";
 import { SidebarCacheScope } from "@/app/use-sidebar-resource";
 import { WorkspaceTimeZoneProvider } from "@/app/workspace-time-zone";
@@ -72,7 +71,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             {/* Mobile: 56px compact app bar; navigation stays in the drawer. */}
             <section className="flex h-full w-full flex-col pt-14 md:pt-0">
               <div className="min-h-0 flex-1">
-                <AppPageTransition>{children}</AppPageTransition>
+                <div className="h-full min-h-0">{children}</div>
               </div>
             </section>
           </main>

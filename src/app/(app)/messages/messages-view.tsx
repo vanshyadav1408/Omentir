@@ -48,6 +48,9 @@ type InboxThread =
       status: string;
       unread: boolean;
       messages: LinkedInInboxMessage[];
+      // Newest message id from the polled inbox list; a change means the
+      // loaded history is behind and must be refetched.
+      latestMessageId?: string;
       chatId: string;
       accountId: string;
       lead?: LeadPreview;
@@ -70,6 +73,11 @@ type InboxThread =
     };
 
 type LocalMessage = LinkedInInboxMessage & { local: true };
+
+function mergeMessagesById(messages: LinkedInInboxMessage[], incoming: LinkedInInboxMessage[]) {
+  return Array.from(new Map([...messages, ...incoming].map((message) => [message.id, message])).values())
+    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+}
 
 function mergeWithLocalMessages<T extends ConversationMessage | LinkedInInboxMessage>(
   messages: T[],
@@ -103,7 +111,13 @@ function buildThreads(
       name: thread.profileName,
     }) || undefined;
     const leadHeadline = [lead?.title, lead?.company].filter(Boolean).join(" at ");
-    const messages = hydratedMessages[id] || thread.messages;
+    // The inbox poll carries each chat's newest message. Merge it into the
+    // loaded history so a new message shows right away instead of waiting for
+    // the history refetch.
+    const hydrated = hydratedMessages[id];
+    const messages = hydrated
+      ? mergeMessagesById(hydrated, thread.messages.filter((message) => message.body))
+      : thread.messages;
     return {
       id,
       kind: "linkedin",
@@ -118,6 +132,7 @@ function buildThreads(
         messages,
         localMessages[id] || [],
       ),
+      latestMessageId: thread.messages.at(-1)?.id,
       chatId: thread.id,
       accountId: thread.accountId,
       lead,
@@ -382,13 +397,22 @@ export default function MessagesView({
       ? loadedSenderAccounts.find((account) => account.accountId === selected.accountId)
       : undefined) ?? loadedSenderAccounts[0];
 
+  // Loads the newest page of history when a chat is opened, and again whenever
+  // the inbox poll reports a newer message. Fetched once and never refreshed,
+  // the history froze and hid every message sent or received after opening.
+  // Primitive deps keep the 5s poll from re-running (and aborting) this.
+  const selectedChat = selected?.kind === "linkedin" ? selected : undefined;
+  const selectedChatThreadId = selectedChat?.id;
+  const selectedChatId = selectedChat?.chatId;
+  const selectedChatAccountId = selectedChat?.accountId;
+  const selectedChatLatestId = selectedChat?.latestMessageId;
   useEffect(() => {
-    if (!selected || selected.kind !== "linkedin" || hydratedMessages[selected.id]) return;
+    if (!selectedChatThreadId || !selectedChatId || !selectedChatAccountId) return;
     const controller = new AbortController();
-    const threadId = selected.id;
+    const threadId = selectedChatThreadId;
     const params = new URLSearchParams({
-      chatId: selected.chatId,
-      accountId: selected.accountId,
+      chatId: selectedChatId,
+      accountId: selectedChatAccountId,
     });
 
     void fetch(`/api/agent/v1/linkedin-chat-messages?${params}`, {
@@ -397,9 +421,17 @@ export default function MessagesView({
       .then((response) => (response.ok ? response.json() : null))
       .then((data: { messages?: LinkedInInboxMessage[]; cursor?: string } | null) => {
         if (!data) return;
-        setHistoryCursors((current) => ({ ...current, [threadId]: data.cursor }));
+        // Keep the cursor from the first load so "Load next 30" still pages
+        // past history the user already loaded.
+        setHistoryCursors((current) =>
+          current[threadId] ? current : { ...current, [threadId]: data.cursor },
+        );
         if (!data.messages?.length) return;
-        setHydratedMessages((current) => ({ ...current, [threadId]: data.messages || [] }));
+        const page = data.messages;
+        setHydratedMessages((current) => ({
+          ...current,
+          [threadId]: mergeMessagesById(current[threadId] || [], page),
+        }));
       })
       .catch(() => {})
       .finally(() => {
@@ -408,7 +440,7 @@ export default function MessagesView({
       });
 
     return () => controller.abort();
-  }, [hydratedMessages, selected]);
+  }, [selectedChatThreadId, selectedChatId, selectedChatAccountId, selectedChatLatestId]);
 
   function loadMoreMessages(thread: Extract<InboxThread, { kind: "linkedin" }>) {
     const cursor = historyCursors[thread.id];
@@ -423,14 +455,10 @@ export default function MessagesView({
       .then((response) => (response.ok ? response.json() : null))
       .then((data: { messages?: LinkedInInboxMessage[]; cursor?: string } | null) => {
         if (!data) return;
-        setHydratedMessages((current) => {
-          const merged = [...(current[thread.id] || []), ...(data.messages || [])];
-          return {
-            ...current,
-            [thread.id]: Array.from(new Map(merged.map((message) => [message.id, message])).values())
-              .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()),
-          };
-        });
+        setHydratedMessages((current) => ({
+          ...current,
+          [thread.id]: mergeMessagesById(current[thread.id] || [], data.messages || []),
+        }));
         setHistoryCursors((current) => ({ ...current, [thread.id]: data.cursor }));
       })
       .finally(() => {

@@ -1,8 +1,12 @@
-import { auth } from "@/lib/server/auth";
+import { auth, currentUser } from "@/lib/server/auth";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { saveProductProfileAction } from "@/app/actions";
 import { resolveActiveWorkspace } from "@/lib/server/active-workspace";
-import { syncHostedWorkspaceBilling } from "@/lib/server/billing-sync";
+import {
+  syncWorkspaceBillingIfInactive,
+  syncWorkspaceLinkedInSeatsFromWhop,
+} from "@/lib/server/billing-sync";
 import { hasActiveSubscription } from "@/lib/server/subscription";
 import { getWorkspaceSetup } from "@/lib/server/workspace-setup";
 import OverviewSetup from "./overview-setup";
@@ -37,12 +41,23 @@ export default async function HomePage({
   const linkedinParam = Array.isArray(params.linkedin) ? params.linkedin[0] : params.linkedin;
 
   const loadedWorkspace = await resolveActiveWorkspace(userId);
-  // Independent: setup reads Firestore + Unipile, billing reads Clerk + Whop.
-  // Running them back to back put both on the critical path of every visit.
-  const [setup, workspace] = await Promise.all([
+  // Independent reads. Activating an unpaid workspace from Whop has to happen
+  // before render (it decides the paywall); the LinkedIn seat sync does not,
+  // since Overview shows no seat count, so it runs after the response with the
+  // user read here (request APIs are unavailable inside after()).
+  const [setup, workspace, user] = await Promise.all([
     getWorkspaceSetup(loadedWorkspace.id),
-    syncHostedWorkspaceBilling(loadedWorkspace),
+    syncWorkspaceBillingIfInactive(loadedWorkspace),
+    currentUser(),
   ]);
+  after(() =>
+    syncWorkspaceLinkedInSeatsFromWhop(workspace, user).catch((error) => {
+      console.error(
+        "[overview] LinkedIn seat sync failed:",
+        error instanceof Error ? error.message : error,
+      );
+    }),
+  );
 
   if (!setup.productProfile) {
     redirect(workspace.onboarding ? "/workspace" : "/onboarding");

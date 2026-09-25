@@ -37,16 +37,14 @@ import type {
 
 export type { ReplyIntent };
 
-const DEFAULT_MODEL = "gemini-3.7-flash";
+const DEFAULT_MODEL = "gemini-3.8-flash";
 const MODEL = process.env.GEMINI_MODEL || DEFAULT_MODEL;
-// Deliberately NOT falling back to MODEL. Search-grounded calls are the most
-// latency-sensitive thing here, and an older pinned model cannot serve them:
-// measured on gemini-3.5-flash, the lead-preview grounded call failed 3/3
-// (37.5s deadline, 38.0s abort, 429) where 3.6-flash answers in 15-28s. A stale
-// GEMINI_MODEL in one environment silently broke the onboarding lead preview in
-// production for weeks while it worked everywhere else. Set
-// GEMINI_SEARCH_MODEL explicitly to override this.
-const SEARCH_MODEL = process.env.GEMINI_SEARCH_MODEL || DEFAULT_MODEL;
+// GEMINI_MODEL decides search-grounded calls too; GEMINI_SEARCH_MODEL overrides
+// just those. Keep GEMINI_MODEL current in every environment: measured on
+// gemini-3.5-flash, the lead-preview grounded call failed 3/3 (37.5s deadline,
+// 38.0s abort, 429) where 3.6-flash answers in 15-28s, and a stale pin once broke
+// the onboarding lead preview in production for weeks.
+const SEARCH_MODEL = process.env.GEMINI_SEARCH_MODEL || MODEL;
 const GEMINI_MAX_RETRIES = 2;
 // Onboarding's 5-person grounded preview finishes in 15-28s. Asking Vertex for
 // 15 people with a 90s client timeout hits 504 DEADLINE_EXCEEDED, then a retry
