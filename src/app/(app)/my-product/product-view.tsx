@@ -1,5 +1,6 @@
 "use client";
 
+import { unwrapAction, type ActionFailure } from "@/lib/action-result";
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { ProductProfile, Workspace } from "@/lib/server/types";
@@ -23,9 +24,9 @@ type ProductViewProps = {
   workspace: Pick<Workspace, "id" | "ownerId" | "name">;
   faviconUrl?: string;
   workspaceName?: string;
-  saveAction: (formData: FormData) => void | Promise<void | SaveProductResult>;
-  analyzeAction: (formData: FormData) => void | Promise<void>;
-  deleteAction: (workspaceId: string) => void | Promise<void>;
+  saveAction: (formData: FormData) => Promise<void | SaveProductResult | ActionFailure>;
+  analyzeAction: (formData: FormData) => Promise<{ analyzed: boolean } | ActionFailure>;
+  deleteAction: (workspaceId: string) => Promise<void | ActionFailure>;
 };
 
 const INDUSTRY_OPTIONS = [
@@ -205,7 +206,7 @@ export default function ProductView({
   deleteAction,
 }: ProductViewProps) {
   const router = useRouter();
-  const { showSuccess } = useToast();
+  const { showError, showSuccess } = useToast();
   const [pending, startTransition] = useTransition();
   const [analyzing, startAnalyzing] = useTransition();
 
@@ -249,7 +250,14 @@ export default function ProductView({
     if (!websiteUrl.trim()) return;
     const formData = new FormData();
     formData.set("websiteUrl", websiteUrl);
-    startAnalyzing(() => analyzeAction(formData));
+    startAnalyzing(async () => {
+      try {
+        const { analyzed } = unwrapAction(await analyzeAction(formData));
+        if (!analyzed) showError("Could not analyze this website. Check the URL and try again.");
+      } catch (error) {
+        showError(userFacingError(error, "Could not analyze this website."));
+      }
+    });
   }
 
   function handleSave(event: React.FormEvent<HTMLFormElement>) {
@@ -270,7 +278,7 @@ export default function ProductView({
     }
     startTransition(async () => {
       try {
-        const result = await saveAction(formData);
+        const result = unwrapAction(await saveAction(formData));
         if (result && typeof result === "object" && result.ok === false) {
           setSchedulingError(result.error);
           return;

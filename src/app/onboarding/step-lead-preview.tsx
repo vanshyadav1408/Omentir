@@ -1,5 +1,6 @@
 "use client";
 
+import { unwrapAction } from "@/lib/action-result";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
@@ -237,7 +238,7 @@ export default function StepLeadPreview({
 
   const completeSelfHostedOnboarding = () => {
     startCompleting(async () => {
-      await completeSelfHostedOnboardingAction();
+      unwrapAction(await completeSelfHostedOnboardingAction());
       router.replace("/onboarding");
       router.refresh();
     });

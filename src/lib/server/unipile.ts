@@ -431,10 +431,12 @@ async function request<T>(
 
   for (let attempt = 0; attempt <= UNIPILE_RATE_LIMIT_RETRIES; attempt += 1) {
     const controller = new AbortController();
+    // Start the clock after the queue wait. Timing the queue too aborted
+    // requests right as they went out whenever the shared queue was backed up.
+    await throttleUnipileRequest();
     const timeout = setTimeout(() => controller.abort(), UNIPILE_TIMEOUT_MS);
 
     try {
-      await throttleUnipileRequest();
       const response = await fetch(`${config.baseUrl}${path}`, {
         ...init,
         signal: init?.signal || controller.signal,
@@ -2140,29 +2142,34 @@ export async function listLinkedInAccountAttendees(accountId: string) {
   const seen = new Set<string>();
   let cursor: string | undefined;
 
-  try {
-    // Inbox matching needs the attendee for each open chat. One page of 200
-    // misses people on busy accounts, so walk a few pages instead of leaving
-    // those rows without a name or photo.
-    for (let page = 0; page < 3; page += 1) {
-      const result = await request<
+  // Inbox matching needs the attendee for each open chat. One page of 200
+  // misses people on busy accounts, so walk a few pages instead of leaving
+  // those rows without a name or photo.
+  for (let page = 0; page < 3; page += 1) {
+    let result: UnipileListResponse<UnipileChatAttendee> | UnipileChatAttendee[];
+    try {
+      result = await request<
         UnipileListResponse<UnipileChatAttendee> | UnipileChatAttendee[]
       >(withQuery("/api/v1/chat_attendees", { account_id: accountId, limit: 200, cursor }));
-      const pageItems = getListItems<UnipileChatAttendee>(result);
-      if (!pageItems.length) break;
-      for (const attendee of pageItems) {
-        const id = attendee.id || attendee.provider_id || "";
-        if (id && seen.has(id)) continue;
-        if (id) seen.add(id);
-        attendees.push(attendee);
-      }
-      cursor = getListCursor(result);
-      if (!cursor) break;
+    } catch (error) {
+      // A failed first page leaves every chat nameless, and nameless chats are
+      // dropped from the inbox. Fail the load so callers keep the last good
+      // inbox instead of showing one with most rows missing.
+      if (!attendees.length) throw error;
+      return attendees;
     }
-    return attendees;
-  } catch {
-    return attendees;
+    const pageItems = getListItems<UnipileChatAttendee>(result);
+    if (!pageItems.length) break;
+    for (const attendee of pageItems) {
+      const id = attendee.id || attendee.provider_id || "";
+      if (id && seen.has(id)) continue;
+      if (id) seen.add(id);
+      attendees.push(attendee);
+    }
+    cursor = getListCursor(result);
+    if (!cursor) break;
   }
+  return attendees;
 }
 
 // Recent messages across all of the account's chats, in one call. Used to build
@@ -2189,7 +2196,25 @@ async function listLinkedInAccountMessagesPage(
 
 async function listLinkedInAccountMessages(accountId: string, limit: number) {
   const page = await listLinkedInAccountMessagesPage(accountId, limit);
-  return page?.messages || [];
+  // Without these, every inbox row loses its last-message preview. Fail the
+  // load instead of returning an inbox that looks empty.
+  if (!page) throw new Error("LinkedIn recent messages could not be loaded.");
+  return page.messages;
+}
+
+// Direct ownership check for one chat: a single lookup instead of re-listing
+// the whole inbox, and it also covers chats older than the inbox page.
+export async function linkedInChatBelongsToAccount(chatId: string, accountId: string) {
+  if (!isUnipileConfigured()) return false;
+  try {
+    const chat = await request<UnipileChat>(`/api/v1/chats/${encodeURIComponent(chatId)}`);
+    return chat?.account_id === accountId;
+  } catch (error) {
+    if (error instanceof UnipileResponseError && (error.status === 404 || error.status === 400)) {
+      return false;
+    }
+    throw error;
+  }
 }
 
 // Inbound messages that arrived after `sinceMs`, newest-provider-order, for

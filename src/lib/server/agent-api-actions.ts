@@ -44,6 +44,7 @@ import { resolveTimeZone } from "@/lib/time-zone";
 import { dedupeLinkedInInboxThreads } from "@/lib/inbox-threads";
 import {
   listLinkedInChatMessagesPage,
+  linkedInChatBelongsToAccount,
   listLinkedInInbox,
   sendLinkedInChatMessage,
 } from "./unipile";
@@ -383,12 +384,7 @@ export async function getChatMessagesResource(context: AgentApiContext, payload:
   }
 
   const account = await requireOwnedInboxAccount(context, parsed.data.accountId);
-  const visibleThreads = await listLinkedInInbox({
-    accountId: account.accountId,
-    limit: 50,
-    includeMessageHistory: false,
-  });
-  if (!visibleThreads.some((thread) => thread.id === parsed.data.chatId)) {
+  if (!(await linkedInChatBelongsToAccount(parsed.data.chatId, account.accountId))) {
     throw new AgentApiOperationError("Chat not found.", 404);
   }
 
@@ -420,12 +416,7 @@ export async function replyToChatResource(context: AgentApiContext, payload: unk
   }
 
   const account = await requireOwnedInboxAccount(context, parsed.data.accountId);
-  const visibleThreads = await listLinkedInInbox({
-    accountId: account.accountId,
-    limit: 50,
-    includeMessageHistory: false,
-  });
-  if (!visibleThreads.some((thread) => thread.id === parsed.data.chatId)) {
+  if (!(await linkedInChatBelongsToAccount(parsed.data.chatId, account.accountId))) {
     throw new AgentApiOperationError("Chat not found.", 404);
   }
 

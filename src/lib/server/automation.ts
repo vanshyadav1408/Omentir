@@ -466,8 +466,9 @@ async function runAgents(mode: AutomationSafetyMode) {
         continue;
       }
 
-      // Agent may have been deleted between getDueAgents and here (or mid
-      // cascade). Skip quietly - there is nothing left to mark running/error.
+      // Agent may have been deleted, paused, or already run by an overlapping
+      // tick since getDueAgents. Skip quietly - another run owns it or there is
+      // nothing left to mark running/error.
       if (!(await markAgentStarted(agent))) continue;
 
       if (agentUsesPeopleEngine(agent)) {

@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { getLinkedInAccountByAccountId, listWorkspaceIdsSharingLinkedIn } from "@/lib/server/data";
 import { resolveActiveWorkspace } from "@/lib/server/active-workspace";
 import { hasActiveSubscription } from "@/lib/server/subscription";
-import { listLinkedInChatMessagesPage, listLinkedInInbox } from "@/lib/server/unipile";
+import { linkedInChatBelongsToAccount, listLinkedInChatMessagesPage } from "@/lib/server/unipile";
 
 export async function GET(request: Request) {
   const { userId } = await auth();
@@ -27,15 +27,20 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Chat not found" }, { status: 404 });
   }
 
-  const visibleThreads = await listLinkedInInbox({
-    accountId: account.accountId,
-    limit: 50,
-    includeMessageHistory: false,
-  });
-  if (!visibleThreads.some((thread) => thread.id === chatId)) {
-    return NextResponse.json({ error: "Chat not found" }, { status: 404 });
+  try {
+    if (!(await linkedInChatBelongsToAccount(chatId, account.accountId))) {
+      return NextResponse.json({ error: "Chat not found" }, { status: 404 });
+    }
+    const page = await listLinkedInChatMessagesPage({ chatId, limit: 30, cursor });
+    return NextResponse.json(page);
+  } catch (error) {
+    console.error(
+      "[linkedin-chat-messages] history load failed:",
+      error instanceof Error ? error.message : error,
+    );
+    return NextResponse.json(
+      { error: "LinkedIn messages could not be loaded. Try again." },
+      { status: 502 },
+    );
   }
-
-  const page = await listLinkedInChatMessagesPage({ chatId, limit: 30, cursor });
-  return NextResponse.json(page);
 }

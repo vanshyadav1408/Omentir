@@ -63,12 +63,19 @@ function levelFor(value: number, max: number) {
 export default function ActivityHeatmap({
   days,
   timeZone,
+  todayKey: fixedTodayKey,
 }: {
   days: ActivityDay[];
   timeZone?: string;
+  // Last day on the board. Defaults to today; the homepage demo pins it to the
+  // build day so its prerendered HTML matches what the browser renders.
+  todayKey?: string;
 }) {
   const model = useMemo(() => {
-    const todayKey = zonedDayKey(Date.now(), timeZone) || new Date().toISOString().slice(0, 10);
+    const todayKey =
+      fixedTodayKey ||
+      zonedDayKey(Date.now(), timeZone) ||
+      new Date().toISOString().slice(0, 10);
     let startKey = addDays(todayKey, -52 * 7);
     while (weekday(startKey) !== 0) startKey = addDays(startKey, -1);
 
@@ -159,7 +166,7 @@ export default function ActivityHeatmap({
       longest,
       current,
     };
-  }, [days, timeZone]);
+  }, [days, timeZone, fixedTodayKey]);
 
   /* On narrow screens the board scrolls; open on the latest weeks, not a year ago. */
   const scrollRef = useRef<HTMLDivElement>(null);

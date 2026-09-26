@@ -1,5 +1,6 @@
 "use client";
 
+import { unwrapAction } from "@/lib/action-result";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Group, LeadPreview } from "@/lib/server/types";
 import {
@@ -209,7 +210,7 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
   async function loadLeadOutreach(leadId: string, options?: { quiet?: boolean }) {
     if (!leadId) return;
     try {
-      const outreach = await getLeadOutreachAction(leadId);
+      const outreach = unwrapAction(await getLeadOutreachAction(leadId));
       setOutreachByLead((current) => ({ ...current, [leadId]: outreach }));
       setOutreachErrors((current) => {
         if (!(leadId in current)) return current;
@@ -247,7 +248,7 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
     const formData = new FormData();
     formData.set("enrollmentId", action.id);
     try {
-      const { result } = await runScheduledActionNowAction(formData);
+      const { result } = unwrapAction(await runScheduledActionNowAction(formData));
       setFeedback((current) => ({ ...current, [action.id]: resultMessage(result, action.kind) }));
       setConfirmingId("");
       await loadLeadOutreach(action.lead?.id || openLeadId);
@@ -274,7 +275,7 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
     const formData = new FormData();
     formData.set("leadId", leadId);
     try {
-      await stopLeadOutreachAction(formData);
+      unwrapAction(await stopLeadOutreachAction(formData));
       setConfirmingStopLeadId("");
       await loadLeadOutreach(leadId);
       leadsResource.reload();
@@ -491,7 +492,7 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
     formData.set("groupId", target.id);
 
     try {
-      await deleteGroupAction(formData);
+      unwrapAction(await deleteGroupAction(formData));
       leadsResource.reload();
     } catch (error) {
       setDeletedGroupIds((current) => {

@@ -28,6 +28,20 @@ export function isAgentDueForRun(
     : agent.nextRunAt <= now;
 }
 
+// Whether a discovery run may be claimed right now, judged on the agent doc as
+// currently stored (not a snapshot from earlier in the tick). Getting this
+// wrong lets two overlapping ticks run the same agent back to back.
+export function canClaimAgentRun(
+  agent: Pick<Agent, "mode" | "status" | "nextRunAt" | "runStartedAt" | "updatedAt">,
+  nowMs = Date.now(),
+) {
+  if (agent.mode === "outreach") return false;
+  if (agent.status !== "active" && agent.status !== "error" && agent.status !== "running") {
+    return false;
+  }
+  return isAgentDueForRun(agent, nowMs);
+}
+
 export function hasIntervalElapsed(
   lastSentAt: number,
   intervalMs: number,

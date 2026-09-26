@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+  canClaimAgentRun,
   localDayAndHour,
   nextInviteLimitRetryAt,
   nextLocalMondayAt,
@@ -68,5 +69,51 @@ describe("localDayAndHour", () => {
       hour: 9,
     });
     expect(localDayAndHour("UTC", nowMs).hour).toBe(13);
+  });
+});
+
+describe("canClaimAgentRun", () => {
+  const nowMs = Date.parse("2026-09-26T10:00:00.000Z");
+  const due = {
+    mode: "signals" as const,
+    status: "active" as const,
+    nextRunAt: "2026-09-26T09:00:00.000Z",
+    updatedAt: "2026-09-25T09:00:00.000Z",
+  };
+
+  test("a due agent can be claimed", () => {
+    expect(canClaimAgentRun(due, nowMs)).toBe(true);
+  });
+
+  test("an agent another tick already ran (next run moved to tomorrow) is not run again from a stale due list", () => {
+    expect(
+      canClaimAgentRun({ ...due, nextRunAt: "2026-09-27T09:00:00.000Z" }, nowMs),
+    ).toBe(false);
+  });
+
+  test("an agent another tick is running right now is not started a second time", () => {
+    expect(
+      canClaimAgentRun(
+        { ...due, status: "running", runStartedAt: "2026-09-26T09:55:00.000Z" },
+        nowMs,
+      ),
+    ).toBe(false);
+  });
+
+  test("a run stuck for over 30 minutes can be reclaimed so a crashed tick does not wedge the agent", () => {
+    expect(
+      canClaimAgentRun(
+        { ...due, status: "running", runStartedAt: "2026-09-26T09:00:00.000Z" },
+        nowMs,
+      ),
+    ).toBe(true);
+  });
+
+  test("an agent paused since the due list was read does not start", () => {
+    expect(canClaimAgentRun({ ...due, status: "paused" }, nowMs)).toBe(false);
+  });
+
+  test("outreach-only agents never run discovery", () => {
+    expect(canClaimAgentRun({ ...due, mode: "outreach" }, nowMs)).toBe(false);
   });
 });

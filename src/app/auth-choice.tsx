@@ -11,19 +11,23 @@ import { AuthField, AuthHeading, AUTH_TAGLINE, AuthSwitchLine, GoogleMark } from
  * signUp.create / signIn.create run — render it inside those forms.
  */
 function ClerkCaptcha() {
-  const [ready, setReady] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark" | null>(null);
 
   useEffect(() => {
-    const frame = window.requestAnimationFrame(() => setReady(true));
+    // Match the resolved site theme (set in <head> before paint), so the
+    // widget is not a dark box on the light auth page.
+    const frame = window.requestAnimationFrame(() =>
+      setTheme(document.documentElement.dataset.siteTheme === "light" ? "light" : "dark"),
+    );
     return () => window.cancelAnimationFrame(frame);
   }, []);
 
-  if (!ready) return null;
+  if (!theme) return null;
 
   return (
     <div
       id="clerk-captcha"
-      data-cl-theme="dark"
+      data-cl-theme={theme}
       data-cl-size="flexible"
       className="mx-auto w-full"
     />
@@ -109,7 +113,7 @@ type ClerkBrowser = {
     };
   };
   status?: string;
-  setActive?: (params: { session: string; redirectUrl: string }) => Promise<void>;
+  setActive?: (params: { session: string }) => Promise<void>;
 };
 
 type LoadedClerkBrowser = ClerkBrowser & {
@@ -127,6 +131,9 @@ type AuthChoiceProps = {
   primary: "login" | "signup";
   initialWebsite?: string;
   signupReturnUrl?: string;
+  // Where a completed login goes, e.g. back to an OAuth consent screen. Must
+  // already be a safe same-origin path (see safeReturnPath).
+  loginReturnUrl?: string;
 };
 
 function getErrorMessage(error: unknown) {
@@ -182,21 +189,33 @@ export async function getLoadedClerk(
   );
 }
 
+const SESSION_ACTIVATE_TIMEOUT_MS = 15_000;
+
+/**
+ * Navigate only after Clerk has set the session. setActive's own redirectUrl
+ * navigates just before the session is set, and an early fallback redirect
+ * could land on a protected page with no session cookie and bounce back to
+ * /login on slow connections.
+ */
 async function activateSession(
   clerk: LoadedClerkBrowser,
   session: string,
   redirectUrl: string,
 ) {
-  const fallback = window.setTimeout(() => {
-    window.location.assign(redirectUrl);
-  }, 1500);
-
-  await clerk.setActive({
-    session,
-    redirectUrl,
-  });
-
-  window.clearTimeout(fallback);
+  let timer = 0;
+  try {
+    await Promise.race([
+      clerk.setActive({ session }),
+      new Promise<never>((_, reject) => {
+        timer = window.setTimeout(
+          () => reject(new Error("Sign in is taking too long. Check your connection and try again.")),
+          SESSION_ACTIVATE_TIMEOUT_MS,
+        );
+      }),
+    ]);
+  } finally {
+    window.clearTimeout(timer);
+  }
   window.location.assign(redirectUrl);
 }
 
@@ -221,6 +240,7 @@ export default function AuthChoice({
   primary,
   initialWebsite = "",
   signupReturnUrl,
+  loginReturnUrl = "/overview",
 }: AuthChoiceProps) {
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
@@ -257,7 +277,7 @@ export default function AuthChoice({
       await clerk.client.signIn.authenticateWithRedirect({
         strategy: "oauth_google",
         redirectUrl: "/sso-callback",
-        redirectUrlComplete: "/overview",
+        redirectUrlComplete: loginReturnUrl,
       });
     } catch (err) {
       setError(getErrorMessage(err));
@@ -328,7 +348,7 @@ export default function AuthChoice({
     let result = initialResult;
 
     if (isCompleteSignIn(result)) {
-      await activateSession(clerk, result.createdSessionId, "/overview");
+      await activateSession(clerk, result.createdSessionId, loginReturnUrl);
       return true;
     }
 
@@ -342,7 +362,7 @@ export default function AuthChoice({
           password,
         });
         if (isCompleteSignIn(result)) {
-          await activateSession(clerk, result.createdSessionId, "/overview");
+          await activateSession(clerk, result.createdSessionId, loginReturnUrl);
           return true;
         }
       }
@@ -466,7 +486,7 @@ export default function AuthChoice({
           : await clerk.client.signUp.attemptEmailAddressVerification({ code });
 
       if (result.status === "complete" && result.createdSessionId) {
-        const redirectUrl = verifyMode === "signup" ? postSignupUrl : "/overview";
+        const redirectUrl = verifyMode === "signup" ? postSignupUrl : loginReturnUrl;
         await activateSession(clerk, result.createdSessionId, redirectUrl);
         return;
       }
@@ -540,7 +560,7 @@ export default function AuthChoice({
       });
 
       if (result.status === "complete" && result.createdSessionId) {
-        await activateSession(clerk, result.createdSessionId, "/overview");
+        await activateSession(clerk, result.createdSessionId, loginReturnUrl);
         return;
       }
 

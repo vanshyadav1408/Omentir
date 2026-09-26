@@ -1,5 +1,6 @@
 "use client";
 
+import { unwrapAction } from "@/lib/action-result";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -252,9 +253,9 @@ export default function AgentsView({
 
     try {
       if (isActive) {
-        await pauseAgentAction(formData);
+        unwrapAction(await pauseAgentAction(formData));
       } else {
-        await resumeAgentAction(formData);
+        unwrapAction(await resumeAgentAction(formData));
         const resumeKind =
           agent.mode === "steal_customers"
             ? "steal_customers"
@@ -312,7 +313,7 @@ export default function AgentsView({
     formData.set("agentId", target.id);
 
     try {
-      await deleteAgentAction(formData);
+      unwrapAction(await deleteAgentAction(formData));
       agentsResource.reload();
       router.refresh();
     } catch (error) {
@@ -338,7 +339,7 @@ export default function AgentsView({
     formData.set("leadsOnly", String(target.leadsOnly));
     setSavingLeadsOnly(true);
     try {
-      await setAgentLeadsOnlyAction(formData);
+      unwrapAction(await setAgentLeadsOnlyAction(formData));
       setLeadsOnlyTarget(null);
       agentsResource.reload();
       statusResource.reload();

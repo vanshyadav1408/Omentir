@@ -5,6 +5,7 @@ export { agentMcpTools, agentToolInputSchemas } from "@/lib/agent-tools";
 import {
   allowOutreachOnAgent,
   claimActionSlot,
+  recordManualActionSlot,
   consumeDailyQuota,
   hasDailyQuotaRemaining,
   createAgent,
@@ -99,6 +100,8 @@ export class AgentApiOperationError extends Error {
 
   constructor(message: string, status: number, details?: unknown) {
     super(message);
+    // Lets action-errors.ts recognize it without importing this module.
+    this.name = "AgentApiOperationError";
     this.status = status;
     this.details = details;
   }
@@ -1324,6 +1327,10 @@ export async function sendReplyToLead(
   workspace: AgentApiContext["workspace"],
   leadId: string,
   message: string,
+  // Set by the /messages composer. A person typing a reply is not held to the
+  // automation's spacing gate or daily cap; the send is still counted so
+  // automation backs off. Agent API callers keep both limits.
+  options: { manual?: boolean } = {},
 ) {
   const lead = await findLeadForWorkspace({ workspaceId: workspace.id, leadId });
   if (!lead) throw new AgentApiOperationError("Lead not found.", 404);
@@ -1348,22 +1355,26 @@ export async function sendReplyToLead(
     throw new AgentApiOperationError("No connected LinkedIn account.", 409);
   }
 
-  if (
-    !(await hasDailyQuotaRemaining(
-      workspace.id,
-      "messages",
-      workspace.settings.dailyMessageLimit,
-      workspace.timezone,
-    ))
-  ) {
-    throw new AgentApiOperationError("Daily message limit reached. Try again tomorrow.", 429);
-  }
-  const nextSlotAllowedAt = await claimActionSlot(workspace.id, account.id);
-  if (nextSlotAllowedAt) {
-    throw new AgentApiOperationError(
-      `This LinkedIn account can send again at ${nextSlotAllowedAt}.`,
-      429,
-    );
+  if (options.manual) {
+    await recordManualActionSlot(workspace.id, account.id);
+  } else {
+    if (
+      !(await hasDailyQuotaRemaining(
+        workspace.id,
+        "messages",
+        workspace.settings.dailyMessageLimit,
+        workspace.timezone,
+      ))
+    ) {
+      throw new AgentApiOperationError("Daily message limit reached. Try again tomorrow.", 429);
+    }
+    const nextSlotAllowedAt = await claimActionSlot(workspace.id, account.id);
+    if (nextSlotAllowedAt) {
+      throw new AgentApiOperationError(
+        `This LinkedIn account can send again at ${nextSlotAllowedAt}.`,
+        429,
+      );
+    }
   }
 
   const sendResult = await sendLinkedInMessage({

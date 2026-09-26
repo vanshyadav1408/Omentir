@@ -39,6 +39,13 @@ type SidebarFetchCache = {
 const ACTIVITY_RECONCILE_MIN_MS = 30_000;
 const lastActivityReconcileAt = new Map<string, number>();
 const activityReconcileInflight = new Map<string, Promise<unknown>>();
+// Last successful inbox per Unipile account, served when a poll fails so a
+// transient provider error does not blank the Messages list.
+const LAST_GOOD_INBOX_MAX_AGE_MS = 30 * 60 * 1000;
+const lastGoodInbox = new Map<
+  string,
+  { threads: Awaited<ReturnType<typeof listLinkedInInbox>>; at: number }
+>();
 
 function cachedLeadDashboardPreviews(workspaceId: string, cache: SidebarFetchCache) {
   cache.leadDashboardPreviews ||= listLeadDashboardPreviews(workspaceId);
@@ -347,18 +354,35 @@ export async function GET(request: Request) {
     const inboxes = await Promise.all(
       uniqueAccounts.map(async (account) => {
         try {
-          return await listLinkedInInbox({
+          const threads = await listLinkedInInbox({
             accountId: account.accountId,
             limit: 30,
             messageLimit: 50,
             includeMessageHistory: false,
           });
+          lastGoodInbox.set(account.accountId, { threads, at: Date.now() });
+          return threads;
         } catch (error) {
-          errors.push(error instanceof Error ? error.message : "LinkedIn inbox could not be loaded.");
-          return [];
+          const message = error instanceof Error ? error.message : "LinkedIn inbox could not be loaded.";
+          errors.push(message);
+          console.error(`[sidebar-data] inbox load failed for ${account.accountId}:`, message);
+          // Serve the last good inbox for this account. Returning [] here made
+          // every chat vanish from Messages until the next successful poll.
+          const cached = lastGoodInbox.get(account.accountId);
+          return cached && Date.now() - cached.at < LAST_GOOD_INBOX_MAX_AGE_MS
+            ? cached.threads
+            : [];
         }
       }),
     );
+    if (uniqueAccounts.length && errors.length === uniqueAccounts.length && !inboxes.flat().length) {
+      // Nothing to serve. A non-2xx keeps the client on the inbox it already
+      // has instead of replacing it with an empty one.
+      return NextResponse.json(
+        { error: "LinkedIn messages could not be loaded from Unipile." },
+        { status: 502 },
+      );
+    }
     const threads = inboxes
       .flat()
       .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());

@@ -6,7 +6,12 @@ import { hashAgentApiToken } from "@/lib/agent-api-token";
 import { planHasApiAccess, planLimits } from "@/lib/plan-limits";
 import { isValidTimeZone } from "@/lib/time-zone";
 import { getDb, nowIso, cleanId, normalizeLinkedInProfileUrl } from "./firebase";
-import { hasIntervalElapsed, isAgentDueForRun, nextDailyAgentRunAt } from "./scheduling";
+import {
+  canClaimAgentRun,
+  hasIntervalElapsed,
+  isAgentDueForRun,
+  nextDailyAgentRunAt,
+} from "./scheduling";
 import {
   DEFAULT_AGENT_RUN_HOUR,
   SPACING_MINUTES,
@@ -1496,11 +1501,21 @@ export async function deferAgentRun(agent: Agent) {
   });
 }
 
+// Claims the run. The tick releases its lock once sends finish while
+// discovery keeps going, so a later tick can run an agent that this tick's
+// (now stale) due list still holds. Re-checking inside a transaction means
+// only one of them starts it. False = gone, paused, or already run/running.
 export async function markAgentStarted(agent: Agent) {
-  return updateAgentDoc(agent.id, {
-    status: "running",
-    runStartedAt: nowIso(),
-    updatedAt: nowIso(),
+  const ref = collection<Agent>("agents").doc(agent.id);
+  return getDb().runTransaction(async (transaction) => {
+    const current = (await transaction.get(ref)).data();
+    if (!current || !canClaimAgentRun(current)) return false;
+    transaction.update(ref, {
+      status: "running",
+      runStartedAt: nowIso(),
+      updatedAt: nowIso(),
+    });
+    return true;
   });
 }
 
@@ -4160,6 +4175,21 @@ export async function claimActionSlot(workspaceId: string, linkedInAccountId: st
     });
     return null;
   });
+}
+
+// A person replying from the Messages inbox is a normal conversation, not
+// automation, so it never waits on the spacing gate. It still records the send
+// so the next automated action on this account waits a full interval.
+export async function recordManualActionSlot(workspaceId: string, linkedInAccountId: string) {
+  await getDb().collection("actionSpacing").doc(linkedInAccountId).set(
+    {
+      workspaceId,
+      linkedInAccountId,
+      lastSentAt: Date.now(),
+      updatedAt: nowIso(),
+    },
+    { merge: true },
+  );
 }
 
 // Single-flight lock for the automation tick so overlapping cron runs (a long

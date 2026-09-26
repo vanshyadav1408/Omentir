@@ -1,5 +1,6 @@
 "use client";
 
+import { unwrapAction } from "@/lib/action-result";
 import { useEffect, useRef, useState } from "react";
 import { usePostHog } from "posthog-js/react";
 import { completeOnboardingQuestionsAction } from "../actions";
@@ -68,7 +69,7 @@ export default function StepQuestions() {
       );
     }
     try {
-      await completeOnboardingQuestionsAction(formData);
+      unwrapAction(await completeOnboardingQuestionsAction(formData));
     } catch (error) {
       setPending(false);
       throw error;

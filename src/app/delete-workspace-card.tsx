@@ -1,5 +1,6 @@
 "use client";
 
+import { unwrapAction, type ActionFailure } from "@/lib/action-result";
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { isNextNavigationError, userFacingError } from "@/app/toast";
 import { useBodyScrollLock } from "@/app/use-body-scroll-lock";
@@ -12,7 +13,7 @@ export default function DeleteWorkspaceCard({
   deleteAction,
 }: {
   workspace: { id: string; ownerId?: string; name?: string };
-  deleteAction: (workspaceId: string) => void | Promise<void>;
+  deleteAction: (workspaceId: string) => Promise<void | ActionFailure>;
 }) {
   const keepsAccountWorkspace = isOriginalWorkspace(workspace);
   const name = workspaceDisplayName(workspace);
@@ -43,7 +44,7 @@ export default function DeleteWorkspaceCard({
     setError("");
     startTransition(async () => {
       try {
-        await deleteAction(workspace.id);
+        unwrapAction(await deleteAction(workspace.id));
         clearSidebarResourceCache();
       } catch (err) {
         if (isNextNavigationError(err)) {

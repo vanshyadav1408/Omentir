@@ -2889,13 +2889,6 @@ html.marketing-menu-open [data-marketing-header] {
   outline-offset: -1px;
 }
 
-.hero-app .home-mock-app {
-  flex: 1;
-  min-height: 0;
-  height: 100%;
-  border: 0;
-}
-
 .home-slide-draw .home-mock-app {
   flex: 1;
   min-height: 16rem;
@@ -4424,9 +4417,10 @@ html[data-theme="dark"] .m3-btn-pair > .m3-btn-outlined:hover:not(:disabled) {
   flex-direction: column;
   overflow: hidden;
   margin: 8px;
-  border: 1px solid #262626;
+  border: 1px solid var(--site-border);
   border-radius: 12px;
-  background: #0a0a0a;
+  background: var(--site-bg);
+  container-type: inline-size;
   box-shadow:
     0 22px 56px rgba(0, 0, 0, 0.45),
     0 0 0 1px rgba(255, 255, 255, 0.06);
@@ -4442,8 +4436,8 @@ html[data-theme="dark"] .m3-btn-pair > .m3-btn-outlined:hover:not(:disabled) {
 }
 
 @media (max-width: 767.98px) {
-  /* Phones get the mock's own narrow layout at full width (list first, tap
-     for detail) instead of a desktop-sized window that scrolls sideways. */
+  /* Phones get a fixed-height window; the demo dashboard scrolls inside it
+     instead of a desktop-sized window that scrolls sideways. */
   .hero-app {
     height: 28rem;
     min-height: 28rem;
@@ -4453,6 +4447,1049 @@ html[data-theme="dark"] .m3-btn-pair > .m3-btn-outlined:hover:not(:disabled) {
     height: 26rem;
     min-height: 26rem;
   }
+}
+
+/* Homepage hero: a still copy of the app's Overview (hero-app-preview.tsx).
+   Values mirror the .dashboard-shell rules; that class cannot be used here
+   because `:root:has(.dashboard-shell)` would restyle the whole site. It reads
+   the same site tokens as the app, so it follows the light/dark theme. */
+.hero-dash {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  color: var(--site-text);
+  font-size: 13px;
+  user-select: none;
+}
+
+/* Narrow windows get the app's collapsed icon rail, so every page stays
+   reachable on phones. */
+.hero-dash-sidebar {
+  display: flex;
+  width: 3.25rem;
+  flex-shrink: 0;
+  flex-direction: column;
+  padding: 0 0.375rem 0.5rem;
+  border-right: 1px solid var(--site-border);
+  background: var(--site-sidebar, var(--site-card));
+}
+
+.hero-dash-sidebar :is(.hero-dash-nav-label, .hero-dash-brand .hero-dash-icon, .hero-dash-nav-bottom > button:last-child .hero-dash-icon) {
+  display: none;
+}
+
+.hero-dash-sidebar .hero-dash-brand,
+.hero-dash-sidebar .hero-dash-nav > button {
+  justify-content: center;
+  padding: 0;
+}
+
+@container (min-width: 720px) {
+  .hero-dash-sidebar {
+    width: 12rem;
+    padding-inline: 0.5rem;
+  }
+
+  .hero-dash-sidebar :is(.hero-dash-nav-label, .hero-dash-brand .hero-dash-icon, .hero-dash-nav-bottom > button:last-child .hero-dash-icon) {
+    display: revert;
+  }
+
+  .hero-dash-sidebar .hero-dash-brand,
+  .hero-dash-sidebar .hero-dash-nav > button {
+    justify-content: flex-start;
+    padding: 0 0.5rem;
+  }
+}
+
+.hero-dash-brand {
+  display: flex;
+  height: 3rem;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0 0.5rem;
+  font-weight: 500;
+}
+
+.hero-dash-brand .hero-dash-icon {
+  margin-left: auto;
+  color: var(--site-text-2);
+}
+
+.hero-dash-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 0.25rem;
+}
+
+.hero-dash-nav > button {
+  display: flex;
+  width: 100%;
+  height: 2rem;
+  align-items: center;
+  gap: 0.625rem;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--site-text-2);
+  font: inherit;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.hero-dash-nav > button:hover {
+  color: var(--site-text);
+  background: color-mix(in oklab, var(--site-text) 4%, transparent);
+}
+
+.hero-dash-nav > button.is-active {
+  background: color-mix(in oklab, var(--site-text) 6%, transparent);
+  color: var(--site-text);
+}
+
+.hero-dash-nav > button:focus-visible,
+.hero-dash button:focus-visible {
+  outline: 2px solid var(--site-accent);
+  outline-offset: 1px;
+}
+
+.hero-dash-nav-label {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.hero-dash-nav-bottom {
+  margin-top: auto;
+}
+
+.hero-dash-nav-bottom > button:last-child .hero-dash-icon {
+  margin-left: auto;
+}
+
+.hero-dash-icon {
+  font-size: 18px;
+  line-height: 1;
+  font-variation-settings: "FILL" 0, "wght" 300, "GRAD" 0, "opsz" 20;
+}
+
+.hero-dash-workspace-mark {
+  display: grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  border-radius: 4px;
+  background: var(--site-card-3);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+/* The only live part: the main pane scrolls so the whole dashboard can be
+   seen. Scrolling past its end hands off to the page. */
+.hero-dash-main {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.hero-dash-main::-webkit-scrollbar {
+  display: none;
+}
+
+.hero-dash-content {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 1rem 1.5rem;
+}
+
+@container (min-width: 720px) {
+  .hero-dash-content {
+    padding-inline: 1.25rem;
+  }
+}
+
+.hero-dash-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-top: 1.5rem;
+}
+
+.hero-dash-toolbar p {
+  font-size: 14px;
+  color: var(--site-text-2);
+}
+
+.hero-dash-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.hero-dash-seg {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--site-border);
+  border-radius: 8px;
+}
+
+.hero-dash-seg button {
+  display: inline-flex;
+  height: 1.75rem;
+  align-items: center;
+  padding: 0 0.5rem;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--site-text-2);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.hero-dash-seg button:hover {
+  color: var(--site-text);
+}
+
+.hero-dash-seg button.is-on {
+  background: var(--site-card-3);
+  color: var(--site-text);
+}
+
+.hero-dash-btn {
+  display: inline-flex;
+  height: 1.75rem;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0 0.625rem;
+  background: none;
+  color: inherit;
+  font-family: inherit;
+  border: 1px solid color-mix(in oklab, var(--site-text) 14%, transparent);
+  border-radius: 6px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+button.hero-dash-btn {
+  cursor: pointer;
+}
+
+button.hero-dash-btn:hover:not(.is-filled) {
+  background: color-mix(in oklab, var(--site-text) 6%, transparent);
+}
+
+.hero-dash-btn.is-filled {
+  border-color: transparent;
+  background: var(--site-text);
+  color: var(--site-bg);
+  font-size: 12px;
+}
+
+.hero-dash-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+@container (min-width: 900px) {
+  .hero-dash-stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.hero-dash-card {
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid var(--site-border);
+  border-radius: 12px;
+  background: var(--site-card);
+}
+
+.hero-dash-panel {
+  margin-top: 1.25rem;
+  padding: 1rem 1.25rem;
+}
+
+.hero-dash-label {
+  font-size: 12px;
+  color: var(--site-text-2);
+}
+
+.hero-dash-value {
+  margin-top: 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 1.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+@container (min-width: 900px) {
+  .hero-dash-value {
+    font-size: 2rem;
+    line-height: 2.25rem;
+  }
+}
+
+.hero-dash-caption {
+  margin-top: 0.25rem;
+  font-size: 11px;
+  color: var(--site-text-2);
+}
+
+.hero-dash-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.35;
+  color: var(--site-text);
+}
+
+.hero-dash-sub {
+  margin-top: 0.125rem;
+  font-size: 12px;
+  color: var(--site-text-2);
+}
+
+.hero-dash-strong {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--site-text);
+}
+
+.hero-app .hero-dash .analysis-chart {
+  background-color: transparent !important;
+}
+
+.hero-dash-connect {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  padding: 0.75rem 1rem;
+}
+
+.hero-dash-connect-icon {
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--site-card-3);
+}
+
+.hero-dash-lists {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+@container (min-width: 900px) {
+  .hero-dash-lists {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.hero-dash-list {
+  padding: 0 1rem;
+}
+
+.hero-dash-list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 0;
+}
+
+.hero-dash-list-head > span:first-child {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--site-text-2);
+}
+
+.hero-dash-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 0;
+  border-top: 1px solid var(--site-border);
+}
+
+.hero-dash-list-head + .hero-dash-row,
+.hero-dash-row:first-child {
+  border-top: 0;
+}
+
+.hero-dash-row.is-button {
+  width: 100%;
+  border-right: 0;
+  border-bottom: 0;
+  border-left: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.hero-dash-row.is-button:hover {
+  background: color-mix(in oklab, var(--site-text) 4%, transparent);
+}
+
+.hero-dash-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.4rem;
+}
+
+.hero-dash-row.is-top {
+  align-items: flex-start;
+}
+
+.hero-dash-face {
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  border-radius: 999px;
+  object-fit: cover;
+}
+
+.hero-dash-score {
+  font-size: 13.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.hero-dash-body {
+  display: -webkit-box;
+  margin-top: 0.375rem;
+  overflow: hidden;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--site-text);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+/* Demo pages behind the sidebar (hero-app-screens.tsx). */
+.hero-dash-page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-top: 1.5rem;
+}
+
+.hero-dash-page-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  color: var(--site-text);
+}
+
+.hero-dash-field {
+  display: flex;
+  min-height: 2rem;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.625rem;
+  border: 1px solid color-mix(in oklab, var(--site-text) 12%, transparent);
+  border-radius: 6px;
+  font-size: 12.5px;
+  color: var(--site-text);
+}
+
+.hero-dash-field.is-text {
+  display: block;
+  line-height: 1.5;
+}
+
+.hero-dash-search {
+  width: 12rem;
+  color: var(--site-text-3);
+}
+
+.hero-dash-toggle {
+  position: relative;
+  display: inline-block;
+  width: 2rem;
+  height: 1.125rem;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--site-card-4);
+}
+
+.hero-dash-toggle::after {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: 999px;
+  background: var(--site-bg);
+  content: "";
+}
+
+button.hero-dash-toggle {
+  padding: 0;
+  border: 0;
+  cursor: pointer;
+}
+
+.hero-dash-toggle::after {
+  transition: left 0.15s ease, right 0.15s ease;
+}
+
+.hero-dash-toggle.is-on {
+  background: #3fb950;
+}
+
+.hero-dash-toggle.is-on::after {
+  left: auto;
+  right: 2px;
+  background: #fff;
+}
+
+.hero-dash-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 5px;
+  background: var(--site-card-3);
+  color: var(--site-text-2);
+  font-size: 10.5px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.hero-dash-pill.is-good {
+  background: color-mix(in oklab, #3fb950 18%, transparent);
+  color: var(--tone-green);
+}
+
+.hero-dash-pill.is-hot {
+  background: color-mix(in oklab, #e85e6b 18%, transparent);
+  color: var(--tone-salmon);
+}
+
+.hero-dash-pill i {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.hero-dash-eyebrow {
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--site-text-2);
+}
+
+.hero-dash-agent {
+  margin-top: 0.75rem;
+}
+
+.hero-dash-page-head + .hero-dash-agent {
+  margin-top: 1rem;
+}
+
+.hero-dash-agent-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.hero-dash-agent-note {
+  margin-top: 0.5rem;
+}
+
+.hero-dash-agent-note b {
+  font-weight: 600;
+  color: var(--site-text);
+}
+
+.hero-dash-agent-note b.is-good {
+  color: var(--tone-green);
+}
+
+.hero-dash-agent-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.875rem;
+}
+
+@container (min-width: 720px) {
+  .hero-dash-agent-stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.hero-dash-agent-value {
+  margin-top: 0.25rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.hero-dash-agent-value span {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--site-text-2);
+}
+
+.hero-dash-agent-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.875rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--site-border);
+}
+
+.hero-dash-tabs {
+  display: flex;
+  gap: 1.25rem;
+  margin-top: 1rem;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--site-border);
+  scrollbar-width: none;
+}
+
+.hero-dash-tabs button {
+  position: relative;
+  flex-shrink: 0;
+  padding: 0 0 0.6rem;
+  border: 0;
+  background: none;
+  color: var(--site-text-2);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.hero-dash-tabs button:hover,
+.hero-dash-tabs button.is-on {
+  color: var(--site-text);
+}
+
+.hero-dash-tabs button.is-on::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  background: var(--site-text);
+  content: "";
+}
+
+.hero-dash-tabs b {
+  margin-left: 0.25rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: var(--site-card-3);
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+/* Like the app, the list and the open conversation live in a fixed-height
+   card and scroll on their own, so the reply box sits at the bottom of the
+   conversation instead of right under the last message. */
+.hero-dash-split {
+  display: grid;
+  height: 30rem;
+  grid-template-rows: minmax(0, 1fr);
+  margin-top: 0.75rem;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* The phone window is 28rem tall; this keeps the whole card, reply box
+   included, in view under the page title and tabs. */
+@container (max-width: 719.98px) {
+  .hero-dash-split {
+    height: 18.5rem;
+  }
+}
+
+.hero-dash-split-list,
+.hero-dash-split-detail {
+  min-width: 0;
+  min-height: 0;
+}
+
+.hero-dash-split-list {
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.hero-dash-split-detail {
+  flex-direction: column;
+}
+
+.hero-dash-split-detail,
+.hero-dash-split[data-open] .hero-dash-split-list {
+  display: none;
+}
+
+.hero-dash-split .hero-dash-split-list,
+.hero-dash-split[data-open] .hero-dash-split-detail {
+  display: flex;
+  flex-direction: column;
+}
+
+.hero-dash-split[data-open] .hero-dash-split-list {
+  display: none;
+}
+
+@container (min-width: 720px) {
+  .hero-dash-split {
+    grid-template-columns: 17rem minmax(0, 1fr);
+  }
+
+  /* Both panes always show here, whether or not a row was opened. */
+  .hero-dash-split .hero-dash-split-list,
+  .hero-dash-split .hero-dash-split-detail,
+  .hero-dash-split[data-open] .hero-dash-split-list {
+    display: flex;
+  }
+
+  .hero-dash-split-list {
+    border-right: 1px solid var(--site-border);
+  }
+
+  .hero-dash-back {
+    display: none;
+  }
+}
+
+.hero-dash-split-head,
+.hero-dash-split-foot {
+  padding: 0.75rem 1rem;
+}
+
+.hero-dash-split-head {
+  border-bottom: 1px solid var(--site-border);
+}
+
+.hero-dash-thread {
+  display: flex;
+  width: 100%;
+  align-items: flex-start;
+  gap: 0.625rem;
+  padding: 0.75rem 1rem;
+  border: 0;
+  border-bottom: 1px solid var(--site-border);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.hero-dash-thread.is-row {
+  align-items: center;
+  padding-block: 0.55rem;
+}
+
+.hero-dash-thread:hover {
+  background: color-mix(in oklab, var(--site-text) 4%, transparent);
+}
+
+.hero-dash-thread.is-on {
+  background: color-mix(in oklab, var(--site-text) 7%, transparent);
+}
+
+.hero-dash-thread-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.hero-dash-thread-top .hero-dash-caption {
+  margin-top: 0;
+}
+
+.hero-dash-initials {
+  display: inline-grid;
+  place-items: center;
+  background: var(--site-card-3);
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.hero-dash-check {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  border: 1px solid color-mix(in oklab, var(--site-text) 25%, transparent);
+  border-radius: 3px;
+}
+
+.hero-dash-chat-head {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--site-border);
+}
+
+.hero-dash-back {
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--site-border);
+  border-radius: 6px;
+  background: none;
+  color: var(--site-text-2);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.hero-dash-chat {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.hero-dash-bubble-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.hero-dash-bubble-row.is-you {
+  justify-content: flex-end;
+}
+
+.hero-dash-bubble {
+  max-width: 80%;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid var(--site-border);
+  border-radius: 14px 14px 14px 4px;
+  background: var(--site-card-2);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.hero-dash-bubble-row.is-you .hero-dash-bubble {
+  border-radius: 14px 14px 4px 14px;
+  background: color-mix(in oklab, #0a66c2 16%, var(--site-card));
+}
+
+.hero-dash-composer {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--site-border);
+}
+
+/* Beats the global html.dark input fill so it reads like the app's composer. */
+:root .hero-dash .hero-dash-composer input.hero-dash-input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="hidden"]) {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid color-mix(in oklab, var(--site-text) 12%, transparent) !important;
+  /* The marketing site rounds every input into a pill; the app uses 6px. */
+  border-radius: 6px !important;
+  background: transparent !important;
+  color: var(--site-text) !important;
+  font: inherit;
+  font-size: 12.5px;
+  outline: none;
+}
+
+:root .hero-dash .hero-dash-composer input.hero-dash-input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="hidden"]):focus {
+  border-width: 1px;
+  border-color: color-mix(in oklab, var(--site-text) 35%, transparent) !important;
+}
+
+.hero-dash-send {
+  display: grid;
+  width: 1.9rem;
+  height: 1.9rem;
+  flex-shrink: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: #0a66c2;
+  color: #fff;
+  cursor: pointer;
+}
+
+.hero-dash-send:disabled {
+  background: var(--site-card-3);
+  color: var(--site-text-3);
+  cursor: default;
+}
+
+.hero-dash-lead-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.hero-dash-lead-body {
+  padding: 1rem;
+}
+
+.hero-dash-body.is-full {
+  display: block;
+  -webkit-line-clamp: unset;
+}
+
+.hero-dash-progress {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.hero-dash-progress div {
+  color: var(--site-text-2);
+  font-size: 11px;
+}
+
+.hero-dash-progress span {
+  display: block;
+  height: 3px;
+  margin-bottom: 0.35rem;
+  border-radius: 999px;
+  background: var(--site-card-4);
+}
+
+.hero-dash-progress .is-done {
+  color: var(--site-text);
+}
+
+.hero-dash-progress .is-done span {
+  background: #3fb950;
+}
+
+.hero-dash-steps {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.hero-dash-steps > div {
+  padding-left: 0.75rem;
+  border-left: 2px solid var(--site-border);
+}
+
+.hero-dash-section {
+  margin-top: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--site-border);
+}
+
+.hero-dash-section:last-child {
+  border-bottom: 0;
+}
+
+.hero-dash-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--site-text);
+}
+
+.hero-dash-inline {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+.hero-dash-inline .hero-dash-field {
+  color: var(--site-text-3);
+}
+
+.hero-dash-inline .hero-dash-btn {
+  height: auto;
+}
+
+.hero-dash-numbered {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding-left: 1.1rem;
+  list-style: decimal;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.hero-dash-numbered .is-code {
+  list-style: none;
+  margin-left: -1.1rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 6px;
+  background: var(--site-card-2);
+  font-family: var(--font-site-mono, ui-monospace, monospace);
+  font-size: 11.5px;
+}
+
+.hero-dash-profile {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.hero-dash-form {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+@container (min-width: 720px) {
+  .hero-dash-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.hero-dash-form .hero-dash-label {
+  margin-bottom: 0.3rem;
+}
+
+.hero-dash-setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
 }
 
 @media (max-width: 559.98px) {
@@ -4481,133 +5518,10 @@ html[data-theme="dark"] .m3-btn-pair > .m3-btn-outlined:hover:not(:disabled) {
   }
 }
 
-.hero-app-canvas {
-  display: flex;
-  width: 100%;
-  height: 100%;
-  min-width: 0;
-  min-height: 0;
-  flex: 1;
-}
-
-.hero-app-navigation {
-  margin-top: 1rem;
-}
-
-.hero-app-navigation-list {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.75rem;
-  max-width: 40rem;
-  margin: 0 auto;
-}
-
-.hero-app-navigation button {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  gap: 0.55rem;
-  padding: 0.35rem 0;
-  border: 0;
-  background: none;
-  font: inherit;
-  text-align: left;
-  color: var(--md-sys-color-on-surface-variant);
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
-
-.hero-app-navigation button.is-active,
-.hero-app-navigation button:hover {
-  color: var(--md-sys-color-on-surface);
-}
-
-.hero-app-navigation button:focus-visible {
-  outline: 2px solid #c2d0aa;
-  outline-offset: 4px;
-  border-radius: 4px;
-}
-
-.hero-app-navigation-track {
-  position: relative;
-  display: block;
-  height: 3px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: rgba(154, 170, 134, 0.28);
-  transition: background-color 0.3s ease;
-}
-
-.hero-app-navigation button.is-done .hero-app-navigation-track,
-.hero-app-navigation button:hover .hero-app-navigation-track {
-  background: rgba(154, 170, 134, 0.55);
-}
-
-.hero-app-navigation-fill {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: #c2d0aa;
-  transform-origin: left center;
-  animation: hero-progress var(--hero-slide-ms, 7500ms) linear forwards;
-}
-
-.hero-app-navigation-list.is-paused .hero-app-navigation-fill {
-  animation-play-state: paused;
-}
-
-.hero-app-navigation-list.is-stopped .hero-app-navigation-fill {
-  animation: none;
-}
-
-@keyframes hero-progress {
-  from {
-    transform: scaleX(0);
-  }
-
-  to {
-    transform: scaleX(1);
-  }
-}
-
-.hero-app-navigation-caption {
-  display: flex;
-  gap: 0.4rem;
-  font-size: 12.5px;
-  line-height: 1.3;
-}
-
-.hero-app-navigation-caption b {
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  opacity: 0.55;
-}
-
-@media (min-width: 768px) {
-  .hero-app-navigation {
-    margin-top: 1.25rem;
-  }
-
-  .hero-app-navigation-caption {
-    font-size: 13.5px;
-  }
-}
-
-/* Mock motion. The hero runs it on every slide change; the How it works
-   panels wait for Reveal to mark them on screen. Reduced motion skips all of
-   it, and without an animation end the slideshow never auto-advances. */
-@media (prefers-reduced-motion: reduce) {
-  .hero-app-navigation-fill {
-    animation: none;
-  }
-}
-
+/* Mock motion. The How it works panels wait for Reveal to mark them on
+   screen. Reduced motion skips all of it. */
 @media (prefers-reduced-motion: no-preference) {
-  .hero-app-canvas {
-    animation: hero-canvas-in 480ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
-  }
-
-  :is(.hero-app, .reveal[data-revealed]) :is(
+  .reveal[data-revealed] :is(
       .home-mock-people li,
       .home-mock-threads li,
       .home-mock-fields > *,
@@ -4617,7 +5531,7 @@ html[data-theme="dark"] .m3-btn-pair > .m3-btn-outlined:hover:not(:disabled) {
     animation: home-mock-rise 420ms cubic-bezier(0.2, 0.8, 0.2, 1) var(--d, 0ms) both;
   }
 
-  :is(.hero-app, .reveal[data-revealed]) :is(
+  .reveal[data-revealed] :is(
       .home-mock-log-stack > *,
       .home-mock-chips li,
       .home-mock-scan-faces > *
@@ -4625,20 +5539,20 @@ html[data-theme="dark"] .m3-btn-pair > .m3-btn-outlined:hover:not(:disabled) {
     animation: home-mock-pop 380ms cubic-bezier(0.2, 0.8, 0.2, 1) var(--d, 0ms) both;
   }
 
-  :is(.hero-app, .reveal[data-revealed]) .home-mock-log-stack > * {
+  .reveal[data-revealed] .home-mock-log-stack > * {
     animation-duration: 460ms;
   }
 
-  :is(.hero-app, .reveal[data-revealed]) .home-mock-scorebar b {
+  .reveal[data-revealed] .home-mock-scorebar b {
     transform-origin: left center;
     animation: home-mock-grow 800ms cubic-bezier(0.2, 0.8, 0.2, 1) 200ms both;
   }
 
-  :is(.hero-app, .reveal[data-revealed]) .home-mock-ring circle + circle {
+  .reveal[data-revealed] .home-mock-ring circle + circle {
     animation: home-mock-ring 900ms cubic-bezier(0.2, 0.8, 0.2, 1) 150ms both;
   }
 
-  :is(.hero-app, .reveal[data-revealed]) :is(
+  .reveal[data-revealed] :is(
       .home-mock-threads strong em,
       .home-mock-chat > header strong em,
       .home-mock-connected em
@@ -4668,18 +5582,6 @@ html[data-theme="dark"] .m3-btn-pair > .m3-btn-outlined:hover:not(:disabled) {
   .home-mock-preview li:nth-child(1) { --d: 300ms; }
   .home-mock-preview li:nth-child(2) { --d: 380ms; }
   .home-mock-preview li:nth-child(3) { --d: 460ms; }
-}
-
-@keyframes hero-canvas-in {
-  from {
-    opacity: 0;
-    transform: translateY(10px) scale(0.985);
-  }
-
-  to {
-    opacity: 1;
-    transform: none;
-  }
 }
 
 @keyframes home-mock-rise {
@@ -6068,8 +6970,10 @@ html.dark [class~="bg-amber-50"] {
 }
 html.dark .text-amber-700,
 html.dark .text-amber-800,
+html.dark .text-amber-900,
 html.dark [class~="text-amber-700"],
-html.dark [class~="text-amber-800"] {
+html.dark [class~="text-amber-800"],
+html.dark [class~="text-amber-900"] {
   color: var(--tone-amber) !important;
 }
 html.dark .border-amber-200,
@@ -7427,25 +8331,26 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
 /* Landing stat cards under the hero demo. */
 .home-stat {
   border-radius: 4px;
+  container-type: inline-size;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 2.5rem;
+  gap: 1.75rem;
   padding: 1.5rem;
 }
 
 @media (min-width: 768px) {
   .home-stat {
-    min-height: 13rem;
-    padding: 1.75rem 2rem;
+    min-height: 15rem;
+    padding: 1.75rem 1.5rem;
   }
 }
 
 .home-stat-value {
-  font-size: clamp(3rem, 6vw, 4.5rem);
+  font-size: clamp(3.5rem, 32cqi, 6.5rem);
   font-weight: 400;
   letter-spacing: -0.04em;
-  line-height: 1;
+  line-height: 0.9;
   color: var(--site-text);
 }
 

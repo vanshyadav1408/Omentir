@@ -16,7 +16,7 @@ import {
   createOwnedWorkspace,
   deleteOwnedWorkspace,
   listWorkspacesForOwner,
-  claimActionSlot,
+  recordManualActionSlot,
   completeConversationManualFollowUp,
   consumeDailyQuota,
   deleteAgent,
@@ -30,7 +30,6 @@ import {
   getLinkedInAccountByAccountId,
   getLinkedInAccountForWorkspace,
   getProductProfile,
-  hasDailyQuotaRemaining,
   listCampaigns,
   listLeads,
   pauseAgent,
@@ -50,6 +49,7 @@ import {
   upsertProductProfile,
   upsertLead,
   stopLeadOutreach,
+  listWorkspaceIdsSharingLinkedIn,
 } from "@/lib/server/data";
 import { parseAgentMessageTone } from "@/lib/agent-setup-defaults";
 import { parseLinkedInLeadCsv } from "@/lib/linkedin-csv";
@@ -70,7 +70,11 @@ import { executeScheduledActionNow } from "@/lib/server/automation";
 import { getLeadOutreach } from "@/lib/server/scheduled-actions";
 import { analyzeWebsiteOrSearch, draftAgentSetupWithGemini } from "@/lib/server/gemini";
 import { hasActiveSubscription, requireActiveSubscription } from "@/lib/server/subscription";
-import { deleteLinkedInAccount, sendLinkedInChatMessage } from "@/lib/server/unipile";
+import {
+  deleteLinkedInAccount,
+  linkedInChatBelongsToAccount,
+  sendLinkedInChatMessage,
+} from "@/lib/server/unipile";
 import type { CampaignReplyHandling, CampaignStep, ProductProfile, SendWindow } from "@/lib/server/types";
 import { isLocalMode } from "@/lib/runtime-mode";
 import {
@@ -82,6 +86,7 @@ import {
   setActiveWorkspaceCookie,
 } from "@/lib/server/active-workspace";
 import { resolveWebsiteFavicon } from "@/lib/server/website-favicon";
+import { withActionErrors } from "@/lib/server/action-errors";
 
 async function requireWorkspace() {
   const { userId } = await auth();
@@ -163,7 +168,7 @@ function revalidateWorkspacePages() {
   revalidatePath("/", "layout");
 }
 
-export async function switchWorkspaceAction(workspaceId: string) {
+async function switchWorkspaceActionImpl(workspaceId: string) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
   const workspace = await findOwnedWorkspace(userId, workspaceId.trim());
@@ -172,7 +177,11 @@ export async function switchWorkspaceAction(workspaceId: string) {
   revalidateWorkspacePages();
 }
 
-export async function createWorkspaceAction(formData: FormData) {
+export async function switchWorkspaceAction(...args: Parameters<typeof switchWorkspaceActionImpl>) {
+  return withActionErrors(() => switchWorkspaceActionImpl(...args));
+}
+
+async function createWorkspaceActionImpl(formData: FormData) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
   const primary = await ensureWorkspace(userId);
@@ -198,7 +207,11 @@ export async function createWorkspaceAction(formData: FormData) {
   redirect("/workspace");
 }
 
-export async function deleteWorkspaceAction(workspaceId: string) {
+export async function createWorkspaceAction(...args: Parameters<typeof createWorkspaceActionImpl>) {
+  return withActionErrors(() => createWorkspaceActionImpl(...args));
+}
+
+async function deleteWorkspaceActionImpl(workspaceId: string) {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
   const id = workspaceId.trim();
@@ -212,6 +225,10 @@ export async function deleteWorkspaceAction(workspaceId: string) {
   }
   revalidateWorkspacePages();
   redirect("/workspace");
+}
+
+export async function deleteWorkspaceAction(...args: Parameters<typeof deleteWorkspaceActionImpl>) {
+  return withActionErrors(() => deleteWorkspaceActionImpl(...args));
 }
 
 function splitList(value: FormDataEntryValue | null) {
@@ -446,12 +463,13 @@ function formatUtcTime(date = new Date()) {
   }).format(date);
 }
 
-export async function analyzeWebsiteAction(formData: FormData) {
+async function analyzeWebsiteActionImpl(formData: FormData) {
   const workspace = await requireWorkspace();
   const websiteUrl = String(formData.get("websiteUrl") || "").trim();
 
   if (!websiteUrl) throw new Error("Website URL is required.");
 
+  let analyzed = false;
   try {
     const analysis = await analyzeWebsiteOrSearch(websiteUrl);
     const existing = await getProductProfile(workspace.id);
@@ -482,16 +500,26 @@ export async function analyzeWebsiteAction(formData: FormData) {
       websiteUrl,
       companyName: analysis.companyName,
     });
-  } catch {
-    // Keep the previous profile when re-analysis fails.
+    analyzed = true;
+  } catch (error) {
+    // Keep the previous profile when re-analysis fails, but tell the caller.
+    console.error(
+      "[analyzeWebsiteAction] analysis failed:",
+      error instanceof Error ? error.message : error,
+    );
   }
 
   revalidatePath("/workspace");
   revalidatePath("/my-product");
   revalidatePath("/overview");
+  return { analyzed };
 }
 
-export async function completeOnboardingQuestionsAction(formData: FormData) {
+export async function analyzeWebsiteAction(...args: Parameters<typeof analyzeWebsiteActionImpl>) {
+  return withActionErrors(() => analyzeWebsiteActionImpl(...args));
+}
+
+async function completeOnboardingQuestionsActionImpl(formData: FormData) {
   const workspace = await requireWorkspace();
   const websiteUrl = String(formData.get("websiteUrl") || "").trim();
   const onboarding = {
@@ -563,14 +591,18 @@ export async function completeOnboardingQuestionsAction(formData: FormData) {
   revalidatePath("/onboarding");
 
   if (websiteUrl) {
-    await analyzeWebsiteAction(formData);
+    await analyzeWebsiteActionImpl(formData);
     redirect("/onboarding");
   }
 
   redirect("/onboarding");
 }
 
-export async function completeSelfHostedOnboardingAction() {
+export async function completeOnboardingQuestionsAction(...args: Parameters<typeof completeOnboardingQuestionsActionImpl>) {
+  return withActionErrors(() => completeOnboardingQuestionsActionImpl(...args));
+}
+
+async function completeSelfHostedOnboardingActionImpl() {
   if (!isLocalMode()) throw new Error("Self-hosted onboarding is unavailable in hosted mode.");
   const workspace = await requireWorkspace();
   await updateWorkspaceOnboarding(workspace.id, {
@@ -583,11 +615,15 @@ export async function completeSelfHostedOnboardingAction() {
   return { ok: true };
 }
 
+export async function completeSelfHostedOnboardingAction(...args: Parameters<typeof completeSelfHostedOnboardingActionImpl>) {
+  return withActionErrors(() => completeSelfHostedOnboardingActionImpl(...args));
+}
+
 export type SaveProductProfileResult =
   | { ok: true }
   | { ok: false; error: string };
 
-export async function saveProductProfileAction(
+async function saveProductProfileActionImpl(
   formData: FormData,
 ): Promise<SaveProductProfileResult> {
   const workspace = await requireWorkspace();
@@ -684,9 +720,13 @@ export async function saveProductProfileAction(
   return { ok: true };
 }
 
+export async function saveProductProfileAction(...args: Parameters<typeof saveProductProfileActionImpl>) {
+  return withActionErrors(() => saveProductProfileActionImpl(...args));
+}
+
 // Used by the Overview "Set deal size" modal to set the average ticket size in
 // isolation without touching the rest of the product profile.
-export async function setAverageTicketSizeAction(formData: FormData) {
+async function setAverageTicketSizeActionImpl(formData: FormData) {
   const workspace = await requireWorkspace();
   const value = numberFromForm(formData, "averageTicketSize", undefined);
   if (value === undefined) return;
@@ -696,13 +736,21 @@ export async function setAverageTicketSizeAction(formData: FormData) {
   revalidatePath("/my-product");
 }
 
-export async function continueWithProductProfileAction(formData: FormData) {
-  const result = await saveProductProfileAction(formData);
+export async function setAverageTicketSizeAction(...args: Parameters<typeof setAverageTicketSizeActionImpl>) {
+  return withActionErrors(() => setAverageTicketSizeActionImpl(...args));
+}
+
+async function continueWithProductProfileActionImpl(formData: FormData) {
+  const result = await saveProductProfileActionImpl(formData);
   if (!result.ok) return;
   redirect("/onboarding");
 }
 
-export async function saveSettingsAction(formData: FormData) {
+export async function continueWithProductProfileAction(...args: Parameters<typeof continueWithProductProfileActionImpl>) {
+  return withActionErrors(() => continueWithProductProfileActionImpl(...args));
+}
+
+async function saveSettingsActionImpl(formData: FormData) {
   const workspace = await requireWorkspace();
   const schema = z.object({
     dailyInviteLimit: z.coerce.number().int().min(1).max(100),
@@ -743,10 +791,14 @@ export async function saveSettingsAction(formData: FormData) {
   revalidatePath("/leads");
 }
 
+export async function saveSettingsAction(...args: Parameters<typeof saveSettingsActionImpl>) {
+  return withActionErrors(() => saveSettingsActionImpl(...args));
+}
+
 const PROFILE_IMAGE_MAX_BYTES = 2 * 1024 * 1024;
 const LOCAL_PROFILE_IMAGE_MAX_CHARS = 900_000;
 
-export async function uploadProfileImageAction(formData: FormData) {
+async function uploadProfileImageActionImpl(formData: FormData) {
   const workspace = await requireWorkspace();
   const file = formData.get("image");
   const blob =
@@ -783,10 +835,14 @@ export async function uploadProfileImageAction(formData: FormData) {
   revalidatePath("/settings");
 }
 
+export async function uploadProfileImageAction(...args: Parameters<typeof uploadProfileImageActionImpl>) {
+  return withActionErrors(() => uploadProfileImageActionImpl(...args));
+}
+
 // Called once by the app shell for workspaces that have never had a zone
 // stored, so the schedule the server computes matches the clock the user reads.
 // An explicit choice in Settings always wins: this only fills a blank.
-export async function saveWorkspaceTimeZoneAction(timezone: string) {
+async function saveWorkspaceTimeZoneActionImpl(timezone: string) {
   const workspace = await requireWorkspace();
   if (workspace.timezone) return;
   await updateWorkspaceTimezone(workspace.id, String(timezone || "").trim());
@@ -794,7 +850,11 @@ export async function saveWorkspaceTimeZoneAction(timezone: string) {
   revalidatePath("/leads");
 }
 
-export async function runScheduledActionNowAction(formData: FormData) {
+export async function saveWorkspaceTimeZoneAction(...args: Parameters<typeof saveWorkspaceTimeZoneActionImpl>) {
+  return withActionErrors(() => saveWorkspaceTimeZoneActionImpl(...args));
+}
+
+async function runScheduledActionNowActionImpl(formData: FormData) {
   const workspace = await requireWorkspace();
   requireActiveSubscription(workspace);
   const enrollmentId = String(formData.get("enrollmentId") || "").trim();
@@ -807,13 +867,21 @@ export async function runScheduledActionNowAction(formData: FormData) {
   return { result };
 }
 
-export async function getLeadOutreachAction(leadId: string) {
+export async function runScheduledActionNowAction(...args: Parameters<typeof runScheduledActionNowActionImpl>) {
+  return withActionErrors(() => runScheduledActionNowActionImpl(...args));
+}
+
+async function getLeadOutreachActionImpl(leadId: string) {
   const workspace = await requireWorkspace();
   requireActiveSubscription(workspace);
   return getLeadOutreach(workspace.id, String(leadId || "").trim());
 }
 
-export async function stopLeadOutreachAction(formData: FormData) {
+export async function getLeadOutreachAction(...args: Parameters<typeof getLeadOutreachActionImpl>) {
+  return withActionErrors(() => getLeadOutreachActionImpl(...args));
+}
+
+async function stopLeadOutreachActionImpl(formData: FormData) {
   const workspace = await requireWorkspace();
   requireActiveSubscription(workspace);
   const leadId = String(formData.get("leadId") || "").trim();
@@ -826,7 +894,11 @@ export async function stopLeadOutreachAction(formData: FormData) {
   revalidatePath("/overview");
 }
 
-export async function createAgentApiKeyAction(formData: FormData) {
+export async function stopLeadOutreachAction(...args: Parameters<typeof stopLeadOutreachActionImpl>) {
+  return withActionErrors(() => stopLeadOutreachActionImpl(...args));
+}
+
+async function createAgentApiKeyActionImpl(formData: FormData) {
   const workspace = await requireWorkspace();
   requireActiveSubscription(workspace);
   // createAgentApiKey also enforces planHasApiAccess; this keeps the action
@@ -837,7 +909,11 @@ export async function createAgentApiKeyAction(formData: FormData) {
   return token;
 }
 
-export async function revokeAgentApiKeyAction(formData: FormData) {
+export async function createAgentApiKeyAction(...args: Parameters<typeof createAgentApiKeyActionImpl>) {
+  return withActionErrors(() => createAgentApiKeyActionImpl(...args));
+}
+
+async function revokeAgentApiKeyActionImpl(formData: FormData) {
   const workspace = await requireWorkspace();
   const keyId = String(formData.get("keyId") || "").trim();
   if (!keyId) throw new Error("Agent token id is required.");
@@ -845,7 +921,11 @@ export async function revokeAgentApiKeyAction(formData: FormData) {
   revalidatePath("/api-keys");
 }
 
-export async function disconnectLinkedInAccountAction(formData?: FormData) {
+export async function revokeAgentApiKeyAction(...args: Parameters<typeof revokeAgentApiKeyActionImpl>) {
+  return withActionErrors(() => revokeAgentApiKeyActionImpl(...args));
+}
+
+async function disconnectLinkedInAccountActionImpl(formData?: FormData) {
   const workspace = await requireWorkspace();
   const linkedInAccountId = String(formData?.get("linkedInAccountId") || "").trim();
   const account = await getLinkedInAccountForWorkspace(
@@ -861,6 +941,10 @@ export async function disconnectLinkedInAccountAction(formData?: FormData) {
   revalidatePath("/settings");
   revalidatePath("/connect");
   revalidatePath("/overview");
+}
+
+export async function disconnectLinkedInAccountAction(...args: Parameters<typeof disconnectLinkedInAccountActionImpl>) {
+  return withActionErrors(() => disconnectLinkedInAccountActionImpl(...args));
 }
 
 function parseAgentMode(rawMode: string): "prompt" | "filters" | "signals" | "outreach" | "steal_customers" {
@@ -949,7 +1033,7 @@ async function createAgentFromForm(
   });
 }
 
-export async function createAgentForSetupAction(formData: FormData) {
+async function createAgentForSetupActionImpl(formData: FormData) {
   const workspace = await requireWorkspace();
   requireActiveSubscription(workspace);
   const agent = await createAgentFromForm(workspace, formData);
@@ -958,7 +1042,11 @@ export async function createAgentForSetupAction(formData: FormData) {
   return { agentId: agent.id, groupId: agent.targetGroupId };
 }
 
-export async function importLinkedInCsvLeadsAction(formData: FormData) {
+export async function createAgentForSetupAction(...args: Parameters<typeof createAgentForSetupActionImpl>) {
+  return withActionErrors(() => createAgentForSetupActionImpl(...args));
+}
+
+async function importLinkedInCsvLeadsActionImpl(formData: FormData) {
   const workspace = await requireWorkspace();
   requireActiveSubscription(workspace);
   const agentId = String(formData.get("agentId") || "").trim();
@@ -988,6 +1076,10 @@ export async function importLinkedInCsvLeadsAction(formData: FormData) {
   }
   revalidatePath("/leads");
   return { imported: leads.length };
+}
+
+export async function importLinkedInCsvLeadsAction(...args: Parameters<typeof importLinkedInCsvLeadsActionImpl>) {
+  return withActionErrors(() => importLinkedInCsvLeadsActionImpl(...args));
 }
 
 async function updateAgentFromForm(
@@ -1048,7 +1140,7 @@ async function updateAgentFromForm(
   });
 }
 
-export async function updateAgentForSetupAction(formData: FormData) {
+async function updateAgentForSetupActionImpl(formData: FormData) {
   const workspace = await requireWorkspace();
   requireActiveSubscription(workspace);
   const agent = await updateAgentFromForm(workspace, formData);
@@ -1058,7 +1150,11 @@ export async function updateAgentForSetupAction(formData: FormData) {
   return { agentId: agent.id, groupId: agent.targetGroupId };
 }
 
-export async function updateAgentAction(formData: FormData) {
+export async function updateAgentForSetupAction(...args: Parameters<typeof updateAgentForSetupActionImpl>) {
+  return withActionErrors(() => updateAgentForSetupActionImpl(...args));
+}
+
+async function updateAgentActionImpl(formData: FormData) {
   const workspace = await requireWorkspace();
   requireActiveSubscription(workspace);
   const agent = await updateAgentFromForm(workspace, formData);
@@ -1095,14 +1191,22 @@ export async function updateAgentAction(formData: FormData) {
   redirect("/agents");
 }
 
-export async function draftAgentSetupAction() {
+export async function updateAgentAction(...args: Parameters<typeof updateAgentActionImpl>) {
+  return withActionErrors(() => updateAgentActionImpl(...args));
+}
+
+async function draftAgentSetupActionImpl() {
   const workspace = await requireWorkspace();
   const profile = await getProductProfile(workspace.id);
 
   return draftAgentSetupWithGemini(profile);
 }
 
-export async function createAgentAndDiscoverLeadsAction(formData: FormData) {
+export async function draftAgentSetupAction(...args: Parameters<typeof draftAgentSetupActionImpl>) {
+  return withActionErrors(() => draftAgentSetupActionImpl(...args));
+}
+
+async function createAgentAndDiscoverLeadsActionImpl(formData: FormData) {
   const workspace = await requireWorkspace();
   requireActiveSubscription(workspace);
   const groupName = String(formData.get("groupName") || "").trim();
@@ -1160,7 +1264,11 @@ export async function createAgentAndDiscoverLeadsAction(formData: FormData) {
   };
 }
 
-export async function pauseAgentAction(formData: FormData) {
+export async function createAgentAndDiscoverLeadsAction(...args: Parameters<typeof createAgentAndDiscoverLeadsActionImpl>) {
+  return withActionErrors(() => createAgentAndDiscoverLeadsActionImpl(...args));
+}
+
+async function pauseAgentActionImpl(formData: FormData) {
   const workspace = await requireWorkspace();
   const agentId = String(formData.get("agentId") || "").trim();
 
@@ -1170,7 +1278,11 @@ export async function pauseAgentAction(formData: FormData) {
   revalidateWorkspaceDataPages();
 }
 
-export async function resumeAgentAction(formData: FormData) {
+export async function pauseAgentAction(...args: Parameters<typeof pauseAgentActionImpl>) {
+  return withActionErrors(() => pauseAgentActionImpl(...args));
+}
+
+async function resumeAgentActionImpl(formData: FormData) {
   const workspace = await requireWorkspace();
   requireActiveSubscription(workspace);
   const agentId = String(formData.get("agentId") || "").trim();
@@ -1181,7 +1293,11 @@ export async function resumeAgentAction(formData: FormData) {
   revalidateWorkspaceDataPages();
 }
 
-export async function setAgentLeadsOnlyAction(formData: FormData) {
+export async function resumeAgentAction(...args: Parameters<typeof resumeAgentActionImpl>) {
+  return withActionErrors(() => resumeAgentActionImpl(...args));
+}
+
+async function setAgentLeadsOnlyActionImpl(formData: FormData) {
   const workspace = await requireWorkspace();
   const agentId = String(formData.get("agentId") || "").trim();
   const leadsOnly = formData.get("leadsOnly") === "true";
@@ -1192,7 +1308,11 @@ export async function setAgentLeadsOnlyAction(formData: FormData) {
   revalidateWorkspaceDataPages();
 }
 
-export async function deleteAgentAction(formData: FormData) {
+export async function setAgentLeadsOnlyAction(...args: Parameters<typeof setAgentLeadsOnlyActionImpl>) {
+  return withActionErrors(() => setAgentLeadsOnlyActionImpl(...args));
+}
+
+async function deleteAgentActionImpl(formData: FormData) {
   const workspace = await requireWorkspace();
   const agentId = String(formData.get("agentId") || "").trim();
 
@@ -1202,7 +1322,11 @@ export async function deleteAgentAction(formData: FormData) {
   revalidateWorkspaceDataPages();
 }
 
-export async function deleteGroupAction(formData: FormData) {
+export async function deleteAgentAction(...args: Parameters<typeof deleteAgentActionImpl>) {
+  return withActionErrors(() => deleteAgentActionImpl(...args));
+}
+
+async function deleteGroupActionImpl(formData: FormData) {
   const workspace = await requireWorkspace();
   const groupId = String(formData.get("groupId") || "").trim();
 
@@ -1211,6 +1335,10 @@ export async function deleteGroupAction(formData: FormData) {
   await deleteGroup(workspace.id, groupId);
   revalidatePath("/leads");
   revalidateWorkspaceDataPages();
+}
+
+export async function deleteGroupAction(...args: Parameters<typeof deleteGroupActionImpl>) {
+  return withActionErrors(() => deleteGroupActionImpl(...args));
 }
 
 // Campaigns created before the picker existed have no stored value and keep
@@ -1243,7 +1371,7 @@ async function bookingLinkFromForm(
   );
 }
 
-export async function createCampaignAction(formData: FormData) {
+async function createCampaignActionImpl(formData: FormData) {
   const workspace = await requireWorkspace();
   requireActiveSubscription(workspace);
   const steps = buildCampaignSteps(formData, workspace.settings.firstMessageDelayMinutes);
@@ -1301,27 +1429,31 @@ export async function createCampaignAction(formData: FormData) {
   revalidateWorkspaceDataPages();
 }
 
+export async function createCampaignAction(...args: Parameters<typeof createCampaignActionImpl>) {
+  return withActionErrors(() => createCampaignActionImpl(...args));
+}
+
 async function cleanupAgentAfterFailedLaunch(agentId: string, context: string) {
   const cleanup = new FormData();
   cleanup.set("agentId", agentId);
   try {
-    await deleteAgentAction(cleanup);
+    await deleteAgentActionImpl(cleanup);
   } catch (cleanupError) {
     console.error(context, cleanupError);
   }
 }
 
-export async function launchAgentFromSetupAction(formData: FormData) {
+async function launchAgentFromSetupActionImpl(formData: FormData) {
   const groupName = String(formData.get("groupName") || "").trim();
   const agentName = String(formData.get("name") || groupName || "LinkedIn agent").trim();
 
-  const createdAgent = await createAgentForSetupAction(formData);
+  const createdAgent = await createAgentForSetupActionImpl(formData);
   formData.set("name", agentName);
   formData.set("groupId", createdAgent.groupId);
   formData.set("allowEmptyLeadGroup", "on");
 
   try {
-    await createCampaignAction(formData);
+    await createCampaignActionImpl(formData);
   } catch (error) {
     // A failed final launch must not leave a newly-created agent consuming the
     // user's plan slot.
@@ -1334,16 +1466,20 @@ export async function launchAgentFromSetupAction(formData: FormData) {
   redirect("/agents");
 }
 
-export async function launchOutreachAgentFromSetupAction(formData: FormData) {
+export async function launchAgentFromSetupAction(...args: Parameters<typeof launchAgentFromSetupActionImpl>) {
+  return withActionErrors(() => launchAgentFromSetupActionImpl(...args));
+}
+
+async function launchOutreachAgentFromSetupActionImpl(formData: FormData) {
   const groupName = String(formData.get("groupName") || "").trim();
   formData.set("name", String(formData.get("name") || groupName || "LinkedIn outreach").trim());
   formData.set("mode", "outreach");
-  const createdAgent = await createAgentForSetupAction(formData);
+  const createdAgent = await createAgentForSetupActionImpl(formData);
   formData.set("agentId", createdAgent.agentId);
   formData.set("groupId", createdAgent.groupId);
   try {
-    await importLinkedInCsvLeadsAction(formData);
-    await createCampaignAction(formData);
+    await importLinkedInCsvLeadsActionImpl(formData);
+    await createCampaignActionImpl(formData);
   } catch (error) {
     await cleanupAgentAfterFailedLaunch(
       createdAgent.agentId,
@@ -1354,22 +1490,30 @@ export async function launchOutreachAgentFromSetupAction(formData: FormData) {
   redirect("/agents");
 }
 
-export async function launchExistingAgentFromSetupAction(formData: FormData) {
+export async function launchOutreachAgentFromSetupAction(...args: Parameters<typeof launchOutreachAgentFromSetupActionImpl>) {
+  return withActionErrors(() => launchOutreachAgentFromSetupActionImpl(...args));
+}
+
+async function launchExistingAgentFromSetupActionImpl(formData: FormData) {
   const groupName = String(formData.get("groupName") || "").trim();
   const agentName = String(formData.get("name") || groupName || "LinkedIn agent").trim();
   formData.set("name", agentName);
 
-  const updatedAgent = await updateAgentForSetupAction(formData);
+  const updatedAgent = await updateAgentForSetupActionImpl(formData);
   formData.set("groupId", updatedAgent.groupId);
   formData.set("allowEmptyLeadGroup", "on");
 
-  await createCampaignAction(formData);
+  await createCampaignActionImpl(formData);
   redirect("/agents");
+}
+
+export async function launchExistingAgentFromSetupAction(...args: Parameters<typeof launchExistingAgentFromSetupActionImpl>) {
+  return withActionErrors(() => launchExistingAgentFromSetupActionImpl(...args));
 }
 
 // Threads that are not in the live LinkedIn inbox list have no chat id, so the
 // reply goes to the lead directly (LinkedIn reuses the existing 1:1 chat).
-export async function sendLeadReplyAction(formData: FormData) {
+async function sendLeadReplyActionImpl(formData: FormData) {
   const workspace = await requireWorkspace();
   requireActiveSubscription(workspace);
   const leadId = String(formData.get("leadId") || "").trim();
@@ -1378,25 +1522,37 @@ export async function sendLeadReplyAction(formData: FormData) {
   if (!body) throw new Error("Message cannot be empty.");
   if (body.length > 4000) throw new Error("Message is too long.");
   const { sendReplyToLead } = await import("@/lib/server/agent-api-operations");
-  await sendReplyToLead(workspace, leadId, body);
+  await sendReplyToLead(workspace, leadId, body, { manual: true });
   revalidatePath("/messages");
 }
 
-export async function sendLinkedInChatMessageAction(formData: FormData) {
+export async function sendLeadReplyAction(...args: Parameters<typeof sendLeadReplyActionImpl>) {
+  return withActionErrors(() => sendLeadReplyActionImpl(...args));
+}
+
+async function sendLinkedInChatMessageActionImpl(formData: FormData) {
   const workspace = await requireWorkspace();
   requireActiveSubscription(workspace);
   const chatId = String(formData.get("chatId") || "").trim();
   const body = String(formData.get("body") || "").trim();
   // Reply from the account that owns the chat - with multiple connected
-  // accounts, defaulting to the first would send from the wrong identity.
+  // accounts, defaulting to the first would send from the wrong identity. The
+  // inbox also lists accounts shared from the owner's other workspaces, so any
+  // account this workspace can use is accepted; an unknown one is an error.
   const requestedAccountId = String(formData.get("accountId") || "").trim();
-  const requestedAccount = requestedAccountId
-    ? await getLinkedInAccountByAccountId(requestedAccountId)
-    : null;
-  const linkedInAccount =
-    requestedAccount?.workspaceId === workspace.id
-      ? requestedAccount
-      : await getLinkedInAccount(workspace.id);
+  let linkedInAccount;
+  if (requestedAccountId) {
+    const requestedAccount = await getLinkedInAccountByAccountId(requestedAccountId);
+    const usableWorkspaceIds = requestedAccount
+      ? await listWorkspaceIdsSharingLinkedIn(workspace.id)
+      : [];
+    if (!requestedAccount || !usableWorkspaceIds.includes(requestedAccount.workspaceId)) {
+      throw new Error("This LinkedIn account is not connected to this workspace.");
+    }
+    linkedInAccount = requestedAccount;
+  } else {
+    linkedInAccount = await getLinkedInAccount(workspace.id);
+  }
 
   const attachments = formData
     .getAll("attachments")
@@ -1408,20 +1564,12 @@ export async function sendLinkedInChatMessageAction(formData: FormData) {
   const oversized = attachments.find((file) => file.size > 15 * 1024 * 1024);
   if (oversized) throw new Error(`"${oversized.name}" is too large - attachments must be under 15MB.`);
 
-  if (
-    !(await hasDailyQuotaRemaining(
-      workspace.id,
-      "messages",
-      workspace.settings.dailyMessageLimit,
-      workspace.timezone,
-    ))
-  ) {
-    throw new Error("Daily message limit reached. Try again tomorrow.");
+  if (!(await linkedInChatBelongsToAccount(chatId, linkedInAccount.accountId))) {
+    throw new Error("This conversation is not on the selected LinkedIn account.");
   }
-  const nextSlotAllowedAt = await claimActionSlot(workspace.id, linkedInAccount.id);
-  if (nextSlotAllowedAt) {
-    throw new Error(`This account can send again at ${nextSlotAllowedAt}.`);
-  }
+  // A person replying in the inbox is not automation: no spacing gate or daily
+  // cap. Recording the send still makes automation on this account back off.
+  await recordManualActionSlot(workspace.id, linkedInAccount.id);
 
   const result = await sendLinkedInChatMessage({
     chatId,
@@ -1451,10 +1599,18 @@ export async function sendLinkedInChatMessageAction(formData: FormData) {
   revalidatePath("/messages");
 }
 
-export async function completeConversationManualFollowUpAction(formData: FormData) {
+export async function sendLinkedInChatMessageAction(...args: Parameters<typeof sendLinkedInChatMessageActionImpl>) {
+  return withActionErrors(() => sendLinkedInChatMessageActionImpl(...args));
+}
+
+async function completeConversationManualFollowUpActionImpl(formData: FormData) {
   const workspace = await requireWorkspace();
   const leadId = String(formData.get("leadId") || "").trim();
   if (!leadId) throw new Error("Lead id is required.");
   await completeConversationManualFollowUp(workspace.id, leadId);
   revalidatePath("/messages");
+}
+
+export async function completeConversationManualFollowUpAction(...args: Parameters<typeof completeConversationManualFollowUpActionImpl>) {
+  return withActionErrors(() => completeConversationManualFollowUpActionImpl(...args));
 }

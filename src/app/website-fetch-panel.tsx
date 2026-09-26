@@ -6,6 +6,7 @@ import { useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import AiLoadingOverlay from "./ai-loading-overlay";
 import { continueWithProductProfileAction } from "./actions";
+import { isActionFailure } from "@/lib/action-result";
 import { AuthField, AuthTextArea } from "./auth-ui";
 
 type WebsiteAnalysis = {
@@ -159,6 +160,7 @@ export default function WebsiteFetchPanel({
     startNavigating(() => router.push(continueHref));
   }
 
+  const [submitError, setSubmitError] = useState("");
   const readyData = state.status === "ready" ? state.data : null;
   const showForm = state.status === "ready" || state.status === "manual";
   const formWebsiteUrl = readyData?.websiteUrl || websiteUrl;
@@ -217,7 +219,13 @@ export default function WebsiteFetchPanel({
         <section className="mt-8 w-full">
           <form
             {...(isSignedIn
-              ? { action: continueWithProductProfileAction }
+              ? {
+                  action: async (formData: FormData) => {
+                    setSubmitError("");
+                    const result = await continueWithProductProfileAction(formData);
+                    if (isActionFailure(result)) setSubmitError(result.actionError);
+                  },
+                }
               : { onSubmit: handleSignedOutContinue })}
             className="flex flex-col gap-4"
           >
@@ -252,6 +260,9 @@ export default function WebsiteFetchPanel({
               isPending={isNavigating}
               className="auth-btn"
             />
+            {submitError ? (
+              <p className="auth-error text-sm leading-6">{submitError}</p>
+            ) : null}
           </form>
         </section>
       ) : null}

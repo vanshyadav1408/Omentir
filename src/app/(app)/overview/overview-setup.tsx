@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import NewAgentButton from "@/app/(app)/agents/new-agent-button";
 import { isNextNavigationError, useToast, userFacingError } from "@/app/toast";
 import { TextField } from "@/app/ui/text-field";
+import { unwrapAction, type ActionFailure } from "@/lib/action-result";
 import {
   INVALID_SCHEDULING_LINK_MESSAGE,
   hasUsableBookingLink,
@@ -19,7 +20,7 @@ export type OverviewSetupProps = {
   linkedInError?: boolean;
   hasBookingLink: boolean;
   schedulingLink: string;
-  saveBookingLink: (formData: FormData) => Promise<SaveBookingLinkResult | void>;
+  saveBookingLink: (formData: FormData) => Promise<SaveBookingLinkResult | ActionFailure | void>;
   needsLinkedInReconnect?: boolean;
   hasAgent: boolean;
 };
@@ -106,7 +107,7 @@ function BookingLinkForm({
     formData.set("schedulingLink", value);
     startTransition(async () => {
       try {
-        const result = await saveBookingLink(formData);
+        const result = unwrapAction(await saveBookingLink(formData));
         if (result && typeof result === "object" && result.ok === false) {
           setError(result.error);
           return;

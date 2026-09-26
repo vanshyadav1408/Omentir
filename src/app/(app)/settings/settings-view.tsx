@@ -1,6 +1,7 @@
 "use client";
 
-import { userFacingError } from "@/app/toast";
+import { unwrapAction, type ActionFailure } from "@/lib/action-result";
+import { userFacingError, useToast } from "@/app/toast";
 import { useEffect, useRef, useState, useTransition } from "react";
 import type { LinkedInAccount, Workspace } from "@/lib/server/types";
 import { ContentReveal, LinkedInAccountsSkeleton } from "@/app/app-skeletons";
@@ -34,10 +35,10 @@ type SettingsViewProps = {
   workspace: Workspace;
   linkedInAccounts: LinkedInAccount[];
   user: { name: string; email: string; imageUrl?: string };
-  saveAction: (formData: FormData) => void | Promise<void>;
-  uploadImageAction: (formData: FormData) => void | Promise<void>;
-  disconnectAction: (formData: FormData) => void | Promise<void>;
-  deleteWorkspaceAction: (workspaceId: string) => void | Promise<void>;
+  saveAction: (formData: FormData) => Promise<void | ActionFailure>;
+  uploadImageAction: (formData: FormData) => Promise<void | ActionFailure>;
+  disconnectAction: (formData: FormData) => Promise<void | ActionFailure>;
+  deleteWorkspaceAction: (workspaceId: string) => Promise<void | ActionFailure>;
   localMode?: boolean;
   notificationsEnabled?: boolean;
 };
@@ -465,6 +466,7 @@ export default function SettingsView({
 }: SettingsViewProps) {
   const [tab, setTab] = useState<Tab>("Profile");
   const [pending, startTransition] = useTransition();
+  const { showError } = useToast();
   const [uploadingPhoto, startUpload] = useTransition();
   const [photoError, setPhotoError] = useState("");
   const photoInputRef = useRef<HTMLInputElement>(null);
@@ -547,7 +549,13 @@ export default function SettingsView({
     if (dailyDigest && subscriptionActive) formData.set("dailyDigestEmailEnabled", "on");
     formData.set("dailyDigestHour", String(digestHour));
     formData.set("inviteWithdrawAfterDays", String(withdrawAfterDays));
-    startTransition(() => saveAction(formData));
+    startTransition(async () => {
+      try {
+        unwrapAction(await saveAction(formData));
+      } catch (error) {
+        showError(userFacingError(error, "Settings could not be saved."));
+      }
+    });
   }
 
   async function handlePhotoChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -561,7 +569,7 @@ export default function SettingsView({
       formData.set("image", image);
       startUpload(async () => {
         try {
-          await uploadImageAction(formData);
+          unwrapAction(await uploadImageAction(formData));
         } catch (err) {
           setPhotoError(userFacingError(err, "Could not update the photo."));
         }
@@ -955,7 +963,7 @@ export default function SettingsView({
                               const formData = new FormData();
                               formData.set("linkedInAccountId", account.id);
                               startTransition(async () => {
-                                await disconnectAction(formData);
+                                unwrapAction(await disconnectAction(formData));
                                 linkedInAccountsResource.reload();
                               });
                             }}

@@ -1,5 +1,6 @@
 "use client";
 
+import { unwrapAction, type ActionFailure } from "@/lib/action-result";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
@@ -71,12 +72,12 @@ type PreparedAgent = {
 };
 
 type AgentSetupProps = {
-  createAgent: (formData: FormData) => void | Promise<void>;
-  prepareAgent: (formData: FormData) => Promise<PreparedAgent>;
-  draftSetup: () => Promise<AgentSetupDraft>;
+  createAgent: (formData: FormData) => Promise<void | ActionFailure>;
+  prepareAgent: (formData: FormData) => Promise<PreparedAgent | ActionFailure>;
+  draftSetup: () => Promise<AgentSetupDraft | ActionFailure>;
   saveProductProfile?: (
     formData: FormData,
-  ) => void | Promise<void | { ok: true } | { ok: false; error: string }>;
+  ) => Promise<void | { ok: true } | { ok: false; error: string } | ActionFailure>;
   profile?: CompanyProfile | null;
   initialAgent?: Agent | null;
   // The window the agent's existing campaign is already sending in. Lives on
@@ -1065,7 +1066,7 @@ export default function AgentSetup({
         setDiscoveryError("");
         setDiscovering(true);
         try {
-          const result = await prepareAgent(formData);
+          const result = unwrapAction(await prepareAgent(formData));
           setPreparedAgent(result);
           setPreparedAgentId(result.agentId);
           // Leads-only agents are complete once prepared: the agent and its
@@ -1166,7 +1167,7 @@ export default function AgentSetup({
       try {
         // Survives navigation to /agents (full, steal, outreach, edit).
         markAgentStartedNotice(agentStartedLabel(), agentStartedKind);
-        await createAgent(formData);
+        unwrapAction(await createAgent(formData));
         // Always land on Agents for every mode. Server actions also redirect
         // here; client replace covers cases where the redirect is swallowed.
         router.replace("/agents");
@@ -1206,7 +1207,7 @@ export default function AgentSetup({
     formData.set("websiteUrl", companyWebsiteUrl);
     startCompanySaving(async () => {
       try {
-        const result = await saveProductProfile(formData);
+        const result = unwrapAction(await saveProductProfile(formData));
         if (result && typeof result === "object" && result.ok === false) {
           showError(result.error);
           return;
@@ -1231,7 +1232,7 @@ export default function AgentSetup({
     setDrafting(true);
     void (async () => {
       try {
-        const draft = await draftSetup();
+        const draft = unwrapAction(await draftSetup());
         setName(draft.agentName || "New Agent");
         setGroupName(draft.groupName);
         setTitles(draft.titles.length ? draft.titles : initialTitles);

@@ -20,13 +20,16 @@ export default async function LoginPage({
   searchParams: Promise<{ next?: string }>;
 }) {
   const { userId } = await authOrSignedOut();
-  if (userId) redirect("/overview");
+  // `next` carries flows that need sign-in first (e.g. OAuth consent for an AI
+  // app) back to where they started, in both hosted and local mode.
+  const { next } = await searchParams;
+  const returnTo = safeReturnPath(next);
+  if (userId) redirect(returnTo);
   if (isLocalMode()) {
-    const { next } = await searchParams;
     return (
       <AuthShell footer={<AuthLegalFooter />}>
         <LocalLoginForm
-          returnTo={safeReturnPath(next)}
+          returnTo={returnTo}
           passwordRequired={isLocalPasswordRequired()}
         />
       </AuthShell>
@@ -34,7 +37,7 @@ export default async function LoginPage({
   }
   return (
     <AuthShell footer={<AuthLegalFooter />}>
-      <AuthChoice primary="login" />
+      <AuthChoice primary="login" loginReturnUrl={returnTo} />
     </AuthShell>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { unwrapAction } from "@/lib/action-result";
 import {
   useEffect,
   useLayoutEffect,
@@ -179,7 +180,7 @@ export default function WorkspaceSwitcher({
     }
     startTransition(async () => {
       try {
-        await switchWorkspaceAction(workspaceId);
+        unwrapAction(await switchWorkspaceAction(workspaceId));
         clearSidebarResourceCache();
         setOpen(false);
         onNavigate?.();
@@ -203,7 +204,7 @@ export default function WorkspaceSwitcher({
     const formData = new FormData(event.currentTarget);
     startTransition(async () => {
       try {
-        await createWorkspaceAction(formData);
+        unwrapAction(await createWorkspaceAction(formData));
         clearSidebarResourceCache();
       } catch (error) {
         if (isNextNavigationError(error)) {

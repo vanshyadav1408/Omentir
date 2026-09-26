@@ -1,5 +1,6 @@
 "use client";
 
+import { unwrapAction } from "@/lib/action-result";
 import { userFacingError } from "@/app/toast";
 import { useEffect, useMemo, useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
@@ -133,7 +134,7 @@ export default function ActionsDashboard({ items, title, serverNow, timezone, he
     const formData = new FormData();
     formData.set("enrollmentId", action.id);
     try {
-      const { result } = await runScheduledActionNowAction(formData);
+      const { result } = unwrapAction(await runScheduledActionNowAction(formData));
       setFeedback((current) => ({ ...current, [action.id]: resultMessage(result, action.kind) }));
       setConfirmingId("");
       router.refresh();
@@ -152,7 +153,7 @@ export default function ActionsDashboard({ items, title, serverNow, timezone, he
     const formData = new FormData();
     formData.set("leadId", leadId);
     try {
-      await stopLeadOutreachAction(formData);
+      unwrapAction(await stopLeadOutreachAction(formData));
       setConfirmingStopLeadId("");
       setMobileDetailsOpen(false);
       router.refresh();

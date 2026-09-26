@@ -1,5 +1,6 @@
 "use client";
 
+import { unwrapAction, type ActionFailure } from "@/lib/action-result";
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { siteUrl } from "@/app/seo";
@@ -15,8 +16,8 @@ type ApiKeysViewProps = {
   agentApiKeys: AgentApiKey[];
   /** Plan has no API access: the keys section renders blurred behind an upgrade prompt. */
   locked?: boolean;
-  createAgentApiKeyAction: (formData: FormData) => Promise<string>;
-  revokeAgentApiKeyAction: (formData: FormData) => void | Promise<void>;
+  createAgentApiKeyAction: (formData: FormData) => Promise<string | ActionFailure>;
+  revokeAgentApiKeyAction: (formData: FormData) => Promise<void | ActionFailure>;
 };
 
 const ENDPOINTS = [
@@ -324,7 +325,7 @@ export default function ApiKeysView({
     const formData = new FormData();
     formData.set("label", keyLabel.trim() || "AI agent");
     startTransition(async () => {
-      const token = await createAgentApiKeyAction(formData);
+      const token = unwrapAction(await createAgentApiKeyAction(formData));
       setCreatedKey(token);
       setKeyLabel("");
       agentApiKeysResource.reload();
@@ -335,7 +336,7 @@ export default function ApiKeysView({
     const formData = new FormData();
     formData.set("keyId", keyId);
     startTransition(async () => {
-      await revokeAgentApiKeyAction(formData);
+      unwrapAction(await revokeAgentApiKeyAction(formData));
       agentApiKeysResource.reload();
     });
   }

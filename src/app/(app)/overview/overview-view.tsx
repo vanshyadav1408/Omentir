@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { setAverageTicketSizeAction } from "@/app/actions";
+import { useToast, userFacingError } from "@/app/toast";
+import { unwrapAction } from "@/lib/action-result";
 import AnalysisChart from "@/app/analysis-chart";
 import { useSidebarResource } from "@/app/use-sidebar-resource";
 import {
@@ -183,6 +185,7 @@ export default function OverviewView({
     averageTicketSize ? String(averageTicketSize) : "",
   );
   const [savingTicket, startSavingTicket] = useTransition();
+  const { showError } = useToast();
   const hydrated = useHydrated();
   useBodyScrollLock(dealModalOpen);
 
@@ -197,9 +200,17 @@ export default function OverviewView({
     if (!Number.isFinite(parsed) || parsed < 0) return;
     const formData = new FormData();
     formData.set("averageTicketSize", String(parsed));
+    const previousTicketSize = ticketSize;
     setTicketSize(parsed);
     setDealModalOpen(false);
-    startSavingTicket(() => setAverageTicketSizeAction(formData));
+    startSavingTicket(async () => {
+      try {
+        unwrapAction(await setAverageTicketSizeAction(formData));
+      } catch (error) {
+        setTicketSize(previousTicketSize);
+        showError(userFacingError(error, "Deal size could not be saved."));
+      }
+    });
   }
 
   const stats = useMemo(() => {

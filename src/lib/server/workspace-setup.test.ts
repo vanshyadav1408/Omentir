@@ -15,6 +15,9 @@ mock.module("./data", () => ({
   listLinkedInAccounts: async () => storedAccounts,
   listAgents: async () => [{ id: "agent-1" }],
   getLatestLinkedInAccount: async () => storedAccounts[0] ?? null,
+  // Bun keeps module mocks across test files; unipile.ts imports these.
+  consumeAvatarViewBudget: async () => "exhausted",
+  consumeProfileViewBudget: async () => false,
 }));
 mock.module("./linkedin-accounts", () => ({
   // Unipile never answers: the setup check must not care.

@@ -1,5 +1,7 @@
 "use client";
 
+import { unwrapAction } from "@/lib/action-result";
+import { userFacingError } from "@/app/toast";
 import { FormEvent, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -255,10 +257,14 @@ const TABS: Array<{ id: MessageTab; label: string }> = [
   { id: "follow", label: "Needs a follow up" },
   { id: "denied", label: "Denied" },
 ];
-const selectMessageData = (data: Record<string, unknown>) => ({
-  conversations: data.conversations as Conversation[] || [],
-  leads: data.leads as LeadPreview[] || [],
-});
+const selectConversations = (data: Record<string, unknown>) =>
+  (data.conversations as Conversation[]) || [];
+const selectLeads = (data: Record<string, unknown>) => (data.leads as LeadPreview[]) || [];
+// Conversations and the live inbox refresh every few seconds. Leads rarely
+// change and reading all of them is the expensive query, so they refresh on a
+// slower cadence (and whenever the tab regains focus).
+const POLL_INTERVAL_MS = 5000;
+const LEAD_POLL_EVERY_TICKS = 12;
 type SenderAccount = { accountId: string; displayName: string; avatarUrl?: string };
 type LinkedInInboxResource = {
   threads: LinkedInInboxThread[];
@@ -284,13 +290,16 @@ export default function MessagesView({
 }) {
   const router = useRouter();
   const timeZone = useWorkspaceTimeZone();
-  const messageDataResource = useSidebarResource(
-    "conversations,leadPreviews",
-    { conversations, leads },
-    selectMessageData,
+  const conversationsResource = useSidebarResource(
+    "conversations",
+    conversations,
+    selectConversations,
   );
-  const { conversations: loadedConversations, leads: loadedLeads } = messageDataResource.value;
-  const reloadMessageData = messageDataResource.reload;
+  const leadsResource = useSidebarResource("leadPreviews", leads, selectLeads);
+  const loadedConversations = conversationsResource.value;
+  const loadedLeads = leadsResource.value;
+  const reloadConversations = conversationsResource.reload;
+  const reloadLeads = leadsResource.reload;
   const linkedInInboxResource = useSidebarResource(
     "linkedinInbox",
     { threads: linkedInThreads, senderAccounts },
@@ -298,7 +307,8 @@ export default function MessagesView({
   );
   const linkedInInbox = linkedInInboxResource.value;
   const reloadLinkedInInbox = linkedInInboxResource.reload;
-  const isInitialLoading = messageDataResource.loading || linkedInInboxResource.loading;
+  const isInitialLoading =
+    conversationsResource.loading || leadsResource.loading || linkedInInboxResource.loading;
   const loadedLinkedInThreads = linkedInInbox.threads;
   const loadedSenderAccounts = linkedInInbox.senderAccounts;
   const linkedInInboxError = linkedInInbox.error;
@@ -310,6 +320,10 @@ export default function MessagesView({
     chatHistoryCache.cursors,
   );
   const [historyLoadingIds, setHistoryLoadingIds] = useState<Set<string>>(new Set());
+  // Chats whose last history fetch failed. They show the preview they have and
+  // a retry link, instead of quietly looking like a one-message conversation.
+  const [historyErrorIds, setHistoryErrorIds] = useState<Set<string>>(new Set());
+  const [historyRetry, setHistoryRetry] = useState(0);
   // LinkedIn threads whose message-history fetch has completed (even if it came
   // back empty). Until a thread has settled, the detail pane stays blank
   // instead of showing "No messages yet".
@@ -337,6 +351,7 @@ export default function MessagesView({
   const [selectedId, setSelectedId] = useState<string>(threads[0]?.id ?? "");
   const [isMobileConversationOpen, setIsMobileConversationOpen] = useState(false);
   const [isCompletingFollowUp, startCompletingFollowUp] = useTransition();
+  const [followUpError, setFollowUpError] = useState("");
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -352,19 +367,34 @@ export default function MessagesView({
   }, [linkedInInboxError]);
 
   useEffect(() => {
-    const refresh = () => {
-      reloadMessageData();
+    let ticks = 0;
+    const refreshAll = () => {
+      if (document.hidden) return;
+      ticks = 0;
+      reloadConversations();
+      reloadLeads();
       reloadLinkedInInbox();
     };
-    const interval = window.setInterval(refresh, 5000);
-    window.addEventListener("focus", refresh);
-    document.addEventListener("visibilitychange", refresh);
+    const poll = () => {
+      // A background tab needs no live inbox; it refreshes when shown again.
+      if (document.hidden) return;
+      ticks += 1;
+      reloadConversations();
+      reloadLinkedInInbox();
+      if (ticks >= LEAD_POLL_EVERY_TICKS) {
+        ticks = 0;
+        reloadLeads();
+      }
+    };
+    const interval = window.setInterval(poll, POLL_INTERVAL_MS);
+    window.addEventListener("focus", refreshAll);
+    document.addEventListener("visibilitychange", refreshAll);
     return () => {
       window.clearInterval(interval);
-      window.removeEventListener("focus", refresh);
-      document.removeEventListener("visibilitychange", refresh);
+      window.removeEventListener("focus", refreshAll);
+      document.removeEventListener("visibilitychange", refreshAll);
     };
-  }, [reloadMessageData, reloadLinkedInInbox]);
+  }, [reloadConversations, reloadLeads, reloadLinkedInInbox]);
 
   const filtered = useMemo(() => {
     return threads.filter((thread) => {
@@ -429,12 +459,24 @@ export default function MessagesView({
       accountId: selectedChatAccountId,
     });
 
+    const markHistoryError = (failed: boolean) =>
+      setHistoryErrorIds((current) => {
+        if (current.has(threadId) === failed) return current;
+        const next = new Set(current);
+        if (failed) next.add(threadId);
+        else next.delete(threadId);
+        return next;
+      });
+
     void fetch(`/api/agent/v1/linkedin-chat-messages?${params}`, {
       signal: controller.signal,
     })
-      .then((response) => (response.ok ? response.json() : null))
-      .then((data: { messages?: LinkedInInboxMessage[]; cursor?: string } | null) => {
-        if (!data) return;
+      .then((response) => {
+        if (!response.ok) throw new Error(`History request failed: ${response.status}`);
+        return response.json();
+      })
+      .then((data: { messages?: LinkedInInboxMessage[]; cursor?: string }) => {
+        markHistoryError(false);
         // Keep the cursor from the first load so "Load next 30" still pages
         // past history the user already loaded.
         setHistoryCursors((current) =>
@@ -447,14 +489,24 @@ export default function MessagesView({
           [threadId]: mergeMessagesById(current[threadId] || [], page),
         }));
       })
-      .catch(() => {})
+      .catch((error) => {
+        if (controller.signal.aborted) return;
+        console.error("LinkedIn chat history failed to load:", error);
+        markHistoryError(true);
+      })
       .finally(() => {
         if (controller.signal.aborted) return;
         setHydrationSettledIds((current) => new Set(current).add(threadId));
       });
 
     return () => controller.abort();
-  }, [selectedChatThreadId, selectedChatId, selectedChatAccountId, selectedChatLatestId]);
+  }, [
+    selectedChatThreadId,
+    selectedChatId,
+    selectedChatAccountId,
+    selectedChatLatestId,
+    historyRetry,
+  ]);
 
   function loadMoreMessages(thread: Extract<InboxThread, { kind: "linkedin" }>) {
     const cursor = historyCursors[thread.id];
@@ -466,14 +518,20 @@ export default function MessagesView({
       cursor,
     });
     void fetch(`/api/agent/v1/linkedin-chat-messages?${params}`)
-      .then((response) => (response.ok ? response.json() : null))
-      .then((data: { messages?: LinkedInInboxMessage[]; cursor?: string } | null) => {
-        if (!data) return;
+      .then((response) => {
+        if (!response.ok) throw new Error(`History request failed: ${response.status}`);
+        return response.json();
+      })
+      .then((data: { messages?: LinkedInInboxMessage[]; cursor?: string }) => {
         setHydratedMessages((current) => ({
           ...current,
           [thread.id]: mergeMessagesById(current[thread.id] || [], data.messages || []),
         }));
         setHistoryCursors((current) => ({ ...current, [thread.id]: data.cursor }));
+      })
+      .catch((error) => {
+        console.error("Older LinkedIn messages failed to load:", error);
+        setHistoryErrorIds((current) => new Set(current).add(thread.id));
       })
       .finally(() => {
         setHistoryLoadingIds((current) => {
@@ -509,10 +567,15 @@ export default function MessagesView({
     if (!selected?.conversation || isCompletingFollowUp) return;
     const formData = new FormData();
     formData.set("leadId", selected.conversation.leadId);
+    setFollowUpError("");
     startCompletingFollowUp(async () => {
-      await completeConversationManualFollowUpAction(formData);
-      messageDataResource.reload();
-      router.refresh();
+      try {
+        unwrapAction(await completeConversationManualFollowUpAction(formData));
+        reloadConversations();
+        router.refresh();
+      } catch (error) {
+        setFollowUpError(userFacingError(error, "Could not mark this follow-up done."));
+      }
     });
   }
 
@@ -740,8 +803,10 @@ export default function MessagesView({
             >
               {selected ? (
                 <>
-                  <div className="flex shrink-0 flex-col items-start justify-between gap-3 border-b border-zinc-200 bg-white px-4 py-3.5 sm:flex-row sm:items-center sm:px-5">
-                    <div className="flex min-w-0 items-center gap-3">
+                  <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-zinc-200 bg-white px-4 py-3.5 sm:px-5">
+                    {/* The follow-up banner wraps under the name when the pane
+                        is too narrow, instead of squeezing and clipping. */}
+                    <div className="flex min-w-[12rem] flex-1 items-center gap-3">
                       <button
                         type="button"
                         onClick={() => setIsMobileConversationOpen(false)}
@@ -779,9 +844,9 @@ export default function MessagesView({
                       </div>
                     </div>
                     {selectedCategory === "follow" ? (
-                      <div className="flex w-full items-center justify-between gap-3 rounded-lg bg-amber-50 px-3 py-2 sm:w-auto">
-                        <span className="text-[11px] font-medium text-amber-900">
-                          Follow up manually, then clear this task.
+                      <div className="flex w-full max-w-full items-center justify-between gap-3 rounded-lg bg-amber-50 px-3 py-2 sm:w-auto">
+                        <span className="min-w-0 text-[11px] font-medium text-amber-900">
+                          {followUpError || "Follow up manually, then clear this task."}
                         </span>
                         <button
                           type="button"
@@ -860,6 +925,18 @@ export default function MessagesView({
                       })}
                       </ContentReveal>
                     )}
+                    {selected.kind === "linkedin" && historyErrorIds.has(selected.id) ? (
+                      <div className="flex items-center justify-center gap-2 pt-1 text-[12px] font-medium text-zinc-700">
+                        <span>Could not load the full conversation from LinkedIn.</span>
+                        <button
+                          type="button"
+                          onClick={() => setHistoryRetry((current) => current + 1)}
+                          className="cursor-pointer font-semibold text-zinc-900 underline underline-offset-2"
+                        >
+                          Retry
+                        </button>
+                      </div>
+                    ) : null}
                     {selected.kind === "linkedin" && historyCursors[selected.id] ? (
                       <div className="flex justify-center pt-1">
                         <button
@@ -915,6 +992,7 @@ function Composer({
   const [body, setBody] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [isSending, setIsSending] = useState(false);
+  const [sendError, setSendError] = useState("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -924,6 +1002,7 @@ function Composer({
     if ((!message && !attachments.length) || isSending) return;
     setBody("");
     setFiles([]);
+    setSendError("");
     setIsSending(true);
     void (async () => {
       const formData = new FormData();
@@ -936,15 +1015,16 @@ function Composer({
           for (const file of attachments) {
             formData.append("attachments", file);
           }
-          await sendLinkedInChatMessageAction(formData);
+          unwrapAction(await sendLinkedInChatMessageAction(formData));
         } else {
-          await sendLeadReplyAction(formData);
+          unwrapAction(await sendLeadReplyAction(formData));
         }
         onSent(message || `📎 ${attachments.map((file) => file.name).join(", ")}`);
       } catch (caught) {
-        // Restore the draft so nothing is lost; keep the failure out of the UI.
+        // Restore the draft so nothing is lost, and say why it did not send.
         setBody(message);
         setFiles(attachments);
+        setSendError(userFacingError(caught, "Message did not send. Try again."));
         console.error("Message failed to send:", caught);
       } finally {
         setIsSending(false);
@@ -954,6 +1034,11 @@ function Composer({
 
   return (
     <form onSubmit={handleSubmit} className="border-t border-zinc-200 bg-white p-3">
+      {sendError ? (
+        <p role="alert" className="mb-2 text-[12px] font-medium text-[var(--md-sys-color-error)]">
+          {sendError}
+        </p>
+      ) : null}
       {files.length ? (
         <div className="mb-2 flex flex-wrap gap-1.5">
           {files.map((file, index) => (
