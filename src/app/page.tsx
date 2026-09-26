@@ -88,9 +88,7 @@ export default function Home() {
                 <HeroCta />
               </HeroCopy>
             </div>
-            {/* Pinned at build time so the prerendered demo dashboard and
-                the browser draw the same dates. */}
-            <HeroProductStage todayKey={new Date().toISOString().slice(0, 10)} />
+            <HeroProductStage />
             <HomeStats />
           </div>
         </section>

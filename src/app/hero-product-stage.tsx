@@ -1,10 +1,10 @@
 import Image from "next/image";
-import HeroAppPreview from "./hero-app-preview";
+import HeroVideo from "./hero-video";
 
-export default function HeroProductStage({ todayKey }: { todayKey: string }) {
+export default function HeroProductStage() {
   return (
-    <figure className="hero-product-frame" aria-label="A demo of the Omentir app with sample data">
-      <div className="hero-app-stage">
+    <figure className="hero-product-frame" aria-label="A video showing how Omentir works">
+      <div className="hero-app-stage hero-video-stage">
         <Image
           src="/hero-lake.jpg"
           alt=""
@@ -14,9 +14,8 @@ export default function HeroProductStage({ todayKey }: { todayKey: string }) {
           quality={90}
           className="hero-product-frame-media"
         />
-        {/* Not aria-hidden: the demo sidebar has real buttons. */}
-        <div className="hero-app">
-          <HeroAppPreview todayKey={todayKey} />
+        <div className="hero-video-window">
+          <HeroVideo />
         </div>
       </div>
     </figure>

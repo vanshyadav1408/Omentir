@@ -2587,6 +2587,38 @@ html.marketing-menu-open [data-marketing-header] {
   object-position: center 42%;
 }
 
+/* Homepage YouTube demo, in the window on the lake frame. */
+.hero-video-stage {
+  min-height: 0;
+  aspect-ratio: 16 / 9;
+}
+
+.hero-video-window {
+  position: absolute;
+  inset: 6px;
+  z-index: 1;
+  overflow: hidden;
+  border: 1px solid var(--site-border);
+  border-radius: 12px;
+  background: #000;
+  box-shadow:
+    0 22px 56px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+@media (min-width: 768px) {
+  .hero-video-window {
+    inset: 10px;
+  }
+}
+
+.hero-video-media {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
 .faq-section-heading {
   font-size: 1.9rem;
   font-weight: 600;
