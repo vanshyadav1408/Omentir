@@ -125,7 +125,7 @@ export default function CustomerLogoWall({
       <div className="omentir-primary-width">
         <p
           id={headingId}
-          className="text-center text-sm font-normal text-[var(--md-sys-color-on-surface)]"
+          className="text-left text-sm font-normal text-[var(--md-sys-color-on-surface)]"
         >
           Teams using Omentir
         </p>

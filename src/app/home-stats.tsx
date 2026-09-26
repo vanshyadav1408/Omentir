@@ -8,13 +8,21 @@ const STATS = [
  *  feature cards. */
 export default function HomeStats() {
   return (
-    <section aria-label="Omentir in numbers" className="mt-10 grid gap-3 md:mt-12 md:grid-cols-3">
-      {STATS.map((stat) => (
-        <div key={stat.label} className="home-green-panel home-stat">
-          <p className="home-stat-value">{stat.value}</p>
-          <p className="home-stat-label">{stat.label}</p>
-        </div>
-      ))}
+    <section aria-labelledby="home-stats-heading" className="mt-10 md:mt-12">
+      <p
+        id="home-stats-heading"
+        className="text-left text-sm font-normal text-[var(--md-sys-color-on-surface)]"
+      >
+        Statistics
+      </p>
+      <div className="mt-8 grid gap-3 md:mt-10 md:grid-cols-3">
+        {STATS.map((stat) => (
+          <div key={stat.label} className="home-green-panel home-stat">
+            <p className="home-stat-value">{stat.value}</p>
+            <p className="home-stat-label">{stat.label}</p>
+          </div>
+        ))}
+      </div>
     </section>
   );
 }

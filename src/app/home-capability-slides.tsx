@@ -66,7 +66,7 @@ export default function HomeCapabilitySlides() {
     >
       <p
         id="how-it-works-heading"
-        className="text-sm font-normal text-[var(--md-sys-color-on-surface-variant)]"
+        className="text-left text-sm font-normal text-[var(--md-sys-color-on-surface)]"
       >
         How it works
       </p>
