@@ -74,7 +74,8 @@ export async function GET(request: NextRequest) {
   const periodParam = params.get("period");
   const period = isStatsPeriod(periodParam) ? periodParam : "30d";
   const offset = Math.min(Math.max(Number(params.get("offset")) || 0, 0), 500);
-  const range = resolveStatsRange(period, offset);
+  const window = Math.floor(Date.now() / STATS_REFRESH_MS);
+  const range = resolveStatsRange(period, offset, window * STATS_REFRESH_MS);
   const requested = params.get("interval");
   const allowed = allowedIntervals(range.from, range.to);
   let interval = isStatsInterval(requested) && allowed.includes(requested) ? requested : defaultInterval(period);

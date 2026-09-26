@@ -53,10 +53,10 @@ describe("sums", () => {
     expect(sumPayments([a, b])).toEqual({ usd: 98, customers: 1, count: 2 });
   });
 
-  test("chart buckets use India time and split first purchases from renewals", () => {
-    // 20:00 UTC on Sep 8 is already Sep 9 in India.
+  test("revenue uses the same UTC day as PostHog while keeping purchases and renewals separate", () => {
+    // Both payments belong to Sep 8 in the project timezone.
     const days = revenueByBucket([a, b], "day");
     expect(days.get("2026-09-08")?.newRevenue).toBe(49);
-    expect(days.get("2026-09-09")?.renewalRevenue).toBe(49);
+    expect(days.get("2026-09-08")?.renewalRevenue).toBe(49);
   });
 });

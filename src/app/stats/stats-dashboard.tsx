@@ -63,7 +63,7 @@ const STALE_POLLS = 20;
 
 // The last answer for the default views (no filters, current period) is kept in
 // this browser, so a reload paints numbers at once while the server catches up.
-const savedKey = (queryKey: string) => `omentir-stats:${queryKey}`;
+const savedKey = (queryKey: string) => `omentir-stats:v2:${queryKey}`;
 function readSaved<T>(queryKey: string): StatsResponse<T> | undefined {
   try {
     const raw = window.localStorage.getItem(savedKey(queryKey));

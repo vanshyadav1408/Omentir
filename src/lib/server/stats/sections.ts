@@ -12,13 +12,12 @@ import type {
 import { runHogQL, type StatsPropertyFilter } from "./posthog-query";
 import {
   aiQuery,
-  breakdownQuery,
-  chartQuery,
+  allBreakdownsQuery,
+  BREAKDOWNS,
   exitLinksQuery,
   goalSeriesQuery,
   goalTotalsQuery,
-  kpiQuery,
-  onlineQuery,
+  overviewQuery,
   payerFirstTouchQuery,
   payersMatchingFiltersQuery,
   personMapQuery,
@@ -73,11 +72,13 @@ async function linkPayments(payments: StatsPayment[], range: Range): Promise<Lin
  * person. With filters active, only payers whose visits match count.
  */
 async function paymentsInScope(range: Range, fromMs: number, filters: StatsPropertyFilter[]): Promise<LinkedPayment[]> {
+  const payments = await loadWhopPayments();
+  if (!payments.some((p) => p.at >= fromMs && p.at < range.to.getTime())) return [];
   const linked = (await linkedPayments(range)).filter((l) => l.payment.at >= fromMs && l.payment.at < range.to.getTime());
   if (!filters.length) return linked;
   const persons = [...new Set(linked.map((l) => l.personId).filter((p): p is string => !!p))];
   if (!persons.length) return [];
-  const matching = await runHogQL(payersMatchingFiltersQuery(persons), range, filters);
+  const matching = await runHogQL(payersMatchingFiltersQuery(persons, filters), range, filters);
   const allowed = new Set(matching.results.map((row) => str(row[0])));
   return linked.filter((l) => l.personId && allowed.has(l.personId));
 }
@@ -85,19 +86,17 @@ async function paymentsInScope(range: Range, fromMs: number, filters: StatsPrope
 export async function loadOverview(range: Range, interval: StatsInterval, filters: StatsPropertyFilter[]): Promise<StatsOverviewData> {
   const fromMs = range.from.getTime();
   const previousFrom = fromMs - (range.to.getTime() - fromMs);
-  const [kpi, chart, online, money] = await Promise.all([
-    runHogQL(kpiQuery(), range, filters),
-    runHogQL(chartQuery(interval), range, filters),
-    runHogQL(onlineQuery(), range, filters),
+  const [traffic, money] = await Promise.all([
+    runHogQL(overviewQuery(interval, filters), range, filters),
     paymentsInScope(range, previousFrom, filters),
   ]);
-  const [vc, vp, bc, bp, dc, dp] = (kpi.results[0] ?? []).map(num);
+  const [vc, vp, bc, bp, dc, dp] = (traffic.results.find((row) => row[0] === "kpi")?.slice(2) ?? []).map(num);
   const current = money.filter((l) => l.payment.at >= fromMs);
   const previous = money.filter((l) => l.payment.at < fromMs);
   const now = sumPayments(current);
   const before = sumPayments(previous);
   const revenue = revenueByBucket(current, interval);
-  const visitors = new Map(chart.results.map((row) => [str(row[0]), num(row[1])]));
+  const visitors = new Map(traffic.results.filter((row) => row[0] === "chart").map((row) => [str(row[1]), num(row[2])]));
   const buckets = [...new Set([...visitors.keys(), ...revenue.keys()])].sort();
   return {
     kpis: {
@@ -107,7 +106,7 @@ export async function loadOverview(range: Range, interval: StatsInterval, filter
       bounceRate: { current: bc ?? 0, previous: bp ?? 0 },
       sessionSeconds: { current: dc ?? 0, previous: dp ?? 0 },
     },
-    online: num(online.results[0]?.[0]),
+    online: num(traffic.results.find((row) => row[0] === "online")?.[2]),
     series: buckets.map((bucket) => ({
       bucket,
       visitors: visitors.get(bucket) ?? 0,
@@ -124,13 +123,17 @@ export async function loadBreakdown(
   filters: StatsPropertyFilter[],
 ): Promise<StatsBreakdownData> {
   const [rows, exits, money] = await Promise.all([
-    runHogQL(breakdownQuery(card), range, filters),
-    card === "pages" ? runHogQL(exitLinksQuery(), range, filters) : Promise.resolve(null),
+    runHogQL(allBreakdownsQuery(filters), range, filters),
+    card === "pages" ? runHogQL(exitLinksQuery(filters), range, filters) : Promise.resolve(null),
     paymentsInScope(range, range.from.getTime(), filters),
   ]);
   const tabs: StatsBreakdownRow[][] = [[], [], []];
+  const cards = Object.keys(BREAKDOWNS) as BreakdownCard[];
+  const firstTab = cards.slice(0, cards.indexOf(card)).reduce((n, key) => n + BREAKDOWNS[key].length, 0);
   for (const row of rows.results) {
-    tabs[num(row[0])]?.push({
+    const tab = num(row[0]) - firstTab;
+    if (tab < 0 || tab >= BREAKDOWNS[card].length) continue;
+    tabs[tab]?.push({
       value: str(row[1]),
       label: str(row[2]),
       visitors: num(row[3]),
@@ -143,7 +146,7 @@ export async function loadBreakdown(
   // Credit each payment to where the payer first came from (90-day lookback).
   const persons = [...new Set(money.map((l) => l.personId).filter((p): p is string => !!p))];
   if (persons.length) {
-    const firstTouch = await runHogQL(payerFirstTouchQuery(card, persons), range, filters);
+    const firstTouch = await runHogQL(payerFirstTouchQuery(card, persons, filters), range, filters);
     const touch = new Map(firstTouch.results.map((row) => [str(row[0]), (row[1] as unknown[]).map(str)]));
     tabs.forEach((tab, i) => {
       const credit = new Map<string, { label: string; usd: number; payers: Set<string> }>();
@@ -188,8 +191,8 @@ export async function loadBreakdown(
 export async function loadGoals(range: Range, interval: StatsInterval, filters: StatsPropertyFilter[]): Promise<StatsGoalsData> {
   const filtered = filters.length > 0;
   const [totals, series, money] = await Promise.all([
-    runHogQL(goalTotalsQuery(filtered), range, filters),
-    runHogQL(goalSeriesQuery(interval, filtered), range, filters),
+    runHogQL(goalTotalsQuery(filtered, filters), range, filters),
+    runHogQL(goalSeriesQuery(interval, filtered, filters), range, filters),
     paymentsInScope(range, range.from.getTime(), filters),
   ]);
   const goals: StatsGoalsData = {
@@ -212,7 +215,7 @@ export async function loadGoals(range: Range, interval: StatsInterval, filters: 
 }
 
 export async function loadAi(range: Range, interval: StatsInterval, filters: StatsPropertyFilter[]): Promise<StatsAiData> {
-  const result = await runHogQL(aiQuery(interval), range, filters);
+  const result = await runHogQL(aiQuery(interval, filters), range, filters);
   return {
     rows: result.results.map((row) => ({
       bucket: str(row[0]),

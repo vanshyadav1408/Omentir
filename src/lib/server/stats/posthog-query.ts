@@ -14,8 +14,7 @@ export function statsBackendConfigured() {
   return Boolean(process.env.POSTHOG_PERSONAL_API_KEY);
 }
 
-// The page asks for ~15 queries at once. Past a few concurrent queries PostHog
-// answers 429 and the retries back off for seconds, so queue them here instead.
+// Concurrent dashboard sections share this queue to avoid PostHog's 429 limit.
 const MAX_CONCURRENT = 3;
 let running = 0;
 const waiting: (() => void)[] = [];
@@ -32,18 +31,24 @@ async function withSlot<T>(task: () => Promise<T>): Promise<T> {
   }
 }
 
+const inFlight = new Map<string, Promise<HogQLResult>>();
+
 export function runHogQL(
   query: string,
   range: { from: Date; to: Date },
   filters: StatsPropertyFilter[] = [],
 ): Promise<HogQLResult> {
-  return withSlot(() => queryPostHog(query, range, filters));
+  const id = JSON.stringify([query, range.from, range.to, filters]);
+  const pending = inFlight.get(id);
+  if (pending) return pending;
+  const request = withSlot(() => queryPostHog(query, range)).finally(() => inFlight.delete(id));
+  inFlight.set(id, request);
+  return request;
 }
 
 async function queryPostHog(
   query: string,
   range: { from: Date; to: Date },
-  filters: StatsPropertyFilter[] = [],
 ): Promise<HogQLResult> {
   const key = process.env.POSTHOG_PERSONAL_API_KEY;
   if (!key) throw new Error("POSTHOG_PERSONAL_API_KEY is not set.");
@@ -53,19 +58,11 @@ async function queryPostHog(
   const request = JSON.stringify({
     query: {
       kind: "HogQLQuery",
-      query,
+      query: query
+        .replaceAll("{filters.dateRange.from}", `toDateTime('${range.from.toISOString()}')`)
+        .replaceAll("{filters.dateRange.to}", `toDateTime('${range.to.toISOString()}')`),
       filters: {
-        dateRange: {
-          date_from: range.from.toISOString(),
-          date_to: range.to.toISOString(),
-          explicitDate: true,
-        },
-        properties: filters.map((filter) => ({
-          type: "event",
-          key: filter.key,
-          operator: "exact",
-          value: [filter.value],
-        })),
+        filterTestAccounts: true,
       },
     },
   });
@@ -89,6 +86,9 @@ async function queryPostHog(
     const detail = response ? await response.text().catch(() => "") : "";
     throw new Error(`PostHog query failed (${response?.status ?? "no response"}): ${detail.slice(0, 300)}`);
   }
-  const body = (await response.json()) as Partial<HogQLResult>;
+  const body = (await response.json()) as Partial<HogQLResult> & { error?: string; query_status?: { complete?: boolean } };
+  if (body.error || !Array.isArray(body.results) || body.query_status?.complete === false) {
+    throw new Error(body.error || "PostHog query has not completed.");
+  }
   return { columns: body.columns ?? [], results: body.results ?? [] };
 }

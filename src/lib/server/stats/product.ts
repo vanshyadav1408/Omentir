@@ -270,20 +270,20 @@ const SYSTEM_EVENTS = "('platform_daily', 'platform_stats', 'posthog_setup_check
 export async function loadProductApp(range: Range, interval: StatsInterval): Promise<ProductAppData> {
   const [kpi, chart, online, users, pages, events] = await Promise.all([
     runHogQL(`SELECT uniqIf(person_id, timestamp >= ${F}), uniqIf(person_id, timestamp < ${F})
-FROM events WHERE ${APP_VIEWS} AND timestamp >= ${PREV} AND timestamp < ${T}`, range),
+FROM events WHERE ${APP_VIEWS} AND {filters} AND timestamp >= ${PREV} AND timestamp < ${T}`, range),
     runHogQL(`SELECT ${bucketExpr(interval)} AS bucket, uniq(person_id)
-FROM events WHERE ${APP_VIEWS} AND timestamp >= ${F} AND timestamp < ${T}
+FROM events WHERE ${APP_VIEWS} AND {filters} AND timestamp >= ${F} AND timestamp < ${T}
 GROUP BY bucket ORDER BY bucket LIMIT 5000`, range),
-    runHogQL(`SELECT uniq(person_id) FROM events WHERE ${APP_VIEWS} AND timestamp > now() - INTERVAL 5 MINUTE`, range),
+    runHogQL(`SELECT uniq(person_id) FROM events WHERE ${APP_VIEWS} AND {filters} AND timestamp > now() - INTERVAL 5 MINUTE`, range),
     runHogQL(`SELECT coalesce(nullIf(toString(person.properties.email), ''), toString(person_id)) AS who,
   count() AS views, uniq(toDate(toTimeZone(timestamp, 'Asia/Kolkata'))) AS days, uniq(\`$session_id\`) AS sessions
-FROM events WHERE ${APP_VIEWS} AND timestamp >= ${F} AND timestamp < ${T}
+FROM events WHERE ${APP_VIEWS} AND {filters} AND timestamp >= ${F} AND timestamp < ${T}
 GROUP BY who ORDER BY views DESC LIMIT 100`, range),
     runHogQL(`SELECT ${APP_PAGE} AS page, uniq(person_id) AS people, count() AS views
-FROM events WHERE ${APP_VIEWS} AND timestamp >= ${F} AND timestamp < ${T}
+FROM events WHERE ${APP_VIEWS} AND {filters} AND timestamp >= ${F} AND timestamp < ${T}
 GROUP BY page ORDER BY people DESC, views DESC LIMIT 100`, range),
     runHogQL(`SELECT event, count() AS times, uniq(person_id) AS people
-FROM events WHERE event NOT LIKE '$%' AND event NOT IN ${SYSTEM_EVENTS} AND timestamp >= ${F} AND timestamp < ${T}
+FROM events WHERE {filters} AND event NOT LIKE '$%' AND event NOT IN ${SYSTEM_EVENTS} AND timestamp >= ${F} AND timestamp < ${T}
 GROUP BY event ORDER BY times DESC LIMIT 100`, range),
   ]);
   const [current, previous] = (kpi.results[0] ?? []).map(num);

@@ -5119,24 +5119,33 @@ button.hero-dash-toggle {
   font-weight: 600;
 }
 
+/* Leads and Messages stretch their card down to the bottom of the demo
+   window instead of stopping at a fixed height. */
+.hero-dash-content:has(> :is(.hero-dash-leads, .hero-dash-messages)) {
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+}
+
+.hero-dash-leads,
+.hero-dash-messages {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
 /* Like the app, the list and the open conversation live in a fixed-height
    card and scroll on their own, so the reply box sits at the bottom of the
-   conversation instead of right under the last message. */
+   conversation instead of right under the last message. The floor keeps the
+   card usable in the 28rem phone window. */
 .hero-dash-split {
   display: grid;
-  height: 30rem;
+  flex: 1 1 0px;
+  min-height: 18.5rem;
   grid-template-rows: minmax(0, 1fr);
   margin-top: 0.75rem;
   padding: 0;
   overflow: hidden;
-}
-
-/* The phone window is 28rem tall; this keeps the whole card, reply box
-   included, in view under the page title and tabs. */
-@container (max-width: 719.98px) {
-  .hero-dash-split {
-    height: 18.5rem;
-  }
 }
 
 .hero-dash-split-list,

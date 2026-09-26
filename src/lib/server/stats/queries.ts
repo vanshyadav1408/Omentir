@@ -1,9 +1,11 @@
 import "server-only";
 
+import type { StatsPropertyFilter } from "./posthog-query";
+
 import { STATS_TIMEZONE, type StatsInterval } from "@/lib/stats-periods";
 
-// HogQL for stats.omentir.com. Every query binds every filter key the page can
-// set: PostHog rejects a query when an active filter key has no binding.
+// HogQL for stats.omentir.com. Dashboard filters use the expressions below;
+// PostHog supplies the project internal/test-user exclusions.
 // Signups are credited to the person's pageviews (90-day lookback) because
 // server events carry no attribution and a server geo-IP. Money is not read
 // from PostHog at all: see whop-payments.ts (PostHog payment events were
@@ -52,21 +54,22 @@ const AI_KEYS = ["ai_name", "ai_kind"];
 /** Keys the page may filter on. Anything else is dropped before querying. */
 export const STATS_FILTER_KEYS = new Set([...WEB_BINDINGS.map(([, key]) => key), ...AI_KEYS]);
 
-const WEB_FILTERS = `{filters(
-    null AS timestamp,
-    ${WEB_BINDINGS.map(([expr, key]) => `${expr} AS '${key}'`).join(",\n    ")},
-    ${AI_KEYS.map((key) => `null AS '${key}'`).join(", ")}
-  )}`;
+const quote = (value: string) => "'" + value.replaceAll("\\", "\\\\").replaceAll("'", "\\'") + "'";
 
-function aiFilters(bindings: string) {
-  const skipped = WEB_BINDINGS.map(([, key]) => key).filter((key) => key !== "$pathname");
-  return `{filters(
-      ${bindings},
-      ${skipped.map((key) => `null AS '${key}'`).join(", ")}
-    )}`;
+// PostHog applies its project test-account rules through the unbound placeholder.
+// Dashboard filters use the expressions above, including computed channels.
+function propertyFilters(filters: StatsPropertyFilter[], bindings: [string, string][]) {
+  return ["{filters}", ...filters.flatMap(({ key, value }) => {
+    const expr = bindings.find(([, name]) => name === key)?.[0];
+    return expr ? [`${expr} = ${quote(value)}`] : [];
+  })].join(" AND ");
 }
 
-/** Bucket key in India time, matching bucketKey() in stats-periods.ts. */
+function webFilters(filters: StatsPropertyFilter[]) {
+  return propertyFilters(filters, WEB_BINDINGS);
+}
+
+/** Bucket key in dashboard time, matching bucketKey() in stats-periods.ts. */
 export function bucketExpr(interval: StatsInterval, timestamp = "timestamp") {
   const column = `toTimeZone(${timestamp}, '${STATS_TIMEZONE}')`;
   switch (interval) {
@@ -81,20 +84,20 @@ export function bucketExpr(interval: StatsInterval, timestamp = "timestamp") {
   }
 }
 
-function pageviews(start: string, columns = "person_id, timestamp") {
+function pageviews(start: string, columns = "person_id, timestamp", filters: StatsPropertyFilter[] = []) {
   return `SELECT ${columns}
   FROM events
   WHERE event = '$pageview'
     AND ${LIVE_SITE}
     AND timestamp >= ${start} - ${LOOKBACK}
     AND timestamp < ${T}
-    AND ${WEB_FILTERS}`;
+    AND ${webFilters(filters)}`;
 }
 
 // ------------------------------------------------------------------ overview
 
 /** One row: current and previous-period traffic values for the KPI strip. */
-export function kpiQuery() {
+export function kpiQuery(filters: StatsPropertyFilter[] = []) {
   return `WITH
 pv AS (
   SELECT person_id, \`$session_id\` AS sid, timestamp, toFloat(session.$is_bounce) AS bounce, toFloat(session.$session_duration) AS dur
@@ -103,7 +106,7 @@ pv AS (
     AND ${LIVE_SITE}
     AND timestamp >= ${PREV}
     AND timestamp < ${T}
-    AND ${WEB_FILTERS}
+    AND ${webFilters(filters)}
 ),
 v AS (
   SELECT
@@ -127,23 +130,33 @@ FROM v CROSS JOIN s`;
 }
 
 /** Visitors per bucket. Revenue per bucket comes from Whop. */
-export function chartQuery(interval: StatsInterval) {
+export function chartQuery(interval: StatsInterval, filters: StatsPropertyFilter[] = []) {
   return `SELECT ${bucketExpr(interval)} AS bucket, uniq(person_id) AS visitors
 FROM events
 WHERE event = '$pageview'
   AND ${LIVE_SITE}
   AND timestamp >= ${F}
   AND timestamp < ${T}
-  AND ${WEB_FILTERS}
+  AND ${webFilters(filters)}
 GROUP BY bucket
 ORDER BY bucket
 LIMIT 5000`;
 }
 
-export function onlineQuery() {
+export function onlineQuery(filters: StatsPropertyFilter[] = []) {
   return `SELECT uniq(person_id)
 FROM events
-WHERE event = '$pageview' AND ${LIVE_SITE} AND timestamp > now() - INTERVAL 5 MINUTE AND ${WEB_FILTERS}`;
+WHERE event = '$pageview' AND ${LIVE_SITE} AND timestamp > now() - INTERVAL 5 MINUTE AND ${webFilters(filters)}`;
+}
+
+/** Traffic KPIs, chart and online count share one PostHog round trip. */
+export function overviewQuery(interval: StatsInterval, filters: StatsPropertyFilter[] = []) {
+  return `SELECT 'kpi' AS kind, '' AS bucket, c, p, bc, bp, dc, dp FROM (${kpiQuery(filters)})
+UNION ALL
+SELECT 'chart', bucket, visitors, 0, 0, 0, 0, 0 FROM (${chartQuery(interval, filters)})
+UNION ALL
+SELECT 'online', '', *, 0, 0, 0, 0, 0 FROM (${onlineQuery(filters)})
+LIMIT 5002`;
 }
 
 // ------------------------------------------------------------------ breakdowns
@@ -180,8 +193,15 @@ export type BreakdownCard = keyof typeof BREAKDOWNS;
  * signups. One scan of pageviews covers all tabs of a card. Paid and revenue
  * per row are added from Whop (see payerFirstTouchQuery).
  */
-export function breakdownQuery(card: BreakdownCard, top = 50) {
-  const dims = BREAKDOWNS[card] as Dimension[];
+export function breakdownQuery(card: BreakdownCard, top = 50, filters: StatsPropertyFilter[] = []) {
+  return dimensionQuery(BREAKDOWNS[card], top, filters);
+}
+
+export function allBreakdownsQuery(filters: StatsPropertyFilter[] = []) {
+  return dimensionQuery(Object.values(BREAKDOWNS).flat(), 50, filters);
+}
+
+function dimensionQuery(dims: Dimension[], top: number, filters: StatsPropertyFilter[]) {
   const columns = dims
     .flatMap((dim, i) => [`toString(${dim.value}) AS v${i}`, `toString(${dim.label ?? dim.value}) AS l${i}`])
     .join(", ");
@@ -189,8 +209,14 @@ export function breakdownQuery(card: BreakdownCard, top = 50) {
   const first = `tuple(${dims.map((_, i) => `v${i}, l${i}`).join(", ")})`;
   const credited = `[${dims.map((_, i) => `('c', ${i}, per.first.${2 * i + 1}, per.first.${2 * i + 2})`).join(", ")}]`;
   return `WITH
+cv AS (
+  SELECT DISTINCT person_id
+  FROM events
+  WHERE event = 'signed_up' AND {filters} AND timestamp >= ${F} AND timestamp < ${T}
+),
 pv AS (
-  ${pageviews(F, `person_id, timestamp, ${columns}`)}
+  ${pageviews(F, `person_id, timestamp, ${columns}`, filters)}
+    AND (timestamp >= ${F} OR person_id IN (SELECT person_id FROM cv))
 ),
 per AS (
   SELECT
@@ -199,11 +225,6 @@ per AS (
     arrayDistinct(arrayFlatten(groupArrayIf(${seen}, timestamp >= ${F}))) AS seen
   FROM pv
   GROUP BY person_id
-),
-cv AS (
-  SELECT DISTINCT person_id
-  FROM events
-  WHERE event = 'signed_up' AND timestamp >= ${F} AND timestamp < ${T}
 ),
 grouped AS (
   SELECT
@@ -232,7 +253,7 @@ LIMIT 1000`;
 }
 
 /** Outbound link clicks (DataFast's "Exit link" tab). Not filterable by itself. */
-export function exitLinksQuery() {
+export function exitLinksQuery(filters: StatsPropertyFilter[] = []) {
   return `SELECT
   cutQueryStringAndFragment(toString(properties.$external_click_url)) AS url,
   uniq(person_id) AS visitors,
@@ -243,7 +264,7 @@ WHERE event = '$autocapture'
   AND properties.$external_click_url IS NOT NULL
   AND timestamp >= ${F}
   AND timestamp < ${T}
-  AND ${WEB_FILTERS}
+  AND ${webFilters(filters)}
 GROUP BY url
 ORDER BY visitors DESC, clicks DESC
 LIMIT 50`;
@@ -260,14 +281,14 @@ const GOAL_EVENTS = `event NOT LIKE '$%'
  * no tracked visit still happened); with filters only people whose visits
  * match can be credited.
  */
-function goalBase(filtered: boolean) {
+function goalBase(filtered: boolean, filters: StatsPropertyFilter[]) {
   return `pv AS (
-  ${pageviews(F)}
+  ${pageviews(F, "person_id, timestamp", filters)}
 ),
 g AS (
   SELECT person_id, event, timestamp
   FROM events
-  WHERE ${GOAL_EVENTS}
+  WHERE ${GOAL_EVENTS} AND {filters}
     AND timestamp >= ${F}
     AND timestamp < ${T}
     ${filtered ? "AND person_id IN (SELECT person_id FROM pv)" : ""}
@@ -275,9 +296,9 @@ g AS (
 }
 
 /** Rows: event, people, completions. */
-export function goalTotalsQuery(filtered: boolean) {
+export function goalTotalsQuery(filtered: boolean, filters: StatsPropertyFilter[] = []) {
   return `WITH
-${goalBase(filtered)}
+${goalBase(filtered, filters)}
 SELECT event, uniq(person_id) AS people, count() AS completions
 FROM g
 GROUP BY event
@@ -286,9 +307,9 @@ LIMIT 100`;
 }
 
 /** Rows: event, bucket, people. */
-export function goalSeriesQuery(interval: StatsInterval, filtered: boolean) {
+export function goalSeriesQuery(interval: StatsInterval, filtered: boolean, filters: StatsPropertyFilter[] = []) {
   return `WITH
-${goalBase(filtered)}
+${goalBase(filtered, filters)}
 SELECT event, ${bucketExpr(interval)} AS bucket, uniq(person_id) AS people
 FROM g
 GROUP BY event, bucket
@@ -315,7 +336,7 @@ const GEMINI_OR_GOOGLE = `if(properties.referring_domain IN ${GEMINI_DOMAINS}, '
  * Google AI Overview impressions, and visits sent by Gemini / Google AI.
  * The last two have no kind; they count as AI answers.
  */
-export function aiQuery(interval: StatsInterval) {
+export function aiQuery(interval: StatsInterval, filters: StatsPropertyFilter[] = []) {
   return `SELECT ${bucketExpr(interval)} AS bucket, ai, coalesce(nullIf(toString(kind), ''), 'assistant') AS kind, sum(fetches) AS fetches
 FROM (
   SELECT
@@ -325,16 +346,18 @@ FROM (
     1 AS fetches
   FROM events
   WHERE event = '$http_log'
+    AND timestamp >= ${F} AND timestamp < ${T}
     AND ${HTTP_LOG_PATHS}
-    AND ${aiFilters("timestamp AS timestamp, properties.ai_name AS 'ai_name', properties.ai_kind AS 'ai_kind', properties.$pathname AS '$pathname'")}
+    AND ${propertyFilters(filters, [["properties.ai_name", "ai_name"], ["properties.ai_kind", "ai_kind"], ["properties.$pathname", "$pathname"]])}
 
   UNION ALL
 
   SELECT timestamp, 'Google AI' AS ai, NULL AS kind, toFloat(properties.gsc_impressions) AS fetches
   FROM events
   WHERE event = 'google_ai_overview_report'
+    AND timestamp >= ${F} AND timestamp < ${T}
     AND coalesce(toString(properties.gsc_page), '') = ''
-    AND ${aiFilters("timestamp AS timestamp, 'Google AI' AS 'ai_name', null AS 'ai_kind', properties.gsc_page AS '$pathname'")}
+    AND ${propertyFilters(filters, [["'Google AI'", "ai_name"], ["NULL", "ai_kind"], ["properties.gsc_page", "$pathname"]])}
 
   UNION ALL
 
@@ -342,10 +365,12 @@ FROM (
   FROM events
   WHERE event = '$pageview'
     AND ${LIVE_SITE}
+    AND timestamp >= ${F} AND timestamp < ${T}
     AND (properties.referring_domain IN ${GEMINI_DOMAINS} OR properties.google_text_fragment IS NOT NULL)
-    AND ${aiFilters(`timestamp AS timestamp, ${GEMINI_OR_GOOGLE} AS 'ai_name', null AS 'ai_kind', properties.$pathname AS '$pathname'`)}
+    AND ${propertyFilters(filters, [[GEMINI_OR_GOOGLE, "ai_name"], ["NULL", "ai_kind"], ["properties.$pathname", "$pathname"]])}
 )
-WHERE ai IS NOT NULL AND ai != ''
+WHERE timestamp >= ${F} AND timestamp < ${T}
+  AND ai IS NOT NULL AND ai != ''
 GROUP BY bucket, ai, kind
 ORDER BY bucket
 LIMIT 20000`;
@@ -368,19 +393,19 @@ GROUP BY distinct_id`;
 }
 
 /** Rows: person_id of payers whose visits match the active filters (previous period included). */
-export function payersMatchingFiltersQuery(personIds: string[]) {
+export function payersMatchingFiltersQuery(personIds: string[], filters: StatsPropertyFilter[] = []) {
   return `SELECT DISTINCT toString(person_id)
 FROM events
 WHERE event = '$pageview'
   AND ${LIVE_SITE}
   AND timestamp >= ${PREV} - ${LOOKBACK}
   AND timestamp < ${T}
-  AND ${WEB_FILTERS}
+  AND ${webFilters(filters)}
   AND toString(person_id) IN (${quoted(personIds)})`;
 }
 
 /** Rows: person_id, first-touch tuple (v0, l0, v1, l1, ...) for a card's tabs, filter-aware. */
-export function payerFirstTouchQuery(card: BreakdownCard, personIds: string[]) {
+export function payerFirstTouchQuery(card: BreakdownCard, personIds: string[], filters: StatsPropertyFilter[] = []) {
   const dims = BREAKDOWNS[card] as Dimension[];
   const columns = dims
     .flatMap((dim, i) => [`toString(${dim.value}) AS v${i}`, `toString(${dim.label ?? dim.value}) AS l${i}`])
@@ -388,7 +413,7 @@ export function payerFirstTouchQuery(card: BreakdownCard, personIds: string[]) {
   const first = `tuple(${dims.map((_, i) => `v${i}, l${i}`).join(", ")})`;
   return `SELECT toString(person_id), argMin(${first}, timestamp)
 FROM (
-  ${pageviews(F, `person_id, timestamp, ${columns}`)}
+  ${pageviews(F, `person_id, timestamp, ${columns}`, filters)}
 )
 WHERE toString(person_id) IN (${quoted(personIds)})
 GROUP BY person_id`;
