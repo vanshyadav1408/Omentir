@@ -9,7 +9,7 @@ function CheckIcon() {
       viewBox="0 0 16 16"
       fill="none"
       aria-hidden="true"
-      className="h-6 w-3.5 shrink-0 text-[var(--md-sys-color-on-surface)]"
+      className="h-[1lh] w-3.5 shrink-0 text-[var(--md-sys-color-on-surface)]"
     >
       <path
         d="M3.5 8.5 6.5 11.5 12.5 4.5"
