@@ -147,6 +147,30 @@ function agentTitle(agent: Agent) {
   return agent.name?.trim() || modeLabel(agent);
 }
 
+type StatusFilter = "all" | "active" | "paused" | "error";
+type AgentSort = "newest" | "oldest" | "most_leads" | "fewest_leads";
+
+const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
+  { id: "all", label: "All agents" },
+  { id: "active", label: "Active" },
+  { id: "paused", label: "Paused" },
+  { id: "error", label: "Errors" },
+];
+
+const AGENT_SORTS: { id: AgentSort; label: string }[] = [
+  { id: "newest", label: "Newest first" },
+  { id: "oldest", label: "Oldest first" },
+  { id: "most_leads", label: "Most leads" },
+  { id: "fewest_leads", label: "Fewest leads" },
+];
+
+// "running" is an active agent mid-run, so it belongs under Active.
+function matchesStatusFilter(status: Agent["status"], filter: StatusFilter) {
+  if (filter === "all") return true;
+  if (filter === "active") return status === "active" || status === "running";
+  return status === filter;
+}
+
 const NO_METRICS = {
   target: 0,
   contacted: 0,
@@ -196,6 +220,8 @@ export default function AgentsView({
     leadsOnly: boolean;
   } | null>(null);
   const [savingLeadsOnly, setSavingLeadsOnly] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [sortBy, setSortBy] = useState<AgentSort>("newest");
   // Keeps "in 25 min" honest while the page sits open. The facts behind the
   // line are re-read less often: each read queries every campaign's queue.
   const [now, setNow] = useState(() => Date.now());
@@ -449,6 +475,35 @@ export default function AgentsView({
     );
   }, [loadedAgents, loadedLeads, loadedEnrollments]);
 
+  const statusCounts = useMemo(() => {
+    const counts: Record<StatusFilter, number> = { all: 0, active: 0, paused: 0, error: 0 };
+    for (const agent of visibleAgents) {
+      const status = optimisticStatuses[agent.id] ?? agent.status;
+      for (const { id } of STATUS_FILTERS) {
+        if (matchesStatusFilter(status, id)) counts[id] += 1;
+      }
+    }
+    return counts;
+  }, [visibleAgents, optimisticStatuses]);
+
+  const listedAgents = useMemo(() => {
+    const createdMs = (agent: Agent) => Date.parse(agent.createdAt) || 0;
+    const leadCount = (agent: Agent) => agentMetrics.get(agent.id)?.target ?? 0;
+    return visibleAgents
+      .filter((agent) =>
+        matchesStatusFilter(optimisticStatuses[agent.id] ?? agent.status, statusFilter),
+      )
+      .sort((a, b) => {
+        if (sortBy === "oldest") return createdMs(a) - createdMs(b);
+        if (sortBy === "most_leads" || sortBy === "fewest_leads") {
+          const diff = leadCount(a) - leadCount(b);
+          // Equal lead counts fall back to newest first so the order is stable.
+          if (diff !== 0) return sortBy === "fewest_leads" ? diff : -diff;
+        }
+        return createdMs(b) - createdMs(a);
+      });
+  }, [visibleAgents, optimisticStatuses, statusFilter, sortBy, agentMetrics]);
+
   if (!isInitialLoading && visibleAgents.length === 0) {
     return (
       <CompleteSetupPrompt
@@ -472,6 +527,57 @@ export default function AgentsView({
       <line x1="12" y1="5" x2="12" y2="19" />
       <line x1="5" y1="12" x2="19" y2="12" />
     </svg>
+  );
+
+  const dropdownArrow = (
+    <span className="material-symbols-outlined pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-[16px] text-zinc-500" aria-hidden="true">
+      arrow_drop_down
+    </span>
+  );
+
+  const listControls = (
+    <div className="flex flex-wrap items-center gap-2">
+      <label className="flex h-8 items-center gap-2 rounded-md border border-zinc-200 bg-white px-2.5 text-xs font-semibold text-zinc-700">
+        <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M4 5h16l-6 7v5l-4 2v-7L4 5Z" />
+        </svg>
+        <span className="relative">
+          <select
+            aria-label="Filter agents by status"
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
+            className="cursor-pointer appearance-none border-0 bg-transparent pr-6 shadow-none outline-none"
+          >
+            {STATUS_FILTERS.map((filter) => (
+              <option key={filter.id} value={filter.id}>
+                {filter.label} ({statusCounts[filter.id]})
+              </option>
+            ))}
+          </select>
+          {dropdownArrow}
+        </span>
+      </label>
+      <label className="flex h-8 items-center gap-2 rounded-md border border-zinc-200 bg-white px-2.5 text-xs font-semibold text-zinc-700">
+        <svg className="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4" />
+        </svg>
+        <span className="relative">
+          <select
+            aria-label="Sort agents"
+            value={sortBy}
+            onChange={(event) => setSortBy(event.target.value as AgentSort)}
+            className="cursor-pointer appearance-none border-0 bg-transparent pr-6 shadow-none outline-none"
+          >
+            {AGENT_SORTS.map((sort) => (
+              <option key={sort.id} value={sort.id}>
+                {sort.label}
+              </option>
+            ))}
+          </select>
+          {dropdownArrow}
+        </span>
+      </label>
+    </div>
   );
 
   const mobileHeaderFabClass =
@@ -539,8 +645,14 @@ export default function AgentsView({
           <OutreachListSkeleton label="Loading agents" />
         ) : (
           <ContentReveal>
+          <div className="mb-3">{listControls}</div>
+          {listedAgents.length === 0 ? (
+            <p className="py-10 text-center text-sm font-medium text-zinc-600">
+              No agents match this filter.
+            </p>
+          ) : null}
           <ul className="flex flex-col gap-3">
-            {visibleAgents.map((agent) => {
+            {listedAgents.map((agent) => {
               const metrics = agentMetrics.get(agent.id) ?? NO_METRICS;
               const displayStatus = optimisticStatuses[agent.id] ?? agent.status;
               const isActive = displayStatus === "active" || displayStatus === "running";
