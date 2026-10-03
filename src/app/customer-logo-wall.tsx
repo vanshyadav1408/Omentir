@@ -29,7 +29,7 @@ const CUSTOMERS = [
   {
     name: "IT-Harvest",
     href: "https://it-harvest.com",
-    src: "/customer-logos/it-harvest.png",
+    src: "/customer-logos/it-harvest.webp",
     width: 180,
     height: 60,
   },
@@ -52,7 +52,7 @@ const CUSTOMERS = [
   {
     name: "MarvelX",
     href: "https://marvelx.ai",
-    src: "/customer-logos/marvelx.png",
+    src: "/customer-logos/marvelx.webp",
     width: 40,
     height: 40,
     ownPlate: true,
@@ -60,7 +60,7 @@ const CUSTOMERS = [
   {
     name: "Codi",
     href: "https://codi.com",
-    src: "/customer-logos/codi.png",
+    src: "/customer-logos/codi.webp",
     width: 40,
     height: 40,
     silhouette: true,
@@ -75,7 +75,7 @@ const CUSTOMERS = [
   {
     name: "Dibe Agency",
     href: "https://dibe.agency",
-    src: "/customer-logos/dibe-agency.png",
+    src: "/customer-logos/dibe-agency.webp",
     width: 208,
     height: 166,
     knockout: true,

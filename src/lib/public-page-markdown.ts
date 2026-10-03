@@ -42,6 +42,7 @@ const MARKETING_PAGES = [
   { htmlPath: "/about", title: "About" },
   { htmlPath: "/pricing", title: "Pricing" },
   { htmlPath: "/help", title: "LinkedIn outreach help" },
+  { htmlPath: "/guides", title: "Sales guides by AI agent" },
   { htmlPath: "/minimum-booking-guarantee", title: "Minimum Booking Guarantee" },
   { htmlPath: "/privacy-policy", title: "Privacy Policy" },
   { htmlPath: "/terms-of-service", title: "Terms of Service" },
@@ -347,6 +348,7 @@ function familyIndexMarkdown(
     | "/use-cases"
     | "/alternatives"
     | "/help"
+    | "/guides"
     | "/tools",
   title: string,
   description: string,
@@ -758,6 +760,20 @@ export async function renderPublicMarkdown(htmlPath: string): Promise<string | n
         title: page.question,
         href: `/help/${page.slug}`,
         note: `${HELP_CLUSTER_LABELS[page.cluster]}. ${page.description}`,
+      }))
+    );
+  }
+
+  if (htmlPath === "/guides") {
+    const guides = await getGuides();
+    return familyIndexMarkdown(
+      "/guides",
+      "Sales guides by AI agent",
+      "How to run LinkedIn outreach with the agent you already use: Grok Bot, Meta Muse, OpenAI Dots, Manus Cue, Claude Code, Cursor and others. Most guides include a prompt to paste in.",
+      liveSeoPages(guides).map((page) => ({
+        title: page.title,
+        href: `/${page.slug}`,
+        note: page.description,
       }))
     );
   }

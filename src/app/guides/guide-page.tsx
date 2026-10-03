@@ -5,6 +5,7 @@ import { PromptCopyBox } from "../grok-bot-setup-block";
 import JsonLd from "../json-ld";
 import MarketingClosingCta from "../marketing-closing-cta";
 import {
+  articlePathCrumbs,
   CalPageHero,
   MarketingFooter,
   MarketingHeader,
@@ -128,6 +129,7 @@ export default function GuidePageView({ page }: { page: GuidePage }) {
     }),
     createBreadcrumbJsonLd([
       { name: "Home", url: siteUrl },
+      { name: "Guides", url: `${siteUrl}/guides` },
       { name: page.title, url: pageUrl },
     ]),
     ...(showFaq ? [createFAQJsonLd(page.faqItems)] : []),
@@ -139,6 +141,7 @@ export default function GuidePageView({ page }: { page: GuidePage }) {
       <main className="site-theme min-h-screen overflow-x-hidden">
         <MarketingHeader transparentAtTop />
         <CalPageHero
+          crumbs={articlePathCrumbs("guides", page.slug)}
           title={page.title}
           description={page.description}
         >

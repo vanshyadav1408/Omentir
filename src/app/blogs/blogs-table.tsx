@@ -65,8 +65,10 @@ export default function BlogsTable({ rows, categories }: { rows: BlogRow[]; cate
       ) : null}
 
       <ul className="cal-post-grid mt-12">
-        {grid.slice(0, shown).map((row) => (
-          <li key={row.slug}>
+        {/* Every post stays in the HTML so crawlers find a link to it; the
+            ones past "Show more" are only hidden. */}
+        {grid.map((row, index) => (
+          <li key={row.slug} hidden={index >= shown}>
             <BlogCard post={row} />
           </li>
         ))}

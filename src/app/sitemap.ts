@@ -28,6 +28,7 @@ const publicRoutes = [
   { path: "/minimum-booking-guarantee", changeFrequency: "monthly", priority: 0.5, lastModified: "2026-08-09" },
   { path: "/about", changeFrequency: "monthly", priority: 0.7, lastModified: "2026-07-17" },
   { path: "/help", changeFrequency: "weekly", priority: 0.7, lastModified: "2026-08-23" },
+  { path: "/guides", changeFrequency: "weekly", priority: 0.7 },
   { path: "/llms.txt", changeFrequency: "weekly", priority: 0.4 },
   { path: "/llms-full.txt", changeFrequency: "weekly", priority: 0.4 },
   { path: "/agents.md", changeFrequency: "monthly", priority: 0.4, lastModified: "2026-08-22" },
@@ -124,6 +125,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const useCasesIndexDate = latestFrom(useCases);
   const alternativesIndexDate = latestFrom(alternatives);
   const helpIndexDate = latestFrom(helpPages);
+  const guidesIndexDate = latestFrom(guides);
   const llmsIndexDate = [
     blogsIndexDate,
     featuresIndexDate,
@@ -150,6 +152,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/use-cases": useCasesIndexDate,
     "/alternatives": alternativesIndexDate,
     "/help": helpIndexDate,
+    "/guides": guidesIndexDate,
     "/tools": latestToolDate(),
     ...legalDates,
   };

@@ -28,6 +28,7 @@ const footerColumns: Array<[string, ...Array<[label: string, href: string]>]> = 
     ["Codex outbound", "/use-cases/codex-outbound"],
     ["Book LinkedIn demos", "/use-cases/book-linkedin-demos"],
     ["Blogs", "/blogs"],
+    ["Guides", "/guides"],
     ["Open Source", "/blogs/omentir-is-now-open-source"],
   ],
   [

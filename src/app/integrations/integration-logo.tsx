@@ -17,17 +17,17 @@ const INTEGRATION_LOGOS: Record<
     preserveColor: true,
   },
   "meta-muse": {
-    src: "/integration-logos/meta-muse.png",
+    src: "/integration-logos/meta-muse.webp",
     name: "Meta Muse",
     preserveColor: true,
   },
   "openai-dots": {
-    src: "/integration-logos/openai-dots.png",
+    src: "/integration-logos/openai-dots.webp",
     name: "OpenAI Dots",
     preserveColor: true,
   },
   "manus-cue": {
-    src: "/integration-logos/manus-cue.png",
+    src: "/integration-logos/manus-cue.webp",
     name: "Manus Cue",
     preserveColor: true,
   },
