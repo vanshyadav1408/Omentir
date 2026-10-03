@@ -200,7 +200,9 @@ jobs:
           import xml.etree.ElementTree as ET
 
           def fetch(url, data=None, headers=None, timeout=60):
-              request = urllib.request.Request(url, data=data, headers=headers or {})
+              # Cloudflare answers 403 to urllib's default Python-urllib agent.
+              headers = {"user-agent": "omentir-deploy/1.0 (+https://omentir.com)", **(headers or {})}
+              request = urllib.request.Request(url, data=data, headers=headers)
               with urllib.request.urlopen(request, timeout=timeout) as response:
                   return response.status, response.read()
 
