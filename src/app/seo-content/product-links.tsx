@@ -1,6 +1,6 @@
-import { Fragment, type ReactNode } from "react";
+import { cache, Fragment, type ReactNode } from "react";
 import { splitMarkdownLinks } from "@/lib/cms/markdown-links";
-import { marketingLinkRel } from "@/lib/marketing-link-rel";
+import { isPaidAnchor } from "@/lib/paid-placement";
 
 /**
  * Official homepages for third-party products we name on marketing pages.
@@ -226,6 +226,13 @@ export function productHref(name: string): string | undefined {
   return NAME_TO_PRODUCT.get(name.trim().toLowerCase())?.href;
 }
 
+/**
+ * One outbound link per product per page. React scopes `cache` to a single
+ * server render, so every helper below shares this set across sections,
+ * tables, steps, and FAQs. Later mentions render as plain text.
+ */
+const linkedOnThisPage = cache(() => new Set<string>());
+
 export function ProductHomeLink({
   name,
   className = PRODUCT_LINK_CLASS,
@@ -235,10 +242,12 @@ export function ProductHomeLink({
   className?: string;
   children?: ReactNode;
 }) {
-  const href = productHref(name);
-  if (!href) return <>{children ?? name}</>;
+  const product = NAME_TO_PRODUCT.get(name.trim().toLowerCase());
+  const linked = linkedOnThisPage();
+  if (!product || linked.has(product.id)) return <>{children ?? name}</>;
+  linked.add(product.id);
   return (
-    <a href={href} target="_blank" rel={marketingLinkRel(href)} className={className}>
+    <a href={product.href} target="_blank" rel="noopener" className={className}>
       {children ?? name}
     </a>
   );
@@ -248,31 +257,47 @@ function normalizeHref(href: string) {
   return href.replace(/\/+$/, "").toLowerCase();
 }
 
-/** Markdown anchors on SEO pages win over a second auto-link to the same homepage. */
-export function linkifySeoCopy(text: string, seen?: Set<string>): ReactNode {
-  const linked = seen ?? new Set<string>();
-  const parts = splitMarkdownLinks(text);
-  const hasMarkdownLink = parts.some((part) => part.type === "link");
-  if (!hasMarkdownLink) return linkifyProducts(text, linked);
-
-  for (const part of parts) {
-    if (part.type !== "link") continue;
-    const product = PRODUCT_HOMEPAGES.find(
-      (item) => normalizeHref(item.href) === normalizeHref(part.href)
-    );
-    if (product) linked.add(product.id);
+function markdownLinkKey(href: string) {
+  const product = PRODUCT_HOMEPAGES.find(
+    (item) => normalizeHref(item.href) === normalizeHref(href)
+  );
+  if (product) return product.id;
+  try {
+    return new URL(href).hostname.replace(/^www\./, "").toLowerCase();
+  } catch {
+    return href;
   }
+}
+
+/**
+ * Markdown anchors on SEO pages win over an auto-link to the same homepage in
+ * the same paragraph. The contracted paid anchor always renders; any other
+ * repeat link becomes plain text.
+ */
+export function linkifySeoCopy(text: string): ReactNode {
+  const linked = linkedOnThisPage();
+  const parts = splitMarkdownLinks(text);
+  if (!parts.some((part) => part.type === "link")) return linkifyProducts(text, linked);
+
+  const keep = parts.map((part) => {
+    if (part.type !== "link") return false;
+    const key = markdownLinkKey(part.href);
+    if (linked.has(key) && !isPaidAnchor(part.href, part.text)) return false;
+    linked.add(key);
+    return true;
+  });
 
   return parts.map((part, index) => {
     if (part.type === "text") {
       return <Fragment key={`t${index}`}>{linkifyProducts(part.text, linked)}</Fragment>;
     }
+    if (!keep[index]) return <Fragment key={`a${index}`}>{part.text}</Fragment>;
     return (
       <a
         key={`a${index}`}
         href={part.href}
         target="_blank"
-        rel={marketingLinkRel(part.href)}
+        rel="noopener"
         className={PRODUCT_LINK_CLASS}
       >
         {part.text}
@@ -281,10 +306,9 @@ export function linkifySeoCopy(text: string, seen?: Set<string>): ReactNode {
   });
 }
 
-export function linkifyProducts(text: string, seen?: Set<string>): ReactNode {
+export function linkifyProducts(text: string, linked = linkedOnThisPage()): ReactNode {
   const local = new RegExp(PRODUCT_PATTERN.source, PRODUCT_PATTERN.flags);
   const parts: ReactNode[] = [];
-  const linked = seen ?? new Set<string>();
   let last = 0;
   let match: RegExpExecArray | null;
   let index = 0;
@@ -308,7 +332,7 @@ export function linkifyProducts(text: string, seen?: Set<string>): ReactNode {
           key={`${product.id}-${index}`}
           href={product.href}
           target="_blank"
-          rel={marketingLinkRel(product.href)}
+          rel="noopener"
           className={PRODUCT_LINK_CLASS}
         >
           {raw}

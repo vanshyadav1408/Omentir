@@ -279,17 +279,16 @@ export function SetupSteps({ steps }: { steps: ReadonlyArray<{ title: string; de
           glance instead of as a stacked list. */}
       <ol className="cal-steps-grid mt-6">
         {steps.map((step, index) => {
-          const seen = new Set<string>();
           return (
             <li key={step.title} className="cal-step-card">
               <span className="cal-step-num" aria-hidden="true">
                 {index + 1}
               </span>
               <p className="font-medium text-[var(--site-text)]">
-                {linkifyProducts(step.title, seen)}
+                {linkifyProducts(step.title)}
               </p>
               <p className="mt-1.5 text-sm leading-6 text-[var(--cal-muted)]">
-                {linkifyProducts(step.description, seen)}
+                {linkifyProducts(step.description)}
               </p>
             </li>
           );
@@ -363,13 +362,10 @@ export function FaqBlock({
       <h2 className="cal-read-h2">Frequently asked questions</h2>
       <div className={branded ? "mt-6 md:mt-8" : "mt-4"}>
         <FaqAccordion
-          items={page.faqItems.map((item) => {
-            const seen = new Set<string>();
-            return {
-              question: linkifyProducts(item.question, seen),
-              answer: linkifyProducts(item.answer, seen),
-            };
-          })}
+          items={page.faqItems.map((item) => ({
+            question: linkifyProducts(item.question),
+            answer: linkifyProducts(item.answer),
+          }))}
         />
       </div>
     </section>
@@ -422,16 +418,15 @@ export function SectionBody({
   codeLabel?: string;
   className?: string;
 }) {
-  const seen = new Set<string>();
   return (
     <div className={`space-y-4 text-left ${className}`}>
       {paragraphs.map((paragraph, index) => (
-        <p key={`${id}-p-${index}`}>{linkifySeoCopy(paragraph, seen)}</p>
+        <p key={`${id}-p-${index}`}>{linkifySeoCopy(paragraph)}</p>
       ))}
       {bullets && bullets.length > 0 ? (
         <ul className="cal-checklist">
           {bullets.map((bullet, index) => (
-            <li key={`${id}-b-${index}`}>{linkifySeoCopy(bullet, seen)}</li>
+            <li key={`${id}-b-${index}`}>{linkifySeoCopy(bullet)}</li>
           ))}
         </ul>
       ) : null}

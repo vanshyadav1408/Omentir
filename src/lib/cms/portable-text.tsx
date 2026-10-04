@@ -5,10 +5,10 @@ import type { PortableTextBlock } from "@portabletext/types";
 import Image from "next/image";
 import Link from "next/link";
 import { MarketingTable, MarketingTd, MarketingTh, MarketingThead, MarketingTr } from "@/app/marketing-table";
+import { dedupeOutboundLinks } from "./dedupe-outbound-links";
 import { isHostLinkLabel, sameSitePath, splitMarkdownLinks } from "./markdown-links";
 import { headingId, headingIdFromBlock } from "./portable-text-toc";
 import { isSanityCdnUrl, sanityImageUrl } from "@/sanity/lib/image";
-import { marketingLinkRel } from "@/lib/marketing-link-rel";
 
 function MarkdownCell({ text }: { text: string }) {
   return (
@@ -55,7 +55,7 @@ function InlineLink({
     );
   }
   return (
-    <a href={href} target="_blank" rel={marketingLinkRel(href)} data-link-kind={linkKind} className={className} style={style}>
+    <a href={href} target="_blank" rel="noopener" data-link-kind={linkKind} className={className} style={style}>
       {children}
     </a>
   );
@@ -163,5 +163,5 @@ const components: PortableTextComponents = {
 
 export function BlogPortableText({ value }: { value: PortableTextBlock[] }) {
   if (!value?.length) return null;
-  return <PortableText value={value} components={components} />;
+  return <PortableText value={dedupeOutboundLinks(value)} components={components} />;
 }
