@@ -50,6 +50,7 @@ import {
   updateWorkspaceBilling,
   markAgentRun,
   markAgentStarted,
+  nextDayAgentSlot,
   prepareEnrollmentActionNow,
   recordDailyLeadDiscoveryRun,
   recordInviteLimitSignal,
@@ -65,8 +66,12 @@ import {
   draftCampaignReplyMessage,
   MAX_AI_SEQUENCE_MESSAGES,
   normalizeAgentSearch,
-  scoreLeadForProduct,
 } from "./gemini";
+import {
+  DAILY_LEAD_FILTER_LIMIT,
+  LeadFilterCapReached,
+  scoreLeadForProduct,
+} from "./lead-qualification";
 import {
   applyConnectionAccepted,
   draftUpcomingMessagePreview,
@@ -472,6 +477,20 @@ async function runAgents(mode: AutomationSafetyMode) {
       // nothing left to mark running/error.
       if (!(await markAgentStarted(agent))) continue;
 
+      // The workspace spent today's lead filters (shared by all its agents).
+      // Pause quietly like a reached daily target and come back tomorrow.
+      if (
+        !(await hasDailyQuotaRemaining(
+          agent.workspaceId,
+          "leadFilters",
+          DAILY_LEAD_FILTER_LIMIT,
+          workspace.timezone,
+        ))
+      ) {
+        await markAgentRun(agent, true, { nextRunAt: await nextDayAgentSlot(agent) });
+        continue;
+      }
+
       if (agentUsesPeopleEngine(agent)) {
         const usage = await getDailyLeadDiscoveryUsage(
           agent.id,
@@ -493,6 +512,7 @@ async function runAgents(mode: AutomationSafetyMode) {
           agent,
           account,
           profile,
+          timezone: workspace.timezone,
           initialLeadTarget: remainingTarget,
           dailyLeadLimit: remainingTarget,
           locationSlot: usage.attempts,
@@ -513,7 +533,11 @@ async function runAgents(mode: AutomationSafetyMode) {
         await markAgentRun(
           agent,
           true,
-          shouldRefill ? { nextRunAt: addMinutes(DISCOVERY_REFILL_MINUTES) } : undefined,
+          result.filterCapReached
+            ? { nextRunAt: await nextDayAgentSlot(agent) }
+            : shouldRefill
+              ? { nextRunAt: addMinutes(DISCOVERY_REFILL_MINUTES) }
+              : undefined,
         );
         continue;
       }
@@ -560,6 +584,7 @@ async function runAgents(mode: AutomationSafetyMode) {
               { ...rawLead, ...existing },
               profile,
               agent,
+              workspace.timezone,
             );
             if (score.fitScore >= STANDARD_AGENT_SCORE_THRESHOLD) {
               await upsertLead(agent.workspaceId, agent.targetGroupId, {
@@ -587,6 +612,7 @@ async function runAgents(mode: AutomationSafetyMode) {
               { ...enrichedLead, ...enrichedExisting },
               profile,
               agent,
+              workspace.timezone,
             );
             if (score.fitScore >= STANDARD_AGENT_SCORE_THRESHOLD) {
               await upsertLead(agent.workspaceId, agent.targetGroupId, {
@@ -599,7 +625,7 @@ async function runAgents(mode: AutomationSafetyMode) {
           continue;
         }
 
-        const score = await scoreLeadForProduct(enrichedLead, profile, agent);
+        const score = await scoreLeadForProduct(enrichedLead, profile, agent, workspace.timezone);
         // Gate on fit so broad keyword matches (right title, wrong
         // industry/location) don't enter the group and get auto-contacted.
         if (score.fitScore < STANDARD_AGENT_SCORE_THRESHOLD) {
@@ -618,6 +644,12 @@ async function runAgents(mode: AutomationSafetyMode) {
 
       await markAgentRun(agent, true);
     } catch (error) {
+      // Hit the shared daily lead filter cap mid-run: leads already saved stay,
+      // and the agent ends this run normally instead of showing an error.
+      if (error instanceof LeadFilterCapReached) {
+        await markAgentRun(agent, true, { nextRunAt: await nextDayAgentSlot(agent) });
+        continue;
+      }
       // Soft-fail the agent to error + next daily slot, but always record the
       // real cause so the activity feed is not just a red badge with no reason.
       // If the agent was deleted mid-run, markAgentRun no-ops and we skip the

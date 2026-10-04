@@ -20,6 +20,7 @@ import {
   nextLocalAgentRunAt,
   planSendSchedule,
   zonedParts,
+  zonedTimeToUtc,
   type SendActionKind,
 } from "./send-schedule";
 import { remapStepIndex } from "./enrollment-remap";
@@ -437,6 +438,7 @@ const WORKSPACE_SCOPED_COLLECTIONS = [
   "groups",
   "leads",
   "leadSignals",
+  "discoveryBacklog",
   "campaigns",
   "campaignEnrollments",
   "conversations",
@@ -1455,6 +1457,28 @@ async function nextAgentSlot(agent: Agent) {
   }
 }
 
+// The agent's daily slot on the workspace's next local day. Used once the daily
+// lead filter cap is spent: a slot later today would only wake the agent to
+// find the cap still used up, and the cap resets at local midnight.
+export async function nextDayAgentSlot(agent: Agent) {
+  try {
+    const { timezone } = await getWorkspace(agent.workspaceId);
+    const local = zonedParts(timezone, Date.now());
+    const midnight = zonedTimeToUtc(timezone, {
+      year: local.year,
+      month: local.month,
+      day: local.day + 1,
+    });
+    // One millisecond early so a slot at exactly 00:00 still lands tomorrow.
+    const from = midnight - 1;
+    return agent.runAnchorAt
+      ? nextAnchoredAgentRunAt(agent.runAnchorAt, timezone, from)
+      : nextLocalAgentRunAt(normalizeRunAtHour(agent.runAtHour), timezone, from);
+  } catch {
+    return nextDailyAgentRunAt(agent.nextRunAt);
+  }
+}
+
 // Firestore update() throws NOT_FOUND (code 5) when the doc is gone. Agents can
 // be deleted mid-tick (user deletes while discovery is still running, or the
 // cascade finishes after getDueAgents already returned the row). Lifecycle
@@ -1657,6 +1681,7 @@ export async function deleteAgent(workspaceId: string, agentId: string) {
   });
   await stopEnrollmentsForAgentLeads(workspaceId, agentId);
   await ref.delete();
+  await collection("discoveryBacklog").doc(agentId).delete();
 
   const groupStillFed = (await listAgents(workspaceId)).some(
     (other) => other.id !== agentId && other.targetGroupId === agent.targetGroupId,
@@ -2265,6 +2290,45 @@ export async function markLeadSignalPromoted(
     },
     { merge: true },
   );
+}
+
+// Candidates a discovery run found but could not score because the workspace
+// spent its daily lead filters. The agent's next run scores these first.
+// Stored as one JSON string: candidates carry optional fields Firestore rejects
+// as undefined, and the string length keeps the doc under Firestore's 1 MB.
+const DISCOVERY_BACKLOG_MAX_CHARS = 800_000;
+
+export async function saveDiscoveryBacklog(agent: Agent, candidates: unknown[]) {
+  const kept: unknown[] = [];
+  let size = 2;
+  for (const candidate of candidates) {
+    const length = JSON.stringify(candidate).length + 1;
+    if (size + length > DISCOVERY_BACKLOG_MAX_CHARS) break;
+    kept.push(candidate);
+    size += length;
+  }
+  await collection("discoveryBacklog").doc(agent.id).set({
+    workspaceId: agent.workspaceId,
+    agentId: agent.id,
+    candidatesJson: JSON.stringify(kept),
+    savedAt: nowIso(),
+  });
+  return kept.length;
+}
+
+// Reads and clears the backlog. A run that hits the cap again saves whatever it
+// still could not score, so taking it up front cannot drop work.
+export async function takeDiscoveryBacklog<T>(agentId: string): Promise<T[]> {
+  const ref = collection<{ candidatesJson?: string }>("discoveryBacklog").doc(agentId);
+  const snap = await ref.get();
+  if (!snap.exists) return [];
+  await ref.delete();
+  try {
+    const parsed = JSON.parse(snap.data()?.candidatesJson || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
 }
 
 export async function listCampaigns(workspaceId: string) {
@@ -3923,7 +3987,7 @@ function quotaDayKey(timezone: string | undefined) {
 
 export async function hasDailyQuotaRemaining(
   workspaceId: string,
-  kind: "invites" | "messages",
+  kind: "invites" | "messages" | "leadFilters",
   limit: number,
   timezone: string | undefined,
 ) {
@@ -4002,9 +4066,11 @@ export async function recordDailyLeadDiscoveryRun(
 // Reserves one unit of today's quota. Call this only after the LinkedIn send
 // succeeds - failed Unipile responses must not burn the daily budget, or the
 // rest of the day is stuck on invite-limit / message-limit with zero outreach.
+// "leadFilters" is the exception: it caps model spend, so it is reserved before
+// the Jev call, which keeps parallel agents from overshooting the cap.
 export async function consumeDailyQuota(
   workspaceId: string,
-  kind: "invites" | "messages",
+  kind: "invites" | "messages" | "leadFilters",
   limit: number,
   timezone: string | undefined,
 ) {

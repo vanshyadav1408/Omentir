@@ -5,6 +5,8 @@ import {
   listLinkedInAccounts,
   logAutomationRun,
   markLeadSignalPromoted,
+  saveDiscoveryBacklog,
+  takeDiscoveryBacklog,
   updateAgentPeopleEngineCursor,
   upsertLead,
   upsertLeadSignal,
@@ -18,8 +20,8 @@ import {
   findGroundedAgentCandidates,
   matchesTargetTitle,
   planPeopleSearch,
-  scoreLeadForProduct,
 } from "./gemini";
+import { LeadFilterCapReached, scoreLeadForProduct } from "./lead-qualification";
 import {
   getLinkedInPostCreatedAt,
   getLinkedInPostCreatedAtRaw,
@@ -1221,6 +1223,8 @@ export async function runPeopleEngineForAgent(input: {
   agent: Agent;
   account: LinkedInAccount;
   profile: ProductProfile | null;
+  // Workspace time zone: the daily lead filter cap resets at its local midnight.
+  timezone: string | undefined;
   initialLeadTarget?: number;
   dailyLeadLimit?: number;
   // 0-based discovery attempt for this local day. Rotates which country a
@@ -1573,6 +1577,7 @@ export async function runPeopleEngineForAgent(input: {
   let activeCandidates = 0;
   let activityUnverifiable = 0;
   let timeBudgetExpired = false;
+  let filterCapReached = false;
 
   const qualifyExistingLead = async (
     existingLead: Lead,
@@ -1601,9 +1606,11 @@ export async function runPeopleEngineForAgent(input: {
         },
         input.profile,
         input.agent,
+        input.timezone,
       );
     } catch (error) {
-      // One Gemini blip must not mark the whole agent Error; skip this lead.
+      if (error instanceof LeadFilterCapReached) throw error;
+      // One Jev blip must not mark the whole agent Error; skip this lead.
       console.error(
         `[people-engine] score failed for existing lead ${existingLead.id}:`,
         error instanceof Error ? error.message : error,
@@ -1695,9 +1702,16 @@ export async function runPeopleEngineForAgent(input: {
   // New people first. Re-scoring leads already in this group burned the
   // 15-minute budget on Gemini calls that cannot raise leadsAdded. Other-group
   // adoptions still run after the new pool, and only if time remains.
+  // Candidates left unscored when an earlier run hit the daily lead filter cap
+  // go ahead of today's finds.
+  const backlog = await takeDiscoveryBacklog<Candidate>(input.agent.id);
+  const backlogKeys = new Set(backlog.map((candidate) => candidate.personKey));
   const freshCandidates: Candidate[] = [];
   const adoptCandidates: Candidate[] = [];
-  for (const candidate of rankedCandidates) {
+  for (const candidate of [
+    ...backlog,
+    ...rankedCandidates.filter((candidate) => !backlogKeys.has(candidate.personKey)),
+  ]) {
     const existingLead = findKnownLead(
       existingLeadsById,
       existingByProviderId,
@@ -1710,9 +1724,13 @@ export async function runPeopleEngineForAgent(input: {
     else freshCandidates.push(candidate);
   }
 
-  for (const candidate of [...freshCandidates, ...adoptCandidates]) {
+  const queue = [...freshCandidates, ...adoptCandidates];
+  // First queue position this run did not finish, for the backlog below.
+  let stoppedAt = queue.length;
+  for (const [index, candidate] of queue.entries()) {
     if (!hasRunTime(deadline)) {
       timeBudgetExpired = true;
+      stoppedAt = index;
       break;
     }
 
@@ -1812,6 +1830,11 @@ export async function runPeopleEngineForAgent(input: {
       try {
         await qualifyExistingLead(existingLead, candidate, firstSignal, persistedSignals);
       } catch (error) {
+        if (error instanceof LeadFilterCapReached) {
+          filterCapReached = true;
+          stoppedAt = index;
+          break;
+        }
         console.error(
           "[people-engine] qualify existing lead failed:",
           error instanceof Error ? error.message : error,
@@ -1901,16 +1924,28 @@ export async function runPeopleEngineForAgent(input: {
     );
 
     if (knownLead) {
-      await qualifyExistingLead(
-        knownLead,
-        { ...candidate, lead: enrichedLead },
-        firstSignal,
-        persistedSignals,
-      );
+      try {
+        await qualifyExistingLead(
+          knownLead,
+          { ...candidate, lead: enrichedLead },
+          firstSignal,
+          persistedSignals,
+        );
+      } catch (error) {
+        if (error instanceof LeadFilterCapReached) {
+          filterCapReached = true;
+          stoppedAt = index;
+          break;
+        }
+        throw error;
+      }
       continue;
     }
 
-    if (leadsAdded >= dailyLeadLimit) break;
+    if (leadsAdded >= dailyLeadLimit) {
+      stoppedAt = index;
+      break;
+    }
 
     let score: Awaited<ReturnType<typeof scoreLeadForProduct>>;
     try {
@@ -1930,8 +1965,14 @@ export async function runPeopleEngineForAgent(input: {
         },
         input.profile,
         input.agent,
+        input.timezone,
       );
     } catch (error) {
+      if (error instanceof LeadFilterCapReached) {
+        filterCapReached = true;
+        stoppedAt = index;
+        break;
+      }
       console.error(
         "[people-engine] score failed for new candidate:",
         error instanceof Error ? error.message : error,
@@ -1992,7 +2033,29 @@ export async function runPeopleEngineForAgent(input: {
     );
     leadsAdded += 1;
     if (input.initialLeadTarget && leadsAdded >= input.initialLeadTarget) {
+      stoppedAt = index + 1;
       break;
+    }
+  }
+
+  // Hand unscored work to the next run: everything after a cap stop, plus any
+  // carried-over candidates an earlier stop (time budget, daily target) never
+  // reached, so taking the backlog up front cannot drop them.
+  const leftover = queue
+    .slice(stoppedAt)
+    .filter((candidate) => filterCapReached || backlogKeys.has(candidate.personKey));
+  if (leftover.length) {
+    try {
+      const saved = await saveDiscoveryBacklog(input.agent, leftover);
+      console.log(
+        `[people-engine] agent ${input.agent.id}: ${saved} unscored candidates saved for the next run` +
+          `${filterCapReached ? " (lead filter cap reached)" : ""}.`,
+      );
+    } catch (error) {
+      console.error(
+        "[people-engine] save discovery backlog failed:",
+        error instanceof Error ? error.message : error,
+      );
     }
   }
 
@@ -2029,5 +2092,6 @@ export async function runPeopleEngineForAgent(input: {
     activeCandidates,
     activityUnverifiable,
     timeBudgetExpired,
+    filterCapReached,
   };
 }
