@@ -4,7 +4,8 @@
 
 export type JevNoulAnswer = { type: "noul"; noul: number };
 export type JevScoreAnswer = { type: "score"; score: number; confidence: number };
-export type JevAnswers = Record<string, JevNoulAnswer | JevScoreAnswer | undefined>;
+export type JevChoiceAnswer = { type: "choice"; choice: string; confidence: number };
+export type JevAnswers = Record<string, JevNoulAnswer | JevScoreAnswer | JevChoiceAnswer | undefined>;
 
 export type LeadFitBasis = "agent" | "product" | "steal";
 
@@ -15,16 +16,18 @@ const DISQUALIFIED_CAP = 40;
 // Each judgment is its own question. Jev's score is a probability-weighted mean
 // across levels, so mixing role and company on one scale let a lead split
 // between "adjacent role" and "match" average out to "wrong company".
-// Jev also reads literally, so every level spells out its condition.
+// Wording is kept short on purpose: every token of it is billed on every call.
 const AGENT_FIT_LEVELS = [
-  "Unrelated: the lead's role has nothing to do with the roles `agent_request` asks for.",
-  "Adjacent: a related function, but not one of the roles `agent_request` asks for.",
-  "Unclear: the profile is too vague to tell whether the lead's role is one `agent_request` asks for.",
-  "Match: the lead's role is one `agent_request` asks for, or a close variant of it at a similar level.",
-  "Exact match: the lead's title is one `agent_request` asks for, and the profile shows they do that job now.",
+  "Unrelated role",
+  "Related function, but not a requested role",
+  "Too vague to tell",
+  "A requested role, or a close variant at a similar level",
+  "Exactly a requested title, doing that job now",
 ];
 
 // Agents with no prompt or filters are judged against the product profile.
+// These keep full sentences: the short version lost real buyers whose fit is a
+// situation rather than a title (job seekers for a resume tool).
 const PRODUCT_FIT_LEVELS = [
   "Not a buyer: the lead's role and company have nothing to do with what `sender_product` does.",
   "Unlikely: a related field, but not a role that buys or uses `sender_product`.",
@@ -34,11 +37,11 @@ const PRODUCT_FIT_LEVELS = [
 ];
 
 const STEAL_FIT_LEVELS = [
-  "Not a buyer: wrong field, spam, or an employee of the company whose post they engaged with.",
-  "Unlikely buyer: the lead's role or company has little to do with what `sender_product` solves.",
-  "Unclear: the role could fit, but nothing shows the lead needs what `sender_product` solves.",
-  "Plausible buyer: the role matches who buys `sender_product`, and the engagement shows interest in the problem it solves.",
-  "Strong buyer: the role matches who buys `sender_product`, and the engagement shows the lead is evaluating or asking for a product like it.",
+  "Not a buyer: spam, unrelated, or works at the post's company",
+  "Role unrelated to what `sender_product` solves",
+  "Role could fit, but no sign of need",
+  "Buyer role, and the engagement shows interest in the problem",
+  "Buyer role, and the engagement shows they want a product like it",
 ];
 
 const FIT_QUESTIONS: Record<LeadFitBasis, { instructions: string; criteria: string[] }> = {
@@ -47,7 +50,7 @@ const FIT_QUESTIONS: Record<LeadFitBasis, { instructions: string; criteria: stri
     // the product solves ("who struggle with manual prospecting"). A profile
     // never proves the pain, so Jev is told to judge the role alone here.
     instructions:
-      "Is the lead's current role one of the roles `agent_request` asks for? Judge only the job title and function. Ignore company, industry, and location here. Parts of `agent_request` about what these people need, struggle with, or do day to day are not requirements.",
+      "Is the lead's current role one `agent_request` asks for? Judge title and function only; ignore company, location, and needs.",
     criteria: AGENT_FIT_LEVELS,
   },
   product: {
@@ -57,7 +60,7 @@ const FIT_QUESTIONS: Record<LeadFitBasis, { instructions: string; criteria: stri
   },
   steal: {
     instructions:
-      "How likely is `lead` to buy `sender_product`? Judge from the lead's role and company, and from their comment or reaction in `lead.engagementContext` on a post about a similar product.",
+      "Would `lead` buy `sender_product`? Judge their role and company, and their engagement in `lead.engagementContext`.",
     criteria: STEAL_FIT_LEVELS,
   },
 };
@@ -92,43 +95,47 @@ const COMPETITOR_REASON = "Works on a product or service that competes with your
 const WRONG_COMPANY_REASON = "Right role, but the company or industry does not fit this agent.";
 const WRONG_LOCATION_REASON = "Based outside the places this agent was set up to target.";
 
-export function buildLeadFitQuestions(input: { basis: LeadFitBasis; hasProduct: boolean }) {
+export function buildLeadFitQuestions(input: {
+  basis: LeadFitBasis;
+  hasProduct: boolean;
+  // Location filters are enforced in code before scoring, so Jev only checks
+  // location for an agent whose places live in its prompt alone.
+  askLocation: boolean;
+}) {
   const questions: Record<string, unknown> = {
     fit: { type: "score", ...FIT_QUESTIONS[input.basis] },
   };
 
   if (input.basis === "agent") {
-    questions.wrongCompany = {
-      type: "noul",
-      instructions:
-        "Does `agent_request` ask for a specific kind of company or industry, and does the lead's company or industry clearly differ from it?",
+    // Fits, wrong kind of company, and rival seller are mutually exclusive, so
+    // one choice covers what used to be two yes/no questions for fewer tokens.
+    questions.company = {
+      type: "choice",
+      instructions: "Which describes the lead's company?",
       criteria: {
-        true: "`agent_request` names a company type or industry, and the lead clearly works somewhere else.",
-        false: "`agent_request` names no company type or industry, or the lead's company fits it, or the profile does not say.",
+        fits: "Fits `agent_request`, or is not stated",
+        wrong_kind: "Clearly a different industry or company type than `agent_request` names",
+        ...(input.hasProduct
+          ? { rival: "Sells what `sender_product` sells, as a product or as a service for clients" }
+          : {}),
       },
     };
-    // Location filters are enforced in code before scoring. This catches a
-    // place named only in the prompt ("SDRs in Asia-Pacific").
-    questions.wrongLocation = {
-      type: "noul",
-      instructions:
-        "Does `agent_request` ask for people in specific places, and is `lead.location` clearly somewhere else?",
-      criteria: {
-        true: "`agent_request` names countries or regions, and the lead is based outside all of them.",
-        false: "`agent_request` names no place, or the lead is based in one of them, or `lead.location` is missing.",
-      },
-    };
-  }
-
-  // Without a product profile there is nothing to compete with.
-  if (input.hasProduct) {
+    if (input.askLocation) {
+      questions.wrongLocation = {
+        type: "noul",
+        instructions: "Does `agent_request` name places that `lead.location` is clearly outside of?",
+        criteria: { true: "Names places, and the lead is outside all of them", false: "Names none, the lead is inside, or unknown" },
+      };
+    }
+  } else if (input.hasProduct) {
+    // Without a product profile there is nothing to compete with.
     questions.competitor = {
       type: "noul",
       instructions:
-        "Does the lead's own company offer the same kind of product or service as `sender_product`, making the lead a rival rather than a customer?",
+        "Does the lead's own company sell the same kind of product or service as `sender_product`, including an agency doing that work for clients?",
       criteria: {
-        true: "The lead's company sells what `sender_product` sells, either the same kind of product or an agency doing that same work for clients.",
-        false: "The lead's company does something else, even if it also uses AI or software.",
+        true: "The lead's company sells what `sender_product` sells, as a product or as a service for clients",
+        false: "The lead's company does something else, even if the lead does this work in-house",
       },
     };
   }
@@ -150,10 +157,11 @@ export function leadFitFromAnswers(answers: JevAnswers, basis: LeadFitBasis) {
   const level = Math.min(topLevel, Math.max(0, fit.score));
   const fitScore = Math.round((level / topLevel) * 100);
 
-  if (said(answers.competitor)) {
+  const company = answers.company?.type === "choice" ? answers.company.choice : "";
+  if (said(answers.competitor) || company === "rival") {
     return { fitScore: Math.min(fitScore, DISQUALIFIED_CAP), scoreReasons: [COMPETITOR_REASON] };
   }
-  if (said(answers.wrongCompany)) {
+  if (company === "wrong_kind") {
     return { fitScore: Math.min(fitScore, DISQUALIFIED_CAP), scoreReasons: [WRONG_COMPANY_REASON] };
   }
   if (said(answers.wrongLocation)) {

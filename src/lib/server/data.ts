@@ -47,6 +47,7 @@ import {
   leadOutcomeNotificationLockId,
   MEETING_BOOKED_CONFIDENCE,
   USER_STOPPED_OUTREACH_ERROR,
+  OWNER_MESSAGED_OUTREACH_ERROR,
   type LeadOutcomeNotificationKind,
 } from "./reply-automation-policy";
 import type {
@@ -60,6 +61,7 @@ import type {
   CampaignEnrollmentPreview,
   CampaignStep,
   Conversation,
+  ConversationMessage,
   Group,
   Lead,
   LeadAgentRef,
@@ -439,6 +441,7 @@ const WORKSPACE_SCOPED_COLLECTIONS = [
   "leads",
   "leadSignals",
   "discoveryBacklog",
+  "leadRejections",
   "campaigns",
   "campaignEnrollments",
   "conversations",
@@ -1682,6 +1685,7 @@ export async function deleteAgent(workspaceId: string, agentId: string) {
   await stopEnrollmentsForAgentLeads(workspaceId, agentId);
   await ref.delete();
   await collection("discoveryBacklog").doc(agentId).delete();
+  await collection("leadRejections").doc(agentId).delete();
 
   const groupStillFed = (await listAgents(workspaceId)).some(
     (other) => other.id !== agentId && other.targetGroupId === agent.targetGroupId,
@@ -2143,6 +2147,14 @@ export async function upsertLead(workspaceId: string, groupId: string, lead: Par
       const existingGroupIds = existingLead.groupIds || [];
       const alreadyInGroup = existingGroupIds.includes(groupId);
 
+      // The first discovery owns this person in the workspace. Another agent
+      // must not add a second group or replace the original profile evidence.
+      if ((existingGroupIds.length && !alreadyInGroup) ||
+          (lead.sourceAgentId && existingLead.sourceAgentId &&
+           lead.sourceAgentId !== existingLead.sourceAgentId)) {
+        return existingLead;
+      }
+
       // Never let a re-discovery overwrite the outreach status of a lead that's
       // already being worked (invited/messaged/replied/stopped). Re-applying the
       // discovery default ("new") would reset history and re-contact someone
@@ -2329,6 +2341,47 @@ export async function takeDiscoveryBacklog<T>(agentId: string): Promise<T[]> {
   } catch {
     return [];
   }
+}
+
+// People Jev rejected, one doc per agent mapping a hashed person identity to
+// the question fingerprint it was rejected under. Read workspace-wide with no
+// expiry (loadWorkspaceLeadRejections), so editing an agent does not re-judge.
+type LeadRejectionEntry = { k: string; at: string };
+
+function leadRejectionField(identity: string) {
+  return hashId(identity).slice(0, 16);
+}
+
+// Honor rejections saved before workspace-wide history was introduced, across
+// every agent and targeting fingerprint. Both discovery paths used different
+// identity prefixes, so check their two legacy forms.
+export async function loadWorkspaceLeadRejections(workspaceId: string) {
+  const snapshot = await collection<{ entries?: Record<string, LeadRejectionEntry> }>("leadRejections")
+    .where("workspaceId", "==", workspaceId).get();
+  const rejected = new Set(snapshot.docs.flatMap((doc) => Object.keys(doc.data().entries || {})));
+  return (identity: string) => {
+    const personKey = identity.startsWith(`${workspaceId}-`)
+      ? identity.slice(workspaceId.length + 1)
+      : identity;
+    return rejected.has(leadRejectionField(personKey)) ||
+      rejected.has(leadRejectionField(`${workspaceId}-${personKey}`));
+  };
+}
+
+// rejections maps person identity -> question fingerprint.
+export async function saveLeadRejections(agent: Agent, rejections: Map<string, string>) {
+  if (!rejections.size) return;
+  const at = nowIso();
+  await collection("leadRejections").doc(agent.id).set(
+    {
+      workspaceId: agent.workspaceId,
+      agentId: agent.id,
+      entries: Object.fromEntries(
+        [...rejections].map(([identity, k]) => [leadRejectionField(identity), { k, at }]),
+      ),
+    },
+    { merge: true },
+  );
 }
 
 export async function listCampaigns(workspaceId: string) {
@@ -3265,7 +3318,7 @@ export async function claimEnrollmentAction(input: {
 // Stops every live sequence for this lead. Sequence-complete enrollments stay
 // stopped so a later inbound can still be answered; user-stopped ones get a
 // lastError that enrollmentBlocksAiReply recognizes, so AI does not keep talking.
-export async function stopLeadOutreach(workspaceId: string, leadId: string) {
+export async function stopLeadOutreach(workspaceId: string, leadId: string, reason = USER_STOPPED_OUTREACH_ERROR) {
   const lead = await findLeadForWorkspace({ workspaceId, leadId });
   if (!lead) throw new Error("Lead not found.");
 
@@ -3276,8 +3329,8 @@ export async function stopLeadOutreach(workspaceId: string, leadId: string) {
     const enrollment = doc.data();
     return (
       enrollment.workspaceId === workspaceId &&
-      enrollment.status !== "stopped" &&
-      enrollment.status !== "replied"
+      (reason === OWNER_MESSAGED_OUTREACH_ERROR ||
+       (enrollment.status !== "stopped" && enrollment.status !== "replied"))
     );
   });
 
@@ -3289,7 +3342,7 @@ export async function stopLeadOutreach(workspaceId: string, leadId: string) {
         status: "stopped",
         pendingAction: FieldValue.delete(),
         pausedDeferredAt: FieldValue.delete(),
-        lastError: USER_STOPPED_OUTREACH_ERROR,
+        lastError: reason,
         updatedAt: now,
       }),
     );
@@ -3298,7 +3351,7 @@ export async function stopLeadOutreach(workspaceId: string, leadId: string) {
 
   // enrollNewLeadsInCampaign only picks outreachStatus === "new". Leave invited /
   // connected / messaged as-is so agent metrics keep the stage already reached.
-  if (lead.outreachStatus === "new") {
+  if (lead.outreachStatus === "new" || reason === OWNER_MESSAGED_OUTREACH_ERROR) {
     await updateLead(workspaceId, lead.id, { outreachStatus: "stopped" });
   }
 
@@ -3451,6 +3504,7 @@ export async function createConversationMessage(input: {
   senderName: string;
   body: string;
   direction?: "inbound" | "outbound";
+  outboundSource?: ConversationMessage["outboundSource"];
   // Stable provider message id (e.g. Unipile's). When set, a retried webhook
   // delivery is recognized and skipped instead of appending a duplicate.
   providerMessageId?: string;
@@ -3514,6 +3568,7 @@ export async function createConversationMessage(input: {
       senderName: input.senderName,
       body: input.body,
       createdAt: timestamp,
+      ...(input.direction === "outbound" ? { outboundSource: input.outboundSource || "manual" } : {}),
     };
 
     const intentPatch =
@@ -3582,6 +3637,9 @@ export async function createConversationMessage(input: {
 
     return true;
   });
+  if (input.direction === "outbound" && input.outboundSource !== "automation") {
+    await stopLeadOutreach(input.workspaceId, input.leadId, OWNER_MESSAGED_OUTREACH_ERROR);
+  }
   return inserted;
 }
 

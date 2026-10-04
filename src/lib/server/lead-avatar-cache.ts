@@ -1,7 +1,7 @@
 import "server-only";
 
 import { getDb, nowIso } from "./firebase";
-import { httpsAvatarUrl, leadAvatarUrlCanBePersisted } from "../lead-avatar";
+import { httpsAvatarUrl, isExpiredLinkedInMediaUrl, leadAvatarUrlCanBePersisted } from "../lead-avatar";
 import { fetchLeadAvatarBytes } from "./lead-avatar-fetch";
 
 const COLLECTION = "leadAvatars";
@@ -58,6 +58,19 @@ export function leadAvatarCacheBytes(cache: LeadAvatarCache | null) {
   const body = asBuffer(cache.body);
   if (!body?.byteLength || !cache.contentType) return null;
   return { body, contentType: cache.contentType };
+}
+
+/**
+ * A lead's headshot as bytes, for embedding where a URL would expire (email).
+ * Cached copy first, then the CDN URL while its token is live. Never asks
+ * Unipile for a fresh one: profile reads are budgeted per account.
+ */
+export async function leadAvatarBytes(lead: { id: string; avatarUrl?: string }) {
+  const cached = leadAvatarCacheBytes(await getLeadAvatarCache(lead.id));
+  if (cached) return cached;
+  const url = httpsAvatarUrl(lead.avatarUrl);
+  if (!url || isExpiredLinkedInMediaUrl(url)) return null;
+  return fetchLeadAvatarBytes(url);
 }
 
 export async function saveLeadAvatarCache(input: {

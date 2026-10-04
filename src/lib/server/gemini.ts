@@ -1,7 +1,8 @@
 import "server-only";
 
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, ThinkingLevel } from "@google/genai";
 import { getServiceAccount } from "./firebase";
+import { cachedApiResult } from "./api-result-cache";
 import {
   asksAboutPricing,
   containsPricingDetails,
@@ -410,6 +411,10 @@ async function generateJson<T>(
   timeoutMs?: number,
   deadlineAt?: number,
   systemInstruction?: string,
+  // Thinking tokens bill as output and were most of the spend: a judge call
+  // that answers one digit used to think for up to 4,000 tokens. Unset keeps
+  // the model's default.
+  thinkingLevel?: ThinkingLevel,
 ) {
   const config = getGeminiConfig();
   if (!config) return fallback;
@@ -425,6 +430,7 @@ async function generateJson<T>(
       const requestConfig = {
         ...(temperature === undefined ? {} : { temperature }),
         ...(systemInstruction ? { systemInstruction } : {}),
+        ...(thinkingLevel ? { thinkingConfig: { thinkingLevel } } : {}),
         // Callers a user is actively waiting on pass a deadline; without one
         // a stalled upstream call hangs the request until the proxy kills it.
         ...(Number.isFinite(attemptMs) ? { httpOptions: { timeout: attemptMs } } : {}),
@@ -586,6 +592,11 @@ export async function analyzeWebsiteWithGemini(input: {
   const analysis = await generateJson<typeof WEBSITE_ANALYSIS_FALLBACK>(
     getWebsiteAnalysisPrompt(input),
     WEBSITE_ANALYSIS_FALLBACK,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    ThinkingLevel.LOW,
   );
 
   return normalizeWebsiteAnalysis(analysis);
@@ -639,6 +650,7 @@ Website: ${websiteUrl.slice(0, 500)}`;
         config: {
           temperature: 0.2,
           tools: [{ googleSearch: {} }],
+          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
           // No responseMimeType and no maxOutputTokens - see the note in
           // findPreviewLeadsWithGemini. With them this call returned nothing
           // usable in 3/3 runs (72s empty body, 119s cancel, and a 429 those
@@ -898,6 +910,8 @@ ${dataBlock}`;
         temperature,
         timeoutMs,
         startedAt + budgetMs,
+        undefined,
+        ThinkingLevel.LOW,
       );
       const leads = normalizePreviewLeads(parsed.leads);
       logStage(`draft-${temperature}`, at, parsed.leads, leads.length);
@@ -926,6 +940,7 @@ ${dataBlock}`;
         config: {
           temperature: 0.5,
           tools: [{ googleSearch: {} }],
+          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
           // Deliberately no responseMimeType and no maxOutputTokens. Grounded
           // search plus constrained JSON decoding makes Vertex spend 75-95s and
           // then return an empty candidate - measured 9 times, 9 empty bodies,
@@ -1230,6 +1245,11 @@ Rules:
 Company profile:
 ${JSON.stringify(profile)}`,
     fallback,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    ThinkingLevel.LOW,
   );
 
   return {
@@ -1387,6 +1407,9 @@ Keywords and required context: ${JSON.stringify(agent.filters.keywords.slice(0, 
     fallback,
     0.1,
     30_000,
+    undefined,
+    undefined,
+    ThinkingLevel.LOW,
   );
 
   const seen = new Set<string>();
@@ -1423,6 +1446,22 @@ export async function findGroundedAgentCandidates(
   limit = GROUNDED_CANDIDATE_LIMIT,
   profile: ProductProfile | null = null,
 ): Promise<GroundedAgentCandidate[]> {
+  return cachedApiResult({
+    workspaceId: agent.workspaceId,
+    provider: "gemini-candidates-v1",
+    request: [MODEL, SEARCH_MODEL, agent.prompt, agent.filters, profile, limit],
+    // Refill runs reuse evidence; tomorrow's discovery gets a fresh search.
+    ttlMs: 6 * 60 * 60 * 1000,
+    generate: () => findGroundedAgentCandidatesUncached(agent, limit, profile),
+    cacheable: (result) => Array.isArray(result) && result.length > 0,
+  });
+}
+
+async function findGroundedAgentCandidatesUncached(
+  agent: Agent,
+  limit = GROUNDED_CANDIDATE_LIMIT,
+  profile: ProductProfile | null = null,
+): Promise<GroundedAgentCandidate[]> {
   const config = getGeminiConfig();
   if (!config) return [];
 
@@ -1453,6 +1492,9 @@ Keywords and required context: ${JSON.stringify(agent.filters.keywords.slice(0, 
         config: {
           temperature: 0.2,
           tools: [{ googleSearch: {} }],
+          // Runs on every discovery run of every agent. Default thinking
+          // added thousands of output-priced tokens per search.
+          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
           httpOptions: { timeout: GROUNDED_SEARCH_TIMEOUT_MS },
         },
       });
@@ -1693,6 +1735,7 @@ ${input.facts}`,
     undefined,
     undefined,
     OUTREACH_SYSTEM_PROMPT,
+    ThinkingLevel.LOW,
   );
 
   const rejected: string[] = [];
@@ -1734,6 +1777,7 @@ ${input.facts}`,
     undefined,
     undefined,
     OUTREACH_SYSTEM_PROMPT,
+    ThinkingLevel.LOW,
   );
   const choice = Math.round(Number(judged.choice));
   if (choice === 0) throw new Error("AI judge found unsupported claims in every draft; retrying later.");
@@ -2031,6 +2075,10 @@ Latest inbound message to classify:
 ${input.latestInbound}`,
       fallback,
       0.2,
+      undefined,
+      undefined,
+      undefined,
+      ThinkingLevel.LOW,
     );
 
     const normalizedIntent = String(result.intent || "")
@@ -2360,6 +2408,8 @@ export async function analyzePublicLinkedInProfile(
       0.35,
       22_000,
       deadlineAt,
+      undefined,
+      ThinkingLevel.LOW,
     );
     const rating = normalizeRating(raw);
     if (!rating.summary) {
@@ -2374,6 +2424,8 @@ export async function analyzePublicLinkedInProfile(
     0.55,
     22_000,
     deadlineAt,
+    undefined,
+    ThinkingLevel.LOW,
   );
   const improve = normalizeImprove(raw);
   if (!improve.headline && !improve.about && !improve.experience) {
@@ -2427,6 +2479,7 @@ Set found true if you have at least a headline or About. If search returns nothi
       config: {
         temperature: 0.1,
         tools,
+        thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
         httpOptions: { timeout: 28_000 },
       },
     });

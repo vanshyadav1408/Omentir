@@ -3,15 +3,18 @@ import "server-only";
 import {
   listLeads,
   listLinkedInAccounts,
+  loadWorkspaceLeadRejections,
   logAutomationRun,
   markLeadSignalPromoted,
   saveDiscoveryBacklog,
+  saveLeadRejections,
   takeDiscoveryBacklog,
   updateAgentPeopleEngineCursor,
   upsertLead,
   upsertLeadSignal,
 } from "./data";
 import { cleanId, normalizeLinkedInProfileUrl, nowIso } from "./firebase";
+import { wasWorkspaceLeadProcessed } from "./workspace-lead-history";
 import { agentTargetLocations, matchesTargetLocation, searchableLocationNames } from "./geo";
 import { isAnonymousLinkedInProfile } from "./outreach-rules";
 import {
@@ -21,7 +24,10 @@ import {
   matchesTargetTitle,
   planPeopleSearch,
 } from "./gemini";
-import { LeadFilterCapReached, scoreLeadForProduct } from "./lead-qualification";
+import {
+  LeadFilterCapReached,
+  scoreLeadForProduct,
+} from "./lead-qualification";
 import {
   getLinkedInPostCreatedAt,
   getLinkedInPostCreatedAtRaw,
@@ -1260,15 +1266,11 @@ export async function runPeopleEngineForAgent(input: {
   const existingByUrl = new Map<string, Lead>();
   for (const lead of existingLeads) {
     rememberLead(existingLeadIds, existingLeadsById, existingByProviderId, existingByUrl, lead);
+    if (!lead.groupIds.includes(input.agent.targetGroupId) || lead.sourceAgentId !== input.agent.id) continue;
   }
-  // People searches page past leads already in this agent's group: LinkedIn
-  // returns the same first page for the same query day after day, so without
-  // this a mature agent re-reads yesterday's results and discovers nobody new.
-  // Leads in OTHER groups are not excluded - surfacing them here is how they
-  // get adopted into this agent's group.
+  // Page past every saved workspace lead, regardless of agent or group.
   const groupLeadKeys = new Set(
     existingLeads
-      .filter((lead) => lead.groupIds?.includes(input.agent.targetGroupId))
       .flatMap((lead) => profileSearchKeys(lead)),
   );
   const criteria = await planPeopleSearch(input.agent);
@@ -1566,8 +1568,6 @@ export async function runPeopleEngineForAgent(input: {
 
   let leadsAdded = 0;
   let signalsObserved = 0;
-  let existingQualifiedLeads = 0;
-  let existingRejected = 0;
   let lowScoreCandidates = 0;
   let outOfRegionCandidates = 0;
   let skippedPostNoise = 0;
@@ -1578,81 +1578,17 @@ export async function runPeopleEngineForAgent(input: {
   let activityUnverifiable = 0;
   let timeBudgetExpired = false;
   let filterCapReached = false;
-
-  const qualifyExistingLead = async (
-    existingLead: Lead,
-    candidate: Candidate,
-    firstSignal: ObservedSignal,
-    persistedSignals: LeadSignal[],
-  ) => {
-    const mergedLead = mergeLead(existingLead, candidate.lead);
-    if (
-      failsLocationGate(mergedLead.location, targetLocations, candidate.signals)
-    ) {
-      outOfRegionCandidates += 1;
-      return false;
-    }
-    let score: Awaited<ReturnType<typeof scoreLeadForProduct>>;
-    try {
-      score = await scoreLeadForProduct(
-        {
-          ...mergedLead,
-          signalType: firstSignal.signalType,
-          signalSource: firstSignal.signalSource,
-          signalText: firstSignal.signalText,
-          signalUrl: firstSignal.signalUrl,
-          leadReason: firstSignal.leadReason,
-          engagementContext: firstSignal.engagementContext,
-        },
-        input.profile,
-        input.agent,
-        input.timezone,
-      );
-    } catch (error) {
-      if (error instanceof LeadFilterCapReached) throw error;
-      // One Jev blip must not mark the whole agent Error; skip this lead.
-      console.error(
-        `[people-engine] score failed for existing lead ${existingLead.id}:`,
-        error instanceof Error ? error.message : error,
-      );
-      existingRejected += 1;
-      return false;
-    }
-
-    if (score.fitScore < QUALIFIED_SCORE_THRESHOLD) {
-      existingRejected += 1;
-      return false;
-    }
-
-    const lead = await upsertLead(input.agent.workspaceId, input.agent.targetGroupId, {
-      linkedInUrl: existingLead.linkedInUrl || candidate.lead.linkedInUrl,
-      providerProfileId: existingLead.providerProfileId || candidate.lead.providerProfileId,
-      avatarUrl: mergedLead.avatarUrl,
-      // Refresh warm-signal context when we re-qualify someone already known.
-      signalType: firstSignal.signalType,
-      signalSource: firstSignal.signalSource,
-      signalText: firstSignal.signalText,
-      signalUrl: firstSignal.signalUrl,
-      signalObservedAt: firstSignal.signalObservedAt,
-      leadReason: firstSignal.leadReason,
-      engagementContext: firstSignal.engagementContext,
-      linkedinActivityAt: mergedLead.linkedinActivityAt,
-      linkedinActivitySource: mergedLead.linkedinActivitySource,
-      profileContext: mergedLead.profileContext,
-      fitScore: score.fitScore,
-    });
-
-    await Promise.all(
-      persistedSignals.map((signal) =>
-        markLeadSignalPromoted(signal.id, {
-          leadId: lead.id,
-          fitScore: score.fitScore,
-        }),
-      ),
+  // People Jev already rejected anywhere in this workspace are skipped before a
+  // profile view or a Jev call is spent on them again.
+  const wasRejected = await loadWorkspaceLeadRejections(input.agent.workspaceId).catch((error) => {
+    console.error(
+      "[people-engine] load lead rejections failed:",
+      error instanceof Error ? error.message : error,
     );
-    existingQualifiedLeads += 1;
-    return true;
-  };
+    return () => false;
+  });
+  const newRejections = new Map<string, string>();
+  let knownRejected = 0;
 
   const allCandidates = Array.from(candidates.values());
   titleFiltered = allCandidates.filter(
@@ -1699,15 +1635,10 @@ export async function runPeopleEngineForAgent(input: {
         ),
     );
 
-  // New people first. Re-scoring leads already in this group burned the
-  // 15-minute budget on Gemini calls that cannot raise leadsAdded. Other-group
-  // adoptions still run after the new pool, and only if time remains.
-  // Candidates left unscored when an earlier run hit the daily lead filter cap
-  // go ahead of today's finds.
+  // Process only new workspace identities, with unfinished backlog first.
   const backlog = await takeDiscoveryBacklog<Candidate>(input.agent.id);
   const backlogKeys = new Set(backlog.map((candidate) => candidate.personKey));
   const freshCandidates: Candidate[] = [];
-  const adoptCandidates: Candidate[] = [];
   for (const candidate of [
     ...backlog,
     ...rankedCandidates.filter((candidate) => !backlogKeys.has(candidate.personKey)),
@@ -1719,12 +1650,11 @@ export async function runPeopleEngineForAgent(input: {
       input.agent.workspaceId,
       candidate.lead,
     );
-    if (existingLead?.groupIds?.includes(input.agent.targetGroupId)) continue;
-    if (existingLead) adoptCandidates.push(candidate);
-    else freshCandidates.push(candidate);
+    if (existingLead) continue;
+    freshCandidates.push(candidate);
   }
 
-  const queue = [...freshCandidates, ...adoptCandidates];
+  const queue = freshCandidates;
   // First queue position this run did not finish, for the backlog below.
   let stoppedAt = queue.length;
   for (const [index, candidate] of queue.entries()) {
@@ -1732,6 +1662,11 @@ export async function runPeopleEngineForAgent(input: {
       timeBudgetExpired = true;
       stoppedAt = index;
       break;
+    }
+    if (wasRejected(candidate.personKey) ||
+        await wasWorkspaceLeadProcessed(input.agent.workspaceId, candidate.lead)) {
+      knownRejected += 1;
+      continue;
     }
 
     let persistedSignals: LeadSignal[];
@@ -1826,24 +1761,7 @@ export async function runPeopleEngineForAgent(input: {
       input.agent.workspaceId,
       candidate.lead,
     );
-    if (existingLead) {
-      try {
-        await qualifyExistingLead(existingLead, candidate, firstSignal, persistedSignals);
-      } catch (error) {
-        if (error instanceof LeadFilterCapReached) {
-          filterCapReached = true;
-          stoppedAt = index;
-          break;
-        }
-        console.error(
-          "[people-engine] qualify existing lead failed:",
-          error instanceof Error ? error.message : error,
-        );
-        existingRejected += 1;
-        continue;
-      }
-      continue;
-    }
+    if (existingLead) continue;
 
     // Signals above are already persisted; bound the costly part (live profile
     // views) so a high-candidate run can't rack up account-risking view counts.
@@ -1923,24 +1841,7 @@ export async function runPeopleEngineForAgent(input: {
       enrichedLead,
     );
 
-    if (knownLead) {
-      try {
-        await qualifyExistingLead(
-          knownLead,
-          { ...candidate, lead: enrichedLead },
-          firstSignal,
-          persistedSignals,
-        );
-      } catch (error) {
-        if (error instanceof LeadFilterCapReached) {
-          filterCapReached = true;
-          stoppedAt = index;
-          break;
-        }
-        throw error;
-      }
-      continue;
-    }
+    if (knownLead) continue;
 
     if (leadsAdded >= dailyLeadLimit) {
       stoppedAt = index;
@@ -1982,6 +1883,7 @@ export async function runPeopleEngineForAgent(input: {
     }
 
     if (score.fitScore < QUALIFIED_SCORE_THRESHOLD) {
+      if (score.questionKey) newRejections.set(candidate.personKey, score.questionKey);
       lowScoreCandidates += 1;
       continue;
     }
@@ -2038,6 +1940,13 @@ export async function runPeopleEngineForAgent(input: {
     }
   }
 
+  await saveLeadRejections(input.agent, newRejections).catch((error) => {
+    console.error(
+      "[people-engine] save lead rejections failed:",
+      error instanceof Error ? error.message : error,
+    );
+  });
+
   // Hand unscored work to the next run: everything after a cap stop, plus any
   // carried-over candidates an earlier stop (time budget, daily target) never
   // reached, so taking the backlog up front cannot drop them.
@@ -2067,8 +1976,7 @@ export async function runPeopleEngineForAgent(input: {
     status: "completed",
     message:
       `Agent ${input.agent.id}: ${candidates.size} candidates -> ${leadsAdded} new leads ` +
-      `(${existingQualifiedLeads} existing leads requalified, ${existingRejected} existing leads rejected, ` +
-      `${lowScoreCandidates} new leads rejected, ` +
+      `(${lowScoreCandidates} new leads rejected, ${knownRejected} skipped as already processed, ` +
       `${outOfRegionCandidates} out of region, ${enrichments} profile views spent` +
       `, people search hits: ${peopleSearchHits}` +
       `, skipped post noise: ${skippedPostNoise}` +
@@ -2085,8 +1993,8 @@ export async function runPeopleEngineForAgent(input: {
     candidates: candidates.size,
     signalsObserved,
     leadsAdded,
-    existingQualifiedLeads,
-    existingRejected,
+    existingQualifiedLeads: 0,
+    existingRejected: 0,
     lowScoreCandidates,
     outOfRegionCandidates,
     activeCandidates,

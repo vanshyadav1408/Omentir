@@ -460,6 +460,9 @@ export async function replyToChatResource(context: AgentApiContext, payload: unk
       direction: "outbound",
       providerMessageId: result.id,
     });
+  } else if (parsed.data.leadId) {
+    const { OWNER_MESSAGED_OUTREACH_ERROR } = await import("./reply-automation-policy");
+    await stopLeadOutreach(context.workspace.id, parsed.data.leadId, OWNER_MESSAGED_OUTREACH_ERROR);
   }
 
   return { ok: true, chatId: parsed.data.chatId, sent: true };

@@ -347,6 +347,7 @@ type UnipileChatAttendee = {
 
 type UnipileMessage = {
   id?: string;
+  message_type?: string;
   chat_id?: string;
   text?: string;
   body?: string;
@@ -438,7 +439,7 @@ function withQuery(path: string, params: Record<string, string | number | boolea
 async function request<T>(
   path: string,
   init?: RequestInit,
-  options?: { retryTransientReadErrors?: boolean },
+  options?: { retryTransientReadErrors?: boolean; beforeSend?: () => Promise<void> },
 ) {
   const config = getConfig();
   if (!config) {
@@ -447,15 +448,17 @@ async function request<T>(
   const isFormData = typeof FormData !== "undefined" && init?.body instanceof FormData;
 
   for (let attempt = 0; attempt <= UNIPILE_RATE_LIMIT_RETRIES; attempt += 1) {
-    const controller = new AbortController();
     // Start the clock after the queue wait. Timing the queue too aborted
     // requests right as they went out whenever the shared queue was backed up.
     await throttleUnipileRequest();
+    await options?.beforeSend?.();
+    const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), UNIPILE_TIMEOUT_MS);
 
     try {
       const response = await fetch(`${config.baseUrl}${path}`, {
         ...init,
+        cache: "no-store",
         signal: init?.signal || controller.signal,
         headers: {
           "x-api-key": config.apiKey,
@@ -1143,6 +1146,7 @@ function normalizeChatMessage(message: UnipileMessage, chatId: string): LinkedIn
 
   return {
     id: message.id || `${chatId}-${messageTimestamp(message)}`,
+    ...(message.message_type ? { messageType: message.message_type } : {}),
     chatId,
     direction: outbound ? "outbound" : "inbound",
     senderName: outbound ? "You" : senderName,
@@ -2952,11 +2956,14 @@ export async function sendConnectionRequest(input: {
   }
 }
 
+export class LinkedInMessageSendBlocked extends Error {}
+
 export async function sendLinkedInMessage(input: {
   accountId: string;
   providerProfileId?: string;
   linkedInUrl: string;
   body: string;
+  beforeSend?: (providerProfileId: string) => Promise<void>;
 }) {
   requireUnipileConfigured();
 
@@ -2991,6 +2998,7 @@ export async function sendLinkedInMessage(input: {
         method: "POST",
         body: formData,
       },
+      { beforeSend: () => input.beforeSend?.(resolvedProviderId) ?? Promise.resolve() },
     );
     return { id: result.message_id || result.id, chatId: result.chat_id };
   };

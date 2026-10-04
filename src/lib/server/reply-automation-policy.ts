@@ -78,6 +78,8 @@ export function shouldShareBookingLink(input: {
 
 export const USER_STOPPED_OUTREACH_ERROR =
   "Outreach stopped by the user from the Actions page.";
+export const OWNER_MESSAGED_OUTREACH_ERROR =
+  "Outreach stopped because you messaged this lead yourself.";
 
 const PERMANENT_AI_REPLY_BLOCK = [
   /agent that sourced this lead was deleted/i,
@@ -85,6 +87,7 @@ const PERMANENT_AI_REPLY_BLOCK = [
   /anonymized LinkedIn Member/i,
   /recipient unreachable/i,
   /outreach stopped by the user/i,
+  /messaged this lead yourself/i,
 ];
 
 export function enrollmentBlocksAiReply(enrollment: Pick<CampaignEnrollment, "lastError">) {

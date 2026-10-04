@@ -487,6 +487,7 @@ export type CampaignEnrollmentPreview = Pick<
 
 export type ConversationMessage = {
   id: string;
+  outboundSource?: "automation" | "manual";
   direction: "inbound" | "outbound";
   senderName: string;
   body: string;
@@ -540,6 +541,7 @@ export type LinkedInInboxAttachment = {
 
 export type LinkedInInboxMessage = {
   id: string;
+  messageType?: string;
   chatId: string;
   direction: "inbound" | "outbound";
   senderName: string;

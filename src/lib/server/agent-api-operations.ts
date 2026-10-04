@@ -34,7 +34,6 @@ import {
   setSendWindowForGroup,
   updateAgent,
   updateCampaign,
-  updateLead,
   updateWorkspaceSettings,
   updateWorkspaceTimezone,
   upsertProductProfile,
@@ -1314,9 +1313,6 @@ export async function replyToLeadResource(context: AgentApiContext, payload: unk
     throw new AgentApiOperationError("Invalid reply payload.", 400, parsed.error.flatten());
   }
   await sendReplyToLead(context.workspace, parsed.data.leadId, parsed.data.message);
-  // Kept from the original agent API contract. The /messages composer does not
-  // touch outreachStatus, matching sendLinkedInChatMessageAction.
-  await updateLead(context.workspace.id, parsed.data.leadId, { outreachStatus: "replied" });
   return { ok: true, leadId: parsed.data.leadId, sent: true };
 }
 

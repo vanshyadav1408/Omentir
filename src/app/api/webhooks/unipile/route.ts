@@ -20,6 +20,7 @@ import { passwordsMatch } from "@/lib/local-session";
 import { unipileWebhookProvidedSecret } from "@/lib/unipile-webhook-auth";
 import { rateLimitRequestShared } from "@/lib/request-rate-limit";
 import { readJsonBody, RequestBodyTooLargeError } from "@/lib/server/request-body";
+import { stopForOwnerMessageWebhook } from "@/lib/server/owner-message-guard";
 
 export const dynamic = "force-dynamic";
 
@@ -64,11 +65,15 @@ type UnipileWebhook = {
         content?: string;
         sender?: UnipileWebhookSender;
         is_sender?: boolean;
+        is_event?: boolean;
+        message_type?: string;
       };
   sender?: UnipileWebhookSender;
   attendees?: UnipileWebhookSender[];
   attachments?: unknown[];
   is_sender?: boolean;
+  is_event?: boolean;
+  message_type?: string;
   account_info?: { user_id?: string; user_provider_id?: string };
   profile_url?: string;
   provider_id?: string;
@@ -267,6 +272,19 @@ export async function POST(request: NextRequest) {
   // An invite note that opens a chat is the real-time accept signal, so confirm
   // first-degree and unlock the sequence instead of ignoring the event entirely.
   if (isOwnMessage) {
+    const messageType = payload.message_type || nestedMessage?.message_type;
+    const isEvent = payload.is_event || nestedMessage?.is_event;
+    if (lead && isReply && !isEvent && messageType !== "INVITATION" && inboundMessageBody(payload)) {
+      const stopped = await stopForOwnerMessageWebhook({
+        workspaceId,
+        leadId: lead.id,
+        providerMessageId: payload.message_id || nestedMessage?.id,
+      });
+      if (stopped) {
+        revalidateWorkspaceDataPages();
+        return NextResponse.json({ ok: true, stopped: true });
+      }
+    }
     if (lead && (await applyAcceptanceIfFirstDegree({ workspaceId, lead, account }))) {
       revalidateWorkspaceDataPages();
       await logAutomationRun({

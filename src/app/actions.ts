@@ -1568,6 +1568,10 @@ async function sendLeadReplyActionImpl(formData: FormData) {
   if (body.length > 4000) throw new Error("Message is too long.");
   const { sendReplyToLead } = await import("@/lib/server/agent-api-operations");
   await sendReplyToLead(workspace, leadId, body, { manual: true });
+  revalidatePath("/actions");
+  revalidatePath("/agents");
+  revalidatePath("/leads");
+  revalidatePath("/overview");
   revalidatePath("/messages");
 }
 
@@ -1640,7 +1644,14 @@ async function sendLinkedInChatMessageActionImpl(formData: FormData) {
       direction: "outbound",
       providerMessageId: result.id,
     });
+  } else if (leadId) {
+    const { OWNER_MESSAGED_OUTREACH_ERROR } = await import("@/lib/server/reply-automation-policy");
+    await stopLeadOutreach(workspace.id, leadId, OWNER_MESSAGED_OUTREACH_ERROR);
   }
+  revalidatePath("/actions");
+  revalidatePath("/agents");
+  revalidatePath("/leads");
+  revalidatePath("/overview");
   revalidatePath("/messages");
 }
 

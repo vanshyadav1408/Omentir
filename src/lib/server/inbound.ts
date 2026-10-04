@@ -41,6 +41,7 @@ import {
   shouldStopForReply,
 } from "./reply-automation-policy";
 import { hasActiveSubscription } from "./subscription";
+import { leadAvatarBytes } from "./lead-avatar-cache";
 import {
   emailWasSkipped,
   sendInterestedLeadNotification,
@@ -760,6 +761,8 @@ export async function finishInboundReplyClassification(
       )
     ) {
       try {
+        // A missing photo must never cost the notification.
+        const photo = await leadAvatarBytes(lead).catch(() => null);
         const result = await sendInterestedLeadNotification({
           to: notifyEmail,
           lead: {
@@ -772,6 +775,7 @@ export async function finishInboundReplyClassification(
             fitScore: lead.fitScore,
             scoreReasons: lead.scoreReasons,
             signalText: lead.signalText,
+            photo: photo ?? undefined,
           },
           campaignName: campaign?.name,
           linkedInAccountName: persisted.account?.displayName,

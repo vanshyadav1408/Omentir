@@ -1,5 +1,8 @@
 import "server-only";
 
+import { wasWorkspaceLeadProcessed } from "./workspace-lead-history";
+import { stopForOwnerMessage } from "./owner-message-guard";
+
 import {
   acquireTickLock,
   releaseTickLock,
@@ -43,6 +46,7 @@ import {
   listCampaigns,
   listConnectionSentEnrollments,
   listLeads,
+  loadWorkspaceLeadRejections,
   listWorkspaces,
   listAllLinkedInAccounts,
   clearInviteLimitSignals,
@@ -54,6 +58,7 @@ import {
   prepareEnrollmentActionNow,
   recordDailyLeadDiscoveryRun,
   recordInviteLimitSignal,
+  saveLeadRejections,
   setInviteCooldown,
   updateEnrollment,
   updateLead,
@@ -71,6 +76,7 @@ import {
   DAILY_LEAD_FILTER_LIMIT,
   LeadFilterCapReached,
   scoreLeadForProduct,
+  type LeadScore,
 } from "./lead-qualification";
 import {
   applyConnectionAccepted,
@@ -142,6 +148,7 @@ import {
   searchLinkedInProfiles,
   sendConnectionRequest,
   sendLinkedInMessage,
+  LinkedInMessageSendBlocked,
   UnipileResponseError,
 } from "./unipile";
 import type {
@@ -287,7 +294,7 @@ async function sendProviderAction<T>(action: () => Promise<T>) {
   try {
     return await action();
   } catch (error) {
-    if (error instanceof UnipileResponseError) throw error;
+    if (error instanceof UnipileResponseError || error instanceof LinkedInMessageSendBlocked) throw error;
     throw new UnconfirmedProviderSendError(
       error instanceof Error ? error.message : "The provider result was unavailable.",
     );
@@ -545,15 +552,12 @@ async function runAgents(mode: AutomationSafetyMode) {
       const criteria = await normalizeAgentSearch(agent);
       const targetLocations = agentTargetLocations(agent, profile);
 
-      // Daily searches largely return the same people. Leads already in this
-      // group are paged past, while a lead from another group must be scored
-      // against this agent before adoption. A global score from another agent
-      // is not evidence that the person matches this agent's request.
+      // Page past everyone already saved in this workspace, across all groups.
+      // A person is processed only once per workspace.
       const existingLeads = await listLeads(agent.workspaceId, undefined, 5000);
       const existingLeadsById = new Map(existingLeads.map((lead) => [lead.id, lead]));
       const groupLeadKeys = new Set(
         existingLeads
-          .filter((lead) => lead.groupIds?.includes(agent.targetGroupId))
           .flatMap((lead) => profileSearchKeys(lead)),
       );
 
@@ -570,6 +574,26 @@ async function runAgents(mode: AutomationSafetyMode) {
         excludeKeys: groupLeadKeys,
       });
 
+      // People Jev already rejected anywhere in this workspace are skipped before
+      // a profile view or a Jev call is spent on them again. Saved one at a
+      // time: a cap stop leaves this loop by throwing.
+      const wasRejected = await loadWorkspaceLeadRejections(agent.workspaceId).catch((error) => {
+        console.error(
+          "[automation] load lead rejections failed:",
+          error instanceof Error ? error.message : error,
+        );
+        return () => false;
+      });
+      const rememberRejection = async (identity: string, score: LeadScore) => {
+        if (score.fitScore >= STANDARD_AGENT_SCORE_THRESHOLD || !score.questionKey) return;
+        await saveLeadRejections(agent, new Map([[identity, score.questionKey]])).catch((error) => {
+          console.error(
+            "[automation] save lead rejection failed:",
+            error instanceof Error ? error.message : error,
+          );
+        });
+      };
+
       for (const rawLead of rawLeads) {
         // Hard location gate. LinkedIn classic search ignores the agent's
         // target country (network-biased results), and AI fit scoring alone
@@ -577,28 +601,17 @@ async function runAgents(mode: AutomationSafetyMode) {
         if (!matchesTargetLocation(rawLead.location, targetLocations)) {
           continue;
         }
-        const existing = existingLeadsById.get(leadDocId(agent.workspaceId, rawLead));
-        if (existing) {
-          if (!existing.groupIds?.includes(agent.targetGroupId)) {
-            const score = await scoreLeadForProduct(
-              { ...rawLead, ...existing },
-              profile,
-              agent,
-              workspace.timezone,
-            );
-            if (score.fitScore >= STANDARD_AGENT_SCORE_THRESHOLD) {
-              await upsertLead(agent.workspaceId, agent.targetGroupId, {
-                linkedInUrl: existing.linkedInUrl || rawLead.linkedInUrl,
-                providerProfileId: existing.providerProfileId || rawLead.providerProfileId,
-              });
-            }
-          }
-          continue;
-        }
+        const identity = leadDocId(agent.workspaceId, rawLead);
+        if (profileSearchKeys(rawLead).some((key) => groupLeadKeys.has(key)) ||
+            wasRejected(identity) ||
+            await wasWorkspaceLeadProcessed(agent.workspaceId, rawLead)) continue;
+        const existing = existingLeadsById.get(identity);
+        if (existing) continue;
         const enrichedLead = await enrichLinkedInLead(account, rawLead);
         if (
           isAnonymousLinkedInProfile(enrichedLead) ||
-          !matchesTargetLocation(enrichedLead.location, targetLocations)
+          !matchesTargetLocation(enrichedLead.location, targetLocations) ||
+          profileSearchKeys(enrichedLead).some((key) => groupLeadKeys.has(key))
         ) {
           continue;
         }
@@ -606,32 +619,16 @@ async function runAgents(mode: AutomationSafetyMode) {
         const enrichedExisting = existingLeadsById.get(
           leadDocId(agent.workspaceId, enrichedLead),
         );
-        if (enrichedExisting) {
-          if (!enrichedExisting.groupIds?.includes(agent.targetGroupId)) {
-            const score = await scoreLeadForProduct(
-              { ...enrichedLead, ...enrichedExisting },
-              profile,
-              agent,
-              workspace.timezone,
-            );
-            if (score.fitScore >= STANDARD_AGENT_SCORE_THRESHOLD) {
-              await upsertLead(agent.workspaceId, agent.targetGroupId, {
-                linkedInUrl: enrichedExisting.linkedInUrl || enrichedLead.linkedInUrl,
-                providerProfileId:
-                  enrichedExisting.providerProfileId || enrichedLead.providerProfileId,
-              });
-            }
-          }
-          continue;
-        }
+        if (enrichedExisting) continue;
 
         const score = await scoreLeadForProduct(enrichedLead, profile, agent, workspace.timezone);
+        await rememberRejection(identity, score);
         // Gate on fit so broad keyword matches (right title, wrong
         // industry/location) don't enter the group and get auto-contacted.
         if (score.fitScore < STANDARD_AGENT_SCORE_THRESHOLD) {
           continue;
         }
-        await upsertLead(agent.workspaceId, agent.targetGroupId, {
+        const savedLead = await upsertLead(agent.workspaceId, agent.targetGroupId, {
           ...enrichedLead,
           fitScore: score.fitScore,
           scoreReasons: score.scoreReasons,
@@ -639,6 +636,7 @@ async function runAgents(mode: AutomationSafetyMode) {
           sourceAgentId: agent.id,
           outreachStatus: "new",
         });
+        if (!savedLead.groupIds.includes(agent.targetGroupId) || savedLead.sourceAgentId !== agent.id) continue;
         leadsAdded += 1;
       }
 
@@ -739,6 +737,43 @@ async function runEnrollment(
     await updateCurrentEnrollment({ status: "stopped" });
     return "stopped";
   }
+  const ownerMessageBlocksSend = async (providerProfileId?: string) => {
+    try {
+      return await stopForOwnerMessage({
+        workspaceId: enrollment.workspaceId,
+        leadId: lead.id,
+        accountId: account.accountId,
+        providerProfileId: providerProfileId || lead.providerProfileId,
+        linkedInUrl: lead.linkedInUrl,
+        allowLegacyAutomatedMessages: campaign.steps.slice(0, enrollment.currentStepIndex)
+          .some((step) => step.type === "message"),
+      });
+    } catch (error) {
+      console.error("[automation] message history check failed:", error);
+      await updateCurrentEnrollment({
+        pendingAction: undefined,
+        nextActionAt: addMinutes(SPACING_MINUTES),
+        lastError: "Could not check LinkedIn messages. Outreach will retry later.",
+      });
+      return true;
+    }
+  };
+  const sendCheckedMessage = async (body: string) => {
+    try {
+      return await sendProviderAction(() => sendLinkedInMessage({
+        accountId: account.accountId,
+        providerProfileId: lead.providerProfileId,
+        linkedInUrl: lead.linkedInUrl,
+        body,
+        beforeSend: async (providerProfileId) => {
+          if (await ownerMessageBlocksSend(providerProfileId)) throw new LinkedInMessageSendBlocked();
+        },
+      }));
+    } catch (error) {
+      if (error instanceof LinkedInMessageSendBlocked) return null;
+      throw error;
+    }
+  };
   if (
     shouldHaltOutreachSend({
       enrollmentStatus: enrollment.status,
@@ -970,12 +1005,8 @@ async function runEnrollment(
     });
     if (!claimed) return "action-claimed";
 
-    const sendResult = await sendProviderAction(() => sendLinkedInMessage({
-      accountId: account.accountId,
-      providerProfileId: lead.providerProfileId,
-      linkedInUrl: lead.linkedInUrl,
-      body,
-    }));
+    const sendResult = await sendCheckedMessage(body);
+    if (!sendResult) return "owner-message-blocked";
     await createConversationMessage({
       workspaceId: enrollment.workspaceId,
       leadId: lead.id,
@@ -984,6 +1015,7 @@ async function runEnrollment(
       senderName: "You",
       body,
       direction: "outbound",
+      outboundSource: "automation",
       providerMessageId: sendResult.id,
     });
     // An AI reply is a LinkedIn message like any other, so it counts against
@@ -1474,14 +1506,10 @@ async function runEnrollment(
   });
   if (!claimed) return "action-claimed";
 
-  budget.messages -= 1;
   // Same as invites: only count quota after Unipile accepts the send.
-  const messageSendResult = await sendProviderAction(() => sendLinkedInMessage({
-    accountId: account.accountId,
-    providerProfileId: lead.providerProfileId,
-    linkedInUrl: lead.linkedInUrl,
-    body,
-  }));
+  const messageSendResult = await sendCheckedMessage(body);
+  if (!messageSendResult) return "owner-message-blocked";
+  budget.messages -= 1;
   // Record what was sent: follow-up and reply drafting read this transcript,
   // and without it every later message drafts blind and repeats itself.
   await createConversationMessage({
@@ -1492,6 +1520,7 @@ async function runEnrollment(
     senderName: account.displayName || "You",
     body,
     direction: "outbound",
+    outboundSource: "automation",
     providerMessageId: messageSendResult.id,
   });
   await consumeDailyQuota(
