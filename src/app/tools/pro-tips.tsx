@@ -8,18 +8,20 @@ export default function ToolProTips({ tips }: { tips: readonly string[] }) {
       aria-labelledby="pro-tips-heading"
       className="omentir-primary-width relative z-10 min-w-0 pt-12 md:pt-16"
     >
-      <div className="rounded-2xl border border-[var(--site-border)] bg-[var(--site-card)] px-6 py-8 md:px-10 md:py-10">
+      <div className="rounded-[28px] bg-[var(--cal-hero)] px-6 py-8 md:px-12 md:py-12">
         <h2
           id="pro-tips-heading"
-          className="flex items-center justify-center gap-2 text-center text-xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] md:text-2xl"
+          style={{ fontFamily: "var(--font-cal-display)" }}
+          className="flex items-center justify-center gap-2 text-center text-2xl font-medium tracking-tight text-[var(--site-text)] md:text-3xl"
         >
           <svg
             viewBox="0 0 24 24"
             width="22"
             height="22"
             fill="none"
-            stroke="#c2d0aa"
+            stroke="currentColor"
             strokeWidth="1.8"
+            className="text-[var(--cal-blue)]"
             strokeLinecap="round"
             strokeLinejoin="round"
             aria-hidden="true"
@@ -29,18 +31,28 @@ export default function ToolProTips({ tips }: { tips: readonly string[] }) {
           </svg>
           Pro tips
         </h2>
-        <div className="mt-6 grid gap-3 sm:grid-cols-2 sm:gap-x-12 sm:gap-y-3">
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 sm:gap-x-12">
           {columns.map((column, columnIndex) => (
-            <ul key={columnIndex} className="space-y-3">
+            <ul key={columnIndex} className="space-y-4">
               {column.map((tip) => (
                 <li
                   key={tip}
-                  className="flex items-start gap-3 text-sm leading-6 text-[var(--md-sys-color-on-surface)]"
+                  className="flex items-start gap-3 text-[15px] leading-6 text-[var(--site-text)]"
                 >
-                  <span
-                    className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[var(--site-accent)]"
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="18"
+                    height="18"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="mt-[3px] shrink-0 text-[var(--cal-blue)]"
                     aria-hidden="true"
-                  />
+                  >
+                    <path d="m5 12.5 4.5 4.5L19 7.5" />
+                  </svg>
                   <span>{tip}</span>
                 </li>
               ))}

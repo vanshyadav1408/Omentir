@@ -2,11 +2,11 @@ import type { ReactNode } from "react";
 
 function StepIcon({ children }: { children: ReactNode }) {
   return (
-    <span className="mx-auto grid h-10 w-10 place-items-center text-[var(--md-sys-color-on-surface)]">
+    <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-[var(--cal-blue-soft)] text-[var(--cal-blue)]">
       <svg
         viewBox="0 0 24 24"
-        width="28"
-        height="28"
+        width="24"
+        height="24"
         fill="none"
         stroke="currentColor"
         strokeWidth="1.8"
@@ -53,19 +53,19 @@ export default function ToolHowItWorks({
         {steps.map((step, index) => (
           <li
             key={step.title}
-            className="rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container)] px-6 py-8 text-center md:px-7 md:py-9"
+            className="rounded-[20px] bg-[var(--cal-surface)] px-6 py-8 text-center shadow-[var(--cal-shadow)] md:px-7 md:py-9"
           >
             {ICONS[index] ?? null}
-            <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--md-sys-color-on-surface-variant)]">
+            <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--cal-muted)]">
               Step {index + 1}
             </p>
             <h3
               style={{ fontFamily: "var(--font-cal-display)" }}
-              className="mt-2 text-lg font-medium tracking-tight text-[var(--md-sys-color-on-surface)]"
+              className="mt-2 text-xl font-medium tracking-tight text-[var(--site-text)]"
             >
               {step.title}
             </h3>
-            <p className="mx-auto mt-2 max-w-[18rem] text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)]">
+            <p className="mx-auto mt-2 max-w-[18rem] text-sm leading-6 text-[var(--cal-muted)]">
               {step.body}
             </p>
           </li>

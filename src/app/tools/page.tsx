@@ -13,7 +13,15 @@ import {
   createWebPageJsonLd,
   siteUrl,
 } from "../seo";
-import { ALL_TOOLS, TOOLS_INDEX } from "./tools-data";
+import SquircleIcon, { type SquircleTone } from "../squircle-icon";
+import type { FeatureNavIcon } from "../feature-nav";
+import { ALL_TOOLS, TOOLS_INDEX, type FreeTool } from "./tools-data";
+
+const TOOL_ICONS: Record<FreeTool["slug"], { icon: FeatureNavIcon; tone: SquircleTone }> = {
+  "linkedin-profile-rating": { icon: "target", tone: "blue" },
+  "improve-linkedin-profile": { icon: "message", tone: "lavender" },
+  "find-leads": { icon: "search", tone: "lime" },
+};
 
 export const metadata = createPageMetadata({
   title: `${TOOLS_INDEX.title} - Omentir`,
@@ -73,23 +81,32 @@ export default function ToolsIndexPage() {
           title={TOOLS_INDEX.title}
           description={TOOLS_INDEX.lede}
         />
-        <div className="cal-read">
-          <ul className="grid gap-3">
-            {ALL_TOOLS.map((tool, index) => (
+        <div className="cal-read cal-read-moderate">
+          <ul className="grid gap-4 md:grid-cols-3">
+            {ALL_TOOLS.map((tool) => (
               <li key={tool.slug}>
-                <Link href={tool.href} className="cal-link-card !justify-start !gap-4 !p-6">
-                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[var(--cal-blue-soft)] text-sm font-semibold tabular-nums text-[var(--cal-blue)]">
-                    {index + 1}
-                  </span>
-                  <span className="min-w-0">
-                    <h2 className="text-xl font-medium tracking-tight">{tool.title}</h2>
-                    <small>{tool.summary}</small>
+                <Link
+                  href={tool.href}
+                  className="cal-link-card !flex-col !items-start !justify-start !gap-0 !p-7"
+                >
+                  <SquircleIcon icon={TOOL_ICONS[tool.slug].icon} tone={TOOL_ICONS[tool.slug].tone} size={48} />
+                  <h2
+                    style={{ fontFamily: "var(--font-cal-display)" }}
+                    className="mt-6 text-2xl font-medium tracking-tight"
+                  >
+                    {tool.title}
+                  </h2>
+                  <small className="!mt-2 flex-1">{tool.summary}</small>
+                  <span className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-[var(--cal-blue)]">
+                    Open tool <span aria-hidden="true">&rarr;</span>
                   </span>
                 </Link>
               </li>
             ))}
           </ul>
-          <MarkdownTwinLink path={TOOLS_INDEX.path} title={TOOLS_INDEX.title} />
+          <div className="mt-10">
+            <MarkdownTwinLink path={TOOLS_INDEX.path} title={TOOLS_INDEX.title} />
+          </div>
         </div>
         <MarketingFooter />
       </main>
