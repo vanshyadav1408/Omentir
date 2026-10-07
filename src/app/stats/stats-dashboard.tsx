@@ -12,6 +12,8 @@ import {
   type StatsQuery,
 } from "@/lib/stats-periods";
 import type {
+  McpListsData,
+  McpOverviewData,
   ProductAppData,
   ProductOverviewData,
   StatsAiData,
@@ -36,14 +38,19 @@ import {
   urlDomain,
 } from "./stats-icons";
 import { StatsMainCard } from "./stats-main-card";
+import { McpView } from "./mcp-view";
 import { ProductView } from "./product-view";
 
 type Query = StatsQuery;
-export type StatsView = "web" | "product";
+export type StatsView = "web" | "product" | "mcp";
 const VIEWS: { key: StatsView; label: string }[] = [
   { key: "web", label: "Web analytics" },
   { key: "product", label: "Product analytics" },
+  { key: "mcp", label: "MCP analytics" },
 ];
+// MCP filter keys start with "mcp_" (MCP_FILTER_KEYS on the server). Each view
+// keeps its own filters in the URL and only sends and shows those.
+const isMcpFilter = (filter: StatsFilter) => filter.key.startsWith("mcp_");
 
 function writeQuery(query: Query, view: StatsView) {
   const params = new URLSearchParams();
@@ -243,23 +250,30 @@ export default function StatsDashboard({ initialQuery, initialView }: { initialQ
   );
 
   const web = view === "web";
+  const mcp = view === "mcp";
   const range = useMemo(() => resolveStatsRange(query.period, query.offset), [query]);
   // Product numbers are daily counters: no hourly buckets and no web filters there.
-  const intervals = allowedIntervals(range.from, range.to).filter((i) => web || i !== "hour");
-  const interval = web || query.interval !== "hour" ? query.interval : "day";
+  const hourly = view !== "product";
+  const intervals = allowedIntervals(range.from, range.to).filter((i) => hourly || i !== "hour");
+  const interval = hourly || query.interval !== "hour" ? query.interval : "day";
   const productQuery = useMemo(() => ({ ...query, interval, filters: [] }), [query, interval]);
-  const overview = useSection<StatsOverviewData>("overview", query, refresh, tick, web);
-  const sources = useSection<StatsBreakdownData>("sources", query, refresh, tick, web);
-  const pages = useSection<StatsBreakdownData>("pages", query, refresh, tick, web);
-  const location = useSection<StatsBreakdownData>("location", query, refresh, tick, web);
-  const tech = useSection<StatsBreakdownData>("tech", query, refresh, tick, web);
-  const ai = useSection<StatsAiData>("ai", query, refresh, tick, web);
-  const product = useSection<ProductOverviewData>("product", productQuery, refresh, tick, !web);
-  const productApp = useSection<ProductAppData>("product-app", productQuery, refresh, tick, !web);
+  const webQuery = useMemo(() => ({ ...query, filters: query.filters.filter((f) => !isMcpFilter(f)) }), [query]);
+  const mcpQuery = useMemo(() => ({ ...query, filters: query.filters.filter(isMcpFilter) }), [query]);
+  const viewFilters = web ? webQuery.filters : mcp ? mcpQuery.filters : [];
+  const overview = useSection<StatsOverviewData>("overview", webQuery, refresh, tick, web);
+  const sources = useSection<StatsBreakdownData>("sources", webQuery, refresh, tick, web);
+  const pages = useSection<StatsBreakdownData>("pages", webQuery, refresh, tick, web);
+  const location = useSection<StatsBreakdownData>("location", webQuery, refresh, tick, web);
+  const tech = useSection<StatsBreakdownData>("tech", webQuery, refresh, tick, web);
+  const ai = useSection<StatsAiData>("ai", webQuery, refresh, tick, web);
+  const product = useSection<ProductOverviewData>("product", productQuery, refresh, tick, view === "product");
+  const productApp = useSection<ProductAppData>("product-app", productQuery, refresh, tick, view === "product");
+  const mcpOverview = useSection<McpOverviewData>("mcp", mcpQuery, refresh, tick, mcp);
+  const mcpLists = useSection<McpListsData>("mcp-lists", mcpQuery, refresh, tick, mcp);
 
   const buckets = useMemo(() => bucketsBetween(range.from, range.to, interval), [range, interval]);
-  const anyLoading = [overview, sources, pages, location, tech, ai, product, productApp].some((s) => s.loading || s.refreshing);
-  const stamp = web ? overview.data?.updatedAt : product.data?.updatedAt;
+  const anyLoading = [overview, sources, pages, location, tech, ai, product, productApp, mcpOverview, mcpLists].some((s) => s.loading || s.refreshing);
+  const stamp = web ? overview.data?.updatedAt : mcp ? mcpOverview.data?.updatedAt : product.data?.updatedAt;
   const updatedAt = stamp ? new Date(stamp) : null;
   const periodLabel = STATS_PERIODS.find((p) => p.key === query.period)?.label ?? "";
   const rangeLabel =
@@ -330,9 +344,9 @@ export default function StatsDashboard({ initialQuery, initialView }: { initialQ
           )}
         </div>
 
-        {web && query.filters.length > 0 && (
+        {viewFilters.length > 0 && (
           <div className="stats-filters">
-            {query.filters.map((f) => (
+            {viewFilters.map((f) => (
               <span key={f.key} className="stats-chip">
                 <b>{f.label}</b>
                 <button type="button" aria-label={`Remove ${f.label}`} onClick={() => update({ filters: query.filters.filter((x) => x.key !== f.key) })}>
@@ -340,8 +354,8 @@ export default function StatsDashboard({ initialQuery, initialView }: { initialQ
                 </button>
               </span>
             ))}
-            {query.filters.length > 1 && (
-              <button type="button" className="stats-link-btn" onClick={() => update({ filters: [] })}>Clear all</button>
+            {viewFilters.length > 1 && (
+              <button type="button" className="stats-link-btn" onClick={() => update({ filters: query.filters.filter((f) => !viewFilters.includes(f)) })}>Clear all</button>
             )}
           </div>
         )}
@@ -366,6 +380,14 @@ export default function StatsDashboard({ initialQuery, initialView }: { initialQ
 
         <StatsAiCard data={ai.data?.data} loading={ai.loading} error={ai.error} buckets={buckets} interval={query.interval} onFilter={addFilter} />
         </>
+        ) : mcp ? (
+          <McpView
+            overview={{ data: mcpOverview.data?.data, loading: mcpOverview.loading, error: mcpOverview.error }}
+            lists={{ data: mcpLists.data?.data, loading: mcpLists.loading, error: mcpLists.error }}
+            buckets={buckets}
+            interval={interval}
+            onFilter={addFilter}
+          />
         ) : (
           <ProductView
             overview={{ data: product.data?.data, loading: product.loading, error: product.error }}

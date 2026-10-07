@@ -15,12 +15,15 @@ export function StatsLineChart({
   series,
   highlight,
   height = 260,
+  format,
 }: {
   buckets: string[];
   interval: StatsInterval;
   series: LineSeries[];
   highlight?: string | null;
   height?: number;
+  /** Axis and tooltip values; counts by default. */
+  format?: (value: number) => string;
 }) {
   const [ref, width] = useElementWidth<HTMLDivElement>();
   const [hover, setHover] = useState<number | null>(null);
@@ -61,7 +64,7 @@ export function StatsLineChart({
             {ticks.map((t) => (
               <g key={t}>
                 <line className="stats-gridline" x1={PAD.left} x2={width - PAD.right} y1={y(t)} y2={y(t)} />
-                <text x={PAD.left - 8} y={y(t) + 4} textAnchor="end">{formatCompact(t)}</text>
+                <text x={PAD.left - 8} y={y(t) + 4} textAnchor="end">{(format ?? formatCompact)(t)}</text>
               </g>
             ))}
             {buckets.map((bucket, i) =>
@@ -99,7 +102,7 @@ export function StatsLineChart({
           {rows.map((row) => (
             <div key={row.key} className="stats-tooltip-row">
               <span className="stats-tooltip-key"><i style={{ background: row.color }} />{row.label}</span>
-              <b>{formatNumber(row.value)}</b>
+              <b>{(format ?? formatNumber)(row.value)}</b>
             </div>
           ))}
         </div>

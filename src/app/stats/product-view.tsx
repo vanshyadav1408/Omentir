@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { StatsInterval } from "@/lib/stats-periods";
-import type { ProductAppData, ProductListRow, ProductListTab, ProductOverviewData, StatsComparison } from "@/lib/stats-types";
+import type { ProductAppData, ProductListRow, ProductListTab, ProductOverviewData, StatsComparison, StatsFilter } from "@/lib/stats-types";
 import { changeRatio, formatCompact, formatNumber } from "./stats-format";
 import { Glyph } from "./stats-icons";
 import { StatsLineChart } from "./stats-line-chart";
@@ -120,14 +120,34 @@ function ProductMainCard({ overview, app, buckets, interval }: Props) {
 }
 
 const VISIBLE = 10;
+const tipValue = (value: number | string) => (typeof value === "number" ? formatNumber(value) : value);
 
-function ProductListCard({ title, tabs, loading, error }: { title: string; tabs?: ProductListTab[]; loading: boolean; error?: string }) {
+export function ProductListCard({
+  title,
+  tabs,
+  loading,
+  error,
+  onFilter,
+}: {
+  title: string;
+  tabs?: ProductListTab[];
+  loading: boolean;
+  error?: string;
+  /** Rows of tabs with a filterKey filter the view on click (MCP view). */
+  onFilter?: (filter: StatsFilter) => void;
+}) {
   const [tab, setTab] = useState(0);
   const [hover, setHover] = useState<number | null>(null);
   const [details, setDetails] = useState(false);
   const active = tabs?.[Math.min(tab, tabs.length - 1)];
   const rows = active?.rows ?? [];
   const max = Math.max(1, ...rows.map((r) => r.value));
+  const filterKey = onFilter ? active?.filterKey : undefined;
+  const activate = (row: ProductListRow) => {
+    if (!filterKey || !onFilter) return;
+    onFilter({ key: filterKey, value: row.key, label: `${active?.filterLabel ?? active?.label} is ${row.label}` });
+  };
+  const Row = filterKey ? "button" : "div";
 
   return (
     <section className={`stats-card${loading ? " is-loading" : ""}`} aria-label={title}>
@@ -150,25 +170,32 @@ function ProductListCard({ title, tabs, loading, error }: { title: string; tabs?
         ) : (
           <div className="stats-list" onMouseLeave={() => setHover(null)}>
             {rows.slice(0, VISIBLE).map((row, i) => (
-              <div key={`${row.key}-${i}`} className="stats-row" onMouseEnter={() => setHover(i)}>
+              <Row
+                key={`${row.key}-${i}`}
+                type={filterKey ? "button" : undefined}
+                className="stats-row"
+                onMouseEnter={() => setHover(i)}
+                onClick={filterKey ? () => activate(row) : undefined}
+              >
                 <span className="stats-row-bar" style={{ width: `${(row.value / max) * 100}%` }} />
                 <span className="stats-row-label" title={row.sub ? `${row.label} (${row.sub})` : row.label}>
                   <span>{row.label}</span>
                   {row.sub && <span className="stats-row-sub">{row.sub}</span>}
+                  {filterKey && <span className="stats-row-filter">{Glyph.filter}</span>}
                 </span>
-                <span className="stats-row-value">{formatCompact(row.value)}</span>
+                <span className="stats-row-value">{row.display ?? formatCompact(row.value)}</span>
                 {hover === i && row.tip && (
                   <span className="stats-tooltip stats-row-tip" style={{ top: 32 }}>
                     <span className="stats-tooltip-title" style={{ display: "block" }}>{row.label}</span>
                     {row.tip.map(([label, value]) => (
                       <span key={label} className="stats-tooltip-row">
                         <span className="stats-tooltip-key">{label}</span>
-                        <b>{formatNumber(value)}</b>
+                        <b>{tipValue(value)}</b>
                       </span>
                     ))}
                   </span>
                 )}
-              </div>
+              </Row>
             ))}
           </div>
         )}
@@ -183,12 +210,29 @@ function ProductListCard({ title, tabs, loading, error }: { title: string; tabs?
         </div>
       )}
 
-      {details && active && <DetailsModal title={`${title}: ${active.label}`} tab={active} onClose={() => setDetails(false)} />}
+      {details && active && (
+        <DetailsModal
+          title={`${title}: ${active.label}`}
+          tab={active}
+          onClose={() => setDetails(false)}
+          onActivate={filterKey ? (row) => { setDetails(false); activate(row); } : undefined}
+        />
+      )}
     </section>
   );
 }
 
-function DetailsModal({ title, tab, onClose }: { title: string; tab: ProductListTab; onClose: () => void }) {
+function DetailsModal({
+  title,
+  tab,
+  onClose,
+  onActivate,
+}: {
+  title: string;
+  tab: ProductListTab;
+  onClose: () => void;
+  onActivate?: (row: ProductListRow) => void;
+}) {
   const [query, setQuery] = useState("");
   const needle = query.trim().toLowerCase();
   const shown = tab.rows.filter((row) => `${row.label} ${row.sub ?? ""}`.toLowerCase().includes(needle));
@@ -211,12 +255,12 @@ function DetailsModal({ title, tab, onClose }: { title: string; tab: ProductList
             </thead>
             <tbody>
               {shown.map((row, i) => (
-                <tr key={`${row.key}-${i}`}>
+                <tr key={`${row.key}-${i}`} className={onActivate ? "is-clickable" : undefined} onClick={onActivate ? () => onActivate(row) : undefined}>
                   <td>
                     {row.label}
                     {row.sub && <span className="stats-row-sub"> {row.sub}</span>}
                   </td>
-                  {(row.tip ?? [[tab.unit, row.value]]).map(([label, value]) => <td key={label}>{formatNumber(value)}</td>)}
+                  {(row.tip ?? [[tab.unit, row.display ?? row.value]]).map(([label, value]) => <td key={label}>{tipValue(value)}</td>)}
                 </tr>
               ))}
             </tbody>

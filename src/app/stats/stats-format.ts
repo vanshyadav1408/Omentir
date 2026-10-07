@@ -41,6 +41,13 @@ export function formatDuration(seconds: number) {
   return `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`;
 }
 
+/** Response times: "340 ms", "5.4s", then minutes like formatDuration. */
+export function formatMs(ms: number) {
+  if (ms < 1000) return `${Math.round(ms)} ms`;
+  if (ms < 60_000) return `${trim(ms / 1000)}s`;
+  return formatDuration(ms / 1000);
+}
+
 /** Relative change, or null when there is nothing to compare against. */
 export function changeRatio(current: number, previous: number) {
   if (!previous) return null;

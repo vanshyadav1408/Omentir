@@ -46,13 +46,14 @@ export type StatsAiData = {
   rows: { bucket: string; ai: string; kind: string; fetches: number }[];
 };
 
-export type StatsSection = "overview" | "sources" | "pages" | "location" | "tech" | "goals" | "ai" | "product" | "product-app";
+export type StatsSection = "overview" | "sources" | "pages" | "location" | "tech" | "goals" | "ai" | "product" | "product-app" | "mcp" | "mcp-lists";
 
 // ------------------------------------------------------------------ Product analytics
 
-/** One row of a Product analytics list card. `tip` lines show on hover. */
-export type ProductListRow = { key: string; label: string; sub?: string; value: number; tip?: [label: string, value: number][] };
-export type ProductListTab = { label: string; unit: string; rows: ProductListRow[] };
+/** One row of a Product or MCP list card. `tip` lines show on hover; `display` replaces the number. */
+export type ProductListRow = { key: string; label: string; sub?: string; value: number; display?: string; tip?: [label: string, value: number | string][] };
+/** With a filterKey, clicking a row filters the view to `filterKey = row.key`. */
+export type ProductListTab = { label: string; unit: string; rows: ProductListRow[]; filterKey?: string; filterLabel?: string };
 
 export type ProductMetric = "newUsers" | "agentsCreated" | "leadsFound" | "leadsContacted" | "replies" | "meetings";
 
@@ -75,6 +76,23 @@ export type ProductAppData = {
   users: ProductListRow[];
   pages: ProductListRow[];
   events: ProductListRow[];
+};
+
+// ------------------------------------------------------------------ MCP analytics
+
+export type McpMetric = "users" | "sessions" | "calls" | "errors" | "medianMs";
+
+/** PostHog $mcp_* events from the Omentir MCP server. */
+export type McpOverviewData = {
+  kpis: Record<McpMetric, StatsComparison>;
+  series: ({ bucket: string } & Record<McpMetric, number>)[];
+};
+
+export type McpListsData = {
+  tools: ProductListTab[];
+  clients: ProductListTab[];
+  users: ProductListTab[];
+  requests: ProductListTab[];
 };
 
 export type StatsResponse<T> = {

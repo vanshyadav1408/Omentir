@@ -11,12 +11,13 @@ import { STATS_REFRESH_MS, type StatsSection } from "@/lib/stats-types";
 import { statsAccess } from "@/lib/server/stats/access";
 import { statsBackendConfigured, type StatsPropertyFilter } from "@/lib/server/stats/posthog-query";
 import { STATS_FILTER_KEYS } from "@/lib/server/stats/queries";
+import { MCP_FILTER_KEYS, loadMcpLists, loadMcpOverview } from "@/lib/server/stats/mcp";
 import { loadProductApp, loadProductOverview } from "@/lib/server/stats/product";
 import { loadAi, loadBreakdown, loadGoals, loadOverview } from "@/lib/server/stats/sections";
 
 export const dynamic = "force-dynamic";
 
-const SECTIONS = new Set<StatsSection>(["overview", "sources", "pages", "location", "tech", "goals", "ai", "product", "product-app"]);
+const SECTIONS = new Set<StatsSection>(["overview", "sources", "pages", "location", "tech", "goals", "ai", "product", "product-app", "mcp", "mcp-lists"]);
 // Stats update every 5 minutes, on the clock (:00, :05, :10, ...). Results are
 // cached per window; the page refetches when a new window starts. The refresh
 // button (?fresh=1) is the only way to get newer numbers inside a window.
@@ -47,14 +48,14 @@ function refreshSection(key: string, load: () => Promise<unknown>, range: { from
   return pending;
 }
 
-function parseFilters(raw: string | null): StatsPropertyFilter[] {
+function parseFilters(raw: string | null, keys: Set<string>): StatsPropertyFilter[] {
   if (!raw) return [];
   try {
     const parsed = JSON.parse(raw) as unknown;
     if (!Array.isArray(parsed)) return [];
     return parsed
       .filter((f): f is StatsPropertyFilter =>
-        !!f && typeof f.key === "string" && typeof f.value === "string" && STATS_FILTER_KEYS.has(f.key))
+        !!f && typeof f.key === "string" && typeof f.value === "string" && keys.has(f.key))
       .slice(0, 10);
   } catch {
     return [];
@@ -83,12 +84,15 @@ export async function GET(request: NextRequest) {
   const product = section === "product" || section === "product-app";
   // Product numbers are daily counters, so the Product view has no hourly buckets.
   if (product && interval === "hour") interval = "day";
-  const filters = product ? [] : parseFilters(params.get("filters"));
+  const mcp = section === "mcp" || section === "mcp-lists";
+  const filters = product ? [] : parseFilters(params.get("filters"), mcp ? MCP_FILTER_KEYS : STATS_FILTER_KEYS);
 
   const key = JSON.stringify([section, period, offset, interval, filters]);
   const load = () =>
     section === "product" ? loadProductOverview(range, interval)
     : section === "product-app" ? loadProductApp(range, interval)
+    : section === "mcp" ? loadMcpOverview(range, interval, filters)
+    : section === "mcp-lists" ? loadMcpLists(range, filters)
     : section === "overview" ? loadOverview(range, interval, filters)
     : section === "goals" ? loadGoals(range, interval, filters)
     : section === "ai" ? loadAi(range, interval, filters)
