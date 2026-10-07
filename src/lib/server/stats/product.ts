@@ -1,6 +1,7 @@
 import "server-only";
 
 import { PRODUCT_APP_PATH_REGEX } from "@/lib/posthog-product-paths";
+import { mergeActivity, type ActivityHit } from "@/lib/stats-activity";
 import { bucketFor, type StatsInterval } from "@/lib/stats-periods";
 import type {
   ProductAppData,
@@ -14,8 +15,9 @@ import { runHogQL } from "./posthog-query";
 import { LIVE_SITE, bucketExpr } from "./queries";
 
 // Product analytics on stats.omentir.com: what customers do inside Omentir.
-// Outreach numbers come from Firestore's activityDays, the same counters the
-// customer dashboard shows. They are daily, so this view has no hourly chart.
+// Outreach numbers come from Firestore's activityDays day totals plus the timed
+// activityEvents and invite times, merged in src/lib/stats-activity.ts so a
+// window shorter than a day still counts and the chart can go hourly.
 // App usage (active users, pages) comes from PostHog pageviews on app paths.
 
 type Range = { from: Date; to: Date };
@@ -25,8 +27,8 @@ const num = (value: unknown) => {
   return Number.isFinite(n) ? n : 0;
 };
 const str = (value: unknown) => (value == null ? "" : String(value));
-// activityDays and usageDays store a plain YYYY-MM-DD; read it as an India day like the rest of the page.
-const dayMs = (day: string) => Date.parse(`${day}T00:00:00+05:30`);
+// activityDays and usageDays store a plain YYYY-MM-DD; read it as a UTC day like the rest of the page.
+const dayMs = (day: string) => Date.parse(`${day}T00:00:00Z`);
 
 const PLAN_LABELS: Record<string, string> = { solo: "Pro", lifetime: "Lifetime", startup: "Startup", enterprise: "Enterprise" };
 const MODE_LABELS: Record<string, string> = { signals: "Signals", outreach: "Outreach only", prompt: "Prompt", steal_customers: "Steal customers" };
@@ -64,7 +66,9 @@ export async function loadProductOverview(range: Range, interval: StatsInterval)
   const inRange = (ms: number) => ms >= fromMs && ms < toMs;
   const inPrev = (ms: number) => ms >= prevMs && ms < fromMs;
 
-  const [workspaceSnap, agentSnap, activitySnap, accountSnap, usageSnap, conversationSnap, leadSnap] = await Promise.all([
+  const prevIso = new Date(prevMs).toISOString();
+  const toIso = range.to.toISOString();
+  const [workspaceSnap, agentSnap, activitySnap, accountSnap, usageSnap, conversationSnap, leadSnap, eventSnap, inviteSnap] = await Promise.all([
     db.collection("workspaces").select("ownerId", "name", "notificationEmail", "createdAt", "onboarding", "billing").get(),
     db.collection("agents").select("workspaceId", "name", "mode", "status", "createdAt").get(),
     db.collection("activityDays").select("workspaceId", "day", "found", "contacted", "replies", "meetingsBooked").get(),
@@ -76,6 +80,18 @@ export async function loadProductOverview(range: Range, interval: StatsInterval)
       .where("createdAt", ">=", range.from.toISOString())
       .where("createdAt", "<", range.to.toISOString())
       .select("sourceAgentId", "outreachStatus")
+      .get(),
+    // Timed activity for both windows. "contacted" events are outbound messages,
+    // not invites, so contacted comes from enrollment invite times instead.
+    db.collection("activityEvents")
+      .where("createdAt", ">=", prevIso)
+      .where("createdAt", "<", toIso)
+      .select("workspaceId", "metric", "createdAt")
+      .get(),
+    db.collection("campaignEnrollments")
+      .where("connectionSentAt", ">=", prevIso)
+      .where("connectionSentAt", "<", toIso)
+      .select("workspaceId", "leadId", "connectionSentAt")
       .get(),
   ]);
 
@@ -125,25 +141,37 @@ export async function loadProductOverview(range: Range, interval: StatsInterval)
     if (inRange(ms)) agentsByWorkspace.set(a.workspaceId, (agentsByWorkspace.get(a.workspaceId) ?? 0) + 1);
   }
 
-  const perWorkspace = new Map<string, { found: number; contacted: number; replies: number; meetings: number }>();
-  for (const doc of activitySnap.docs) {
+  const EVENT_METRICS: Record<string, ActivityHit["metric"]> = { found: "leadsFound", replies: "replies", meetingsBooked: "meetings" };
+  const hits: ActivityHit[] = [];
+  for (const doc of eventSnap.docs) {
+    const metric = EVENT_METRICS[str(doc.get("metric"))];
+    if (metric) hits.push({ workspaceId: str(doc.get("workspaceId")), metric, at: Date.parse(str(doc.get("createdAt"))) });
+  }
+  for (const doc of inviteSnap.docs) {
+    hits.push({
+      workspaceId: str(doc.get("workspaceId")),
+      metric: "leadsContacted",
+      at: Date.parse(str(doc.get("connectionSentAt"))),
+      leadId: str(doc.get("leadId")),
+    });
+  }
+  const totals = activitySnap.docs.map((doc) => {
     const d = doc.data();
-    const ms = dayMs(str(d.day));
-    const found = num(d.found);
-    const contacted = num(d.contacted);
-    const replies = num(d.replies);
-    const meetings = num(d.meetingsBooked);
-    add("leadsFound", ms, found);
-    add("leadsContacted", ms, contacted);
-    add("replies", ms, replies);
-    add("meetings", ms, meetings);
-    if (!inRange(ms)) continue;
-    const row = perWorkspace.get(str(d.workspaceId)) ?? { found: 0, contacted: 0, replies: 0, meetings: 0 };
-    row.found += found;
-    row.contacted += contacted;
-    row.replies += replies;
-    row.meetings += meetings;
-    perWorkspace.set(str(d.workspaceId), row);
+    return {
+      workspaceId: str(d.workspaceId),
+      day: str(d.day),
+      counts: { leadsFound: num(d.found), leadsContacted: num(d.contacted), replies: num(d.replies), meetings: num(d.meetingsBooked) },
+    };
+  });
+
+  const perWorkspace = new Map<string, { found: number; contacted: number; replies: number; meetings: number }>();
+  const field = { leadsFound: "found", leadsContacted: "contacted", replies: "replies", meetings: "meetings" } as const;
+  for (const c of mergeActivity(totals, hits, [[prevMs, fromMs], [fromMs, toMs]])) {
+    add(c.metric, c.at, c.count);
+    if (!inRange(c.at)) continue;
+    const row = perWorkspace.get(c.workspaceId) ?? { found: 0, contacted: 0, replies: 0, meetings: 0 };
+    row[field[c.metric]] += c.count;
+    perWorkspace.set(c.workspaceId, row);
   }
 
   const userRows = (pick: (r: { found: number; contacted: number; replies: number }) => number): ProductListRow[] =>

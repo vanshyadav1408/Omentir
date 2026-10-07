@@ -88,3 +88,17 @@ test("a hand-edited URL falls back to defaults instead of breaking the page", ()
   expect(range.to.getTime() - range.from.getTime()).toBe(DAY);
   expect(resolveStatsRange("today", 0, now).from.toISOString()).toBe("2026-09-26T00:00:00.000Z");
 });
+
+test("last hour, 4 hours and 12 hours are exact rolling windows charted hourly, and stepping back moves one whole window", () => {
+  for (const [period, hours] of [["1h", 1], ["4h", 4], ["12h", 12]] as const) {
+    const current = resolveStatsRange(period, 0, NOW);
+    expect(current.to.getTime()).toBe(NOW);
+    expect(current.to.getTime() - current.from.getTime()).toBe(hours * 3_600_000);
+    const previous = resolveStatsRange(period, 1, NOW);
+    expect(previous.to.getTime()).toBe(current.from.getTime());
+    expect(parseStatsQuery((name) => (name === "period" ? period : null)).interval).toBe("hour");
+  }
+  // 14:30 back to 13:30 touches the 13:00 and 14:00 buckets.
+  const hour = resolveStatsRange("1h", 0, NOW);
+  expect(bucketsBetween(hour.from, hour.to, "hour")).toEqual(["2026-09-25 13:00", "2026-09-25 14:00"]);
+});

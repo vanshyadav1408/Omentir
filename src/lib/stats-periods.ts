@@ -10,6 +10,9 @@ const ZONE_OFFSET_MS = 0;
 export const STATS_PERIODS = [
   { key: "today", label: "Today" },
   { key: "yesterday", label: "Yesterday" },
+  { key: "1h", label: "Last hour" },
+  { key: "4h", label: "Last 4 hours" },
+  { key: "12h", label: "Last 12 hours" },
   { key: "24h", label: "Last 24 hours" },
   { key: "7d", label: "Last 7 days" },
   { key: "30d", label: "Last 30 days" },
@@ -44,6 +47,7 @@ export const STATS_INTERVALS: { key: StatsInterval; label: string }[] = [
 const ALL_TIME_START = Date.UTC(2026, 0, 1) - ZONE_OFFSET_MS;
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
+const ROLLING_HOURS = { "1h": 1, "4h": 4, "12h": 12, "24h": 24 } as const;
 
 export function isStatsPeriod(value: string | null | undefined): value is StatsPeriod {
   return STATS_PERIODS.some((period) => period.key === value);
@@ -97,10 +101,15 @@ export function resolveStatsRange(period: StatsPeriod, offset = 0, nowMs = Date.
       from = today - (back + 1) * DAY;
       to = from + DAY;
       break;
-    case "24h":
-      to = nowMs - back * DAY;
-      from = to - DAY;
+    case "1h":
+    case "4h":
+    case "12h":
+    case "24h": {
+      const span = ROLLING_HOURS[period] * HOUR;
+      to = nowMs - back * span;
+      from = to - span;
       break;
+    }
     case "7d":
     case "30d": {
       const days = period === "7d" ? 7 : 30;
@@ -135,7 +144,7 @@ export function resolveStatsRange(period: StatsPeriod, offset = 0, nowMs = Date.
 }
 
 export function defaultInterval(period: StatsPeriod): StatsInterval {
-  if (period === "today" || period === "yesterday" || period === "24h") return "hour";
+  if (period === "today" || period === "yesterday" || period in ROLLING_HOURS) return "hour";
   if (period === "12m") return "month";
   if (period === "ytd" || period === "all") return "week";
   return "day";

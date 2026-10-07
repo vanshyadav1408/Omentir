@@ -80,10 +80,8 @@ export async function GET(request: NextRequest) {
   const range = resolveStatsRange(period, offset, window * STATS_REFRESH_MS);
   const requested = params.get("interval");
   const allowed = allowedIntervals(range.from, range.to);
-  let interval = isStatsInterval(requested) && allowed.includes(requested) ? requested : defaultInterval(period);
+  const interval = isStatsInterval(requested) && allowed.includes(requested) ? requested : defaultInterval(period);
   const product = section === "product" || section === "product-app";
-  // Product numbers are daily counters, so the Product view has no hourly buckets.
-  if (product && interval === "hour") interval = "day";
   const mcp = section === "mcp" || section === "mcp-lists";
   const filters = product ? [] : parseFilters(params.get("filters"), mcp ? MCP_FILTER_KEYS : STATS_FILTER_KEYS);
 

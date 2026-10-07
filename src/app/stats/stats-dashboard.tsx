@@ -5,6 +5,7 @@ import {
   DEFAULT_STATS_PERIOD,
   STATS_INTERVALS,
   STATS_PERIODS,
+  STATS_TIMEZONE_LABEL,
   allowedIntervals,
   bucketsBetween,
   defaultInterval,
@@ -252,11 +253,10 @@ export default function StatsDashboard({ initialQuery, initialView }: { initialQ
   const web = view === "web";
   const mcp = view === "mcp";
   const range = useMemo(() => resolveStatsRange(query.period, query.offset), [query]);
-  // Product numbers are daily counters: no hourly buckets and no web filters there.
-  const hourly = view !== "product";
-  const intervals = allowedIntervals(range.from, range.to).filter((i) => hourly || i !== "hour");
-  const interval = hourly || query.interval !== "hour" ? query.interval : "day";
-  const productQuery = useMemo(() => ({ ...query, interval, filters: [] }), [query, interval]);
+  const intervals = allowedIntervals(range.from, range.to);
+  const interval = query.interval;
+  // Product numbers take no web filters.
+  const productQuery = useMemo(() => ({ ...query, filters: [] }), [query]);
   const webQuery = useMemo(() => ({ ...query, filters: query.filters.filter((f) => !isMcpFilter(f)) }), [query]);
   const mcpQuery = useMemo(() => ({ ...query, filters: query.filters.filter(isMcpFilter) }), [query]);
   const viewFilters = web ? webQuery.filters : mcp ? mcpQuery.filters : [];
@@ -276,10 +276,14 @@ export default function StatsDashboard({ initialQuery, initialView }: { initialQ
   const stamp = web ? overview.data?.updatedAt : mcp ? mcpOverview.data?.updatedAt : product.data?.updatedAt;
   const updatedAt = stamp ? new Date(stamp) : null;
   const periodLabel = STATS_PERIODS.find((p) => p.key === query.period)?.label ?? "";
+  // Past windows shorter than a day (Last hour, 4 or 12 hours) need the times, not just the date.
+  const shortWindow = range.to.getTime() - range.from.getTime() < 86_400_000;
   const rangeLabel =
-    query.offset > 0
-      ? `${range.from.toISOString().slice(0, 10)} to ${new Date(range.to.getTime() - 1).toISOString().slice(0, 10)}`
-      : periodLabel;
+    query.offset === 0
+      ? periodLabel
+      : shortWindow
+        ? `${range.from.toISOString().slice(0, 16).replace("T", " ")} to ${range.to.toISOString().slice(11, 16)} ${STATS_TIMEZONE_LABEL}`
+        : `${range.from.toISOString().slice(0, 10)} to ${new Date(range.to.getTime() - 1).toISOString().slice(0, 10)}`;
 
   const live = query.offset === 0 && query.period !== "yesterday";
 
