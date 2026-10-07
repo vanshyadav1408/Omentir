@@ -5,8 +5,10 @@ import {
   DEFAULT_STATS_PERIOD,
   STATS_INTERVALS,
   STATS_PERIODS,
+  STATS_TIMEZONE,
   STATS_TIMEZONE_LABEL,
   allowedIntervals,
+  bucketKey,
   bucketsBetween,
   defaultInterval,
   resolveStatsRange,
@@ -72,7 +74,7 @@ const STALE_POLLS = 20;
 
 // The last answer for the default views (no filters, current period) is kept in
 // this browser, so a reload paints numbers at once while the server catches up.
-const savedKey = (queryKey: string) => `omentir-stats:v2:${queryKey}`;
+const savedKey = (queryKey: string) => `omentir-stats:v3:${queryKey}`;
 function readSaved<T>(queryKey: string): StatsResponse<T> | undefined {
   try {
     const raw = window.localStorage.getItem(savedKey(queryKey));
@@ -284,8 +286,8 @@ export default function StatsDashboard({ initialQuery, initialView }: { initialQ
     query.offset === 0
       ? periodLabel
       : shortWindow
-        ? `${range.from.toISOString().slice(0, 16).replace("T", " ")} to ${range.to.toISOString().slice(11, 16)} ${STATS_TIMEZONE_LABEL}`
-        : `${range.from.toISOString().slice(0, 10)} to ${new Date(range.to.getTime() - 1).toISOString().slice(0, 10)}`;
+        ? `${bucketKey(range.from.getTime(), "minute")} to ${bucketKey(range.to.getTime(), "minute").slice(11)} ${STATS_TIMEZONE_LABEL}`
+        : `${bucketKey(range.from.getTime(), "day")} to ${bucketKey(range.to.getTime() - 1, "day")}`;
 
   const live = query.offset === 0 && query.period !== "yesterday";
 
@@ -345,7 +347,7 @@ export default function StatsDashboard({ initialQuery, initialView }: { initialQ
           </button>
           {updatedAt && (
             <span className="stats-updated">
-              Updated {updatedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}, refreshes every 5 min
+              Updated {updatedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", timeZone: STATS_TIMEZONE })} {STATS_TIMEZONE_LABEL}, refreshes every 5 min
             </span>
           )}
         </div>

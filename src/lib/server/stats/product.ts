@@ -27,7 +27,7 @@ const num = (value: unknown) => {
   return Number.isFinite(n) ? n : 0;
 };
 const str = (value: unknown) => (value == null ? "" : String(value));
-// activityDays and usageDays store a plain YYYY-MM-DD; read it as a UTC day like the rest of the page.
+// usageDays stores a plain YYYY-MM-DD with no time; it is read as starting at UTC midnight.
 const dayMs = (day: string) => Date.parse(`${day}T00:00:00Z`);
 
 const PLAN_LABELS: Record<string, string> = { solo: "Pro", lifetime: "Lifetime", startup: "Startup", enterprise: "Enterprise" };

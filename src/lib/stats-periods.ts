@@ -1,11 +1,11 @@
 // Date ranges and chart buckets for stats.omentir.com. Shared by the API route
-// and the client so both agree on bucket keys. Days, weeks and months follow
-// UTC, matching the PostHog project timezone, and the SQL buckets
-// use the same zone (see STATS_TIMEZONE in queries.ts).
+// and the client so both agree on bucket keys. Minutes, hours, days, weeks and
+// months follow India time (Asia/Kolkata, UTC+5:30, no daylight saving), the
+// owner's choice, and the SQL buckets use the same zone (see bucketExpr in queries.ts).
 
-export const STATS_TIMEZONE = "UTC";
-export const STATS_TIMEZONE_LABEL = "UTC";
-const ZONE_OFFSET_MS = 0;
+export const STATS_TIMEZONE = "Asia/Kolkata";
+export const STATS_TIMEZONE_LABEL = "IST";
+const ZONE_OFFSET_MS = 330 * 60_000;
 
 export const STATS_PERIODS = [
   { key: "today", label: "Today" },
