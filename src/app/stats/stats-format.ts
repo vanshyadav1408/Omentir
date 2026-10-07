@@ -60,12 +60,15 @@ const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Frida
 function parseBucket(bucket: string) {
   const [date, time] = bucket.split(" ");
   const [y, m, d] = date.split("-").map(Number);
-  const hour = time ? Number(time.split(":")[0]) : 0;
-  return new Date(Date.UTC(y, (m || 1) - 1, d || 1, hour));
+  const [hour, minute] = time ? time.split(":").map(Number) : [0, 0];
+  return new Date(Date.UTC(y, (m || 1) - 1, d || 1, hour || 0, minute || 0));
 }
+
+const clock = (d: Date) => `${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}`;
 
 export function axisLabel(bucket: string, interval: StatsInterval) {
   const d = parseBucket(bucket);
+  if (interval === "minute") return clock(d);
   if (interval === "hour") return `${String(d.getUTCHours()).padStart(2, "0")}:00`;
   if (interval === "month") return `${MONTHS[d.getUTCMonth()]} ${String(d.getUTCFullYear()).slice(2)}`;
   return `${String(d.getUTCDate()).padStart(2, "0")} ${MONTHS[d.getUTCMonth()]}`;
@@ -74,7 +77,7 @@ export function axisLabel(bucket: string, interval: StatsInterval) {
 export function tooltipLabel(bucket: string, interval: StatsInterval) {
   const d = parseBucket(bucket);
   const day = `${WEEKDAYS[d.getUTCDay()]}, ${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`;
-  if (interval === "hour") return `${day}, ${String(d.getUTCHours()).padStart(2, "0")}:00 ${STATS_TIMEZONE_LABEL}`;
+  if (interval === "minute" || interval === "hour") return `${day}, ${clock(d)} ${STATS_TIMEZONE_LABEL}`;
   if (interval === "week") return `Week of ${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`;
   if (interval === "month") return `${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
   return day;

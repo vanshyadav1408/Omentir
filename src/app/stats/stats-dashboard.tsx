@@ -216,12 +216,13 @@ export default function StatsDashboard({ initialQuery, initialView }: { initialQ
   const [query, setQuery] = useState<Query>(initialQuery);
   const [view, setView] = useState<StatsView>(initialView);
   const [refresh, setRefresh] = useState(0);
-  const [tick, setTick] = useState(0);
+  // The current 5-minute window number. The API answers for the same window.
+  const [tick, setTick] = useState(() => Math.floor(Date.now() / STATS_REFRESH_MS));
 
   // Refetch at every 5-minute mark (:00, :05, ...), when the server's cache window rolls over.
   useEffect(() => {
     const wait = STATS_REFRESH_MS - (Date.now() % STATS_REFRESH_MS) + 2_000;
-    const timer = window.setTimeout(() => setTick((t) => t + 1), wait);
+    const timer = window.setTimeout(() => setTick((t) => Math.max(t + 1, Math.floor(Date.now() / STATS_REFRESH_MS))), wait);
     return () => window.clearTimeout(timer);
   }, [tick]);
 
@@ -252,7 +253,8 @@ export default function StatsDashboard({ initialQuery, initialView }: { initialQ
 
   const web = view === "web";
   const mcp = view === "mcp";
-  const range = useMemo(() => resolveStatsRange(query.period, query.offset), [query]);
+  // Same clock as the API (the last 5-minute mark), so chart buckets match the data even per minute.
+  const range = useMemo(() => resolveStatsRange(query.period, query.offset, tick * STATS_REFRESH_MS), [query, tick]);
   const intervals = allowedIntervals(range.from, range.to);
   const interval = query.interval;
   // Product numbers take no web filters.

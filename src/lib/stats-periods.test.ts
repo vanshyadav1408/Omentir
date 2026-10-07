@@ -89,16 +89,32 @@ test("a hand-edited URL falls back to defaults instead of breaking the page", ()
   expect(resolveStatsRange("today", 0, now).from.toISOString()).toBe("2026-09-26T00:00:00.000Z");
 });
 
-test("last hour, 4 hours and 12 hours are exact rolling windows charted hourly, and stepping back moves one whole window", () => {
+test("last hour, 4 hours and 12 hours are exact rolling windows, and stepping back moves one whole window", () => {
   for (const [period, hours] of [["1h", 1], ["4h", 4], ["12h", 12]] as const) {
     const current = resolveStatsRange(period, 0, NOW);
     expect(current.to.getTime()).toBe(NOW);
     expect(current.to.getTime() - current.from.getTime()).toBe(hours * 3_600_000);
     const previous = resolveStatsRange(period, 1, NOW);
     expect(previous.to.getTime()).toBe(current.from.getTime());
-    expect(parseStatsQuery((name) => (name === "period" ? period : null)).interval).toBe("hour");
   }
   // 14:30 back to 13:30 touches the 13:00 and 14:00 buckets.
   const hour = resolveStatsRange("1h", 0, NOW);
   expect(bucketsBetween(hour.from, hour.to, "hour")).toEqual(["2026-09-25 13:00", "2026-09-25 14:00"]);
+});
+
+test("last hour charts by the minute, because hourly would draw just two points", () => {
+  const hour = resolveStatsRange("1h", 0, NOW);
+  expect(parseStatsQuery((name) => (name === "period" ? "1h" : null)).interval).toBe("minute");
+  // Keys must match the SQL formatDateTime(toStartOfMinute(ts), '%Y-%m-%d %H:%i') rows, or the chart draws zeros.
+  const keys = bucketsBetween(hour.from, hour.to, "minute");
+  expect(keys).toHaveLength(60);
+  expect(keys[0]).toBe("2026-09-25 13:30");
+  expect(keys.at(-1)).toBe("2026-09-25 14:29");
+  expect(bucketFor(Date.parse("2026-09-25T14:07:59Z"), "minute")).toBe("2026-09-25 14:07");
+  // 4 and 12 hours keep hourly by default; per-minute stays available up to 4 hours only.
+  expect(parseStatsQuery((name) => (name === "period" ? "4h" : null)).interval).toBe("hour");
+  const four = resolveStatsRange("4h", 0, NOW);
+  expect(allowedIntervals(four.from, four.to)).toContain("minute");
+  const twelve = resolveStatsRange("12h", 0, NOW);
+  expect(allowedIntervals(twelve.from, twelve.to)).not.toContain("minute");
 });

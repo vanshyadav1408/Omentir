@@ -73,6 +73,8 @@ function webFilters(filters: StatsPropertyFilter[]) {
 export function bucketExpr(interval: StatsInterval, timestamp = "timestamp") {
   const column = `toTimeZone(${timestamp}, '${STATS_TIMEZONE}')`;
   switch (interval) {
+    case "minute":
+      return `formatDateTime(toStartOfMinute(${column}), '%Y-%m-%d %H:%i')`;
     case "hour":
       return `formatDateTime(toStartOfHour(${column}), '%Y-%m-%d %H:00')`;
     case "week":

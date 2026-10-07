@@ -27,7 +27,7 @@ export type StatsPeriod = (typeof STATS_PERIODS)[number]["key"];
 
 /** Period shown when the URL has no (or an unknown) ?period=. */
 export const DEFAULT_STATS_PERIOD: StatsPeriod = "24h";
-export type StatsInterval = "hour" | "day" | "week" | "month";
+export type StatsInterval = "minute" | "hour" | "day" | "week" | "month";
 
 export type StatsQuery = {
   period: StatsPeriod;
@@ -37,6 +37,7 @@ export type StatsQuery = {
 };
 
 export const STATS_INTERVALS: { key: StatsInterval; label: string }[] = [
+  { key: "minute", label: "By minute" },
   { key: "hour", label: "Hourly" },
   { key: "day", label: "Daily" },
   { key: "week", label: "Weekly" },
@@ -45,7 +46,8 @@ export const STATS_INTERVALS: { key: StatsInterval; label: string }[] = [
 
 // PostHog product events start in 2026; nothing older exists.
 const ALL_TIME_START = Date.UTC(2026, 0, 1) - ZONE_OFFSET_MS;
-const HOUR = 3_600_000;
+const MINUTE = 60_000;
+const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
 const ROLLING_HOURS = { "1h": 1, "4h": 4, "12h": 12, "24h": 24 } as const;
 
@@ -144,16 +146,18 @@ export function resolveStatsRange(period: StatsPeriod, offset = 0, nowMs = Date.
 }
 
 export function defaultInterval(period: StatsPeriod): StatsInterval {
+  if (period === "1h") return "minute";
   if (period === "today" || period === "yesterday" || period in ROLLING_HOURS) return "hour";
   if (period === "12m") return "month";
   if (period === "ytd" || period === "all") return "week";
   return "day";
 }
 
-/** Intervals that make sense for a range: hourly only up to a week, monthly from two months. */
+/** Intervals that make sense for a range: by minute up to 4 hours, hourly up to a week, monthly from two months. */
 export function allowedIntervals(from: Date, to: Date): StatsInterval[] {
   const span = to.getTime() - from.getTime();
   return STATS_INTERVALS.map((i) => i.key).filter((key) => {
+    if (key === "minute") return span <= 4 * HOUR + MINUTE;
     if (key === "hour") return span <= 7 * DAY + HOUR;
     if (key === "month") return span >= 58 * DAY;
     if (key === "week") return span >= 13 * DAY;
@@ -169,12 +173,14 @@ function pad(n: number) {
 export function bucketKey(ms: number, interval: StatsInterval) {
   const d = new Date(toZone(ms));
   const ymd = `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
+  if (interval === "minute") return `${ymd} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
   if (interval === "hour") return `${ymd} ${pad(d.getUTCHours())}:00`;
   return ymd;
 }
 
 function bucketStart(ms: number, interval: StatsInterval) {
-  // Floor hours in the same timezone as the SQL buckets.
+  // Floor minutes and hours in the same timezone as the SQL buckets.
+  if (interval === "minute") return fromZone(Math.floor(toZone(ms) / MINUTE) * MINUTE);
   if (interval === "hour") return fromZone(Math.floor(toZone(ms) / HOUR) * HOUR);
   if (interval === "week") return startOfWeek(ms);
   if (interval === "month") return startOfMonth(ms);
@@ -182,6 +188,7 @@ function bucketStart(ms: number, interval: StatsInterval) {
 }
 
 function nextBucket(ms: number, interval: StatsInterval) {
+  if (interval === "minute") return ms + MINUTE;
   if (interval === "hour") return ms + HOUR;
   if (interval === "week") return ms + 7 * DAY;
   if (interval === "month") return addMonths(ms, 1);
