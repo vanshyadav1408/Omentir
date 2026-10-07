@@ -34,10 +34,10 @@ const policySections: Array<{ title: string; paragraphs: ReactNode[] }> = [
       </>,
       <>
         If an eligible workspace receives fewer than three qualifying bookings
-        during that completed week, the customer may apply for a full refund in
-        accordance with this policy. This page explains how Omentir measures the
-        result, what an active agent means, how a booking is counted, and how to
-        submit a request.
+        during that completed week, the customer may apply for a refund, minus
+        transaction charges, in accordance with this policy. This page explains
+        how Omentir measures the result, what an active agent means, how a
+        booking is counted, and how to submit a request.
       </>,
     ],
   },
@@ -124,10 +124,16 @@ const policySections: Array<{ title: string; paragraphs: ReactNode[] }> = [
     title: "6. Refund entitlement",
     paragraphs: [
       <>
-        For an approved claim, Omentir will issue a full refund of the applicable
-        current subscription charge paid by the customer for the billing period
-        that contains the eligible missed week. This is the meaning of "you pay
-        nothing" in the Minimum Booking Guarantee.
+        For an approved claim, Omentir will refund the applicable current
+        subscription charge paid by the customer for the billing period that
+        contains the eligible missed week, minus transaction charges. Apart from
+        those charges, this is the meaning of "you pay nothing" in the Minimum
+        Booking Guarantee.
+      </>,
+      <>
+        Transaction charges are the payment processing fees charged on the
+        original payment. In most cases they are 3.5% to 5% of the amount paid.
+        Omentir deducts them from every refund it issues.
       </>,
       <>
         Enterprise customers are covered by the same booking standard unless a
@@ -230,7 +236,7 @@ export default function MinimumBookingGuaranteePage() {
       description:
         "The eligibility, warm-up, weekly measurement, and refund terms behind Omentir's booking guarantee.",
       url: `${siteUrl}/minimum-booking-guarantee`,
-      dateModified: "August 9, 2026",
+      dateModified: "October 7, 2026",
     }),
     createBreadcrumbJsonLd([
       { name: "Home", url: siteUrl },
@@ -248,7 +254,7 @@ export default function MinimumBookingGuaranteePage() {
         path="minimum-booking-guarantee"
         title="Minimum Booking Guarantee"
         description="The eligibility, warm-up, weekly measurement, and refund terms behind Omentir's booking guarantee."
-        updated="August 9, 2026"
+        updated="October 7, 2026"
       >
         <p className="text-base font-semibold leading-7 text-[var(--md-sys-color-on-surface)]">
           {minimumBookingGuaranteeStatement}
@@ -256,7 +262,7 @@ export default function MinimumBookingGuaranteePage() {
         <ul className="mt-4 list-disc space-y-2 pl-5 text-base font-medium leading-7 text-[var(--md-sys-color-on-surface)]">
           <li>The two-week warm-up period must be complete.</li>
           <li>At least one agent must remain active for the full week.</li>
-          <li>If there are fewer than three qualifying bookings, you may apply for a full refund.</li>
+          <li>If there are fewer than three qualifying bookings, you may apply for a refund, minus transaction charges (usually 3.5% to 5%).</li>
         </ul>
 
         <div className="mt-12 space-y-10">

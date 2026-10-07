@@ -25,7 +25,7 @@ const publicRoutes = [
   { path: "/use-cases", changeFrequency: "monthly", priority: 0.85 },
   { path: "/integrations", changeFrequency: "monthly", priority: 0.85 },
   { path: "/pricing", changeFrequency: "monthly", priority: 0.8, lastModified: "2026-08-12" },
-  { path: "/minimum-booking-guarantee", changeFrequency: "monthly", priority: 0.5, lastModified: "2026-08-09" },
+  { path: "/minimum-booking-guarantee", changeFrequency: "monthly", priority: 0.5, lastModified: "2026-10-07" },
   { path: "/about", changeFrequency: "monthly", priority: 0.7, lastModified: "2026-07-17" },
   { path: "/help", changeFrequency: "weekly", priority: 0.7, lastModified: "2026-08-23" },
   { path: "/guides", changeFrequency: "weekly", priority: 0.7 },
@@ -34,7 +34,7 @@ const publicRoutes = [
   { path: "/agents.md", changeFrequency: "monthly", priority: 0.4, lastModified: "2026-08-22" },
   { path: "/agent.json", changeFrequency: "monthly", priority: 0.4, lastModified: "2026-08-22" },
   { path: "/privacy-policy", changeFrequency: "yearly", priority: 0.3, lastModified: "2026-07-06" },
-  { path: "/terms-of-service", changeFrequency: "yearly", priority: 0.3, lastModified: "2026-08-09" },
+  { path: "/terms-of-service", changeFrequency: "yearly", priority: 0.3, lastModified: "2026-10-07" },
 ] as const satisfies ReadonlyArray<{
   path: string;
   changeFrequency: "weekly" | "monthly" | "yearly";

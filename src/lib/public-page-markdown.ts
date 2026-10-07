@@ -552,8 +552,8 @@ function guaranteeMarkdown() {
       "**Minimum 3 bookings per week or you pay nothing.**",
       `- The two-week warm-up period must be complete.`,
       `- At least one agent must remain active for the full week.`,
-      `- If there are fewer than three qualifying bookings, you may apply for a full refund.`,
-      `Last updated: August 9, 2026`,
+      `- If there are fewer than three qualifying bookings, you may apply for a refund, minus transaction charges (usually 3.5% to 5%).`,
+      `Last updated: October 7, 2026`,
       sections.join("\n\n"),
     ].join("\n\n")
   );
