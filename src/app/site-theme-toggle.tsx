@@ -35,7 +35,7 @@ function applyPreference(preference: Preference) {
   root.style.colorScheme = resolved;
 }
 
-function setPreference(preference: Preference) {
+export function setPreference(preference: Preference) {
   try {
     localStorage.setItem(STORAGE_KEY, preference);
   } catch {}

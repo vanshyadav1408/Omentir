@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import {
   DEFAULT_STATS_PERIOD,
   STATS_INTERVALS,
@@ -40,6 +40,7 @@ import {
   referrerIcon,
   urlDomain,
 } from "./stats-icons";
+import { setPreference } from "@/app/site-theme-toggle";
 import { StatsMainCard } from "./stats-main-card";
 import { McpView } from "./mcp-view";
 import { ProductView } from "./product-view";
@@ -185,6 +186,24 @@ function Menu({ trigger, children, className }: { trigger: ReactNode; children: 
   );
 }
 
+// The head script (and SiteThemeSync) write data-site-theme, so watch it.
+function subscribeTheme(onChange: () => void) {
+  const observer = new MutationObserver(onChange);
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-site-theme"] });
+  return () => observer.disconnect();
+}
+
+function ThemeToggle() {
+  // null during SSR and hydration: the icon appears once the theme is known.
+  const theme = useSyncExternalStore(subscribeTheme, () => document.documentElement.dataset.siteTheme ?? "light", () => null);
+  const next = theme === "dark" ? "light" : "dark";
+  return (
+    <button type="button" className="stats-icon-btn stats-theme-btn" aria-label={`Switch to ${next} theme`} title={`Switch to ${next} theme`} onClick={() => setPreference(next)}>
+      <span style={{ width: 16, height: 16, display: "inline-flex" }}>{theme && (theme === "dark" ? Glyph.sun : Glyph.moon)}</span>
+    </button>
+  );
+}
+
 const SOURCE_TABS: BreakdownTab[] = [
   { label: "Channel", filterKey: "channel_name", filterLabel: "Channel", icon: (r) => channelIcon(r.value), donut: true },
   { label: "Referrer", filterKey: "referring_domain", filterLabel: "Referrer", icon: (r) => referrerIcon(r.value), display: (r) => (r.value === "(direct)" ? "Direct/None" : r.value) },
@@ -298,6 +317,7 @@ export default function StatsDashboard({ initialQuery, initialView }: { initialQ
           {/* eslint-disable-next-line @next/next/no-img-element -- same-origin app icon */}
           <img src="/icon.png" alt="" />
           Omentir
+          <ThemeToggle />
         </div>
 
         <div className="stats-toolbar">

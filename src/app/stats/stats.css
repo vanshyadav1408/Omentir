@@ -75,6 +75,13 @@
   border-radius: 6px;
 }
 
+/* Light/dark switch on the brand row. stats.omentir.com is its own origin,
+   so the choice made on omentir.com does not carry over; this one is kept
+   separately. */
+.stats-theme-btn {
+  margin-left: auto;
+}
+
 .stats-brand small {
   color: var(--st-muted);
   font-weight: 500;
