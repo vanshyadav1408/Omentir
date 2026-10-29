@@ -499,7 +499,7 @@ function resolveHref(raw: string, scope: TsxScope, hrefFor: (href: string) => st
   if (quoted) return hrefFor(quoted.value);
   // Literal URLs and paths must not go through parseJsValue: `https://x.ai/bot`
   // parses as the identifier `https` because `//` starts a comment.
-  if (/^https?:\/\//.test(trimmed) || trimmed.startsWith("/")) return hrefFor(trimmed);
+  if (/^(https?:\/\/|mailto:|tel:)/.test(trimmed) || trimmed.startsWith("/")) return hrefFor(trimmed);
   const fromScope = valueToPlain(lookupPath(scope, trimmed));
   if (fromScope) return hrefFor(fromScope);
   return hrefFor(trimmed.replace(/^['"`]|['"`]$/g, ""));

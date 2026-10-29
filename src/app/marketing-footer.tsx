@@ -36,6 +36,7 @@ const footerColumns: Array<[string, ...Array<[label: string, href: string]>]> = 
     ["About", "/about"],
     ["Help", "/help"],
     ["Minimum Booking Guarantee", "/minimum-booking-guarantee"],
+    ["Security", "/security"],
     ["Privacy Policy", "/privacy-policy"],
     ["Terms of Service", "/terms-of-service"],
   ],
@@ -213,6 +214,7 @@ export default function MarketingFooter() {
             <Link href="/privacy-policy">Privacy Policy</Link>
             <Link href="/terms-of-service">Terms of Service</Link>
             <Link href="/minimum-booking-guarantee">Minimum Booking Guarantee</Link>
+            <Link href="/security">Security</Link>
           </nav>
           <p>&copy; {year} Omentir. Open Source, MIT licensed.</p>
         </div>

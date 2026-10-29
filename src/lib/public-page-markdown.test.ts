@@ -1,6 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import { markdownToPortableText } from "./cms/markdown-to-portable-text";
-import { blogPostToMarkdown, guidePageToMarkdown, seoPageToMarkdown } from "./public-page-markdown";
+import {
+  blogPostToMarkdown,
+  guidePageToMarkdown,
+  renderPublicMarkdown,
+  seoPageToMarkdown,
+} from "./public-page-markdown";
 
 describe("CMS markdown twins", () => {
   test("writes guide tables, steps and the short answer to the .md twin so agents get the same comparison as readers", () => {
@@ -83,5 +88,14 @@ describe("CMS markdown twins", () => {
     expect(markdown).toContain("# Sanity lead finders");
     expect(markdown).toContain("Sanity feature description");
     expect(markdown).toContain("Discovery quality follows the ICP you typed in Studio.");
+  });
+
+  test("keeps the security page's mailto links whole so a security team can reach us from the .md twin", async () => {
+    const markdown = await renderPublicMarkdown("/security");
+    expect(markdown).toContain("## Your LinkedIn account");
+    expect(markdown).toContain("### Do you store our LinkedIn password?");
+    expect(markdown).toContain("[vansh@omentir.com](mailto:vansh@omentir.com)");
+    expect(markdown).toContain("- **Your LinkedIn password:** Never reaches Omentir.");
+    expect(markdown).toContain("| Unipile | Connects to LinkedIn. |");
   });
 });
