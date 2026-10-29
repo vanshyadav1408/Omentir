@@ -87,18 +87,17 @@ export default function GrokBotSetupBlock({
           sentences a stranger would understand.
         </li>
         <li>
-          In Grok Bot, open Settings, then Plugins. Search Marketplace for
-          Omentir and add it. If it is not listed, add a custom MCP server
-          named Omentir with URL{" "}
+          Ask the Bot to add a custom MCP server named Omentir with URL{" "}
           <span className="font-mono text-sm">{GROK_BOT_MCP_URL}</span>
-          . Approve Connect workspace.
+          . Approve Connect workspace. On a team plan, an admin may need to
+          allow it in the Team Marketplace first.
         </li>
         <li>
-          Put this in the Bot description and leave it there: {GROK_BOT_STOP_RULE}
+          Tell the Bot this in chat and ask it to remember it: {GROK_BOT_STOP_RULE}
         </li>
         <li>
-          If it asks you to take over the computer for a LinkedIn password,
-          passkey, two-factor code, or CAPTCHA, refuse.
+          If it asks for your LinkedIn login, or hands you the computer for a
+          passkey, two-factor code, or CAPTCHA on LinkedIn, refuse.
         </li>
         <li>
           Paste the job below. Replace the brackets. Keep the last two sentences.
