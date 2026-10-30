@@ -671,21 +671,100 @@ export function AgentActionsSkeleton() {
   );
 }
 
-// Route loading state for /agents/[id]: the page header, then the queue.
-export function AgentPageSkeleton() {
+// The agent page's Overview tab: status, the coming-up tiles, results, and the
+// lead finding and outreach panels.
+export function AgentOverviewSkeleton() {
   return (
-    <div className="flex h-full min-h-0 min-w-0 flex-col gap-4 overflow-hidden md:mr-0.5 md:pb-3">
-      <div className="app-x flex shrink-0 items-start justify-between gap-3 pt-5 md:pt-6">
-        <div className="min-w-0 flex-1">
-          <Skeleton className="h-6 w-64 max-w-full" />
-          <Skeleton className="mt-3 h-3.5 w-80 max-w-full" />
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <Skeleton className="h-8 w-14" />
-          <Skeleton className="h-8 w-12" />
+    <div className="app-x flex flex-col gap-4" role="status" aria-label="Loading agent">
+      <div className="m3-card m3-card-outlined px-5 py-4">
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="mt-2 h-3.5 w-96 max-w-full" />
+      </div>
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        {[0, 1, 2, 3].map((cell) => (
+          <div key={cell} className="m3-card m3-card-outlined p-4">
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="mt-2.5 h-5 w-32" />
+            <Skeleton className="mt-2 h-3 w-40 max-w-full" />
+          </div>
+        ))}
+      </div>
+      <div className="m3-card m3-card-outlined px-5 py-4 sm:px-6 sm:py-5">
+        <Skeleton className="h-5 w-20" />
+        <div className="mt-5 grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-5">
+          {[0, 1, 2, 3, 4].map((cell) => (
+            <div key={cell}>
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="mt-2 h-8 w-12" />
+              <Skeleton className="mt-2 h-1.5 w-full" />
+            </div>
+          ))}
         </div>
       </div>
-      <AgentActionsSkeleton />
+      <div className="grid gap-4 lg:grid-cols-2">
+        {[0, 1].map((panel) => (
+          <div key={panel} className="m3-card m3-card-outlined px-5 py-4 sm:px-6 sm:py-5">
+            <Skeleton className="h-5 w-40" />
+            <Skeleton className="mt-5 h-3 w-24" />
+            <Skeleton className="mt-2 h-3.5 w-full" />
+            <Skeleton className="mt-2 h-3.5 w-4/5" />
+            <Skeleton className="mt-5 h-3 w-24" />
+            <Skeleton className="mt-2 h-6 w-3/4" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// The agent page's Leads tab: one card listing the agent's leads.
+export function AgentLeadsSkeleton() {
+  return (
+    <div className="app-x" role="status" aria-label="Loading leads">
+      <div className="m3-card m3-card-outlined overflow-hidden">
+        <div className="px-5 py-3.5">
+          <Skeleton className="h-4 w-28" />
+        </div>
+        {[0, 1, 2, 3, 4, 5].map((row) => (
+          <div key={row} className="flex items-center gap-3 px-5 py-3">
+            <Skeleton className="h-9 w-9 shrink-0 rounded-full" />
+            <div className="min-w-0 flex-1">
+              <Skeleton className="h-3.5 w-36 max-w-full" />
+              <Skeleton className="mt-2 h-3 w-60 max-w-full" />
+            </div>
+            <Skeleton className="h-5 w-20 shrink-0" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Route loading state for /agents/[id]: the page header and tabs, then the
+// Overview tab it opens on.
+export function AgentPageSkeleton() {
+  return (
+    <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden md:mr-0.5 md:pb-3">
+      <div className="app-x shrink-0 pt-5 md:pt-6">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <Skeleton className="h-6 w-64 max-w-full" />
+            <Skeleton className="mt-3 h-3.5 w-48 max-w-full" />
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <Skeleton className="h-8 w-14" />
+            <Skeleton className="h-8 w-12" />
+          </div>
+        </div>
+        <div className="mt-5 flex gap-6 border-b border-[var(--md-sys-color-outline-variant)] pb-2.5">
+          <Skeleton className="h-4 w-16" />
+          <Skeleton className="h-4 w-14" />
+          <Skeleton className="h-4 w-12" />
+        </div>
+      </div>
+      <div className="min-h-0 flex-1 overflow-hidden pt-5">
+        <AgentOverviewSkeleton />
+      </div>
     </div>
   );
 }

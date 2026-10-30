@@ -25,10 +25,12 @@ import {
 import CompleteSetupPrompt from "@/app/(app)/complete-setup-prompt";
 import MobileHeaderPortal from "@/app/mobile-header-portal";
 import { useWorkspaceTimeZone } from "@/app/workspace-time-zone";
-import { formatZonedDate, zonedDayKey } from "@/lib/time-zone";
+import { formatZonedDate } from "@/lib/time-zone";
 import { useHydrated } from "@/app/use-hydrated";
 import {
+  agentModeLabel,
   describeAgentStatus,
+  formatStatusTime,
   type AgentStatusFacts,
   type AgentStatusLine,
 } from "@/lib/agent-status";
@@ -78,35 +80,6 @@ const STATUS_LABEL: Record<AgentStatusLine["tone"], string> = {
   stopped: "text-red-700",
 };
 
-// "in 25 min", "today at 3:40 PM", "tomorrow at 8:00 AM", "Tue at 9:40 AM",
-// "Oct 3 at 9:40 AM", all on the workspace's clock.
-function formatStatusTime(iso: string, timeZone: string | undefined, nowMs: number) {
-  const diffMs = Date.parse(iso) - nowMs;
-  if (diffMs > 0 && diffMs < 60 * 60 * 1000) {
-    return `in ${Math.max(1, Math.round(diffMs / 60000))} min`;
-  }
-  const time = formatZonedDate(iso, timeZone, { hour: "numeric", minute: "2-digit" });
-  const day = zonedDayKey(iso, timeZone);
-  if (day === zonedDayKey(nowMs, timeZone)) return `today at ${time}`;
-  if (day === zonedDayKey(nowMs + 24 * 60 * 60 * 1000, timeZone)) return `tomorrow at ${time}`;
-  const dayLabel =
-    diffMs > 0 && diffMs < 6 * 24 * 60 * 60 * 1000
-      ? formatZonedDate(iso, timeZone, { weekday: "short" })
-      : formatZonedDate(iso, timeZone, { month: "short", day: "numeric" });
-  return `${dayLabel} at ${time}`;
-}
-
-function modeLabel(agent: Agent) {
-  if (agent.mode === "steal_customers") return "Steal Customers";
-  if (agent.mode === "outreach") return "Outreach Only";
-  // Leads-only agents are stored as "signals" like full agents, so without this
-  // there is no way to see which ones are barred from outreach.
-  if (agent.leadsOnly) return "Leads Only";
-  if (agent.mode === "signals") return "Leads + outreach";
-  if (agent.mode === "filters") return "Filters";
-  return "Prompt";
-}
-
 function linkedGroupName(agent: Agent, groups: Group[]) {
   return (
     groups.find((group) => group.id === agent.targetGroupId)?.name ||
@@ -116,7 +89,7 @@ function linkedGroupName(agent: Agent, groups: Group[]) {
 }
 
 function agentTitle(agent: Agent) {
-  return agent.name?.trim() || modeLabel(agent);
+  return agent.name?.trim() || agentModeLabel(agent);
 }
 
 type StatusFilter = "all" | "active" | "paused" | "error";
