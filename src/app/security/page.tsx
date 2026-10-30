@@ -334,7 +334,7 @@ export default function SecurityPage() {
       name: "Security",
       description,
       url: `${siteUrl}/security`,
-      dateModified: "October 29, 2026",
+      dateModified: "September 7, 2026",
     }),
     createBreadcrumbJsonLd([
       { name: "Home", url: siteUrl },
@@ -349,7 +349,7 @@ export default function SecurityPage() {
         path="security"
         title="Security"
         description={description}
-        updated="October 29, 2026"
+        updated="September 7, 2026"
       >
         <dl className="grid gap-3 sm:grid-cols-2">
           {glance.map((item) => (

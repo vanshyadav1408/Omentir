@@ -589,7 +589,7 @@ function securityMarkdown() {
         "/security"
       ),
       glance.join("\n"),
-      `Last updated: October 29, 2026`,
+      `Last updated: September 7, 2026`,
       groups.join("\n\n"),
       `## Which vendors process our data?\n\nThese are the companies that touch your data when you use the hosted version of Omentir. Self-hosting removes Clerk, Whop, and PostHog from the list.\n\n${vendors.join("\n")}`,
     ].join("\n\n")
