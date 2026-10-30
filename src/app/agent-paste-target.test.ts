@@ -11,6 +11,15 @@ describe("agentPasteTarget", () => {
     expect(agentPasteTarget("manus-automations-for-linkedin-outreach")).toBe("Manus");
   });
 
+  test("labels Gemini, Claude and Microsoft agent pages so they never show Grok Bot setup steps", () => {
+    expect(agentPasteTarget("can-i-use-gemini-spark-for-linkedin-outreach")).toBe("Gemini Spark");
+    expect(agentPasteTarget("can-a-gemini-coworker-agent-run-sales-outreach")).toBe("your Gemini agent");
+    expect(agentPasteTarget("can-i-use-claude-duet-for-linkedin-outreach")).toBe("Claude Duet");
+    expect(agentPasteTarget("how-do-i-connect-claude-cowork-to-omentir")).toBe("Cowork");
+    expect(agentPasteTarget("can-microsoft-autopilot-run-lead-research-on-a-schedule")).toBe("Autopilot");
+    expect(agentPasteTarget("can-chatgpt-workspace-agents-run-linkedin-outreach")).toBe("your workspace agent");
+  });
+
   test("keeps the Grok Bot default for unrelated pages", () => {
     expect(agentPasteTarget("grok-bot-sales-outreach")).toBeUndefined();
   });
