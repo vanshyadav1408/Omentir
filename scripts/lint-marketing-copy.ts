@@ -26,6 +26,7 @@ const STRICT_ROOTS = [
   "src/app/help",
   "src/app/surveys",
   "src/app/tools",
+  "src/app/security/page.tsx",
   "src/app/page.tsx",
   "src/lib/public-page-markdown.ts",
 ];

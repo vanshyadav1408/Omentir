@@ -260,6 +260,11 @@ export async function GET() {
       "Eligibility, warm-up period, weekly measurement, and refund process for the minimum booking guarantee."
     ),
     formatMarkdownTwinLink(
+      "Security",
+      "/security",
+      "How Omentir handles LinkedIn logins, where data is stored, which vendors process it, and what certifications it does not have yet."
+    ),
+    formatMarkdownTwinLink(
       "Privacy Policy",
       "/privacy-policy",
       "How Omentir collects, uses, stores, and protects account, LinkedIn, lead, campaign, message, and billing data."

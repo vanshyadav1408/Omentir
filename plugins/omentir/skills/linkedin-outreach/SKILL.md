@@ -38,4 +38,4 @@ Replies go through `omentir_reply_to_lead` on a captured thread, or `omentir_rep
 
 ## Grok Bot
 
-Installed plugins are account-wide. Attach this plugin with `@omentir`. Keep this stop rule in the Bot description: research and draft only. Never send. Never enroll. Never sign into LinkedIn.
+Installed plugins are account-wide. Attach this plugin with `@omentir`. Tell the Bot this stop rule in chat and ask it to remember it: research and draft only. Never send. Never enroll. Never sign into LinkedIn.

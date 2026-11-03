@@ -138,17 +138,24 @@ export default async function OAuthAuthorizePage({
         {workspaces.length > 1 ? (
           <label className="grid gap-1 text-[13px] font-medium text-zinc-800">
             Workspace
-            <select
-              name="workspace_id"
-              defaultValue={workspace.id}
-              className="h-10 rounded-md border border-zinc-200 bg-white px-3 text-[13px] font-normal text-zinc-900"
-            >
-              {workspaces.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {workspaceDisplayName(item)}
-                </option>
-              ))}
-            </select>
+            {/* The global pill radius puts the native arrow on the curve, so the
+                chevron is drawn here with room to breathe. */}
+            <span className="relative">
+              <select
+                name="workspace_id"
+                defaultValue={workspace.id}
+                className="h-10 w-full cursor-pointer appearance-none rounded-md border border-zinc-200 bg-white pl-4 pr-10 text-[13px] font-normal text-zinc-900"
+              >
+                {workspaces.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {workspaceDisplayName(item)}
+                  </option>
+                ))}
+              </select>
+              <span className="material-symbols-outlined pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[18px] leading-none text-zinc-500">
+                expand_more
+              </span>
+            </span>
           </label>
         ) : (
           <input type="hidden" name="workspace_id" value={workspace.id} />

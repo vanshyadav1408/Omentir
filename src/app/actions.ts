@@ -1508,7 +1508,8 @@ async function launchAgentFromSetupActionImpl(formData: FormData) {
     );
     throw error;
   }
-  redirect("/agents");
+  // Setup navigates to the new agent's page itself.
+  return { agentId: createdAgent.agentId };
 }
 
 export async function launchAgentFromSetupAction(...args: Parameters<typeof launchAgentFromSetupActionImpl>) {
@@ -1532,7 +1533,7 @@ async function launchOutreachAgentFromSetupActionImpl(formData: FormData) {
     );
     throw error;
   }
-  redirect("/agents");
+  return { agentId: createdAgent.agentId };
 }
 
 export async function launchOutreachAgentFromSetupAction(...args: Parameters<typeof launchOutreachAgentFromSetupActionImpl>) {
@@ -1549,7 +1550,7 @@ async function launchExistingAgentFromSetupActionImpl(formData: FormData) {
   formData.set("allowEmptyLeadGroup", "on");
 
   await createCampaignActionImpl(formData);
-  redirect("/agents");
+  return { agentId: updatedAgent.agentId };
 }
 
 export async function launchExistingAgentFromSetupAction(...args: Parameters<typeof launchExistingAgentFromSetupActionImpl>) {

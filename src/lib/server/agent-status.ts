@@ -93,14 +93,18 @@ async function campaignFacts(
   };
 }
 
+// agentId narrows the read to one agent (its page), so only that agent's
+// campaign queue is queried.
 export async function loadAgentStatusFacts(
   workspaceId: string,
+  agentId?: string,
 ): Promise<Record<string, AgentStatusFacts>> {
-  const [agents, campaigns, connected] = await Promise.all([
+  const [allAgents, campaigns, connected] = await Promise.all([
     listAgents(workspaceId),
     listCampaigns(workspaceId),
     listLinkedInAccounts(workspaceId),
   ]);
+  const agents = agentId ? allAgents.filter((agent) => agent.id === agentId) : allAgents;
   const automationPaused = isWorkspaceAutomationPaused(getAutomationSafetyMode(), workspaceId);
 
   // Several agents can share a group, so each campaign is read once.

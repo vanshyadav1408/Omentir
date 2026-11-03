@@ -77,7 +77,7 @@ Omentir stores your workspace, leads, conversations, and agent settings so campa
 ## Grok Bot notes
 
 - Prefer this plugin over clicking through LinkedIn in the Bot browser.
-- Put this in the Bot description and leave it there: research and draft only. Never send. Never enroll. Never sign into LinkedIn.
+- Tell the Bot this in chat and ask it to remember it: research and draft only. Never send. Never enroll. Never sign into LinkedIn.
 - Overnight job prompts: https://omentir.com/integrations/grok-bot
 
 ## Docs

@@ -72,7 +72,9 @@ type PreparedAgent = {
 };
 
 type AgentSetupProps = {
-  createAgent: (formData: FormData) => Promise<void | ActionFailure>;
+  // Launches return the agent so setup can open its page; edits redirect to
+  // Agents on the server and return nothing.
+  createAgent: (formData: FormData) => Promise<void | { agentId: string } | ActionFailure>;
   prepareAgent: (formData: FormData) => Promise<PreparedAgent | ActionFailure>;
   draftSetup: () => Promise<AgentSetupDraft | ActionFailure>;
   saveProductProfile?: (
@@ -1092,7 +1094,7 @@ export default function AgentSetup({
         if (preparedAgent?.groupName === groupName.trim()) {
           // Client navigation keeps ToastProvider mounted, so show immediately.
           showAgentStarted(agentStartedLabel(), "leads_only");
-          router.replace("/agents");
+          router.replace(`/agents/${preparedAgent.agentId}`);
           return;
         }
         const formData = new FormData(event.currentTarget);
@@ -1107,7 +1109,7 @@ export default function AgentSetup({
           // Leads-only agents are complete once prepared: the agent and its
           // lead group exist and discovery is scheduled - no campaign step.
           showAgentStarted(agentStartedLabel(), "leads_only");
-          router.replace("/agents");
+          router.replace(`/agents/${result.agentId}`);
         } catch (error) {
           // Production delivers a completed setup redirect as React #441.
           // That is navigation, not a failed prepare.
@@ -1200,12 +1202,14 @@ export default function AgentSetup({
     setSubmitError("");
     startTransition(async () => {
       try {
-        // Survives navigation to /agents (full, steal, outreach, edit).
+        // Survives navigation to the agent's page or Agents (full, steal,
+        // outreach, edit).
         markAgentStartedNotice(agentStartedLabel(), agentStartedKind);
-        unwrapAction(await createAgent(formData));
-        // Always land on Agents for every mode. Server actions also redirect
-        // here; client replace covers cases where the redirect is swallowed.
-        router.replace("/agents");
+        const result = unwrapAction(await createAgent(formData));
+        // A launch lands on the agent it just created. An edit has no result:
+        // its server action redirects to Agents, and this replace covers cases
+        // where that redirect is swallowed.
+        router.replace(result ? `/agents/${result.agentId}` : "/agents");
       } catch (error) {
         if (isNextNavigationError(error)) {
           // Server redirect already targets /agents. Production hides that

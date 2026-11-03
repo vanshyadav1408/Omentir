@@ -8032,11 +8032,10 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
     center / contain no-repeat;
 }
 
-/* ── Site theme (Cursor-style, whole product) ──────────────────────────────
-   Modelled on cursor.com: its warm brown neutrals are shifted to the olive of
-   our feature panels (#12160f), and cards keep our 1px border and corner
-   radius instead of Cursor's borderless tiles. Applies to the marketing site
-   and the app alike.
+/* ── Site theme (base palette, whole product) ──────────────────────────────
+   Originally cursor.com-style olive; the values now follow the app's
+   Calendly-style palette. The app and marketing blocks further down refine
+   it while their shells are mounted.
 
    The --google-* remap below sits on :root, where every --md-sys-color-* role
    is declared, so all of them recompute from the site palette. Dark is the
@@ -8045,19 +8044,19 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
    palette. <html> keeps the `dark` class in both, so the `html.dark` rules
    below stay active and must read tokens rather than hardcoded white. */
 :root {
-  /* cursor.com's values (bg #14120b, cards #1b1913 / #201e18 / #26241e /
-     #2b2923, ink #edecec, 60% / 40% secondary ink, 10% hairlines) with the
-     red and green channels swapped, so the same tones read green, not brown. */
-  --site-bg: #12140b;
-  --site-card: #191b13;
-  --site-card-2: #1e2018;
-  --site-card-3: #24261e;
-  --site-card-4: #292b23;
-  --site-text: #ecedec;
-  --site-border: color-mix(in oklab, var(--site-text) 10%, transparent);
-  --site-accent: #c2d0aa;
-  --site-text-2: color-mix(in oklab, var(--site-text) 60%, transparent);
-  --site-text-3: color-mix(in oklab, var(--site-text) 40%, transparent);
+  /* The app's Calendly-style blue-greys (see the dashboard block further
+     down), so pages outside the app and marketing shells (OAuth consent,
+     checkout, setup, error pages) match the current scheme, not the old olive. */
+  --site-bg: #0f1114;
+  --site-card: #17191d;
+  --site-card-2: #1e2126;
+  --site-card-3: #262a30;
+  --site-card-4: #2e333a;
+  --site-text: #eef1f4;
+  --site-border: #2a2f36;
+  --site-accent: #8dbdf7;
+  --site-text-2: #a4aeb8;
+  --site-text-3: #7c8793;
 
   /* Muted ink steps for the legacy zinc text rules (same alphas as before on
      dark; the light theme raises them so grey text stays dark). */
@@ -8106,18 +8105,17 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
 
 :root[data-site-theme="light"] {
   color-scheme: light;
-  /* cursor.com light (bg #f7f7f4, cards #f2f1ed / #ebeae5 / #e6e5e0 /
-     #e1e0db, ink #26251e) with the same channel swap; ink stays neutral. */
-  --site-bg: #f7f7f4;
-  --site-card: #f1f2ed;
-  --site-card-2: #eaebe5;
-  --site-card-3: #e5e6e0;
-  --site-card-4: #e0e1db;
-  --site-text: #252525;
-  --site-border: color-mix(in oklab, var(--site-text) 10%, transparent);
-  --site-accent: #252525;
-  --site-text-2: color-mix(in oklab, var(--site-text) 60%, transparent);
-  --site-text-3: color-mix(in oklab, var(--site-text) 40%, transparent);
+  /* The app's Calendly-style light palette; ink stays neutral. */
+  --site-bg: #f8f9f9;
+  --site-card: #ffffff;
+  --site-card-2: #f3f5f7;
+  --site-card-3: #e9edf1;
+  --site-card-4: #dde3e9;
+  --site-text: #0b0d0f;
+  --site-border: #e4e6e9;
+  --site-accent: #0b0d0f;
+  --site-text-2: #545f69;
+  --site-text-3: #81909c;
   --ink-soft: color-mix(in oklab, var(--site-text) 85%, transparent);
   --ink-faint: color-mix(in oklab, var(--site-text) 68%, transparent);
 
