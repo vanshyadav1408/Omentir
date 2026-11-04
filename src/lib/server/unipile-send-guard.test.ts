@@ -1,9 +1,10 @@
 import { afterAll, beforeEach, expect, mock, test } from "bun:test";
 
 mock.module("server-only", () => ({}));
+let profileViewsLeft = true;
 mock.module("./data", () => ({
   consumeAvatarViewBudget: async () => "exhausted",
-  consumeProfileViewBudget: async () => true,
+  consumeProfileViewBudget: async () => profileViewsLeft,
   listLinkedInAccounts: async () => [],
   getConversation: async () => ({ messages: [] }),
   listLeadEnrollments: async () => [],
@@ -25,13 +26,16 @@ globalThis.fetch = (async (url: RequestInfo | URL, init?: RequestInit) => {
     return Response.json({ message_id: "sent-message", chat_id: "chat" });
   }
   if (path === "/api/v1/users/person") return Response.json({ provider_id: "ACo-new-provider" });
+  if (path === "/api/v1/users/nobody") return Response.json({ public_identifier: "nobody" });
   if (path === "/api/v1/chat_attendees/ACo-old-provider/chats") return Response.json({
     type: "errors/resource_not_found",
     detail: "The requested resource were not found.\nAttendee not found",
   }, { status: 404 });
   throw new Error(`Unexpected request: ${path}`);
 }) as typeof fetch;
-const { sendLinkedInMessage, LinkedInMessageSendBlocked } = await import("./unipile");
+const {
+  sendConnectionRequest, sendLinkedInMessage, LinkedInMessageSendBlocked, LinkedInRecipientUnresolved,
+} = await import("./unipile");
 const { stopForOwnerMessage } = await import("./owner-message-guard");
 const input = {
   accountId: "account", providerProfileId: "ACo-old-provider",
@@ -40,6 +44,7 @@ const input = {
 beforeEach(() => {
   posts.length = 0;
   rejectFirst = false;
+  profileViewsLeft = true;
 });
 afterAll(() => {
   globalThis.fetch = originalFetch;
@@ -98,4 +103,25 @@ test("recipient resolution retries check the new recipient's history before a se
   })).rejects.toBeInstanceOf(LinkedInMessageSendBlocked);
   expect(checked).toEqual(["ACo-old-provider", "ACo-new-provider"]);
   expect(posts).toHaveLength(1);
+});
+
+// A lead with no stored member id needs a profile view to resolve one. Agent
+// discovery spends the shared 75/day budget early, and every invite to such a
+// lead then failed all day (99 enrollments across 4 workspaces on 2026-11-04).
+test("send-time recipient lookup still resolves after discovery spent the daily view budget", async () => {
+  profileViewsLeft = false;
+  expect(await sendLinkedInMessage({ ...input, providerProfileId: undefined }))
+    .toEqual({ id: "sent-message", chatId: "chat" });
+  expect(posts).toHaveLength(1);
+});
+
+// When the profile truly yields no member id, nothing is sent, and the
+// automation must know that for certain: a generic error was parked as an
+// "unconfirmed send" needing manual review, and connect-step leads stayed
+// parked forever.
+test("an unresolvable recipient fails with a typed error before any request is sent", async () => {
+  const noId = { ...input, providerProfileId: undefined, linkedInUrl: "https://linkedin.com/in/nobody" };
+  await expect(sendLinkedInMessage(noId)).rejects.toBeInstanceOf(LinkedInRecipientUnresolved);
+  await expect(sendConnectionRequest(noId)).rejects.toBeInstanceOf(LinkedInRecipientUnresolved);
+  expect(posts).toHaveLength(0);
 });

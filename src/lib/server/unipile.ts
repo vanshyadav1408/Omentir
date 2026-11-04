@@ -2049,11 +2049,16 @@ export async function isFirstDegreeConnection(input: {
 export async function retrieveLinkedInProfile(input: {
   accountId: string;
   identifier: string;
+  // Send-time recipient resolution must not lose to the daily discovery cap:
+  // agent discovery spent all 75 views by mid-morning and every invite to a
+  // lead without a stored member id failed for the rest of the day. Sends are
+  // already capped by the daily invite/message quotas, so views stay bounded.
+  ignoreViewBudget?: boolean;
 }) {
   if (!isUnipileConfigured()) return null;
 
   // Enrichment callers all tolerate null and keep their base data.
-  if (!(await takeProfileViewBudget(input.accountId))) return null;
+  if (!input.ignoreViewBudget && !(await takeProfileViewBudget(input.accountId))) return null;
   await waitForProfileViewSlot();
 
   const identifier = linkedInIdentifier(input.identifier);
@@ -2928,12 +2933,13 @@ export async function sendConnectionRequest(input: {
     const profile = await retrieveLinkedInProfile({
       accountId: input.accountId,
       identifier: linkedInIdentifier(input.linkedInUrl),
+      ignoreViewBudget: true,
     });
     if (profile?.providerProfileId) providerProfileId = profile.providerProfileId;
   }
 
   if (!looksLikeLinkedInProviderId(providerProfileId)) {
-    throw new Error("LinkedIn provider id is required to send a connection request.");
+    throw new LinkedInRecipientUnresolved("LinkedIn provider id is required to send a connection request.");
   }
 
   const invite = async (resolvedProviderId: string) => {
@@ -2956,6 +2962,7 @@ export async function sendConnectionRequest(input: {
     const profile = await retrieveLinkedInProfile({
       accountId: input.accountId,
       identifier: linkedInIdentifier(input.linkedInUrl),
+      ignoreViewBudget: true,
     });
     const resolvedProviderId = profile?.providerProfileId;
     if (!looksLikeLinkedInProviderId(resolvedProviderId) || resolvedProviderId === providerProfileId) {
@@ -2967,6 +2974,12 @@ export async function sendConnectionRequest(input: {
 }
 
 export class LinkedInMessageSendBlocked extends Error {}
+
+// Thrown before any request is made: the recipient's member id could not be
+// resolved (usually the daily profile-view budget is spent). Nothing reached
+// LinkedIn, so the send is safe to retry and must never be treated as an
+// unconfirmed send.
+export class LinkedInRecipientUnresolved extends Error {}
 
 export async function sendLinkedInMessage(input: {
   accountId: string;
@@ -2985,12 +2998,13 @@ export async function sendLinkedInMessage(input: {
     const profile = await retrieveLinkedInProfile({
       accountId: input.accountId,
       identifier: linkedInIdentifier(input.linkedInUrl),
+      ignoreViewBudget: true,
     });
     if (profile?.providerProfileId) providerProfileId = profile.providerProfileId;
   }
 
   if (!looksLikeLinkedInProviderId(providerProfileId)) {
-    throw new Error("LinkedIn provider id is required to send a message.");
+    throw new LinkedInRecipientUnresolved("LinkedIn provider id is required to send a message.");
   }
 
   const send = async (resolvedProviderId: string) => {
@@ -3027,6 +3041,7 @@ export async function sendLinkedInMessage(input: {
       profile = await retrieveLinkedInProfile({
         accountId: input.accountId,
         identifier: linkedInIdentifier(input.linkedInUrl),
+        ignoreViewBudget: true,
       });
     } catch {
       throw error;

@@ -149,6 +149,7 @@ import {
   sendConnectionRequest,
   sendLinkedInMessage,
   LinkedInMessageSendBlocked,
+  LinkedInRecipientUnresolved,
   UnipileResponseError,
 } from "./unipile";
 import type {
@@ -224,6 +225,17 @@ const UNCONFIRMED_PROVIDER_SEND_PREFIX = "Unconfirmed provider send";
 
 class UnconfirmedProviderSendError extends Error {}
 
+// The send provably never reached LinkedIn: Unipile answered with a rejection,
+// or the recipient id could not be resolved before any request was made.
+function isRejectedBeforeDelivery(error: unknown) {
+  return error instanceof UnipileResponseError || error instanceof LinkedInRecipientUnresolved;
+}
+
+// Before LinkedInRecipientUnresolved existed, this pre-send failure was
+// wrapped as an unconfirmed send and parked for manual review. Nothing was
+// sent, so those enrollments can resume.
+const UNRESOLVED_RECIPIENT_ERROR_MARKER = "LinkedIn provider id is required";
+
 // Human-like pacing. Invites and follow-ups share one per-account drip of at
 // most one per SPACING_MINUTES, enforced across ticks and manual runs by the
 // persistent claimActionSlot gate. AI replies use that same gate at send time
@@ -294,7 +306,13 @@ async function sendProviderAction<T>(action: () => Promise<T>) {
   try {
     return await action();
   } catch (error) {
-    if (error instanceof UnipileResponseError || error instanceof LinkedInMessageSendBlocked) throw error;
+    if (
+      error instanceof UnipileResponseError ||
+      error instanceof LinkedInMessageSendBlocked ||
+      error instanceof LinkedInRecipientUnresolved
+    ) {
+      throw error;
+    }
     throw new UnconfirmedProviderSendError(
       error instanceof Error ? error.message : "The provider result was unavailable.",
     );
@@ -889,7 +907,10 @@ async function runEnrollment(
   }
 
   if (enrollment.lastError?.startsWith(UNCONFIRMED_PROVIDER_SEND_PREFIX)) {
-    if (recoveredStatus !== "queued") {
+    if (
+      recoveredStatus !== "queued" ||
+      enrollment.lastError.includes(UNRESOLVED_RECIPIENT_ERROR_MARKER)
+    ) {
       await updateCurrentEnrollment({
         status: recoveredStatus,
         pendingAction: undefined,
@@ -1699,7 +1720,7 @@ export async function executeScheduledActionNow(workspaceId: string, enrollmentI
         lastError: message,
         retryCount: (enrollment.retryCount || 0) + 1,
         nextActionAt: addMinutes(retryMinutes),
-        ...(error instanceof UnipileResponseError ? { pendingAction: undefined } : {}),
+        ...(isRejectedBeforeDelivery(error) ? { pendingAction: undefined } : {}),
       });
       await safeLogAutomationRun({ workspaceId, kind: "campaign", status: "error", message });
       throw new Error(message);
@@ -2177,7 +2198,7 @@ async function runCampaigns(mode: AutomationSafetyMode) {
         // next tick retries cleanly instead of seeing a stranded pendingAction
         // and parking the enrollment for manual review. Network drops/timeouts
         // (no UnipileResponseError) stay ambiguous and keep the claim.
-        ...(error instanceof UnipileResponseError ? { pendingAction: undefined } : {}),
+        ...(isRejectedBeforeDelivery(error) ? { pendingAction: undefined } : {}),
       });
       await logAutomationRun({
         workspaceId: enrollment.workspaceId,
