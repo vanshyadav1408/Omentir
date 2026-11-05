@@ -109,6 +109,24 @@ const nextConfig: NextConfig = {
       { source: "/contact/:path*", destination: "/overview", permanent: true },
       { source: "/for-agents", destination: "/features/agent-api-and-mcp", permanent: true },
       { source: "/mcp-server", destination: "/integrations/mcp", permanent: true },
+      // Retired pages that still get Google impressions (Search Console, 2026-11-05).
+      // Only URLs with a close live equivalent; off-topic ones stay 404.
+      { source: "/linkedin-api", destination: "/blogs/unipile-safe-linkedin-api", permanent: true },
+      { source: "/dripify", destination: "/comparisons/omentir-vs-dripify", permanent: true },
+      { source: "/expandi", destination: "/comparisons/omentir-vs-expandi", permanent: true },
+      { source: "/instantly-ai-alternatives", destination: "/comparisons/omentir-vs-instantly", permanent: true },
+      { source: "/automation-for-linkedin", destination: "/alternatives/linkedin-automation", permanent: true },
+      { source: "/linkedin-outreach-automation", destination: "/alternatives/linkedin-automation", permanent: true },
+      { source: "/linkedin-automation-tools", destination: "/alternatives/linkedin-automation", permanent: true },
+      { source: "/linkedin-automation-software", destination: "/alternatives/linkedin-automation", permanent: true },
+      { source: "/best-linkedin-automation-tools", destination: "/alternatives/linkedin-automation", permanent: true },
+      { source: "/linkedin-message-automation", destination: "/alternatives/linkedin-automation", permanent: true },
+      { source: "/linkedin-lead-generation-automation", destination: "/alternatives/linkedin-automation", permanent: true },
+      { source: "/alternains/grok-bot", destination: "/alternatives/grok-bot", permanent: true },
+      { source: "/use-cases/grok-bound-outbound", destination: "/use-cases/grok-bot-outbound", permanent: true },
+      { source: "/help/how-to-message-someone-on-connecting", destination: "/help/how-to-message-someone-on-linkedin-without-connecting", permanent: true },
+      { source: "/help/how-to-message-someone-on-connecting-first", destination: "/help/how-to-message-someone-on-linkedin-without-connecting", permanent: true },
+      { source: "/help/why-cant-i-dont-add-a-note-to-linkedin-connection-request", destination: "/help/why-cant-i-add-a-note-to-linkedin-connection-request", permanent: true },
       // Do not rewrite `/` to /studio: the homepage is statically prerendered
       // and the client would hydrate the landing page. Send the browser to the
       // real Studio route instead. Proxy also redirects when Cloudflare
