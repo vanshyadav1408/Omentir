@@ -111,7 +111,10 @@ const nextConfig: NextConfig = {
       { source: "/mcp-server", destination: "/integrations/mcp", permanent: true },
       // Retired pages that still get Google impressions (Search Console, 2026-11-05).
       // Only URLs with a close live equivalent; off-topic ones stay 404.
-      { source: "/linkedin-api", destination: "/blogs/unipile-safe-linkedin-api", permanent: true },
+      { source: "/linkedin-api", destination: "/blogs/how-omentir-connects-to-linkedin", permanent: true },
+      // The post about the old LinkedIn API provider was rewritten under a new slug (2026-11-16).
+      { source: "/blogs/unipile-safe-linkedin-api", destination: "/blogs/how-omentir-connects-to-linkedin", permanent: true },
+      { source: "/blogs/unipile-safe-linkedin-api.md", destination: "/blogs/how-omentir-connects-to-linkedin.md", permanent: true },
       { source: "/dripify", destination: "/comparisons/omentir-vs-dripify", permanent: true },
       { source: "/expandi", destination: "/comparisons/omentir-vs-expandi", permanent: true },
       { source: "/instantly-ai-alternatives", destination: "/comparisons/omentir-vs-instantly", permanent: true },
