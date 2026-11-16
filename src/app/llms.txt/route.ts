@@ -265,6 +265,11 @@ export async function GET() {
       "How Omentir handles LinkedIn logins, where data is stored, which vendors process it, and what certifications it does not have yet."
     ),
     formatMarkdownTwinLink(
+      "LinkedIn Account Safety",
+      "/linkedin-account-safety",
+      "How Omentir signs in to LinkedIn, what it stores, daily limits, restriction risk, and the 7-day disconnect after a plan ends."
+    ),
+    formatMarkdownTwinLink(
       "Privacy Policy",
       "/privacy-policy",
       "How Omentir collects, uses, stores, and protects account, LinkedIn, lead, campaign, message, and billing data."

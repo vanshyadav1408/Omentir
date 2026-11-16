@@ -47,7 +47,7 @@ import {
   linkedInChatBelongsToAccount,
   listLinkedInInbox,
   sendLinkedInChatMessage,
-} from "./unipile";
+} from "./linkedin";
 
 function asAgentError(error: unknown, fallback: string, status = 400): never {
   if (error instanceof AgentApiOperationError) throw error;
@@ -366,7 +366,7 @@ export async function listInboxResource(context: AgentApiContext, payload: unkno
       displayName: account.displayName,
       avatarUrl: account.avatarUrl,
     })),
-    error: errors.length ? "LinkedIn messages could not be loaded from Unipile." : undefined,
+    error: errors.length ? "LinkedIn messages could not be loaded." : undefined,
   };
 }
 

@@ -1,0 +1,612 @@
+/* /a: "Omentir for AI agents". The same minimal shape as the homepage: a
+   painted sky hero, big centered two-tone statements, and scroll motion
+   driven by AgentsMotion (agents-motion.tsx):
+   - `--p` on `[data-ag-act]`: how far you are through a pinned section;
+   - `data-step` on the features section: which feature shows;
+   - `data-in` on `[data-ag-reveal]`: the section has come into view.
+   The base rules are the static page, which is what visitors get without
+   JavaScript, with reduced motion, or on small screens. The motion rules sit
+   behind `.ag-page[data-ready]`. Colors come from the site tokens except
+   the sky, which stays the same in every theme. Scoped to `.ag-` classes
+   because Next keeps a page stylesheet loaded after navigation. */
+
+.ag-page {
+  overflow-x: clip;
+}
+
+/* ── Hero ────────────────────────────────────────────────────────────── */
+
+.ag-hero {
+  padding: 12px;
+}
+
+.ag-sky {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100svh - 24px);
+  padding: 96px 24px 96px;
+  overflow: hidden;
+  border-radius: 22px;
+  background:
+    radial-gradient(70% 38% at 50% 104%, rgb(240 246 255 / 0.85) 0%, rgb(240 246 255 / 0) 70%),
+    linear-gradient(#123f8c 0%, #2c66b8 34%, #5f97d6 62%, #a9cbee 84%, #e4eef8 100%);
+  color: #ffffff;
+  text-align: center;
+}
+
+.ag-sky::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: linear-gradient(rgb(14 62 150 / 0.35) 0%, rgb(24 86 180 / 0.15) 40%, transparent 65%);
+  pointer-events: none;
+}
+
+/* Soft cloud banks that drift slowly sideways. */
+.ag-cloud {
+  position: absolute;
+  z-index: -1;
+  bottom: -14%;
+  height: 36%;
+  border-radius: 50%;
+  filter: blur(12px);
+  opacity: 0.95;
+}
+
+.ag-cloud-1 {
+  left: -12%;
+  width: 66%;
+  background:
+    radial-gradient(closest-side at 30% 60%, #ffffff 40%, rgb(255 255 255 / 0) 100%),
+    radial-gradient(closest-side at 65% 45%, #f7f9fc 35%, rgb(255 255 255 / 0) 100%);
+}
+
+.ag-cloud-2 {
+  right: -14%;
+  width: 70%;
+  background:
+    radial-gradient(closest-side at 30% 65%, #f4f7fb 38%, rgb(255 255 255 / 0) 100%),
+    radial-gradient(closest-side at 62% 40%, #ffffff 40%, rgb(255 255 255 / 0) 100%);
+}
+
+/* !important: the global `html.dark h1` ink rule would otherwise win. */
+.ag-sky h1 {
+  max-width: 13em;
+  margin: 0;
+  color: #ffffff !important;
+  font-family: var(--font-cal-display);
+  font-size: clamp(38px, 5.6vw, 76px);
+  font-weight: 600;
+  line-height: 1.08;
+  letter-spacing: -0.024em;
+  text-shadow: 0 2px 40px rgb(6 30 80 / 0.45);
+  text-wrap: balance;
+}
+
+.ag-sky > p {
+  max-width: 32em;
+  margin: 20px 0 0;
+  color: rgb(255 255 255 / 0.9);
+  font-size: clamp(16px, 1.4vw, 19px);
+  line-height: 1.5;
+  text-shadow: 0 1px 20px rgb(6 30 80 / 0.4);
+}
+
+.ag-cta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 34px;
+}
+
+.ag-down {
+  position: absolute;
+  left: 50%;
+  bottom: 30px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 18px;
+  border-radius: 9999px;
+  background: rgb(20 32 56 / 0.32);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  color: #ffffff;
+  font-size: 13.5px;
+  transform: translateX(-50%);
+}
+
+.ag-down svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ── Statements ──────────────────────────────────────────────────────── */
+
+.ag-slide {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100svh;
+  padding: 96px 24px;
+  text-align: center;
+}
+
+.ag-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(100%, 1040px);
+}
+
+/* Doubled class: beats the global `html.dark h2:not([class*="text-"])` ink. */
+.ag-say.ag-say,
+.ag-why.ag-why {
+  margin: 0;
+  color: var(--site-text);
+  font-family: var(--font-cal-display);
+  font-size: clamp(34px, 4.6vw, 60px);
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -0.024em;
+  text-wrap: balance;
+}
+
+.ag-say span {
+  color: var(--site-text-3);
+}
+
+.ag-note {
+  max-width: 34em;
+  margin: 30px 0 0;
+  color: var(--site-text-2);
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.ag-note a {
+  color: var(--site-text);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklab, var(--site-text) 35%, transparent);
+  text-underline-offset: 3px;
+}
+
+.ag-note a:hover {
+  text-decoration-color: currentColor;
+}
+
+/* The statement that lights up word by word. Static: all words lit. */
+.ag-why-act {
+  --p: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100svh;
+  padding: 96px 24px;
+  text-align: center;
+}
+
+.ag-why.ag-why {
+  max-width: 15em;
+}
+
+.ag-why span {
+  opacity: clamp(0.14, calc(var(--p) * (var(--n) + 4) - var(--i)), 1);
+  transition: opacity 200ms linear;
+}
+
+/* Big words in a row: steps, and the "keeps working" facts. */
+.ag-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  width: 100%;
+  margin: 64px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ag-steps li {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.ag-steps:not(.ag-facts) li + li::before {
+  content: "\2192";
+  position: absolute;
+  top: 58px;
+  left: -12px;
+  color: var(--site-text-3);
+  font-size: 22px;
+  transform: translate(-50%, -50%);
+}
+
+.ag-steps small {
+  color: var(--site-text-3);
+  font-size: 13px;
+}
+
+.ag-steps b {
+  color: var(--site-text);
+  font-family: var(--font-cal-display);
+  font-size: clamp(36px, 4.4vw, 58px);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+.ag-steps span {
+  max-width: 17em;
+  color: var(--site-text-2);
+  font-size: 14.5px;
+  line-height: 1.45;
+}
+
+.ag-url {
+  margin-top: 10px;
+  padding: 6px 12px;
+  border: 1px solid var(--site-border);
+  border-radius: 9999px;
+  background: var(--site-card);
+  color: var(--site-text-2);
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 12px;
+  user-select: all;
+}
+
+/* ── What it does ────────────────────────────────────────────────────────
+   Static: the four features stacked. Pinned (wide screens, motion on): one
+   feature at a time, picked by `data-step`. */
+
+.ag-feats {
+  display: grid;
+  gap: 72px;
+  width: min(100% - 48px, 1100px);
+  margin: 0 auto;
+  padding: 96px 0;
+}
+
+.ag-eyebrow.ag-eyebrow {
+  margin: 0;
+  color: var(--site-text-3);
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.ag-dots {
+  display: none;
+}
+
+.ag-feat {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  align-items: center;
+  gap: clamp(32px, 6vw, 88px);
+}
+
+.ag-feat-text h3 {
+  margin: 0;
+  color: var(--site-text);
+  font-family: var(--font-cal-display);
+  font-size: clamp(32px, 4vw, 54px);
+  font-weight: 600;
+  line-height: 1.08;
+  letter-spacing: -0.028em;
+}
+
+.ag-feat-text p {
+  max-width: 24em;
+  margin: 18px 0 0;
+  color: var(--site-text-2);
+  font-size: clamp(16px, 1.3vw, 18.5px);
+  line-height: 1.55;
+}
+
+/* The small sample card, like the homepage feature cards. */
+.ag-card {
+  padding: 22px 24px 12px;
+  border: 1px solid var(--site-border);
+  border-radius: 18px;
+  background: var(--site-card);
+  box-shadow: 0 30px 60px -30px rgb(0 0 0 / 0.55);
+}
+
+.ag-card-k {
+  margin: 0 0 8px;
+  color: var(--site-text-3);
+  font-size: 12.5px;
+}
+
+.ag-card ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ag-card li {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.3fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 0;
+  border-top: 1px solid var(--site-border);
+  font-size: 14.5px;
+}
+
+.ag-card li span:first-child {
+  color: var(--site-text);
+  font-weight: 600;
+}
+
+.ag-card li span:nth-child(2) {
+  overflow: hidden;
+  color: var(--site-text-2);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ag-card li b {
+  padding: 3px 10px;
+  border-radius: 9999px;
+  background: color-mix(in oklab, var(--site-primary) 16%, transparent);
+  color: var(--site-primary);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+/* ── Motion ──────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: no-preference) {
+  .ag-cloud-1 {
+    animation: ag-drift 60s ease-in-out infinite alternate;
+  }
+
+  .ag-cloud-2 {
+    animation: ag-drift 75s ease-in-out infinite alternate-reverse;
+  }
+
+  /* Hero entrance on load. */
+  .ag-enter {
+    animation: ag-rise 900ms var(--site-ease) both;
+    animation-delay: calc(var(--i, 0) * 120ms + 100ms);
+  }
+
+  .ag-down svg {
+    animation: ag-bob 2.4s ease-in-out infinite;
+  }
+
+  /* Statement: pinned while its words light up. */
+  .ag-page[data-ready] .ag-why-act {
+    display: block;
+    height: 230svh;
+    min-height: 0;
+    padding: 0;
+  }
+
+  .ag-page[data-ready] .ag-why-act .ag-pin {
+    position: sticky;
+    top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100svh;
+    padding: 0 24px;
+  }
+
+  /* Sections build in once they come into view. */
+  .ag-page[data-ready] [data-ag-reveal] :is(.ag-say, .ag-in) {
+    transition:
+      opacity 700ms var(--site-ease),
+      transform 900ms var(--site-ease);
+    transition-delay: calc(var(--i, 0) * 120ms);
+  }
+
+  .ag-page[data-ready] [data-ag-reveal]:not([data-in]) :is(.ag-say, .ag-in) {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+
+  .ag-page[data-ready] [data-ag-reveal] .ag-steps:not(.ag-facts) li + li::before {
+    transition: opacity 500ms ease 700ms;
+  }
+
+  .ag-page[data-ready] [data-ag-reveal]:not([data-in]) .ag-steps li + li::before {
+    opacity: 0;
+  }
+}
+
+/* What it does, pinned: one feature per step on wide screens. */
+@media (min-width: 901px) and (prefers-reduced-motion: no-preference) {
+  .ag-page[data-ready] .ag-feats-act {
+    height: 400svh;
+  }
+
+  .ag-page[data-ready] .ag-feats-act .ag-pin {
+    position: sticky;
+    top: 0;
+    height: 100svh;
+  }
+
+  .ag-page[data-ready] .ag-feats {
+    position: relative;
+    display: block;
+    height: 100%;
+    padding: 0;
+  }
+
+  .ag-page[data-ready] .ag-eyebrow {
+    position: absolute;
+    top: calc(50% - 190px);
+    left: 0;
+    text-align: left;
+  }
+
+  .ag-page[data-ready] .ag-dots {
+    position: absolute;
+    top: calc(50% + 150px);
+    left: 0;
+    display: flex;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .ag-dots li {
+    width: 18px;
+    height: 4px;
+    border-radius: 9999px;
+    background: var(--site-card-4);
+    transition: width 400ms var(--site-ease), background-color 300ms ease;
+  }
+
+  .ag-page[data-ready] .ag-feat {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(28px);
+    transition:
+      opacity 500ms ease,
+      transform 700ms var(--site-ease),
+      visibility 0s linear 500ms;
+  }
+
+  .ag-page[data-ready] .ag-feat .ag-card {
+    transform: translateY(18px) scale(0.98);
+    transition: transform 800ms var(--site-ease) 80ms;
+  }
+
+  .ag-page[data-ready] .ag-feat .ag-card li {
+    opacity: 0;
+    transform: translateX(14px);
+    transition:
+      opacity 400ms ease,
+      transform 600ms var(--site-ease);
+  }
+
+  .ag-page[data-ready] .ag-feats-act:is([data-step="0"]) .ag-feat:nth-of-type(1),
+  .ag-page[data-ready] .ag-feats-act:is([data-step="1"]) .ag-feat:nth-of-type(2),
+  .ag-page[data-ready] .ag-feats-act:is([data-step="2"]) .ag-feat:nth-of-type(3),
+  .ag-page[data-ready] .ag-feats-act:is([data-step="3"]) .ag-feat:nth-of-type(4) {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    transition:
+      opacity 500ms ease 120ms,
+      transform 700ms var(--site-ease) 120ms,
+      visibility 0s;
+  }
+
+  .ag-page[data-ready] .ag-feats-act:is([data-step="0"]) .ag-feat:nth-of-type(1) .ag-card,
+  .ag-page[data-ready] .ag-feats-act:is([data-step="1"]) .ag-feat:nth-of-type(2) .ag-card,
+  .ag-page[data-ready] .ag-feats-act:is([data-step="2"]) .ag-feat:nth-of-type(3) .ag-card,
+  .ag-page[data-ready] .ag-feats-act:is([data-step="3"]) .ag-feat:nth-of-type(4) .ag-card {
+    transform: none;
+  }
+
+  .ag-page[data-ready] .ag-feats-act:is([data-step="0"]) .ag-feat:nth-of-type(1) .ag-card li,
+  .ag-page[data-ready] .ag-feats-act:is([data-step="1"]) .ag-feat:nth-of-type(2) .ag-card li,
+  .ag-page[data-ready] .ag-feats-act:is([data-step="2"]) .ag-feat:nth-of-type(3) .ag-card li,
+  .ag-page[data-ready] .ag-feats-act:is([data-step="3"]) .ag-feat:nth-of-type(4) .ag-card li {
+    opacity: 1;
+    transform: none;
+    transition-delay: calc(var(--i, 0) * 110ms + 350ms);
+  }
+
+  .ag-feats-act[data-step="0"] .ag-dots li:nth-child(1),
+  .ag-feats-act[data-step="1"] .ag-dots li:nth-child(2),
+  .ag-feats-act[data-step="2"] .ag-dots li:nth-child(3),
+  .ag-feats-act[data-step="3"] .ag-dots li:nth-child(4) {
+    width: 36px;
+    background: var(--site-primary);
+  }
+}
+
+@keyframes ag-drift {
+  from {
+    transform: translateX(-3%);
+  }
+  to {
+    transform: translateX(3%);
+  }
+}
+
+@keyframes ag-rise {
+  from {
+    opacity: 0;
+    filter: blur(10px);
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
+}
+
+@keyframes ag-bob {
+  0%,
+  100% {
+    transform: none;
+  }
+  50% {
+    transform: translateY(3px);
+  }
+}
+
+/* ── Small screens ───────────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .ag-feat {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 700px) {
+  .ag-hero {
+    padding: 8px;
+  }
+
+  .ag-sky {
+    min-height: calc(100svh - 16px);
+    border-radius: 18px;
+  }
+
+  .ag-slide {
+    min-height: 80svh;
+  }
+
+  .ag-steps {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 40px;
+  }
+
+  .ag-steps:not(.ag-facts) li + li::before {
+    content: "\2193";
+    top: -22px;
+    left: 50%;
+  }
+
+  .ag-card li {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .ag-card li span:nth-child(2) {
+    display: none;
+  }
+}

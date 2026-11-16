@@ -11,23 +11,19 @@ import { AuthField, AuthHeading, AUTH_TAGLINE, AuthSwitchLine, GoogleMark } from
  * signUp.create / signIn.create run — render it inside those forms.
  */
 function ClerkCaptcha() {
-  const [theme, setTheme] = useState<"light" | "dark" | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Match the resolved site theme (set in <head> before paint), so the
-    // widget is not a dark box on the light auth page.
-    const frame = window.requestAnimationFrame(() =>
-      setTheme(document.documentElement.dataset.siteTheme === "light" ? "light" : "dark"),
-    );
+    const frame = window.requestAnimationFrame(() => setMounted(true));
     return () => window.cancelAnimationFrame(frame);
   }, []);
 
-  if (!theme) return null;
+  if (!mounted) return null;
 
   return (
     <div
       id="clerk-captcha"
-      data-cl-theme={theme}
+      data-cl-theme="dark"
       data-cl-size="flexible"
       className="mx-auto w-full"
     />

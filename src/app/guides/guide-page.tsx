@@ -49,9 +49,9 @@ function DefaultGuideBody({ page }: { page: GuidePage }) {
   const ids = sectionIds(page.sections.map((section) => section.heading));
   const showContents = page.sections.length >= 4;
   return (
-    <div className="omentir-moderate-width min-w-0 space-y-16 pb-8 md:space-y-24 md:pb-12">
+    <div className="cal-prose omentir-moderate-width min-w-0 space-y-16 pb-8 md:space-y-24 md:pb-12">
       {page.answer || showContents ? (
-        <div className="max-w-3xl space-y-6 pt-10 md:pt-14">
+        <div className="space-y-6 pt-10 md:pt-14">
           {page.answer ? <GuideAnswer text={page.answer} /> : null}
           {showContents ? (
             <GuideContents
@@ -69,14 +69,14 @@ function DefaultGuideBody({ page }: { page: GuidePage }) {
             {section.paragraphs.map((paragraph) => (
               <p
                 key={paragraph}
-                className="max-w-2xl text-base leading-8 text-[var(--md-sys-color-on-surface-variant)]"
+                className="text-base leading-8 text-[var(--md-sys-color-on-surface-variant)]"
               >
                 {renderInline(paragraph)}
               </p>
             ))}
           </div>
           {section.bullets?.length ? (
-            <ul className="mt-6 max-w-2xl list-disc space-y-2 pl-5 text-base leading-8 text-[var(--md-sys-color-on-surface-variant)]">
+            <ul className="mt-6 list-disc space-y-2 pl-5 text-base leading-8 text-[var(--md-sys-color-on-surface-variant)]">
               {section.bullets.map((item) => (
                 <li key={item}>{renderInline(item)}</li>
               ))}

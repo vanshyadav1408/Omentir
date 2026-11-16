@@ -1,15 +1,18 @@
 import "server-only";
 
-import { isUnipileAccountUsable } from "@/lib/unipile-account-status";
 import {
   disconnectLinkedInAccount,
+  completeLinkedInAccountRetirement,
   listAllLinkedInAccounts,
+  listConnectedLinkedInAccountsEverywhere,
   listLinkedInAccounts,
   markLinkedInAccountDisconnected,
   saveLinkedInAccount,
   workspaceForLinkedInAccountCap,
 } from "./data";
-import { deleteLinkedInAccount, listUnipileLinkedInAccounts, retrieveOwnLinkedInProfile } from "./unipile";
+import { deleteLinkedInAccount, retrieveOwnLinkedInProfile } from "./linkedin";
+import { isOwnLinkedInId } from "./linkedin-own/ids";
+import { listOwnSessionStatuses } from "./linkedin-own/session-store";
 import { entitlementsFor } from "./entitlements";
 import type { LinkedInAccount } from "./types";
 
@@ -33,11 +36,15 @@ export async function listVerifiedLinkedInAccounts(
   }
 
   try {
-    const providerAccounts = await listUnipileLinkedInAccounts();
+    // The stored session record is the source of truth (marked expired when
+    // LinkedIn signs the session out). Accounts from the old Unipile
+    // integration have no session and need to be reconnected.
+    const ownAccounts = accounts.filter((account) => isOwnLinkedInId(account.accountId));
+    const ownStatuses = await listOwnSessionStatuses(ownAccounts.map((account) => account.accountId));
     const usableAccountIds = new Set(
-      providerAccounts
-        .filter((account) => isUnipileAccountUsable(account.status))
-        .map((account) => account.id),
+      ownAccounts
+        .filter((account) => ownStatuses.get(account.accountId) === "active")
+        .map((account) => account.accountId),
     );
     const activeAccounts = accounts.filter((account) => usableAccountIds.has(account.accountId));
     const staleAccounts = accounts.filter((account) => !usableAccountIds.has(account.accountId));
@@ -46,6 +53,13 @@ export async function listVerifiedLinkedInAccounts(
       await Promise.all(
         staleAccounts.map((account) => disconnectLinkedInAccount(workspaceId, account.id)),
       );
+    }
+
+    // Old Unipile ids left over from a replacement have nothing to delete.
+    for (const account of activeAccounts) {
+      for (const retiredId of account.retiredUnipileAccountIds || []) {
+        await completeLinkedInAccountRetirement(account.id, retiredId).catch(() => {});
+      }
     }
 
     const refreshedAccounts = options.refreshProfiles
@@ -75,24 +89,43 @@ export async function listVerifiedLinkedInAccounts(
   }
 }
 
+// Accounts left from the Unipile integration can never send again. Opening
+// the app marks them disconnected (above), but an owner who stayed away left
+// the tick treating them as connected: invites failed and used up retries,
+// messages were drafted that could not go out, and the acceptance sweep
+// logged an error every few minutes. The tick calls this so their outreach
+// parks until the owner reconnects.
+export async function disconnectLegacyLinkedInAccounts() {
+  const legacy = (await listConnectedLinkedInAccountsEverywhere()).filter(
+    (account) => !isOwnLinkedInId(account.accountId),
+  );
+  for (const account of legacy) {
+    await markLinkedInAccountDisconnected(account.workspaceId, account.id);
+  }
+  return legacy.length;
+}
+
 export async function getVerifiedLinkedInAccount(workspaceId: string) {
   const result = await listVerifiedLinkedInAccounts(workspaceId);
   return result.accounts[0] || null;
 }
 
-export async function purgeWorkspaceUnipileAccounts(workspaceId: string) {
+export async function purgeWorkspaceLinkedInAccounts(workspaceId: string) {
   const accounts = await listAllLinkedInAccounts(workspaceId);
   let deleted = 0;
   let failed = 0;
   for (const account of accounts) {
     if (!account.accountId) continue;
     try {
+      for (const retiredId of account.retiredUnipileAccountIds || []) {
+        await completeLinkedInAccountRetirement(account.id, retiredId);
+      }
       await deleteLinkedInAccount(account.accountId);
       deleted += 1;
     } catch (error) {
       failed += 1;
       console.error(
-        `[unipile] failed to delete account ${account.accountId} for workspace ${workspaceId}:`,
+        `[linkedin] failed to delete account ${account.accountId} for workspace ${workspaceId}:`,
         error instanceof Error ? error.message : error,
       );
     }
@@ -101,8 +134,8 @@ export async function purgeWorkspaceUnipileAccounts(workspaceId: string) {
   return { considered: accounts.length, deleted, failed };
 }
 
-// After extra seats drop, Unipile still bills every connected account. Keep
-// the oldest accounts that fit the paid cap and delete the rest on Unipile.
+// After extra seats drop, keep the oldest accounts that fit the paid cap and
+// disconnect the rest.
 export async function enforceLinkedInAccountCap(workspaceId: string) {
   const workspace = await workspaceForLinkedInAccountCap(workspaceId);
   const cap = entitlementsFor(workspace).limits.linkedInAccounts;
@@ -118,10 +151,13 @@ export async function enforceLinkedInAccountCap(workspaceId: string) {
   for (const account of extra) {
     if (account.accountId) {
       try {
+        for (const retiredId of account.retiredUnipileAccountIds || []) {
+          await completeLinkedInAccountRetirement(account.id, retiredId);
+        }
         await deleteLinkedInAccount(account.accountId);
       } catch (error) {
         console.error(
-          `[unipile] failed to delete extra account ${account.accountId} after seat cap dropped:`,
+          `[linkedin] failed to delete extra account ${account.accountId} after seat cap dropped:`,
           error instanceof Error ? error.message : error,
         );
       }

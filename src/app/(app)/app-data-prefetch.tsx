@@ -14,20 +14,20 @@ const FIRESTORE_WARMUP = [
   "agentApiKeys",
 ];
 
-// Unipile calls. Kept off the Firestore warmup so a 3s inbox fetch on
-// Overview does not delay /leads, and so we never start a second Unipile
+// LinkedIn calls. Kept off the Firestore warmup so a 3s inbox fetch on
+// Overview does not delay /leads, and so we never start a second LinkedIn
 // request while one is already in flight.
-const UNIPILE_WARMUP = [LINKEDIN_INBOX_RESOURCE, "linkedinAccounts"];
+const LINKEDIN_WARMUP = [LINKEDIN_INBOX_RESOURCE, "linkedinAccounts"];
 
 export async function warmOtherPageData(options: { cancelled?: () => boolean } = {}) {
   const cancelled = options.cancelled ?? (() => false);
-  await whenSidebarRequestsSettle(15_000, { ignoreNames: UNIPILE_WARMUP });
+  await whenSidebarRequestsSettle(15_000, { ignoreNames: LINKEDIN_WARMUP });
   for (const resource of FIRESTORE_WARMUP) {
     if (cancelled()) return;
     await prefetchSidebarResource(resource);
   }
   await whenSidebarRequestsSettle();
-  for (const resource of UNIPILE_WARMUP) {
+  for (const resource of LINKEDIN_WARMUP) {
     if (cancelled()) return;
     await prefetchSidebarResource(resource);
   }

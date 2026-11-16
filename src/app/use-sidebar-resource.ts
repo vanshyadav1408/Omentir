@@ -131,7 +131,7 @@ export function prefetchSidebarResource(resource: string): Promise<unknown> {
 // Resolves once nothing is in flight, so background warming can wait for the
 // page the user is actually looking at to finish loading first. Bounded by a
 // deadline so a stalled request can never hold the warmer off forever.
-// ignoreNames lets Overview start warming /leads while Unipile inbox is still
+// ignoreNames lets Overview start warming /leads while the LinkedIn inbox is still
 // in flight, instead of blocking Firestore warmup on a 3s LinkedIn round trip.
 export async function whenSidebarRequestsSettle(
   timeoutMs = 15000,

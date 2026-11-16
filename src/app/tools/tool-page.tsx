@@ -99,7 +99,7 @@ export function ToolPageChrome({
         {tool.howItWorks ? <ToolHowItWorks steps={tool.howItWorks} /> : null}
         {tool.proTips ? <ToolProTips tips={tool.proTips} /> : null}
         {tool.bodySections?.length || tool.relatedLinks?.length ? (
-          <div className="cal-read space-y-14 !pb-0 md:space-y-16">
+          <div className="cal-read cal-read-moderate space-y-14 !pb-0 md:space-y-16">
             {tool.bodySections?.map((section) => (
               <section key={section.heading}>
                 <h2 className="cal-read-h2">{section.heading}</h2>

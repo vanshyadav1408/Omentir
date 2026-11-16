@@ -1,11 +1,33 @@
-// After a Unipile reconnect the agent/campaign still stores the old
+// After a reconnect the agent/campaign can still store an old
 // linkedInAccountId, which is now disconnected. LinkedIn actions must use the
-// workspace's current connected account instead of stalling.
+// workspace's current connected account instead of stalling, but only when
+// that account is the same LinkedIn person. In a workspace with several
+// seats, any other connected account belongs to a teammate: falling back to
+// it sent one person's campaign from another person's profile.
 
-export function resolveUsableLinkedInAccount<T extends { status: string }>(
+import { isOwnLinkedInId } from "./server/linkedin-own/ids";
+
+type AccountLike = { status: string; accountId?: string; displayName?: string };
+
+function sameName(value: string | undefined) {
+  return (value || "").replace(/\s+/g, " ").trim().toLowerCase();
+}
+
+// The same LinkedIn member on another row, or an old Unipile row reconnected
+// through the own client without picking it in the "replace" field (old rows
+// carry no member id, so the name is what is left to match).
+function sameLinkedInPerson(stored: AccountLike, candidate: AccountLike) {
+  if (stored.accountId && stored.accountId === candidate.accountId) return true;
+  if (!stored.accountId || isOwnLinkedInId(stored.accountId)) return false;
+  const name = sameName(stored.displayName);
+  return Boolean(name) && name === sameName(candidate.displayName);
+}
+
+export function resolveUsableLinkedInAccount<T extends AccountLike>(
   requested: T | null | undefined,
-  fallback: T | null,
+  connected: T[],
 ): T | null {
   if (requested?.status === "connected") return requested;
-  return fallback;
+  if (!requested) return connected[0] ?? null;
+  return connected.find((candidate) => sameLinkedInPerson(requested, candidate)) ?? null;
 }

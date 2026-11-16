@@ -50,7 +50,7 @@ describe("httpsAvatarUrl", () => {
     );
   });
 
-  test("reads Unipile nested picture objects and prefers the large headshot over a company logo field", () => {
+  test("reads nested picture objects and prefers the large headshot over a company logo field", () => {
     expect(
       httpsAvatarUrl({
         profile_picture_url_large: "https://media.licdn.com/large.jpg",
@@ -66,7 +66,7 @@ describe("httpsAvatarUrl", () => {
     ).toBe("https://media.licdn.com/nested.jpg");
   });
 
-  test("reads Unipile v2 public and private picture fields from specifics", () => {
+  test("reads public and private picture fields from specifics", () => {
     expect(
       httpsAvatarUrl({
         specifics: {
@@ -125,7 +125,7 @@ describe("durableLeadAvatarUrl", () => {
 });
 
 describe("leadAvatarRefreshIdentifier", () => {
-  test("prefers a LinkedIn provider id over a profile URL so Unipile can fetch a fresh headshot", () => {
+  test("prefers a LinkedIn provider id over a profile URL so the LinkedIn client can fetch a fresh headshot", () => {
     expect(
       leadAvatarRefreshIdentifier({
         providerProfileId: "ACoAAAEkwwAB9KEc2TrQgOLEQ-vzRyZeCDyc6DQ",

@@ -1,4 +1,4 @@
-import type { CampaignEnrollment, Lead } from "./types";
+import type { Campaign, CampaignEnrollment, Lead } from "./types";
 
 // Renders a message template against a lead. `natural: false` means the text
 // is not fit to send as-is - a token had no value (e.g. empty company), or it
@@ -59,7 +59,7 @@ export function isAnonymousLinkedInProfile(lead: Pick<Partial<Lead>, "name">) {
 }
 
 // Free LinkedIn accounts reject invitation notes over ~200 characters
-// (errors/too_many_characters). unipile.ts hard-caps outbound text at the same
+// (errors/too_many_characters). linkedin.ts hard-caps outbound text at the same
 // limit as a transport backstop, but a mid-word chop reads as obviously botched.
 const MAX_CONNECTION_NOTE_CHARS = 200;
 
@@ -82,14 +82,50 @@ export function fitConnectionNote(note: string | undefined) {
   return undefined;
 }
 
-// Unipile reports errors/cannot_resend_yet with one generic "temporary
-// provider limit" detail for three different situations:
+// The note a connect step attaches to its invite, or undefined for a bare
+// invite. Sending and the owner-message guard both read it here, so the guard
+// recognises exactly the text the invite carried.
+export function connectionNoteFor(
+  step: { includeNote: boolean; noteTemplate: string },
+  lead: Pick<Lead, "name" | "company" | "title">,
+) {
+  if (!step.includeNote) return undefined;
+  const rendered = renderTemplate(step.noteTemplate, lead);
+  return rendered.natural && rendered.text ? fitConnectionNote(rendered.text) : undefined;
+}
+
+// The notes this campaign's connect steps send this lead, for telling an
+// accepted invite's note apart from a message the owner typed by hand.
+function campaignInviteNotes(campaign: Pick<Campaign, "steps">, lead: Pick<Lead, "name" | "company" | "title">) {
+  return campaign.steps.flatMap((step) => {
+    const note = step.type === "connect" ? connectionNoteFor(step, lead) : undefined;
+    return note ? [note] : [];
+  });
+}
+
+// The note each invite actually carried comes first. Re-rendering is only for
+// invites sent before the note was stored: it misses once the template was
+// edited or the lead's title or company were refreshed on acceptance.
+export function inviteNotesFor(
+  enrollments: Array<Pick<CampaignEnrollment, "connectionNote">>,
+  campaigns: Array<Pick<Campaign, "steps">>,
+  lead: Pick<Lead, "name" | "company" | "title">,
+) {
+  return [
+    ...enrollments.flatMap((enrollment) => (enrollment.connectionNote ? [enrollment.connectionNote] : [])),
+    ...campaigns.flatMap((campaign) => campaignInviteNotes(campaign, lead)),
+  ];
+}
+
+// errors/cannot_resend_yet is one error type for three different situations
+// (the old Unipile integration reported them that way and the own client's
+// error mapping keeps it):
 // 1. this recipient already has a pending/withdrawn invite (LinkedIn blocks
 //    re-invites for weeks)
 // 2. the account's weekly invitation limit
 // 3. a free account's personalized-note quota is spent (LinkedIn still accepts
-//    a bare Connect; Unipile's own docs say to retry the same invite type
-//    without a note). too_many_characters is the other note-quota signal.
+//    a bare Connect, so the same invite is retried without a note).
+//    too_many_characters is the other note-quota signal.
 // A single rejection is indistinguishable and is usually (1) or (3)
 // (2026-07-13: one such rejection paused a healthy account for a week and
 // emailed the customer a false limit warning). Callers must retry without the

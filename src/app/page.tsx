@@ -1,13 +1,9 @@
+import Link from "next/link";
 import FaqSplitSection from "./faq-split-section";
-import HeroCta from "./hero-cta";
-import HomeClosing from "./home-closing";
-import HomeFeatureAccordion from "./home-feature-accordion";
-import HomeIntegrations from "./home-integrations";
-import HomeProductTabs from "./home-product-tabs";
-import HomeResults from "./home-results";
-import HomeSteps from "./home-steps";
+import HomeInfo from "./home-info";
+import HomeScrollActs from "./home-scroll-acts";
+import HomeStory from "./home-story";
 import { MarketingFooter, MarketingHeader } from "./marketing-shell";
-import Reveal from "./scroll-reveal";
 import JsonLd from "./json-ld";
 import PlanAwarePricingCards from "./plan-aware-pricing-cards";
 import {
@@ -78,45 +74,38 @@ export default function Home() {
   ];
 
   return (
-    <main className="site-theme cal-home min-h-screen overflow-x-clip">
+    <main className="site-theme nx-home min-h-screen">
       <JsonLd id="home-jsonld" data={jsonLd} />
       <MarketingHeader transparentAtTop />
+      <HomeScrollActs />
 
-      <section className="cal-hero">
-        <div className="cal-hero-copy">
-          <h1 className="cal-h1">Omentir will find you customers or you pay nothing.</h1>
-          <p className="cal-lead">
-            Omentir finds buyers who match your ideal customer profile, messages them from your own
-            LinkedIn account, and follows up until they reply.
-          </p>
-          <div className="cal-hero-cta">
-            <HeroCta />
-          </div>
-        </div>
-        <HomeProductTabs />
-      </section>
+      <HomeStory />
+      <HomeInfo />
 
-      <HomeSteps />
-      <HomeFeatureAccordion />
-      <HomeResults />
-      <HomeIntegrations />
-
-      <section
-        id="pricing"
-        aria-labelledby="home-pricing-heading"
-        className="cal-section omentir-primary-width min-w-0 scroll-mt-24"
-      >
-        <Reveal className="cal-intro">
-          <h2 id="home-pricing-heading" className="cal-h2-xl">
-            Pricing with a booking guarantee
-          </h2>
-        </Reveal>
+      <section id="pricing" aria-labelledby="home-pricing-heading" className="nx-info min-w-0">
+        <h2 id="home-pricing-heading">
+          Pricing with a <em>booking guarantee</em>
+        </h2>
         <PlanAwarePricingCards site className="mx-auto mt-12 w-full max-w-4xl" />
       </section>
 
-      <FaqSplitSection items={faqItems} className="cal-section" />
+      <FaqSplitSection items={faqItems} className="nx-faq" widthClass="nx-info" />
 
-      <HomeClosing />
+      <section aria-labelledby="nx-end-heading" className="nx-end">
+        <div>
+          <h2 id="nx-end-heading">
+            Book meetings. Build your <mark>revenue pipeline</mark>.
+          </h2>
+          <div className="nx-cta">
+            <Link href="/signup" className="site-btn site-btn-primary">
+              Get started
+            </Link>
+            <Link href="/demo" className="site-btn site-btn-outline">
+              Book a demo
+            </Link>
+          </div>
+        </div>
+      </section>
 
       <MarketingFooter />
     </main>

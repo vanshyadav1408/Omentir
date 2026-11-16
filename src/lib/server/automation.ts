@@ -1,7 +1,7 @@
 import "server-only";
 
 import { wasWorkspaceLeadProcessed } from "./workspace-lead-history";
-import { stopForOwnerMessage } from "./owner-message-guard";
+import { LeadReplyNotSyncedError, stopForOwnerMessage, stopForOwnerMessageWebhook } from "./owner-message-guard";
 
 import {
   acquireTickLock,
@@ -18,6 +18,7 @@ import {
   getCampaignEnrollment,
   getDailyLeadDiscoveryUsage,
   findLeadForWorkspace,
+  getLinkedInAccountByAccountIdAnyStatus,
   getLinkedInAccountForWorkspace,
   getProductProfile,
   getWorkspace,
@@ -45,6 +46,8 @@ import {
   listAutomationRuns,
   listCampaigns,
   listConnectionSentEnrollments,
+  listExpiredInviteEnrollments,
+  listLeadEnrollments,
   listLeads,
   loadWorkspaceLeadRejections,
   listWorkspaces,
@@ -79,6 +82,7 @@ import {
   type LeadScore,
 } from "./lead-qualification";
 import {
+  applyAcceptanceIfFirstDegree,
   applyConnectionAccepted,
   draftUpcomingMessagePreview,
   findLeadForInboundEvent,
@@ -103,12 +107,12 @@ import {
 } from "./automation-safety";
 import {
   canSendCampaignMessage,
-  fitConnectionNote,
+  connectionNoteFor,
+  inviteNotesFor,
   isInviteResendBlockedErrorType,
   INVITE_LIMIT_SIGNAL_THRESHOLD,
   shouldRetryConnectionWithoutNote,
   isAnonymousLinkedInProfile,
-  renderTemplate,
   writtenSequenceMessage,
 } from "./outreach-rules";
 import {
@@ -124,21 +128,20 @@ import {
   SPACING_MINUTES,
   type SendActionKind,
 } from "./send-schedule";
+import { listActiveOwnSessionAccountIds } from "./linkedin-own/session-store";
 import { hasActiveSubscription } from "./subscription";
 import { runInviteWithdrawals } from "./linkedin-health";
-import { shouldMarkBillingExpired, shouldPurgeUnipileAccounts } from "@/lib/unipile-billing-purge";
-import { purgeWorkspaceUnipileAccounts } from "./linkedin-accounts";
+import { shouldMarkBillingExpired, shouldPurgeLinkedInAccounts } from "@/lib/linkedin-billing-purge";
+import { disconnectLegacyLinkedInAccounts, purgeWorkspaceLinkedInAccounts } from "./linkedin-accounts";
 import { cancelWhopSeatMembership } from "./whop";
 import { sendPlatformStatsSnapshot } from "./platform-stats";
 import { capturePostHogEvent } from "@/lib/posthog-server";
-import { getAppBaseUrl } from "./runtime-config";
 import {
   emailWasSkipped,
   sendDailyDigestEmail,
   sendInvitePauseNotification,
 } from "./email";
 import {
-  ensureUnipileWebhooks,
   hasPendingSentInvitation,
   isFirstDegreeConnection,
   listRecentInboundMessages,
@@ -150,8 +153,8 @@ import {
   sendLinkedInMessage,
   LinkedInMessageSendBlocked,
   LinkedInRecipientUnresolved,
-  UnipileResponseError,
-} from "./unipile";
+  LinkedInResponseError,
+} from "./linkedin";
 import type {
   Campaign,
   CampaignEnrollment,
@@ -185,8 +188,8 @@ const TICK_LOCK_RENEW_INTERVAL_MS = 5 * 60 * 1000;
 // 1.75 minutes tolerates scheduler jitter while keeping the intended ~2-minute
 // tick cadence instead of multiplying it by the instance count.
 const TICK_SCHEDULE_MIN_INTERVAL_MS = 1.75 * 60 * 1000;
-// Unipile's new_relation webhook can lag up to 8 hours and does not fire in
-// real time for bare invites. AI outreach sends those, so the dashboard's
+// LinkedIn pushes nothing when an invite is accepted (the old Unipile
+// new_relation webhook lagged up to 8 hours and is gone), so the dashboard's
 // acceptance path is this per-account sweep against relations + sent invites,
 // not a rare fallback. Pending invites carry no individual recheck schedule:
 // a pool of a few hundred used to consume the due-enrollment window.
@@ -205,9 +208,12 @@ const REPLY_SYNC_MESSAGE_LIMIT = 100;
 // The full account enumeration only runs every cycle claim, keeping the claim
 // reads off the per-tick hot path.
 const PROVIDER_SYNC_CYCLE_MS = 5 * 60 * 1000;
-const WEBHOOK_REGISTRATION_INTERVAL_MS = 6 * 60 * 60 * 1000;
-const UNIPILE_BILLING_PURGE_INTERVAL_MS = 30 * 60 * 1000;
-const UNIPILE_WORKSPACE_PURGE_INTERVAL_MS = 6 * 60 * 60 * 1000;
+const LINKEDIN_BILLING_PURGE_INTERVAL_MS = 30 * 60 * 1000;
+// Nothing can connect an old Unipile account anymore, so this is a cheap
+// repeat of a one-time cleanup rather than a per-tick read.
+const LEGACY_ACCOUNT_CHECK_INTERVAL_MS = 60 * 60 * 1000;
+const PROXY_RESTOCK_INTERVAL_MS = 5 * 60_000;
+const LINKEDIN_WORKSPACE_PURGE_INTERVAL_MS = 6 * 60 * 60 * 1000;
 // Paused/draft campaigns park their enrollments a full day (marked with
 // pausedDeferredAt) because resumeCampaign wakes them explicitly - shorter
 // defers just churn the due queue hourly. Workspaces without an active
@@ -216,6 +222,9 @@ const UNIPILE_WORKSPACE_PURGE_INTERVAL_MS = 6 * 60 * 60 * 1000;
 const PAUSED_CAMPAIGN_DEFER_MINUTES = 24 * 60;
 const INACTIVE_WORKSPACE_DEFER_MINUTES = 60;
 const CONNECTION_GIVE_UP_DAYS = 21;
+// How long after sending the acceptance sweep keeps watching an invite the
+// sequence gave up on. Auto-withdraw (28 days by default) usually ends it first.
+const LATE_ACCEPTANCE_DAYS = 90;
 const ENROLLMENT_MAX_RETRIES = 3;
 const CONNECTION_SEND_RETRY_MINUTES = 30;
 const ENROLLMENT_RETRY_MINUTES = 6 * 60;
@@ -225,10 +234,10 @@ const UNCONFIRMED_PROVIDER_SEND_PREFIX = "Unconfirmed provider send";
 
 class UnconfirmedProviderSendError extends Error {}
 
-// The send provably never reached LinkedIn: Unipile answered with a rejection,
+// The send provably never reached LinkedIn: the client got a rejection back,
 // or the recipient id could not be resolved before any request was made.
 function isRejectedBeforeDelivery(error: unknown) {
-  return error instanceof UnipileResponseError || error instanceof LinkedInRecipientUnresolved;
+  return error instanceof LinkedInResponseError || error instanceof LinkedInRecipientUnresolved;
 }
 
 // Before LinkedInRecipientUnresolved existed, this pre-send failure was
@@ -307,7 +316,7 @@ async function sendProviderAction<T>(action: () => Promise<T>) {
     return await action();
   } catch (error) {
     if (
-      error instanceof UnipileResponseError ||
+      error instanceof LinkedInResponseError ||
       error instanceof LinkedInMessageSendBlocked ||
       error instanceof LinkedInRecipientUnresolved
     ) {
@@ -326,26 +335,29 @@ async function sendConnectionRequestWithNoteFallback(input: {
   note?: string;
 }) {
   try {
-    return await sendProviderAction(() => sendConnectionRequest(input));
+    return { ...(await sendProviderAction(() => sendConnectionRequest(input))), noteSent: input.note };
   } catch (error) {
-    // Personalized-note quota and weekly invite cap share Unipile error types.
+    // Personalized-note quota and weekly invite cap share one error type.
     // A bare Connect is what the LinkedIn app sends, so retry without the note
     // before treating this as a recipient or account limit.
     if (
       !shouldRetryConnectionWithoutNote(
         input.note,
-        error instanceof UnipileResponseError ? error.errorType : undefined,
+        error instanceof LinkedInResponseError ? error.errorType : undefined,
       )
     ) {
       throw error;
     }
-    return sendProviderAction(() =>
-      sendConnectionRequest({
-        accountId: input.accountId,
-        providerProfileId: input.providerProfileId,
-        linkedInUrl: input.linkedInUrl,
-      }),
-    );
+    return {
+      ...(await sendProviderAction(() =>
+        sendConnectionRequest({
+          accountId: input.accountId,
+          providerProfileId: input.providerProfileId,
+          linkedInUrl: input.linkedInUrl,
+        }),
+      )),
+      noteSent: undefined,
+    };
   }
 }
 
@@ -765,13 +777,17 @@ async function runEnrollment(
         linkedInUrl: lead.linkedInUrl,
         allowLegacyAutomatedMessages: campaign.steps.slice(0, enrollment.currentStepIndex)
           .some((step) => step.type === "message"),
+        inviteNotes: inviteNotesFor([enrollment], [campaign], lead),
       });
     } catch (error) {
-      console.error("[automation] message history check failed:", error);
+      const waitingForReply = error instanceof LeadReplyNotSyncedError;
+      if (!waitingForReply) console.error("[automation] message history check failed:", error);
       await updateCurrentEnrollment({
         pendingAction: undefined,
         nextActionAt: addMinutes(SPACING_MINUTES),
-        lastError: "Could not check LinkedIn messages. Outreach will retry later.",
+        lastError: waitingForReply
+          ? error.message
+          : "Could not check LinkedIn messages. Outreach will retry later.",
       });
       return true;
     }
@@ -1089,7 +1105,7 @@ async function runEnrollment(
         new Date(sentAt).getTime() + CONNECTION_GIVE_UP_DAYS * 24 * 60 * 60 * 1000;
       if (Date.now() >= giveUpAt) {
         if (accepted === false) {
-          await updateCurrentEnrollment({ status: "stopped" });
+          await updateCurrentEnrollment({ status: "stopped", inviteExpired: true });
           return "invite-expired";
         }
         // Provider check failed at the give-up date. A short retry is fine
@@ -1246,7 +1262,7 @@ async function runEnrollment(
     // Strict drip: at most one action per account per SPACING_MINUTES, across
     // ticks and manual runs. Claimed before the profile check below so a
     // waiting queue doesn't burn a live profile view on every tick; a claim
-    // that ends up not sending (already connected, Unipile rejection) only
+    // that ends up not sending (already connected, LinkedIn rejection) only
     // delays the next action - it can never over-send.
     const nextSlotAllowedAt = await claimActionSlot(enrollment.workspaceId, account.id);
     if (nextSlotAllowedAt) {
@@ -1284,11 +1300,7 @@ async function runEnrollment(
     // AI never writes invitation notes. Only a user-written template that
     // renders cleanly is attached; anything degraded means a bare invite,
     // which converts fine and can't embarrass the sender.
-    let note: string | undefined;
-    if (step.includeNote) {
-      const rendered = renderTemplate(step.noteTemplate, lead);
-      note = rendered.natural && rendered.text ? fitConnectionNote(rendered.text) : undefined;
-    }
+    const note = connectionNoteFor(step, lead);
 
     const claimed = await claimEnrollmentAction({
       workspaceId: enrollment.workspaceId,
@@ -1317,7 +1329,7 @@ async function runEnrollment(
         budget.inviteCooldownUntil = null;
       }
     }
-    // Send first; only count quota after Unipile accepts. Counting before send
+    // Send first; only count quota after LinkedIn accepts. Counting before send
     // burned the full daily invite budget on rejected notes/ids, then every
     // later enrollment sat on invite-limit with zero outreach.
     const sendResult = await sendConnectionRequestWithNoteFallback({
@@ -1352,6 +1364,9 @@ async function runEnrollment(
       status: "connection_sent",
       currentStepIndex: enrollment.currentStepIndex + 1,
       connectionSentAt: new Date().toISOString(),
+      // The exact note LinkedIn files into the thread once the invite is
+      // accepted, so the owner-message checks recognise it as ours.
+      ...(sendResult.noteSent ? { connectionNote: sendResult.noteSent } : {}),
       pendingAction: undefined,
       // The send succeeded, so any stored rejection is stale; the Actions page
       // surfaces lastError as the card's blocked reason.
@@ -1527,7 +1542,7 @@ async function runEnrollment(
   });
   if (!claimed) return "action-claimed";
 
-  // Same as invites: only count quota after Unipile accepts the send.
+  // Same as invites: only count quota after LinkedIn accepts the send.
   const messageSendResult = await sendCheckedMessage(body);
   if (!messageSendResult) return "owner-message-blocked";
   budget.messages -= 1;
@@ -1998,7 +2013,7 @@ async function runCampaigns(mode: AutomationSafetyMode) {
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Enrollment run failed";
-      const errorType = error instanceof UnipileResponseError ? error.errorType : undefined;
+      const errorType = error instanceof LinkedInResponseError ? error.errorType : undefined;
 
       if (error instanceof UnconfirmedProviderSendError) {
         const unconfirmedMessage = `${UNCONFIRMED_PROVIDER_SEND_PREFIX}: ${message}`;
@@ -2035,8 +2050,8 @@ async function runCampaigns(mode: AutomationSafetyMode) {
       }
 
       if (isInviteResendBlockedErrorType(errorType)) {
-        // Unipile's detail text is the same generic "temporary provider limit"
-        // whether this one recipient can't be re-invited yet or the whole
+        // The error type is the same (errors/cannot_resend_yet) whether
+        // this one recipient can't be re-invited yet or the whole
         // account hit its weekly cap. The sent-invitations list is ground
         // truth for the first case: if this person already has a pending
         // invite (sent manually or before this enrollment), record that
@@ -2193,11 +2208,11 @@ async function runCampaigns(mode: AutomationSafetyMode) {
         lastError: message,
         retryCount,
         nextActionAt: addMinutes(retryMinutes),
-        // A response-bearing Unipile error means the send was rejected outright,
+        // A response-bearing LinkedIn error means the send was rejected outright,
         // so its side effect never happened. Clear the in-flight claim so the
         // next tick retries cleanly instead of seeing a stranded pendingAction
         // and parking the enrollment for manual review. Network drops/timeouts
-        // (no UnipileResponseError) stay ambiguous and keep the claim.
+        // (no LinkedInResponseError) stay ambiguous and keep the claim.
         ...(isRejectedBeforeDelivery(error) ? { pendingAction: undefined } : {}),
       });
       await logAutomationRun({
@@ -2212,50 +2227,12 @@ async function runCampaigns(mode: AutomationSafetyMode) {
   return { enrollments: enrollments.length, actions, newlyEnrolled };
 }
 
-// Re-asserts the Unipile message/relation webhooks from the server itself.
-// Dashboard-only configuration was a silent single point of failure for the
-// product's core promise (reply detection -> interest emails). Never registers
-// a non-https URL: dev and prod share one Unipile account, and a localhost
-// registration would add a dead delivery target.
-async function registerUnipileWebhooks() {
-  try {
-    const secret = process.env.UNIPILE_WEBHOOK_SECRET;
-    const appUrl = getAppBaseUrl();
-    if (!secret || !appUrl.startsWith("https://")) return;
-    if (!(await claimSystemTask("unipile-webhook-registration", WEBHOOK_REGISTRATION_INTERVAL_MS))) {
-      return;
-    }
-
-    const requestUrl = `${appUrl}/api/webhooks/unipile`;
-    const result = await ensureUnipileWebhooks({
-      requestUrl,
-      secretHeaderValue: secret,
-    });
-    if (!result.skipped && result.created.length) {
-      await safeLogAutomationRun({
-        kind: "cron",
-        status: "completed",
-        message: `Registered Unipile webhooks (${result.created.join(", ")}) -> ${requestUrl}.`,
-      });
-    }
-  } catch (error) {
-    await safeLogAutomationRun({
-      kind: "cron",
-      status: "error",
-      message: `Unipile webhook registration failed: ${
-        error instanceof Error ? error.message : "unknown error"
-      }`,
-    });
-  }
-}
-
 // Batched acceptance detection for one account: compare every pending invite
 // against recent first-degree relations (identity + unique name) and the
-// sent-invitations listing. Unipile's new_relation webhook can lag up to 8
-// hours and AI outreach sends bare invites, so this is the path that keeps
-// the dashboard honest. Invites still in the sent list are pending. Invites
-// that vanished are either accepted or withdrawn; only those few get a live
-// profile check to confirm.
+// sent-invitations listing. Nothing pushes an acceptance to Omentir, so this
+// is the path that keeps the dashboard honest. Invites still in the sent list
+// are pending. Invites that vanished are either accepted or withdrawn; only
+// those few get a live profile check to confirm.
 async function sweepAcceptedInvitations(input: {
   workspaceId: string;
   account: LinkedInAccount;
@@ -2265,11 +2242,20 @@ async function sweepAcceptedInvitations(input: {
   const enrollments = (await listConnectionSentEnrollments(workspaceId)).filter((enrollment) =>
     campaignsById.has(enrollment.campaignId),
   );
-  if (!enrollments.length) return { accepted: 0, unavailable: false };
+  // Invites given up at the give-up date that the lead may still accept. The
+  // old webhook reported those acceptances; without it they were lost and the
+  // lead never got the sequence.
+  const lateAcceptanceCutoff = Date.now() - LATE_ACCEPTANCE_DAYS * 24 * 60 * 60 * 1000;
+  const expiredInvites = (await listExpiredInviteEnrollments(workspaceId)).filter(
+    (enrollment) =>
+      campaignsById.has(enrollment.campaignId) &&
+      Date.parse(enrollment.connectionSentAt || "") >= lateAcceptanceCutoff,
+  );
+  if (!enrollments.length && !expiredInvites.length) return { accepted: 0, unavailable: false };
 
   const pendingLeads = (
     await Promise.all(
-      enrollments.map((enrollment) =>
+      [...enrollments, ...expiredInvites].map((enrollment) =>
         findLeadForWorkspace({ workspaceId, leadId: enrollment.leadId }),
       ),
     )
@@ -2352,23 +2338,54 @@ async function sweepAcceptedInvitations(input: {
     });
   }
 
+  // A late acceptance shows up among the newest connections. Only that list is
+  // used: a live profile check for every expired invite would spend profile
+  // views on the same people every sweep.
+  for (const enrollment of expiredInvites) {
+    const lead = pendingLeads.find((item) => item.id === enrollment.leadId);
+    if (!lead || !acceptedLeadIds.has(lead.id) || lead.outreachStatus === "stopped") continue;
+    // A newer invite to the same lead was just handled above; one sequence is enough.
+    if (enrollments.some((pending) => pending.leadId === lead.id)) continue;
+    await applyConnectionAccepted({
+      workspaceId,
+      lead,
+      enrollment,
+      campaign: campaignsById.get(enrollment.campaignId),
+      account,
+    });
+    await updateLead(workspaceId, lead.id, { outreachStatus: "connected" });
+    accepted += 1;
+    await safeLogAutomationRun({
+      workspaceId,
+      kind: "campaign",
+      status: "completed",
+      message: `Stored late connection approval from ${lead.name} (acceptance sweep).`,
+    });
+  }
+
   return { accepted, unavailable: false };
 }
 
-// Reply-sync fallback for one account: pull recent inbound provider messages
-// and run any unseen ones through the same pipeline as the webhook. Dedupe on
-// the provider message id makes re-reading an already-handled message a no-op.
+// Reply-sync fallback for one account: pull recent provider messages and run
+// them through the paths the old Unipile messaging webhook used. Inbound text
+// becomes a stored reply; owner-sent messages stop outreach (or confirm an
+// invite-note acceptance). Dedupe on the provider message id makes re-reading
+// an already-handled message a no-op.
 async function syncInboundReplies(input: {
   workspaceId: string;
   account: LinkedInAccount;
   previousRunAt: number;
+  campaigns: Campaign[];
 }) {
   const { workspaceId, account } = input;
-  const sinceMs =
-    (input.previousRunAt || Date.now() - REPLY_SYNC_INTERVAL_MS) - REPLY_SYNC_OVERLAP_MS;
+  // First successful sync has no previous cursor. Look back a day so replies
+  // that arrived while the account was connecting are not dropped forever.
+  const lookbackMs = input.previousRunAt
+    ? input.previousRunAt - REPLY_SYNC_OVERLAP_MS
+    : Date.now() - 24 * 60 * 60 * 1000;
   const messages = await listRecentInboundMessages({
     accountId: account.accountId,
-    sinceMs,
+    sinceMs: lookbackMs,
     limit: REPLY_SYNC_MESSAGE_LIMIT,
   });
   if (!messages) {
@@ -2401,12 +2418,38 @@ async function syncInboundReplies(input: {
       lead.providerProfileId = message.senderProviderId;
     }
 
+    // Owner typed in the LinkedIn app: stop outreach, or unlock the sequence
+    // when an invite note opened a chat (the old webhook's is_sender path).
+    if (message.isSender) {
+      const stopped = await stopForOwnerMessageWebhook({
+        workspaceId: leadWorkspaceId,
+        leadId: lead.id,
+        providerMessageId: message.id,
+        body: message.body,
+        createdAt: message.createdAt,
+        inviteNotes: inviteNotesFor(
+          await listLeadEnrollments(leadWorkspaceId, lead.id),
+          input.campaigns,
+          lead,
+        ),
+      });
+      if (stopped) {
+        stored += 1;
+        continue;
+      }
+      if (await applyAcceptanceIfFirstDegree({ workspaceId: leadWorkspaceId, lead, account })) {
+        stored += 1;
+      }
+      continue;
+    }
+
     const result = await processInboundMessage({
       workspaceId: leadWorkspaceId,
       lead,
       body: message.body,
       senderName: message.senderName || lead.name,
       providerMessageId: message.id,
+      providerCreatedAt: message.createdAt,
       account,
     });
     if (!result.duplicate) stored += 1;
@@ -2415,10 +2458,10 @@ async function syncInboundReplies(input: {
   return stored;
 }
 
-// Webhooks are the primary signal for acceptances and replies; this phase is
-// the batched fallback that keeps both flowing when a webhook is missed, plus
-// the periodic webhook (re-)registration itself. Runs on its own claim cycle
-// so the per-account claim reads stay off the every-tick hot path.
+// Own LinkedIn accounts have no provider webhook. This phase polls replies
+// (~5 min) and accepted invites (~2 h) for every connected own session and
+// every campaign account. Runs on its own claim cycle so the per-account
+// claim reads stay off the every-tick hot path.
 async function runProviderSyncs(mode: AutomationSafetyMode) {
   const result = { sweptAccounts: 0, acceptedViaSweep: 0, syncedReplies: 0 };
   // Live provider reads plus real state transitions and emails - nothing here
@@ -2427,7 +2470,6 @@ async function runProviderSyncs(mode: AutomationSafetyMode) {
 
   if (!(await claimSystemTask("provider-sync-cycle", PROVIDER_SYNC_CYCLE_MS))) return result;
 
-  await registerUnipileWebhooks();
 
   const campaigns = await getCampaignsForProviderSync();
   const accounts = new Map<
@@ -2455,6 +2497,25 @@ async function runProviderSyncs(mode: AutomationSafetyMode) {
         error,
       );
     }
+  }
+
+  // Own-client accounts receive no provider webhook. The campaign loop
+  // above only reaches accounts an active campaign uses, so enumerate
+  // every live own session as well: each own account gets the same reply
+  // sync and acceptance sweep a webhook would have triggered, on the
+  // same claim intervals, whether or not a campaign is running.
+  try {
+    for (const accountId of await listActiveOwnSessionAccountIds()) {
+      const account = await getLinkedInAccountByAccountIdAnyStatus(accountId);
+      if (!account || account.status !== "connected") continue;
+      if (isWorkspaceAutomationPaused(mode, account.workspaceId)) continue;
+      const key = `${account.workspaceId}:${account.id}`;
+      if (!accounts.has(key)) {
+        accounts.set(key, { workspaceId: account.workspaceId, account, campaignsById: new Map() });
+      }
+    }
+  } catch (error) {
+    console.error("[automation] failed to enumerate own LinkedIn accounts for provider sync:", error);
   }
 
   for (const entry of accounts.values()) {
@@ -2489,9 +2550,13 @@ async function runProviderSyncs(mode: AutomationSafetyMode) {
             workspaceId: entry.workspaceId,
             account: entry.account,
             previousRunAt: syncClaim.previousRunAt,
+            campaigns: [...entry.campaignsById.values()],
           });
         } catch (error) {
-          await releaseSystemTask(syncTaskId).catch((releaseError) => {
+          await releaseSystemTask(syncTaskId, {
+            previousRunAt: syncClaim.previousRunAt || syncClaim.claimedAt - REPLY_SYNC_INTERVAL_MS,
+            claimedAt: syncClaim.claimedAt,
+          }).catch((releaseError) => {
             console.error("[automation] failed to release reply-sync claim:", releaseError);
           });
           throw error;
@@ -2674,10 +2739,10 @@ async function sendDailyDigests(mode: AutomationSafetyMode) {
   return sent;
 }
 
-async function purgeExpiredUnipileAccounts(mode: AutomationSafetyMode) {
+async function purgeExpiredLinkedInAccounts(mode: AutomationSafetyMode) {
   const result = { workspaces: 0, deleted: 0 };
   if (mode.dryRun) return result;
-  if (!(await claimSystemTask("unipile-billing-purge", UNIPILE_BILLING_PURGE_INTERVAL_MS))) {
+  if (!(await claimSystemTask("unipile-billing-purge", LINKEDIN_BILLING_PURGE_INTERVAL_MS))) {
     return result;
   }
 
@@ -2695,22 +2760,22 @@ async function purgeExpiredUnipileAccounts(mode: AutomationSafetyMode) {
         extraLinkedInSeats: 0,
       });
     }
-    if (!shouldPurgeUnipileAccounts(billing)) continue;
+    if (!shouldPurgeLinkedInAccounts(billing)) continue;
 
     const accounts = await listAllLinkedInAccounts(workspace.id);
     if (!accounts.length) continue;
-    if (!(await claimSystemTask(`unipile-purge-${workspace.id}`, UNIPILE_WORKSPACE_PURGE_INTERVAL_MS))) {
+    if (!(await claimSystemTask(`unipile-purge-${workspace.id}`, LINKEDIN_WORKSPACE_PURGE_INTERVAL_MS))) {
       continue;
     }
 
-    const purged = await purgeWorkspaceUnipileAccounts(workspace.id);
+    const purged = await purgeWorkspaceLinkedInAccounts(workspace.id);
     result.workspaces += 1;
     result.deleted += purged.deleted;
     await safeLogAutomationRun({
       workspaceId: workspace.id,
       kind: "cron",
       status: purged.failed ? "error" : "completed",
-      message: `Purged Unipile after billing ended: deleted ${purged.deleted} of ${purged.considered} LinkedIn account${purged.considered === 1 ? "" : "s"}${purged.failed ? `, ${purged.failed} failed` : ""}.`,
+      message: `Disconnected LinkedIn 7 days after the plan ended: removed ${purged.deleted} of ${purged.considered} LinkedIn account${purged.considered === 1 ? "" : "s"}${purged.failed ? `, ${purged.failed} failed` : ""}.`,
     });
   }
 
@@ -2784,6 +2849,32 @@ async function runAutomationTickInner(
   let campaignResult = { enrollments: 0, actions: 0, newlyEnrolled: 0 };
   const errors: string[] = [];
 
+  // Before the send phase, so outreach on an account left from Unipile parks
+  // as "no connected account" instead of failing and using up retries.
+  if (!mode.dryRun) {
+    try {
+      if (await claimSystemTask("legacy-linkedin-disconnect", LEGACY_ACCOUNT_CHECK_INTERVAL_MS)) {
+        const disconnected = await disconnectLegacyLinkedInAccounts();
+        if (disconnected) {
+          console.warn(`[automation] marked ${disconnected} old Unipile LinkedIn account(s) as disconnected.`);
+        }
+      }
+    } catch (error) {
+      console.error("[automation] failed to disconnect old Unipile LinkedIn accounts:", error);
+    }
+  }
+
+  // Static IPs for LinkedIn accounts: buy spares, follow replacements, retire
+  // disconnected ones. Not awaited, so a slow proxy API never delays sends.
+  if (!mode.dryRun && process.env.BYTEFUL_API_PUBLIC_KEY && process.env.BYTEFUL_API_PRIVATE_KEY) {
+    void (async () => {
+      const { PROXY_RESTOCK_TASK, syncAndRestockProxies } = await import("./linkedin-own/proxy-restock");
+      if (await claimSystemTask(PROXY_RESTOCK_TASK, PROXY_RESTOCK_INTERVAL_MS)) await syncAndRestockProxies();
+    })().catch((error) => {
+      console.error("[automation] static IP restock failed:", error instanceof Error ? error.message : error);
+    });
+  }
+
   // Run the agent (lead discovery) and campaign (connect/message) phases
   // independently and concurrently. A failure or slowdown in one phase must
   // not prevent the other from running - a backlog of slow discovery runs
@@ -2833,13 +2924,13 @@ async function runAutomationTickInner(
     console.error("[automation] invite withdrawal phase failed:", error);
   }
 
-  let unipilePurge = { workspaces: 0, deleted: 0 };
+  let linkedInPurge = { workspaces: 0, deleted: 0 };
   try {
-    unipilePurge = await purgeExpiredUnipileAccounts(mode);
+    linkedInPurge = await purgeExpiredLinkedInAccounts(mode);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unipile billing purge failed";
-    errors.push(`unipile-purge: ${message}`);
-    console.error("[automation] Unipile billing purge failed:", error);
+    const message = error instanceof Error ? error.message : "LinkedIn billing purge failed";
+    errors.push(`linkedin-purge: ${message}`);
+    console.error("[automation] LinkedIn billing purge failed:", error);
   }
 
   try {
@@ -2862,7 +2953,7 @@ async function runAutomationTickInner(
   await safeLogAutomationRun({
     kind: "cron",
     status: errors.length ? "error" : "completed",
-    message: `${mode.dryRun ? "DRY RUN " : ""}Agents: ${agentResult.agents}, signal agents: ${agentResult.signalAgents}, signals: ${agentResult.signalsObserved}, leads: ${agentResult.leadsAdded}, time-expired runs: ${agentResult.timeBudgetExpiredRuns}, newly enrolled: ${campaignResult.newlyEnrolled}, campaign actions: ${campaignResult.actions}${providerSync.sweptAccounts ? `, sweeps: ${providerSync.sweptAccounts} (accepted: ${providerSync.acceptedViaSweep})` : ""}${providerSync.syncedReplies ? `, synced replies: ${providerSync.syncedReplies}` : ""}${invitesWithdrawn ? `, invites withdrawn: ${invitesWithdrawn}` : ""}${unipilePurge.deleted ? `, unipile purged: ${unipilePurge.deleted} from ${unipilePurge.workspaces} workspace${unipilePurge.workspaces === 1 ? "" : "s"}` : ""}${digestsSent ? `, digests: ${digestsSent}` : ""}${errors.length ? ` | errors: ${errors.join("; ")}` : ""}`,
+    message: `${mode.dryRun ? "DRY RUN " : ""}Agents: ${agentResult.agents}, signal agents: ${agentResult.signalAgents}, signals: ${agentResult.signalsObserved}, leads: ${agentResult.leadsAdded}, time-expired runs: ${agentResult.timeBudgetExpiredRuns}, newly enrolled: ${campaignResult.newlyEnrolled}, campaign actions: ${campaignResult.actions}${providerSync.sweptAccounts ? `, sweeps: ${providerSync.sweptAccounts} (accepted: ${providerSync.acceptedViaSweep})` : ""}${providerSync.syncedReplies ? `, synced replies: ${providerSync.syncedReplies}` : ""}${invitesWithdrawn ? `, invites withdrawn: ${invitesWithdrawn}` : ""}${linkedInPurge.deleted ? `, LinkedIn accounts purged: ${linkedInPurge.deleted} from ${linkedInPurge.workspaces} workspace${linkedInPurge.workspaces === 1 ? "" : "s"}` : ""}${digestsSent ? `, digests: ${digestsSent}` : ""}${errors.length ? ` | errors: ${errors.join("; ")}` : ""}`,
   });
 
   return { agentResult, campaignResult, errors, dryRun: mode.dryRun };

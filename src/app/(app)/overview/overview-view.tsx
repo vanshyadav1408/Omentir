@@ -57,6 +57,9 @@ const currencyFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 0,
 });
 
+const DATA_REFRESH_MS = 60_000;
+const DATA_RETURN_REFRESH_MS = 30_000;
+
 type RangeKey = "7d" | "30d" | "3m" | "month";
 
 const RANGE_OPTIONS: Array<{ key: RangeKey; label: string; caption: string; days: number }> = [
@@ -166,14 +169,31 @@ export default function OverviewView({
   const chartStartDateKey = toActivityDayKey(new Date(rangeStart).toISOString()) || undefined;
   const chartEndDateKey = toActivityDayKey(new Date(now).toISOString()) || undefined;
 
+  // Each dashboard reload returns every lead and enrollment in the workspace
+  // (9 MB on the largest one). Reloading that every 15 s in every open tab kept
+  // the server busy enough to slow every other page, so data refreshes once a
+  // minute while visible and when the user returns. The clock still ticks.
   useEffect(() => {
-    const interval = window.setInterval(() => {
-      setNow(Date.now());
+    let dataLoadedAt = Date.now();
+    const refresh = (maxAgeMs: number) => {
+      if (document.hidden || Date.now() - dataLoadedAt < maxAgeMs) return;
+      dataLoadedAt = Date.now();
       if (!dashboardLoadingRef.current) reloadDashboard();
       if (!activityDaysLoadingRef.current) reloadActivityDays();
       if (!inboxLoadingRef.current) reloadLinkedInInbox();
+    };
+    const interval = window.setInterval(() => {
+      setNow(Date.now());
+      refresh(DATA_REFRESH_MS);
     }, 15_000);
-    return () => window.clearInterval(interval);
+    const onReturn = () => refresh(DATA_RETURN_REFRESH_MS);
+    window.addEventListener("focus", onReturn);
+    document.addEventListener("visibilitychange", onReturn);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("focus", onReturn);
+      document.removeEventListener("visibilitychange", onReturn);
+    };
   }, [reloadDashboard, reloadActivityDays, reloadLinkedInInbox]);
 
   // Average ticket size lives on the product profile. Mirror it locally so the
@@ -429,15 +449,17 @@ export default function OverviewView({
           </span>
         </Link>
 
-        <div className="m3-card m3-card-outlined mt-5 min-w-0 px-5 py-4 sm:px-6 sm:py-5">
-          <p className="text-[12px] text-[var(--md-sys-color-on-surface-variant)]">Outreach</p>
-          {activityDaysLoading ? (
-            <Skeleton className="mt-2 h-8 w-24" />
-          ) : (
-            <p className="stat-value mt-1 text-[var(--md-sys-color-on-surface)]">
-              {heatmapTotal(loadedActivityDays).toLocaleString()}
-            </p>
-          )}
+        <div className="heatmap-card m3-card m3-card-outlined mt-5 min-w-0 px-5 py-4 sm:px-6 sm:py-5">
+          <div className="heatmap-inset">
+            <p className="text-[12px] text-[var(--md-sys-color-on-surface-variant)]">Outreach</p>
+            {activityDaysLoading ? (
+              <Skeleton className="mt-2 h-8 w-24" />
+            ) : (
+              <p className="stat-value mt-1 text-[var(--md-sys-color-on-surface)]">
+                {heatmapTotal(loadedActivityDays).toLocaleString()}
+              </p>
+            )}
+          </div>
           <div className="mt-4 min-w-0">
             {activityDaysLoading ? (
               <Skeleton className="h-28 w-full" />

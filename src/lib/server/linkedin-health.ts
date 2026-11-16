@@ -20,16 +20,17 @@ import {
 import { cleanId, getDb, nowIso } from "./firebase";
 import { hasActiveSubscription } from "./subscription";
 import { STAGE_ACCEPTED, enrollmentProgressStage, leadStage } from "@/lib/outreach-stage";
+import { isOwnLinkedInId } from "./linkedin-own/ids";
 import type { LinkedInAccount, Workspace } from "./types";
-import { listSentInvitations, withdrawSentInvitation } from "./unipile";
+import { listSentInvitations, withdrawSentInvitation } from "./linkedin";
 
-// Must match PROFILE_VIEW_DAILY_LIMIT in unipile.ts, which enforces it.
+// Must match PROFILE_VIEW_DAILY_LIMIT in linkedin.ts, which enforces it.
 const PROFILE_VIEW_DAILY_LIMIT = 75;
 
 // Same doc the profile-view budget writes (consumeProfileViewBudget): keyed by
-// the Unipile account id and the UTC day.
-function accountUsageRef(unipileAccountId: string, day = new Date().toISOString().slice(0, 10)) {
-  return getDb().collection("usageDays").doc(`account-${cleanId(unipileAccountId)}-${day}`);
+// the LinkedIn account id and the UTC day.
+function accountUsageRef(linkedInAccountId: string, day = new Date().toISOString().slice(0, 10)) {
+  return getDb().collection("usageDays").doc(`account-${cleanId(linkedInAccountId)}-${day}`);
 }
 
 // The account a campaign sends from: its own if connected, else the workspace's
@@ -73,8 +74,12 @@ export async function loadLinkedInHealth(workspace: Workspace): Promise<LinkedIn
 
   return Promise.all(
     accounts.map(async (account) => {
+      // 400 pending invites already clears PENDING_INVITES_DANGER (300) and
+      // renders "400+"; capping own accounts at 4 pages avoids tying up the
+      // paced Voyager queue for 25s whenever Settings opens.
+      const maxPages = isOwnLinkedInId(account.accountId) ? 4 : 10;
       const [{ invitations, complete }, usage] = await Promise.all([
-        listSentInvitations(account.accountId),
+        listSentInvitations(account.accountId, maxPages),
         accountUsageRef(account.accountId).get(),
       ]);
       const sample = acceptanceSample(invitesByAccount.get(account.id) ?? [], nowMs);

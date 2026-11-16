@@ -27,6 +27,7 @@ const publicRoutes = [
   { path: "/pricing", changeFrequency: "monthly", priority: 0.8, lastModified: "2026-08-12" },
   { path: "/minimum-booking-guarantee", changeFrequency: "monthly", priority: 0.5, lastModified: "2026-10-07" },
   { path: "/security", changeFrequency: "monthly", priority: 0.5, lastModified: "2026-09-07" },
+  { path: "/linkedin-account-safety", changeFrequency: "monthly", priority: 0.5, lastModified: "2026-11-16" },
   { path: "/about", changeFrequency: "monthly", priority: 0.7, lastModified: "2026-07-17" },
   { path: "/help", changeFrequency: "weekly", priority: 0.7, lastModified: "2026-08-23" },
   { path: "/guides", changeFrequency: "weekly", priority: 0.7 },

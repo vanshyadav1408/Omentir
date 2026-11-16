@@ -10,6 +10,7 @@
     "start": "bun --bun next start",
     "lint": "bun --bun eslint && bun run lint:copy",
     "lint:copy": "bun scripts/lint-marketing-copy.ts",
+    "test": "bun test --isolate src",
     "postinstall": "if [ ! -f .env.production ]; then rm -rf .next; else rm -rf .next/types .next/dev/types; fi"
   },
   "dependencies": {
@@ -24,6 +25,7 @@
     "firebase-admin": "^14.2.0",
     "next": "16.4.1",
     "next-sanity": "^13.3.3",
+    "playwright-core": "^1.65.1",
     "posthog-js": "^1.424.0",
     "posthog-node": "^5.51.4",
     "react": "19.2.8",

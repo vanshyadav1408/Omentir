@@ -6,7 +6,8 @@ Thank you for contributing. Keep changes focused, explain why they matter, and p
 
 - Open an issue before substantial behavior or architecture changes.
 - Never use real LinkedIn sends to test a contribution. Use dry-run behavior and inspect `automationRuns`.
-- Never commit credentials, provider tokens, customer data, private messages, production logs, or local environment files.
+- Omentir talks to LinkedIn through its own client in `src/lib/server/linkedin-own/`. Tests for it run on invented fixtures. Never commit a real session cookie (`li_at`, `JSESSIONID`), a captured LinkedIn response, or a real person's profile data as a fixture.
+- Never commit credentials, provider tokens, LinkedIn session cookies, customer data, private messages, production logs, or local environment files.
 - Keep hosted and self-hosted behavior in one codebase. Runtime mode flags, not missing credentials, define which integrations run.
 
 ## Development
@@ -17,8 +18,11 @@ Use Bun 1.3, then run:
 bun install
 bunx tsc --noEmit --pretty false
 bun run lint
+bun run test
 bun run build
 ```
+
+Run tests with `bun run test`, not a bare `bun test`: the script isolates each test file, and without that module mocks leak between files and report failures that are not real.
 
 Report every skipped or unavailable check in the pull request.
 

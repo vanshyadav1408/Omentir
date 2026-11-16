@@ -4,15 +4,16 @@
    `node scripts/build-icon-font.mjs` after adding a new icon name. */
 @import "./icon-font.css";
 
-/* `dark:` follows the resolved site theme (data-site-theme, set before paint
-   by the head script), not the OS setting and not the `.dark` class, which
-   <html> keeps in both themes for the html.dark token rules below. */
+/* The product is dark only, so `dark:` always applies, whatever the OS says.
+   Nothing sets data-site-theme any more: this variant and every
+   `:root:not([data-site-theme="light"])` rule below always match. Those
+   selectors stay as written so the rules keep their specificity. */
 @custom-variant dark (&:where(:root:not([data-site-theme="light"]), :root:not([data-site-theme="light"]) *));
 
 /* ── Material 3 single-seed tonal system (base layer) ─────────────────────
    These are the original dark values. The "Site theme" block near the end of
    this file remaps the surface, text and border roles onto the Cursor-style
-   olive palette and supplies the light theme, so new colors belong there.
+   olive palette, so new colors belong there.
 
    Seed only: #ffffff. All brand-derived roles come from that one color via
    color-mix (HCT-style tone ladder approximation: T0–T100). Do not invent new
@@ -302,12 +303,12 @@
   /* Marketing content widths.
      Primary: header / logo-wall / footer band. Same box as MarketingHeader,
      logo left edge to Get started right edge (Tailwind 7xl + page pad).
-     Moderate: alternate landing pages (Grok Bot guides). Between primary
-     and the reading column (Tailwind 5xl + the same page pad).
+     Moderate: alternate landing pages (Grok Bot guides). 64rem of content
+     + the same page pad, so guides line up with .cal-read-moderate.
      Secondary: reading column on blogs, features, help, and SEO
      article shells (Tailwind 3xl + the same page pad). */
   --omentir-primary-max-width: 80rem;
-  --omentir-moderate-max-width: 64rem;
+  --omentir-moderate-max-width: 68rem;
   --omentir-secondary-max-width: 48rem;
   --omentir-page-pad-x: 16px;
   --omentir-page-pad-x-md: 32px;
@@ -2396,7 +2397,8 @@ html[data-theme="dark"] .recommended-badge {
    content (height, width, margin, padding, border-radius).
    Solid base + lighter highlight band — visible in light AND dark. */
 .skeleton,
-.google-skeleton {
+.google-skeleton,
+.field-skeleton .m3-text-field__shell {
   pointer-events: none;
   background-color: var(--md-sys-color-skeleton-base);
   background-image: linear-gradient(
@@ -2439,9 +2441,21 @@ html[data-theme="dark"] .recommended-badge {
   }
 }
 
+/* Route skeletons draw a form's real fields (label, box, helper text) with the
+   shimmer inside the box, so the form keeps its exact geometry while values
+   load. The empty input itself stays hidden and unclickable. */
+.field-skeleton {
+  pointer-events: none;
+}
+
+.field-skeleton .m3-text-field__input {
+  visibility: hidden;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .skeleton,
-  .google-skeleton {
+  .google-skeleton,
+  .field-skeleton .m3-text-field__shell {
     animation: none;
     background-image: none;
     background-color: var(--md-sys-color-skeleton-base);
@@ -7296,10 +7310,6 @@ html.dark .analysis-chart {
   --analysis-chart-accent: #4a8ee8;
 }
 
-:root[data-site-theme="light"] .analysis-chart {
-  --analysis-chart-accent: #1f6fdb;
-}
-
 .analysis-chart__bar {
   fill: var(--analysis-chart-accent);
   transform-box: fill-box;
@@ -7827,13 +7837,34 @@ html:has(.dashboard-shell) .m3-dialog-btn {
   overflow-x: auto;
 }
 
+/* The weekday label column and its gap, shared by the board and by the rows
+   around it, so the card's title, total, stats and legend all start at the
+   first column of days. `.heatmap-card` is the card that holds the board. */
+.heatmap,
+.heatmap-card {
+  --heatmap-label: 16px;
+  --heatmap-label-gap: 8px;
+  container-type: inline-size;
+}
+
+.heatmap-inset {
+  padding-left: calc(var(--heatmap-label) + var(--heatmap-label-gap));
+}
+
+/* Below the board's min-width it scrolls to the latest weeks and the label
+   column scrolls out of view, so the rows under it start at the edge too. */
+@container (max-width: 620px) {
+  .heatmap-inset {
+    padding-left: 0;
+  }
+}
+
 .heatmap-board {
   --heatmap-gap: 3px;
   --heatmap-cell-min: 8px;
-  --heatmap-label: 16px;
   display: grid;
   grid-template-columns: var(--heatmap-label) minmax(0, 1fr);
-  column-gap: 8px;
+  column-gap: var(--heatmap-label-gap);
   row-gap: 4px;
   width: 100%;
   min-width: calc(
@@ -7880,7 +7911,7 @@ html:has(.dashboard-shell) .m3-dialog-btn {
 }
 
 .heatmap-cell {
-  --heatmap-level-0: #1c1c1c;
+  --heatmap-level-0: var(--site-card-3);
   --heatmap-level-1: #0e4429;
   --heatmap-level-2: #006d32;
   --heatmap-level-3: #26a641;
@@ -7890,21 +7921,97 @@ html:has(.dashboard-shell) .m3-dialog-btn {
   border-radius: 2px;
 }
 
-/* Light: no activity is white (with a hairline so it reads on a white card),
-   the busiest days are the darkest green. */
-:root[data-site-theme="light"] .heatmap-cell {
-  --heatmap-level-0: #ffffff;
-  --heatmap-level-1: #9be9a8;
-  --heatmap-level-2: #40c463;
-  --heatmap-level-3: #30a14e;
-  --heatmap-level-4: #216e39;
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--site-text) 8%, transparent);
-}
-
 .heatmap-weeks .heatmap-cell {
   width: 100%;
   height: auto;
   aspect-ratio: 1;
+  cursor: pointer;
+}
+
+.heatmap-weeks .heatmap-cell[data-active] {
+  outline: 1.5px solid var(--site-text);
+  outline-offset: 1px;
+}
+
+/* Day numbers on hover or tap: a raised card like the app's menus. Sits
+   above the day, or below it for the top rows, because the card around the
+   board clips overflow. */
+.heatmap-tip {
+  position: absolute;
+  z-index: 20;
+  width: 184px;
+  padding: 10px 12px 11px;
+  border: 1px solid var(--site-border);
+  border-radius: 12px;
+  background: var(--site-card);
+  color: var(--site-text);
+  font-size: 12px;
+  line-height: 1.4;
+  box-shadow: 0 1px 2px rgb(12 26 48 / 0.06), 0 14px 32px -12px rgb(12 26 48 / 0.28);
+  pointer-events: none;
+  transform: translate(-50%, calc(-100% - 8px));
+}
+
+:root:not([data-site-theme="light"]) .heatmap-tip {
+  border-color: var(--site-card-4);
+  background: var(--site-card-2);
+  box-shadow: 0 16px 40px -12px rgb(0 0 0 / 0.6);
+}
+
+.heatmap-tip[data-below] {
+  transform: translate(-50%, 8px);
+}
+
+.heatmap-tip-date {
+  margin: 0;
+  font-size: 11px;
+  color: var(--site-text-2);
+}
+
+.heatmap-tip-total {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  margin: 2px 0 0;
+  color: var(--site-text-2);
+}
+
+.heatmap-tip-total strong {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--site-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.heatmap-tip dl {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 8px 0 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--site-border);
+}
+
+.heatmap-tip dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.heatmap-tip dl > div[data-zero] {
+  opacity: 0.45;
+}
+
+.heatmap-tip dt {
+  color: var(--site-text-2);
+}
+
+.heatmap-tip dd {
+  margin: 0;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
 }
 
 @media (min-width: 768px) {
@@ -8038,32 +8145,32 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
    it while their shells are mounted.
 
    The --google-* remap below sits on :root, where every --md-sys-color-* role
-   is declared, so all of them recompute from the site palette. Dark is the
-   default; `data-site-theme="light"` (resolved before paint by the inline
-   script in layout.tsx, changed by SiteThemeToggle) swaps in the light
-   palette. <html> keeps the `dark` class in both, so the `html.dark` rules
+   is declared, so all of them recompute from the site palette. The product
+   is dark only. <html> always has the `dark` class, so the `html.dark` rules
    below stay active and must read tokens rather than hardcoded white. */
 :root {
   /* The app's Calendly-style blue-greys (see the dashboard block further
      down), so pages outside the app and marketing shells (OAuth consent,
      checkout, setup, error pages) match the current scheme, not the old olive. */
-  --site-bg: #0f1114;
-  --site-card: #17191d;
-  --site-card-2: #1e2126;
-  --site-card-3: #262a30;
-  --site-card-4: #2e333a;
-  --site-text: #eef1f4;
-  --site-border: #2a2f36;
-  --site-accent: #8dbdf7;
-  --site-text-2: #a4aeb8;
-  --site-text-3: #7c8793;
+  --site-bg: #0b1220;
+  --site-card: #111a2b;
+  --site-card-2: #172236;
+  --site-card-3: #1e2b42;
+  --site-card-4: #27364f;
+  --site-text: #edf2fa;
+  --site-border: #24324a;
+  --site-primary: #7aa7ff;
+  --site-primary-hover: #9bbcff;
+  --site-on-primary: #0b1220;
+  --site-accent: var(--site-primary);
+  --site-text-2: #a6b3c7;
+  --site-text-3: #75849b;
 
-  /* Muted ink steps for the legacy zinc text rules (same alphas as before on
-     dark; the light theme raises them so grey text stays dark). */
+  /* Muted ink steps for the legacy zinc text rules. */
   --ink-soft: color-mix(in srgb, var(--google-text-primary) 76%, transparent);
   --ink-faint: color-mix(in srgb, var(--google-text-primary) 49%, transparent);
 
-  /* Status and link tints. Pastel on dark; the light theme darkens them. */
+  /* Status and link tints, pastel for the dark palette. */
   --tone-blue: #a8c7fa;
   --tone-green: #6ee7b7;
   --tone-amber: #fcd34d;
@@ -8072,8 +8179,15 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
 }
 
 :root {
-  /* Geist is the only sans face; the old variable names point at it so every
+  /* System sans first (San Francisco on Apple devices), the bundled faces
+     elsewhere; the old variable names point at it so every
      var(--font-google-sans), var(--font-roboto) and --font-app-sans follows. */
+  --font-site-sans: -apple-system, BlinkMacSystemFont, var(--font-geist), "Helvetica Neue", Arial, sans-serif;
+  --font-cal-display: -apple-system, BlinkMacSystemFont, var(--font-inter-tight), "Helvetica Neue", Arial, sans-serif;
+  --font-hand: "Bradley Hand", "Segoe Print", "Comic Sans MS", cursive;
+  --site-mark: rgb(122 167 255 / 0.3);
+  --site-red: #d5382b;
+  --site-ease: cubic-bezier(0.16, 1, 0.3, 1);
   --font-google-sans: var(--font-site-sans);
   --font-roboto: var(--font-site-sans);
 
@@ -8083,9 +8197,9 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
   --google-surface-high: var(--site-card-2);
   --google-surface-highest: var(--site-card-3);
   --google-border: var(--site-border);
-  --google-primary: var(--site-text);
-  --google-on-primary: var(--site-bg);
-  --google-primary-container: color-mix(in oklab, var(--site-text) 12%, var(--site-card));
+  --google-primary: var(--site-primary);
+  --google-on-primary: var(--site-on-primary);
+  --google-primary-container: color-mix(in oklab, var(--site-primary) 14%, var(--site-card));
   --google-on-primary-container: var(--site-text);
   --google-text-primary: var(--site-text);
   --google-text-secondary: var(--site-text-2);
@@ -8103,54 +8217,6 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
   background-color: var(--site-bg);
 }
 
-:root[data-site-theme="light"] {
-  color-scheme: light;
-  /* The app's Calendly-style light palette; ink stays neutral. */
-  --site-bg: #f8f9f9;
-  --site-card: #ffffff;
-  --site-card-2: #f3f5f7;
-  --site-card-3: #e9edf1;
-  --site-card-4: #dde3e9;
-  --site-text: #0b0d0f;
-  --site-border: #e4e6e9;
-  --site-accent: #0b0d0f;
-  --site-text-2: #545f69;
-  --site-text-3: #81909c;
-  --ink-soft: color-mix(in oklab, var(--site-text) 85%, transparent);
-  --ink-faint: color-mix(in oklab, var(--site-text) 68%, transparent);
-
-  /* The Tailwind ink ramp is remapped to white alphas for the dark theme
-     further up; in light it becomes the same steps of dark ink. */
-  --color-black: #000000;
-  --color-zinc-300: rgba(0, 0, 0, 0.22);
-  --color-zinc-400: color-mix(in oklab, var(--site-text) 62%, transparent);
-  --color-zinc-500: color-mix(in oklab, var(--site-text) 74%, transparent);
-  --color-zinc-600: color-mix(in oklab, var(--site-text) 80%, transparent);
-  --color-zinc-700: color-mix(in oklab, var(--site-text) 86%, transparent);
-  --color-zinc-800: color-mix(in oklab, var(--site-text) 90%, transparent);
-  --color-zinc-900: var(--site-text);
-  --color-zinc-950: var(--site-text);
-  --color-neutral-800: color-mix(in oklab, var(--site-text) 90%, transparent);
-  --color-neutral-900: var(--site-text);
-  --color-neutral-950: var(--site-text);
-  --color-stone-800: color-mix(in oklab, var(--site-text) 90%, transparent);
-  --color-stone-900: var(--site-text);
-  --color-stone-950: var(--site-text);
-
-  --tone-blue: #1a56c2;
-  --tone-green: #15803d;
-  --tone-amber: #b45309;
-  --tone-salmon: #c2410c;
-  --tone-violet: #6d28d9;
-  --color-blue-500: #1a56c2;
-  --color-blue-600: #1a56c2;
-  --color-blue-700: #174ea6;
-  --google-error: #b3261e;
-  --google-error-container: #f9dedc;
-  --md-sys-color-on-error: #ffffff;
-  --md-sys-color-on-error-container: #410e0b;
-}
-
 /* :root raises this above the global `html.dark main` rule, which hardcodes
    white text; tables inherit from here via `html.dark td { color: inherit }`. */
 :root .site-theme {
@@ -8163,12 +8229,12 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
    on the outlined button, so its colors are restated here. */
 :root .m3-btn {
   border-radius: 9999px;
-  font-weight: 400;
+  font-weight: 600;
 }
 
 :root .m3-btn-pair > .m3-btn {
   border-radius: 9999px;
-  font-weight: 400;
+  font-weight: 600;
 }
 
 :root .m3-btn-filled:hover:not(:disabled),
@@ -8212,7 +8278,8 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
    `h1…h6 { font-weight: 700 }` rule beats Tailwind's layered font-* utilities,
    so the weight is set here. The landing mocks keep their own weights. */
 :is(h1, h2, h3, h4, h5, h6):not(.home-mock-app *) {
-  font-weight: 400;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 /* Pill buttons. Primary is ink on canvas (inverted), secondary a card tone. */
@@ -8222,17 +8289,17 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
   align-items: center;
   justify-content: center;
   gap: 0.375rem;
-  height: 2.75rem;
-  padding: 0 1.375rem;
+  height: 42px;
+  padding: 0 22px;
   border: 1px solid transparent;
   border-radius: 9999px;
-  font-size: 0.9375rem;
-  font-weight: 400;
+  font-size: 14.5px;
+  font-weight: 600;
   line-height: 1;
   white-space: nowrap;
   text-decoration: none;
   cursor: pointer;
-  transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, opacity 150ms ease;
+  transition: transform 250ms var(--site-ease), background-color 200ms ease, border-color 200ms ease, color 200ms ease, box-shadow 200ms ease;
 }
 
 .site-btn-sm {
@@ -8242,9 +8309,9 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
 }
 
 .site-btn-primary {
-  background-color: var(--site-text);
-  border-color: var(--site-text);
-  color: var(--site-bg);
+  background-color: var(--site-primary);
+  border-color: var(--site-primary);
+  color: var(--site-on-primary);
 }
 
 .site-btn-primary:hover {
@@ -8439,39 +8506,6 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
   background: var(--site-card-2);
 }
 
-/* Light tiles: the logo files are drawn for the dark olive tile (light marks,
-   or dark plates like dibe's), so inverting turns marks dark and plates
-   white, and multiply drops the white. Logos with their own filled tile
-   (data-own-plate) keep their tones in greyscale, and a solid one-colour
-   mark (data-silhouette) turns black. */
-:root[data-site-theme="light"] .customer-logo-img {
-  filter: grayscale(1) invert(1) contrast(1.15);
-  mix-blend-mode: multiply;
-  opacity: 0.85;
-}
-
-:root[data-site-theme="light"] .customer-logo-img[data-own-plate] {
-  filter: grayscale(1);
-}
-
-:root[data-site-theme="light"] .customer-logo-img[data-silhouette] {
-  filter: brightness(0);
-}
-
-/* Hover shows the real colours. Several files carry white text, so the
-   tile switches to the dark tile to keep them readable. */
-:root[data-site-theme="light"] .customer-logo-item:hover,
-:root[data-site-theme="light"] .customer-logo-item:focus-visible {
-  background: #12160f;
-}
-
-:root[data-site-theme="light"] .customer-logo-item:hover .customer-logo-img,
-:root[data-site-theme="light"] .customer-logo-item:focus-visible .customer-logo-img {
-  opacity: 1;
-  filter: none;
-  mix-blend-mode: normal;
-}
-
 /* Feature cards: copy column left, product on the right, no divider. */
 .site-theme .home-green-panel {
   border-color: transparent;
@@ -8548,10 +8582,6 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
   color: var(--md-sys-color-on-surface);
 }
 
-:root[data-site-theme="light"] .site-footer {
-  background-color: #fcfcfb;
-}
-
 .site-footer-heading {
   font-size: 0.875rem;
   font-weight: 400;
@@ -8571,38 +8601,6 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
 .site-footer-muted {
   font-size: 0.875rem;
   color: var(--md-sys-color-on-surface-variant);
-}
-
-/* System / light / dark switch on the Settings page. */
-.site-theme-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  padding: 3px;
-  border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: 9999px;
-}
-
-.site-theme-toggle button {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  height: 1.875rem;
-  padding: 0 0.875rem;
-  border-radius: 9999px;
-  font-size: 0.8125rem;
-  color: var(--md-sys-color-on-surface-variant);
-  cursor: pointer;
-  transition: background-color 150ms ease, color 150ms ease;
-}
-
-.site-theme-toggle button:hover {
-  color: var(--md-sys-color-on-surface);
-}
-
-.site-theme-toggle button[aria-pressed="true"] {
-  background-color: var(--site-card-3);
-  color: var(--md-sys-color-on-surface);
 }
 
 /* Pricing cards (site variant). */
@@ -8668,14 +8666,6 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
     align-items: center;
     gap: 1.5rem;
   }
-}
-
-/* Post links: the olive product-name tone is tuned for dark; use the light
-   accent when the site is light. */
-:root[data-site-theme="light"] .blog-article[data-blog-link-tone="olive"] a[data-link-kind],
-:root[data-site-theme="light"] .blog-article[data-blog-link-tone="olive"] a[data-link-kind] :is(span, strong, em),
-:root[data-site-theme="light"] .product-word-link {
-  color: var(--site-accent) !important;
 }
 
 /* Landing stat cards under the hero demo. */
@@ -8792,43 +8782,22 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
    :root:has() rather than .dashboard-shell so portalled menus, dialogs and
    toasts match the app. The marketing site keeps its own palette. */
 :root:has(.dashboard-shell) {
-  --site-bg: #0f1114;
-  --site-card: #17191d;
-  --site-card-2: #1e2126;
-  --site-card-3: #262a30;
-  --site-card-4: #2e333a;
-  --site-text: #eef1f4;
+  --site-bg: #0b1220;
+  --site-card: #111a2b;
+  --site-card-2: #172236;
+  --site-card-3: #1e2b42;
+  --site-card-4: #27364f;
+  --site-text: #edf2fa;
   --site-sidebar: var(--site-bg);
-  --site-border: #2a2f36;
-  --site-text-2: #a4aeb8;
-  --site-text-3: #7c8793;
-  --app-field-border: #3a414a;
-  --app-field-border-focus: #6f7b88;
-  --app-nav-active-bg: #1a2c45;
-  --app-nav-active-ink: #8dbdf7;
+  --site-border: #24324a;
+  --site-text-2: #a6b3c7;
+  --site-text-3: #75849b;
+  --app-field-border: #33425c;
+  --app-field-border-focus: #75849b;
+  --app-nav-active-bg: #1a3157;
+  --app-nav-active-ink: #cfe0ff;
   --md-sys-color-field-outline: var(--app-field-border);
-  --md-sys-color-field-outline-hover: #4a525c;
-}
-
-:root[data-site-theme="light"]:has(.dashboard-shell) {
-  --site-bg: #f8f9f9;
-  --site-card: #ffffff;
-  --site-card-2: #f3f5f7;
-  --site-card-3: #e9edf1;
-  --site-card-4: #dde3e9;
-  --site-text: #0b0d0f;
-  --site-sidebar: var(--site-bg);
-  --site-border: #e4e6e9;
-  --site-text-2: #545f69;
-  --site-text-3: #81909c;
-  --app-field-border: #c3cad1;
-  --app-field-border-focus: #545f69;
-  --app-nav-active-bg: #d5e8fe;
-  --app-nav-active-ink: #1e5ea7;
-  --md-sys-color-field-outline-hover: #81909c;
-  --color-zinc-300: var(--app-field-border);
-  --ink-soft: var(--site-text-2);
-  --ink-faint: var(--site-text-3);
+  --md-sys-color-field-outline-hover: #4b5b76;
 }
 
 /* Cards sit one step above the canvas, like Cursor's elevated tiles. */
@@ -8841,8 +8810,8 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
   --md-sys-color-surface-container-highest: var(--google-surface-highest);
   --md-sys-nav-item-active: color-mix(in oklab, var(--site-text) 6%, transparent);
   --md-sys-color-field-fill: transparent;
-  --md-sys-shape-corner-large: 12px;
-  --md-sys-shape-corner-extra-large: 12px;
+  --md-sys-shape-corner-large: 16px;
+  --md-sys-shape-corner-extra-large: 22px;
 }
 
 /* Sidebar sits on the canvas with no edge; the content floats beside it in
@@ -8865,7 +8834,7 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
 
   :root .dashboard-shell > main > section {
     overflow: hidden;
-    border-radius: 16px;
+    border-radius: 22px;
     background-color: var(--site-card);
   }
 }
@@ -8877,14 +8846,14 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
   letter-spacing: -0.01em;
 }
 
-/* Controls have 12px corners in the app, not the site's pills. Same
-   selector list as the pill rule, one :has() stronger. */
+/* Controls are pills in the app too, like the site. Same selector list as
+   the site-wide pill rule, one :has() stronger. */
 :root:has(.dashboard-shell) {
-  --md-sys-text-field-radius: 12px;
+  --md-sys-text-field-radius: 9999px;
 }
 
 :root:has(.dashboard-shell) :is(.dashboard-shell, .m3-text-field--compact) {
-  --md-sys-text-field-radius: 12px;
+  --md-sys-text-field-radius: 9999px;
 }
 
 :root:has(.dashboard-shell) .m3-btn,
@@ -8896,10 +8865,13 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
 :root:has(.dashboard-shell) :is(button, a)[class~="border"]:is([class~="bg-white"], [class~="bg-transparent"])[class*="px-"],
 :root:has(.dashboard-shell) input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="hidden"]):not([type="color"]),
 :root:has(.dashboard-shell) select,
-:root:has(.dashboard-shell) .m3-text-field__shell,
+:root:has(.dashboard-shell) .m3-text-field__shell {
+  border-radius: 9999px !important;
+}
+
 :root:has(.dashboard-shell) textarea,
 :root:has(.dashboard-shell) .m3-text-field__shell:has(textarea) {
-  border-radius: 12px !important;
+  border-radius: 16px !important;
 }
 
 /* Rounded-full chips, avatars and toggles stay round. */
@@ -8911,9 +8883,9 @@ html.dark #ph-conversations-widget-container textarea:focus-visible,
 body.app-compact:has(.dashboard-shell) .m3-btn:not(.m3-btn--hero):not(.m3-btn-field):not(.m3-btn-pair *),
 :root .dashboard-shell .m3-btn:not(.m3-btn-field),
 :root:has(.dashboard-shell) .m3-dialog-btn {
-  padding-inline: 0.5rem;
+  padding-inline: 0.75rem;
   font-size: 0.8125rem;
-  font-weight: 400;
+  font-weight: 600;
 }
 
 /* Secondary buttons: a 1px ink hairline, no fill. The inset ring on hover
@@ -8956,23 +8928,6 @@ body.app-compact:has(.dashboard-shell) .m3-text-field--textarea .m3-text-field__
   color: var(--site-text-3);
 }
 
-/* Segmented switches (Settings > Appearance): Cursor's All / Tab / Agent
-   control, 6px frame with 4px plates. */
-:root:has(.dashboard-shell) .site-theme-toggle {
-  border-radius: 6px;
-  padding: 2px;
-}
-
-:root:has(.dashboard-shell) .site-theme-toggle button {
-  height: 1.5rem;
-  padding: 0 0.5rem;
-  border-radius: 4px;
-}
-
-:root:has(.dashboard-shell) .site-theme-toggle button[aria-pressed="true"] {
-  background-color: color-mix(in oklab, var(--site-text) 8%, transparent);
-}
-
 /* Cursor's fields have no fill; the global `html.dark input` rule paints one. */
 html.dark:has(.dashboard-shell) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="hidden"]), textarea, select) {
   background-color: transparent !important;
@@ -8988,79 +8943,42 @@ html.dark:has(.dashboard-shell) :is(input:not([type="checkbox"]):not([type="radi
    (buttons, header, menus, reveals, footer, type) apply to every
    marketing page. */
 :root:has(.cal-site) {
-  --site-bg: #06121f;
-  --site-card: #0c1b2e;
-  --site-card-2: #112338;
-  --site-card-3: #172b43;
-  --site-card-4: #1d334d;
-  --site-text: #eef3f8;
-  --site-accent: #7db4ff;
-  --cal-surface: #0e1f33;
-  --cal-ring: #1b3048;
-  --cal-hero: #0a1829;
-  --cal-footer: #040d18;
-  --cal-footer-ink: #eef3f8;
-  --cal-blue: #4d9bff;
-  --cal-blue-soft: color-mix(in oklab, #4d9bff 18%, transparent);
-  --cal-grad-a: color-mix(in oklab, #2f7de0 55%, #06121f);
-  --cal-grad-b: color-mix(in oklab, #7b5ce0 45%, #06121f);
-  --cal-grad-c: color-mix(in oklab, #2fa89a 40%, #06121f);
-  --cal-shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 12px 32px rgb(0 0 0 / 0.3);
-  --cal-muted: #9aa7b4;
-  --cal-art-light: #1a2d45;
-  --cal-art-blue: #2b4f7a;
-  --cal-art-mint: #22595a;
-  --cal-art-lavender: #43407a;
-  --cal-art-lime: #3f5a3a;
+  --site-bg: #0b1220;
+  --site-card: #111a2b;
+  --site-card-2: #172236;
+  --site-card-3: #1e2b42;
+  --site-card-4: #27364f;
+  --site-text: #edf2fa;
+  --site-accent: var(--site-primary);
+  --cal-surface: #141e31;
+  --cal-ring: #1e2b42;
+  --cal-hero: #111a2b;
+  --cal-footer: #070d18;
+  --cal-footer-ink: #edf2fa;
+  --cal-blue: var(--site-primary);
+  --cal-blue-soft: #172742;
+  --cal-grad-a: #2a3a52;
+  --cal-grad-b: #172236;
+  --cal-grad-c: #1f2b3a;
+  --cal-shadow: 0 1px 0 rgb(0 0 0 / 0.2), 0 30px 60px -30px rgb(0 0 0 / 0.7);
+  --cal-muted: #a6b3c7;
+  --cal-art-light: #1e2b42;
+  --cal-art-blue: #2f4563;
+  --cal-art-mint: #33503a;
+  --cal-art-lavender: #5c3a41;
+  --cal-art-lime: #5c5226;
   --cal-art-peach: #5a4636;
   /* TopicArt shapes: a soft light highlight into a brighter tint, so they
      lift off the dark pastel grounds above. */
-  --cal-art-glow: #c9d7ea;
-  --cal-art-blue-deep: #6ea2ec;
-  --cal-art-mint-deep: #58c0aa;
-  --cal-art-lavender-deep: #a397f0;
-  --cal-art-lime-deep: #9cc47c;
+  --cal-art-glow: #dfe6f0;
+  --cal-art-blue-deep: #8fb3e0;
+  --cal-art-mint-deep: #9fd096;
+  --cal-art-lavender-deep: #f0a3ae;
+  --cal-art-lime-deep: #f1d75c;
   --cal-art-peach-deep: #e0a574;
-  --cal-primary-hover: #d6e2ef;
-  --cal-hover: #16283f;
+  --cal-primary-hover: var(--site-primary-hover);
+  --cal-hover: #18233a;
   --cal-menu-shadow: 0 4px 5px rgb(0 0 0 / 0.2), 0 10px 15px rgb(0 0 0 / 0.2), 0 40px 50px rgb(0 0 0 / 0.35);
-}
-
-:root[data-site-theme="light"]:has(.cal-site) {
-  --site-bg: #fcfbf8;
-  --site-card: #ffffff;
-  --site-card-2: #f0ede7;
-  --site-card-3: #eae7e0;
-  --site-card-4: #e4e1d9;
-  --site-text: #071a31;
-  --site-accent: #006bff;
-  --cal-surface: #ffffff;
-  --cal-ring: #ffffff;
-  --cal-hero: #f4f2ec;
-  --cal-footer: #071a31;
-  --cal-footer-ink: #fcfbf8;
-  --cal-blue: #006bff;
-  --cal-blue-soft: #e6f0ff;
-  --cal-grad-a: #84c1ff;
-  --cal-grad-b: #c9b8ff;
-  --cal-grad-c: #a6e6d8;
-  --cal-shadow: 0 1px 2px rgb(7 26 49 / 0.06), 0 12px 32px rgb(7 26 49 / 0.08);
-  --cal-muted: #5f6d77;
-  --cal-art-light: #ffffff;
-  --cal-art-blue: #d6e8ff;
-  --cal-art-mint: #d3f1ea;
-  --cal-art-lavender: #e4dcfb;
-  --cal-art-lime: #e8f2cf;
-  --cal-art-peach: #fbe3cc;
-  --cal-art-glow: #ffffff;
-  --cal-art-blue-deep: #84b8f5;
-  --cal-art-mint-deep: #7fd4c1;
-  --cal-art-lavender-deep: #b4a3f0;
-  --cal-art-lime-deep: #bcd98a;
-  --cal-art-peach-deep: #f3b98a;
-  --cal-primary-hover: #0e396a;
-  --cal-hover: #f5f3ee;
-  --cal-menu-shadow: 0 4px 5px rgb(95 109 119 / 0.04), 0 10px 15px rgb(95 109 119 / 0.04), 0 40px 50px rgb(95 109 119 / 0.1);
 }
 
 :root:has(.cal-site) .site-btn {
@@ -9089,43 +9007,85 @@ html.dark:has(.dashboard-shell) :is(input:not([type="checkbox"]):not([type="radi
   backdrop-filter: none !important;
 }
 
+/* The bar is a frosted dark-glass pill with white ink on every page and at
+   every scroll position, so it reads over photos and over white paper. The
+   ink tokens are white inside it and restored inside the dropdown panels. */
 .cal-header header {
-  height: 64px;
-  margin-top: 12px;
-  width: calc(100% - 2 * var(--omentir-page-pad-x));
-  max-width: calc(var(--omentir-primary-max-width) - 2 * var(--omentir-page-pad-x-md));
-  padding-inline: 16px;
-  border-radius: 20px;
-  background: var(--cal-surface);
-  box-shadow: var(--cal-menu-shadow);
-  transition: background-color 250ms ease, box-shadow 250ms ease, margin-top 250ms ease;
+  --md-sys-color-on-surface: #ffffff;
+  --md-sys-color-on-surface-variant: rgb(255 255 255 / 0.85);
+  --md-sys-color-outline-variant: rgb(255 255 255 / 0.28);
+  height: 60px;
+  margin-top: 22px;
+  width: min(940px, calc(100% - 44px));
+  max-width: none;
+  padding: 0 9px 0 22px;
+  border-radius: 9999px;
+  background: rgb(14 32 66 / 0.55);
+  -webkit-backdrop-filter: blur(20px) saturate(1.3);
+  backdrop-filter: blur(20px) saturate(1.3);
+  color: #ffffff;
 }
 
-/* At the very top the bar sits flat on the hero, like the reference; the
-   frame gets `bg-transparent` from MarketingHeaderFrame until you scroll. */
-.cal-header > div[class~="bg-transparent"] header {
-  margin-top: 16px;
+@media (max-width: 820px) {
+  .cal-header header {
+    margin-top: 16px;
+    width: calc(100% - 32px);
+    padding-left: 18px;
+  }
+}
+
+.cal-header .nav-menu-panel {
+  --md-sys-color-on-surface: var(--google-text-primary);
+  --md-sys-color-on-surface-variant: var(--google-text-secondary);
+  --md-sys-color-outline-variant: var(--google-border);
+  color: var(--site-text);
+}
+
+:root:root:has(.cal-site) .cal-header header .site-btn-sm {
+  height: 42px;
+  padding: 0 20px;
+  font-size: 14.5px;
+}
+
+:root:root:has(.cal-site) .cal-header header .site-btn-primary {
+  border-color: #ffffff;
+  background: #ffffff;
+  color: #0c1a30;
+}
+
+:root:root:has(.cal-site) .cal-header header .site-btn-primary:hover {
+  border-color: #e8eef8;
+  background: #e8eef8;
+}
+
+:root:root:has(.cal-site) .cal-header header :is(.site-btn-outline, .site-btn-secondary) {
   background: transparent;
   box-shadow: none;
+  color: #ffffff;
+  font-weight: 400;
+  opacity: 0.85;
+  padding: 0 12px;
 }
 
-.cal-header .site-btn-sm {
-  height: 2.75rem;
-  padding: 0 1rem;
-  font-size: 0.875rem;
+:root:root:has(.cal-site) .cal-header header :is(.site-btn-outline, .site-btn-secondary):hover {
+  background: transparent;
+  opacity: 1;
 }
 
 .cal-header :is(.site-nav-link, .nav-menu-trigger, nav .group > button) {
   padding: 0.5rem 0.625rem;
-  border-radius: 16px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 9999px;
+  font-size: 14.5px;
+  font-weight: 400;
+  color: #ffffff;
+  opacity: 0.85;
+  transition: opacity 150ms ease;
 }
 
 .cal-header :is(.site-nav-link, .nav-menu-trigger, nav .group > button):hover,
 .cal-header nav .group:is(:hover, :focus-within) > button {
-  background-color: var(--cal-hover);
+  background-color: transparent;
+  opacity: 1;
 }
 
 /* Type scale: medium weight, tight tracking, navy ink. */
@@ -9134,7 +9094,7 @@ html.dark:has(.dashboard-shell) :is(input:not([type="checkbox"]):not([type="radi
   margin-inline: auto;
   font-family: var(--font-cal-display);
   font-size: clamp(2.5rem, 6vw, 4.5rem);
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1.1;
   letter-spacing: -0.022em;
   text-wrap: balance;
@@ -9144,7 +9104,7 @@ html.dark:has(.dashboard-shell) :is(input:not([type="checkbox"]):not([type="radi
   max-width: 48rem;
   font-family: var(--font-cal-display);
   font-size: clamp(2.25rem, 5vw, 3.75rem);
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1.1;
   letter-spacing: -0.024em;
   text-wrap: balance;
@@ -9152,11 +9112,11 @@ html.dark:has(.dashboard-shell) :is(input:not([type="checkbox"]):not([type="radi
 
 :root:has(.cal-site) .cal-h2-lg {
   margin-top: 1rem;
-  font-family: var(--font-cal-serif);
+  font-family: var(--font-cal-display);
   font-size: clamp(2rem, 4vw, 3rem);
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1.1;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.024em;
 }
 
 .cal-lead {
@@ -9233,19 +9193,17 @@ html.dark:has(.dashboard-shell) :is(input:not([type="checkbox"]):not([type="radi
   text-align: center;
 }
 
-/* Hero: cream panel inset from the viewport edges. */
+/* Hero: no panel behind it, the title sits on the page. The top padding
+   clears the floating header. */
 .cal-hero {
   margin: 0 8px;
   padding: 9.5rem 16px 16px;
-  border-radius: 28px;
-  background: var(--cal-hero);
 }
 
 @media (min-width: 768px) {
   .cal-hero {
     margin: 0 12px;
     padding: 11rem 32px 32px;
-    border-radius: 32px;
   }
 }
 
@@ -9998,29 +9956,12 @@ html.dark:has(.dashboard-shell) :is(input:not([type="checkbox"]):not([type="radi
 }
 
 /* Inner marketing pages (blogs, help, features, guides, SEO pages): the
-   homepage's cream hero panel on top, then one centered reading column,
+   hero on top (no panel behind it), then one centered reading column,
    card lists and a rounded closing panel. See CalPageHero and friends in
    marketing-shell.tsx. */
 .cal-page-hero {
-  padding-bottom: 3rem;
-  text-align: center;
-}
-
-@media (min-width: 768px) {
-  .cal-page-hero {
-    padding-bottom: 4.5rem;
-  }
-}
-
-.cal-page-hero-plain {
   padding-bottom: 0;
-  background: transparent;
-}
-
-@media (min-width: 768px) {
-  .cal-page-hero-plain {
-    padding-bottom: 0;
-  }
+  text-align: center;
 }
 
 .cal-page-hero-inner {
@@ -10038,7 +9979,7 @@ html.dark:has(.dashboard-shell) :is(input:not([type="checkbox"]):not([type="radi
 .cal-page-title {
   font-family: var(--font-cal-display);
   font-size: clamp(2.125rem, 5vw, 3.75rem);
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1.1;
   letter-spacing: -0.022em;
   text-wrap: balance;
@@ -10253,7 +10194,8 @@ html.dark:has(.dashboard-shell) :is(input:not([type="checkbox"]):not([type="radi
   .cal-post-layout {
     grid-template-columns: 17rem minmax(0, 44rem);
     justify-content: center;
-    gap: 4.5rem;
+    /* 17 + 3 + 44 = 64rem, the same width as .cal-read-moderate pages. */
+    gap: 3rem;
     padding-block: 4.5rem 7rem;
   }
 
@@ -10391,11 +10333,11 @@ html.dark:has(.dashboard-shell) :is(input:not([type="checkbox"]):not([type="radi
 }
 
 .cal-post-featured strong {
-  font-family: var(--font-cal-serif);
+  font-family: var(--font-cal-display);
   font-size: clamp(1.75rem, 3.2vw, 2.5rem);
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1.15;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.024em;
 }
 
 .cal-post-featured .cal-post-summary {
@@ -11342,30 +11284,20 @@ html.dark:has(.dashboard-shell) :is(input:not([type="checkbox"]):not([type="radi
 }
 
 /* Footer: navy card inset from the page edge. */
+/* Flat full-width band, no card: like nextrip's footer it continues the
+   pale closing section above it. */
 .cal-footer-wrap {
-  padding: 0 8px 8px;
-}
-
-@media (min-width: 768px) {
-  .cal-footer-wrap {
-    padding: 0 24px 24px;
-  }
+  background: var(--cal-footer);
 }
 
 .cal-footer {
-  --cal-footer-muted: color-mix(in oklab, var(--cal-footer-ink) 70%, transparent);
+  --cal-footer-muted: color-mix(in oklab, var(--cal-footer-ink) 62%, transparent);
   --cal-footer-line: color-mix(in oklab, var(--cal-footer-ink) 10%, transparent);
-  padding: 3.5rem 1.5rem 2rem;
-  border-radius: 32px;
+  width: min(100% - 48px, 1140px);
+  margin: 0 auto;
+  padding: 72px 0 110px;
   background: var(--cal-footer);
   color: var(--cal-footer-ink);
-}
-
-@media (min-width: 768px) {
-  .cal-footer {
-    padding: 6rem 6rem 3rem;
-    border-radius: 64px;
-  }
 }
 
 .cal-footer-top {
@@ -11388,23 +11320,19 @@ html.dark:has(.dashboard-shell) :is(input:not([type="checkbox"]):not([type="radi
 
 .cal-footer-statement {
   max-width: 24rem;
-  font-family: var(--font-cal-display);
-  font-size: clamp(2.5rem, 4.5vw, 3.75rem);
-  font-weight: 500;
-  line-height: 1.1;
-  letter-spacing: -0.024em;
+  font-family: var(--font-site-sans);
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+  font-weight: 600;
+  line-height: 1.22;
+  letter-spacing: -0.01em;
   color: var(--cal-footer-ink);
 }
 
 .cal-footer-wordmark {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
   align-self: flex-start;
-  font-family: var(--font-cal-display);
-  font-size: clamp(2.5rem, 4vw, 3.5rem);
+  font-size: 20px;
   font-weight: 600;
-  letter-spacing: -0.04em;
+  letter-spacing: 0.04em;
 }
 
 .cal-footer-columns {
@@ -11428,15 +11356,15 @@ html.dark:has(.dashboard-shell) :is(input:not([type="checkbox"]):not([type="radi
 :root:has(.cal-site) .cal-footer .cal-footer-heading {
   margin-bottom: 0.75rem;
   color: var(--cal-footer-ink);
-  font-size: 1.125rem;
-  font-weight: 500;
+  font-size: 15px;
+  font-weight: 600;
   line-height: 1.4;
 }
 
 .cal-footer-links {
   display: grid;
   gap: 0.5rem;
-  font-size: 0.875rem;
+  font-size: 13px;
   line-height: 1.4;
 }
 
@@ -11452,64 +11380,38 @@ html.dark:has(.dashboard-shell) :is(input:not([type="checkbox"]):not([type="radi
 }
 
 .cal-footer-row {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 2rem;
-  margin-top: 4rem;
-  padding-top: 3.5rem;
+  display: grid;
+  gap: 10px;
+  margin-top: 56px;
+  padding-top: 26px;
   border-top: 1px solid var(--cal-footer-line);
 }
 
-.cal-footer-label {
-  margin-bottom: 1.25rem;
-  font-size: 1rem;
-  font-weight: 500;
-}
-
-@media (min-width: 768px) {
-  .cal-footer-social {
-    text-align: right;
-  }
-}
-
-.cal-footer-tiles {
+.cal-footer-inline {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  align-items: baseline;
+  gap: 6px 18px;
+  font-size: 13px;
 }
 
-@media (min-width: 768px) {
-  .cal-footer-social .cal-footer-tiles {
-    justify-content: flex-end;
-  }
-}
-
-.cal-footer-tile {
-  display: grid;
-  place-items: center;
-  width: 3rem;
-  height: 3rem;
-  border: 1px solid var(--cal-footer-line);
-  border-radius: 12px;
-  background: color-mix(in oklab, var(--cal-footer-ink) 5%, transparent);
+.cal-footer-label {
+  min-width: 84px;
+  font-weight: 600;
   color: var(--cal-footer-ink);
-  transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.cal-footer-tile:hover {
-  background: color-mix(in oklab, var(--cal-footer-ink) 12%, transparent);
+.cal-footer-inline a {
+  color: var(--cal-footer-muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--cal-footer-line);
+  transition: color 150ms ease, text-decoration-color 150ms ease;
 }
 
-/* Logo tiles: drop the logo component's own box and draw the marks in the
-   footer ink, whatever the page theme. */
-.cal-footer-tiles.is-logos .cal-footer-tile > span {
-  border: 0;
-  background: transparent;
-}
-
-.cal-footer-tiles.is-logos img {
-  filter: invert(1) !important;
+.cal-footer-inline a:hover {
+  color: var(--cal-footer-ink);
+  text-decoration-color: currentColor;
 }
 
 .cal-footer-legal {
@@ -11518,8 +11420,10 @@ html.dark:has(.dashboard-shell) :is(input:not([type="checkbox"]):not([type="radi
   align-items: center;
   justify-content: space-between;
   gap: 1.25rem 2rem;
-  margin-top: 3.5rem;
-  font-size: 0.875rem;
+  margin-top: 26px;
+  padding-top: 26px;
+  border-top: 1px solid var(--cal-footer-line);
+  font-size: 13px;
   color: var(--cal-footer-muted);
 }
 
@@ -11527,19 +11431,6 @@ html.dark:has(.dashboard-shell) :is(input:not([type="checkbox"]):not([type="radi
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem 1.5rem;
-}
-
-.cal-footer .site-theme-toggle {
-  border-color: var(--cal-footer-line);
-}
-
-.cal-footer .site-theme-toggle button {
-  color: var(--cal-footer-muted);
-}
-
-.cal-footer .site-theme-toggle button[aria-pressed="true"] {
-  background-color: color-mix(in oklab, var(--cal-footer-ink) 14%, transparent);
-  color: var(--cal-footer-ink);
 }
 
 /* Inactive squircles dim into the navy page in dark mode. */
@@ -11682,9 +11573,9 @@ html.dark:has(.dashboard-shell) :is(input:not([type="checkbox"]):not([type="radi
   }
 }
 
-/* Shared marketing type: display face on page and section headings, the
-   serif stays a homepage accent. Product mocks keep their own type. */
-/* :where keeps this a default, so section styles (like the homepage serif
+/* Shared marketing type: one sans display face on every page and section
+   heading. Product mocks keep their own type. */
+/* :where keeps this a default, so section styles (like the homepage hero
    heading) still override it. */
 :where(:root:has(.cal-site) main) :is(h1, h2):not(.home-mock-app *),
 :where(:root:has(.cal-site)) :is(.hero-display, .hero-display-sentence, .faq-section-heading) {
@@ -11726,8 +11617,8 @@ html.dark:has(.dashboard-shell) :is(input:not([type="checkbox"]):not([type="radi
      Phones keep the panel padding thin so the form gets most of the width. */
   flex-direction: column;
   gap: 1.75rem;
-  margin: 8px 8px 0;
-  padding: 2rem 0.5rem;
+  margin: 8px;
+  padding: 2rem 0.5rem 1.5rem;
   border-radius: 28px;
   background:
     radial-gradient(55% 65% at 18% 35%, color-mix(in oklab, #2f7de0 70%, var(--cal-grad-a)), transparent 72%),
@@ -11738,8 +11629,8 @@ html.dark:has(.dashboard-shell) :is(input:not([type="checkbox"]):not([type="radi
 
 @media (min-width: 768px) {
   .cal-auth-stage {
-    margin: 16px 16px 0;
-    padding: 5rem 2rem;
+    margin: 16px;
+    padding: 5rem 2rem 1.5rem;
     border-radius: 32px;
   }
 }
@@ -11769,8 +11660,14 @@ html.dark:has(.dashboard-shell) :is(input:not([type="checkbox"]):not([type="radi
 
 }
 
+/* Legal links sit at the bottom of the panel. The two auto margins split the
+   free space so the logo and card stay centered above them. */
+.cal-auth-stage:has(> .cal-auth-footer) > .cal-auth-logo {
+  margin-top: auto;
+}
+
 .cal-auth-footer {
-  padding: 1.5rem 1rem;
+  margin-top: auto;
   text-align: center;
   font-size: 0.875rem;
   color: var(--cal-muted);
@@ -11897,31 +11794,36 @@ html.dark:has(.dashboard-shell) :is(input:not([type="checkbox"]):not([type="radi
   box-shadow: none !important;
 }
 
-/* Site-wide controls copy the auth card (login, signup, onboarding): 50px
-   buttons with 20px corners (44px / 16px in the header), 48px fields with
-   16px corners. Two button kinds only, like the auth card: filled ink
-   (primary) and outlined ink (outline; secondary renders the same).
+/* Site-wide controls are 42px pills (38px in the header) with semibold
+   14.5px labels. Two button kinds only: filled ink (primary) and a white
+   pill with a soft shadow (outline; secondary renders the same).
    :root:root:has() + !important outrank the old site-wide pill rule and the
    global `html.dark input` fill/ring chain. */
 :root:root:has(.cal-site) .site-btn {
-  height: 50px;
-  padding: 0 1.5rem;
-  border-radius: 20px !important;
-  font-size: 1rem;
-  font-weight: 500;
+  height: 42px;
+  padding: 0 22px;
+  border-radius: 9999px !important;
+  font-size: 14.5px;
+  font-weight: 600;
+}
+
+:root:root:has(.cal-site) .site-btn:active {
+  transform: scale(0.97);
 }
 
 :root:root:has(.cal-site) .site-btn-sm {
-  height: 44px;
-  padding: 0 1rem;
-  border-radius: 16px !important;
-  font-size: 0.875rem;
+  height: 38px;
+  padding: 0 18px;
+  border-radius: 9999px !important;
+  font-size: 14px;
 }
 
+/* The second button kind is a white pill lifted by a soft long shadow. */
 :root:root:has(.cal-site) :is(.site-btn-outline, .site-btn-secondary) {
-  border-color: var(--site-text);
-  background: transparent;
+  border-color: transparent;
+  background: var(--cal-surface);
   color: var(--site-text);
+  box-shadow: 0 1px 0 rgb(0 0 0 / 0.04), 0 10px 26px -14px rgb(12 26 48 / 0.32), 0 0 0 1px var(--site-border);
 }
 
 :root:root:has(.cal-site) :is(.site-btn-outline, .site-btn-secondary):hover {
@@ -12269,30 +12171,32 @@ html.dark:has(.dashboard-shell) :is(input:not([type="checkbox"]):not([type="radi
 
 /* No fixed height: the grid stretches each column to the row, so every card
    ends on the same line and the shorter list just leaves space below it. */
+/* nextrip's .card: one white surface, hairline border, 16px corners and a
+   long soft shadow; the top half is split from the list by a hairline. */
 .cal-price {
   display: flex;
   flex-direction: column;
-  padding: 8px 8px 24px;
-  border-radius: 40px;
-  background: var(--cal-hero, var(--site-card-2));
+  padding: 0 0 24px;
+  border: 1px solid var(--site-border);
+  border-radius: 16px;
+  background: var(--site-card);
+  box-shadow: var(--cal-shadow, none);
 }
 
 .cal-price-top {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 24px;
-  border-radius: 32px;
-  background: var(--cal-surface, var(--site-card));
-  box-shadow: var(--cal-shadow, none);
+  gap: 10px;
+  padding: 28px 28px 24px;
+  border-bottom: 1px solid var(--site-border);
 }
 
 :root:has(.cal-site) .cal-price .cal-price-name {
-  font-family: var(--font-cal-display);
-  font-size: 2.25rem;
-  font-weight: 500;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
+  font-family: var(--font-site-sans);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: normal;
 }
 
 .cal-price-note {
@@ -12303,11 +12207,12 @@ html.dark:has(.dashboard-shell) :is(input:not([type="checkbox"]):not([type="radi
 
 .cal-price-amount {
   margin: 12px 0 4px;
-  font-family: var(--font-cal-serif);
-  font-size: 3rem;
-  font-weight: 500;
+  font-family: var(--font-site-sans);
+  font-size: 44px;
+  font-weight: 600;
   line-height: 1;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
 }
 
 .cal-price-amount small {
@@ -12324,13 +12229,15 @@ html.dark:has(.dashboard-shell) :is(input:not([type="checkbox"]):not([type="radi
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  /* Same 50px / 20px button as .site-btn and the auth card. */
-  height: 50px;
-  padding: 0 20px;
-  border: 1px solid var(--site-text);
-  border-radius: 20px;
-  font-size: 1rem;
-  font-weight: 500;
+  /* nextrip's 42px pill: ghost (white + soft shadow) or dark. */
+  height: 42px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 9999px;
+  background: var(--site-card);
+  box-shadow: 0 1px 0 rgb(0 0 0 / 0.04), 0 10px 26px -14px rgb(12 26 48 / 0.32), inset 0 0 0 1px var(--site-border);
+  font-size: 14.5px;
+  font-weight: 600;
   color: var(--site-text);
   transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1), border-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -12340,13 +12247,14 @@ html.dark:has(.dashboard-shell) :is(input:not([type="checkbox"]):not([type="radi
 }
 
 .cal-price-cta.is-primary {
-  background: var(--site-text);
-  color: var(--site-bg);
+  background: var(--site-primary);
+  box-shadow: none;
+  color: var(--site-on-primary);
 }
 
 .cal-price-cta.is-primary:hover {
-  border-color: var(--cal-primary-hover, var(--site-text));
-  background: var(--cal-primary-hover, var(--site-text));
+  border-color: var(--site-primary-hover);
+  background: var(--site-primary-hover);
 }
 
 .cal-price-cta.is-current {
@@ -12356,7 +12264,7 @@ html.dark:has(.dashboard-shell) :is(input:not([type="checkbox"]):not([type="radi
 }
 
 .cal-price-body {
-  padding: 24px 16px 0;
+  padding: 24px 28px 0;
 }
 
 .cal-price-includes {
@@ -12374,7 +12282,7 @@ html.dark:has(.dashboard-shell) :is(input:not([type="checkbox"]):not([type="radi
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  font-size: 0.875rem;
+  font-size: 15px;
   line-height: 1.45;
   color: var(--site-text);
 }
@@ -12382,31 +12290,27 @@ html.dark:has(.dashboard-shell) :is(input:not([type="checkbox"]):not([type="radi
 .cal-price-frame {
   display: flex;
   flex-direction: column;
-  padding: 0 6px 6px;
-  border-radius: 44px;
-  background: linear-gradient(to bottom, #1f5fd0 0%, #3b82f6 16%, #f3a57f 58%, #a98cf6 100%);
 }
 
-/* The label reads as a note in the serif italic, not a caps badge. */
+/* A highlighter label above the card, like nextrip's yellow <mark>.
+   8 + 20 + 6 = 34px, the same 2.125rem the unframed card is pushed down,
+   so the tops of both cards stay level. */
 .cal-price-flag {
-  /* 8 + 20 + 6 = 34px, the same 2.125rem the unframed card is pushed down,
-     so the white tops of both cards stay level. */
-  padding: 8px 20px 6px;
-  font-family: var(--font-cal-serif);
-  font-size: 1.0625rem;
+  align-self: flex-start;
+  margin: 8px 0 6px;
+  padding: 0 0.2em;
+  font-size: 14.5px;
   line-height: 20px;
-  font-style: italic;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-  color: #ffffff;
+  font-weight: 600;
+  color: var(--site-text);
+  background: linear-gradient(var(--site-mark), var(--site-mark)) 0 88% / 100% 46% no-repeat;
 }
 
 .cal-price-frame > .cal-price {
   flex: 1;
-  border-radius: 38px;
 }
 
-/* FAQ (FaqAccordion, FaqSplitSection): "+" box, question, sliding answer. */
+/* FAQ (FaqAccordion, FaqSplitSection): bare "+", question, sliding answer. */
 .cal-faq-panel {
   padding: 4rem 1rem;
   border-radius: 32px;
@@ -12422,11 +12326,11 @@ html.dark:has(.dashboard-shell) :is(input:not([type="checkbox"]):not([type="radi
 
 :root:has(.cal-site) .cal-faq-panel .cal-faq-heading {
   text-align: center;
-  font-family: var(--font-cal-serif);
+  font-family: var(--font-cal-display);
   font-size: clamp(2.25rem, 4vw, 3rem);
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1.1;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.024em;
 }
 
 .cal-faq-list {
@@ -12460,15 +12364,8 @@ html.dark:has(.dashboard-shell) :is(input:not([type="checkbox"]):not([type="radi
   place-items: center;
   width: 32px;
   height: 32px;
-  border: 1px solid color-mix(in oklab, var(--site-text) 10%, transparent);
-  border-radius: 8px;
-  background: color-mix(in oklab, var(--site-text) 5%, transparent);
   color: var(--site-text);
-  transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1), background-color 150ms ease;
-}
-
-.cal-faq-q:hover .cal-faq-icon {
-  background: color-mix(in oklab, var(--site-text) 10%, transparent);
+  transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .cal-faq-row.is-open .cal-faq-icon {
@@ -12519,5 +12416,1879 @@ html.dark:has(.dashboard-shell) :is(input:not([type="checkbox"]):not([type="radi
   .cal-faq-a,
   .cal-faq-icon {
     transition: none;
+  }
+}
+
+/* ── Homepage story ────────────────────────────────────────────────────────
+   The homepage is a scroll story: tall `.nx-act` sections each pin a
+   full-viewport `.nx-pin`, and HomeScrollActs writes `--p` (0 to 1 through
+   the act) and `data-step` on them. Everything below reads those two. After
+   the story come plain `.nx-info` sections: ruled lists, hairlines, two-tone
+   headings. Colors come from the site tokens, so dark mode follows. */
+.nx-act {
+  --p: 0;
+  position: relative;
+}
+
+.nx-pin {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  overflow: hidden;
+}
+
+.nx-frame {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 22px;
+  background: var(--site-bg);
+}
+
+/* Act 1: photo hero in an inset rounded frame. The headline blurs away, a
+   second line takes its place, then a disc of page color opens from the
+   top right and covers the photo. */
+.nx-hero {
+  height: 260svh;
+}
+
+.nx-hero .nx-pin,
+.nx-brand .nx-pin {
+  padding: 12px;
+}
+
+/* Painted sky, no photo: a deep-to-pale blue ground with a warm glow at the
+   horizon, and soft cloud banks built from blurred radial gradients that
+   drift slowly sideways. */
+.nx-sky {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  transform-origin: 50% 100%;
+  transform: scale(calc(1 + var(--p) * 0.15));
+  background:
+    radial-gradient(70% 38% at 50% 104%, rgb(240 246 255 / 0.85) 0%, rgb(240 246 255 / 0) 70%),
+    linear-gradient(#123f8c 0%, #2c66b8 34%, #5f97d6 62%, #a9cbee 84%, #e4eef8 100%);
+  will-change: transform;
+}
+
+.nx-cloud {
+  position: absolute;
+  display: block;
+  border-radius: 50%;
+  filter: blur(10px);
+  opacity: 0.95;
+  animation: nx-drift 60s ease-in-out infinite alternate;
+}
+
+.nx-cloud-1 {
+  left: -12%;
+  bottom: -14%;
+  width: 66%;
+  height: 34%;
+  background:
+    radial-gradient(closest-side at 30% 60%, #ffffff 40%, rgb(255 255 255 / 0) 100%),
+    radial-gradient(closest-side at 62% 45%, #f7f9fc 35%, rgb(255 255 255 / 0) 100%),
+    radial-gradient(closest-side at 85% 70%, #eef3fa 30%, rgb(255 255 255 / 0) 100%);
+}
+
+.nx-cloud-2 {
+  right: -14%;
+  bottom: -12%;
+  width: 70%;
+  height: 38%;
+  background:
+    radial-gradient(closest-side at 25% 65%, #f4f7fb 38%, rgb(255 255 255 / 0) 100%),
+    radial-gradient(closest-side at 58% 40%, #ffffff 40%, rgb(255 255 255 / 0) 100%),
+    radial-gradient(closest-side at 82% 60%, #f7f9fc 34%, rgb(255 255 255 / 0) 100%);
+  animation-duration: 75s;
+  animation-direction: alternate-reverse;
+}
+
+.nx-cloud-3 {
+  left: 6%;
+  top: 22%;
+  width: 34%;
+  height: 12%;
+  background: radial-gradient(closest-side, rgb(255 255 255 / 0.7) 20%, rgb(255 255 255 / 0) 100%);
+  filter: blur(16px);
+  animation-duration: 90s;
+}
+
+.nx-cloud-4 {
+  right: 4%;
+  top: 34%;
+  width: 28%;
+  height: 9%;
+  background: radial-gradient(closest-side, rgb(255 255 255 / 0.6) 20%, rgb(255 255 255 / 0) 100%);
+  filter: blur(14px);
+  animation-duration: 80s;
+  animation-direction: alternate-reverse;
+}
+
+@keyframes nx-drift {
+  from {
+    transform: translateX(-3%);
+  }
+  to {
+    transform: translateX(3%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nx-cloud {
+    animation: none;
+  }
+}
+
+.nx-sky::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(rgb(14 62 150 / 0.35) 0%, rgb(24 86 180 / 0.15) 40%, transparent 65%);
+  mix-blend-mode: multiply;
+}
+
+.nx-grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.16;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.nx-title {
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  right: 0;
+  top: 48%;
+  margin: 0;
+  padding: 0 24px;
+  text-align: center;
+  color: #ffffff;
+  /* Same type as the /a hero headline (.ag-sky h1). */
+  font-family: var(--font-cal-display);
+  font-size: clamp(38px, 5.6vw, 76px);
+  font-weight: 600;
+  line-height: 1.08;
+  letter-spacing: -0.024em;
+  text-shadow: 0 1px 30px rgb(6 30 80 / 0.3);
+  text-wrap: balance;
+  will-change: opacity, filter, transform;
+}
+
+/* !important: the global `html.dark main h1` ink rule is !important. The
+   headline is two spans, one per line, so the break lands before "or". */
+.nx-home .nx-title h1 {
+  margin: 0 auto;
+  font: inherit;
+  letter-spacing: inherit;
+  color: #ffffff !important;
+}
+
+.nx-home .nx-title h1 span {
+  display: block;
+}
+
+.nx-title-1 {
+  opacity: calc(1 - var(--p) * 4);
+  filter: blur(calc(var(--p) * 48px));
+  transform: translateY(calc(-50% - var(--p) * 80px));
+}
+
+.nx-hero:not([data-step="0"]) .nx-title-1 {
+  pointer-events: none;
+}
+
+.nx-title-2 {
+  max-width: none;
+  opacity: min(calc((var(--p) - 0.26) * 6), calc((0.64 - var(--p)) * 8));
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.nx-hero-cta {
+  font-family: var(--font-site-sans);
+  letter-spacing: normal;
+  text-shadow: none;
+}
+
+:root:root:has(.cal-site) .nx-hero-cta > div {
+  justify-content: center;
+  margin-top: 36px;
+}
+
+:root:root:has(.cal-site) .nx-hero-cta .site-btn {
+  height: 46px;
+  padding: 0 24px;
+  font-size: 15px;
+}
+
+/* Keeps both buttons on one row on a phone. */
+@media (max-width: 480px) {
+  :root:root:has(.cal-site) .nx-hero-cta .site-btn {
+    height: 44px;
+    padding: 0 18px;
+    font-size: 14.5px;
+  }
+}
+
+:root:root:has(.cal-site) .nx-hero-cta .site-btn-primary {
+  border-color: #ffffff;
+  background: #ffffff;
+  color: #0c1a30;
+}
+
+:root:root:has(.cal-site) .nx-hero-cta .site-btn-primary:hover {
+  border-color: #e8eef8;
+  background: #e8eef8;
+}
+
+/* Dark glass, not white: white text on a pale white tint washed out against
+   the light lower sky. */
+:root:root:has(.cal-site) .nx-hero-cta :is(.site-btn-outline, .site-btn-secondary) {
+  border-color: rgb(255 255 255 / 0.35);
+  background: rgb(12 30 70 / 0.28);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: none;
+  color: #ffffff;
+}
+
+:root:root:has(.cal-site) .nx-hero-cta :is(.site-btn-outline, .site-btn-secondary):hover {
+  background: rgb(12 30 70 / 0.4);
+}
+
+.nx-disc {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  background: var(--site-bg);
+  clip-path: circle(calc(max(0, var(--p) - 0.58) * 420vmax) at 82% 16%);
+  will-change: clip-path;
+}
+
+.nx-down {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: 34px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 18px;
+  border-radius: 9999px;
+  background: rgb(20 32 56 / 0.32);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  color: #ffffff;
+  font-size: 13.5px;
+  opacity: calc(1 - var(--p) * 6);
+  transform: translateX(-50%);
+}
+
+.nx-down svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Act 2: a question on the left for each scene on the right. The strip of
+   scenes rides up with scroll and a hand-drawn line runs through it. */
+.nx-problems {
+  height: 520svh;
+  background: var(--site-bg);
+}
+
+.nx-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 40fr) minmax(0, 60fr);
+  width: min(100% - 48px, 1140px);
+  height: 100%;
+  margin: 0 auto;
+}
+
+.nx-say {
+  position: relative;
+  align-self: center;
+  height: 9em;
+  font-size: 42px;
+}
+
+.nx-home .nx-say h2 {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  margin: 0;
+  font-size: 1em;
+  font-weight: 600;
+  line-height: 1.24;
+  letter-spacing: -0.01em;
+  opacity: 0;
+  filter: blur(12px);
+  transform: translateY(-50%);
+  transition: opacity 500ms var(--site-ease), filter 500ms var(--site-ease);
+}
+
+.nx-say h2 em,
+.nx-info > h2 em,
+.nx-faq .cal-faq-heading em {
+  display: block;
+  font-style: normal;
+  color: var(--site-text-3);
+}
+
+.nx-problems[data-step="0"] .nx-say h2:nth-of-type(1),
+.nx-problems[data-step="1"] .nx-say h2:nth-of-type(2),
+.nx-problems[data-step="2"] .nx-say h2:nth-of-type(3),
+.nx-problems[data-step="3"] .nx-say h2:nth-of-type(4) {
+  opacity: 1;
+  filter: none;
+}
+
+.nx-ticks {
+  position: absolute;
+  left: 0;
+  top: calc(50% + 1.9em);
+  display: flex;
+  gap: 5px;
+}
+
+.nx-ticks i {
+  width: 12px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--site-border);
+  transition: background-color 300ms ease;
+}
+
+.nx-problems[data-step="0"] .nx-ticks i:nth-child(1),
+.nx-problems[data-step="1"] .nx-ticks i:nth-child(2),
+.nx-problems[data-step="2"] .nx-ticks i:nth-child(3),
+.nx-problems[data-step="3"] .nx-ticks i:nth-child(4) {
+  background: var(--site-text);
+}
+
+.nx-reel {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+}
+
+.nx-strip {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  transform: translateY(calc(clamp(0, var(--p) * 4 - 0.5, 3) * -100svh));
+  will-change: transform;
+}
+
+.nx-strip > svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.nx-strip path {
+  fill: none;
+  stroke: var(--site-text);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 1;
+  stroke-dashoffset: calc(1 - var(--p) * 1.15);
+}
+
+.nx-scene {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 100svh;
+}
+
+.nx-prop {
+  position: relative;
+  width: 430px;
+  max-width: none;
+  color: var(--site-text);
+  font-family: var(--font-site-sans);
+}
+
+.nx-prop :is(b, strong, small, u, i, span, p) {
+  font-style: normal;
+  text-decoration: none;
+}
+
+.nx-card {
+  border: 1px solid var(--site-border);
+  border-radius: 16px;
+  background: var(--site-card);
+  box-shadow: 0 1px 0 rgb(0 0 0 / 0.03), 0 30px 60px -30px rgb(12 26 48 / 0.3);
+}
+
+.nx-hand {
+  position: absolute;
+  z-index: 3;
+  margin: 0;
+  font-family: var(--font-hand);
+  font-size: 26px;
+  line-height: 1.1;
+  white-space: nowrap;
+  color: var(--site-red);
+  transform: rotate(-7deg);
+}
+
+.nx-ring {
+  position: absolute;
+  z-index: 3;
+  border: 2.5px solid var(--site-red);
+  border-radius: 50%;
+  transform: rotate(-4deg);
+}
+
+.nx-win {
+  position: relative;
+  overflow: hidden;
+  font-size: 12px;
+}
+
+.nx-win-b1,
+.nx-win-b2 {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+}
+
+.nx-win-b1 {
+  opacity: 0.9;
+  transform: translate(-26px, -22px) rotate(-5deg);
+}
+
+.nx-win-b2 {
+  opacity: 0.95;
+  transform: translate(24px, -12px) rotate(4deg);
+}
+
+.nx-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 8px 8px 0;
+  background: var(--site-card-3);
+}
+
+.nx-tabs i {
+  flex: 1;
+  min-width: 0;
+  height: 22px;
+  border-radius: 7px 7px 0 0;
+  background: var(--site-card-4);
+}
+
+.nx-tabs i.on {
+  background: var(--site-card);
+}
+
+.nx-bar {
+  display: flex;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--site-border);
+}
+
+.nx-bar b {
+  flex: 1;
+  height: 22px;
+  overflow: hidden;
+  padding: 0 12px;
+  border-radius: 9999px;
+  background: var(--site-card-2);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 22px;
+  white-space: nowrap;
+  color: var(--site-text-3);
+}
+
+.nx-rows {
+  padding: 6px 14px 12px;
+}
+
+.nx-rows div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--site-border);
+}
+
+.nx-rows div:last-child {
+  border: 0;
+}
+
+.nx-rows u {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--site-card-4);
+}
+
+.nx-rows span {
+  flex: 1;
+  min-width: 0;
+  color: var(--site-text-2);
+}
+
+.nx-rows span b {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--site-text);
+}
+
+.nx-rows strong {
+  font-size: 14px;
+  font-weight: 600;
+  text-align: right;
+}
+
+.nx-rows small {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 400;
+  color: var(--site-text-3);
+}
+
+.nx-chat {
+  display: grid;
+  gap: 10px;
+  padding: 18px 16px;
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.nx-chat p {
+  max-width: 86%;
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 18px;
+}
+
+.nx-chat .me {
+  justify-self: end;
+  border-bottom-right-radius: 6px;
+  background: var(--site-text);
+  color: var(--site-bg);
+}
+
+.nx-chat .ai {
+  justify-self: start;
+  min-width: 130px;
+  border-bottom-left-radius: 6px;
+  background: var(--site-card-2);
+  color: var(--site-text-3);
+}
+
+.nx-chat .ai b {
+  font-weight: 600;
+}
+
+.nx-chat .ai i {
+  display: block;
+  height: 7px;
+  margin-top: 8px;
+  border-radius: 4px;
+  background: var(--site-card-4);
+}
+
+.nx-list {
+  width: 340px;
+  padding: 6px 16px;
+  font-size: 13.5px;
+  transform: rotate(-3deg);
+}
+
+.nx-list p {
+  display: flex;
+  justify-content: space-between;
+  margin: 0;
+  padding: 12px 0;
+  border-top: 1px solid var(--site-border);
+  font-weight: 600;
+}
+
+.nx-list p:first-child {
+  border: 0;
+}
+
+.nx-list .no {
+  font-weight: 400;
+  color: var(--site-text-3);
+}
+
+.nx-blank {
+  position: absolute;
+  right: -8px;
+  bottom: -70px;
+  width: 190px;
+  padding: 16px 16px 18px;
+  font-size: 13px;
+  transform: rotate(5deg);
+}
+
+.nx-blank b {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.nx-blank p {
+  display: flex;
+  justify-content: space-between;
+  margin: 0;
+  padding: 9px 0;
+  border-top: 1px dashed var(--site-card-4);
+  color: var(--site-text-3);
+}
+
+.nx-blank p span {
+  letter-spacing: 0.2em;
+}
+
+.nx-prop-phone {
+  width: 236px;
+}
+
+.nx-phone {
+  position: relative;
+  width: 236px;
+  padding: 9px;
+  border-radius: 38px;
+  background: #0f1726;
+  box-shadow: 0 40px 70px -34px rgb(12 26 48 / 0.45);
+}
+
+.nx-scr {
+  position: relative;
+  min-height: 430px;
+  overflow: hidden;
+  border-radius: 30px;
+  background: var(--site-card);
+}
+
+.nx-isl {
+  position: absolute;
+  z-index: 2;
+  top: 18px;
+  left: 50%;
+  width: 74px;
+  height: 22px;
+  margin-left: -37px;
+  border-radius: 9999px;
+  background: #0f1726;
+}
+
+.nx-phead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 44px 16px 10px;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.nx-phead small {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--site-text-3);
+}
+
+.nx-fav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.nx-fav u {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+}
+
+.nx-fav small {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 400;
+  color: var(--site-text-3);
+}
+
+.nx-fav-hit small {
+  font-weight: 600;
+  color: var(--site-text);
+}
+
+/* Act 3: one sentence, each word clearing as you scroll. */
+.nx-why-act {
+  height: 210svh;
+  background: var(--site-bg);
+}
+
+.nx-why-act .nx-pin {
+  display: grid;
+  place-items: center;
+  padding: 0 24px;
+}
+
+.nx-why {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0 0.26em;
+  max-width: 17em;
+  margin: 0;
+  font-size: clamp(30px, 4.6vw, 60px);
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--site-text);
+}
+
+.nx-why span {
+  --o: calc(var(--p) * (var(--n) + 4) - var(--i));
+  opacity: var(--o);
+  filter: blur(calc(max(0, 1 - var(--o)) * 14px));
+  will-change: opacity, filter;
+}
+
+/* Act 4: a pale sky frame. "So we built", the wordmark, then what it does
+   with highlighter marks and four pinned notes. */
+.nx-brand {
+  height: 480svh;
+  background: var(--site-bg);
+}
+
+.nx-above {
+  background:
+    radial-gradient(80% 46% at 50% 112%, #ffffff 34%, transparent 72%),
+    linear-gradient(#dfe9f5 0%, #f4f7fb 58%, #ffffff 100%);
+}
+
+:root:not([data-site-theme="light"]) :is(.nx-above, .nx-end) {
+  background: linear-gradient(#1a2b45 0%, #0b1220 78%);
+}
+
+.nx-intro,
+.nx-markwrap,
+.nx-claim {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  margin: 0;
+  text-align: center;
+  opacity: 0;
+  filter: blur(14px);
+  transform: translateY(-55%);
+  transition: opacity 600ms var(--site-ease), filter 600ms var(--site-ease);
+}
+
+.nx-brand[data-step="0"] .nx-intro,
+.nx-brand[data-step="1"] .nx-markwrap,
+.nx-brand:is([data-step="2"], [data-step="3"]) .nx-claim {
+  opacity: 1;
+  filter: none;
+}
+
+.nx-intro {
+  font-family: var(--font-cal-display);
+  font-size: clamp(40px, 6vw, 80px);
+  font-weight: 600;
+  letter-spacing: -0.024em;
+  color: var(--site-text);
+}
+
+.nx-mark {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.05em;
+  font-size: clamp(64px, 17vw, 230px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.035em;
+  color: var(--site-text);
+}
+
+/* Sits like a capital letter: bottom on the baseline, top at cap height.
+   The drawn asterisk fills 85.8% of its viewBox with 7.1% empty above and
+   below, so the box is cap height / 0.858 and drops by 7.1% of itself. The
+   em values are the fallback for browsers without the cap unit. */
+.nx-mark-glyph {
+  width: 0.82em;
+  height: 0.82em;
+  width: calc(1cap / 0.858);
+  height: calc(1cap / 0.858);
+  transform: translateY(7.1%);
+}
+
+.nx-claim {
+  padding: 0 24px;
+}
+
+.nx-claim p {
+  max-width: 17.5em;
+  margin: 0 auto;
+  font-size: clamp(23px, 3.1vw, 40px);
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: -0.005em;
+  color: var(--site-text);
+  text-wrap: balance;
+}
+
+.nx-claim mark,
+.nx-end h2 mark {
+  padding: 0 0.06em;
+  border-radius: 3px;
+  background: linear-gradient(var(--site-mark), var(--site-mark)) 0 88% / 0% 46% no-repeat;
+  color: inherit;
+  transition: background-size 700ms var(--site-ease);
+}
+
+:root:not([data-site-theme="light"]) :is(.nx-claim, .nx-end h2) mark {
+  background-image: linear-gradient(rgb(122 167 255 / 0.3), rgb(122 167 255 / 0.3));
+}
+
+.nx-brand:is([data-step="2"], [data-step="3"]) .nx-claim mark,
+.nx-end h2 mark {
+  background-size: 100% 46%;
+}
+
+.nx-claim u {
+  text-decoration: underline wavy transparent 1.6px;
+  text-underline-offset: 0.22em;
+  transition: text-decoration-color 700ms var(--site-ease) 250ms;
+}
+
+.nx-brand:is([data-step="2"], [data-step="3"]) .nx-claim u {
+  text-decoration-color: currentColor;
+}
+
+.nx-note {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: clamp(120px, 13vw, 172px);
+  aspect-ratio: 1 / 0.92;
+  padding: 28px 14px 12px;
+  box-shadow: 0 22px 34px -20px rgb(12 26 48 / 0.3);
+  font-family: var(--font-hand);
+  font-size: clamp(17px, 1.75vw, 23px);
+  line-height: 1.3;
+  text-align: center;
+  color: #1c2b44;
+  opacity: 0;
+  transform: translateY(30px) rotate(var(--r)) scale(0.9);
+  transition: opacity 500ms var(--site-ease), transform 700ms var(--site-ease);
+}
+
+.nx-brand[data-step="3"] .nx-note {
+  opacity: 1;
+  transform: rotate(var(--r));
+}
+
+.nx-note::before {
+  content: "";
+  position: absolute;
+  top: 9px;
+  left: 50%;
+  width: 15px;
+  height: 15px;
+  margin-left: -7px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ffffff, #b3c0d4 55%, #6b7a92);
+  box-shadow: 0 3px 4px rgb(0 0 0 / 0.25);
+}
+
+.nx-note-1 { left: 4%; top: 15%; background: #d6e6ff; --r: -5deg; }
+.nx-note-2 { right: 4%; top: 17%; background: #d3effa; --r: 4deg; transition-delay: 90ms; }
+.nx-note-3 { left: 5%; bottom: 17%; background: #e2e3ff; --r: 4deg; transition-delay: 180ms; }
+.nx-note-4 { right: 5%; bottom: 19%; background: #e9f1ff; --r: -4deg; transition-delay: 270ms; }
+
+/* Plain sections under the story. */
+.nx-info {
+  box-sizing: border-box;
+  width: min(100% - 48px, 1140px);
+  margin: 0 auto;
+  padding: clamp(110px, 15vh, 170px) 0 0;
+  scroll-margin-top: 84px;
+}
+
+.nx-home .nx-info > h2,
+:root:root .nx-home .nx-faq .cal-faq-heading {
+  margin: 0;
+  font-family: var(--font-site-sans);
+  font-size: clamp(30px, 4vw, 50px);
+  font-weight: 600;
+  line-height: 1.22;
+  letter-spacing: -0.01em;
+  text-align: left;
+  color: var(--site-text);
+}
+
+.nx-also a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+  color: var(--site-text);
+  text-decoration: underline;
+  text-decoration-color: var(--site-border);
+  text-underline-offset: 4px;
+  transition: text-decoration-color 200ms ease;
+}
+
+.nx-also a:hover {
+  text-decoration-color: var(--site-text);
+}
+
+.nx-also svg {
+  width: 12px;
+  height: 12px;
+}
+
+.nx-also {
+  margin: 30px 0 0;
+  font-size: 15.5px;
+  line-height: 1.8;
+  color: var(--site-text-2);
+}
+
+/* FAQ on the homepage: no panel, a left heading and ruled rows with the
+   plus on the right. */
+.nx-faq .cal-faq-panel {
+  padding: 0;
+  border-radius: 0;
+  background: none;
+}
+
+.nx-faq .cal-faq-list {
+  max-width: none;
+  margin: 44px 0 0;
+  border-bottom: 1px solid var(--site-border);
+}
+
+.nx-faq .cal-faq-row {
+  border-top: 1px solid var(--site-border);
+  border-bottom: 0;
+}
+
+.nx-faq .cal-faq-q {
+  flex-direction: row-reverse;
+  justify-content: space-between;
+  gap: 20px;
+  width: 100%;
+  padding: 24px 0;
+}
+
+.nx-faq .cal-faq-icon {
+  color: var(--site-text);
+}
+
+.nx-faq .cal-faq-text {
+  font-size: 19px;
+  font-weight: 600;
+}
+
+.nx-faq .cal-faq-a p {
+  max-width: 40em;
+  padding: 0 0 24px;
+  font-size: 15.5px;
+  line-height: 1.8;
+  color: var(--site-text-2);
+}
+
+/* Closing call to action on a pale sky. */
+.nx-end {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 100svh;
+  margin-top: clamp(110px, 15vh, 170px);
+  padding: 120px 24px 150px;
+  overflow: hidden;
+  background:
+    radial-gradient(90% 40% at 50% 108%, #ffffff 30%, transparent 72%),
+    linear-gradient(var(--site-bg) 0%, #f4f7fb 40%, #dfe9f5 80%, var(--cal-footer) 100%);
+  text-align: center;
+}
+
+.nx-home .nx-end h2 {
+  margin: 0;
+  font-size: clamp(30px, 4.6vw, 58px);
+  font-weight: 600;
+  line-height: 1.32;
+  letter-spacing: -0.01em;
+  color: var(--site-text);
+}
+
+.nx-cta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 34px;
+}
+
+@media (max-width: 820px) {
+  .nx-hero .nx-pin,
+  .nx-brand .nx-pin {
+    padding: 8px;
+  }
+
+  .nx-frame {
+    border-radius: 18px;
+  }
+
+  .nx-stage {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+    width: calc(100% - 40px);
+  }
+
+  .nx-say {
+    align-self: end;
+    height: 5.6em;
+    margin-top: 92px;
+    font-size: clamp(24px, 7.2vw, 34px);
+  }
+
+  .nx-home .nx-say h2 {
+    top: 0;
+    transform: none;
+  }
+
+  .nx-ticks {
+    top: auto;
+    bottom: 0.2em;
+  }
+
+  .nx-scene {
+    place-items: start center;
+    padding-top: 9svh;
+  }
+
+  .nx-prop {
+    zoom: 0.72;
+  }
+
+  .nx-claim p {
+    max-width: 14em;
+  }
+
+  .nx-note {
+    width: 104px;
+    padding: 24px 8px 8px;
+    font-size: 15px;
+  }
+
+  .nx-note-1 { left: 3%; top: 11%; }
+  .nx-note-2 { right: 3%; top: 13%; }
+  .nx-note-3 { left: 4%; bottom: 13%; }
+  .nx-note-4 { right: 4%; bottom: 15%; }
+
+  .nx-info {
+    width: calc(100% - 40px);
+    padding-top: 96px;
+  }
+
+  .nx-faq .cal-faq-text {
+    font-size: 17px;
+  }
+
+  /* The note beside the phone has no room on a narrow screen; it moves
+     above it (the offsets are inline styles, hence !important). */
+  .nx-prop-phone .nx-hand {
+    left: 40px !important;
+    top: -46px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nx-title-1,
+  .nx-why span,
+  .nx-home .nx-say h2,
+  .nx-intro,
+  .nx-markwrap,
+  .nx-claim {
+    filter: none;
+    transition: none;
+  }
+
+  .nx-sky {
+    transform: none;
+  }
+
+  .nx-note,
+  .nx-claim mark,
+  .nx-claim u {
+    transition: none;
+  }
+}
+
+/* ── Reading pages, nextrip style ─────────────────────────────────────────
+   Blog posts (.blog-article), help answers (.cal-read), guides (.cal-prose)
+   and the blog index. Same type as nextrip's info sections: 17px body at
+   1.75, semibold two-tone headings, a 68ch measure, and links that look
+   like links (ink, semibold, hairline underline that darkens on hover).
+   Scoped to marketing pages; colors come from the site tokens so dark mode
+   follows. Placed last so it wins over the older Calendly-era rules. */
+:root:has(.cal-site) :is(.blog-article, .cal-read, .cal-prose) {
+  --read-body: color-mix(in oklab, var(--site-text) 84%, var(--site-bg));
+}
+
+/* Directory pages (.cal-read-moderate, .cal-read-wide) hold card grids, not
+   prose, so they keep their own wider max-width. */
+:root:has(.cal-site) .blog-article,
+:root:has(.cal-site) .cal-read:not(.cal-read-wide, .cal-read-moderate) {
+  max-width: 68ch;
+}
+
+:root:root:has(.cal-site) :is(.blog-article, .cal-read, .cal-prose) :is(p, li) {
+  font-size: 17px;
+  line-height: 1.75;
+  color: var(--read-body);
+}
+
+:root:root:has(.cal-site) :is(.blog-article, .cal-read, .cal-prose) :is(p, li) :is(strong, b) {
+  font-weight: 600;
+  color: var(--site-text);
+}
+
+:root:root:has(.cal-site) .blog-article :is(h2, h3),
+:root:root:has(.cal-site) :is(.cal-read-h2, .cal-prose h2, .cal-prose h3) {
+  font-family: var(--font-site-sans);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--site-text);
+  text-wrap: balance;
+}
+
+:root:root:has(.cal-site) :is(.blog-article h2, .cal-read-h2, .cal-prose h2) {
+  font-size: clamp(24px, 3vw, 30px);
+  line-height: 1.25;
+}
+
+:root:root:has(.cal-site) :is(.blog-article h3, .cal-prose h3) {
+  font-size: 20px;
+  line-height: 1.35;
+}
+
+:root:root:has(.cal-site) :is(.blog-article, .cal-read, .cal-prose) a:not(.site-btn, .cal-link-card, .cal-post-card, .cal-post-featured, .cal-post-tag-link),
+:root:root:has(.cal-site) :is(.blog-article, .cal-read, .cal-prose) a:not(.site-btn, .cal-link-card, .cal-post-card, .cal-post-featured, .cal-post-tag-link):visited {
+  color: var(--site-text) !important;
+  font-weight: 600;
+  text-decoration-line: underline !important;
+  text-decoration-thickness: 1px !important;
+  text-decoration-color: color-mix(in oklab, var(--site-text) 28%, transparent) !important;
+  text-underline-offset: 4px;
+  transition: text-decoration-color 150ms ease;
+}
+
+:root:root:has(.cal-site) :is(.blog-article, .cal-read, .cal-prose) a:not(.site-btn, .cal-link-card, .cal-post-card, .cal-post-featured, .cal-post-tag-link):hover {
+  text-decoration-color: var(--site-text) !important;
+}
+
+/* Page heroes: nextrip's two-tone heading weight and a calmer lead. */
+:root:has(.cal-site) .cal-page-title {
+  font-family: var(--font-site-sans);
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+}
+
+:root:has(.cal-site) .cal-page-hero .cal-lead {
+  max-width: 34em;
+  font-size: clamp(16px, 2vw, 18px);
+  line-height: 1.65;
+  color: var(--site-text-2, #4d5b70);
+  text-wrap: pretty;
+}
+
+/* Blog index: text-only posts under a hairline, like nextrip's ruled lists. */
+:root:has(.cal-site) .cal-post-featured-wrap {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+:root:has(.cal-site) .cal-post-card,
+:root:has(.cal-site) .cal-post-featured {
+  display: block;
+  padding-top: 20px;
+  border-top: 1px solid var(--site-border);
+}
+
+:root:has(.cal-site) .cal-post-featured {
+  padding-top: 28px;
+  border-top-width: 2px;
+  border-top-color: var(--site-text);
+}
+
+:root:has(.cal-site) .cal-post-card strong {
+  font-family: var(--font-site-sans);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.3;
+  transition: opacity 150ms ease;
+}
+
+:root:has(.cal-site) .cal-post-featured strong {
+  max-width: 22em;
+  font-family: var(--font-site-sans);
+  font-size: clamp(26px, 3.4vw, 40px);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+:root:has(.cal-site) :is(.cal-post-card, .cal-post-featured):hover strong {
+  opacity: 0.7;
+}
+
+:root:has(.cal-site) .cal-post-summary {
+  font-size: 15.5px;
+  line-height: 1.65;
+  color: var(--site-text-2, #4d5b70);
+}
+
+:root:has(.cal-site) .cal-post-featured .cal-post-summary {
+  max-width: 40em;
+  font-size: 17px;
+}
+
+:root:has(.cal-site) .cal-post-tag {
+  padding: 0;
+  background: none;
+  color: var(--site-text);
+  font-weight: 600;
+}
+
+:root:has(.cal-site) .cal-post-grid {
+  row-gap: 40px;
+  column-gap: 40px;
+}
+
+/* Phones: nextrip's 20px gutters, slightly smaller body, no 5-line centered
+   leads. */
+@media (max-width: 640px) {
+  :root:root:has(.cal-site) :is(.blog-article, .cal-read, .cal-prose) :is(p, li) {
+    font-size: 16.5px;
+  }
+
+  :root:has(.cal-site) .cal-page-hero-inner {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  :root:has(.cal-site) .cal-page-hero .cal-lead {
+    margin-inline: 0;
+  }
+
+  :root:has(.cal-site) .cal-page-meta {
+    justify-content: flex-start;
+  }
+}
+
+/* ── Homepage, centered ──────────────────────────────────────────────────
+   Everything on the landing page sits on the center line, like the hero:
+   the problem questions stack above their scene on every width. */
+.nx-home .nx-say h2 {
+  text-align: center;
+}
+
+.nx-ticks {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+@media (min-width: 821px) {
+  .nx-stage {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .nx-say {
+    align-self: end;
+    height: 3.2em;
+    margin-top: 104px;
+  }
+
+  .nx-home .nx-say h2 {
+    top: 0;
+    transform: none;
+  }
+
+  .nx-ticks {
+    top: auto;
+    bottom: 0;
+  }
+
+  .nx-scene {
+    place-items: start center;
+    padding-top: 9svh;
+  }
+}
+
+.nx-home .nx-info > h2,
+:root:root .nx-home .nx-faq .cal-faq-heading {
+  text-align: center;
+}
+
+/* ── Homepage slides ─────────────────────────────────────────────────────
+   Under the story every section is a centered slide with the same two-tone
+   heading. Features and results are pinned acts that swap one slide per
+   scroll step (`.nx-swap`, driven by data-step). The steps and tools slides
+   build in once their list scrolls into view (data-nx-reveal gets data-in). */
+.nx-home :is(.nx-deck, .nx-proof, .nx-slide) h2 {
+  margin: 0;
+  font-family: var(--font-site-sans);
+  font-size: clamp(28px, 3.4vw, 44px);
+  font-weight: 600;
+  line-height: 1.22;
+  letter-spacing: -0.01em;
+  text-align: center;
+  text-wrap: balance;
+  color: var(--site-text);
+}
+
+:is(.nx-deck, .nx-proof, .nx-slide) h2 em {
+  display: block;
+  font-style: normal;
+  color: var(--site-text-3);
+}
+
+.nx-deck,
+.nx-proof {
+  background: var(--site-bg);
+}
+
+.nx-deck {
+  height: 430svh;
+}
+
+.nx-proof {
+  height: 330svh;
+}
+
+.nx-deck .nx-pin,
+.nx-proof .nx-pin {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  justify-items: center;
+  padding: 112px 24px 116px;
+  text-align: center;
+}
+
+.nx-pin > .nx-ticks {
+  position: static;
+  transform: none;
+}
+
+.nx-act[data-step="0"] .nx-pin > .nx-ticks i:nth-child(1),
+.nx-act[data-step="1"] .nx-pin > .nx-ticks i:nth-child(2),
+.nx-act[data-step="2"] .nx-pin > .nx-ticks i:nth-child(3),
+.nx-act[data-step="3"] .nx-pin > .nx-ticks i:nth-child(4),
+.nx-act[data-step="4"] .nx-pin > .nx-ticks i:nth-child(5),
+.nx-act[data-step="5"] .nx-pin > .nx-ticks i:nth-child(6) {
+  background: var(--site-text);
+}
+
+/* Stacked slides: only the one for the current step shows. A hidden slide
+   that takes keyboard focus shows itself, so a tabbed-to link is never
+   invisible. */
+.nx-swap {
+  position: relative;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nx-swap > li {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  filter: blur(14px);
+  pointer-events: none;
+  transform: translateY(28px) scale(0.97);
+  transition:
+    opacity 600ms var(--site-ease),
+    filter 600ms var(--site-ease),
+    transform 800ms var(--site-ease);
+}
+
+.nx-act[data-step="0"] .nx-swap > li:nth-child(1),
+.nx-act[data-step="1"] .nx-swap > li:nth-child(2),
+.nx-act[data-step="2"] .nx-swap > li:nth-child(3),
+.nx-act[data-step="3"] .nx-swap > li:nth-child(4),
+.nx-act[data-step="4"] .nx-swap > li:nth-child(5),
+.nx-act[data-step="5"] .nx-swap > li:nth-child(6),
+.nx-swap > li:focus-within {
+  opacity: 1;
+  filter: none;
+  pointer-events: auto;
+  transform: none;
+}
+
+/* Feature deck: title, one line, a sample card and a link per slide. */
+.nx-home .nx-deck h3 {
+  margin: 0;
+  font-family: var(--font-site-sans);
+  font-size: clamp(28px, 3.6vw, 46px);
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+  color: var(--site-text);
+}
+
+.nx-deck-note {
+  margin: 10px 0 0;
+  font-size: 17px;
+  line-height: 1.5;
+  color: var(--site-text-2);
+}
+
+.nx-deck .nx-also {
+  margin-top: 20px;
+}
+
+/* Sample cards, after nextrip's request-and-result rows: pale rounded rows,
+   a dark bubble for what you send, a pale one for what comes in. */
+.nx-demo {
+  box-sizing: border-box;
+  width: min(480px, 100%);
+  margin-top: 26px;
+  padding: 16px;
+  font-family: var(--font-site-sans);
+  font-size: 14px;
+  text-align: left;
+  color: var(--site-text);
+}
+
+.nx-demo-k {
+  margin: 0 0 8px;
+  padding: 0 2px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--site-text-3);
+}
+
+.nx-demo-k:not(:first-child) {
+  margin-top: 14px;
+}
+
+.nx-demo-k-me {
+  text-align: right;
+}
+
+.nx-demo-rows {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nx-demo-me + .nx-demo-rows {
+  margin-top: 12px;
+}
+
+.nx-demo-rows li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--site-card-2);
+}
+
+.nx-demo-rows li > :first-child {
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nx-demo-rows li > :last-child {
+  grid-column: -2;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.nx-demo-meta {
+  font-size: 13px;
+  white-space: nowrap;
+  color: var(--site-text-2);
+}
+
+.nx-demo-bar {
+  display: block;
+  width: 96px;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--site-card-4);
+}
+
+.nx-demo-bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--site-text);
+}
+
+.nx-demo-ok {
+  color: #2e7d4f;
+}
+
+:root:not([data-site-theme="light"]) .nx-demo-ok {
+  color: #7bc89a;
+}
+
+.nx-demo-me,
+.nx-demo-in {
+  width: fit-content;
+  max-width: 86%;
+  margin: 0;
+  padding: 10px 16px;
+  font-size: 14.5px;
+  line-height: 1.5;
+}
+
+.nx-demo-me {
+  margin-left: auto;
+  border-radius: 18px 18px 6px 18px;
+  background: var(--site-text);
+  color: var(--site-bg);
+}
+
+.nx-demo-in {
+  border-radius: 18px 18px 18px 6px;
+  background: var(--site-card-2);
+  color: var(--site-text);
+}
+
+/* Results: one big number per step; the yellow highlighter sweeps under
+   the label once its number lands. */
+.nx-proof strong {
+  font-size: clamp(88px, 17vw, 220px);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+  color: var(--site-text);
+}
+
+.nx-proof .nx-swap b {
+  justify-self: center;
+  margin-top: 18px;
+  padding: 0 4px;
+  background: linear-gradient(var(--site-mark), var(--site-mark)) 0 88% / 0% 42% no-repeat;
+  font-size: clamp(20px, 2.4vw, 30px);
+  font-weight: 600;
+  color: var(--site-text-2);
+  transition: background-size 700ms var(--site-ease) 250ms;
+}
+
+.nx-proof[data-step="0"] .nx-swap > li:nth-child(1) b,
+.nx-proof[data-step="1"] .nx-swap > li:nth-child(2) b,
+.nx-proof[data-step="2"] .nx-swap > li:nth-child(3) b {
+  background-size: 100% 42%;
+}
+
+/* Unpinned slides: a full screen each, content on the center line. */
+.nx-slide {
+  box-sizing: border-box;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  width: min(100% - 48px, 1140px);
+  min-height: 100svh;
+  margin: 0 auto;
+  padding: 120px 0;
+  text-align: center;
+  scroll-margin-top: 0;
+}
+
+.nx-slide .nx-also {
+  margin-top: 36px;
+}
+
+/* Build-in: each item rises out of a blur in turn, `--i` sets its place. */
+[data-nx-reveal] > li {
+  opacity: 0;
+  filter: blur(12px);
+  transform: translateY(24px);
+  transition:
+    opacity 700ms var(--site-ease),
+    filter 700ms var(--site-ease),
+    transform 900ms var(--site-ease);
+  transition-delay: calc(var(--i, 0) * var(--stagger, 140ms));
+}
+
+[data-nx-reveal][data-in] > li {
+  opacity: 1;
+  filter: none;
+  transform: none;
+}
+
+/* Steps: four words in a row with arrows between. Omentir does the first
+   three; the last one is yours and gets the highlighter. */
+.nx-flow {
+  --word: clamp(34px, 4.6vw, 60px);
+  --stagger: 180ms;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  width: 100%;
+  margin: 64px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nx-flow li {
+  position: relative;
+  padding: 0 12px;
+}
+
+.nx-flow small {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+  letter-spacing: 0.02em;
+  color: var(--site-text-3);
+}
+
+.nx-flow li:last-child small {
+  color: var(--site-text);
+}
+
+.nx-flow b {
+  display: block;
+  font-size: var(--word);
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--site-text);
+}
+
+.nx-flow p {
+  max-width: 13em;
+  margin: 14px auto 0;
+  font-size: 16px;
+  line-height: 1.45;
+  color: var(--site-text-2);
+}
+
+.nx-flow li + li::before {
+  content: "\2192";
+  position: absolute;
+  left: 0;
+  top: calc(30px + var(--word) * 0.525);
+  font-size: calc(var(--word) * 0.5);
+  font-weight: 400;
+  line-height: 1;
+  color: var(--site-text-3);
+  transform: translate(-50%, -50%);
+}
+
+.nx-flow mark {
+  padding: 0 0.08em;
+  background: linear-gradient(var(--site-mark), var(--site-mark)) 0 88% / 0% 40% no-repeat;
+  color: inherit;
+  transition: background-size 700ms var(--site-ease) 1000ms;
+}
+
+.nx-flow[data-in] mark {
+  background-size: 100% 40%;
+}
+
+:root:not([data-site-theme="light"]) :is(.nx-flow mark, .nx-proof .nx-swap b) {
+  background-image: linear-gradient(rgb(122 167 255 / 0.3), rgb(122 167 255 / 0.3));
+}
+
+/* Tools: big names on the center line, building in one by one. No slash
+   separators: centered lines would leave them dangling at the ends. */
+/* Tools: a 3 by 3 grid of tiles, logo over name. */
+.nx-wall {
+  --stagger: 60ms;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  width: min(100%, 720px);
+  margin: 56px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nx-wall li {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  padding: 30px 12px 24px;
+  border: 1px solid var(--site-border);
+  border-radius: 20px;
+  background: var(--site-card);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--site-text);
+  white-space: nowrap;
+}
+
+/* IntegrationMark boxes the mono and app-icon logos; inside a tile the
+   tile is the box, so drop it and size every logo the same. */
+.nx-wall-mark > span {
+  width: 52px;
+  height: 52px;
+  padding: 6px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+}
+
+@media (max-height: 720px) and (min-width: 821px) {
+  .nx-deck .nx-pin,
+  .nx-proof .nx-pin {
+    padding-top: 96px;
+    padding-bottom: 100px;
+  }
+
+  .nx-demo {
+    margin-top: 18px;
+  }
+
+  .nx-deck .nx-also {
+    margin-top: 14px;
+  }
+}
+
+@media (max-width: 820px) {
+  .nx-deck .nx-pin,
+  .nx-proof .nx-pin {
+    padding: 100px 20px 124px;
+  }
+
+  .nx-slide {
+    width: calc(100% - 40px);
+    padding: 96px 0;
+  }
+
+  .nx-wall {
+    gap: 8px;
+    margin-top: 40px;
+  }
+
+  .nx-wall li {
+    gap: 10px;
+    padding: 20px 4px 16px;
+    border-radius: 16px;
+    font-size: 13.5px;
+  }
+
+  .nx-wall-mark > span {
+    width: 40px;
+    height: 40px;
+  }
+
+  .nx-flow {
+    --word: 32px;
+    grid-template-columns: 1fr;
+    margin-top: 36px;
+  }
+
+  .nx-flow li {
+    padding: 0;
+  }
+
+  .nx-flow small {
+    margin-bottom: 4px;
+  }
+
+  .nx-flow p {
+    max-width: none;
+    margin-top: 4px;
+    font-size: 15px;
+  }
+
+  .nx-flow li + li::before {
+    content: "\2193";
+    position: static;
+    display: block;
+    margin: 8px 0;
+    font-size: 20px;
+    transform: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .nx-demo {
+    padding: 12px;
+  }
+
+  .nx-demo-rows li {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 2px 12px;
+  }
+
+  .nx-demo-rows li > .nx-demo-meta {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .nx-demo-rows li > :last-child {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+
+  .nx-demo-bar {
+    width: 100%;
+    margin-top: 6px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nx-swap > li,
+  [data-nx-reveal] > li,
+  .nx-flow mark,
+  .nx-proof .nx-swap b {
+    filter: none;
+    transition: none;
+  }
+
+  [data-nx-reveal] > li {
+    opacity: 1;
+    transform: none;
+  }
+
+  .nx-flow mark {
+    background-size: 100% 40%;
   }
 }

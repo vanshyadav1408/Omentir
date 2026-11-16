@@ -17,13 +17,13 @@ mock.module("./data", () => ({
   listLeadEnrollments: async () => enrollments,
   stopLeadOutreach: stop,
 }));
-mock.module("./unipile", () => ({
+mock.module("./linkedin", () => ({
   findLinkedInChatWithAttendee: async () => "chat",
-  isUnipileConfigured: () => true,
+  isLinkedInConfiguredFor: () => true,
   listLinkedInChatMessagesPage: read,
   retrieveLinkedInProfile: async () => ({ providerProfileId: "provider" }),
 }));
-const { stopForOwnerMessage, stopForOwnerMessageWebhook } = await import("./owner-message-guard");
+const { LeadReplyNotSyncedError, stopForOwnerMessage, stopForOwnerMessageWebhook } = await import("./owner-message-guard");
 const input = {
   workspaceId: "workspace", leadId: "lead", accountId: "account",
   providerProfileId: "provider", linkedInUrl: "https://linkedin.com/in/lead",
@@ -44,6 +44,54 @@ test("a LinkedIn owner message before the first scheduled send stops all outreac
   pages = [{ messages: [message("owner-message")] }];
   expect(await stopForOwnerMessage(input)).toBe(true);
   expect(stop).toHaveBeenCalledWith("workspace", "lead", OWNER_MESSAGED_OUTREACH_ERROR);
+});
+
+test("reply sync stops outreach for an owner LinkedIn-app message the way the old Unipile webhook did", async () => {
+  expect(await stopForOwnerMessageWebhook({ workspaceId: "workspace", leadId: "lead", providerMessageId: "owner-app-msg" })).toBe(true);
+  expect(stop).toHaveBeenCalledWith("workspace", "lead", OWNER_MESSAGED_OUTREACH_ERROR);
+});
+
+test("an automation echo of our own send does not stop outreach during reply sync", async () => {
+  stored = [{ ...message("auto-echo"), outboundSource: "automation" }];
+  expect(await stopForOwnerMessageWebhook({ workspaceId: "workspace", leadId: "lead", providerMessageId: "auto-echo" })).toBe(false);
+  expect(stop).not.toHaveBeenCalled();
+});
+
+test("a provider echo that arrives while a send is still pending waits for the pre-send history guard", async () => {
+  enrollments = [{ pendingAction: { kind: "message", stepIndex: 0, startedAt: "2026-10-04T01:00:00Z" } }];
+  expect(await stopForOwnerMessageWebhook({ workspaceId: "workspace", leadId: "lead", providerMessageId: "not-saved-yet" })).toBe(false);
+  expect(stop).not.toHaveBeenCalled();
+});
+
+// After an old Unipile account is replaced, LinkedIn returns its earlier
+// automated messages under new own-client ids. Matching them by text and send
+// time keeps every in-flight sequence from being stopped as an owner takeover.
+test("automated messages sent before a Unipile replacement do not falsely trigger an owner takeover", async () => {
+  stored = [{ ...message("old-provider-id"), outboundSource: "automation" }];
+  pages = [{ messages: [message("own_member~m~new-id")] }];
+  expect(await stopForOwnerMessage({ ...input, accountId: "own_member" })).toBe(false);
+  expect(stop).not.toHaveBeenCalled();
+});
+
+// The first reply sync after the switch reads the last day again under new
+// ids. Without this, every lead messaged that day was stopped as if the owner
+// had typed to them.
+test("reply sync does not treat an automated message stored under its old Unipile id as an owner takeover", async () => {
+  stored = [{ ...message("old-provider-id"), outboundSource: "automation" }];
+  expect(await stopForOwnerMessageWebhook({
+    workspaceId: "workspace", leadId: "lead", providerMessageId: "own_member~m~bmV3",
+    body: "Hello", createdAt: "2026-10-04T01:00:40Z",
+  })).toBe(false);
+  expect(stop).not.toHaveBeenCalled();
+});
+
+test("reply sync still stops outreach when the owner sends the same words by hand later", async () => {
+  stored = [{ ...message("old-provider-id"), outboundSource: "automation" }];
+  expect(await stopForOwnerMessageWebhook({
+    workspaceId: "workspace", leadId: "lead", providerMessageId: "own_member~m~bmV3",
+    body: "Hello", createdAt: "2026-10-06T09:00:00Z",
+  })).toBe(true);
+  expect(stop).toHaveBeenCalledTimes(1);
 });
 
 test("a manual Omentir message stops outreach even when it is already stored locally", async () => {
@@ -73,6 +121,27 @@ test("invitation notes and LinkedIn system events do not stop the scheduled firs
     { ...message("accepted"), event: true },
   ] }];
   expect(await stopForOwnerMessage(input)).toBe(false);
+  expect(stop).not.toHaveBeenCalled();
+});
+
+// The own client gets no INVITATION tag from LinkedIn. Without recognising
+// the note by its text, every lead who accepted an invite that carried a note
+// had their sequence stopped as if the owner had written to them by hand.
+test("an untagged invite note in the thread does not stop the first message, but other owner text still does", async () => {
+  const note = "Hi Ana, saw your post on hiring.";
+  pages = [{ messages: [{ ...message("note"), body: "Hi Ana,  saw your post\non hiring. " }] }];
+  expect(await stopForOwnerMessage({ ...input, inviteNotes: [note] })).toBe(false);
+  expect(stop).not.toHaveBeenCalled();
+
+  pages = [{ messages: [{ ...message("typed"), body: "Hi Ana, are you free on Friday?" }] }];
+  expect(await stopForOwnerMessage({ ...input, inviteNotes: [note] })).toBe(true);
+});
+
+test("reply sync does not stop outreach when the owner message it sees is the invite note", async () => {
+  const note = "Hi Ana, saw your post on hiring.";
+  expect(await stopForOwnerMessageWebhook({
+    workspaceId: "workspace", leadId: "lead", providerMessageId: "note-msg", body: note, inviteNotes: [note],
+  })).toBe(false);
   expect(stop).not.toHaveBeenCalled();
 });
 
@@ -112,27 +181,25 @@ test("a later inbound reply cannot restart automation after the owner took over"
   })).toBe(false);
 });
 
-test("an owner-written LinkedIn webhook triggers the existing stop feature immediately", async () => {
-  expect(await stopForOwnerMessageWebhook({ ...input, providerMessageId: "external-manual" })).toBe(true);
-  expect(stop).toHaveBeenCalledWith(input.workspaceId, input.leadId, OWNER_MESSAGED_OUTREACH_ERROR);
-  expect(read).not.toHaveBeenCalled();
-});
-
-test("a recorded automation echo does not stop its own campaign", async () => {
-  stored = [{ ...message("automated"), outboundSource: "automation" }];
-  expect(await stopForOwnerMessageWebhook({ ...input, providerMessageId: "automated" })).toBe(false);
+// Replies are found by polling every few minutes. The send check reads the
+// live thread anyway; a follow-up must not go out on top of a reply LinkedIn
+// already shows just because sync has not stored it yet.
+test("a follow-up waits while the live thread shows a reply that sync has not stored", async () => {
+  const justNow = new Date(Date.now() - 60_000).toISOString();
+  pages = [{ messages: [{ ...message("reply-new", "inbound"), body: "Yes, send details", createdAt: justNow }] }];
+  await expect(stopForOwnerMessage(input)).rejects.toBeInstanceOf(LeadReplyNotSyncedError);
   expect(stop).not.toHaveBeenCalled();
 });
 
-test("a webhook arriving before the automation send result is saved does not cancel that active send", async () => {
-  enrollments = [{ pendingAction: { kind: "message", stepIndex: 1, startedAt: "2026-10-04T00:00:00Z" } }];
-  expect(await stopForOwnerMessageWebhook({ ...input, providerMessageId: "not-yet-saved" })).toBe(false);
-  expect(stop).not.toHaveBeenCalled();
+test("a reply sync already stored does not hold the send", async () => {
+  const justNow = new Date(Date.now() - 60_000).toISOString();
+  stored = [{ ...message("reply-new", "inbound"), createdAt: justNow }];
+  pages = [{ messages: [{ ...message("reply-new", "inbound"), createdAt: justNow }] }];
+  expect(await stopForOwnerMessage(input)).toBe(false);
 });
 
-test("a retry of a recorded manual reply still triggers stop even if an automated action is pending", async () => {
-  stored = [{ ...message("manual"), outboundSource: "manual" }];
-  enrollments = [{ pendingAction: { kind: "reply", stepIndex: 1, startedAt: "2026-10-04T00:00:00Z" } }];
-  expect(await stopForOwnerMessageWebhook({ ...input, providerMessageId: "manual" })).toBe(true);
-  expect(stop).toHaveBeenCalledTimes(1);
+test("an old reply sync never stored does not hold sends forever", async () => {
+  const hoursAgo = new Date(Date.now() - 3 * 60 * 60_000).toISOString();
+  pages = [{ messages: [{ ...message("old-reply", "inbound"), createdAt: hoursAgo }] }];
+  expect(await stopForOwnerMessage(input)).toBe(false);
 });

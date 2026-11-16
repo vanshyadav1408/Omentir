@@ -12,7 +12,7 @@ import {
   findLinkedInChatWithAttendee,
   linkedInChatBelongsToAccount,
   listLinkedInChatMessagesPage,
-} from "@/lib/server/unipile";
+} from "@/lib/server/linkedin";
 
 // A stored conversation older than the inbox page has no chat id on the client.
 // Find the lead's live chat on one of the workspace's accounts so Messages

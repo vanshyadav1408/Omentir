@@ -15,7 +15,7 @@ function addKey(keys: Set<string>, value?: string) {
   if (!normalized) return;
   keys.add(normalized);
 
-  // Unipile relations return URNs; stored leads usually have the bare ACo/ACw id.
+  // Relations can come back as URNs; stored leads usually have the bare ACo/ACw id.
   const urn = normalized.match(/^urn:li:(?:person|member|fsd_profile):(.+)$/);
   if (urn?.[1]) keys.add(urn[1]);
 
@@ -104,7 +104,7 @@ export function pickLeadForProviderIdentity<T extends LinkedInIdentity>(
   return nameMatches.length === 1 ? nameMatches[0] : null;
 }
 
-export function firstDegreeFromUnipileProfile(profile: {
+export function firstDegreeFromLinkedInProfile(profile: {
   network_distance?: string;
   is_relationship?: boolean;
 }) {

@@ -7,20 +7,18 @@ import { defaultDescription, defaultKeywords, defaultOgImage, defaultTitle, site
 import NavigationFeedback from "./navigation-feedback";
 import { PostHogProvider } from "./posthog-provider";
 import { buildEarlyFetchScript } from "./sidebar-early-fetch";
-import { siteThemeScript } from "./site-theme-script";
-import SiteThemeSync from "./site-theme-sync";
 import { ToastProvider } from "./toast";
 import { isLocalMode } from "@/lib/runtime-mode";
 import { studioHostRedirectScript } from "@/sanity/studio-host";
 import "./globals.css";
 
-/* Geist is the product face everywhere (closest free match to cursor.com's
-   CursorGothic); Geist Mono for code. The old --font-google-sans and
-   --font-roboto variables point at it in globals.css so existing styles keep
-   working. */
+/* The product face is the system sans (San Francisco on Apple devices), with
+   Geist as the fallback everywhere else; Geist Mono for code. globals.css
+   builds --font-site-sans from it, and the old --font-google-sans and
+   --font-roboto variables point there so existing styles keep working. */
 const geist = localFont({
   src: "./fonts/geist-latin.woff2",
-  variable: "--font-site-sans",
+  variable: "--font-geist",
   weight: "100 900",
   fallback: ["Helvetica Neue", "Arial", "sans-serif"],
 });
@@ -32,23 +30,15 @@ const geistMono = localFont({
   preload: false,
 });
 
-/* Inter Tight is used by the homepage's LCP heading and app page titles.
-   Preload it so the heading does not wait for CSS discovery. Newsreader
-   remains demand-loaded for serif accents. */
+/* Inter Tight is the heading fallback where there is no system sans
+   (globals.css builds --font-cal-display from it), so it is no longer
+   preloaded. */
 const displayFont = localFont({
   src: "./fonts/inter-tight-latin.woff2",
-  variable: "--font-cal-display",
+  variable: "--font-inter-tight",
   weight: "400 700",
-  preload: true,
-  fallback: ["Helvetica Neue", "Arial", "sans-serif"],
-});
-
-const serifFont = localFont({
-  src: "./fonts/newsreader-latin.woff2",
-  variable: "--font-cal-serif",
-  weight: "400 600",
   preload: false,
-  fallback: ["Georgia", "serif"],
+  fallback: ["Helvetica Neue", "Arial", "sans-serif"],
 });
 
 /* Onboarding face: Figtree, a free stand-in for the reference onboarding's
@@ -135,13 +125,11 @@ export default async function RootLayout({
   );
 
   return (
-    // `dark` + data-theme stay on in both themes: the stylesheet's dark rules
-    // read theme tokens, and the head script below sets data-site-theme to
-    // light or dark before first paint (see site-theme-script.ts).
+    // The product is dark only: there is no light theme or theme switch.
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geist.variable} ${geistMono.variable} ${displayFont.variable} ${serifFont.variable} ${onboardFont.variable} antialiased dark`}
+      className={`${geist.variable} ${geistMono.variable} ${displayFont.variable} ${onboardFont.variable} antialiased dark`}
       data-theme="dark"
       style={
         {
@@ -175,13 +163,10 @@ export default async function RootLayout({
             does not execute an inline script it creates on the client, and the
             root layout is the only node guaranteed to be hydrated instead of
             re-created. See sidebar-early-fetch. */}
-        {/* Resolves the light/dark preference before first paint. */}
-        <script dangerouslySetInnerHTML={{ __html: siteThemeScript() }} />
         <script dangerouslySetInnerHTML={{ __html: studioHostRedirectScript() }} />
         <script dangerouslySetInnerHTML={{ __html: buildEarlyFetchScript() }} />
       </head>
       <body className="app-compact flex min-h-screen flex-col">
-        <SiteThemeSync />
         {/* ClerkProvider inside body avoids Next 16 / Turbopack races where the
             provider wraps <html> before hydration and Clerk UI chunks stall.
             prefetchUI={false}: this app uses custom login/signup (window.Clerk /

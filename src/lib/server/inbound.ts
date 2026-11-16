@@ -1,10 +1,9 @@
 import "server-only";
 
 // Shared handling for provider events about a lead: an accepted connection
-// request and an inbound reply. Both arrive through two independent paths -
-// the Unipile webhook (primary, instant) and the tick's provider sync
-// (fallback, batched) - which must apply identical state transitions, so the
-// logic lives here instead of inside the webhook route.
+// request and an inbound reply. Both are found by the tick's provider sync
+// (batched polling). The old Unipile webhook ran the same state transitions,
+// which is why the logic lives here instead of inside one caller.
 
 import {
   claimLeadOutcomeNotification,
@@ -33,6 +32,7 @@ import { nextAiReplyAt } from "./send-schedule";
 import { capturePostHogEvent } from "@/lib/posthog-server";
 import { classifyReplyIntent, draftCampaignMessage, type ReplyIntentClassification } from "./gemini";
 import { writtenSequenceMessage } from "./outreach-rules";
+import { findMigratedMessage, MIGRATED_REPLY_WINDOW } from "./migrated-message-match";
 import {
   enrollmentBlocksAiReply,
   isHotReply,
@@ -53,7 +53,7 @@ import {
   isFirstDegreeConnection,
   listLinkedInPostsForProfile,
   retrieveLinkedInProfile,
-} from "./unipile";
+} from "./linkedin";
 import { pickLeadForProviderIdentity } from "../linkedin-identity";
 import type {
   Campaign,
@@ -267,6 +267,7 @@ export async function applyConnectionAccepted(input: {
 
   await updateEnrollment(workspaceId, enrollment.id, {
     status: "connected",
+    inviteExpired: undefined,
     ...(currentStep?.type === "wait"
       ? { currentStepIndex: enrollment.currentStepIndex + 1, nextActionAt }
       : { nextActionAt }),
@@ -408,8 +409,8 @@ async function findLeadForInboundEventInWorkspace(input: {
   });
 }
 
-// Own-message webhooks fire when an invite note opens a chat. Unipile says
-// that usually means they accepted, but they can also reply without accepting,
+// An owner-sent message shows up when an invite note opens a chat. That
+// usually means they accepted, but they can also reply without accepting,
 // so confirm first-degree before unlocking campaign messages.
 export async function applyAcceptanceIfFirstDegree(input: {
   workspaceId: string;
@@ -480,10 +481,13 @@ type InboundPersistInput = {
   body: string;
   senderName: string;
   providerMessageId?: string;
+  // LinkedIn's time for the message, for recognising replies stored before a switch.
+  providerCreatedAt?: string;
   campaignIdHint?: string;
   account?: LinkedInAccount | null;
   notifyEmailOverride?: string;
 };
+
 
 export type InboundPersistResult =
   | { skip: true; duplicate: true }
@@ -524,6 +528,18 @@ export async function persistInboundReply(
   ]);
 
   const existingMessages = existingConversation?.messages || [];
+  // The first syncs after leaving Unipile read replies it already delivered,
+  // now under new ids. They were handled then; storing them again would
+  // duplicate the thread, re-arm AI replies and send the reply email twice.
+  if (
+    findMigratedMessage(
+      existingMessages,
+      { id: input.providerMessageId, direction: "inbound", body: input.body, createdAt: input.providerCreatedAt },
+      MIGRATED_REPLY_WINDOW,
+    )
+  ) {
+    return { skip: true, duplicate: true };
+  }
   const alreadyStored = Boolean(
     input.providerMessageId &&
       existingMessages.some((message) => message.id === input.providerMessageId),
@@ -697,9 +713,13 @@ export async function finishInboundReplyClassification(
     (message) => message.id !== persisted.providerMessageId,
   );
 
+  // A newly stored reply always gets its own label. Reusing the conversation's
+  // stored intent gave every later reply the first one's: a "warm" first
+  // reply kept a later "not interested, stop" warm, so the AI answered it.
+  // Only a message we already stored (a retry) keeps the label we acted on.
   const classification =
     persisted.alreadyClassified ||
-    (existingConversation?.replyIntent
+    (!persisted.inserted && existingConversation?.replyIntent
       ? {
           intent: existingConversation.replyIntent,
           confidence: existingConversation.replyIntentConfidence || 0,

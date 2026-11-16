@@ -153,7 +153,7 @@ export function durableLeadAvatarUrlWithRetry(leadId: string | undefined, retry:
   return `${base}&r=${retry}`;
 }
 
-// Unipile GET /users/{id} accepts a provider id (ACo...) or a profile URL.
+// The profile lookup accepts a provider id (ACo...) or a profile URL.
 export function leadAvatarRefreshIdentifier(input: {
   providerProfileId?: string;
   linkedInUrl?: string;
@@ -163,7 +163,7 @@ export function leadAvatarRefreshIdentifier(input: {
   return input.linkedInUrl?.trim() || "";
 }
 
-// Provider ids go stale (Unipile 422 invalid_recipient). Keep the public
+// Provider ids go stale (422 invalid_recipient). Keep the public
 // profile URL as a second try so production can still pull a headshot.
 export function leadAvatarRefreshIdentifiers(input: {
   providerProfileId?: string;

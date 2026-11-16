@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { getLinkedInAccountByAccountId, listWorkspaceIdsSharingLinkedIn } from "@/lib/server/data";
 import { resolveActiveWorkspace } from "@/lib/server/active-workspace";
 import { hasActiveSubscription } from "@/lib/server/subscription";
-import { fetchLinkedInMessageAttachment, linkedInMessageAccountId } from "@/lib/server/unipile";
+import { fetchLinkedInMessageAttachment, linkedInMessageAccountId } from "@/lib/server/linkedin";
 
 const INLINE_TYPES = new Set([
   "image/png",

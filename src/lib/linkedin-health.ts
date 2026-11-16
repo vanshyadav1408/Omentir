@@ -59,10 +59,10 @@ export const ACCEPTANCE_GRACE_DAYS = 7;
 export const MIN_INVITES_FOR_RATE = 15;
 
 // Built from Omentir's own records (when the invite went out, and whether the
-// lead got to "accepted"), not from LinkedIn's pending list: Unipile only
-// knows pending invites by labels like "1 week ago" or "1 month ago", which are
-// too coarse to window, and one LinkedIn account can be shared by several
-// workspaces. A withdrawn or ignored invite never reaches accepted, so both
+// lead got to "accepted"), not from LinkedIn's pending list: one LinkedIn
+// account can be shared by several workspaces, and the pending list used to
+// carry only labels like "1 week ago" or "1 month ago", which are too coarse
+// to window. A withdrawn or ignored invite never reaches accepted, so both
 // count against the rate, as they do on LinkedIn.
 export function acceptanceSample(
   invites: Array<{ sentAt?: string; accepted: boolean }>,

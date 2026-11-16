@@ -33,9 +33,9 @@ describe("withActionErrors", () => {
   test("provider errors with raw response bodies are not shown to users", async () => {
     await expect(
       withActionErrors(async () => {
-        throw new ProviderError('Unipile request failed: 422 {"account_id":"secret"}');
+        throw new ProviderError('LinkedIn request failed: 422 {"account_id":"secret"}');
       }),
-    ).rejects.toThrow("Unipile request failed");
+    ).rejects.toThrow("LinkedIn request failed");
   });
 
   test("database errors carrying a code are not shown to users", async () => {

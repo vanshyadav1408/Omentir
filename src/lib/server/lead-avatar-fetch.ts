@@ -32,32 +32,13 @@ function sniffImageType(body: Buffer, contentType: string) {
   return null;
 }
 
-function unipileApiHost() {
-  const raw = process.env.UNIPILE_DSN || process.env.UNIPILE_BASE_URL || "";
-  if (!raw) return "";
-  try {
-    return new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`).hostname
-      .toLowerCase()
-      .replace(/\.$/, "");
-  } catch {
-    return "";
-  }
-}
-
-function isUnipileAvatarUrl(url: URL) {
-  const host = url.hostname.toLowerCase().replace(/\.$/, "");
-  const configured = unipileApiHost();
-  if (configured && host === configured) return true;
-  return host === "unipile.com" || host.endsWith(".unipile.com");
-}
-
 async function assertAvatarFetchUrl(url: URL) {
   validatePublicWebsiteUrl(url);
   if (url.protocol !== "https:") {
     throw new Error("Only HTTPS avatar URLs can be fetched.");
   }
-  if (!isLinkedInMediaUrl(url.toString()) && !isUnipileAvatarUrl(url)) {
-    throw new Error("Only LinkedIn media or Unipile picture URLs can be fetched.");
+  if (!isLinkedInMediaUrl(url.toString())) {
+    throw new Error("Only LinkedIn media URLs can be fetched.");
   }
   const addresses = await lookup(url.hostname, { all: true, verbatim: true });
   if (!addresses.length || addresses.some(({ address }) => isPrivateOrReservedIp(address))) {
@@ -86,7 +67,7 @@ async function readLimitedBody(response: Response) {
   return Buffer.concat(chunks);
 }
 
-async function requestAvatar(url: URL, extraHeaders?: Record<string, string>) {
+async function requestAvatar(url: URL) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
@@ -99,19 +80,11 @@ async function requestAvatar(url: URL, extraHeaders?: Record<string, string>) {
         "accept-language": "en-US,en;q=0.9",
         "user-agent": BROWSER_UA,
         ...(isLinkedInMediaUrl(url.toString()) ? { referer: "https://www.linkedin.com/" } : {}),
-        ...extraHeaders,
       },
     });
   } finally {
     clearTimeout(timeout);
   }
-}
-
-function unipileAuthHeaders(url: URL): Record<string, string> | undefined {
-  if (!isUnipileAvatarUrl(url)) return undefined;
-  const apiKey = process.env.UNIPILE_API_KEY?.trim();
-  if (!apiKey) return undefined;
-  return { "x-api-key": apiKey };
 }
 
 export async function fetchLeadAvatarBytes(rawUrl: string): Promise<FetchedLeadAvatar | null> {
@@ -126,7 +99,7 @@ export async function fetchLeadAvatarBytes(rawUrl: string): Promise<FetchedLeadA
   for (let hop = 0; hop <= MAX_REDIRECTS; hop += 1) {
     let response: Response;
     try {
-      response = await requestAvatar(current, unipileAuthHeaders(current));
+      response = await requestAvatar(current);
     } catch {
       return null;
     }

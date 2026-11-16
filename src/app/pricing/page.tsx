@@ -44,7 +44,7 @@ const faqItems = [
   {
     question: "Can I self-host Omentir instead of paying?",
     answer:
-      "Yes. Omentir is open source under the MIT license, and the repository ships with a Docker setup for running it on your own infrastructure with your own Firebase, Unipile, and AI provider accounts. The paid plans are the managed version: we run the servers, providers, updates, and support for you.",
+      "Yes. Omentir is open source under the MIT license, and the repository ships with a Docker setup for running it on your own infrastructure with your own Firebase, AI provider, and residential proxy accounts. The paid plans are the managed version: we run the servers, providers, updates, and support for you.",
   },
   {
     question: "Is Omentir worth paying for?",

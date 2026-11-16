@@ -27,7 +27,7 @@ import {
 import { hasActiveSubscription } from "@/lib/server/subscription";
 import { loadAgentStatusFacts } from "@/lib/server/agent-status";
 import { loadLinkedInHealth } from "@/lib/server/linkedin-health";
-import { listLinkedInInbox } from "@/lib/server/unipile";
+import { listLinkedInInbox } from "@/lib/server/linkedin";
 import { resolveActiveWorkspace } from "@/lib/server/active-workspace";
 import { loadDurableActivityDays } from "@/lib/server/sidebar-activity-days";
 
@@ -39,7 +39,7 @@ type SidebarFetchCache = {
 const ACTIVITY_RECONCILE_MIN_MS = 30_000;
 const lastActivityReconcileAt = new Map<string, number>();
 const activityReconcileInflight = new Map<string, Promise<unknown>>();
-// Last successful inbox per Unipile account, served when a poll fails so a
+// Last successful inbox per LinkedIn account, served when a poll fails so a
 // transient provider error does not blank the Messages list.
 const LAST_GOOD_INBOX_MAX_AGE_MS = 30 * 60 * 1000;
 const lastGoodInbox = new Map<
@@ -257,7 +257,7 @@ export async function GET(request: Request) {
           at: lead.createdAt,
           type: "lead",
           title: agent ? "Lead discovered" : "Lead added",
-          description: lead.scoreReasons?.[0] || "Added to a lead group.",
+          description: lead.leadReason || "Added to a lead group.",
           tag: agent?.name || agent?.targetGroupName || undefined,
           status: "success",
           agent,
@@ -335,7 +335,7 @@ export async function GET(request: Request) {
   }
   if (resource === "linkedinInbox") {
     // Use the workspace's connected accounts straight from Firestore - the
-    // Unipile /accounts verification is not needed to load the inbox and keeps
+    // account verification is not needed to load the inbox and keeps
     // it off the critical path (it still runs for the connected/accounts
     // resources). If an account is stale, its inbox call simply returns empty.
     const workspace = await workspacePromise;
@@ -379,7 +379,7 @@ export async function GET(request: Request) {
       // Nothing to serve. A non-2xx keeps the client on the inbox it already
       // has instead of replacing it with an empty one.
       return NextResponse.json(
-        { error: "LinkedIn messages could not be loaded from Unipile." },
+        { error: "LinkedIn messages could not be loaded." },
         { status: 502 },
       );
     }
@@ -401,7 +401,7 @@ export async function GET(request: Request) {
         displayName: account.displayName,
         avatarUrl: account.avatarUrl,
       })),
-      error: errors.length ? "LinkedIn messages could not be loaded from Unipile." : undefined,
+      error: errors.length ? "LinkedIn messages could not be loaded." : undefined,
     });
   }
 

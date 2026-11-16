@@ -1,8 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { buildLeadsCsv } from "./leads-csv";
-import type { LeadPreview } from "./server/types";
+import { buildLeadsCsv, type LeadCsvRow } from "./leads-csv";
 
-function lead(overrides: Partial<LeadPreview> = {}): LeadPreview {
+function lead(overrides: Partial<LeadCsvRow> = {}): LeadCsvRow {
   return {
     id: "lead-1",
     groupIds: ["g1"],
@@ -27,6 +26,19 @@ describe("buildLeadsCsv", () => {
     const csv = buildLeadsCsv([lead({ name: "=HYPERLINK(A1)" })], "UTC");
     expect(csv).toContain("'=HYPERLINK(A1)");
     expect(csv.startsWith("=HYPERLINK")).toBe(false);
+  });
+
+  // The Leads page list stopped loading these two fields to cut its payload,
+  // so the export reads full leads. Losing them here would silently empty two
+  // columns customers rely on.
+  test("keeps the fit reasons and summary that the Leads list no longer loads", () => {
+    const csv = buildLeadsCsv(
+      [lead({ scoreReasons: ["Matches ICP", "Hiring SDRs"], summary: "Runs a 12-person sales team" })],
+      "UTC",
+    );
+    const [, row] = csv.split("\r\n");
+    expect(row).toContain("Matches ICP; Hiring SDRs");
+    expect(row).toContain("Runs a 12-person sales team");
   });
 
   test("uses the workspace calendar day so a late-evening lead is not dated tomorrow in UTC", () => {

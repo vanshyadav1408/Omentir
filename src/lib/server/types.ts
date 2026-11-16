@@ -156,7 +156,9 @@ export type PeopleEngineCursor = {
 export type LinkedInAccount = {
   id: string;
   workspaceId: string;
-  provider: "unipile";
+  // "own": Omentir's own LinkedIn client (accountId starts with own_).
+  provider: "unipile" | "own";
+  retiredUnipileAccountIds?: string[];
   accountId: string;
   displayName: string;
   avatarUrl?: string;
@@ -299,9 +301,7 @@ export type LeadPreview = Pick<
   | "title"
   | "company"
   | "location"
-  | "summary"
   | "fitScore"
-  | "scoreReasons"
   | "signalText"
   | "signalUrl"
   | "leadReason"
@@ -313,7 +313,7 @@ export type LeadPreview = Pick<
 >;
 
 // Narrower projection for the dashboard, which never renders the long-form
-// fields. summary/scoreReasons/signalUrl alone are ~55% of a LeadPreview
+// fields. summary/scoreReasons/signalUrl alone are ~55% of a full lead's
 // payload, so dropping them roughly halves the dashboard's slowest query.
 export type LeadDashboardPreview = Pick<
   Lead,
@@ -452,6 +452,12 @@ export type CampaignEnrollment = {
   lastError?: string;
   retryCount?: number;
   connectionSentAt?: string;
+  // The note the invite actually carried. Re-rendering the template later
+  // gives different text once the template or the lead's title/company change.
+  connectionNote?: string;
+  // Stopped at the give-up date with the invite still unanswered. The lead can
+  // still accept later, so the acceptance sweep keeps looking for these.
+  inviteExpired?: boolean;
   // AI message drafted ahead of time (when the preceding wait step starts) so
   // the Actions page can show exactly what will be sent; the send path reuses
   // it when stepIndex still matches, then clears it.

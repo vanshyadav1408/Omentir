@@ -16,11 +16,8 @@ export default function HeaderAuth() {
 
   return (
     <>
-      <Link href="/login" className="site-btn site-btn-sm site-btn-outline">
+      <Link href="/login" className="site-nav-link">
         Sign in
-      </Link>
-      <Link href="/demo" className="site-btn site-btn-sm site-btn-outline">
-        Book a demo
       </Link>
       <Link href="/signup" className="site-btn site-btn-sm site-btn-primary">
         Get started

@@ -1,5 +1,19 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import {
+  ALWAYS_ON,
+  DECK_CLOSE,
+  DECK_HERO,
+  DECK_PATH,
+  FEATURES,
+  MCP_URL,
+  SAFETY,
+  SETUP_GUIDES,
+  SOURCE_LINK,
+  STEPS,
+  STEPS_HEADING,
+  WHY,
+} from "@/app/a/agents-deck-data";
 import { FEATURE_NAV_ITEMS } from "@/app/feature-nav";
 import { HELP_CLUSTER_LABELS, type HelpPage } from "@/app/help/types";
 import type { GuidePage } from "@/app/guides/types";
@@ -45,6 +59,8 @@ const MARKETING_PAGES = [
   { htmlPath: "/guides", title: "Sales guides by AI agent" },
   { htmlPath: "/minimum-booking-guarantee", title: "Minimum Booking Guarantee" },
   { htmlPath: "/security", title: "Security" },
+  { htmlPath: "/linkedin-account-safety", title: "LinkedIn Account Safety" },
+  { htmlPath: "/a", title: "Omentir for AI agents" },
   { htmlPath: "/privacy-policy", title: "Privacy Policy" },
   { htmlPath: "/terms-of-service", title: "Terms of Service" },
   { htmlPath: "/blogs", title: "Blogs" },
@@ -548,6 +564,47 @@ function sectionsFromBlock(block: string) {
   });
 }
 
+function linkedInAccountSafetyMarkdown() {
+  const source = readAppFile("linkedin-account-safety", "page.tsx").replace(
+    /\{email\}/g,
+    '<a href="mailto:vansh@omentir.com">vansh@omentir.com</a>'
+  );
+  const sections = sectionsMarkdown(source, "sections", "export default function");
+  return collapseMarkdown(
+    [
+      pageHeader(
+        "How Omentir Handles Your LinkedIn Account",
+        "How Omentir signs in to your LinkedIn account, what it stores and what it never stores, the limits it works within, and what happens when you disconnect or your plan ends.",
+        "/linkedin-account-safety"
+      ),
+      `Last updated: November 16, 2026`,
+      sections.join("\n\n"),
+    ].join("\n\n")
+  );
+}
+
+/** /a is a short landing page; its twin is the same sections in order. */
+function agentsDeckMarkdown() {
+  return collapseMarkdown(
+    [
+      pageHeader(DECK_HERO.title, DECK_HERO.sub, DECK_PATH),
+      `## ${WHY}`,
+      `## ${STEPS_HEADING.lead} ${STEPS_HEADING.rest}`,
+      STEPS.map((step, i) => `${i + 1}. **${step.word}** (${step.where}): ${step.note}`).join("\n"),
+      `Connector URL: \`${MCP_URL}\``,
+      `Setup guides: ${SETUP_GUIDES.map((guide) => `[${guide.name}](${absoluteUrl(guide.href)})`).join(", ")}.`,
+      `## What it does`,
+      FEATURES.map((feature) => `- **${feature.title}:** ${feature.note}`).join("\n"),
+      `## ${ALWAYS_ON.lead} ${ALWAYS_ON.rest}`,
+      ALWAYS_ON.facts.map((fact) => `- **${fact.word}:** ${fact.note}`).join("\n"),
+      `## ${SAFETY.lead}`,
+      `${SAFETY.rest} [${SOURCE_LINK.label}](${SOURCE_LINK.href}).`,
+      `## ${DECK_CLOSE.title}`,
+      `${DECK_CLOSE.sub} [Get started](${absoluteUrl("/signup")}) or [book a demo](${absoluteUrl("/demo")}).`,
+    ].join("\n\n")
+  );
+}
+
 function securityMarkdown() {
   const source = readAppFile("security", "page.tsx");
   // The page's `{email}` shorthand is a mailto link; expand it so the twin
@@ -735,6 +792,8 @@ export async function renderPublicMarkdown(htmlPath: string): Promise<string | n
   }
   if (htmlPath === "/minimum-booking-guarantee") return guaranteeMarkdown();
   if (htmlPath === "/security") return securityMarkdown();
+  if (htmlPath === "/linkedin-account-safety") return linkedInAccountSafetyMarkdown();
+  if (htmlPath === DECK_PATH) return agentsDeckMarkdown();
 
   if (htmlPath === "/blogs") return blogIndexMarkdown(await getLiveBlogs());
   if (htmlPath === "/features") {

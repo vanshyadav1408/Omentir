@@ -2,7 +2,7 @@ import { clerkClient } from "@clerk/nextjs/server";
 import { isLocalMode } from "@/lib/runtime-mode";
 import { NextResponse, type NextRequest } from "next/server";
 import { getWorkspace, listWorkspacesForOwner, logAutomationRun, ownerWorkspaceForBilling, updateWorkspaceBilling, updateWorkspaceLinkedInSeats } from "@/lib/server/data";
-import { enforceLinkedInAccountCap, purgeWorkspaceUnipileAccounts } from "@/lib/server/linkedin-accounts";
+import { enforceLinkedInAccountCap, purgeWorkspaceLinkedInAccounts } from "@/lib/server/linkedin-accounts";
 import { syncMailingListPlan } from "@/lib/server/mailing-list";
 import { readTextBody, RequestBodyTooLargeError } from "@/lib/server/request-body";
 import {
@@ -330,21 +330,21 @@ async function deactivateWorkspace(workspaceId: string, sourceId: string) {
   try {
     const ownerWorkspace = await getWorkspace(workspaceId);
     const owned = await listWorkspacesForOwner(ownerWorkspace.ownerId || workspaceId);
-    const purges = await Promise.all(owned.map((item) => purgeWorkspaceUnipileAccounts(item.id)));
+    const purges = await Promise.all(owned.map((item) => purgeWorkspaceLinkedInAccounts(item.id)));
     const considered = purges.reduce((sum, item) => sum + item.considered, 0);
     const deleted = purges.reduce((sum, item) => sum + item.deleted, 0);
     const failed = purges.reduce((sum, item) => sum + item.failed, 0);
     purgeNote =
       considered > 0
-        ? ` Removed ${deleted} Unipile LinkedIn account${deleted === 1 ? "" : "s"} so they stop being billed.`
+        ? ` Disconnected ${deleted} LinkedIn account${deleted === 1 ? "" : "s"}.`
         : "";
     if (failed) {
-      purgeNote += ` ${failed} Unipile delete${failed === 1 ? "" : "s"} failed and will retry on the next tick.`;
+      purgeNote += ` ${failed} LinkedIn disconnect${failed === 1 ? "" : "s"} failed and will retry on the next tick.`;
     }
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unipile purge failed.";
-    console.error("[whop webhook] Unipile purge after deactivation failed:", message);
-    purgeNote = " Unipile purge failed and will retry on the next tick.";
+    const message = error instanceof Error ? error.message : "LinkedIn disconnect failed.";
+    console.error("[whop webhook] LinkedIn disconnect after deactivation failed:", message);
+    purgeNote = " LinkedIn disconnect failed and will retry on the next tick.";
   }
 
   await logAutomationRun({

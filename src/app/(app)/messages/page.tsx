@@ -31,7 +31,7 @@ export default async function MessagesPage() {
   }
   const workspace = await resolveActiveWorkspace(userId);
   // Stored connection state is enough for this gate; the inbox fetch itself
-  // talks to Unipile, so verifying here only delayed the page.
+  // talks to LinkedIn, so verifying here only delayed the page.
   const linkedInAccounts = await listLinkedInAccounts(workspace.id);
   if (!linkedInAccounts.length) {
     return (

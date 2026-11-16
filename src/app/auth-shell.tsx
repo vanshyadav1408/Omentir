@@ -31,8 +31,8 @@ export default function AuthShell({
           <div className="cal-auth-card">
             <div className="cal-auth-form">{children}</div>
           </div>
+          {footer ? <div className="cal-auth-footer">{footer}</div> : null}
         </div>
-        {footer ? <div className="cal-auth-footer">{footer}</div> : null}
       </main>
     );
   }

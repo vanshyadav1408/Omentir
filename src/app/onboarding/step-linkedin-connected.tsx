@@ -2,7 +2,7 @@ import Link from "next/link";
 import { AuthHeading } from "../auth-ui";
 
 // LinkedIn-connected view for existing users who reconnect from Settings.
-// Reached when Unipile returns to /reconnect/success.
+// Not rendered by any route at the moment.
 export default function StepLinkedInConnected() {
   return (
     <div className="w-full">

@@ -18,6 +18,10 @@ RUN bun run build
 FROM oven/bun:1.3.14-alpine@sha256:5acc90a93e91ff07bf72aa90a7c9f0fa189765aec90b47bdbf2152d2196383c0 AS runner
 WORKDIR /app
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000 HOSTNAME=0.0.0.0
+# LinkedIn password sign-in drives a real Chromium (linkedin-own/browser-login.ts);
+# LinkedIn's bot check refuses plain HTTP sign-in requests. The binary is
+# found by path candidates in browser-login.ts (chromium / chromium-browser).
+RUN apk add --no-cache chromium nss freetype harfbuzz ca-certificates ttf-freefont
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./

@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useRef, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import type { ActivityDay } from "@/lib/server/types";
 import { zonedDayKey } from "@/lib/time-zone";
 
 // Per-theme ramps live in globals.css (.heatmap-cell): light runs white to
-// dark green, dark runs charcoal to bright green.
+// dark green, dark runs from the card's navy to bright green.
 const LEVELS = [
   "var(--heatmap-level-0)",
   "var(--heatmap-level-1)",
@@ -50,6 +50,30 @@ function countOf(day: ActivityDay) {
   );
 }
 
+type DayTotals = {
+  found: number;
+  contacted: number;
+  replies: number;
+  meetingsBooked: number;
+  total: number;
+};
+
+type Tip = { key: string; left: number; top: number; below: boolean; pinned: boolean };
+
+const EMPTY_DAY: DayTotals = { found: 0, contacted: 0, replies: 0, meetingsBooked: 0, total: 0 };
+const TIP_HALF_WIDTH = 92;
+
+function formatDay(key: string) {
+  const [year, month, day] = key.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day)).toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
 function levelFor(value: number, max: number) {
   if (value <= 0) return 0;
   if (max <= 1) return 4;
@@ -79,15 +103,21 @@ export default function ActivityHeatmap({
     let startKey = addDays(todayKey, -52 * 7);
     while (weekday(startKey) !== 0) startKey = addDays(startKey, -1);
 
-    const byDay = new Map<string, number>();
+    const byDay = new Map<string, DayTotals>();
     for (const day of days) {
       if (!day.day) continue;
-      byDay.set(day.day, (byDay.get(day.day) || 0) + countOf(day));
+      const totals = byDay.get(day.day) || { ...EMPTY_DAY };
+      totals.found += Number(day.found || 0);
+      totals.contacted += Number(day.contacted || 0);
+      totals.replies += Number(day.replies || 0);
+      totals.meetingsBooked += Number(day.meetingsBooked || 0);
+      totals.total += countOf(day);
+      byDay.set(day.day, totals);
     }
 
     const cells: Array<{ key: string; count: number }> = [];
     for (let key = startKey; key <= todayKey; key = addDays(key, 1)) {
-      cells.push({ key, count: byDay.get(key) || 0 });
+      cells.push({ key, count: byDay.get(key)?.total || 0 });
     }
 
     const weeks: Array<Array<{ key: string; count: number } | null>> = [];
@@ -157,6 +187,7 @@ export default function ActivityHeatmap({
     });
 
     return {
+      byDay,
       weeks,
       max,
       total,
@@ -175,8 +206,62 @@ export default function ActivityHeatmap({
     if (node) node.scrollLeft = node.scrollWidth;
   }, [model.weeks.length]);
 
+  /* Hovering a day shows its numbers; clicking (or tapping) pins them until
+     the next click, Escape, or a scroll moves the board under the tooltip. */
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [tip, setTip] = useState<Tip | null>(null);
+
+  function dayCell(target: EventTarget | null) {
+    const el = target instanceof Element ? target.closest<HTMLElement>("[data-day]") : null;
+    return el && wrapRef.current?.contains(el) ? el : null;
+  }
+
+  function showTip(el: HTMLElement, pinned: boolean) {
+    const wrap = wrapRef.current;
+    const key = el.dataset.day;
+    if (!wrap || !key) return;
+    const cell = el.getBoundingClientRect();
+    const box = wrap.getBoundingClientRect();
+    const center = cell.left - box.left + cell.width / 2;
+    const top = cell.top - box.top;
+    // Cards clip overflow, so days near the top open their tooltip downward.
+    const below = top < 60;
+    setTip({
+      key,
+      left: Math.min(Math.max(center, TIP_HALF_WIDTH), Math.max(TIP_HALF_WIDTH, box.width - TIP_HALF_WIDTH)),
+      top: below ? top + cell.height : top,
+      below,
+      pinned,
+    });
+  }
+
+  const pinned = Boolean(tip?.pinned);
+  useEffect(() => {
+    if (!pinned) return;
+    const close = () => setTip(null);
+    const onPointerDown = (event: PointerEvent) => {
+      if (!dayCell(event.target)) close();
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") close();
+    };
+    const scroller = scrollRef.current;
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    window.addEventListener("scroll", close, true);
+    scroller?.addEventListener("scroll", close);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("scroll", close, true);
+      scroller?.removeEventListener("scroll", close);
+    };
+  }, [pinned]);
+
+  const tipDay = tip ? model.byDay.get(tip.key) || EMPTY_DAY : null;
+
   return (
-    <div>
+    <div ref={wrapRef} className="heatmap relative">
       <div
         ref={scrollRef}
         className="heatmap-scroll"
@@ -210,6 +295,21 @@ export default function ActivityHeatmap({
             style={{
               gridTemplateColumns: `repeat(${model.weeks.length}, minmax(0, 1fr))`,
             }}
+            onPointerOver={(event) => {
+              if (event.pointerType !== "mouse" || tip?.pinned) return;
+              const el = dayCell(event.target);
+              if (el && el.dataset.day !== tip?.key) showTip(el, false);
+            }}
+            onPointerLeave={(event) => {
+              if (event.pointerType !== "mouse") return;
+              setTip((current) => (current?.pinned ? current : null));
+            }}
+            onClick={(event) => {
+              const el = dayCell(event.target);
+              if (!el) return;
+              if (tip?.pinned && tip.key === el.dataset.day) setTip(null);
+              else showTip(el, true);
+            }}
           >
             {model.weeks.map((column, weekIndex) => (
               <div key={weekIndex} className="heatmap-week">
@@ -217,8 +317,9 @@ export default function ActivityHeatmap({
                   cell ? (
                     <span
                       key={cell.key}
+                      data-day={cell.key}
+                      data-active={tip?.key === cell.key ? "" : undefined}
                       className="heatmap-cell"
-                      title={`${cell.key}: ${cell.count}`}
                       style={{
                         backgroundColor: LEVELS[levelFor(cell.count, model.max)],
                       }}
@@ -233,7 +334,43 @@ export default function ActivityHeatmap({
         </div>
       </div>
 
-      <div className="mt-5 grid gap-4 sm:grid-cols-4">
+      {tip && tipDay ? (
+        <div
+          role="tooltip"
+          className="heatmap-tip"
+          data-below={tip.below ? "" : undefined}
+          style={{ left: tip.left, top: tip.top }}
+        >
+          <p className="heatmap-tip-date">{formatDay(tip.key)}</p>
+          {tipDay.total ? (
+            <>
+              <p className="heatmap-tip-total">
+                <strong>{tipDay.total.toLocaleString()}</strong>
+                {tipDay.total === 1 ? "action" : "actions"}
+              </p>
+              <dl>
+                {(
+                  [
+                    ["Leads found", tipDay.found],
+                    ["Contacted", tipDay.contacted],
+                    ["Replies", tipDay.replies],
+                    ["Meetings booked", tipDay.meetingsBooked],
+                  ] as const
+                ).map(([label, value]) => (
+                  <div key={label} data-zero={value === 0 ? "" : undefined}>
+                    <dt>{label}</dt>
+                    <dd>{value.toLocaleString()}</dd>
+                  </div>
+                ))}
+              </dl>
+            </>
+          ) : (
+            <p className="heatmap-tip-total">No activity</p>
+          )}
+        </div>
+      ) : null}
+
+      <div className="heatmap-inset mt-5 grid gap-4 sm:grid-cols-4">
         <div>
           <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)]">Most active month</p>
           <p className="mt-1 text-sm font-medium text-[var(--md-sys-color-on-surface)]">
@@ -260,7 +397,7 @@ export default function ActivityHeatmap({
         </div>
       </div>
 
-      <div className="mt-4 flex items-center gap-1.5 text-[11px] text-[var(--md-sys-color-on-surface-variant)]">
+      <div className="heatmap-inset mt-4 flex items-center gap-1.5 text-[11px] text-[var(--md-sys-color-on-surface-variant)]">
         <span>Fewer</span>
         {LEVELS.map((color) => (
           <span key={color} className="heatmap-cell" style={{ backgroundColor: color }} />

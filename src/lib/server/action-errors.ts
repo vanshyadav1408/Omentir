@@ -9,7 +9,7 @@ const MAX_MESSAGE_LENGTH = 240;
 // Only messages written for people pass through: plain Errors thrown by our
 // own code and the typed errors below. AgentApiOperationError is matched by
 // name so actions.ts keeps loading agent-api-operations lazily. Provider and
-// database errors (Unipile response bodies, Firestore/gRPC errors with a
+// database errors (LinkedIn response bodies, Firestore/gRPC errors with a
 // `code`) stay generic, since their text can carry request details.
 function userFacingMessage(error: unknown) {
   if (!(error instanceof Error)) return "";

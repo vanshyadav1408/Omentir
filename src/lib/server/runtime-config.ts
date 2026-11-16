@@ -1,4 +1,5 @@
 import { isAutomationDisabled, isLocalMode, isLocalPasswordRequired } from "../runtime-mode.ts";
+import { parseSessionKey } from "./linkedin-own/session-crypto";
 
 function required(env: NodeJS.ProcessEnv, name: string) {
   const value = env[name]?.trim();
@@ -63,6 +64,40 @@ export function getAppBaseUrl(env: NodeJS.ProcessEnv = process.env) {
 }
 
 export function validateRuntimeConfig(env: NodeJS.ProcessEnv = process.env) {
+  parseSessionKey(requiredSecret(env, "LINKEDIN_SESSION_KEY"));
+  const proxy = env.LINKEDIN_PROXY_URL?.trim();
+  if (env.NODE_ENV === "production" && !proxy) {
+    throw new Error("[config] LINKEDIN_PROXY_URL is required for the LinkedIn client in production.");
+  }
+  if (proxy) {
+    const url = new URL(proxy.replaceAll("{session}", "config-check").replaceAll("{country}", "US").replaceAll("{country_lower}", "us"));
+    if (!["http:", "https:"].includes(url.protocol)) {
+      throw new Error("[config] LINKEDIN_PROXY_URL must use HTTP or HTTPS.");
+    }
+    // Accounts whose country is unknown still need one, or every request
+    // through a {country} URL fails.
+    if ((proxy.includes("{country}") || proxy.includes("{country_lower}")) && !/^[A-Za-z]{2}$/.test(env.LINKEDIN_PROXY_COUNTRY?.trim() || "")) {
+      throw new Error("[config] LINKEDIN_PROXY_URL uses {country}, so LINKEDIN_PROXY_COUNTRY must be a two-letter country code.");
+    }
+  }
+  const ispProxy = env.LINKEDIN_ISP_PROXY_URL?.trim();
+  // Bought IPs each have their own address, which only a {host} URL reaches.
+  if (env.BYTEFUL_API_PUBLIC_KEY?.trim() && !ispProxy?.includes("{host}")) {
+    throw new Error("[config] BYTEFUL_API_PUBLIC_KEY is set, so LINKEDIN_ISP_PROXY_URL must be http://USER:PASS@{host}:{port} with the Byteful proxy user.");
+  }
+  const budget = env.LINKEDIN_PROXY_MONTHLY_BUDGET_USD?.trim();
+  if (budget && !(Number(budget) > 0)) {
+    throw new Error("[config] LINKEDIN_PROXY_MONTHLY_BUDGET_USD must be a positive number of US dollars.");
+  }
+  if (ispProxy) {
+    if (!ispProxy.includes("{port}")) {
+      throw new Error("[config] LINKEDIN_ISP_PROXY_URL needs a {port} placeholder (one port per static IP).");
+    }
+    const url = new URL(ispProxy.replaceAll("{host}", "203.0.113.1").replaceAll("{port}", "8001"));
+    if (!["http:", "https:"].includes(url.protocol)) {
+      throw new Error("[config] LINKEDIN_ISP_PROXY_URL must use HTTP or HTTPS.");
+    }
+  }
   if (!isLocalMode(env)) {
     required(env, "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY");
     required(env, "CLERK_SECRET_KEY");
@@ -90,9 +125,6 @@ export function validateRuntimeConfig(env: NodeJS.ProcessEnv = process.env) {
   if (serviceAccount.project_id !== env.FIREBASE_PROJECT_ID) {
     throw new Error("[config] FIREBASE_PROJECT_ID must match the service account project_id.");
   }
-  rejectPlaceholder(required(env, "UNIPILE_DSN"), "UNIPILE_DSN");
-  requiredSecret(env, "UNIPILE_API_KEY");
-  requiredSecret(env, "UNIPILE_WEBHOOK_SECRET");
   if (env.GEMINI_API_KEY?.trim()) {
     rejectPlaceholder(env.GEMINI_API_KEY, "GEMINI_API_KEY");
   } else {

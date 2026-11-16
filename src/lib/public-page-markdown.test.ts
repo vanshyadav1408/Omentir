@@ -95,7 +95,7 @@ describe("CMS markdown twins", () => {
     expect(markdown).toContain("## Your LinkedIn account");
     expect(markdown).toContain("### Do you store our LinkedIn password?");
     expect(markdown).toContain("[vansh@omentir.com](mailto:vansh@omentir.com)");
-    expect(markdown).toContain("- **Your LinkedIn password:** Never reaches Omentir.");
-    expect(markdown).toContain("| Unipile | Connects to LinkedIn. |");
+    expect(markdown).toContain("- **Your LinkedIn password:** Used once to sign in. Never stored or logged.");
+    expect(markdown).toContain("| Clerk | Sign-in for Omentir accounts. |");
   });
 });

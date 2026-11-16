@@ -1,4 +1,7 @@
-import type { LeadPreview } from "@/lib/server/types";
+import type { Lead, LeadPreview } from "@/lib/server/types";
+
+// The Leads list omits summary/scoreReasons, so exports read full leads.
+export type LeadCsvRow = LeadPreview & Pick<Lead, "summary" | "scoreReasons">;
 import { zonedDayKey } from "@/lib/time-zone";
 
 export const LEAD_OUTREACH_STATUS_LABELS: Record<LeadPreview["outreachStatus"], string> = {
@@ -17,7 +20,7 @@ function csvCell(value: string) {
   return /[",\n\r]/.test(guarded) ? `"${guarded.replace(/"/g, '""')}"` : guarded;
 }
 
-export function buildLeadsCsv(rows: LeadPreview[], timeZone: string) {
+export function buildLeadsCsv(rows: LeadCsvRow[], timeZone: string) {
   const header = [
     "Name",
     "Title",

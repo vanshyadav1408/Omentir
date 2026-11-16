@@ -63,7 +63,7 @@ export function leadAvatarCacheBytes(cache: LeadAvatarCache | null) {
 /**
  * A lead's headshot as bytes, for embedding where a URL would expire (email).
  * Cached copy first, then the CDN URL while its token is live. Never asks
- * Unipile for a fresh one: profile reads are budgeted per account.
+ * LinkedIn for a fresh one: profile reads are budgeted per account.
  */
 export async function leadAvatarBytes(lead: { id: string; avatarUrl?: string }) {
   const cached = leadAvatarCacheBytes(await getLeadAvatarCache(lead.id));

@@ -12,7 +12,7 @@ function PlusIcon() {
   );
 }
 
-/** FAQ rows: a small "+" box, the question, and the answer sliding open
+/** FAQ rows: a small bare "+", the question, and the answer sliding open
  *  underneath. Several rows can be open at once. Styled by `.cal-faq-*`. */
 export default function FaqAccordion({ items }: { items: readonly FaqItem[] }) {
   const baseId = useId();

@@ -2,7 +2,7 @@
 
 import { unwrapAction } from "@/lib/action-result";
 import { userFacingError } from "@/app/toast";
-import { FormEvent, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { FormEvent, useEffect, useLayoutEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   completeConversationManualFollowUpAction,
@@ -10,7 +10,7 @@ import {
   sendLinkedInChatMessageAction,
 } from "@/app/actions";
 import { useSidebarResource } from "@/app/use-sidebar-resource";
-import { ContentReveal, MessagesInboxSkeleton } from "@/app/app-skeletons";
+import { ContentReveal, MessagesInboxSkeleton, Skeleton } from "@/app/app-skeletons";
 import type {
   Conversation,
   ConversationMessage,
@@ -388,10 +388,12 @@ const selectConversations = (data: Record<string, unknown>) =>
   (data.conversations as Conversation[]) || [];
 const selectLeads = (data: Record<string, unknown>) => (data.leads as LeadPreview[]) || [];
 // Conversations and the live inbox refresh every few seconds. Leads rarely
-// change and reading all of them is the expensive query, so they refresh on a
-// slower cadence (and whenever the tab regains focus).
+// change and reading all of them is the expensive query (12 MB on the largest
+// workspace), so they refresh every 5 minutes, or on return to the tab once
+// they are a minute old.
 const POLL_INTERVAL_MS = 5000;
-const LEAD_POLL_EVERY_TICKS = 12;
+const LEAD_REFRESH_MS = 5 * 60_000;
+const LEAD_RETURN_REFRESH_MS = 60_000;
 type SenderAccount = { accountId: string; displayName: string; avatarUrl?: string };
 type LinkedInInboxResource = {
   threads: LinkedInInboxThread[];
@@ -506,25 +508,18 @@ export default function MessagesView({
   }, [linkedInInboxError]);
 
   useEffect(() => {
-    let ticks = 0;
-    const refreshAll = () => {
-      if (document.hidden) return;
-      ticks = 0;
-      reloadConversations();
-      reloadLeads();
-      reloadLinkedInInbox();
-    };
-    const poll = () => {
+    let leadsLoadedAt = Date.now();
+    const refresh = (leadsMaxAgeMs: number) => {
       // A background tab needs no live inbox; it refreshes when shown again.
       if (document.hidden) return;
-      ticks += 1;
       reloadConversations();
       reloadLinkedInInbox();
-      if (ticks >= LEAD_POLL_EVERY_TICKS) {
-        ticks = 0;
-        reloadLeads();
-      }
+      if (Date.now() - leadsLoadedAt < leadsMaxAgeMs) return;
+      leadsLoadedAt = Date.now();
+      reloadLeads();
     };
+    const poll = () => refresh(LEAD_REFRESH_MS);
+    const refreshAll = () => refresh(LEAD_RETURN_REFRESH_MS);
     const interval = window.setInterval(poll, POLL_INTERVAL_MS);
     window.addEventListener("focus", refreshAll);
     document.addEventListener("visibilitychange", refreshAll);
@@ -808,13 +803,18 @@ export default function MessagesView({
               }`}
             >
               {item.label}
-              <span
-                className={`rounded-full px-1.5 text-[11px] font-semibold ${
-                  active ? "bg-[#ffe8ea] text-[#e85e6b]" : "bg-zinc-100 text-zinc-700"
-                }`}
-              >
-                {counts[item.id]}
-              </span>
+              {/* Counts from half-loaded data read as real zeros, so they wait. */}
+              {isInitialLoading ? (
+                <Skeleton className="h-[11px] w-5 rounded-full" />
+              ) : (
+                <span
+                  className={`rounded-full px-1.5 text-[11px] font-semibold ${
+                    active ? "bg-[#ffe8ea] text-[#e85e6b]" : "bg-zinc-100 text-zinc-700"
+                  }`}
+                >
+                  {counts[item.id]}
+                </span>
+              )}
               {active ? (
                 <span className="absolute inset-x-0 -bottom-px h-0.5 bg-zinc-950" />
               ) : null}
@@ -1151,6 +1151,16 @@ function Composer({
   const [isSending, setIsSending] = useState(false);
   const [sendError, setSendError] = useState("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  // Grow with the draft up to max-h-28, then scroll, instead of scrolling a
+  // single 32px line.
+  useLayoutEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    textarea.style.height = "auto";
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  }, [body]);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -1238,7 +1248,10 @@ function Composer({
           ))}
         </div>
       ) : null}
-      <div className="flex min-h-8 items-center gap-2 rounded-lg border border-zinc-200 bg-white px-2.5 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
+      {/* A pill like the app's other fields: 32px controls inset 5px, so the
+          bar is 44px tall with the buttons evenly spaced from its edge. Items
+          sit at the bottom so the buttons stay put while the draft grows. */}
+      <div className="flex items-end gap-1 rounded-[22px] border border-[var(--app-field-border)] bg-white px-1.5 py-[5px] transition-colors focus-within:border-[var(--app-field-border-focus)]">
         <input
           ref={fileInputRef}
           type="file"
@@ -1256,7 +1269,7 @@ function Composer({
             onClick={() => fileInputRef.current?.click()}
             disabled={isSending}
             aria-label="Attach file"
-            className="grid h-8 w-8 shrink-0 cursor-pointer place-items-center rounded-md text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-800 disabled:cursor-not-allowed disabled:opacity-40"
+            className="grid h-8 w-8 shrink-0 cursor-pointer place-items-center rounded-full text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-800 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <svg
               className="h-4 w-4"
@@ -1272,12 +1285,18 @@ function Composer({
           </button>
         ) : null}
         <textarea
+          ref={textareaRef}
           value={body}
           onChange={(event) => setBody(event.target.value)}
           disabled={isSending}
           placeholder={`Reply to ${selected.profileName}...`}
           rows={1}
-          className="max-h-28 min-h-8 min-w-0 flex-1 resize-none border-0 bg-transparent py-[6px] pl-2 text-[13px] leading-5 text-zinc-900 shadow-none outline-none placeholder:text-zinc-400 disabled:text-zinc-400"
+          // No text-zinc-4xx variants here: the dark theme matches
+          // [class*="text-zinc-4"] with !important, which greyed out the typed
+          // text. Placeholders take the theme's own ::placeholder color.
+          className={`max-h-28 min-h-8 min-w-0 flex-1 resize-none border-0 bg-transparent py-1.5 text-[13px] leading-5 text-zinc-900 shadow-none outline-none disabled:opacity-60 ${
+            canAttach ? "px-1" : "px-2.5"
+          }`}
           onKeyDown={(event) => {
             if (event.key === "Enter" && !event.shiftKey) {
               event.preventDefault();
@@ -1288,11 +1307,11 @@ function Composer({
         <button
           type="submit"
           disabled={isSending || (!body.trim() && !files.length)}
-          className="grid h-7 w-7 shrink-0 cursor-pointer place-items-center rounded-full bg-[#0a66c2] text-white transition-colors hover:bg-[#004182] disabled:cursor-not-allowed disabled:bg-zinc-200 disabled:text-zinc-400"
+          className="grid h-8 w-8 shrink-0 cursor-pointer place-items-center rounded-full bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-35"
           aria-label="Send"
         >
           <svg
-            className="h-3.5 w-3.5 translate-x-px"
+            className="h-4 w-4 translate-x-px"
             viewBox="0 0 24 24"
             fill="currentColor"
             aria-hidden="true"

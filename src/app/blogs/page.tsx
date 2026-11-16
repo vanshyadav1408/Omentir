@@ -30,7 +30,7 @@ export default async function BlogsIndexPage() {
       <JsonLd id="blogs-jsonld" data={jsonLd} />
       <main className="site-theme min-h-screen overflow-x-hidden">
         <MarketingHeader transparentAtTop />
-        <CalPageHero plain title={title} description={description} />
+        <CalPageHero title={title} description={description} />
         <div className="cal-read cal-read-wide">
           <BlogsList blogs={blogs} />
         </div>

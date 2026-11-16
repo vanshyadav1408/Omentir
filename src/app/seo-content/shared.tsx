@@ -127,7 +127,7 @@ export function SeoDocLayout({
   afterTitle,
   children,
   path,
-  width = "secondary",
+  width = "moderate",
 }: {
   as?: "div" | "article";
   crumbs: ReadonlyArray<ArticleCrumb>;
@@ -138,8 +138,8 @@ export function SeoDocLayout({
   path?: string;
   width?: "primary" | "moderate" | "secondary";
 }) {
-  // Calendly-style: the cream hero panel on top, then one centered column
-  // (reading width for articles, wider for directories).
+  // Calendly-style: the hero on top, then one centered column
+  // (64rem by default; the 68ch reading width left too much empty side space).
   const widthClass =
     width === "primary" ? "cal-read-wide" : width === "moderate" ? "cal-read-moderate" : "";
   return (

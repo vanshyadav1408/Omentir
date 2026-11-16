@@ -42,8 +42,8 @@ const email = (
 
 // Short answers for the cards at the top. The markdown twin reads these too.
 const glance: Array<{ label: string; value: string }> = [
-  { label: "Your LinkedIn password", value: "Never reaches Omentir. You sign in on Unipile's page." },
-  { label: "When you disconnect", value: "The LinkedIn session is deleted at Unipile first." },
+  { label: "Your LinkedIn password", value: "Used once to sign in. Never stored or logged." },
+  { label: "When you disconnect", value: "Omentir deletes its copy of the LinkedIn session." },
   { label: "Where data lives", value: "Google Cloud, us-central1 (Iowa, US), encrypted at rest." },
   { label: "AI and your data", value: "Vertex AI on our own project. Nothing is used for training." },
   { label: "The code", value: "Open source, MIT. The same code runs omentir.com." },
@@ -61,14 +61,16 @@ const securityGroups: Group[] = [
         title: "Do you store our LinkedIn password?",
         paragraphs: [
           <>
-            No. You sign in to LinkedIn on a login page run by Unipile, the
-            LinkedIn API provider Omentir uses. Your password goes to that page
-            and never reaches Omentir&apos;s servers. Unipile keeps the LinkedIn
-            session that lets Omentir send invites and messages for you.
+            No. You type your LinkedIn email and password into Omentir&apos;s
+            connect form. Our server enters them on linkedin.com once, in a
+            browser it runs, and keeps only the session LinkedIn hands back.
+            The password is never saved or written to logs.
           </>,
           <>
-            The link that opens the login page works once and expires after 30
-            minutes.
+            That session is stored encrypted with AES-256-GCM and is never
+            logged. Omentir uses it to send your invites and messages. If
+            LinkedIn asks for a verification code, the sign-in waits up to ten
+            minutes for it.
           </>,
         ],
       },
@@ -76,15 +78,26 @@ const securityGroups: Group[] = [
         title: "What happens when we disconnect or cancel?",
         paragraphs: [
           <>
-            When you click Disconnect in Omentir, we delete the LinkedIn session
-            at Unipile first and only then mark the account as disconnected.
-            When a subscription is cancelled, Omentir deletes every LinkedIn
-            session connected to that customer&apos;s workspaces.
+            When you click Disconnect in Omentir, we delete the stored LinkedIn
+            session first and only then mark the account as disconnected. When
+            a plan ends, the account stays connected for 7 days in case the
+            customer resubscribes. After those 7 days, Omentir disconnects it
+            and deletes every LinkedIn session connected to that
+            customer&apos;s workspaces.
           </>,
           <>
-            You can also end the session yourself at any time from the list of
-            active sessions in LinkedIn&apos;s own settings. That cuts off
-            Omentir&apos;s access too.
+            Deleting our copy does not sign you out on LinkedIn. To end the
+            session there too, remove it from the list of active sessions in
+            LinkedIn&apos;s own settings. That also cuts off Omentir&apos;s
+            access right away.
+          </>,
+          <>
+            The{" "}
+            <Link href="/linkedin-account-safety" className={linkClass}>
+              LinkedIn account safety page
+            </Link>{" "}
+            walks through sign-in, storage, limits, and disconnection in more
+            detail.
           </>,
         ],
       },
@@ -211,7 +224,7 @@ const securityGroups: Group[] = [
           </>,
           <>
             Omentir checks the signature or shared secret on every webhook from
-            Clerk, Whop, and Unipile before acting on it.
+            Clerk and Whop before acting on it.
           </>,
         ],
       },
@@ -315,7 +328,6 @@ const securityGroups: Group[] = [
 
 const subprocessors: Array<{ name: string; purpose: string; data: string }> = [
   { name: "Google Cloud", purpose: "Hosts the app server and database, runs the AI models.", data: "All workspace data." },
-  { name: "Unipile", purpose: "Connects to LinkedIn.", data: "LinkedIn session, profiles, invites, and messages." },
   { name: "Clerk", purpose: "Sign-in for Omentir accounts.", data: "Name, email, and login sessions." },
   { name: "Whop", purpose: "Checkout and billing.", data: "Email and payment details." },
   { name: "Cloudflare", purpose: "Serves omentir.com over HTTPS.", data: "Traffic in transit." },

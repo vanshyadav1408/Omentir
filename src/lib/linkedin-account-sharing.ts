@@ -1,5 +1,5 @@
 // LinkedIn connections belong to the owner, not a single workspace. A new
-// workspace should keep using the Unipile account already connected elsewhere
+// workspace should keep using the LinkedIn account already connected elsewhere
 // instead of looking empty and asking the user to log in again.
 
 export function canonicalLinkedInAccountsByProvider<

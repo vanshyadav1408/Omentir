@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { Group, LeadPreview } from "@/lib/server/types";
 import {
   deleteGroupAction,
+  exportLeadGroupCsvAction,
   getLeadOutreachAction,
   runScheduledActionNowAction,
   stopLeadOutreachAction,
@@ -21,7 +22,6 @@ import {
 } from "@/app/toast";
 import MobileHeaderPortal from "@/app/mobile-header-portal";
 import { useWorkspaceTimeZone } from "@/app/workspace-time-zone";
-import { buildLeadsCsv } from "@/lib/leads-csv";
 import type { LeadOutreachSummary, ScheduledAction } from "@/lib/server/scheduled-actions";
 import {
   ActionDetails,
@@ -154,6 +154,9 @@ function downloadCsv(filename: string, csv: string) {
 }
 
 const PER_PAGE_OPTIONS = [25, 50, 100];
+const OUTREACH_REFRESH_MS = 5_000;
+const LEAD_LIST_REFRESH_MS = 120_000;
+const LEAD_LIST_RETURN_REFRESH_MS = 30_000;
 const selectLeadsData = (data: Record<string, unknown>) => ({
   groups: data.groups as Group[] || [],
   leads: data.leads as LeadPreview[] || [],
@@ -294,18 +297,28 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
     void loadLeadOutreach(openLeadId, { quiet: openLeadId in outreachByLead });
   }, [openLeadId]);
 
+  // The open lead's outreach is one small read, so it stays near-live. The
+  // list is every lead in the workspace (12 MB on the largest one); reloading
+  // it every 5 s kept the server busy enough to slow every other page, so it
+  // refreshes every 2 minutes while visible and when the user returns.
   useEffect(() => {
-    const refresh = () => {
+    let listLoadedAt = Date.now();
+    const refresh = (listMaxAgeMs: number) => {
+      if (document.hidden) return;
       void loadLeadOutreach(openLeadIdRef.current, { quiet: true });
+      if (Date.now() - listLoadedAt < listMaxAgeMs) return;
+      listLoadedAt = Date.now();
       leadsResource.reload();
     };
-    const interval = window.setInterval(refresh, 5000);
-    window.addEventListener("focus", refresh);
-    document.addEventListener("visibilitychange", refresh);
+    const tick = () => refresh(LEAD_LIST_REFRESH_MS);
+    const onReturn = () => refresh(LEAD_LIST_RETURN_REFRESH_MS);
+    const interval = window.setInterval(tick, OUTREACH_REFRESH_MS);
+    window.addEventListener("focus", onReturn);
+    document.addEventListener("visibilitychange", onReturn);
     return () => {
       window.clearInterval(interval);
-      window.removeEventListener("focus", refresh);
-      document.removeEventListener("visibilitychange", refresh);
+      window.removeEventListener("focus", onReturn);
+      document.removeEventListener("visibilitychange", onReturn);
     };
   }, [leadsResource.reload]);
 
@@ -466,22 +479,26 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
     }
   }
 
-  function confirmExportGroup() {
+  async function confirmExportGroup() {
     const target = exportGroup;
     if (!target) return;
     setExportGroup(null);
 
-    const rows = loadedLeads.filter((lead) => lead.groupIds.includes(target.id));
-    if (rows.length === 0) {
-      showError("This lead group has no leads to export.");
-      return;
+    try {
+      const { count, csv } = unwrapAction(await exportLeadGroupCsvAction(target.id, timeZone));
+      if (count === 0) {
+        showError("This lead group has no leads to export.");
+        return;
+      }
+      const slug =
+        target.name
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "") || "lead-group";
+      downloadCsv(`${slug}-leads.csv`, csv);
+    } catch (error) {
+      showError(userFacingError(error, "The CSV could not be exported."));
     }
-    const slug =
-      target.name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, "") || "lead-group";
-    downloadCsv(`${slug}-leads.csv`, buildLeadsCsv(rows, timeZone));
   }
 
   async function confirmDeleteGroup() {

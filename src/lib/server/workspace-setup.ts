@@ -17,10 +17,10 @@ export type WorkspaceSetup = {
 };
 
 // Overview calls this on every visit. Stored connection state is enough to
-// render (Leads and Messages gate the same way); the Unipile verification that
+// render (Leads and Messages gate the same way); the account verification that
 // disconnects dead sessions runs after the response, so a dead session shows
-// the reconnect prompt from the next visit instead of costing every visit a
-// Unipile round trip.
+// the reconnect prompt from the next visit instead of costing every visit that
+// check.
 export const getWorkspaceSetup = cache(async function getWorkspaceSetup(
   workspaceId: string,
 ): Promise<WorkspaceSetup> {

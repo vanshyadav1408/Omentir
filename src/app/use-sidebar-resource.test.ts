@@ -17,7 +17,7 @@ function jsonResponse(data: unknown) {
 }
 
 describe("whenSidebarRequestsSettle", () => {
-  test("can ignore an in-flight inbox so /leads warmup does not wait on Unipile", async () => {
+  test("can ignore an in-flight inbox so /leads warmup does not wait on LinkedIn", async () => {
     let releaseInbox!: () => void;
     const inboxGate = new Promise<void>((resolve) => {
       releaseInbox = resolve;

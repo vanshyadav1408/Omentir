@@ -28,6 +28,10 @@ import { sendWindowTimeZoneForLead } from "./lead-time-zone";
 import { capturePostHogEvent } from "@/lib/posthog-server";
 import { addInviteLimitSignal } from "./outreach-rules";
 import { resolveUsableLinkedInAccount } from "@/lib/linkedin-account-fallback";
+import { isOwnLinkedInId, memberIdFromOwnAccountId } from "./linkedin-own/ids";
+import { invalidateOwnSession, ownSessionDocument, type StoredLinkedInSession } from "./linkedin-own/session-store";
+import type { OwnSession } from "./linkedin-own/transport";
+import { retiredAccountKey } from "./linkedin-own/retired-accounts";
 import {
   canonicalLinkedInAccountsByProvider,
   linkedInAccountIsOnOwnedWorkspace,
@@ -496,7 +500,7 @@ async function pauseWorkspaceOutreach(workspaceId: string) {
   );
 }
 
-// LinkedIn is owned by the person, not one extra workspace. Move the Unipile
+// LinkedIn is owned by the person, not one extra workspace. Move the account
 // rows onto the original workspace so deleting a leftover company does not
 // disconnect LinkedIn everywhere.
 async function rehomeLinkedInAccountsToPrimary(
@@ -1031,7 +1035,49 @@ export async function listAllLinkedInAccounts(workspaceId: string) {
   return snap.docs.map((doc) => doc.data());
 }
 
-// Includes disconnected and error rows so reconnect can reuse the Unipile
+// Old Unipile accounts in the owner's workspaces that campaigns still point
+// at, most used first: the choices in the reconnect form's replace field. An
+// old account no campaign uses has nothing to carry over, and owners who
+// reconnected several times have a pile of same-named ones.
+export async function listReplaceableLinkedInAccounts(workspaceId: string) {
+  const workspaceIds = await listWorkspaceIdsSharingLinkedIn(workspaceId);
+  const [accounts, campaigns] = await Promise.all([
+    listLinkedInAccountDocs(workspaceIds, false),
+    Promise.all(workspaceIds.map((id) => listCampaigns(id))),
+  ]);
+  const usedBy = new Map<string, number>();
+  for (const campaign of campaigns.flat()) {
+    if (campaign.linkedInAccountId) usedBy.set(campaign.linkedInAccountId, (usedBy.get(campaign.linkedInAccountId) || 0) + 1);
+  }
+  const choices = new Map<string, { accountId: string; name: string; campaigns: number }>();
+  for (const account of accounts) {
+    if (isOwnLinkedInId(account.accountId)) continue;
+    const choice = choices.get(account.accountId) || { accountId: account.accountId, name: account.displayName || "LinkedIn account", campaigns: 0 };
+    choice.campaigns += usedBy.get(account.id) || 0;
+    choices.set(account.accountId, choice);
+  }
+  return [...choices.values()].filter((choice) => choice.campaigns > 0).sort((a, b) => b.campaigns - a.campaigns);
+}
+
+// Connected accounts across every workspace, for the tick's check on accounts
+// left from the Unipile integration.
+export async function listConnectedLinkedInAccountsEverywhere() {
+  const snap = await collection<LinkedInAccount>("linkedinAccounts").where("status", "==", "connected").get();
+  return snap.docs.map((doc) => doc.data());
+}
+
+export async function listAllOwnedLinkedInAccounts(workspaceId: string) {
+  return canonicalLinkedInAccountsByProvider(await listLinkedInAccountDocs(await listWorkspaceIdsSharingLinkedIn(workspaceId), false));
+}
+
+export async function completeLinkedInAccountRetirement(accountDocId: string, retiredAccountId: string) {
+  const account = (await collection<LinkedInAccount>("linkedinAccounts").doc(accountDocId).get()).data();
+  if (!account) return;
+  const rows = await collection<LinkedInAccount>("linkedinAccounts").where("accountId", "==", account.accountId).get();
+  for (const doc of rows.docs) await doc.ref.update({ retiredUnipileAccountIds: FieldValue.arrayRemove(retiredAccountId), updatedAt: nowIso() });
+}
+
+// Includes disconnected and error rows so reconnect can reuse the LinkedIn
 // account id after the session died. Looks across the owner's workspaces so a
 // new workspace can reconnect the same LinkedIn instead of starting over.
 export async function getLatestLinkedInAccount(workspaceId: string) {
@@ -1089,7 +1135,7 @@ export async function getLinkedInAccountForWorkspace(
     account && (await linkedInAccountAllowedInWorkspace(account, workspaceId)) ? account : null;
   if (requested?.status === "connected") return requested;
   if (!options?.fallbackToDefault) return null;
-  return resolveUsableLinkedInAccount(requested, await getLinkedInAccount(workspaceId));
+  return resolveUsableLinkedInAccount(requested, await listLinkedInAccounts(workspaceId));
 }
 
 export async function getLinkedInAccountByAccountId(accountId: string) {
@@ -1108,13 +1154,21 @@ export async function saveLinkedInAccount(
   workspaceId: string,
   input: Pick<LinkedInAccount, "accountId" | "displayName" | "status"> & {
     avatarUrl?: string;
+    ownSession?: OwnSession;
+    replaceAccountId?: string;
   },
 ) {
   const workspace = await workspaceForLinkedInAccountCap(workspaceId);
   const limit = linkedInAccountLimit(workspace.billing);
   const timestamp = nowIso();
   const allowedWorkspaceIds = await listWorkspaceIdsSharingLinkedIn(workspaceId);
-  const existingForOwner = await getLinkedInAccountByAccountIdAnyStatus(input.accountId);
+  const current = await getLinkedInAccountByAccountIdAnyStatus(input.accountId);
+  const replacement = input.replaceAccountId ? await getLinkedInAccountByAccountIdAnyStatus(input.replaceAccountId) : null;
+  if (input.replaceAccountId && (!replacement || isOwnLinkedInId(input.replaceAccountId) || !input.ownSession || !allowedWorkspaceIds.includes(replacement.workspaceId))) {
+    throw new Error("The LinkedIn account to replace is not available in this workspace.");
+  }
+  if (replacement && current && current.id !== replacement.id) throw new Error("This LinkedIn account is already connected. Reconnect the existing account instead.");
+  const existingForOwner = replacement || current;
   const reusable =
     existingForOwner &&
     linkedInAccountIsOnOwnedWorkspace(existingForOwner.workspaceId, allowedWorkspaceIds)
@@ -1124,7 +1178,7 @@ export async function saveLinkedInAccount(
   const homeWorkspaceId = reusable?.workspaceId || workspaceId;
   const accountRef = collection<LinkedInAccount>("linkedinAccounts").doc(id);
   const existingAccount = reusable;
-  if (!existingAccount && input.status === "connected") {
+  if (existingAccount?.status !== "connected" && input.status === "connected") {
     const connectedAccounts = await listLinkedInAccounts(workspaceId);
     if (connectedAccounts.length >= limit) {
       throw new Error(`Your current plan supports up to ${limit} LinkedIn account${limit === 1 ? "" : "s"}.`);
@@ -1133,7 +1187,10 @@ export async function saveLinkedInAccount(
   const account: LinkedInAccount = {
     id,
     workspaceId: homeWorkspaceId,
-    provider: "unipile",
+    provider: isOwnLinkedInId(input.accountId) ? "own" : "unipile",
+    ...(input.replaceAccountId || existingAccount?.retiredUnipileAccountIds?.length
+      ? { retiredUnipileAccountIds: [...new Set([...(existingAccount?.retiredUnipileAccountIds || []), ...(input.replaceAccountId ? [input.replaceAccountId] : [])])] }
+      : {}),
     accountId: input.accountId,
     displayName: input.displayName,
     ...(input.avatarUrl ? { avatarUrl: input.avatarUrl } : {}),
@@ -1148,12 +1205,58 @@ export async function saveLinkedInAccount(
   await getDb().runTransaction(async (transaction) => {
     const ownerSnap = await transaction.get(ownerRef);
     const owner = ownerSnap.data();
+    const retired = await transaction.get(getDb().collection("linkedinRetiredAccounts").doc(retiredAccountKey(input.accountId)));
+    if (retired.exists) throw new Error("This LinkedIn connection has been replaced. Refresh and try again.");
     if (
       owner &&
       (owner.accountId !== input.accountId ||
         !linkedInAccountIsOnOwnedWorkspace(owner.workspaceId, allowedWorkspaceIds))
     ) {
       throw new Error("This LinkedIn account is already connected to another workspace.");
+    }
+    let sessionWrite: { ref: FirebaseFirestore.DocumentReference; value: StoredLinkedInSession } | undefined;
+    if (input.ownSession) {
+      if (!isOwnLinkedInId(input.accountId) || input.ownSession.accountId !== input.accountId || memberIdFromOwnAccountId(input.accountId) !== input.ownSession.memberId) {
+        throw new Error("LinkedIn session does not match the account.");
+      }
+      const sessionRef = getDb().collection("linkedinSessions").doc(input.accountId);
+      const sessionSnap = await transaction.get(sessionRef);
+      const stored = ownSessionDocument({
+        ...input.ownSession, displayName: input.displayName,
+      }, sessionSnap.data() as StoredLinkedInSession | undefined);
+      sessionWrite = { ref: sessionRef, value: stored };
+    }
+    let replaced: FirebaseFirestore.QueryDocumentSnapshot<LinkedInAccount>[] = [];
+    if (input.replaceAccountId) {
+      replaced = (await transaction.get(collection<LinkedInAccount>("linkedinAccounts").where("accountId", "==", input.replaceAccountId))).docs;
+      if (!replaced.length || replaced.some((doc) => !allowedWorkspaceIds.includes(doc.data().workspaceId))) {
+        throw new Error("The LinkedIn account changed during migration. Please try again.");
+      }
+      for (const ids of chunkIds(allowedWorkspaceIds)) {
+        const pending = await transaction.get(collection<CampaignEnrollment>("campaignEnrollments").where("workspaceId", "in", ids));
+        if (pending.docs.some((doc) => doc.data().pendingAction)) throw new Error("Outreach is sending a message. Wait for it to finish before replacing LinkedIn.");
+      }
+    }
+    let seatLock: FirebaseFirestore.DocumentReference | undefined;
+    if (existingAccount?.status !== "connected" && input.status === "connected") {
+      seatLock = getDb().collection("linkedinSeatLocks").doc(workspace.ownerId || workspace.id);
+      await transaction.get(seatLock);
+      const connectedIds = new Set<string>();
+      for (const ids of chunkIds(allowedWorkspaceIds)) {
+        const rows = await transaction.get(collection<LinkedInAccount>("linkedinAccounts").where("workspaceId", "in", ids).where("status", "==", "connected"));
+        for (const doc of rows.docs) if (doc.data().accountId !== input.accountId) connectedIds.add(doc.data().accountId);
+      }
+      if (connectedIds.size >= limit) throw new Error(`Your current plan supports up to ${limit} LinkedIn account${limit === 1 ? "" : "s"}.`);
+    }
+    if (seatLock) transaction.set(seatLock, { updatedAt: timestamp });
+    if (sessionWrite) transaction.set(sessionWrite.ref, sessionWrite.value);
+    for (const doc of replaced) {
+      transaction.set(doc.ref, { ...account, id: doc.id, workspaceId: doc.data().workspaceId, createdAt: doc.data().createdAt }, { merge: true });
+    }
+    if (input.replaceAccountId) {
+      transaction.set(getDb().collection("linkedinRetiredAccounts").doc(retiredAccountKey(input.replaceAccountId)), {
+        accountId: input.replaceAccountId, replacementAccountId: input.accountId, workspaceId: homeWorkspaceId, migratedAt: timestamp,
+      });
     }
     transaction.set(
       ownerRef,
@@ -1166,6 +1269,7 @@ export async function saveLinkedInAccount(
     );
     transaction.set(accountRef, account, { merge: true });
   });
+  if (input.ownSession) invalidateOwnSession(input.accountId);
   return account;
 }
 
@@ -1927,9 +2031,9 @@ export async function listLeadPreviews(
     "title",
     "company",
     "location",
-    "summary",
+    // summary and scoreReasons stay off the list: they were ~40% of its bytes
+    // and only the CSV export reads them (exportLeadGroupCsvAction).
     "fitScore",
-    "scoreReasons",
     "signalText",
     "signalUrl",
     "leadReason",
@@ -2037,7 +2141,7 @@ export async function listLeadAgentRefs(
 }
 
 function looksLikeLinkedInProviderId(id: string | undefined): id is string {
-  // Unipile account types do not share one stable provider-id prefix. The
+  // LinkedIn account types do not share one stable provider-id prefix. The
   // workspace-scoped exact query is the safety boundary.
   return Boolean(id?.trim());
 }
@@ -3210,6 +3314,17 @@ export async function listConnectionSentEnrollments(workspaceId: string, limit?:
   return snap.docs.map((doc) => doc.data());
 }
 
+// Invites the sequence gave up on that the lead may still accept. Equality
+// filters only, so no composite index is needed.
+export async function listExpiredInviteEnrollments(workspaceId: string) {
+  const snap = await collection<CampaignEnrollment>("campaignEnrollments")
+    .where("workspaceId", "==", workspaceId)
+    .where("inviteExpired", "==", true)
+    .where("status", "==", "stopped")
+    .get();
+  return snap.docs.map((doc) => doc.data());
+}
+
 // AI replies must not wait behind a page of older due invites. A separate
 // query (status == reply_received) also pulls in enrollments the old planner
 // parked past the 15-minute pause, which `orderBy(nextActionAt).limit` would
@@ -3535,8 +3650,8 @@ export async function createConversationMessage(input: {
   body: string;
   direction?: "inbound" | "outbound";
   outboundSource?: ConversationMessage["outboundSource"];
-  // Stable provider message id (e.g. Unipile's). When set, a retried webhook
-  // delivery is recognized and skipped instead of appending a duplicate.
+  // Stable provider message id. When set, a message that reply sync reads
+  // again is recognized and skipped instead of appending a duplicate.
   providerMessageId?: string;
   // Optional intent classification for the latest inbound reply.
   replyIntent?: Conversation["replyIntent"];
@@ -4152,7 +4267,7 @@ export async function recordDailyLeadDiscoveryRun(
 }
 
 // Reserves one unit of today's quota. Call this only after the LinkedIn send
-// succeeds - failed Unipile responses must not burn the daily budget, or the
+// succeeds - failed LinkedIn sends must not burn the daily budget, or the
 // rest of the day is stuck on invite-limit / message-limit with zero outreach.
 // "leadFilters" is the exception: it caps model spend, so it is reserved before
 // the Jev call, which keeps parallel agents from overshooting the cap.
@@ -4244,7 +4359,7 @@ export async function consumeAvatarViewBudget(
       const now = Date.now();
       const lastAt = Number(snap.data()?.lastAvatarViewAt || 0);
       // In-process waits do not serialize across PM2 workers. Opening /leads
-      // used to fire dozens of Unipile profile visits at once on production.
+      // used to fire dozens of profile visits at once on production.
       if (lastAt && now - lastAt < AVATAR_VIEW_MIN_SPACING_MS) return "throttled";
 
       transaction.set(
@@ -4282,15 +4397,18 @@ export async function claimSystemTask(taskId: string, intervalMs: number) {
     if (lastRunAt && now - lastRunAt < intervalMs) return null;
 
     transaction.set(ref, { taskId, lastRunAt: now, updatedAt: nowIso() });
-    return { previousRunAt: lastRunAt };
+    return { previousRunAt: lastRunAt, claimedAt: now };
   });
 }
 
-export async function releaseSystemTask(taskId: string) {
-  await getDb()
-    .collection("automationLocks")
-    .doc(`task-${cleanId(taskId)}`)
-    .delete();
+export async function releaseSystemTask(taskId: string, restore?: { previousRunAt: number; claimedAt: number }) {
+  const ref = getDb().collection("automationLocks").doc(`task-${cleanId(taskId)}`);
+  if (!restore) return ref.delete();
+  await getDb().runTransaction(async (transaction) => {
+    const current = await transaction.get(ref);
+    if (current.data()?.lastRunAt !== restore.claimedAt) return;
+    transaction.set(ref, { taskId, lastRunAt: restore.previousRunAt, updatedAt: nowIso() });
+  });
 }
 
 // Persistent per-account action drip: at most one outbound action per account

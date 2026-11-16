@@ -53,7 +53,7 @@ import {
   normalizeSchedulingLink,
   resolveBookingLink,
 } from "@/lib/scheduling-link";
-import { sendLinkedInMessage } from "./unipile";
+import { sendLinkedInMessage } from "./linkedin";
 import { isValidTimeZone, resolveTimeZone } from "@/lib/time-zone";
 import type { AgentApiContext } from "./agent-api";
 import type { Agent, Campaign, CampaignReplyHandling, CampaignStep, SendWindow } from "./types";
@@ -1379,7 +1379,7 @@ export async function sendReplyToLead(
     linkedInUrl: lead.linkedInUrl,
     body: message,
   });
-  // Count only after Unipile accepts so rejected sends don't burn the budget.
+  // Count only after LinkedIn accepts so rejected sends don't burn the budget.
   await consumeDailyQuota(
     workspace.id,
     "messages",

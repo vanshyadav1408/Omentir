@@ -23,7 +23,7 @@ export default function AlternativePageView({ page }: { page: SeoContentPage }) 
         crumbs={familyCrumbs("alternatives", page.slug)}
         title={page.title}
         path={`/alternatives/${page.slug}`}
-        width={page.slug === "grok-bot" ? "primary" : "secondary"}
+        width={page.slug === "grok-bot" ? "primary" : "moderate"}
       >
         <VerdictBanner page={page} />
         {page.roundupItems ? (

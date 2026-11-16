@@ -37,7 +37,7 @@ const nextConfig: NextConfig = {
   // serving until the new build is finished. See production-build.sh.
   distDir: process.env.NEXT_DIST_DIR || ".next",
   transpilePackages: ["next-sanity", "@portabletext/react"],
-  serverExternalPackages: ["sanity", "@sanity/vision", "styled-components", "posthog-node", "@posthog/mcp"],
+  serverExternalPackages: ["sanity", "@sanity/vision", "styled-components", "posthog-node", "@posthog/mcp", "playwright-core"],
   images: {
     qualities: [75, 90],
     remotePatterns: [

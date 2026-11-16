@@ -107,7 +107,7 @@ export function sameLinkedInInboxThread(a: LinkedInInboxThread, b: LinkedInInbox
   );
 }
 
-// Unipile's /chats list is every inbox (Classic, Sales Navigator, Recruiter).
+// A chat list can cover every inbox (Classic, Sales Navigator, Recruiter).
 // LinkedIn still has one 1:1 thread per person, so those copies must collapse
 // to a single inbox row. Otherwise the user sees Ezekiel twice and can open
 // the wrong copy.

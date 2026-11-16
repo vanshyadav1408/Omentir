@@ -28,6 +28,8 @@ const STRICT_ROOTS = [
   "src/app/tools",
   "src/app/security/page.tsx",
   "src/app/page.tsx",
+  "src/app/new-landing",
+  "src/app/a",
   "src/lib/public-page-markdown.ts",
 ];
 

@@ -7,7 +7,7 @@ import {
   leadAvatarRefreshIdentifiers,
 } from "../lead-avatar";
 import { persistLeadAvatarFromUrl } from "./lead-avatar-cache";
-import { retrieveLinkedInProfileAvatar } from "./unipile";
+import { retrieveLinkedInProfileAvatar } from "./linkedin";
 import type { Lead } from "./types";
 
 const inflight = new Map<string, Promise<boolean>>();

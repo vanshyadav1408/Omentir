@@ -3,7 +3,7 @@ import "server-only";
 import type { AgentSendKind, AgentStatusFacts } from "@/lib/agent-status";
 import { getAutomationSafetyMode, isWorkspaceAutomationPaused } from "./automation-safety";
 import { findNextScheduledStepIndex } from "./campaign-sequence";
-import { getInviteCooldown, listAgents, listCampaigns, listLinkedInAccounts } from "./data";
+import { getInviteCooldown, getLinkedInAccountForWorkspace, listAgents, listCampaigns, listLinkedInAccounts } from "./data";
 import { getDb } from "./firebase";
 import type { Campaign, CampaignEnrollment, LinkedInAccount } from "./types";
 
@@ -67,11 +67,16 @@ async function countAwaitingAcceptance(workspaceId: string, campaignId: string) 
   return snap.data().count;
 }
 
-// Same answer as getLinkedInAccountForWorkspace(..., { fallbackToDefault: true })
-// - the requested account if connected, else the workspace's first connected
-// one - resolved from a single read instead of several per agent.
-function sendingAccount(connected: LinkedInAccount[], linkedInAccountId?: string) {
-  return connected.find((account) => account.id === linkedInAccountId) ?? connected[0] ?? null;
+// Same answer as getLinkedInAccountForWorkspace(..., { fallbackToDefault: true }).
+// A connected campaign account is answered from the list already read; only a
+// disconnected one needs the lookup, which decides whether another connected
+// row is the same person or the campaign waits for its own seat.
+async function sendingAccount(workspaceId: string, connected: LinkedInAccount[], linkedInAccountId?: string) {
+  if (!linkedInAccountId) return connected[0] ?? null;
+  return (
+    connected.find((account) => account.id === linkedInAccountId) ??
+    (await getLinkedInAccountForWorkspace(workspaceId, linkedInAccountId, { fallbackToDefault: true }))
+  );
 }
 
 async function campaignFacts(
@@ -79,7 +84,7 @@ async function campaignFacts(
   campaign: Campaign,
   connected: LinkedInAccount[],
 ) {
-  const account = sendingAccount(connected, campaign.linkedInAccountId);
+  const account = await sendingAccount(workspaceId, connected, campaign.linkedInAccountId);
   const [inviteLimitUntil, nextSend, awaitingAcceptance] = await Promise.all([
     account ? getInviteCooldown(workspaceId, account.id) : null,
     campaign.status === "active" ? nextCampaignSend(workspaceId, campaign) : undefined,
@@ -132,6 +137,21 @@ export async function loadAgentStatusFacts(
     ),
   );
 
+  // Agents with no campaign still need an account: discovery refuses to run
+  // without a connected LinkedIn account.
+  const agentAccountConnected = new Map(
+    await Promise.all(
+      agents
+        .filter((agent) => {
+          const campaign = campaignForGroup.get(agent.targetGroupId);
+          return !campaign || !factsByCampaign.has(campaign.id);
+        })
+        .map(async (agent) =>
+          [agent.id, Boolean(await sendingAccount(workspaceId, connected, agent.linkedInAccountId))] as const,
+        ),
+    ),
+  );
+
   return Object.fromEntries(
     agents.map((agent) => {
       const campaign = campaignForGroup.get(agent.targetGroupId);
@@ -141,10 +161,7 @@ export async function loadAgentStatusFacts(
         leadsOnly: Boolean(agent.leadsOnly),
         findsLeads: agent.mode !== "outreach",
         nextRunAt: agent.nextRunAt,
-        // Agents with no campaign still need an account: discovery refuses to
-        // run without a connected LinkedIn account.
-        accountConnected:
-          facts?.accountConnected ?? Boolean(sendingAccount(connected, agent.linkedInAccountId)),
+        accountConnected: facts?.accountConnected ?? agentAccountConnected.get(agent.id) ?? false,
         automationPaused,
         campaignStatus: campaign?.status,
         inviteLimitUntil: facts?.inviteLimitUntil,

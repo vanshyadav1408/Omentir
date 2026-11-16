@@ -75,7 +75,7 @@ import {
   deleteLinkedInAccount,
   linkedInChatBelongsToAccount,
   sendLinkedInChatMessage,
-} from "@/lib/server/unipile";
+} from "@/lib/server/linkedin";
 import type { CampaignReplyHandling, CampaignStep, ProductProfile, SendWindow } from "@/lib/server/types";
 import { isLocalMode } from "@/lib/runtime-mode";
 import {
@@ -88,6 +88,8 @@ import {
 } from "@/lib/server/active-workspace";
 import { resolveWebsiteFavicon } from "@/lib/server/website-favicon";
 import { withActionErrors } from "@/lib/server/action-errors";
+import { buildLeadsCsv } from "@/lib/leads-csv";
+import { resolveTimeZone } from "@/lib/time-zone";
 
 async function requireWorkspace() {
   const { userId } = await auth();
@@ -917,6 +919,22 @@ export async function getLeadOutreachAction(...args: Parameters<typeof getLeadOu
   return withActionErrors(() => getLeadOutreachActionImpl(...args));
 }
 
+// The Leads list carries no summary or score reasons (they were ~40% of its
+// payload), so the CSV reads the group's full leads here. The browser passes
+// its display zone so "Added" dates match what the page shows.
+async function exportLeadGroupCsvActionImpl(groupId: string, timeZone: string) {
+  const workspace = await requireWorkspace();
+  requireActiveSubscription(workspace);
+  const id = String(groupId || "").trim();
+  if (!id) throw new Error("Lead group is required.");
+  const leads = await listLeads(workspace.id, id);
+  return { count: leads.length, csv: buildLeadsCsv(leads, resolveTimeZone(timeZone)) };
+}
+
+export async function exportLeadGroupCsvAction(...args: Parameters<typeof exportLeadGroupCsvActionImpl>) {
+  return withActionErrors(() => exportLeadGroupCsvActionImpl(...args));
+}
+
 async function stopLeadOutreachActionImpl(formData: FormData) {
   const workspace = await requireWorkspace();
   requireActiveSubscription(workspace);
@@ -970,8 +988,8 @@ async function disconnectLinkedInAccountActionImpl(formData?: FormData) {
   );
   if (!account) return;
 
-  // Remove the session from Unipile first so a local "disconnected" record
-  // never hides a still-live LinkedIn connection.
+  // Delete the stored session first so a local "disconnected" record never
+  // hides a still-live LinkedIn connection.
   await deleteLinkedInAccount(account.accountId);
   await disconnectLinkedInAccount(workspace.id, account.id);
   revalidatePath("/settings");

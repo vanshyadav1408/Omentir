@@ -46,7 +46,8 @@ import {
   searchLinkedInPosts,
   searchLinkedInProfiles,
   searchLinkedInProfilesAtCompanies,
-} from "./unipile";
+  takeLinkedInSearchLimitNotice,
+} from "./linkedin";
 import type {
   Agent,
   Lead,
@@ -1237,7 +1238,8 @@ export async function runPeopleEngineForAgent(input: {
   // title/keyword search hits so refill runs are not stuck on one market.
   locationSlot?: number;
 }) {
-  const deadline = Date.now() + PEOPLE_ENGINE_RUN_MS;
+  const runStartedAt = Date.now();
+  const deadline = runStartedAt + PEOPLE_ENGINE_RUN_MS;
   const dailyLeadLimit = Math.min(
     input.dailyLeadLimit ?? DEFAULT_DAILY_QUALIFIED_LEAD_CAP,
     DEFAULT_DAILY_QUALIFIED_LEAD_CAP,
@@ -1787,7 +1789,7 @@ export async function runPeopleEngineForAgent(input: {
     }
 
     // Grounded web search can verify role and employer context, but a model can
-    // still return a plausible-looking LinkedIn slug. Require Unipile to resolve
+    // still return a plausible-looking LinkedIn slug. Require LinkedIn to resolve
     // that profile to a provider identity before the lead becomes contactable.
     if (hasGroundedEvidence && !enrichedLead.providerProfileId) {
       anonymousDropped += 1;
@@ -1988,6 +1990,24 @@ export async function runPeopleEngineForAgent(input: {
   }).catch((error) => {
     console.error("[people-engine] failed to log run summary:", error);
   });
+
+  // Past LinkedIn's monthly search cap a free account gets about three people
+  // per search, which only looked like "the agent finds no leads". Say why,
+  // once a day per account.
+  const searchAccounts = await listLinkedInAccounts(input.agent.workspaceId).catch(() => [input.account]);
+  for (const account of searchAccounts) {
+    if (!takeLinkedInSearchLimitNotice(account.accountId, runStartedAt)) continue;
+    await logAutomationRun({
+      workspaceId: input.agent.workspaceId,
+      kind: "people_engine",
+      status: "error",
+      message:
+        `LinkedIn's monthly search limit is reached on ${account.displayName || "a connected LinkedIn account"}. ` +
+        "Until LinkedIn resets it at the start of next month, each search shows only about three people, so agents will find far fewer leads.",
+    }).catch((error) => {
+      console.error("[people-engine] failed to log search limit notice:", error);
+    });
+  }
 
   return {
     candidates: candidates.size,

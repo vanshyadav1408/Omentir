@@ -13,8 +13,8 @@ Do not open a public GitHub issue for a suspected vulnerability. Email `vansh@om
 - Reproduction steps or a proof of concept
 - Any proposed mitigation
 
-Do not include live credentials, provider tokens, private LinkedIn messages, customer data, or unsanitized production logs. Allow a reasonable remediation window before public disclosure.
+Do not include live credentials, provider tokens, LinkedIn session cookies (`li_at`, `JSESSIONID`), private LinkedIn messages, customer data, or unsanitized production logs. Allow a reasonable remediation window before public disclosure.
 
 ## Operational scope
 
-Self-hosters are responsible for securing their deployment, rotating credentials, restricting network access, configuring HTTPS, backing up Firestore, and following provider security guidance. Omentir cannot rotate or investigate credentials for independently operated deployments.
+Self-hosters are responsible for securing their deployment, rotating credentials, protecting `LINKEDIN_SESSION_KEY` (it decrypts every stored LinkedIn session), restricting network access, configuring HTTPS, backing up Firestore, and following provider security guidance. Omentir cannot rotate or investigate credentials for independently operated deployments.

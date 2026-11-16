@@ -161,7 +161,7 @@ export function shouldKeepStealComment(input: {
   if (input.postCreatedAt) {
     return isRecentEnough(input.postCreatedAt, STEAL_MAX_COMMENT_AGE_MS, now);
   }
-  // Unipile often omits timestamps. The post picker already limited the thread,
+  // Comments can arrive without a timestamp. The post picker already limited the thread,
   // so dropping every undated comment emptied Steal Customers.
   return true;
 }

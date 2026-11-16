@@ -5,13 +5,13 @@ import {
 } from "./linkedin-account-sharing";
 
 describe("canonicalLinkedInAccountsByProvider", () => {
-  test("keeps one Unipile account so a new workspace sees the owner's existing LinkedIn instead of asking to connect again", () => {
+  test("keeps one LinkedIn account so a new workspace sees the owner's existing LinkedIn instead of asking to connect again", () => {
     const shared = canonicalLinkedInAccountsByProvider([
-      { accountId: "unipile-1", createdAt: "2026-01-02T00:00:00.000Z", workspaceId: "ws-new" },
-      { accountId: "unipile-1", createdAt: "2026-01-01T00:00:00.000Z", workspaceId: "ws-home" },
+      { accountId: "account-1", createdAt: "2026-01-02T00:00:00.000Z", workspaceId: "ws-new" },
+      { accountId: "account-1", createdAt: "2026-01-01T00:00:00.000Z", workspaceId: "ws-home" },
     ]);
     expect(shared).toEqual([
-      { accountId: "unipile-1", createdAt: "2026-01-01T00:00:00.000Z", workspaceId: "ws-home" },
+      { accountId: "account-1", createdAt: "2026-01-01T00:00:00.000Z", workspaceId: "ws-home" },
     ]);
   });
 });

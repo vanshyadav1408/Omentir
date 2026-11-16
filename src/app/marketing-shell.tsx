@@ -1,9 +1,7 @@
 import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
-import { hostedGithubRepo } from "@/lib/hosted-identity";
 import { AskAiMenu } from "./ask-ai-menu";
 import FeatureMenu from "./feature-menu";
-import GithubStarButton from "./github-star-button";
 import HeaderAuth from "./header-auth";
 import LogoMark from "./logo-mark";
 import MarketingHeaderFrame from "./marketing-header-frame";
@@ -29,11 +27,6 @@ export function MarketingHeader({ transparentAtTop = false }: { transparentAtTop
               <LogoMark className="h-5 w-5 md:h-6 md:w-6" />
               <span className="truncate">Omentir</span>
             </Link>
-            {/* Remote GitHub data is cosmetic. Render the link immediately so a
-                slow API response cannot hold back the entire landing header. */}
-            <Suspense fallback={<GithubStarButtonFallback />}>
-              <GithubStarButton />
-            </Suspense>
           </div>
 
           <nav className="hidden min-w-0 flex-1 items-center justify-center gap-1 text-sm font-normal text-[var(--md-sys-color-on-surface)] md:flex lg:absolute lg:left-1/2 lg:flex-none lg:-translate-x-1/2">
@@ -41,6 +34,7 @@ export function MarketingHeader({ transparentAtTop = false }: { transparentAtTop
             <Link href="/integrations" className="site-nav-link">Integrations</Link>
             <Link href="/pricing" className="site-nav-link">Pricing</Link>
             <AskAiMenu />
+            <Link href="/demo" className="site-nav-link">Book a demo</Link>
           </nav>
 
           {/* ml-auto keeps actions on the right: on mobile the nav is hidden, and on lg
@@ -63,34 +57,11 @@ export function MarketingHeader({ transparentAtTop = false }: { transparentAtTop
   );
 }
 
-function GithubStarButtonFallback() {
-  return (
-    <a
-      href={`https://github.com/${hostedGithubRepo()}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      aria-label="Omentir on GitHub"
-      className="m3-state-layer inline-flex shrink-0 items-center justify-center gap-1 rounded-md border border-[var(--md-sys-color-outline-variant)] px-[9px] py-[5px] text-[11px] font-medium leading-none text-[var(--md-sys-color-on-surface-variant)] transition-colors hover:text-[var(--md-sys-color-on-surface)] md:gap-1.5 md:px-[11px] md:py-[7px] md:text-[13px]"
-    >
-      <svg
-        viewBox="0 0 16 16"
-        aria-hidden="true"
-        className="h-3.5 w-3.5 shrink-0 fill-current md:h-4 md:w-4"
-      >
-        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z" />
-      </svg>
-    </a>
-  );
-}
-
 function HeaderAuthFallback() {
   return (
     <>
-      <Link href="/login" className="site-btn site-btn-sm site-btn-outline">
+      <Link href="/login" className="site-nav-link">
         Sign in
-      </Link>
-      <Link href="/demo" className="site-btn site-btn-sm site-btn-outline">
-        Book a demo
       </Link>
       <Link href="/signup" className="site-btn site-btn-sm site-btn-primary">
         Get started
@@ -229,16 +200,14 @@ export function ArticleCrumbs({
   );
 }
 
-/** Calendly-style top for inner marketing pages: the homepage's cream panel
- *  with crumbs, a display title, an optional lede and extra content (meta
- *  line, actions) below. */
+/** Top for inner marketing pages: crumbs, a display title, an optional lede
+ *  and extra content (meta line, actions) below, on the page background. */
 export function CalPageHero({
   crumbs,
   title,
   description,
   children,
   leading,
-  plain = false,
 }: {
   crumbs?: ReadonlyArray<ArticleCrumb>;
   title: ReactNode;
@@ -246,11 +215,9 @@ export function CalPageHero({
   children?: ReactNode;
   /** Shown above the title (a topic chip, for example). */
   leading?: ReactNode;
-  /** No cream panel: the title sits on the page (blog index). */
-  plain?: boolean;
 }) {
   return (
-    <section className={`cal-hero cal-page-hero${plain ? " cal-page-hero-plain" : ""}`}>
+    <section className="cal-hero cal-page-hero">
       <div className="cal-page-hero-inner">
         {crumbs && crumbs.length > 0 ? (
           <ArticleCrumbs crumbs={crumbs} className="mb-6 justify-center" />

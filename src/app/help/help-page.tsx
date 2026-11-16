@@ -89,7 +89,7 @@ export default function HelpArticle({ page }: { page: HelpPage }) {
           }
           title={page.question}
         />
-        <article className="cal-read">
+        <article className="cal-read cal-read-moderate">
           {/* The first paragraph is the direct answer: set apart as a card so
               the answer is the first thing you see. */}
           {page.paragraphs[0] ? (

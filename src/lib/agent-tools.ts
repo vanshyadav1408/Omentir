@@ -498,7 +498,7 @@ export const agentToolInputSchemas = {
   omentir_list_inbox: {
     type: "object",
     properties: {
-      accountId: { type: "string", description: "Unipile account id. Defaults to every connected seat." },
+      accountId: { type: "string", description: "LinkedIn account id from omentir_list_linkedin_accounts. Defaults to every connected seat." },
       query: { type: "string" },
       limit: { type: "integer", minimum: 1, maximum: 50 },
     },

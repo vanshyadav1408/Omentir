@@ -1,53 +1,27 @@
 import { auth } from "@/lib/server/auth";
-import { NextResponse } from "next/server";
-import { createLinkedInAuthLink, listUnipileLinkedInAccounts } from "@/lib/server/unipile";
+import { NextRequest, NextResponse } from "next/server";
 import { getAppBaseUrl } from "@/lib/server/runtime-config";
-import { createLinkedInConnectToken, getLatestLinkedInAccount } from "@/lib/server/data";
-import { resolveActiveWorkspace } from "@/lib/server/active-workspace";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+function redirectOriginFor(request: NextRequest | undefined, appUrl: string) {
+  if (!request || process.env.NODE_ENV !== "development") return appUrl;
+  const allowedDevHosts = new Set([
+    "localhost",
+    "127.0.0.1",
+    "[::1]",
+    ...(process.env.ALLOWED_DEV_ORIGINS?.split(",").map((item) => item.trim()).filter(Boolean) ?? []),
+  ]);
+  return allowedDevHosts.has(request.nextUrl.hostname) ? request.nextUrl.origin : appUrl;
+}
+
+// Settings, overview and onboarding link here. LinkedIn connects through
+// Omentir's own sign-in form.
+export async function GET(request?: NextRequest) {
   const { userId } = await auth();
-  const appUrl = getAppBaseUrl();
+  const redirectBase = redirectOriginFor(request, getAppBaseUrl());
   if (!userId) {
-    return NextResponse.redirect(new URL("/login", appUrl));
+    return NextResponse.redirect(new URL("/login", redirectBase));
   }
-
-  // New and returning users both land back on Overview after Unipile.
-  // The setup checklist is the reconnect screen for everyone.
-  const failurePath = "/overview?linkedin=error";
-
-  try {
-    const workspace = await resolveActiveWorkspace(userId);
-    const [callbackToken, latestAccount] = await Promise.all([
-      createLinkedInConnectToken(workspace.id),
-      getLatestLinkedInAccount(workspace.id),
-    ]);
-    let reconnectAccountId: string | undefined = latestAccount?.accountId;
-    if (reconnectAccountId) {
-      try {
-        const providerAccounts = await listUnipileLinkedInAccounts();
-        if (!providerAccounts.some((account) => account.id === reconnectAccountId)) {
-          reconnectAccountId = undefined;
-        }
-      } catch {
-        // Unipile list failed. Still try reconnect with the stored id.
-      }
-    }
-
-    const url = await createLinkedInAuthLink({
-      callbackToken,
-      successRedirectUrl: `${appUrl}/connect/success`,
-      failureRedirectUrl: `${appUrl}${failurePath}`,
-      notifyUrl: `${appUrl}/api/connect/callback`,
-      reconnectAccountId,
-    });
-
-    return NextResponse.redirect(url);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "LinkedIn auth link failed.";
-    console.error("[connect/linkedin] failed to create Unipile auth link:", message);
-    return NextResponse.redirect(new URL(failurePath, appUrl));
-  }
+  return NextResponse.redirect(new URL("/connect/linkedin", redirectBase));
 }

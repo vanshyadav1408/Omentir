@@ -1,8 +1,7 @@
 /* stats.omentir.com: an analytics page modelled on DataFast, dressed in the
-   app's Calendly-style dashboard theme (canvas #f8f9f9, white 16px cards,
-   ink #0b0d0f, blue accents; a matching dark set). Its own tokens, since the
-   page renders outside the app shell. Scoped under .stats-root so none of it
-   leaks out. */
+   app's Calendly-style dashboard theme (dark only: 16px cards, blue
+   accents). Its own tokens, since the page renders outside the app shell.
+   Scoped under .stats-root so none of it leaks out. */
 
 .stats-root {
   --st-bg: #0f1114;
@@ -73,13 +72,6 @@
   width: 22px;
   height: 22px;
   border-radius: 6px;
-}
-
-/* Light/dark switch on the brand row. stats.omentir.com is its own origin,
-   so the choice made on omentir.com does not carry over; this one is kept
-   separately. */
-.stats-theme-btn {
-  margin-left: auto;
 }
 
 .stats-brand small {
@@ -983,26 +975,6 @@ body:has(.stats-root) #ph-conversations-widget-container {
   overflow-wrap: anywhere;
 }
 
-
-/* ------------------------------------------------------------ theme */
-
-:root[data-site-theme="light"] .stats-root {
-  --st-bg: #f8f9f9;
-  --st-card: #ffffff;
-  --st-card-hover: #f3f5f7;
-  --st-border: #e4e6e9;
-  --st-border-strong: #c3cad1;
-  --st-text: #0b0d0f;
-  --st-muted: #545f69;
-  --st-faint: #81909c;
-  --st-visitors: #006bff;
-  --st-revenue: #545f69;
-  --st-renewal: #9aa5af;
-  --st-bar: #e9edf1;
-  --st-bar-revenue: color-mix(in oklab, #006bff 22%, #ffffff);
-  --st-up: #15803d;
-  --st-down: #dc2626;
-}
 
 /* Brand, headline numbers and dialog titles in the display face. */
 .stats-brand,

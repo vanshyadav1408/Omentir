@@ -24,7 +24,7 @@ export default async function LeadsPage() {
   }
   const workspace = await resolveActiveWorkspace(userId);
   // Only the agent gate matters here. The full setup check also verifies
-  // LinkedIn with Unipile, which put seconds on every visit to this page.
+  // the LinkedIn connection, which put seconds on every visit to this page.
   if (!(await hasAnyAgent(workspace.id))) {
     return (
       <CompleteSetupPrompt icon="identity_platform" message="Start an AI agent on Overview first." />

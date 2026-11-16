@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-function ArrowIcon() {
+export function ArrowIcon() {
   return (
     <svg viewBox="0 0 12 12" aria-hidden="true" className="h-3 w-3">
       <path

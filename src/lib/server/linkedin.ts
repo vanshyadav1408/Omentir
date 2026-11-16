@@ -1,0 +1,2922 @@
+import "server-only";
+
+import type {
+  Agent,
+  Lead,
+  LinkedInInboxMessage,
+  LinkedInInboxThread,
+  LinkedInProfileContext,
+} from "./types";
+import { consumeAvatarViewBudget, consumeProfileViewBudget, listLinkedInAccounts } from "./data";
+import { searchableLocationNames } from "./geo";
+import {
+  firstDegreeFromLinkedInProfile,
+  linkedInIdentityKeys,
+  type LinkedInIdentity,
+} from "../linkedin-identity";
+import { httpsAvatarUrl } from "../lead-avatar";
+import { dedupeLinkedInInboxThreads } from "../inbox-threads";
+import { LinkedInResponseError } from "./linkedin-errors";
+import { ownAccountIdForRequest, ownLinkedInAttachment, ownLinkedInRequest } from "./linkedin-own/router";
+import { isOwnLinkedInId } from "./linkedin-own/ids";
+
+export { LinkedInResponseError };
+
+// Classic LinkedIn search is much more rate-sensitive than messages. A short
+// burst of searches can make LinkedIn return 429 for every remaining query,
+// which turns a good agent configuration into an empty lead run.
+const LINKEDIN_SEARCH_MIN_REQUEST_SPACING_MS = 2_000;
+const LINKEDIN_RATE_LIMIT_RETRY_MS = 15_000;
+const LINKEDIN_RATE_LIMIT_RETRIES = 1;
+const LINKEDIN_TRANSIENT_READ_RETRY_MS = 5_000;
+const RECENT_INBOUND_MAX_PAGES = 20;
+// Free LinkedIn accounts reject notes over ~200 chars (the send fails with
+// errors/too_many_characters). Paid accounts allow 300; 200 is safe for both.
+const LINKEDIN_CONNECTION_NOTE_LIMIT = 200;
+const LINKEDIN_MESSAGE_LIMIT = 8000;
+let nextLinkedInSearchAt = 0;
+let linkedInSearchThrottle = Promise.resolve();
+
+// Every /users/{id} retrieval registers as a profile view on the customer's
+// LinkedIn account. Unbounded views trip LinkedIn's "high volume of profile
+// data" enforcement, so all profile reads share a per-account daily budget
+// (persisted in Firestore - restarts and multiple processes must not reset or
+// multiply it) and human-like in-process spacing.
+const PROFILE_VIEW_DAILY_LIMIT = 75;
+// Headshot refreshes share the same daily counter as discovery, but stop
+// earlier so opening /leads cannot spend the views the people engine needs.
+const AVATAR_PROFILE_VIEW_DAILY_LIMIT = 50;
+const PROFILE_VIEW_MIN_SPACING_MS = 2_000;
+// At most this many chats get a profile lookup per inbox load, and only when
+// the chat itself carries no usable attendee name.
+const INBOX_ENRICHMENT_LIMIT = 5;
+let nextProfileViewAt = 0;
+
+function takeProfileViewBudget(accountId: string) {
+  return consumeProfileViewBudget(accountId, PROFILE_VIEW_DAILY_LIMIT);
+}
+
+function takeAvatarViewBudget(accountId: string) {
+  return consumeAvatarViewBudget(accountId, AVATAR_PROFILE_VIEW_DAILY_LIMIT);
+}
+
+function isInvalidRecipientError(error: unknown) {
+  return error instanceof LinkedInResponseError && error.errorType === "errors/invalid_recipient";
+}
+
+function waitForProfileViewSlot() {
+  const waitMs = nextProfileViewAt - Date.now();
+  nextProfileViewAt = Math.max(Date.now(), nextProfileViewAt) + PROFILE_VIEW_MIN_SPACING_MS;
+  return waitMs > 0 ? wait(waitMs) : Promise.resolve();
+}
+
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function throttleLinkedInSearch() {
+  const previous = linkedInSearchThrottle;
+  let release = () => {};
+  linkedInSearchThrottle = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+
+  await previous;
+  const waitMs = Math.max(0, nextLinkedInSearchAt - Date.now());
+  if (waitMs > 0) await wait(waitMs);
+  nextLinkedInSearchAt = Date.now() + LINKEDIN_SEARCH_MIN_REQUEST_SPACING_MS;
+  release();
+}
+
+export type LinkedInProfile = {
+  id?: string;
+  public_identifier?: string;
+  provider_id?: string;
+  profile_url?: string;
+  linkedin_url?: string;
+  profile_picture_url?: string;
+  profile_picture_url_large?: string;
+  public_picture_url?: string;
+  public_picture_url_large?: string;
+  private_picture_download_url?: string;
+  profile_image_url?: string;
+  picture_url?: string;
+  avatar_url?: string;
+  name?: string;
+  first_name?: string;
+  last_name?: string;
+  headline?: string;
+  occupation?: string;
+  company?: string;
+  location?: string;
+  location_name?: string;
+  locationName?: string;
+  geo_location?: string;
+  geoLocation?: string;
+  city?: string;
+  country?: string;
+  summary?: string;
+  work_experience?: unknown[];
+  experience?: unknown[];
+  education?: unknown[];
+  skills?: unknown[];
+  certifications?: unknown[];
+  projects?: unknown[];
+  volunteering_experience?: unknown[];
+  volunteer_experience?: unknown[];
+  languages?: unknown[];
+  image?: unknown;
+  picture?: unknown;
+  avatar?: unknown;
+  profile_picture?: unknown;
+  profile?: unknown;
+  user?: unknown;
+  linkedin?: unknown;
+  linkedin_specific?: unknown;
+  provider_data?: unknown;
+  specifics?: unknown;
+};
+
+export type LinkedInPost = {
+  id?: string;
+  social_id?: string;
+  object_urn?: string;
+  url?: string;
+  share_url?: string;
+  text?: string;
+  content?: string;
+  commentary?: string;
+  created_at?: string;
+  posted_at?: string;
+  // `date` can be a relative string ("1w", "6h") that Date.parse cannot read
+  // (the old Unipile integration sent those). Prefer `parsed_datetime` (ISO).
+  parsed_datetime?: string;
+  date?: string;
+  author?: LinkedInProfile;
+  user?: LinkedInProfile;
+};
+
+type LinkedInComment = {
+  id?: string;
+  text?: string;
+  message?: string;
+  body?: string;
+  url?: string;
+  created_at?: string;
+  posted_at?: string;
+  parsed_datetime?: string;
+  date?: string;
+  // `author` can be a bare display-name string (the old Unipile integration
+  // sent those), with the real profile under author_details (id + profile_url).
+  // Prefer author_details when present.
+  author?: LinkedInProfile | string;
+  author_details?: LinkedInProfile & {
+    id?: string;
+    profile_url?: string;
+    headline?: string;
+    is_company?: boolean;
+  };
+  user?: LinkedInProfile;
+  from?: LinkedInProfile;
+  profile?: LinkedInProfile;
+};
+
+type LinkedInReaction = {
+  id?: string;
+  type?: string;
+  reaction_type?: string;
+  url?: string;
+  created_at?: string;
+  author?: LinkedInProfile | string;
+  author_details?: LinkedInProfile & {
+    id?: string;
+    profile_url?: string;
+    headline?: string;
+    is_company?: boolean;
+  };
+  user?: LinkedInProfile;
+  from?: LinkedInProfile;
+  profile?: LinkedInProfile;
+};
+
+type LinkedInListResponse<T> = {
+  items?: T[];
+  results?: T[];
+  data?: T[] | LinkedInListResponse<T>;
+  cursor?: string | null;
+  paging?: { cursor?: string | null };
+};
+
+type LinkedInCompany = {
+  id?: string;
+  name?: string;
+  profile_url?: string;
+  industry?: string | string[];
+  employee_count?: number;
+  employee_count_range?: { from?: number; to?: number };
+};
+
+type LinkedInChatAttendee = {
+  id?: string;
+  provider_id?: string;
+  member_id?: string;
+  urn?: string;
+  name?: string;
+  display_name?: string;
+  displayName?: string;
+  full_name?: string;
+  fullName?: string;
+  first_name?: string;
+  firstName?: string;
+  last_name?: string;
+  lastName?: string;
+  username?: string;
+  headline?: string;
+  occupation?: string;
+  title?: string;
+  job_title?: string;
+  jobTitle?: string;
+  position?: string;
+  company?: string;
+  profile_url?: string;
+  profileUrl?: string;
+  public_profile_url?: string;
+  publicProfileUrl?: string;
+  linkedin_url?: string;
+  linkedinUrl?: string;
+  public_identifier?: string;
+  publicIdentifier?: string;
+  profile_picture_url?: string;
+  profilePictureUrl?: string;
+  profile_picture_url_large?: string;
+  profilePictureUrlLarge?: string;
+  public_picture_url?: string;
+  public_picture_url_large?: string;
+  private_picture_download_url?: string;
+  profile_image_url?: string;
+  profileImageUrl?: string;
+  picture_url?: string;
+  pictureUrl?: string;
+  avatar_url?: string;
+  avatarUrl?: string;
+  image_url?: string;
+  imageUrl?: string;
+  image?: unknown;
+  picture?: unknown;
+  avatar?: unknown;
+  profile_picture?: unknown;
+  profile?: unknown;
+  user?: unknown;
+  linkedin?: unknown;
+  linkedin_specific?: unknown;
+  provider_data?: unknown;
+  is_self?: boolean;
+  is_current_user?: boolean;
+  is_me?: boolean;
+  self?: boolean;
+};
+
+type LinkedInMessage = {
+  id?: string;
+  provider_id?: string;
+  message_type?: string;
+  chat_id?: string;
+  text?: string;
+  body?: string;
+  message?: string;
+  content?: string;
+  sender_id?: string;
+  attendee_id?: string;
+  // The other person on a 1:1 chat. Own-client account listings attach this so
+  // reply sync can stop outreach when the owner typed in the LinkedIn app.
+  attendee_provider_id?: string;
+  attendee_profile_url?: string;
+  attendee_name?: string;
+  sender_name?: string;
+  sender?: LinkedInChatAttendee;
+  from?: LinkedInChatAttendee;
+  is_sender?: boolean;
+  is_read?: boolean;
+  timestamp?: string;
+  date?: string;
+  created_at?: string;
+  sent_at?: string;
+  account_id?: string;
+  subject?: string | null;
+  // LinkedIn's own notices. Hidden ones ("Anton reacted 👍") never show as a
+  // message on LinkedIn; the reaction sits on the message it reacts to.
+  is_event?: number | boolean;
+  hidden?: number | boolean;
+  deleted?: number | boolean;
+  attachments?: LinkedInMessageAttachment[];
+  reactions?: Array<{ value?: string }>;
+};
+
+type LinkedInMessageAttachment = {
+  id?: string;
+  type?: string;
+  file_name?: string;
+  url?: string;
+  unavailable?: boolean;
+};
+
+type LinkedInChat = {
+  id?: string;
+  provider_id?: string;
+  attendee_id?: string;
+  attendee_provider_id?: string;
+  account_id?: string;
+  name?: string;
+  title?: string;
+  subject?: string;
+  unread?: boolean;
+  unread_count?: number;
+  read?: boolean;
+  timestamp?: string;
+  date?: string;
+  created_at?: string;
+  updated_at?: string;
+  last_message_at?: string;
+  attendees?: LinkedInChatAttendee[];
+  participants?: LinkedInChatAttendee[];
+  users?: LinkedInChatAttendee[];
+  last_message?: LinkedInMessage | string;
+};
+
+type LinkedInSearchCategory = "people" | "posts" | "companies";
+type RecordLike = Record<string, unknown>;
+
+function withQuery(path: string, params: Record<string, string | number | boolean | undefined>) {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined || value === "") continue;
+    query.set(key, String(value));
+  }
+
+  const suffix = query.toString();
+  return suffix ? `${path}?${suffix}` : path;
+}
+
+type RequestOptions = { retryTransientReadErrors?: boolean; beforeSend?: () => Promise<void> };
+
+// How long to wait before the one retry, or null when the error must surface.
+function retryDelayForError(error: LinkedInResponseError, options?: RequestOptions) {
+  const retryableTransientReadError =
+    Boolean(options?.retryTransientReadErrors) &&
+    (error.status === 502 ||
+      error.status === 503 ||
+      error.errorType === "errors/no_client_session" ||
+      error.errorType === "errors/disconnected_account");
+  if (error.status !== 429 && !retryableTransientReadError) return null;
+
+  // Search requests are read-only even though LinkedIn Classic search uses
+  // POST. Retrying transient provider/session failures is safe here, while
+  // outbound invite/message requests must never use this option because a
+  // lost response can leave their side effect ambiguous.
+  return error.status === 429
+    ? Math.max(error.retryAfterMs || 0, LINKEDIN_RATE_LIMIT_RETRY_MS)
+    : LINKEDIN_TRANSIENT_READ_RETRY_MS;
+}
+
+// Accounts connected through Omentir's own LinkedIn client (ids starting
+// own_) answer these REST-style paths in-process (the shapes the old Unipile
+// integration used), with the same retry rules. Pacing is per LinkedIn account.
+async function requestOwn<T>(
+  accountId: string,
+  path: string,
+  init: RequestInit | undefined,
+  options: RequestOptions | undefined,
+) {
+  for (let attempt = 0; attempt <= LINKEDIN_RATE_LIMIT_RETRIES; attempt += 1) {
+    await options?.beforeSend?.();
+    try {
+      return (await ownLinkedInRequest(accountId, path, init, {
+        takeProfileView: takeProfileViewBudget,
+      })) as T;
+    } catch (error) {
+      if (!(error instanceof LinkedInResponseError)) throw error;
+      const delayMs = retryDelayForError(error, options);
+      if (delayMs === null || attempt === LINKEDIN_RATE_LIMIT_RETRIES) throw error;
+      await wait(delayMs);
+    }
+  }
+
+  throw new Error("Unreachable LinkedIn retry state.");
+}
+
+// Every LinkedIn account runs on Omentir's own LinkedIn client (ids starting
+// own_). Accounts left over from the old Unipile integration have no session
+// here, so their calls fail as disconnected and the account asks to reconnect.
+async function request<T>(
+  path: string,
+  init?: RequestInit,
+  options?: RequestOptions,
+) {
+  const ownAccountId = ownAccountIdForRequest(path, init);
+  if (!ownAccountId) throw legacyAccountError();
+  return requestOwn<T>(ownAccountId, path, init, options);
+}
+
+function legacyAccountError() {
+  const detail = "This LinkedIn account was connected through the old integration. Reconnect it in Settings.";
+  return new LinkedInResponseError(401, detail, JSON.stringify({ type: "errors/disconnected_account", detail }));
+}
+
+function asRecord(value: unknown): RecordLike | null {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as RecordLike)
+    : null;
+}
+
+function getListItems<T>(result: LinkedInListResponse<T> | T[]): T[];
+function getListItems<T>(result: unknown): T[];
+function getListItems<T>(result: unknown): T[] {
+  if (Array.isArray(result)) return result as T[];
+
+  const record = asRecord(result);
+  if (!record) return [];
+
+  for (const key of ["items", "results", "data"]) {
+    const value = record[key];
+    if (Array.isArray(value)) return value as T[];
+
+    const nested = asRecord(value);
+    if (nested) {
+      const nestedItems = getListItems<T>(nested);
+      if (nestedItems.length) return nestedItems;
+    }
+  }
+
+  return [];
+}
+
+export function getListCursor(result: unknown): string | undefined {
+  const record = asRecord(result);
+  if (!record) return undefined;
+  if (typeof record.cursor === "string" && record.cursor) return record.cursor;
+  if (typeof record.next_cursor === "string" && record.next_cursor) return record.next_cursor;
+  const paging = asRecord(record.paging);
+  if (typeof paging?.cursor === "string" && paging.cursor) return paging.cursor;
+  return getListCursor(record.data);
+}
+
+function cleanString(value: unknown) {
+  if (typeof value === "string") {
+    const trimmed = value.replace(/\s+/g, " ").trim();
+    return trimmed || undefined;
+  }
+
+  if (typeof value === "number") return String(value);
+  return undefined;
+}
+
+function uniqueStrings(values: string[]) {
+  return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)));
+}
+
+function pickString(record: RecordLike | null | undefined, keys: string[]) {
+  if (!record) return undefined;
+
+  for (const key of keys) {
+    const value = cleanString(record[key]);
+    if (value) return value;
+  }
+
+  return undefined;
+}
+
+function pickNestedString(
+  record: RecordLike | null | undefined,
+  parentKeys: string[],
+  childKeys: string[],
+) {
+  if (!record) return undefined;
+
+  for (const parentKey of parentKeys) {
+    const nested = asRecord(record[parentKey]);
+    const value = pickString(nested, childKeys);
+    if (value) return value;
+  }
+
+  return undefined;
+}
+
+function actorFromEngagement(item: LinkedInComment | LinkedInReaction): LinkedInProfile | null {
+  // Prefer structured author_details: a comment payload's `author` can be
+  // a bare display name string, which cannot be messaged or de-duplicated.
+  if (item.author_details && typeof item.author_details === "object") {
+    const details = item.author_details;
+    if (details.is_company) return null;
+    const displayName = typeof item.author === "string" ? item.author.trim() : "";
+    return {
+      ...details,
+      id: details.id || details.provider_id,
+      provider_id: details.provider_id || details.id,
+      name: details.name || displayName,
+      headline: details.headline || details.occupation,
+      profile_url: details.profile_url || details.linkedin_url,
+      linkedin_url: details.linkedin_url || details.profile_url,
+    };
+  }
+  if (item.author && typeof item.author === "object") return item.author;
+  if (item.user && typeof item.user === "object") return item.user;
+  if (item.from && typeof item.from === "object") return item.from;
+  if (item.profile && typeof item.profile === "object") return item.profile;
+  return null;
+}
+
+function firstAvatarUrl(...values: unknown[]) {
+  for (const value of values) {
+    const url = httpsAvatarUrl(value);
+    if (url) return url;
+  }
+  return undefined;
+}
+
+function recordAvatarUrl(record: RecordLike | null | undefined) {
+  if (!record) return undefined;
+  return firstAvatarUrl(
+    record.profile_picture_url_large,
+    record.profilePictureUrlLarge,
+    record.public_picture_url_large,
+    record.publicPictureUrlLarge,
+    record.public_picture_url,
+    record.publicPictureUrl,
+    record.private_picture_download_url,
+    record.privatePictureDownloadUrl,
+    record.profile_picture_url,
+    record.profilePictureUrl,
+    record.profile_image_url,
+    record.profileImageUrl,
+    record.picture_url,
+    record.pictureUrl,
+    record.avatar_url,
+    record.avatarUrl,
+    record.image_url,
+    record.imageUrl,
+    record.picture,
+    record.avatar,
+    record.profile_picture,
+    record.image,
+    asRecord(record.picture)?.urls,
+    asRecord(record.avatar)?.urls,
+    asRecord(record.profile_picture)?.urls,
+    asRecord(record.image)?.urls,
+    pickNestedString(
+      record,
+      [
+        "picture",
+        "avatar",
+        "profile_picture",
+        "image",
+        "profile",
+        "user",
+        "linkedin",
+        "linkedin_specific",
+        "provider_data",
+        "specifics",
+        "urls",
+      ],
+      [
+        "url",
+        "large",
+        "original",
+        "medium",
+        "small",
+        "profile_picture_url_large",
+        "profilePictureUrlLarge",
+        "public_picture_url_large",
+        "public_picture_url",
+        "private_picture_download_url",
+        "profile_picture_url",
+        "profilePictureUrl",
+        "profile_image_url",
+        "profileImageUrl",
+        "picture_url",
+        "pictureUrl",
+        "avatar_url",
+        "avatarUrl",
+        "image_url",
+        "imageUrl",
+      ],
+    ),
+  );
+}
+
+function profileAvatarUrl(profile: LinkedInProfile) {
+  return firstAvatarUrl(
+    profile.profile_picture_url_large,
+    profile.public_picture_url_large,
+    profile.public_picture_url,
+    profile.profile_picture_url,
+    profile.profile_image_url,
+    profile.picture_url,
+    profile.avatar_url,
+    profile.private_picture_download_url,
+    recordAvatarUrl(asRecord(profile)),
+    recordAvatarUrl(asRecord(profile.specifics)),
+  );
+}
+
+// The VPS cannot always fetch media.licdn.com (datacenter IP, expired e=).
+// A private download URL, when the payload carries one (the old Unipile
+// integration did), is preferred over the display URL.
+function profileAvatarPersistUrl(profile: LinkedInProfile, displayUrl: string | undefined) {
+  const specifics = asRecord(profile.specifics);
+  return firstAvatarUrl(
+    profile.private_picture_download_url,
+    specifics?.private_picture_download_url,
+    specifics?.privatePictureDownloadUrl,
+    displayUrl,
+  );
+}
+
+function profileLocation(profile: LinkedInProfile) {
+  return (
+    profile.location ||
+    profile.location_name ||
+    profile.locationName ||
+    profile.geo_location ||
+    profile.geoLocation ||
+    [profile.city, profile.country].filter(Boolean).join(", ")
+  );
+}
+
+function profileCompany(profile: LinkedInProfile) {
+  const record = asRecord(profile);
+  const direct =
+    cleanString(profile.company) ||
+    pickString(record, ["company_name", "companyName", "current_company", "currentCompany"]);
+  if (direct) return direct;
+
+  const experience = [profile.work_experience, profile.experience].find(Array.isArray) || [];
+  const entries = experience.map(asRecord).filter((entry): entry is RecordLike => Boolean(entry));
+  const current = entries.filter((entry) =>
+    entry.current === true ||
+    entry.is_current === true ||
+    entry.isCurrent === true ||
+    !pickString(entry, ["end", "end_date", "endDate", "ends_at", "endsAt"]),
+  );
+
+  for (const entry of [...current, ...entries]) {
+    const company =
+      pickString(entry, ["company", "company_name", "companyName", "organization", "employer"]) ||
+      pickNestedString(entry, ["company", "organization", "employer"], ["name", "title"]);
+    if (company) return company;
+  }
+
+  return "";
+}
+
+function profileSection(
+  profile: LinkedInProfile,
+  sectionKeys: string[],
+  fieldKeys: string[],
+  limit: number,
+) {
+  const record = asRecord(profile);
+  const section = sectionKeys
+    .map((key) => record?.[key])
+    .find((value) => Array.isArray(value));
+  if (!Array.isArray(section)) return [];
+
+  return uniqueStrings(
+    section
+      .slice(0, limit)
+      .map((entry) => {
+        const entryRecord = asRecord(entry);
+        if (!entryRecord) return cleanString(entry) || "";
+
+        const parts = fieldKeys.flatMap((key) => {
+          const value = entryRecord[key];
+          if (Array.isArray(value)) {
+            return value
+              .slice(0, 8)
+              .map((item) => {
+                const itemRecord = asRecord(item);
+                return (
+                  cleanString(item) ||
+                  pickString(itemRecord, ["name", "title", "skill", "language"]) ||
+                  ""
+                );
+              })
+              .filter(Boolean);
+          }
+          return cleanString(value) || "";
+        });
+
+        return uniqueStrings(parts).join(" | ").slice(0, 500);
+      })
+      .filter(Boolean),
+  );
+}
+
+export function normalizeLinkedInProfileContext(
+  profile: LinkedInProfile,
+): LinkedInProfileContext | undefined {
+  const context: LinkedInProfileContext = {
+    about: String(profile.summary || "").trim().slice(0, 1200),
+    experience: profileSection(
+      profile,
+      ["work_experience", "experience"],
+      ["position", "title", "company", "location", "start", "end", "description", "skills"],
+      8,
+    ),
+    education: profileSection(
+      profile,
+      ["education"],
+      ["degree", "field_of_study", "school", "start", "end", "description"],
+      6,
+    ),
+    skills: profileSection(profile, ["skills"], ["name", "skill"], 25),
+    certifications: profileSection(
+      profile,
+      ["certifications"],
+      ["name", "authority", "issuer", "start", "end"],
+      8,
+    ),
+    projects: profileSection(
+      profile,
+      ["projects"],
+      ["name", "title", "description", "start", "end", "url"],
+      6,
+    ),
+    volunteering: profileSection(
+      profile,
+      ["volunteering_experience", "volunteer_experience"],
+      ["role", "organization", "cause", "description", "start", "end"],
+      6,
+    ),
+    languages: profileSection(profile, ["languages"], ["name", "language", "proficiency"], 12),
+    recentPosts: [],
+    capturedAt: new Date().toISOString(),
+  };
+
+  return Object.entries(context).some(
+    ([key, value]) =>
+      key !== "capturedAt" && (typeof value === "string" ? Boolean(value) : value.length > 0),
+  )
+    ? context
+    : undefined;
+}
+
+function normalizeLinkedInProfile(profile: LinkedInProfile) {
+  const name =
+    profile.name ||
+    [profile.first_name, profile.last_name].filter(Boolean).join(" ") ||
+    "LinkedIn profile";
+
+  return {
+    providerProfileId: looksLikeLinkedInProviderId(profile.provider_id)
+      ? profile.provider_id
+      : looksLikeLinkedInProviderId(profile.id)
+        ? profile.id
+        : undefined,
+    linkedInUrl:
+      profile.profile_url ||
+      profile.linkedin_url ||
+      (profile.public_identifier ? `https://www.linkedin.com/in/${profile.public_identifier}` : ""),
+    avatarUrl: profileAvatarUrl(profile),
+    name,
+    title: profile.headline || profile.occupation || "",
+    company: profileCompany(profile),
+    location: profileLocation(profile) || "",
+    summary: profile.summary || "",
+    profileContext: normalizeLinkedInProfileContext(profile),
+  } satisfies Partial<Lead>;
+}
+
+function attendeeName(attendee: LinkedInChatAttendee | null | undefined) {
+  const record = asRecord(attendee);
+  const direct =
+    pickString(record, [
+      "name",
+      "display_name",
+      "displayName",
+      "full_name",
+      "fullName",
+      "username",
+      "public_identifier",
+      "publicIdentifier",
+      "provider_id",
+      "member_id",
+    ]) ||
+    [attendee?.first_name || attendee?.firstName, attendee?.last_name || attendee?.lastName]
+      .filter(Boolean)
+      .join(" ") ||
+    pickNestedString(
+      record,
+      ["profile", "user", "linkedin", "linkedin_specific", "provider_data"],
+      [
+        "name",
+        "display_name",
+        "displayName",
+        "full_name",
+        "fullName",
+        "username",
+        "public_identifier",
+        "publicIdentifier",
+      ],
+    );
+
+  return (
+    direct ||
+    ""
+  );
+}
+
+function attendeeHeadline(attendee: LinkedInChatAttendee | null | undefined) {
+  const record = asRecord(attendee);
+  const direct = pickString(record, [
+    "headline",
+    "occupation",
+    "title",
+    "job_title",
+    "jobTitle",
+    "position",
+  ]);
+  const nested = pickNestedString(
+    record,
+    ["profile", "user", "linkedin", "linkedin_specific", "provider_data"],
+    ["headline", "occupation", "title", "job_title", "jobTitle", "position"],
+  );
+  const company = pickString(record, ["company"]) || pickNestedString(
+    record,
+    ["profile", "user", "linkedin", "linkedin_specific", "provider_data"],
+    ["company"],
+  );
+
+  return direct || nested || company || "";
+}
+
+function chatTitle(chat: LinkedInChat, extraAttendees: LinkedInChatAttendee[] = []) {
+  const attendees = chatAttendees(chat, extraAttendees);
+  const otherNames = attendees
+    .filter((attendee) => !isSelfAttendee(attendee))
+    .map(attendeeName)
+    .filter(Boolean);
+
+  return chat.name || chat.title || chat.subject || otherNames.join(", ") || "LinkedIn chat";
+}
+
+function chatAttendees(chat: LinkedInChat, extraAttendees: LinkedInChatAttendee[] = []) {
+  return [
+    ...(chat.attendees || []),
+    ...(chat.participants || []),
+    ...(chat.users || []),
+    ...extraAttendees,
+  ];
+}
+
+function isSelfAttendee(attendee: LinkedInChatAttendee) {
+  return Boolean(attendee.is_self || attendee.is_current_user || attendee.is_me || attendee.self);
+}
+
+function primaryChatAttendee(
+  chat: LinkedInChat,
+  extraAttendees: LinkedInChatAttendee[] = [],
+  inboundSenderName?: string,
+) {
+  const attendees = chatAttendees(chat, extraAttendees);
+  if (!attendees.length) return null;
+
+  if (inboundSenderName) {
+    const normalizedInboundName = inboundSenderName.trim().toLowerCase();
+    const matchingSender = attendees.find(
+      (attendee) => attendeeName(attendee).trim().toLowerCase() === normalizedInboundName,
+    );
+    if (matchingSender) return matchingSender;
+  }
+
+  return attendees.find((attendee) => !isSelfAttendee(attendee)) || attendees[0] || null;
+}
+
+function attendeeProfileUrl(attendee: LinkedInChatAttendee | null) {
+  const record = asRecord(attendee);
+  if (!record) return undefined;
+
+  return (
+    pickString(record, ["profile_url", "public_profile_url", "linkedin_url"]) ||
+    pickString(record, ["profileUrl", "publicProfileUrl", "linkedinUrl"]) ||
+    pickNestedString(
+      record,
+      ["profile", "user", "linkedin", "linkedin_specific", "provider_data"],
+      [
+        "profile_url",
+        "profileUrl",
+        "public_profile_url",
+        "publicProfileUrl",
+        "linkedin_url",
+        "linkedinUrl",
+      ],
+    ) ||
+    (pickString(record, ["public_identifier", "publicIdentifier", "username"])
+      ? `https://www.linkedin.com/in/${pickString(record, ["public_identifier", "publicIdentifier", "username"])}`
+      : undefined)
+  );
+}
+
+function attendeeAvatarUrl(attendee: LinkedInChatAttendee | null) {
+  const record = asRecord(attendee);
+  if (!record) return undefined;
+  return recordAvatarUrl(record);
+}
+
+function rememberAttendeeKey(
+  byKey: Map<string, LinkedInChatAttendee>,
+  raw: string | undefined,
+  attendee: LinkedInChatAttendee,
+) {
+  const key = raw?.trim();
+  if (!key || byKey.has(key)) return;
+  byKey.set(key, attendee);
+  const lower = key.toLowerCase();
+  if (!byKey.has(lower)) byKey.set(lower, attendee);
+}
+
+function indexChatAttendees(attendees: LinkedInChatAttendee[]) {
+  const byKey = new Map<string, LinkedInChatAttendee>();
+  for (const attendee of attendees) {
+    rememberAttendeeKey(byKey, attendee.id, attendee);
+    rememberAttendeeKey(byKey, attendee.provider_id, attendee);
+    rememberAttendeeKey(byKey, attendee.member_id, attendee);
+    rememberAttendeeKey(byKey, attendee.urn, attendee);
+    rememberAttendeeKey(byKey, attendee.public_identifier, attendee);
+    for (const key of linkedInIdentityKeys({
+      providerProfileId: attendee.provider_id || attendee.member_id || attendee.urn,
+      publicIdentifier: attendee.public_identifier,
+      linkedInUrl: attendeeProfileUrl(attendee),
+    })) {
+      rememberAttendeeKey(byKey, key, attendee);
+    }
+  }
+  return byKey;
+}
+
+function attendeeForChat(
+  chat: LinkedInChat,
+  byKey: Map<string, LinkedInChatAttendee>,
+) {
+  const candidates = [
+    chat.attendee_id,
+    chat.attendee_provider_id,
+    ...linkedInIdentityKeys({ providerProfileId: chat.attendee_provider_id }),
+  ];
+  for (const candidate of candidates) {
+    const key = candidate?.trim();
+    if (!key) continue;
+    const hit = byKey.get(key) || byKey.get(key.toLowerCase());
+    if (hit) return hit;
+  }
+  return undefined;
+}
+
+function attendeeProviderIdentifier(attendee: LinkedInChatAttendee | null) {
+  const record = asRecord(attendee);
+  return pickString(record, [
+    "provider_id",
+    "providerId",
+    "member_id",
+    "memberId",
+    "urn",
+    "public_identifier",
+    "publicIdentifier",
+    "id",
+  ]);
+}
+
+function chatAttendeeProviderIdentifier(chat: LinkedInChat) {
+  return chat.attendee_provider_id || attendeeProviderIdentifier(primaryChatAttendee(chat));
+}
+
+function messageSenderAttendee(message: LinkedInMessage) {
+  if (message.is_sender) return null;
+  if (message.sender) return message.sender;
+  if (message.from) return message.from;
+  if (!message.sender_name) return null;
+
+  return {
+    id: message.sender_id || message.attendee_id,
+    name: message.sender_name,
+  } satisfies LinkedInChatAttendee;
+}
+
+function mergeProfileIntoAttendee(
+  attendee: LinkedInChatAttendee | null,
+  profile: Partial<Lead> | null,
+) {
+  if (!profile) return attendee;
+
+  return {
+    ...(attendee || {}),
+    name: attendeeName(attendee) || profile.name,
+    headline: attendeeHeadline(attendee) || profile.title,
+    profile_url: attendeeProfileUrl(attendee) || profile.linkedInUrl,
+    profile_picture_url: attendeeAvatarUrl(attendee) || profile.avatarUrl,
+  } satisfies LinkedInChatAttendee;
+}
+
+function messageBody(message: LinkedInMessage | string | undefined) {
+  if (!message) return "";
+  if (typeof message === "string") return message;
+  const text = message.text || message.body || message.message || message.content || "";
+  if (text.trim()) return text;
+  // The old Unipile webhook stored attachment-only replies as this placeholder so
+  // they still stopped the sequence and triggered the reply email. Polling
+  // must do the same, or a photo reply is silently dropped.
+  if (message.attachments?.length) return "[Sent an attachment]";
+  return "";
+}
+
+function messageTimestamp(message: LinkedInMessage) {
+  return (
+    message.timestamp ||
+    message.date ||
+    message.sent_at ||
+    message.created_at ||
+    new Date().toISOString()
+  );
+}
+
+const UNKNOWN_SENDER_NAME = "LinkedIn";
+
+function normalizeChatMessage(message: LinkedInMessage, chatId: string): LinkedInInboxMessage {
+  const outbound = Boolean(message.is_sender);
+  const senderName =
+    message.sender_name ||
+    attendeeName(message.sender) ||
+    attendeeName(message.from) ||
+    UNKNOWN_SENDER_NAME;
+
+  const attachments = (message.attachments || []).flatMap((attachment) =>
+    attachment.id
+      ? [{
+          id: attachment.id,
+          type: attachment.type || "file",
+          name: attachment.file_name || undefined,
+          url: attachment.url?.startsWith("https://") ? attachment.url : undefined,
+          unavailable: attachment.unavailable || undefined,
+        }]
+      : [],
+  );
+  const reactions = (message.reactions || []).flatMap((reaction) =>
+    reaction.value ? [reaction.value] : [],
+  );
+
+  return {
+    id: message.id || `${chatId}-${messageTimestamp(message)}`,
+    ...(message.message_type ? { messageType: message.message_type } : {}),
+    chatId,
+    direction: outbound ? "outbound" : "inbound",
+    senderName: outbound ? "You" : senderName,
+    body: messageBody(message),
+    createdAt: messageTimestamp(message),
+    ...(message.subject ? { subject: message.subject } : {}),
+    ...(attachments.length ? { attachments } : {}),
+    ...(reactions.length ? { reactions } : {}),
+    ...(message.is_event ? { event: true } : {}),
+    ...(message.deleted ? { deleted: true } : {}),
+  };
+}
+
+// What LinkedIn itself shows in a thread: every message with text or an
+// attachment, deleted ones as a placeholder, and no hidden notices. Filtering
+// on text alone dropped photos, files, shared posts and deleted messages.
+function isVisibleChatMessage(message: LinkedInMessage) {
+  if (message.hidden) return false;
+  return Boolean(messageBody(message) || message.attachments?.length || message.deleted);
+}
+
+// Accounts LinkedIn answered with its monthly search limit notice, and when
+// the owner was last told. Searches then return about three people each, and
+// discovery quietly found almost no one.
+const searchLimitReachedAt = new Map<string, number>();
+const searchLimitNoticedAt = new Map<string, number>();
+const SEARCH_LIMIT_NOTICE_INTERVAL_MS = 24 * 60 * 60 * 1000;
+
+// True once a day per account while its searches keep hitting the limit:
+// the caller tells the owner, and later runs that day stay quiet.
+export function takeLinkedInSearchLimitNotice(accountId: string, sinceMs: number) {
+  const reachedAt = searchLimitReachedAt.get(accountId) || 0;
+  if (reachedAt < sinceMs) return false;
+  if (Date.now() - (searchLimitNoticedAt.get(accountId) || 0) < SEARCH_LIMIT_NOTICE_INTERVAL_MS) return false;
+  searchLimitNoticedAt.set(accountId, Date.now());
+  return true;
+}
+
+async function searchLinkedIn<T>(input: {
+  accountId: string;
+  category: LinkedInSearchCategory;
+  keywords?: string;
+  url?: string;
+  limit: number;
+  locationIds?: string[];
+  companyIds?: string[];
+  headcount?: { min: number; max: number };
+  // Items rejected by `take` are fetched but neither returned nor counted, so
+  // the search pages past them toward `limit` accepted items. This is how a
+  // repeat of yesterday's query digs below the first page instead of returning
+  // the same already-known people again.
+  take?: (item: T) => boolean;
+  // Bounds how deep a mostly-rejected result set can page; never binds for
+  // callers without `take` (their limits fit in the first pages anyway).
+  maxPages?: number;
+}) {
+  if (!isLinkedInConfiguredFor(input.accountId)) return [];
+
+  const maxPages = input.maxPages ?? 8;
+  const items: T[] = [];
+  const seenCursors = new Set<string>();
+  let cursor: string | undefined;
+
+  // The search path reads limit from the query string and pages with a cursor; a
+  // single un-paginated request only ever returns the first page.
+  for (let page = 0; page < maxPages && items.length < input.limit; page += 1) {
+    await throttleLinkedInSearch();
+    const result = await request<LinkedInListResponse<T>>(
+      withQuery("/api/v1/linkedin/search", {
+        account_id: input.accountId,
+        // With a take filter most of a page may be rejected, so always request
+        // full pages; without one, only fetch what is still missing.
+        limit: input.take ? 50 : Math.min(input.limit - items.length, 50),
+      }),
+      {
+        method: "POST",
+        body: JSON.stringify({
+          api: "classic",
+          category: input.category,
+          type: input.category,
+          keywords: input.keywords,
+          url: input.url,
+          ...(input.locationIds?.length ? { location: input.locationIds } : {}),
+          ...(input.companyIds?.length ? { company: input.companyIds } : {}),
+          ...(input.headcount ? { headcount: [input.headcount] } : {}),
+          cursor,
+        }),
+      },
+      { retryTransientReadErrors: true },
+    );
+
+    if ((result as { search_limit_reached?: boolean }).search_limit_reached) {
+      searchLimitReachedAt.set(input.accountId, Date.now());
+    }
+    const pageItems = getListItems<T>(result);
+    if (!pageItems.length) break;
+    items.push(...(input.take ? pageItems.filter(input.take) : pageItems));
+
+    const nextCursor = getListCursor(result);
+    if (!nextCursor || seenCursors.has(nextCursor)) break;
+    seenCursors.add(nextCursor);
+    cursor = nextCursor;
+  }
+
+  return items.slice(0, input.limit);
+}
+
+// Whether calls for this account, chat or message id can be served: only ids
+// from Omentir's own LinkedIn client can.
+export function isLinkedInConfiguredFor(id: string | undefined) {
+  return isOwnLinkedInId(id);
+}
+
+function requireLinkedInConfiguredFor(id: string | undefined) {
+  if (!isLinkedInConfiguredFor(id)) throw legacyAccountError();
+}
+
+// Fetches the connected account owner's basic LinkedIn identity. Unlike a
+// prospect profile view, `me` is the authenticated user's own profile and no
+// optional profile sections are requested.
+export async function retrieveOwnLinkedInProfile(accountId: string) {
+  if (!isLinkedInConfiguredFor(accountId)) return null;
+
+  const profile = await request<LinkedInProfile>(
+    withQuery("/api/v1/users/me", { account_id: accountId }),
+  );
+  const displayName =
+    [profile.first_name, profile.last_name].filter(Boolean).join(" ").trim() ||
+    profile.name?.trim();
+
+  if (!displayName && !profileAvatarUrl(profile)) return null;
+  return {
+    displayName,
+    avatarUrl: profileAvatarUrl(profile),
+    providerProfileId: looksLikeLinkedInProviderId(profile.provider_id)
+      ? profile.provider_id
+      : looksLikeLinkedInProviderId(profile.id)
+        ? profile.id
+        : undefined,
+    publicIdentifier: profile.public_identifier || "",
+    location: profileLocation(profile) || "",
+  };
+}
+
+function limitText(value: string | undefined, maxLength: number) {
+  const text = String(value || "").trim();
+  return text.length > maxLength ? text.slice(0, maxLength).trim() : text;
+}
+
+function linkedInIdentifier(value: string) {
+  if (!value.includes("/")) return value;
+
+  try {
+    const url = new URL(/^https?:\/\//i.test(value) ? value : `https://${value}`);
+    const parts = url.pathname.split("/").filter(Boolean);
+    const profileIndex = parts.findIndex((part) => part === "in" || part === "pub");
+    return profileIndex >= 0 ? parts[profileIndex + 1] || value : parts.at(-1) || value;
+  } catch {
+    return value.replace(/[?#].*$/, "").replace(/\/+$/, "").split("/").pop() || value;
+  }
+}
+
+export async function deleteLinkedInAccount(accountId: string) {
+  if (!accountId) throw new Error("LinkedIn account id is required.");
+  // Old Unipile account ids have nothing stored here to delete.
+  if (!isOwnLinkedInId(accountId)) return;
+
+  try {
+    await request<void>(`/api/v1/accounts/${encodeURIComponent(accountId)}`, {
+      method: "DELETE",
+    });
+  } catch (error) {
+    // 404 means the stored session is already gone.
+    if (error instanceof LinkedInResponseError && error.status === 404) return;
+    throw error;
+  }
+}
+
+// LinkedIn's location parameter takes geo ids, not names. Resolve each target
+// name via the parameter search; ids are LinkedIn-global, so cache by
+// name across accounts. Failed lookups are not cached so a transient error
+// doesn't permanently disable location targeting for that name.
+const locationIdCache = new Map<string, string | null>();
+const companyEvidenceCache = new Map<string, LinkedInCompanyEvidence>();
+
+async function resolveLinkedInLocationIds(accountId: string, locations: string[]) {
+  const ids = new Set<string>();
+
+  for (const location of locations) {
+    const key = location.trim().toLowerCase();
+    if (!key) continue;
+
+    if (!locationIdCache.has(key)) {
+      try {
+        const result = await request<LinkedInListResponse<{ id?: string; title?: string }>>(
+          withQuery("/api/v1/linkedin/search/parameters", {
+            account_id: accountId,
+            type: "LOCATION",
+            keywords: location,
+            limit: 5,
+          }),
+        );
+        const items = getListItems<{ id?: string; title?: string }>(result);
+        // Prefer the exact-title match ("Australia" over "New South Wales,
+        // Australia"), falling back to LinkedIn's top suggestion.
+        const exact = items.find((item) => (item.title || "").trim().toLowerCase() === key);
+        locationIdCache.set(key, (exact || items[0])?.id || null);
+      } catch (error) {
+        console.error(`[linkedin] failed to resolve location "${location}":`, error);
+        continue;
+      }
+    }
+
+    const id = locationIdCache.get(key);
+    if (id) ids.add(id);
+  }
+
+  return Array.from(ids);
+}
+
+// Identity keys for matching a search result against already-saved leads:
+// the lowercase provider id plus the lowercase public identifier from the
+// profile URL, so a match on either field identifies the same person even
+// when the two records carry different URL formats.
+export function profileSearchKeys(
+  profile: Pick<Partial<Lead>, "providerProfileId" | "linkedInUrl"> & {
+    publicIdentifier?: string;
+  },
+) {
+  return linkedInIdentityKeys({
+    providerProfileId: profile.providerProfileId,
+    linkedInUrl: profile.linkedInUrl,
+    publicIdentifier: profile.publicIdentifier,
+  });
+}
+
+export async function searchLinkedInProfiles(input: {
+  accountId: string;
+  criteria: {
+    titles: string[];
+    industries: string[];
+    locations: string[];
+    keywords: string[];
+  };
+  limit: number;
+  agent: Agent;
+  // profileSearchKeys of leads the caller already has. The search skips these
+  // and pages deeper until it accumulates `limit` genuinely new profiles -
+  // without this, a mature agent re-reads the same first page of the same
+  // query every day and discovers nobody.
+  excludeKeys?: Set<string>;
+}) {
+  // A connected LinkedIn account can remain healthy for messaging while its
+  // Classic people search returns HTTP 200 with an empty result set. Search
+  // through another connected account owned by the same workspace in that
+  // case. The agent's selected account is still used first and remains the
+  // account used for profile enrichment and outreach.
+  const workspaceAccounts = await listLinkedInAccounts(input.agent.workspaceId);
+  const searchAccountIds = Array.from(
+    new Set([input.accountId, ...workspaceAccounts.map((account) => account.accountId)]),
+  );
+
+  // One search per title/keyword. Joining every criterion into a single
+  // keyword string produces an AND query that matches almost nobody.
+  const queries = [...input.criteria.titles, ...input.criteria.keywords]
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+  if (!queries.length) {
+    queries.push(
+      [...input.criteria.industries, ...input.criteria.locations]
+        .filter(Boolean)
+        .join(" "),
+    );
+  }
+
+  // Constrain the search itself to the target locations. LinkedIn ignores
+  // keywords like "Australia" and returns network-biased (local) results;
+  // only the location parameter actually scopes results to the country.
+  const searchLocations = searchableLocationNames(input.criteria.locations);
+  let locationIds: string[] = [];
+  for (const accountId of searchAccountIds) {
+    locationIds = await resolveLinkedInLocationIds(
+      accountId,
+      searchLocations,
+    );
+    if (locationIds.length || !searchLocations.length) break;
+  }
+
+  // When no requested location resolves to a LinkedIn id the search silently
+  // goes global, and network-biased results then waste enrichment budget on
+  // out-of-region people that all get rejected downstream.
+  if (searchLocations.length && !locationIds.length) {
+    console.error(
+      `[linkedin] no location ids resolved for ${JSON.stringify(
+        searchLocations,
+      )} (from ${JSON.stringify(input.criteria.locations)}) - people search for agent ${input.agent.id} is running unscoped.`,
+    );
+  }
+
+  const profiles = new Map<string, ReturnType<typeof normalizeLinkedInProfile>>();
+  const perQueryLimit = Math.max(Math.ceil(input.limit / queries.length), 10);
+  const excluded = input.excludeKeys;
+  const takeFresh =
+    excluded?.size
+      ? (item: LinkedInProfile) =>
+          !profileSearchKeys(normalizeLinkedInProfile(item)).some((key) => excluded.has(key))
+      : undefined;
+
+  for (const keywords of queries) {
+    if (profiles.size >= input.limit) break;
+    if (!keywords) continue;
+
+    let items: LinkedInProfile[] = [];
+    for (const accountId of searchAccountIds) {
+      items = await searchLinkedIn<LinkedInProfile>({
+        accountId,
+        category: "people",
+        keywords,
+        limit: perQueryLimit,
+        locationIds,
+        take: takeFresh,
+        // Up to 250 scanned results per query when known profiles clog the top.
+        maxPages: takeFresh ? 5 : undefined,
+      });
+      if (items.length) break;
+    }
+
+    for (const item of items) {
+      const profile = normalizeLinkedInProfile(item);
+      const key = profile.providerProfileId || profile.linkedInUrl || profile.name;
+      if (!key || profiles.has(key)) continue;
+      profiles.set(key, profile);
+      if (profiles.size >= input.limit) break;
+    }
+  }
+
+  return Array.from(profiles.values());
+}
+
+export async function searchLinkedInProfilesAtCompanies(input: {
+  accountId: string;
+  titles: string[];
+  industries: string[];
+  locations: string[];
+  companySize: { min: number; max: number };
+  limit: number;
+  agent: Agent;
+  excludeKeys?: Set<string>;
+}) {
+  const workspaceAccounts = await listLinkedInAccounts(input.agent.workspaceId);
+  const searchAccountIds = Array.from(
+    new Set([input.accountId, ...workspaceAccounts.map((account) => account.accountId)]),
+  );
+  let locationIds: string[] = [];
+  for (const accountId of searchAccountIds) {
+    locationIds = await resolveLinkedInLocationIds(
+      accountId,
+      searchableLocationNames(input.locations),
+    );
+    if (locationIds.length || !input.locations.length) break;
+  }
+
+  const companies = new Map<string, LinkedInCompany>();
+  for (const industry of input.industries.slice(0, 5)) {
+    for (const accountId of searchAccountIds) {
+      const items = await searchLinkedIn<LinkedInCompany>({
+        accountId,
+        category: "companies",
+        keywords: industry,
+        limit: 20,
+        locationIds,
+        headcount: input.companySize,
+        maxPages: 2,
+      });
+      if (!items.length) continue;
+      for (const company of items) {
+        if (company.id) companies.set(company.id, company);
+      }
+      break;
+    }
+    if (companies.size >= 40) break;
+  }
+
+  const companyIds = Array.from(companies.keys()).slice(0, 40);
+  if (!companyIds.length) return [];
+
+  const profiles = new Map<string, ReturnType<typeof normalizeLinkedInProfile>>();
+  const excluded = input.excludeKeys;
+  const takeFresh = (item: LinkedInProfile) => {
+    const profile = normalizeLinkedInProfile(item);
+    if (profile.name.trim().toLowerCase() === "linkedin member") return false;
+    return !excluded?.size || !profileSearchKeys(profile).some((key) => excluded.has(key));
+  };
+  const companyBatches = Array.from(
+    { length: Math.ceil(companyIds.length / 10) },
+    (_, index) => companyIds.slice(index * 10, index * 10 + 10),
+  );
+
+  for (const title of input.titles.slice(0, 6)) {
+    for (const companyBatch of companyBatches) {
+      if (profiles.size >= input.limit) break;
+      let items: LinkedInProfile[] = [];
+      for (const accountId of searchAccountIds) {
+        items = await searchLinkedIn<LinkedInProfile>({
+          accountId,
+          category: "people",
+          keywords: title,
+          limit: Math.min(20, input.limit - profiles.size),
+          locationIds,
+          companyIds: companyBatch,
+          take: takeFresh,
+          maxPages: 2,
+        });
+        if (items.length) break;
+      }
+
+      for (const item of items) {
+        const profile = normalizeLinkedInProfile(item);
+        const key = profile.providerProfileId || profile.linkedInUrl || profile.name;
+        if (!key || profiles.has(key)) continue;
+        profiles.set(key, profile);
+      }
+    }
+    if (profiles.size >= input.limit) break;
+  }
+
+  return Array.from(profiles.values()).slice(0, input.limit);
+}
+
+/**
+ * Find people currently associated with a named company (for Steal Customers:
+ * competitor employees whose posts we then scan for commenters).
+ */
+export async function searchLinkedInEmployeesAtCompany(input: {
+  accountId: string;
+  companyLabel: string;
+  /** Optional LinkedIn company vanity slug or numeric id from the source URL. */
+  companyIdentifier?: string;
+  limit: number;
+  agent: Agent;
+  excludeKeys?: Set<string>;
+}) {
+  const label = input.companyLabel.trim();
+  if (!isLinkedInConfiguredFor(input.accountId) || !label) return [];
+
+  const workspaceAccounts = await listLinkedInAccounts(input.agent.workspaceId);
+  const searchAccountIds = Array.from(
+    new Set([input.accountId, ...workspaceAccounts.map((account) => account.accountId)]),
+  );
+
+  // Prefer resolving the exact company page (vanity slug → provider id). Keyword
+  // company search on a slug like "origamiagents" often returns 0 or the wrong
+  // "Origami Studios" and left Steal Customers with no employee posts.
+  let companyId = "";
+  const sourceIdentifier = (input.companyIdentifier || label).trim();
+  if (sourceIdentifier) {
+    for (const accountId of searchAccountIds) {
+      companyId = await resolveLinkedInCompanyProviderId({
+        accountId,
+        identifier: sourceIdentifier,
+      });
+      if (companyId) break;
+    }
+  }
+  if (!companyId) {
+    for (const accountId of searchAccountIds) {
+      const companies = await searchLinkedIn<LinkedInCompany>({
+        accountId,
+        category: "companies",
+        keywords: label,
+        limit: 10,
+        maxPages: 1,
+      });
+      if (!companies.length) continue;
+      const normalized = label.toLowerCase().replace(/[-_]+/g, " ");
+      const exact =
+        companies.find(
+          (company) => company.name?.trim().toLowerCase() === normalized,
+        ) ||
+        companies.find((company) =>
+          company.name?.trim().toLowerCase().includes(normalized),
+        ) ||
+        companies[0];
+      if (exact?.id) {
+        companyId = exact.id;
+        break;
+      }
+    }
+  }
+  if (!companyId) return [];
+
+  const profiles = new Map<string, ReturnType<typeof normalizeLinkedInProfile>>();
+  const excluded = input.excludeKeys;
+  const takeFresh = (item: LinkedInProfile) => {
+    const profile = normalizeLinkedInProfile(item);
+    if (profile.name.trim().toLowerCase() === "linkedin member") return false;
+    return !excluded?.size || !profileSearchKeys(profile).some((key) => excluded.has(key));
+  };
+
+  // LinkedIn classic people search needs a keyword even with company filter.
+  // Keep role words generic so any industry can surface employees who post.
+  const queries = [
+    label,
+    "employee",
+    "founder",
+    "manager",
+    "director",
+    "lead",
+    "specialist",
+    "associate",
+  ];
+
+  for (const keywords of queries) {
+    if (profiles.size >= input.limit) break;
+    let items: LinkedInProfile[] = [];
+    for (const accountId of searchAccountIds) {
+      items = await searchLinkedIn<LinkedInProfile>({
+        accountId,
+        category: "people",
+        keywords,
+        limit: Math.min(25, input.limit - profiles.size + 5),
+        companyIds: [companyId],
+        take: takeFresh,
+        maxPages: 2,
+      });
+      if (items.length) break;
+    }
+    for (const item of items) {
+      const profile = normalizeLinkedInProfile(item);
+      const key = profile.providerProfileId || profile.linkedInUrl || profile.name;
+      if (!key || profiles.has(key)) continue;
+      profiles.set(key, profile);
+      if (profiles.size >= input.limit) break;
+    }
+  }
+
+  return Array.from(profiles.values()).slice(0, input.limit);
+}
+
+export async function searchLinkedInProfilesByUrl(input: {
+  accountId: string;
+  url: string;
+  limit: number;
+}) {
+  const items = await searchLinkedIn<LinkedInProfile>({
+    accountId: input.accountId,
+    category: "people",
+    url: input.url,
+    limit: input.limit,
+  });
+
+  return items.map(normalizeLinkedInProfile);
+}
+
+export type LinkedInCompanyEvidence = {
+  text: string;
+  url: string;
+};
+
+export async function retrieveLinkedInCompanyEvidence(input: {
+  accountId: string;
+  companyName: string;
+}): Promise<LinkedInCompanyEvidence | null> {
+  const companyName = input.companyName.trim();
+  if (!isLinkedInConfiguredFor(input.accountId) || !companyName) return null;
+
+  const cacheKey = companyName.toLowerCase();
+  const cached = companyEvidenceCache.get(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const parameters = await request<LinkedInListResponse<{ id?: string; title?: string }>>(
+      withQuery("/api/v1/linkedin/search/parameters", {
+        account_id: input.accountId,
+        type: "COMPANY",
+        keywords: companyName,
+        limit: 5,
+      }),
+    );
+    const exact = getListItems<{ id?: string; title?: string }>(parameters).find(
+      (item) => item.title?.trim().toLowerCase() === companyName.toLowerCase(),
+    );
+    if (!exact?.id) return null;
+
+    const company = await request<LinkedInCompany>(
+      withQuery(`/api/v1/linkedin/company/${encodeURIComponent(exact.id)}`, {
+        account_id: input.accountId,
+      }),
+    );
+    const industries = Array.isArray(company.industry)
+      ? company.industry.filter(Boolean).join(", ")
+      : String(company.industry || "").trim();
+    const from = Number(company.employee_count_range?.from || 0);
+    const to = Number(company.employee_count_range?.to || 0);
+    const range = from && to ? `${from}-${to} employees` : from ? `${from}+ employees` : "";
+    const parts = [
+      `Current company: ${company.name || companyName}`,
+      industries ? `LinkedIn industry: ${industries}` : "",
+      range ? `LinkedIn company size: ${range}` : "",
+      company.employee_count ? `LinkedIn listed employees: ${company.employee_count}` : "",
+    ].filter(Boolean);
+    if (parts.length <= 1) return null;
+
+    const evidence = {
+      text: parts.join("; "),
+      url: company.profile_url || `https://www.linkedin.com/company/${exact.id}`,
+    };
+    companyEvidenceCache.set(cacheKey, evidence);
+    return evidence;
+  } catch (error) {
+    console.error(`[linkedin] failed to retrieve company evidence for "${companyName}":`, error);
+    return null;
+  }
+}
+
+export async function searchLinkedInPosts(input: {
+  accountId: string;
+  keywords: string;
+  limit: number;
+}) {
+  return searchLinkedIn<LinkedInPost>({
+    accountId: input.accountId,
+    category: "posts",
+    keywords: input.keywords,
+    limit: input.limit,
+  });
+}
+
+// Company posts require LinkedIn's internal numeric id (e.g. "99440945"),
+// not the vanity slug from /company/origamiagents. Public identifiers resolve via
+// GET /linkedin/company/{public_identifier}.
+const companyProviderIdCache = new Map<string, string>();
+
+async function resolveLinkedInCompanyProviderId(input: {
+  accountId: string;
+  identifier: string;
+}) {
+  const raw = linkedInIdentifier(input.identifier).trim();
+  if (!raw) return "";
+  // Already a LinkedIn company provider id (digits).
+  if (/^\d+$/.test(raw)) return raw;
+
+  const cacheKey = `${input.accountId}:${raw.toLowerCase()}`;
+  const cached = companyProviderIdCache.get(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const company = await request<LinkedInCompany & { public_identifier?: string }>(
+      withQuery(`/api/v1/linkedin/company/${encodeURIComponent(raw)}`, {
+        account_id: input.accountId,
+      }),
+    );
+    const id = String(company.id || "").trim();
+    if (id) {
+      companyProviderIdCache.set(cacheKey, id);
+      return id;
+    }
+  } catch (error) {
+    console.error(
+      `[linkedin] resolve company id for "${raw}":`,
+      error instanceof Error ? error.message : error,
+    );
+  }
+  return "";
+}
+
+export async function listLinkedInPostsForProfile(input: {
+  accountId: string;
+  identifier: string;
+  isCompany?: boolean;
+  limit: number;
+}) {
+  if (!isLinkedInConfiguredFor(input.accountId)) return [];
+
+  let identifier = linkedInIdentifier(input.identifier);
+  if (input.isCompany) {
+    const companyId = await resolveLinkedInCompanyProviderId({
+      accountId: input.accountId,
+      identifier,
+    });
+    // Vanity slugs always 422 without the numeric id; skip rather than fail the run.
+    if (!companyId) return [];
+    identifier = companyId;
+  }
+
+  const result = await request<LinkedInListResponse<LinkedInPost>>(
+    withQuery(`/api/v1/users/${encodeURIComponent(identifier)}/posts`, {
+      account_id: input.accountId,
+      is_company: input.isCompany,
+      limit: input.limit,
+    }),
+    undefined,
+    { retryTransientReadErrors: true },
+  );
+
+  return getListItems(result).slice(0, input.limit);
+}
+
+export async function retrieveLinkedInPost(input: {
+  accountId: string;
+  postId: string;
+}) {
+  if (!isLinkedInConfiguredFor(input.accountId)) return null;
+
+  return request<LinkedInPost>(
+    withQuery(`/api/v1/posts/${encodeURIComponent(input.postId)}`, {
+      account_id: input.accountId,
+    }),
+  );
+}
+
+export async function listLinkedInPostComments(input: {
+  accountId: string;
+  postId: string;
+  limit: number;
+}) {
+  if (!isLinkedInConfiguredFor(input.accountId)) return [];
+
+  const result = await request<LinkedInListResponse<LinkedInComment>>(
+    withQuery(`/api/v1/posts/${encodeURIComponent(input.postId)}/comments`, {
+      account_id: input.accountId,
+      limit: input.limit,
+    }),
+  );
+
+  return getListItems(result).slice(0, input.limit).map((comment) => ({
+    id: comment.id,
+    text: comment.text || comment.message || comment.body || "",
+    url: comment.url,
+    createdAt: pickParseableTimestamp(
+      comment.parsed_datetime,
+      comment.created_at,
+      comment.posted_at,
+      comment.date,
+    ),
+    profile: actorFromEngagement(comment),
+  }));
+}
+
+export async function listLinkedInPostReactions(input: {
+  accountId: string;
+  postId: string;
+  limit: number;
+}) {
+  if (!isLinkedInConfiguredFor(input.accountId)) return [];
+
+  const result = await request<LinkedInListResponse<LinkedInReaction>>(
+    withQuery(`/api/v1/posts/${encodeURIComponent(input.postId)}/reactions`, {
+      account_id: input.accountId,
+      limit: input.limit,
+    }),
+  );
+
+  return getListItems(result).slice(0, input.limit).map((reaction) => ({
+    id: reaction.id,
+    type: reaction.reaction_type || reaction.type || "reaction",
+    url: reaction.url,
+    createdAt: reaction.created_at,
+    profile: actorFromEngagement(reaction),
+  }));
+}
+
+// Returns true/false when LinkedIn reports a relationship, null when the
+// profile can't be fetched or the field is missing.
+export async function isFirstDegreeConnection(input: {
+  accountId: string;
+  identifier: string;
+  // Acceptance confirmation (sweep, webhook, Send now) must not lose to the
+  // daily discovery cap. Discovery still consumes the budget; these reads are
+  // a handful per account and still use the in-process spacing below.
+  ignoreViewBudget?: boolean;
+}) {
+  if (!isLinkedInConfiguredFor(input.accountId)) return null;
+
+  // Accepts a provider id or public identifier; reduce a profile URL to its
+  // last path segment so callers can pass linkedInUrl as a fallback.
+  const identifier = linkedInIdentifier(input.identifier);
+
+  // Over budget reads as "unknown" - callers already defer and retry later.
+  if (!input.ignoreViewBudget && !(await takeProfileViewBudget(input.accountId))) return null;
+  await waitForProfileViewSlot();
+
+  try {
+    const profile = await request<
+      LinkedInProfile & { network_distance?: string; is_relationship?: boolean }
+    >(
+      withQuery(`/api/v1/users/${encodeURIComponent(identifier)}`, {
+        account_id: input.accountId,
+      }),
+    );
+    return firstDegreeFromLinkedInProfile(profile);
+  } catch {
+    return null;
+  }
+}
+
+export async function retrieveLinkedInProfile(input: {
+  accountId: string;
+  identifier: string;
+  // Send-time recipient resolution must not lose to the daily discovery cap:
+  // agent discovery spent all 75 views by mid-morning and every invite to a
+  // lead without a stored member id failed for the rest of the day. Sends are
+  // already capped by the daily invite/message quotas, so views stay bounded.
+  ignoreViewBudget?: boolean;
+}) {
+  if (!isLinkedInConfiguredFor(input.accountId)) return null;
+
+  // Enrichment callers all tolerate null and keep their base data.
+  if (!input.ignoreViewBudget && !(await takeProfileViewBudget(input.accountId))) return null;
+  await waitForProfileViewSlot();
+
+  const identifier = linkedInIdentifier(input.identifier);
+  const profile = await request<LinkedInProfile>(
+    withQuery(`/api/v1/users/${encodeURIComponent(identifier)}`, {
+      account_id: input.accountId,
+      linkedin_sections: "*",
+    }),
+  );
+
+  return normalizeLinkedInProfile(profile);
+}
+
+export type LinkedInAvatarRetrieveResult =
+  | { ok: true; url: string; persistUrl: string }
+  | { ok: false; reason: "unconfigured" | "throttled" | "exhausted" | "missing" };
+
+// Picture-capable profile read. LinkedIn omits headshot fields unless
+// linkedin_sections=* is set. One daily avatar-view is spent for the whole
+// identifier list so a stale ACo... fallback does not burn a second visit.
+export async function retrieveLinkedInProfileAvatar(input: {
+  accountId: string;
+  identifiers: string[];
+}): Promise<LinkedInAvatarRetrieveResult> {
+  if (!isLinkedInConfiguredFor(input.accountId)) return { ok: false, reason: "unconfigured" };
+
+  const tried = new Set<string>();
+  const identifiers: string[] = [];
+  for (const raw of input.identifiers) {
+    const identifier = linkedInIdentifier(raw.trim());
+    if (!identifier || tried.has(identifier)) continue;
+    tried.add(identifier);
+    identifiers.push(identifier);
+  }
+  if (!identifiers.length) return { ok: false, reason: "missing" };
+
+  const budget = await takeAvatarViewBudget(input.accountId);
+  if (budget !== "ok") return { ok: false, reason: budget };
+
+  for (const identifier of identifiers) {
+    try {
+      const profile = await request<LinkedInProfile>(
+        withQuery(`/api/v1/users/${encodeURIComponent(identifier)}`, {
+          account_id: input.accountId,
+          linkedin_sections: "*",
+        }),
+      );
+      const url = profileAvatarUrl(profile);
+      const persistUrl = profileAvatarPersistUrl(profile, url);
+      const resolved = url || persistUrl;
+      if (!resolved) {
+        console.error(`[linkedin] profile ${identifier} returned no headshot fields`);
+        continue;
+      }
+      return { ok: true, url: url || resolved, persistUrl: persistUrl || resolved };
+    } catch (error) {
+      console.error(
+        `[linkedin] avatar retrieve failed for ${identifier}:`,
+        error instanceof Error ? error.message : error,
+      );
+      if (isInvalidRecipientError(error)) continue;
+      break;
+    }
+  }
+
+  return { ok: false, reason: "missing" };
+}
+
+async function fetchLinkedInChatMessages(input: {
+  chatId: string;
+  limit?: number;
+}) {
+  if (!isLinkedInConfiguredFor(input.chatId)) return [];
+
+  const result = await request<LinkedInListResponse<LinkedInMessage> | LinkedInMessage[]>(
+    withQuery(`/api/v1/chats/${encodeURIComponent(input.chatId)}/messages`, {
+      limit: input.limit || 50,
+    }),
+  );
+
+  return getListItems<LinkedInMessage>(result);
+}
+
+export async function listLinkedInChatMessages(input: {
+  chatId: string;
+  limit?: number;
+}) {
+  const messages = await fetchLinkedInChatMessages(input);
+
+  return messages
+    .map((message) => normalizeChatMessage(message, input.chatId))
+    .filter((message) => message.body)
+    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+}
+
+export async function listLinkedInChatMessagesPage(input: {
+  chatId: string;
+  limit?: number;
+  cursor?: string;
+}) {
+  if (!isLinkedInConfiguredFor(input.chatId)) return { messages: [], cursor: undefined };
+
+  const result = await request<LinkedInListResponse<LinkedInMessage> | LinkedInMessage[]>(
+    withQuery(`/api/v1/chats/${encodeURIComponent(input.chatId)}/messages`, {
+      limit: input.limit || 30,
+      cursor: input.cursor,
+    }),
+  );
+  const messages = getListItems<LinkedInMessage>(result)
+    .filter(isVisibleChatMessage)
+    .map((message) => normalizeChatMessage(message, input.chatId))
+    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+
+  return { messages, cursor: getListCursor(result) };
+}
+
+// The account's 1:1 chat with this person, newest first. One lookup, no
+// profile view. Messages uses it for conversations older than the inbox page,
+// which otherwise showed Omentir's partial stored copy instead of LinkedIn's.
+export async function findLinkedInChatWithAttendee(input: {
+  accountId: string;
+  providerProfileId: string;
+}) {
+  if (!isLinkedInConfiguredFor(input.accountId)) return null;
+
+  let result: LinkedInListResponse<LinkedInChat> | LinkedInChat[];
+  try {
+    result = await request<LinkedInListResponse<LinkedInChat> | LinkedInChat[]>(
+      withQuery(`/api/v1/chat_attendees/${encodeURIComponent(input.providerProfileId)}/chats`, {
+        account_id: input.accountId,
+      }),
+    );
+  } catch (error) {
+    // New connections can have no attendee until a chat exists. Only this
+    // specific absence means no history; other failures must block outreach.
+    if (error instanceof LinkedInResponseError && error.status === 404 &&
+        error.errorType === "errors/resource_not_found" &&
+        /(?:^|\n)Attendee not found\.?$/i.test(error.detail?.trim() || "")) return null;
+    throw error;
+  }
+  const chat = getListItems<LinkedInChat>(result)
+    .filter((item) => item.id && (!item.account_id || item.account_id === input.accountId))
+    .sort((a, b) => Date.parse(b.timestamp || "") - Date.parse(a.timestamp || ""))[0];
+  return chat?.id || null;
+}
+
+// The account that owns a message, for checking access before serving one of
+// its attachments.
+export async function linkedInMessageAccountId(messageId: string) {
+  if (!isLinkedInConfiguredFor(messageId)) return null;
+  try {
+    const message = await request<LinkedInMessage>(
+      `/api/v1/messages/${encodeURIComponent(messageId)}`,
+    );
+    return message?.account_id || null;
+  } catch (error) {
+    if (error instanceof LinkedInResponseError && (error.status === 404 || error.status === 400)) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+// Raw attachment bytes. Chat photos and files have no public URL, so they
+// are served through the app.
+export async function fetchLinkedInMessageAttachment(input: {
+  messageId: string;
+  attachmentId: string;
+}) {
+  if (!isOwnLinkedInId(input.messageId)) throw legacyAccountError();
+  return ownLinkedInAttachment(input.messageId, input.attachmentId);
+}
+
+export async function listLinkedInChatAttendees(input: {
+  chatId: string;
+}) {
+  if (!isLinkedInConfiguredFor(input.chatId)) return [];
+
+  try {
+    const result = await request<
+      LinkedInListResponse<LinkedInChatAttendee> | LinkedInChatAttendee[]
+    >(`/api/v1/chats/${encodeURIComponent(input.chatId)}/attendees`);
+
+    return getListItems<LinkedInChatAttendee>(result);
+  } catch {
+    return [];
+  }
+}
+
+async function enrichChatAttendee(input: {
+  accountId: string;
+  attendee: LinkedInChatAttendee | null;
+  providerIdentifier?: string;
+}) {
+  const identifier = input.providerIdentifier || attendeeProviderIdentifier(input.attendee);
+  if (!identifier) return input.attendee;
+
+  try {
+    const profile = await retrieveLinkedInProfile({
+      accountId: input.accountId,
+      identifier,
+    });
+
+    return mergeProfileIntoAttendee(input.attendee, profile);
+  } catch {
+    return input.attendee;
+  }
+}
+
+export async function listLinkedInAccountAttendees(accountId: string) {
+  if (!isLinkedInConfiguredFor(accountId)) return [] as LinkedInChatAttendee[];
+
+  const attendees: LinkedInChatAttendee[] = [];
+  const seen = new Set<string>();
+  let cursor: string | undefined;
+
+  // Inbox matching needs the attendee for each open chat. One page of 200
+  // misses people on busy accounts, so walk a few pages instead of leaving
+  // those rows without a name or photo.
+  for (let page = 0; page < 3; page += 1) {
+    let result: LinkedInListResponse<LinkedInChatAttendee> | LinkedInChatAttendee[];
+    try {
+      result = await request<
+        LinkedInListResponse<LinkedInChatAttendee> | LinkedInChatAttendee[]
+      >(withQuery("/api/v1/chat_attendees", { account_id: accountId, limit: 200, cursor }));
+    } catch (error) {
+      // A failed first page leaves every chat nameless, and nameless chats are
+      // dropped from the inbox. Fail the load so callers keep the last good
+      // inbox instead of showing one with most rows missing.
+      if (!attendees.length) throw error;
+      return attendees;
+    }
+    const pageItems = getListItems<LinkedInChatAttendee>(result);
+    if (!pageItems.length) break;
+    for (const attendee of pageItems) {
+      const id = attendee.id || attendee.provider_id || "";
+      if (id && seen.has(id)) continue;
+      if (id) seen.add(id);
+      attendees.push(attendee);
+    }
+    cursor = getListCursor(result);
+    if (!cursor) break;
+  }
+  return attendees;
+}
+
+// Recent messages across all of the account's chats, in one call. Used to build
+// last-message previews for the inbox list without a request per chat.
+async function listLinkedInAccountMessagesPage(
+  accountId: string,
+  limit: number,
+  cursor?: string,
+  sinceMs?: number,
+) {
+  if (!isLinkedInConfiguredFor(accountId)) return { messages: [] as LinkedInMessage[], cursor: undefined };
+
+  try {
+    const result = await request<LinkedInListResponse<LinkedInMessage> | LinkedInMessage[]>(
+      withQuery("/api/v1/messages", { account_id: accountId, limit, cursor, ...(isOwnLinkedInId(accountId) && sinceMs !== undefined ? { since: sinceMs } : {}) }),
+    );
+    return {
+      messages: getListItems<LinkedInMessage>(result),
+      cursor: getListCursor(result),
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function listLinkedInAccountMessages(accountId: string, limit: number) {
+  const page = await listLinkedInAccountMessagesPage(accountId, limit);
+  // Without these, every inbox row loses its last-message preview. Fail the
+  // load instead of returning an inbox that looks empty.
+  if (!page) throw new Error("LinkedIn recent messages could not be loaded.");
+  return page.messages;
+}
+
+// Direct ownership check for one chat: a single lookup instead of re-listing
+// the whole inbox, and it also covers chats older than the inbox page.
+export async function linkedInChatBelongsToAccount(chatId: string, accountId: string) {
+  if (!isLinkedInConfiguredFor(chatId)) return false;
+  try {
+    const chat = await request<LinkedInChat>(`/api/v1/chats/${encodeURIComponent(chatId)}`);
+    return chat?.account_id === accountId;
+  } catch (error) {
+    if (error instanceof LinkedInResponseError && (error.status === 404 || error.status === 400)) {
+      return false;
+    }
+    throw error;
+  }
+}
+
+// Recent account messages after `sinceMs` for reply sync. Returns inbound
+// replies and owner-sent messages (so a LinkedIn-app reply stops outreach the
+// way the old Unipile webhook did). Newest-provider-order from LinkedIn,
+// oldest-first in the return value. Costs a small paginated /messages listing.
+export async function listRecentInboundMessages(input: {
+  accountId: string;
+  sinceMs: number;
+  limit?: number;
+}) {
+  const messages: LinkedInMessage[] = [];
+  const pageLimit = input.limit || 100;
+  let cursor: string | undefined;
+  let truncated = false;
+
+  for (let page = 0; page < RECENT_INBOUND_MAX_PAGES; page += 1) {
+    const result = await listLinkedInAccountMessagesPage(input.accountId, pageLimit, cursor, input.sinceMs);
+    if (!result) return null;
+    messages.push(...result.messages);
+    if (!result.cursor) break;
+    if (!result.messages.length && !isOwnLinkedInId(input.accountId)) break;
+
+    // Results are newest first. Once a page reaches the sync cursor, later
+    // pages cannot contain a newer message. The hard page cap still protects
+    // the tick if a provider returns an unexpected ordering.
+    const timestamps = result.messages
+      .map((message) => Date.parse(messageTimestamp(message)))
+      .filter((timestamp) => Number.isFinite(timestamp));
+    if (timestamps.length && Math.min(...timestamps) <= input.sinceMs) break;
+    if (page === RECENT_INBOUND_MAX_PAGES - 1 && isOwnLinkedInId(input.accountId) && result.cursor) {
+      // Keep what we have. Returning null used to discard the whole window and
+      // leave a busy inbox stuck with no replies imported.
+      truncated = true;
+      break;
+    }
+    cursor = result.cursor;
+  }
+
+  if (truncated) {
+    console.warn(
+      `[linkedin] reply sync truncated after ${RECENT_INBOUND_MAX_PAGES} pages for ${input.accountId}; processing the newest messages and retrying the rest next cycle`,
+    );
+  }
+
+  const seenIds = new Set<string>();
+  return messages
+    .filter((message) => {
+      if (!message.id) return true;
+      if (seenIds.has(message.id)) return false;
+      seenIds.add(message.id);
+      return true;
+    })
+    // Skip LinkedIn system notices and invite cards. Keep owner-sent and
+    // inbound text/attachment messages so sync can stop outreach or store a reply.
+    .filter((message) => !message.is_event && message.message_type !== "INVITATION")
+    .map((message) => {
+      const outbound = Boolean(message.is_sender);
+      // For owner messages the lead is the other person on the chat, not us.
+      const leadAttendee = outbound
+        ? {
+            provider_id: message.attendee_provider_id,
+            id: message.attendee_provider_id,
+            name: message.attendee_name,
+            profile_url: message.attendee_profile_url,
+          }
+        : message.sender || message.from || null;
+      return {
+        id: message.id,
+        chatId: message.chat_id,
+        isSender: outbound,
+        senderProviderId: outbound
+          ? message.attendee_provider_id ||
+            leadAttendee?.provider_id ||
+            leadAttendee?.id ||
+            leadAttendee?.member_id ||
+            leadAttendee?.urn ||
+            ""
+          : message.sender_id ||
+            message.attendee_id ||
+            message.sender?.provider_id ||
+            message.sender?.id ||
+            message.sender?.member_id ||
+            message.sender?.urn ||
+            message.from?.provider_id ||
+            message.from?.id ||
+            message.from?.member_id ||
+            message.from?.urn ||
+            "",
+        linkedInUrl: outbound
+          ? message.attendee_profile_url || attendeeProfileUrl(leadAttendee)
+          : attendeeProfileUrl(message.sender || message.from || null),
+        senderName: outbound
+          ? message.attendee_name || attendeeName(leadAttendee) || ""
+          : message.sender_name ||
+            attendeeName(message.sender) ||
+            attendeeName(message.from) ||
+            "",
+        body: messageBody(message),
+        createdAt: messageTimestamp(message),
+      };
+    })
+    .filter((message) => message.body && Date.parse(message.createdAt) > input.sinceMs)
+    .sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt));
+}
+
+export async function listLinkedInInbox(input: {
+  accountId: string;
+  limit?: number;
+  messageLimit?: number;
+  includeMessageHistory?: boolean;
+}) {
+  if (!isLinkedInConfiguredFor(input.accountId)) return [];
+
+  const includeMessageHistory = input.includeMessageHistory ?? true;
+
+  // In the lightweight (list) path, resolve every chat's attendee from ONE bulk
+  // attendees call - fetched in parallel with the chats list - instead of one
+  // request per chat. The chats-list endpoint itself carries no names/avatars.
+  const chatLimit = input.limit || 25;
+  const [result, bulkAttendees, bulkMessages] = await Promise.all([
+    request<LinkedInListResponse<LinkedInChat>>(
+      withQuery("/api/v1/chats", {
+        account_id: input.accountId,
+        account_type: "LINKEDIN",
+        limit: chatLimit,
+      }),
+    ),
+    includeMessageHistory
+      ? Promise.resolve([] as LinkedInChatAttendee[])
+      : listLinkedInAccountAttendees(input.accountId),
+    includeMessageHistory
+      ? Promise.resolve([] as LinkedInMessage[])
+      : listLinkedInAccountMessages(input.accountId, Math.min(chatLimit * 6, 250)),
+  ]);
+  const chats: LinkedInChat[] = [];
+  const seenChatIds = new Set<string>();
+  for (const chat of getListItems(result)) {
+    if (!chat.id || seenChatIds.has(chat.id)) continue;
+    seenChatIds.add(chat.id);
+    chats.push(chat);
+  }
+  const attendeeByKey = indexChatAttendees(bulkAttendees);
+  // Most recent message per chat, for the inbox list preview.
+  const lastMessageByChat = new Map<string, LinkedInMessage>();
+  for (const message of bulkMessages) {
+    const cid = message.chat_id;
+    if (!cid || !isVisibleChatMessage(message)) continue;
+    const existing = lastMessageByChat.get(cid);
+    if (
+      !existing ||
+      new Date(messageTimestamp(message)).getTime() >
+        new Date(messageTimestamp(existing)).getTime()
+    ) {
+      lastMessageByChat.set(cid, message);
+    }
+  }
+  // Each enrichment is a live profile view on the user's LinkedIn account, so
+  // only look up chats that carry no usable name, and only a few per load -
+  // never one view per chat per page visit.
+  const enrichmentBudget = { left: INBOX_ENRICHMENT_LIMIT };
+
+  const threads = await Promise.all(
+    chats.map(async (chat): Promise<LinkedInInboxThread> => {
+      const chatId = chat.id || "";
+      if (!includeMessageHistory) {
+        // Resolve this chat's attendee from ONE bulk attendees list, matching
+        // chat attendee ids and Classic/Sales Nav provider ids, so the
+        // inbox row gets a real name and photo without a per-chat request.
+        const matched = attendeeForChat(chat, attendeeByKey);
+        const detailedAttendees = matched ? [matched] : [];
+        const fallbackTitle = chatTitle(chat, detailedAttendees);
+        const lastMessage = lastMessageByChat.get(chatId);
+        const sender =
+          lastMessage && !lastMessage.is_sender
+            ? lastMessage.sender || lastMessage.from || messageSenderAttendee(lastMessage)
+            : null;
+        const baseAttendee = primaryChatAttendee(chat, [
+          ...detailedAttendees,
+          ...(sender ? [sender] : []),
+        ]);
+        let profileName = attendeeName(baseAttendee) || fallbackTitle;
+        const lastMessageAt = lastMessage
+          ? messageTimestamp(lastMessage)
+          : chat.last_message_at ||
+            chat.updated_at ||
+            chat.timestamp ||
+            chat.date ||
+            chat.created_at ||
+            new Date().toISOString();
+        const messages = lastMessage ? [normalizeChatMessage(lastMessage, chatId)] : [];
+
+        if (profileName === "LinkedIn" && fallbackTitle !== "LinkedIn chat") {
+          profileName = fallbackTitle;
+        }
+
+        return {
+          id: chatId,
+          providerChatId: chat.provider_id || chatId,
+          accountId: chat.account_id || input.accountId,
+          title: fallbackTitle,
+          profileName,
+          profileHeadline: attendeeHeadline(baseAttendee) || attendeeHeadline(sender),
+          profileUrl: attendeeProfileUrl(baseAttendee) || attendeeProfileUrl(sender),
+          avatarUrl: attendeeAvatarUrl(baseAttendee) || attendeeAvatarUrl(sender),
+          attendeeProviderId:
+            chat.attendee_provider_id || attendeeProviderIdentifier(baseAttendee),
+          unread: Boolean(chat.unread || Number(chat.unread_count || 0) > 0 || chat.read === false),
+          updatedAt: lastMessageAt,
+          messages,
+        };
+      }
+
+      const [rawMessages, detailedAttendees] = await Promise.all([
+        fetchLinkedInChatMessages({
+          chatId,
+          limit: input.messageLimit || 50,
+        }).catch(() => []),
+        listLinkedInChatAttendees({ chatId }),
+      ]);
+      let messages = rawMessages
+        .filter(isVisibleChatMessage)
+        .map((message) => normalizeChatMessage(message, chatId))
+        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      const messageAttendees = rawMessages
+        .map(messageSenderAttendee)
+        .filter((attendee): attendee is LinkedInChatAttendee => Boolean(attendee));
+      // "LinkedIn" is normalizeChatMessage's placeholder, not a name; using it
+      // titled threads "LinkedIn" and signed inbound messages that way.
+      const inboundSenderName = messages.find(
+        (message) => message.direction === "inbound" && message.senderName !== UNKNOWN_SENDER_NAME,
+      )?.senderName;
+      const baseAttendee = primaryChatAttendee(
+        chat,
+        [...detailedAttendees, ...messageAttendees],
+        inboundSenderName,
+      );
+      // Enrichment spends the shared daily profile-view budget, so it stays
+      // limited to threads with no inbound message at all, as before.
+      const needsEnrichment =
+        !attendeeName(baseAttendee) && !messages.some((message) => message.direction === "inbound");
+      let primaryAttendee = baseAttendee;
+      if (needsEnrichment && enrichmentBudget.left > 0) {
+        enrichmentBudget.left -= 1;
+        primaryAttendee = await enrichChatAttendee({
+          accountId: input.accountId,
+          attendee: baseAttendee,
+          providerIdentifier: chatAttendeeProviderIdentifier(chat),
+        });
+      }
+      const fallbackTitle = chatTitle(chat, [...detailedAttendees, ...messageAttendees]);
+      let profileName = attendeeName(primaryAttendee) || inboundSenderName || fallbackTitle;
+      const profileHeadline = attendeeHeadline(primaryAttendee);
+      const profileUrl = attendeeProfileUrl(primaryAttendee);
+      const avatarUrl = attendeeAvatarUrl(primaryAttendee);
+      const lastMessage = chat.last_message;
+
+      if (profileName === "LinkedIn" && fallbackTitle !== "LinkedIn chat") {
+        profileName = fallbackTitle;
+      }
+
+      if (profileName && profileName !== UNKNOWN_SENDER_NAME) {
+        messages = messages.map((message) =>
+          message.direction === "inbound" && message.senderName === UNKNOWN_SENDER_NAME
+            ? { ...message, senderName: profileName }
+            : message,
+        );
+      }
+
+      if (!messages.length && lastMessage) {
+        messages = [
+          typeof lastMessage === "string"
+            ? {
+                id: `${chatId}-last`,
+                chatId,
+                direction: "inbound",
+                senderName: profileName,
+                body: lastMessage,
+                createdAt:
+                  chat.last_message_at ||
+                  chat.updated_at ||
+                  chat.timestamp ||
+                  chat.date ||
+                  chat.created_at ||
+                  new Date().toISOString(),
+              }
+            : normalizeChatMessage(lastMessage, chatId),
+        ];
+      }
+
+      return {
+        id: chatId,
+        providerChatId: chat.provider_id || chatId,
+        accountId: chat.account_id || input.accountId,
+        title: fallbackTitle,
+        profileName,
+        profileHeadline,
+        profileUrl,
+        avatarUrl,
+        attendeeProviderId:
+          chatAttendeeProviderIdentifier(chat) || attendeeProviderIdentifier(primaryAttendee),
+        unread: Boolean(chat.unread || Number(chat.unread_count || 0) > 0 || chat.read === false),
+        updatedAt:
+          chat.last_message_at ||
+          chat.updated_at ||
+          chat.timestamp ||
+          chat.date ||
+          chat.created_at ||
+          messages.at(-1)?.createdAt ||
+          new Date().toISOString(),
+        messages,
+      };
+    }),
+  );
+  return dedupeLinkedInInboxThreads(threads);
+}
+
+export function normalizeLinkedInActor(profile: LinkedInProfile | null | undefined) {
+  if (!profile) return null;
+  const lead = normalizeLinkedInProfile(profile);
+  if (!lead.linkedInUrl && !lead.providerProfileId) return null;
+  return lead;
+}
+
+export function getLinkedInPostId(post: LinkedInPost) {
+  return post.social_id || post.id || post.object_urn || "";
+}
+
+export function getLinkedInPostText(post: LinkedInPost) {
+  return post.text || post.content || post.commentary || "";
+}
+
+export function getLinkedInPostUrl(post: LinkedInPost) {
+  return post.url || post.share_url || "";
+}
+
+/** Prefer absolute ISO timestamps over relative labels like "1w" / "6h". */
+function parseLinkedInRelativeTimestamp(value: string) {
+  const match = /^(\d+)\s*(mo|[smhdwy])$/i.exec(value.trim());
+  if (!match) return "";
+  const amount = Number(match[1]);
+  const unit = match[2].toLowerCase();
+  const unitMs: Record<string, number> = {
+    s: 1000,
+    m: 60 * 1000,
+    h: 60 * 60 * 1000,
+    d: 24 * 60 * 60 * 1000,
+    w: 7 * 24 * 60 * 60 * 1000,
+    mo: 30 * 24 * 60 * 60 * 1000,
+    y: 365 * 24 * 60 * 60 * 1000,
+  };
+  const delta = unitMs[unit];
+  if (!delta || !Number.isFinite(amount)) return "";
+  return new Date(Date.now() - amount * delta).toISOString();
+}
+
+function pickParseableTimestamp(...values: Array<string | undefined>) {
+  for (const value of values) {
+    const text = String(value || "").trim();
+    if (!text) continue;
+    if (Number.isFinite(Date.parse(text))) return text;
+    const relative = parseLinkedInRelativeTimestamp(text);
+    if (relative) return relative;
+  }
+  return "";
+}
+
+export function getLinkedInPostCreatedAt(post: LinkedInPost) {
+  return (
+    pickParseableTimestamp(
+      post.parsed_datetime,
+      post.created_at,
+      post.posted_at,
+      post.date,
+    ) || new Date().toISOString()
+  );
+}
+
+/** Provider-reported post time only. Empty when LinkedIn omits the field. */
+export function getLinkedInPostCreatedAtRaw(post: LinkedInPost) {
+  return pickParseableTimestamp(
+    post.parsed_datetime,
+    post.created_at,
+    post.posted_at,
+    post.date,
+  );
+}
+
+// LinkedIn member provider ids start with ACo (Classic), ACw (Sales Navigator),
+// or AE (Recruiter). Public vanity slugs
+// (e.g. "pavanbabar") are not valid provider_id values for /users/invite and
+// produce errors/invalid_parameters ("User ID does not match provider's expected format").
+export function looksLikeLinkedInProviderId(id: string | undefined): id is string {
+  if (!id) return false;
+  return /^(?:ACo|ACw|AE)/i.test(id) || /^urn:li:person:/i.test(id);
+}
+
+// errors/cannot_resend_yet is the same error type whether the
+// recipient already has a pending/withdrawn invite or the account hit its
+// weekly cap. The account's sent-invitations list is ground truth for the
+// pending-recipient case. Returns true/false, or null when it can't be
+// determined (not configured, missing id, list too long, request failure).
+// Every provider id and public identifier in the account's sent-invitations
+// list, lowercased. One paginated listing costs a few API requests and zero
+// profile views, so the acceptance sweep can compare hundreds of pending
+// enrollments against it in a single pass. Returns null when the list could
+// not be fetched completely (provider error, or more pages than the cap) -
+// callers must treat that as "unknown", never as "nothing pending".
+function addInvitationIdentityKeys(
+  ids: Set<string>,
+  item: {
+    invited_user_id?: string;
+    invited_user_public_id?: string;
+    user?: {
+      id?: string;
+      provider_id?: string;
+      public_identifier?: string;
+      profile_url?: string;
+    };
+  },
+) {
+  const nested = item.user;
+  for (const key of linkedInIdentityKeys({
+    providerProfileId:
+      item.invited_user_id || nested?.provider_id || nested?.id,
+    publicIdentifier: item.invited_user_public_id || nested?.public_identifier,
+    linkedInUrl: nested?.profile_url,
+  })) {
+    ids.add(key);
+  }
+}
+
+export async function listSentInvitationProviderIds(accountId: string) {
+  if (!isLinkedInConfiguredFor(accountId)) return null;
+
+  const ids = new Set<string>();
+  let cursor: string | undefined;
+
+  try {
+    // 10 pages of 100 covers a 21-day pending pool at the maximum configurable
+    // invite rate; beyond that, give up rather than page forever.
+    for (let page = 0; page < 10; page += 1) {
+      const result = await request<
+        LinkedInListResponse<{
+          invited_user_id?: string;
+          invited_user_public_id?: string;
+          user?: {
+            id?: string;
+            provider_id?: string;
+            public_identifier?: string;
+            profile_url?: string;
+          };
+        }>
+      >(
+        withQuery("/api/v1/users/invite/sent", {
+          account_id: accountId,
+          limit: 100,
+          cursor,
+        }),
+      );
+      const items = getListItems<{
+        invited_user_id?: string;
+        invited_user_public_id?: string;
+        user?: {
+          id?: string;
+          provider_id?: string;
+          public_identifier?: string;
+          profile_url?: string;
+        };
+      }>(result);
+      for (const item of items) addInvitationIdentityKeys(ids, item);
+      cursor = getListCursor(result);
+      if (!cursor || !items.length) return ids;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export type SentInvitation = {
+  id: string;
+  // LinkedIn's sent time for the invitation. Missing when the list omits it.
+  sentAt?: string;
+};
+
+// The account's pending sent invitations with their ids and dates, for the
+// health meter and auto-withdraw. `complete` is false when the list ran past
+// the page cap or a page failed; callers must not read a partial list as the
+// whole pending pool.
+export async function listSentInvitations(accountId: string, maxPages = 10) {
+  if (!isLinkedInConfiguredFor(accountId)) return { invitations: [] as SentInvitation[], complete: false };
+
+  const invitations: SentInvitation[] = [];
+  let cursor: string | undefined;
+  try {
+    for (let page = 0; page < maxPages; page += 1) {
+      const result = await request<
+        LinkedInListResponse<{ id?: string; parsed_datetime?: string }>
+      >(withQuery("/api/v1/users/invite/sent", { account_id: accountId, limit: 100, cursor }));
+      const items = getListItems<{ id?: string; parsed_datetime?: string }>(result);
+      for (const item of items) {
+        if (item.id) invitations.push({ id: item.id, sentAt: item.parsed_datetime });
+      }
+      cursor = getListCursor(result);
+      if (!cursor || !items.length) return { invitations, complete: true };
+    }
+    return { invitations, complete: false };
+  } catch {
+    return { invitations, complete: false };
+  }
+}
+
+// Cancels one pending invitation. LinkedIn blocks re-inviting that person for
+// about three weeks afterwards.
+export async function withdrawSentInvitation(accountId: string, invitationId: string) {
+  requireLinkedInConfiguredFor(accountId);
+  await request(
+    withQuery(`/api/v1/users/invite/sent/${encodeURIComponent(invitationId)}`, {
+      account_id: accountId,
+    }),
+    { method: "DELETE" },
+  );
+}
+
+type LinkedInRelation = {
+  first_name?: string;
+  last_name?: string;
+  name?: string;
+  public_identifier?: string;
+  public_profile_url?: string;
+  member_id?: string;
+  member_urn?: string;
+  connection_urn?: string;
+  provider_id?: string;
+};
+
+function relationToIdentity(item: LinkedInRelation): LinkedInIdentity {
+  return {
+    providerProfileId: item.provider_id || item.member_id || item.member_urn,
+    publicIdentifier: item.public_identifier,
+    linkedInUrl: item.public_profile_url,
+    name:
+      item.name ||
+      [item.first_name, item.last_name].filter(Boolean).join(" ") ||
+      undefined,
+  };
+}
+
+// Most recently added first-degree connections. Used by the acceptance sweep
+// so a Steal Customers run that already spent the daily profile-view budget
+// can still mark invites accepted without 20 extra /users/{id} reads.
+export async function listRecentRelations(accountId: string) {
+  if (!isLinkedInConfiguredFor(accountId)) return null;
+
+  const relations: LinkedInIdentity[] = [];
+  let cursor: string | undefined;
+
+  try {
+    for (let page = 0; page < 5; page += 1) {
+      const result = await request<LinkedInListResponse<LinkedInRelation>>(
+        withQuery("/api/v1/users/relations", {
+          account_id: accountId,
+          limit: 100,
+          cursor,
+        }),
+      );
+      const items = getListItems<LinkedInRelation>(result);
+      for (const item of items) relations.push(relationToIdentity(item));
+      cursor = getListCursor(result);
+      if (!cursor || !items.length) return relations;
+    }
+    return relations;
+  } catch {
+    return null;
+  }
+}
+
+export async function hasPendingSentInvitation(input: {
+  accountId: string;
+  providerProfileId?: string;
+  linkedInUrl?: string;
+}) {
+  const keys = profileSearchKeys({
+    providerProfileId: input.providerProfileId,
+    linkedInUrl: input.linkedInUrl,
+  });
+  if (!keys.length) return null;
+
+  const ids = await listSentInvitationProviderIds(input.accountId);
+  if (!ids) return null;
+  return keys.some((key) => ids.has(key.toLowerCase()));
+}
+
+export async function sendConnectionRequest(input: {
+  accountId: string;
+  providerProfileId?: string;
+  linkedInUrl: string;
+  note?: string;
+}) {
+  requireLinkedInConfiguredFor(input.accountId);
+  let providerProfileId = input.providerProfileId;
+  const message = input.note ? limitText(input.note, LINKEDIN_CONNECTION_NOTE_LIMIT) : undefined;
+
+  // Resolve (or re-resolve) when missing or clearly not a member provider id.
+  if ((!looksLikeLinkedInProviderId(providerProfileId) || !providerProfileId) && input.linkedInUrl) {
+    const profile = await retrieveLinkedInProfile({
+      accountId: input.accountId,
+      identifier: linkedInIdentifier(input.linkedInUrl),
+      ignoreViewBudget: true,
+    });
+    if (profile?.providerProfileId) providerProfileId = profile.providerProfileId;
+  }
+
+  if (!looksLikeLinkedInProviderId(providerProfileId)) {
+    throw new LinkedInRecipientUnresolved("LinkedIn provider id is required to send a connection request.");
+  }
+
+  const invite = async (resolvedProviderId: string) => {
+    const result = await request<{ id?: string }>("/api/v1/users/invite", {
+      method: "POST",
+      body: JSON.stringify({
+        account_id: input.accountId,
+        provider_id: resolvedProviderId,
+        message,
+      }),
+    });
+    return { ...result, providerProfileId: resolvedProviderId };
+  };
+
+  try {
+    return await invite(providerProfileId);
+  } catch (error) {
+    if (!input.linkedInUrl) throw error;
+
+    const profile = await retrieveLinkedInProfile({
+      accountId: input.accountId,
+      identifier: linkedInIdentifier(input.linkedInUrl),
+      ignoreViewBudget: true,
+    });
+    const resolvedProviderId = profile?.providerProfileId;
+    if (!looksLikeLinkedInProviderId(resolvedProviderId) || resolvedProviderId === providerProfileId) {
+      throw error;
+    }
+
+    return invite(resolvedProviderId);
+  }
+}
+
+export class LinkedInMessageSendBlocked extends Error {}
+
+// Thrown before any request is made: the recipient's member id could not be
+// resolved (usually the daily profile-view budget is spent). Nothing reached
+// LinkedIn, so the send is safe to retry and must never be treated as an
+// unconfirmed send.
+export class LinkedInRecipientUnresolved extends Error {}
+
+export async function sendLinkedInMessage(input: {
+  accountId: string;
+  providerProfileId?: string;
+  linkedInUrl: string;
+  body: string;
+  beforeSend?: (providerProfileId: string) => Promise<void>;
+}) {
+  requireLinkedInConfiguredFor(input.accountId);
+
+  // The start-new-chat path only accepts attendees_ids (member
+  // provider ids); provider_id/profile_url are silently invalid there. Resolve
+  // the recipient the same way sendConnectionRequest does.
+  let providerProfileId = input.providerProfileId;
+  if (!looksLikeLinkedInProviderId(providerProfileId) && input.linkedInUrl) {
+    const profile = await retrieveLinkedInProfile({
+      accountId: input.accountId,
+      identifier: linkedInIdentifier(input.linkedInUrl),
+      ignoreViewBudget: true,
+    });
+    if (profile?.providerProfileId) providerProfileId = profile.providerProfileId;
+  }
+
+  if (!looksLikeLinkedInProviderId(providerProfileId)) {
+    throw new LinkedInRecipientUnresolved("LinkedIn provider id is required to send a message.");
+  }
+
+  const send = async (resolvedProviderId: string) => {
+    // The start-chat contract is multipart form data (kept from the old
+    // Unipile integration). Append the single recipient once; repeated
+    // attendees_ids fields are only needed for groups.
+    const formData = new FormData();
+    formData.append("account_id", input.accountId);
+    formData.append("attendees_ids", resolvedProviderId);
+    formData.append("text", limitText(input.body, LINKEDIN_MESSAGE_LIMIT));
+
+    const result = await request<{ chat_id?: string; message_id?: string; id?: string }>(
+      "/api/v1/chats",
+      {
+        method: "POST",
+        body: formData,
+      },
+      { beforeSend: () => input.beforeSend?.(resolvedProviderId) ?? Promise.resolve() },
+    );
+    return { id: result.message_id || result.id, chatId: result.chat_id };
+  };
+
+  try {
+    return await send(providerProfileId);
+  } catch (error) {
+    // Provider member ids can be account-specific. A valid id captured through
+    // another LinkedIn session may still be rejected by this campaign's
+    // account, so refresh by the public URL before giving up. Only retry an
+    // explicit provider rejection; a timeout may already have sent the message.
+    if (!(error instanceof LinkedInResponseError) || !input.linkedInUrl) throw error;
+
+    let profile: Partial<Lead> | null = null;
+    try {
+      profile = await retrieveLinkedInProfile({
+        accountId: input.accountId,
+        identifier: linkedInIdentifier(input.linkedInUrl),
+        ignoreViewBudget: true,
+      });
+    } catch {
+      throw error;
+    }
+    const resolvedProviderId = profile?.providerProfileId;
+    if (
+      !looksLikeLinkedInProviderId(resolvedProviderId) ||
+      resolvedProviderId === providerProfileId
+    ) {
+      throw error;
+    }
+
+    return send(resolvedProviderId);
+  }
+}
+
+export async function sendLinkedInChatMessage(input: {
+  chatId: string;
+  accountId: string;
+  body: string;
+  attachments?: File[];
+}) {
+  requireLinkedInConfiguredFor(input.chatId);
+
+  const formData = new FormData();
+  formData.set("account_id", input.accountId);
+  if (input.body) formData.set("text", limitText(input.body, LINKEDIN_MESSAGE_LIMIT));
+  for (const file of input.attachments || []) {
+    formData.append("attachments", file, file.name);
+  }
+
+  return request<{ id?: string }>(`/api/v1/chats/${encodeURIComponent(input.chatId)}/messages`, {
+    method: "POST",
+    body: formData,
+  });
+}

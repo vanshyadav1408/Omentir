@@ -26,6 +26,10 @@ const INTEGRATION_LOGOS: Record<
     name: "OpenAI Dots",
     preserveColor: true,
   },
+  "claude-duet": {
+    src: "/integration-logos/claude-duet.svg",
+    name: "Claude Duet",
+  },
   "manus-cue": {
     src: "/integration-logos/manus-cue.webp",
     name: "Manus Cue",
@@ -90,6 +94,7 @@ export default function IntegrationLogo({
 const BRAND_COLOR: Record<string, string> = {
   claude: "#d97757",
   "claude-code": "#d97757",
+  "claude-duet": "#d97757",
   chatgpt: "#10a37f",
   "rest-api": "var(--cal-blue)",
 };

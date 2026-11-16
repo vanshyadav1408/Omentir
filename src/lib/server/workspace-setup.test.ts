@@ -15,12 +15,12 @@ mock.module("./data", () => ({
   listLinkedInAccounts: async () => storedAccounts,
   listAgents: async () => [{ id: "agent-1" }],
   getLatestLinkedInAccount: async () => storedAccounts[0] ?? null,
-  // Bun keeps module mocks across test files; unipile.ts imports these.
+  // Bun keeps module mocks across test files; linkedin.ts imports these.
   consumeAvatarViewBudget: async () => "exhausted",
   consumeProfileViewBudget: async () => false,
 }));
 mock.module("./linkedin-accounts", () => ({
-  // Unipile never answers: the setup check must not care.
+  // Verification never answers: the setup check must not care.
   listVerifiedLinkedInAccounts: () => {
     verifyCalls += 1;
     return new Promise(() => {});
@@ -30,7 +30,7 @@ mock.module("./linkedin-accounts", () => ({
 const { getWorkspaceSetup } = await import("./workspace-setup");
 
 describe("getWorkspaceSetup", () => {
-  test("renders Overview from stored LinkedIn state without waiting on Unipile", async () => {
+  test("renders Overview from stored LinkedIn state without waiting on account verification", async () => {
     storedAccounts = [{ accountId: "acc-1" }];
     scheduled.length = 0;
     verifyCalls = 0;
@@ -38,7 +38,7 @@ describe("getWorkspaceSetup", () => {
     const setup = await Promise.race([
       getWorkspaceSetup("ws-stored"),
       new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("setup waited on Unipile verification")), 200),
+        setTimeout(() => reject(new Error("setup waited on LinkedIn verification")), 200),
       ),
     ]);
 
@@ -52,7 +52,7 @@ describe("getWorkspaceSetup", () => {
     expect(verifyCalls).toBe(1);
   });
 
-  test("skips the background Unipile call when nothing is connected", async () => {
+  test("skips the background verification when nothing is connected", async () => {
     storedAccounts = [];
     scheduled.length = 0;
 

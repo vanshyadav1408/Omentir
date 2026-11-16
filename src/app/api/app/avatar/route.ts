@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
       if (next) return next;
     }
 
-    // Expired CDN tokens 404. Pull a fresh headshot from Unipile in the
+    // Expired CDN tokens 404. Pull a fresh headshot from LinkedIn in the
     // background; wait a beat so the first rows can paint without a 404 that
     // the <img> would never retry.
     const refresh = refreshLeadAvatarIfNeeded(lead);
