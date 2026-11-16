@@ -11,6 +11,8 @@ let accounts: LinkedInAccount[] = [];
 let ownStatuses = new Map<string, "active" | "expired">();
 const disconnected: string[] = [];
 const completed: string[] = [];
+const deletedSessions: string[] = [];
+let connectedElsewhere = false;
 
 mock.module("./data", () => ({
   listLinkedInAccounts: async () => accounts,
@@ -18,6 +20,7 @@ mock.module("./data", () => ({
     disconnected.push(id);
   },
   completeLinkedInAccountRetirement: async (_id: string, retiredId: string) => { completed.push(retiredId); },
+  hasOtherLinkedInConnection: async () => connectedElsewhere,
   listAllLinkedInAccounts: async () => accounts,
   listConnectedLinkedInAccountsEverywhere: async () => accounts,
   markLinkedInAccountDisconnected: async (_workspaceId: string, id: string) => {
@@ -28,7 +31,7 @@ mock.module("./data", () => ({
   workspaceForLinkedInAccountCap: async () => ({}),
 }));
 mock.module("./linkedin", () => ({
-  deleteLinkedInAccount: async () => undefined,
+  deleteLinkedInAccount: async (accountId: string) => { deletedSessions.push(accountId); },
   retrieveOwnLinkedInProfile: async () => null,
 }));
 mock.module("./linkedin-own/session-store", () => ({
@@ -37,7 +40,7 @@ mock.module("./linkedin-own/session-store", () => ({
 }));
 mock.module("./entitlements", () => ({ entitlementsFor: () => ({ limits: { linkedInAccounts: 1 } }) }));
 
-const { disconnectLegacyLinkedInAccounts, listVerifiedLinkedInAccounts } = await import("./linkedin-accounts");
+const { disconnectLegacyLinkedInAccounts, forgetLinkedInSession, listVerifiedLinkedInAccounts } = await import("./linkedin-accounts");
 
 function account(id: string, accountId: string): LinkedInAccount {
   return {
@@ -57,6 +60,8 @@ beforeEach(() => {
   ownStatuses = new Map();
   disconnected.length = 0;
   completed.length = 0;
+  deletedSessions.length = 0;
+  connectedElsewhere = false;
 });
 
 afterAll(() => {
@@ -103,4 +108,16 @@ test("the tick disconnects old Unipile accounts even when the owner never opens 
   accounts = [account("doc-unipile", "UnipileAbc"), account("doc-own", "own_ACoAAlive01")];
   expect(await disconnectLegacyLinkedInAccounts()).toBe(1);
   expect(disconnected).toEqual(["doc-unipile"]);
+});
+
+// One LinkedIn account can be connected under two Omentir logins on one
+// stored session. Disconnecting it under one login (or that login's plan
+// ending) must not sign the other login out.
+test("leaving from one login keeps the LinkedIn session another login still uses", async () => {
+  connectedElsewhere = true;
+  await forgetLinkedInSession(account("doc-own", "own_ACoAAlive01"));
+  expect(deletedSessions).toEqual([]);
+  connectedElsewhere = false;
+  await forgetLinkedInSession(account("doc-own", "own_ACoAAlive01"));
+  expect(deletedSessions).toEqual(["own_ACoAAlive01"]);
 });

@@ -18,7 +18,7 @@ import {
   getCampaignEnrollment,
   getDailyLeadDiscoveryUsage,
   findLeadForWorkspace,
-  getLinkedInAccountByAccountIdAnyStatus,
+  listConnectedLinkedInAccountsEverywhere,
   getLinkedInAccountForWorkspace,
   getProductProfile,
   getWorkspace,
@@ -2505,9 +2505,11 @@ async function runProviderSyncs(mode: AutomationSafetyMode) {
   // sync and acceptance sweep a webhook would have triggered, on the
   // same claim intervals, whether or not a campaign is running.
   try {
-    for (const accountId of await listActiveOwnSessionAccountIds()) {
-      const account = await getLinkedInAccountByAccountIdAnyStatus(accountId);
-      if (!account || account.status !== "connected") continue;
+    // One LinkedIn account connected under several Omentir logins has a row
+    // per login, and each login's leads are only found from its own row.
+    const liveSessions = new Set(await listActiveOwnSessionAccountIds());
+    for (const account of await listConnectedLinkedInAccountsEverywhere()) {
+      if (!liveSessions.has(account.accountId)) continue;
       if (isWorkspaceAutomationPaused(mode, account.workspaceId)) continue;
       const key = `${account.workspaceId}:${account.id}`;
       if (!accounts.has(key)) {

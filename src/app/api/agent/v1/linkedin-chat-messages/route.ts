@@ -2,9 +2,7 @@ import { auth } from "@/lib/server/auth";
 import { NextResponse } from "next/server";
 import {
   findLeadForWorkspace,
-  getLinkedInAccountByAccountId,
   listLinkedInAccounts,
-  listWorkspaceIdsSharingLinkedIn,
 } from "@/lib/server/data";
 import { resolveActiveWorkspace } from "@/lib/server/active-workspace";
 import { hasActiveSubscription } from "@/lib/server/subscription";
@@ -74,10 +72,11 @@ export async function GET(request: Request) {
 
   const chatId = url.searchParams.get("chatId")?.trim() || "";
   const accountId = url.searchParams.get("accountId")?.trim() || "";
-  const account = accountId ? await getLinkedInAccountByAccountId(accountId) : null;
-  const ownedIds = account ? await listWorkspaceIdsSharingLinkedIn(workspace.id) : [];
+  const account = accountId
+    ? (await listLinkedInAccounts(workspace.id)).find((item) => item.accountId === accountId)
+    : null;
 
-  if (!chatId || !account || !ownedIds.includes(account.workspaceId)) {
+  if (!chatId || !account) {
     return NextResponse.json({ error: "Chat not found" }, { status: 404 });
   }
 

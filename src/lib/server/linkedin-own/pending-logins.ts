@@ -24,7 +24,6 @@ type PendingLoginDocument = {
   proxyHost?: string;
   proxyCountry?: string;
   timezone?: string;
-  replaceAccountId?: string;
   method: VerificationMethod;
   hint?: string;
   attempts: number;
@@ -60,7 +59,6 @@ export async function savePendingLogin(input: {
   proxyHost?: string;
   proxyCountry?: string;
   timezone?: string;
-  replaceAccountId?: string;
   method: VerificationMethod;
   hint?: string;
 }) {
@@ -80,7 +78,6 @@ export async function savePendingLogin(input: {
     ...(input.proxyPort && input.proxyHost ? { proxyHost: input.proxyHost } : {}),
     ...(input.proxyCountry ? { proxyCountry: input.proxyCountry } : {}),
     ...(input.timezone ? { timezone: input.timezone } : {}),
-    ...(input.replaceAccountId ? { replaceAccountId: input.replaceAccountId } : {}),
     method: input.method,
     ...(input.hint ? { hint: input.hint } : {}),
     attempts: 0,

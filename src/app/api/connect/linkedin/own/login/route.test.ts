@@ -129,13 +129,13 @@ test("a verification check is parked without the password", async () => {
     hint: "We sent a code to s***@example.com",
     live: { fakeBrowser: true },
   };
-  const response = await POST(request({ ...input, replaceAccountId: "old-account" }));
+  const response = await POST(request());
   expect(response.status).toBe(200);
   expect(await response.json()).toEqual({
     needsVerification: true, loginId: "pending-login-id-000000000000", method: "email", hint: "We sent a code to s***@example.com",
   });
   expect(connections).toHaveLength(0);
-  expect(saved[0]).toMatchObject({ userId: "user-1", workspaceId: "owned-workspace", replaceAccountId: "old-account", proxySessionId: logins[0].proxySessionId, proxyPort: 8001 });
+  expect(saved[0]).toMatchObject({ userId: "user-1", workspaceId: "owned-workspace", proxySessionId: logins[0].proxySessionId, proxyPort: 8001 });
   // The code step finishes on this same IP, so it stays held.
   expect(released).toHaveLength(0);
   expect(registeredLive).toEqual([{ id: "pending-login-id-000000000000", live: { fakeBrowser: true } }]);

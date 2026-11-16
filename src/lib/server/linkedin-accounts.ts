@@ -3,6 +3,7 @@ import "server-only";
 import {
   disconnectLinkedInAccount,
   completeLinkedInAccountRetirement,
+  hasOtherLinkedInConnection,
   listAllLinkedInAccounts,
   listConnectedLinkedInAccountsEverywhere,
   listLinkedInAccounts,
@@ -105,6 +106,14 @@ export async function disconnectLegacyLinkedInAccounts() {
   return legacy.length;
 }
 
+// One LinkedIn account can be connected under several Omentir logins, all on
+// the one stored session. Leaving from one login must not sign the others
+// out, so the session is forgotten only when nothing else is connected to it.
+export async function forgetLinkedInSession(account: Pick<LinkedInAccount, "id" | "accountId">) {
+  if (await hasOtherLinkedInConnection(account)) return;
+  await deleteLinkedInAccount(account.accountId);
+}
+
 export async function getVerifiedLinkedInAccount(workspaceId: string) {
   const result = await listVerifiedLinkedInAccounts(workspaceId);
   return result.accounts[0] || null;
@@ -120,7 +129,7 @@ export async function purgeWorkspaceLinkedInAccounts(workspaceId: string) {
       for (const retiredId of account.retiredUnipileAccountIds || []) {
         await completeLinkedInAccountRetirement(account.id, retiredId);
       }
-      await deleteLinkedInAccount(account.accountId);
+      await forgetLinkedInSession(account);
       deleted += 1;
     } catch (error) {
       failed += 1;
@@ -154,7 +163,7 @@ export async function enforceLinkedInAccountCap(workspaceId: string) {
         for (const retiredId of account.retiredUnipileAccountIds || []) {
           await completeLinkedInAccountRetirement(account.id, retiredId);
         }
-        await deleteLinkedInAccount(account.accountId);
+        await forgetLinkedInSession(account);
       } catch (error) {
         console.error(
           `[linkedin] failed to delete extra account ${account.accountId} after seat cap dropped:`,

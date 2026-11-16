@@ -67,16 +67,8 @@ function GoogleIcon() {
   );
 }
 
-type OldAccount = { accountId: string; name: string; campaigns: number };
-
-// Select value for "this is not one of my old accounts".
-const NEW_ACCOUNT = "new";
-
-export default function LinkedInConnectForm({ oldAccounts = [] }: { oldAccounts?: OldAccount[] }) {
+export default function LinkedInConnectForm() {
   const router = useRouter();
-  // With one old account the person is almost always reconnecting it, so it
-  // starts selected. With several they have to say which, or none.
-  const [replaceChoice, setReplaceChoice] = useState(oldAccounts.length === 1 ? oldAccounts[0].accountId : "");
   // Password sign-in runs in a real browser on the server, because
   // LinkedIn turns away plain HTTP sign-in requests.
   const [step, setStep] = useState<Step>({ kind: "credentials" });
@@ -141,7 +133,6 @@ export default function LinkedInConnectForm({ oldAccounts = [] }: { oldAccounts?
       email,
       password,
       ...browser(),
-      ...replaceAccount,
     });
     // The password is only needed for this one request.
     if (!result.ok && !result.needsVerification) setPassword("");
@@ -157,12 +148,10 @@ export default function LinkedInConnectForm({ oldAccounts = [] }: { oldAccounts?
     }));
   }
 
-  const replaceAccount = replaceChoice && replaceChoice !== NEW_ACCOUNT ? { replaceAccountId: replaceChoice } : {};
-
   async function connectSession(event: FormEvent) {
     event.preventDefault();
     if (loading) return;
-    handle(await send("/api/connect/linkedin/own", { liAt, jsessionId, ...browser(), ...replaceAccount }));
+    handle(await send("/api/connect/linkedin/own", { liAt, jsessionId, ...browser() }));
   }
 
   function startOver() {
@@ -239,31 +228,6 @@ export default function LinkedInConnectForm({ oldAccounts = [] }: { oldAccounts?
                 disabled={loading}
               />
             </Field>
-            {oldAccounts.length ? (
-              <div>
-                <Field label="Reconnecting an account?">
-                  <select
-                    className={inputClass}
-                    name="linkedin-replace"
-                    value={replaceChoice}
-                    onChange={(event) => setReplaceChoice(event.currentTarget.value)}
-                    required
-                    disabled={loading}
-                  >
-                    {oldAccounts.length > 1 ? <option value="" disabled>Choose one</option> : null}
-                    {oldAccounts.map((account) => (
-                      <option key={account.accountId} value={account.accountId}>
-                        Yes, {account.name} ({account.campaigns} {account.campaigns === 1 ? "campaign" : "campaigns"})
-                      </option>
-                    ))}
-                    <option value={NEW_ACCOUNT}>No, add a new account</option>
-                  </select>
-                </Field>
-                <p className="mt-1.5 text-xs leading-5 text-[var(--site-text-3)]">
-                  Pick the account you had connected before, so its campaigns keep running on it.
-                </p>
-              </div>
-            ) : null}
             {errorLine}
             <button type="submit" className={primary} disabled={loading}>
               {loading ? "Signing in to LinkedIn..." : "Connect LinkedIn"}

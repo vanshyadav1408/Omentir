@@ -1,6 +1,6 @@
 import { auth } from "@/lib/server/auth";
 import { NextResponse } from "next/server";
-import { getLinkedInAccountByAccountId, listWorkspaceIdsSharingLinkedIn } from "@/lib/server/data";
+import { listLinkedInAccounts } from "@/lib/server/data";
 import { resolveActiveWorkspace } from "@/lib/server/active-workspace";
 import { hasActiveSubscription } from "@/lib/server/subscription";
 import { fetchLinkedInMessageAttachment, linkedInMessageAccountId } from "@/lib/server/linkedin";
@@ -36,10 +36,11 @@ export async function GET(request: Request) {
   const messageId = url.searchParams.get("messageId")?.trim() || "";
   const attachmentId = url.searchParams.get("attachmentId")?.trim() || "";
   const accountId = url.searchParams.get("accountId")?.trim() || "";
-  const account = accountId ? await getLinkedInAccountByAccountId(accountId) : null;
-  const ownedIds = account ? await listWorkspaceIdsSharingLinkedIn(workspace.id) : [];
+  const account = accountId
+    ? (await listLinkedInAccounts(workspace.id)).find((item) => item.accountId === accountId)
+    : null;
 
-  if (!messageId || !attachmentId || !account || !ownedIds.includes(account.workspaceId)) {
+  if (!messageId || !attachmentId || !account) {
     return NextResponse.json({ error: "Attachment not found" }, { status: 404 });
   }
 

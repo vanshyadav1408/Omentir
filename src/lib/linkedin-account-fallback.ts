@@ -13,9 +13,9 @@ function sameName(value: string | undefined) {
   return (value || "").replace(/\s+/g, " ").trim().toLowerCase();
 }
 
-// The same LinkedIn member on another row, or an old Unipile row reconnected
-// through the own client without picking it in the "replace" field (old rows
-// carry no member id, so the name is what is left to match).
+// The same LinkedIn member on another row, or an old Unipile row whose person
+// connected again through the own client, which always adds a new row (old
+// rows carry no member id, so the name is what is left to match).
 function sameLinkedInPerson(stored: AccountLike, candidate: AccountLike) {
   if (stored.accountId && stored.accountId === candidate.accountId) return true;
   if (!stored.accountId || isOwnLinkedInId(stored.accountId)) return false;

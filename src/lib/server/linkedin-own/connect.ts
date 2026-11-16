@@ -1,15 +1,9 @@
 import "server-only";
 
 import { randomBytes } from "node:crypto";
-import {
-  getLinkedInAccountByAccountIdAnyStatus,
-  completeLinkedInAccountRetirement,
-  listWorkspaceIdsSharingLinkedIn,
-  saveLinkedInAccount,
-} from "../data";
+import { completeLinkedInAccountRetirement, saveLinkedInAccount } from "../data";
 import { endpoints } from "./endpoints";
-import { isOwnLinkedInId, ownAccountIdForMember } from "./ids";
-import type { LinkedInAccount } from "../types";
+import { ownAccountIdForMember } from "./ids";
 import { mapMeResponse } from "./mappers";
 import { keptProxyIdentity } from "./proxy-pool";
 import { getOwnSessionRecord } from "./session-store";
@@ -26,7 +20,6 @@ export async function connectOwnLinkedInAccount(input: {
   cookieHeader: string;
   userAgent: string;
   timezone?: string;
-  replaceAccountId?: string;
   // The proxy a password sign-in already used (or the one reserved for
   // this connect), so the session keeps the IP it was created from.
   proxySessionId?: string;
@@ -64,27 +57,10 @@ export async function connectOwnLinkedInAccount(input: {
   if (!me?.provider_id) throw new LinkedInConnectError("LinkedIn did not accept these cookies.");
   const accountId = ownAccountIdForMember(me.provider_id);
 
-  // 2. Ownership: this person must not belong to someone else's workspace.
-  // Checked before the stored session is touched, so a refused connect can
-  // never overwrite another workspace's cookies.
-  const allowedWorkspaceIds = await listWorkspaceIdsSharingLinkedIn(input.workspaceId);
-  const existing = await getLinkedInAccountByAccountIdAnyStatus(accountId);
-  if (existing && !allowedWorkspaceIds.includes(existing.workspaceId)) {
-    throw new LinkedInConnectError("This LinkedIn account is already connected to another workspace.");
-  }
-
-  // 3. Replacing an account from the old Unipile integration keeps its
-  // record id, campaigns and stored conversations. Those old accounts can no
-  // longer be read, so the owner's choice in the form decides which one.
-  let replacement: LinkedInAccount | undefined;
-  if (input.replaceAccountId) {
-    const candidate = await getLinkedInAccountByAccountIdAnyStatus(input.replaceAccountId);
-    if (!candidate || !allowedWorkspaceIds.includes(candidate.workspaceId) || isOwnLinkedInId(candidate.accountId)) {
-      throw new LinkedInConnectError("The LinkedIn account to replace is not available in this workspace.");
-    }
-    replacement = candidate;
-  }
-
+  // 2. The same LinkedIn member may already be connected, here or under
+  // another Omentir login. Whoever just signed in is that member, so every
+  // one of those connections moves onto this session and keeps the IP the
+  // account already had.
   const stored = await getOwnSessionRecord(accountId);
   const kept = keptProxyIdentity(stored || undefined, fresh) || fresh;
   if (kept.proxySessionId !== fresh.proxySessionId) {
@@ -92,16 +68,14 @@ export async function connectOwnLinkedInAccount(input: {
     const verified = mapMeResponse((await voyagerRequest(probe, { path: endpoints.me() })) as VoyagerResponse);
     if (verified?.provider_id !== me.provider_id) throw new LinkedInConnectError("LinkedIn could not verify this session. Please sign in again.");
   }
-  // Ownership, account and encrypted credentials commit together. A losing
-  // connection never writes or deletes the winning workspace's session.
+  // Account and encrypted credentials commit together.
   try {
     const account = await saveLinkedInAccount(input.workspaceId, {
       accountId,
       displayName: me.name || "LinkedIn",
       ...(me.profile_picture_url ? { avatarUrl: me.profile_picture_url } : {}),
       status: "connected",
-      ownSession: { ...probe, accountId, memberId: me.provider_id, ...(replacement ? { legacyAccountId: replacement.accountId } : {}) },
-      ...(replacement ? { replaceAccountId: replacement.accountId } : {}),
+      ownSession: { ...probe, accountId, memberId: me.provider_id },
     });
     // Old Unipile ids have nothing left to delete; clear their markers.
     for (const retiredId of account.retiredUnipileAccountIds || []) {
@@ -114,7 +88,7 @@ export async function connectOwnLinkedInAccount(input: {
     }
     return account;
   } catch (error) {
-    if (error instanceof Error && /^(?:Your current plan|This LinkedIn|The LinkedIn|LinkedIn message|Outreach is)/.test(error.message)) {
+    if (error instanceof Error && /^(?:Your current plan|This LinkedIn|LinkedIn message)/.test(error.message)) {
       throw new LinkedInConnectError(error.message);
     }
     throw error;

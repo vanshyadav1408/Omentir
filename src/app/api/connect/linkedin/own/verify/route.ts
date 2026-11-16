@@ -102,7 +102,6 @@ export async function POST(request: NextRequest) {
       userAgent: pending.userAgent,
       ...proxyIdentityOf(pending),
       ...(pending.timezone ? { timezone: pending.timezone } : {}),
-      ...(pending.replaceAccountId ? { replaceAccountId: pending.replaceAccountId } : {}),
     });
     // A reconnect keeps the account's earlier IP; this one goes back.
     if (pending.proxyPort) await releaseProxy(pending.proxySessionId, { rest: false }).catch(() => undefined);

@@ -13,12 +13,10 @@ import {
   findOwnedWorkspace,
   getAgent,
   getLinkedInAccount,
-  getLinkedInAccountByAccountId,
   getProductProfile,
   hasDailyQuotaRemaining,
   listLeads,
   listLinkedInAccounts,
-  listWorkspaceIdsSharingLinkedIn,
   listWorkspacesForOwner,
   ownerWorkspaceForBilling,
   setAgentApiKeyWorkspace,
@@ -143,13 +141,9 @@ function filesFromAttachments(
 
 async function requireOwnedInboxAccount(context: AgentApiContext, accountId?: string) {
   const requested = accountId?.trim()
-    ? await getLinkedInAccountByAccountId(accountId.trim())
+    ? (await listLinkedInAccounts(context.workspace.id)).find((item) => item.accountId === accountId.trim())
     : null;
-  const ownedIds = requested ? await listWorkspaceIdsSharingLinkedIn(context.workspace.id) : [];
-  const account =
-    requested && ownedIds.includes(requested.workspaceId)
-      ? requested
-      : await getLinkedInAccount(context.workspace.id);
+  const account = requested || (await getLinkedInAccount(context.workspace.id));
   if (!account) {
     throw new AgentApiOperationError("Connect LinkedIn in Omentir before using the inbox.", 409);
   }

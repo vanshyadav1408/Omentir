@@ -28,7 +28,7 @@ import {
   findOwnedWorkspace,
   getAgent,
   getLinkedInAccount,
-  getLinkedInAccountByAccountId,
+  listLinkedInAccounts,
   getLinkedInAccountForWorkspace,
   getProductProfile,
   listCampaigns,
@@ -50,7 +50,6 @@ import {
   upsertProductProfile,
   upsertLead,
   stopLeadOutreach,
-  listWorkspaceIdsSharingLinkedIn,
 } from "@/lib/server/data";
 import { parseAgentMessageTone } from "@/lib/agent-setup-defaults";
 import { parseLinkedInLeadCsv } from "@/lib/linkedin-csv";
@@ -72,10 +71,10 @@ import { getLeadOutreach, saveScheduledMessageEdit } from "@/lib/server/schedule
 import { analyzeWebsiteOrSearch, draftAgentSetupWithGemini } from "@/lib/server/gemini";
 import { hasActiveSubscription, requireActiveSubscription } from "@/lib/server/subscription";
 import {
-  deleteLinkedInAccount,
   linkedInChatBelongsToAccount,
   sendLinkedInChatMessage,
 } from "@/lib/server/linkedin";
+import { forgetLinkedInSession } from "@/lib/server/linkedin-accounts";
 import type { CampaignReplyHandling, CampaignStep, ProductProfile, SendWindow } from "@/lib/server/types";
 import { isLocalMode } from "@/lib/runtime-mode";
 import {
@@ -1019,7 +1018,7 @@ async function disconnectLinkedInAccountActionImpl(formData?: FormData) {
 
   // Delete the stored session first so a local "disconnected" record never
   // hides a still-live LinkedIn connection.
-  await deleteLinkedInAccount(account.accountId);
+  await forgetLinkedInSession(account);
   await disconnectLinkedInAccount(workspace.id, account.id);
   revalidatePath("/settings");
   revalidatePath("/connect");
@@ -1642,11 +1641,10 @@ async function sendLinkedInChatMessageActionImpl(formData: FormData) {
   const requestedAccountId = String(formData.get("accountId") || "").trim();
   let linkedInAccount;
   if (requestedAccountId) {
-    const requestedAccount = await getLinkedInAccountByAccountId(requestedAccountId);
-    const usableWorkspaceIds = requestedAccount
-      ? await listWorkspaceIdsSharingLinkedIn(workspace.id)
-      : [];
-    if (!requestedAccount || !usableWorkspaceIds.includes(requestedAccount.workspaceId)) {
+    const requestedAccount = (await listLinkedInAccounts(workspace.id)).find(
+      (account) => account.accountId === requestedAccountId,
+    );
+    if (!requestedAccount) {
       throw new Error("This LinkedIn account is not connected to this workspace.");
     }
     linkedInAccount = requestedAccount;

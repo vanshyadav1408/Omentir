@@ -23,7 +23,6 @@ const inputSchema = z.object({
   password: z.string().min(1).max(1024),
   userAgent: z.string().trim().min(1).max(1024),
   timezone: z.string().max(100).optional(),
-  replaceAccountId: z.string().trim().min(1).max(256).optional(),
 });
 
 // Step 1: email and password. Either connects straight away or returns a
@@ -42,7 +41,7 @@ export async function POST(request: NextRequest) {
   try {
     const parsed = inputSchema.safeParse(await readJsonBody<unknown>(request, 16 * 1024));
     if (!parsed.success) return json({ error: "Enter your LinkedIn email and password." }, 400);
-    const { email, password, userAgent, timezone, replaceAccountId } = parsed.data;
+    const { email, password, userAgent, timezone } = parsed.data;
     if (!/Mozilla\/5\.0/.test(userAgent)) return json({ error: "Open this page in a regular browser and try again." }, 400);
 
     const workspace = await resolveActiveWorkspace(guard.userId);
@@ -69,7 +68,6 @@ export async function POST(request: NextRequest) {
           method: outcome.method,
           ...(outcome.hint ? { hint: outcome.hint } : {}),
           ...(timezone ? { timezone } : {}),
-          ...(replaceAccountId ? { replaceAccountId } : {}),
         });
         if ("live" in outcome) {
           registerLiveBrowserLogin(loginId, outcome.live);
@@ -89,7 +87,6 @@ export async function POST(request: NextRequest) {
       userAgent,
       ...proxy,
       ...(timezone ? { timezone } : {}),
-      ...(replaceAccountId ? { replaceAccountId } : {}),
     });
     // A reconnect keeps the account's earlier IP; this one goes back.
     await giveBackProxy();

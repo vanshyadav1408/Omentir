@@ -69,7 +69,7 @@ beforeEach(() => {
   submitError = undefined;
   pending = {
     id: LOGIN_ID, userId: "user-1", workspaceId: "owned-workspace", cookies: { JSESSIONID: '"ajax:1"' }, challenge,
-    userAgent: "Mozilla/5.0 test", proxySessionId: "0123456789abcdef", timezone: "Asia/Kolkata", replaceAccountId: "old-account",
+    userAgent: "Mozilla/5.0 test", proxySessionId: "0123456789abcdef", timezone: "Asia/Kolkata",
     method: "email", attempts: 0,
   };
   submissions.length = 0;
@@ -90,7 +90,7 @@ test("the right code connects with the stored session details and clears the pen
   expect(deleted).toEqual([LOGIN_ID]);
   expect(connections).toEqual([{
     workspaceId: "owned-workspace", cookieHeader: 'li_at=AQED; JSESSIONID="ajax:1"', userAgent: "Mozilla/5.0 test",
-    proxySessionId: "0123456789abcdef", timezone: "Asia/Kolkata", replaceAccountId: "old-account",
+    proxySessionId: "0123456789abcdef", timezone: "Asia/Kolkata",
   }]);
 });
 

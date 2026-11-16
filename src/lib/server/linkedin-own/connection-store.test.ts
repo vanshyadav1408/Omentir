@@ -82,8 +82,7 @@ mock.module("../firebase", () => ({
 const realTransport = await import("./transport");
 mock.module("./transport", () => ({ ...realTransport, voyagerRequest: async () => fx.meResponse }));
 const { connectOwnLinkedInAccount } = await import("./connect");
-const { saveLinkedInAccount, claimSystemTask, releaseSystemTask, listReplaceableLinkedInAccounts } = await import("../data");
-const { retiredAccountKey } = await import("./retired-accounts");
+const { saveLinkedInAccount, claimSystemTask, releaseSystemTask, hasOtherLinkedInConnection } = await import("../data");
 const { deleteOwnSession, invalidateOwnSession, loadOwnSession, markOwnSessionExpired, sessionHooks } = await import("./session-store");
 const original = { key: process.env.LINKEDIN_SESSION_KEY, local: process.env.RUN_LOCALLY };
 afterAll(() => {
@@ -100,7 +99,6 @@ function workspace(id: string) { rows.set(`workspaces/${id}`, { id, ownerId: id,
 function legacyAccount() {
   rows.set("linkedinAccounts/original-seat", { id: "original-seat", workspaceId: "a", accountId: "legacy-account", provider: "unipile", displayName: "Sam", status: "connected", createdAt: "2025-01-01", updatedAt: "2025-01-01" });
   rows.set("campaigns/campaign", { id: "campaign", workspaceId: "a", linkedInAccountId: "original-seat", status: "active" });
-  rows.set("conversations/history", { workspaceId: "a", messages: [{ id: "old-message", body: "Already sent", direction: "outbound", outboundSource: "automation" }] });
 }
 beforeEach(() => {
   rows.clear(); failCommit = false;
@@ -109,12 +107,38 @@ beforeEach(() => {
   workspace("a"); workspace("b");
 });
 
-test("two owners connecting the same member leave exactly one account with its encrypted session", async () => {
-  const results = await Promise.allSettled([connectOwnLinkedInAccount({ ...input, workspaceId: "a" }), connectOwnLinkedInAccount({ ...input, workspaceId: "b" })]);
-  expect(results.filter((result) => result.status === "fulfilled")).toHaveLength(1);
-  const session = rows.get(`linkedinSessions/${accountId}`)!;
-  expect(JSON.parse(decryptSessionSecret(String(session.sealedCookies))).li_at).toBe("secret");
-  expect([...rows.keys()].filter((path) => path.startsWith("linkedinAccounts/"))).toHaveLength(1);
+// A person with two Omentir logins was told "already connected to another
+// workspace" and could not use their own LinkedIn under the second one. Each
+// login now gets its own account row, and both send through one session.
+test("the same LinkedIn member can be connected under two Omentir logins on one shared session", async () => {
+  const [first, second] = await Promise.all([connectOwnLinkedInAccount({ ...input, workspaceId: "a" }), connectOwnLinkedInAccount({ ...input, workspaceId: "b" })]);
+  expect([first.workspaceId, second.workspaceId].sort()).toEqual(["a", "b"]);
+  expect(first.id).not.toBe(second.id);
+  expect([...rows.keys()].filter((path) => path.startsWith("linkedinSessions/"))).toEqual([`linkedinSessions/${accountId}`]);
+  expect(JSON.parse(decryptSessionSecret(String(rows.get(`linkedinSessions/${accountId}`)!.sealedCookies))).li_at).toBe("secret");
+});
+
+// With a row per login, a sign-in must find its own login's row. Picking the
+// other login's row would add a duplicate on every sign-in and profile refresh.
+test("signing in again under one login reuses that login's row and leaves the other login's row alone", async () => {
+  const first = await connectOwnLinkedInAccount({ ...input, workspaceId: "a" });
+  const second = await connectOwnLinkedInAccount({ ...input, workspaceId: "b" });
+  const secondBefore = structuredClone(rows.get(`linkedinAccounts/${second.id}`));
+  const again = await connectOwnLinkedInAccount({ ...input, cookieHeader: 'li_at=fresh; JSESSIONID="ajax:456"', workspaceId: "a" });
+  expect(again.id).toBe(first.id);
+  expect(again.createdAt).toBe(first.createdAt);
+  expect(rows.get(`linkedinAccounts/${second.id}`)).toEqual(secondBefore);
+  expect([...rows.keys()].filter((path) => path.startsWith("linkedinAccounts/"))).toHaveLength(2);
+});
+
+// Disconnecting deletes the stored session. With two logins on that session,
+// the first one to leave must not sign the other one out.
+test("a LinkedIn account counts as still in use until its last login disconnects", async () => {
+  const first = await connectOwnLinkedInAccount({ ...input, workspaceId: "a" });
+  const second = await connectOwnLinkedInAccount({ ...input, workspaceId: "b" });
+  expect(await hasOtherLinkedInConnection(first)).toBe(true);
+  rows.get(`linkedinAccounts/${second.id}`)!.status = "disconnected";
+  expect(await hasOtherLinkedInConnection(first)).toBe(false);
 });
 
 test("a failed account commit never leaves new credentials behind", async () => {
@@ -138,34 +162,18 @@ test("reconnecting a disconnected account must still fit the owner's paid seat l
   expect(rows.has(`linkedinSessions/${accountId}`)).toBe(false);
 });
 
-test("replacing an old Unipile account keeps its campaigns and history, and that old id can never come back as a live account", async () => {
+// The connect form used to ask "reconnecting an account?" and moved the old
+// account's row and campaigns onto the new sign-in. Every connect is a new
+// account now, so an old row is never rewritten by one.
+test("connecting next to an old Unipile account adds a new account and leaves the old one as it was", async () => {
   legacyAccount();
-  const history = structuredClone(rows.get("conversations/history"));
-  const migrated = await connectOwnLinkedInAccount({ ...input, workspaceId: "a", replaceAccountId: "legacy-account" });
-  expect(migrated.id).toBe("original-seat");
-  expect(migrated.accountId).toBe(accountId);
+  rows.get("linkedinAccounts/original-seat")!.status = "disconnected";
+  const before = structuredClone(rows.get("linkedinAccounts/original-seat"));
+  const connected = await connectOwnLinkedInAccount({ ...input, workspaceId: "a" });
+  expect(connected.id).not.toBe("original-seat");
+  expect(rows.get("linkedinAccounts/original-seat")).toEqual(before);
   expect(rows.get("campaigns/campaign")?.linkedInAccountId).toBe("original-seat");
-  expect(rows.get("conversations/history")).toEqual(history);
-  expect(migrated.retiredUnipileAccountIds).toEqual([]);
-  expect(rows.has(`linkedinRetiredAccounts/${retiredAccountKey("legacy-account")}`)).toBe(true);
-});
-
-// The old account can no longer be read to prove who it belonged to, so the
-// owner picks it in the form. That choice must stay inside their workspaces.
-test("an old account from someone else's workspace cannot be taken over by naming it", async () => {
-  legacyAccount();
-  rows.set("linkedinAccounts/original-seat", { ...rows.get("linkedinAccounts/original-seat"), workspaceId: "b" });
-  await expect(connectOwnLinkedInAccount({ ...input, workspaceId: "a", replaceAccountId: "legacy-account" })).rejects.toThrow("not available in this workspace");
-  expect(rows.get("linkedinAccounts/original-seat")?.accountId).toBe("legacy-account");
-  expect(rows.has(`linkedinSessions/${accountId}`)).toBe(false);
-});
-
-test("an active send keeps the original connection intact", async () => {
-  legacyAccount();
-  rows.set("campaignEnrollments/sending", { workspaceId: "a", pendingAction: { kind: "message" } });
-  await expect(connectOwnLinkedInAccount({ ...input, workspaceId: "a", replaceAccountId: "legacy-account" })).rejects.toThrow("Outreach is sending");
-  expect(rows.get("linkedinAccounts/original-seat")?.accountId).toBe("legacy-account");
-  expect(rows.has(`linkedinSessions/${accountId}`)).toBe(false);
+  expect([...rows.keys()].some((path) => path.startsWith("linkedinRetiredAccounts/"))).toBe(false);
 });
 
 test("failed sync restores its successful watermark and cannot release a newer claim", async () => {
@@ -216,17 +224,6 @@ test("a stored session that cannot be decrypted is a typed rejection, not a poss
   expect(error?.name).toBe("LinkedInResponseError");
   expect(error?.status).toBe(503);
   expect(error?.errorType).toBe("errors/provider_unconfigured");
-});
-
-test("the reconnect form offers only old accounts that campaigns still run on", async () => {
-  // Reconnecting without naming the old account leaves its campaigns pointing
-  // at a record that can never send. Owners who reconnected several times
-  // also have same-named leftovers no campaign uses; listing those would
-  // make the right one impossible to pick.
-  workspace("a");
-  legacyAccount();
-  rows.set("linkedinAccounts/leftover", { id: "leftover", workspaceId: "a", accountId: "legacy-unused", provider: "unipile", displayName: "Sam", status: "disconnected", createdAt: "2025-01-01T00:00:00Z", updatedAt: "2025-01-01T00:00:00Z" });
-  expect(await listReplaceableLinkedInAccounts("a")).toEqual([{ accountId: "legacy-account", name: "Sam", campaigns: 1 }]);
 });
 
 test("late cookie refreshes cannot recreate a disconnected session", async () => {

@@ -18,7 +18,6 @@ const inputSchema = z.object({
   jsessionId: z.string().trim().min(1).max(1024).regex(/^"?ajax:[A-Za-z0-9_-]+"?$/),
   userAgent: z.string().trim().min(1).max(1024),
   timezone: z.string().max(100).optional(),
-  replaceAccountId: z.string().trim().min(1).max(256).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -45,7 +44,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Check both session values and try again." }, { status: 400 });
     }
     const workspace = await resolveActiveWorkspace(userId);
-    const { liAt, jsessionId, userAgent, timezone, replaceAccountId } = parsed.data;
+    const { liAt, jsessionId, userAgent, timezone } = parsed.data;
     proxy = await reserveProxy(randomBytes(8).toString("hex"), requestCountry(request.headers));
     if (!proxy) throw new LinkedInConnectError(NO_FREE_PROXY_MESSAGE);
     const account = await connectOwnLinkedInAccount({
@@ -54,7 +53,6 @@ export async function POST(request: NextRequest) {
       userAgent,
       timezone,
       ...proxy,
-      ...(replaceAccountId ? { replaceAccountId } : {}),
     });
     await giveBackProxy();
     return NextResponse.json({ ok: true, displayName: account.displayName }, { headers: { "cache-control": "no-store" } });
