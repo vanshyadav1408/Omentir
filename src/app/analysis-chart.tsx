@@ -1,27 +1,19 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import type {
-  ActivityDay,
-  CampaignEnrollmentPreview,
-  Conversation,
-  LeadDashboardPreview,
-} from "@/lib/server/types";
+import type { ActivityDay } from "@/lib/server/types";
 import {
-  buildActivityTotalsFromLive,
   mergeActivityTotals,
   toActivityChartPoints,
   type ActivityChartPoint,
+  type ActivityDayTotals,
 } from "@/lib/activity-overview";
 
 type ChartPoint = ActivityChartPoint;
 
 type AnalysisChartProps = {
-  // Only the timeline fields are read, so the dashboard's slim projection is
-  // enough here; a full LeadPreview still satisfies it.
-  leads: LeadDashboardPreview[];
-  conversations: Conversation[];
-  enrollments: CampaignEnrollmentPreview[];
+  /** Day totals built on the server from the live leads, enrollments and conversations. */
+  liveTotals: ActivityDayTotals[];
   /** Durable day totals that survive agent/lead deletion. */
   activityDays?: ActivityDay[];
   maxDays?: number;
@@ -60,15 +52,12 @@ const chart = {
 };
 
 function buildChartData({
-  leads,
-  conversations,
-  enrollments,
+  liveTotals,
   activityDays = [],
   maxDays = 11,
   startDateKey,
   endDateKey,
 }: AnalysisChartProps): ChartPoint[] {
-  const live = buildActivityTotalsFromLive({ leads, enrollments, conversations });
   const durable = activityDays
     .filter((day) => day.day)
     .map((day) => ({
@@ -80,7 +69,7 @@ function buildChartData({
     }));
 
   // max() merge: durable history keeps deleted-agent work; live fills current days.
-  return toActivityChartPoints(mergeActivityTotals(live, durable), {
+  return toActivityChartPoints(mergeActivityTotals(liveTotals, durable), {
     maxDays,
     startDateKey,
     endDateKey,

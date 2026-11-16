@@ -12,6 +12,15 @@ import {
 } from "@/app/actions";
 import { TextField } from "@/app/ui/text-field";
 import { useSidebarResource } from "@/app/use-sidebar-resource";
+import { LEADS_RESOURCE } from "@/app/sidebar-early-fetch";
+import {
+  ALL_LEADS_GROUP,
+  DEFAULT_LEAD_PAGE_SIZE,
+  EMPTY_LEAD_PAGE,
+  LEAD_PAGE_SIZES,
+  leadPageQueryString,
+  type LeadPage,
+} from "@/lib/lead-page";
 import { ContentReveal, LeadsTableSkeleton, Skeleton } from "@/app/app-skeletons";
 import NewAgentButton from "@/app/(app)/agents/new-agent-button";
 import { useBodyScrollLock } from "@/app/use-body-scroll-lock";
@@ -35,7 +44,6 @@ import { LeadAvatar } from "@/app/lead-avatar";
 
 type LeadsViewProps = {
   groups: Group[];
-  leads: LeadPreview[];
 };
 
 function LinkedInProfileLink({ href }: { href: string }) {
@@ -54,7 +62,7 @@ function LinkedInProfileLink({ href }: { href: string }) {
   );
 }
 
-const ALL_CONTACTS_TAB = "all";
+const ALL_CONTACTS_TAB = ALL_LEADS_GROUP;
 
 function outreachEmptyCopy(status: LeadPreview["outreachStatus"]) {
   if (status === "replied") return "They replied. Continue the thread in Messages.";
@@ -153,28 +161,41 @@ function downloadCsv(filename: string, csv: string) {
   URL.revokeObjectURL(url);
 }
 
-const PER_PAGE_OPTIONS = [25, 50, 100];
+const PER_PAGE_OPTIONS = LEAD_PAGE_SIZES;
 const OUTREACH_REFRESH_MS = 5_000;
 const LEAD_LIST_REFRESH_MS = 120_000;
 const LEAD_LIST_RETURN_REFRESH_MS = 30_000;
+// The server searches the whole workspace, so wait for a pause in typing.
+const SEARCH_DEBOUNCE_MS = 250;
 const selectLeadsData = (data: Record<string, unknown>) => ({
   groups: data.groups as Group[] || [],
-  leads: data.leads as LeadPreview[] || [],
+  leadPage: data.leadPage as LeadPage || EMPTY_LEAD_PAGE,
 });
 
-export default function LeadsView({ groups, leads }: LeadsViewProps) {
+export default function LeadsView({ groups }: LeadsViewProps) {
   const timeZone = useWorkspaceTimeZone();
-  const leadsResource = useSidebarResource(
-    "groups,leadPreviews",
-    { groups, leads },
-    selectLeadsData,
-  );
-  const { groups: loadedGroups, leads: loadedLeads } = leadsResource.value;
-  const isInitialLoading = leadsResource.loading;
   const [selectedGroupId, setSelectedGroupId] = useState<string>(ALL_CONTACTS_TAB);
   const [search, setSearch] = useState("");
-  const [perPage, setPerPage] = useState<number>(100);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [perPage, setPerPage] = useState<number>(DEFAULT_LEAD_PAGE_SIZE);
   const [page, setPage] = useState(1);
+  // The server pages, filters and searches; the default view's key is plain
+  // LEADS_RESOURCE so the early fetch, warmer and IndexedDB share it.
+  const pageQuery = leadPageQueryString({
+    groupId: selectedGroupId,
+    search: debouncedSearch,
+    page,
+    perPage,
+  });
+  const leadsResource = useSidebarResource(
+    LEADS_RESOURCE + (pageQuery ? `?${pageQuery}` : ""),
+    { groups, leadPage: EMPTY_LEAD_PAGE },
+    selectLeadsData,
+  );
+  const { groups: loadedGroups, leadPage } = leadsResource.value;
+  const isInitialLoading = leadsResource.loading;
+  // The previous page stays on screen until the requested one arrives.
+  const isPageLoading = !isInitialLoading && leadPage.key !== pageQuery;
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [mobileGroupMenu, setMobileGroupMenu] = useState<Group | null>(null);
   const [desktopGroupMenu, setDesktopGroupMenu] = useState<{
@@ -329,40 +350,33 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
     showAgentStarted(notice.name || undefined, notice.kind);
   }, [showAgentStarted]);
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    // Only show leads that still belong to a live group. Deleting a group
-    // permanently removes its leads from the database; this filter also hides
-    // any legacy orphan rows with empty groupIds.
-    const liveGroupIds = new Set(
-      loadedGroups
-        .filter((group) => !deletedGroupIds.has(group.id))
-        .map((group) => group.id),
-    );
-    let next = loadedLeads.filter((lead) =>
-      lead.groupIds.some((id) => liveGroupIds.has(id)),
-    );
-    if (selectedGroupId !== ALL_CONTACTS_TAB) {
-      next = next.filter((lead) => lead.groupIds.includes(selectedGroupId));
-    }
-    if (q) {
-      next = next.filter(
-        (lead) =>
-          lead.name.toLowerCase().includes(q) ||
-          lead.company.toLowerCase().includes(q) ||
-          lead.title.toLowerCase().includes(q),
-      );
-    }
-    next = [...next].sort((a, b) => (b.fitScore || 0) - (a.fitScore || 0));
-    return next;
-  }, [loadedLeads, loadedGroups, deletedGroupIds, search, selectedGroupId]);
+  // A new search starts on page 1, in the same update so only one request goes out.
+  useEffect(() => {
+    if (search === debouncedSearch) return;
+    const timer = window.setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, SEARCH_DEBOUNCE_MS);
+    return () => window.clearTimeout(timer);
+  }, [search, debouncedSearch]);
 
-  const total = filtered.length;
-  const totalPages = Math.max(1, Math.ceil(total / perPage));
-  const currentPage = Math.min(page, totalPages);
-  const start = (currentPage - 1) * perPage;
-  const end = Math.min(start + perPage, total);
-  const pageRows = filtered.slice(start, end);
+  // The server already dropped leads outside live groups. A group deleted a
+  // moment ago is hidden here until the reload after its delete lands.
+  const pageRows = useMemo(() => {
+    if (!deletedGroupIds.size) return leadPage.leads;
+    const liveGroupIds = new Set(
+      loadedGroups.filter((group) => !deletedGroupIds.has(group.id)).map((group) => group.id),
+    );
+    return leadPage.leads.filter((lead) =>
+      (lead.groupIds || []).some((id) => liveGroupIds.has(id)),
+    );
+  }, [leadPage.leads, loadedGroups, deletedGroupIds]);
+
+  const total = leadPage.total;
+  const totalPages = Math.max(1, Math.ceil(total / leadPage.perPage));
+  const currentPage = leadPage.page;
+  const start = (currentPage - 1) * leadPage.perPage;
+  const end = Math.min(start + leadPage.leads.length, total);
   const openLead = pageRows.find((lead) => lead.id === openLeadId) ?? null;
   const pageLeadKey = pageRows.map((lead) => lead.id).join(",");
 
@@ -564,10 +578,7 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
             placeholder="Search leads"
             aria-label="Search leads"
             value={search}
-            onChange={(event) => {
-              setSearch(event.target.value);
-              setPage(1);
-            }}
+            onChange={(event) => setSearch(event.target.value)}
             leadingIcon={
               <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <circle cx="11" cy="11" r="8" />
@@ -588,10 +599,7 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
               placeholder="Search leads"
               aria-label="Search leads"
               value={search}
-              onChange={(event) => {
-                setSearch(event.target.value);
-                setPage(1);
-              }}
+              onChange={(event) => setSearch(event.target.value)}
               leadingIcon={
                 <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <circle cx="11" cy="11" r="8" />
@@ -706,7 +714,7 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
         {isInitialLoading ? (
           <LeadsTableSkeleton />
         ) : (
-          <ContentReveal key={selectedGroupId} className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[minmax(22rem,2fr)_minmax(0,3fr)]">
+          <ContentReveal key={leadPage.groupId} className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[minmax(22rem,2fr)_minmax(0,3fr)]">
             <div className="flex min-h-0 min-w-0 flex-col md:border-r md:border-zinc-200">
               <div className="m3-table-grid-header hidden shrink-0 grid-cols-[40px_minmax(0,1fr)] items-center gap-3 md:grid">
                 <span>
@@ -720,10 +728,13 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
                 <span>Contact</span>
               </div>
 
-              <div className="m3-table-grid min-h-0 flex-1 overflow-y-auto">
+              <div
+                aria-busy={isPageLoading}
+                className={`m3-table-grid min-h-0 flex-1 overflow-y-auto transition-opacity ${isPageLoading ? "opacity-60" : ""}`}
+              >
                 {pageRows.length === 0 ? (
                   <div className="grid h-full place-items-center p-6 text-center text-[12px] font-medium text-zinc-700 md:p-10">
-                    {search ? (
+                    {leadPage.search ? (
                       "No leads match your search."
                     ) : (
                       <div>
@@ -790,7 +801,7 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
                   <div className="flex items-center gap-0.5">
                     <button
                       type="button"
-                      onClick={() => setPage((current) => Math.max(1, current - 1))}
+                      onClick={() => setPage(Math.max(1, currentPage - 1))}
                       disabled={currentPage === 1}
                       className="grid h-7 w-7 cursor-pointer place-items-center rounded-md border border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface-container)] text-[var(--md-sys-color-on-surface-variant)] transition-colors hover:bg-[var(--md-sys-state-hover)] disabled:cursor-not-allowed disabled:opacity-40"
                       aria-label="Previous page"
@@ -804,7 +815,7 @@ export default function LeadsView({ groups, leads }: LeadsViewProps) {
                     </span>
                     <button
                       type="button"
-                      onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+                      onClick={() => setPage(Math.min(totalPages, currentPage + 1))}
                       disabled={currentPage === totalPages}
                       className="grid h-7 w-7 cursor-pointer place-items-center rounded-md border border-[var(--md-sys-color-outline)] bg-[var(--md-sys-color-surface-container)] text-[var(--md-sys-color-on-surface-variant)] transition-colors hover:bg-[var(--md-sys-state-hover)] disabled:cursor-not-allowed disabled:opacity-40"
                       aria-label="Next page"

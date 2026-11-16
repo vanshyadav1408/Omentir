@@ -178,9 +178,7 @@ function OverviewScreen({ todayKey, go }: { todayKey: string; go: DemoGo }) {
         <p className="hero-dash-sub">Leads, outreach, and replies for this range.</p>
         <div className="mt-4">
           <AnalysisChart
-            leads={[]}
-            conversations={[]}
-            enrollments={[]}
+            liveTotals={[]}
             activityDays={activityDays}
             maxDays={rangeDays}
             startDateKey={rangeStart}

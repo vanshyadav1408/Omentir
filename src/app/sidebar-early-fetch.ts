@@ -24,9 +24,10 @@ const EARLY_FETCH_KEY = "__omentirSidebarEarlyFetch";
 
 type EarlyFetchStore = Record<string, Promise<Record<string, unknown> | null>>;
 
-/** Resource strings shared by the Overview page (script) and its view (hook). */
-export const DASHBOARD_RESOURCE =
-  "agents,groups,leadDashboardPreviews,enrollmentPreviews,conversations";
+/** Resource strings shared by the pages (script), their views (hook) and the warmer. */
+export const DASHBOARD_RESOURCE = "overviewSummary";
+export const LEADS_RESOURCE = "groups,leadPage";
+export const AGENTS_RESOURCE = "agents,groups,agentMetrics";
 export const ACTIVITY_DAYS_RESOURCE = "activityDays";
 export const LINKEDIN_INBOX_RESOURCE = "linkedinInbox";
 
@@ -42,9 +43,9 @@ export const LINKEDIN_INBOX_RESOURCE = "linkedinInbox";
  */
 export const EARLY_FETCH_ROUTES: Record<string, string[]> = {
   "/overview": [DASHBOARD_RESOURCE, ACTIVITY_DAYS_RESOURCE, LINKEDIN_INBOX_RESOURCE],
-  "/leads": ["groups,leadPreviews"],
+  "/leads": [LEADS_RESOURCE],
   "/messages": ["conversations", "leadPreviews", LINKEDIN_INBOX_RESOURCE],
-  "/agents": ["agents,groups,leadAgentRefs,enrollmentPreviews", "agentStatus"],
+  "/agents": [AGENTS_RESOURCE, "agentStatus"],
   "/settings": ["linkedinAccounts"],
   "/api-keys": ["agentApiKeys"],
 };

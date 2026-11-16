@@ -14,7 +14,7 @@ function jsonResponse(data: unknown) {
 }
 
 describe("warmOtherPageData", () => {
-  test("starts leadPreviews while LinkedIn inbox is still in flight so /leads and /messages can warm in the background on Overview", async () => {
+  test("starts the Leads page while LinkedIn inbox is still in flight, and never warms the whole lead list", async () => {
     let releaseInbox!: () => void;
     const inboxGate = new Promise<void>((resolve) => {
       releaseInbox = resolve;
@@ -47,19 +47,24 @@ describe("warmOtherPageData", () => {
       await Promise.race([
         new Promise<void>((resolve, reject) => {
           const timer = setInterval(() => {
-            if (fetched.some((resource) => resource.split(",").includes("leadPreviews"))) {
+            if (fetched.some((resource) => resource.split(",").includes("leadPage"))) {
               clearInterval(timer);
               resolve();
             }
           }, 5);
           setTimeout(() => {
             clearInterval(timer);
-            reject(new Error(`leadPreviews did not start before inbox finished: ${fetched.join(" | ")}`));
+            reject(new Error(`leadPage did not start before inbox finished: ${fetched.join(" | ")}`));
           }, 400);
         }),
         warming,
       ]);
-      expect(fetched.some((resource) => resource.split(",").includes("leadPreviews"))).toBe(true);
+      expect(fetched.some((resource) => resource.split(",").includes("leadPage"))).toBe(true);
+      releaseInbox();
+      await warming;
+      // ~9 MB on the largest workspace; downloading it on every app page is
+      // what slowed first loads.
+      expect(fetched.some((resource) => resource.split(",").includes("leadPreviews"))).toBe(false);
     } finally {
       releaseInbox();
       globalThis.fetch = originalFetch;

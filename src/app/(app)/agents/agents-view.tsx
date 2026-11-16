@@ -4,7 +4,7 @@ import { unwrapAction } from "@/lib/action-result";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import type { Agent, CampaignEnrollmentPreview, Group, LeadAgentRef } from "@/lib/server/types";
+import type { Agent, Group } from "@/lib/server/types";
 import {
   deleteAgentAction,
   pauseAgentAction,
@@ -12,6 +12,8 @@ import {
   setAgentLeadsOnlyAction,
 } from "@/app/actions";
 import { useSidebarResource } from "@/app/use-sidebar-resource";
+import { AGENTS_RESOURCE } from "@/app/sidebar-early-fetch";
+import { NO_AGENT_METRICS, type AgentMetrics } from "@/lib/agent-metrics";
 import { ContentReveal, OutreachListSkeleton } from "@/app/app-skeletons";
 import NewAgentButton from "./new-agent-button";
 import { AgentStatusPill } from "./agent-status-pill";
@@ -34,20 +36,10 @@ import {
   type AgentStatusFacts,
   type AgentStatusLine,
 } from "@/lib/agent-status";
-import {
-  STAGE_ACCEPTED,
-  STAGE_CONTACTED,
-  STAGE_MESSAGED,
-  STAGE_REPLIED,
-  enrollmentProgressStage,
-  leadStage,
-} from "@/lib/outreach-stage";
 
 type AgentsViewProps = {
   agents: Agent[];
   groups: Group[];
-  leads: LeadAgentRef[];
-  enrollments: CampaignEnrollmentPreview[];
   /** Finite plan cap, or null when the plan has unlimited agents. */
   agentLimit: number | null;
   atAgentLimit: boolean;
@@ -59,8 +51,7 @@ type AgentsViewProps = {
 const selectAgentsData = (data: Record<string, unknown>) => ({
   agents: data.agents as Agent[] || [],
   groups: data.groups as Group[] || [],
-  leads: data.leads as LeadAgentRef[] || [],
-  enrollments: data.enrollments as CampaignEnrollmentPreview[] || [],
+  agentMetrics: data.agentMetrics as Record<string, AgentMetrics> || {},
 });
 
 const selectAgentStatus = (data: Record<string, unknown>) =>
@@ -116,21 +107,9 @@ function matchesStatusFilter(status: Agent["status"], filter: StatusFilter) {
   return status === filter;
 }
 
-const NO_METRICS = {
-  target: 0,
-  contacted: 0,
-  accepted: 0,
-  messaged: 0,
-  replied: 0,
-  acceptRate: null as number | null,
-  replyRate: null as number | null,
-};
-
 export default function AgentsView({
   agents,
   groups,
-  leads,
-  enrollments,
   agentLimit,
   atAgentLimit,
   subscriptionActive,
@@ -138,9 +117,10 @@ export default function AgentsView({
   const router = useRouter();
   const timeZone = useWorkspaceTimeZone();
   const hydrated = useHydrated();
+  // Per-agent counts are computed on the server (src/lib/agent-metrics.ts).
   const agentsResource = useSidebarResource(
-    "agents,groups,leadAgentRefs,enrollmentPreviews",
-    { agents, groups, leads, enrollments },
+    AGENTS_RESOURCE,
+    { agents, groups, agentMetrics: {} as Record<string, AgentMetrics> },
     selectAgentsData,
     subscriptionActive,
   );
@@ -153,8 +133,7 @@ export default function AgentsView({
   const {
     agents: loadedAgents,
     groups: loadedGroups,
-    leads: loadedLeads,
-    enrollments: loadedEnrollments,
+    agentMetrics,
   } = agentsResource.value;
   const isInitialLoading = agentsResource.loading;
   const [pendingToggleIds, setPendingToggleIds] = useState<Set<string>>(new Set());
@@ -354,72 +333,6 @@ export default function AgentsView({
     return describeAgentStatus({ ...facts, agentStatus: displayStatus }, options);
   }
 
-  const agentMetrics = useMemo(() => {
-    const leadsByAgent = new Map<string, LeadAgentRef[]>();
-    for (const lead of loadedLeads) {
-      const agentId = lead.sourceAgentId;
-      if (!agentId) continue;
-      const list = leadsByAgent.get(agentId) ?? [];
-      list.push(lead);
-      leadsByAgent.set(agentId, list);
-    }
-
-    // A lead can be enrolled more than once (re-run, second campaign); the
-    // furthest of those enrollments is the one that describes the lead.
-    const enrollmentStageByLead = new Map<string, number>();
-    for (const enrollment of loadedEnrollments) {
-      enrollmentStageByLead.set(
-        enrollment.leadId,
-        Math.max(
-          enrollmentStageByLead.get(enrollment.leadId) ?? 0,
-          enrollmentProgressStage(enrollment.status, enrollment.connectionSentAt),
-        ),
-      );
-    }
-
-    return new Map(
-      loadedAgents.map((agent) => {
-        // The agent's own leads, not its group's: groups are shared, so the
-        // group count mixed in leads this agent never sourced and made the
-        // "x% contacted" denominator bigger than the population it counts.
-        const agentLeads = leadsByAgent.get(agent.id) ?? [];
-        const target = agentLeads.length;
-
-        // Leads-only agents never send: outreach stats must stay zero even if a
-        // shared-group bug left enrollments pointing at their sourced leads.
-        if (agent.leadsOnly) {
-          return [agent.id, { ...NO_METRICS, target }];
-        }
-
-        const stages = agentLeads.map((lead) =>
-          Math.max(leadStage(lead.outreachStatus), enrollmentStageByLead.get(lead.id) ?? 0),
-        );
-        const countAtLeast = (stage: number) => stages.filter((value) => value >= stage).length;
-        const contacted = countAtLeast(STAGE_CONTACTED);
-        const accepted = countAtLeast(STAGE_ACCEPTED);
-        const messaged = countAtLeast(STAGE_MESSAGED);
-        const replied = countAtLeast(STAGE_REPLIED);
-
-        const acceptRate = contacted > 0 ? Math.round((accepted / contacted) * 100) : null;
-        // Only messaged leads can reply, so they are the reply-rate denominator.
-        const replyRate = messaged > 0 ? Math.round((replied / messaged) * 100) : null;
-
-        return [
-          agent.id,
-          {
-            target,
-            contacted,
-            accepted,
-            messaged,
-            replied,
-            acceptRate,
-            replyRate,
-          },
-        ];
-      }),
-    );
-  }, [loadedAgents, loadedLeads, loadedEnrollments]);
-
   const statusCounts = useMemo(() => {
     const counts: Record<StatusFilter, number> = { all: 0, active: 0, paused: 0, error: 0 };
     for (const agent of visibleAgents) {
@@ -433,7 +346,7 @@ export default function AgentsView({
 
   const listedAgents = useMemo(() => {
     const createdMs = (agent: Agent) => Date.parse(agent.createdAt) || 0;
-    const leadCount = (agent: Agent) => agentMetrics.get(agent.id)?.target ?? 0;
+    const leadCount = (agent: Agent) => agentMetrics[agent.id]?.target ?? 0;
     return visibleAgents
       .filter((agent) =>
         matchesStatusFilter(optimisticStatuses[agent.id] ?? agent.status, statusFilter),
@@ -598,7 +511,7 @@ export default function AgentsView({
           ) : null}
           <ul className="flex flex-col gap-3">
             {listedAgents.map((agent) => {
-              const metrics = agentMetrics.get(agent.id) ?? NO_METRICS;
+              const metrics = agentMetrics[agent.id] ?? NO_AGENT_METRICS;
               const displayStatus = optimisticStatuses[agent.id] ?? agent.status;
               const isActive = displayStatus === "active" || displayStatus === "running";
               const togglePending = pendingToggleIds.has(agent.id);

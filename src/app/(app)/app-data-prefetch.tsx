@@ -2,14 +2,23 @@
 
 import { useEffect } from "react";
 import { prefetchSidebarResource, whenSidebarRequestsSettle } from "@/app/use-sidebar-resource";
-import { ACTIVITY_DAYS_RESOURCE, LINKEDIN_INBOX_RESOURCE } from "@/app/sidebar-early-fetch";
+import {
+  ACTIVITY_DAYS_RESOURCE,
+  AGENTS_RESOURCE,
+  DASHBOARD_RESOURCE,
+  LEADS_RESOURCE,
+  LINKEDIN_INBOX_RESOURCE,
+} from "@/app/sidebar-early-fetch";
 
-// /leads and /messages first. Overview's dashboard projection cannot fill
-// leadPreviews, so that query is the one that makes those two pages instant.
+// Each page's first view, all small since Leads, Overview and Agents are paged
+// and counted on the server. The whole lead list (Messages' leadPreviews,
+// ~9 MB on the largest workspace) is deliberately not warmed: downloading it in
+// the background on every app page is what this change removes.
 const FIRESTORE_WARMUP = [
-  "groups,leadPreviews",
+  LEADS_RESOURCE,
   "conversations",
-  "agents,enrollmentPreviews",
+  DASHBOARD_RESOURCE,
+  AGENTS_RESOURCE,
   ACTIVITY_DAYS_RESOURCE,
   "agentApiKeys",
 ];

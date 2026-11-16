@@ -43,3 +43,34 @@ describe("whenSidebarRequestsSettle", () => {
     }
   });
 });
+
+describe("paged resources", () => {
+  test("a visited Leads page is served from memory, and only the 30 newest pages are kept", async () => {
+    const fetched: string[] = [];
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = (async (input: RequestInfo | URL) => {
+      const resource = new URL(String(input), "http://localhost").searchParams.get("resource") || "";
+      fetched.push(resource);
+      return jsonResponse({ leadPage: { key: resource } });
+    }) as typeof fetch;
+
+    try {
+      // The fields of "leadPage?page=2" are looked up by its base name; if
+      // that broke, nothing would be cached and every revisit would refetch.
+      await prefetchSidebarResource("leadPage?page=2");
+      await prefetchSidebarResource("leadPage?page=2");
+      expect(fetched).toEqual(["leadPage?page=2"]);
+
+      for (let page = 3; page <= 32; page += 1) {
+        await prefetchSidebarResource(`leadPage?page=${page}`);
+      }
+      // Page 2 is now the 31st newest, so it was dropped; page 32 is kept.
+      fetched.length = 0;
+      await prefetchSidebarResource("leadPage?page=32");
+      await prefetchSidebarResource("leadPage?page=2");
+      expect(fetched).toEqual(["leadPage?page=2"]);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+});

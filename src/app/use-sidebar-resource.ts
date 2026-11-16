@@ -5,10 +5,15 @@ import { adoptEarlyFetch } from "@/app/sidebar-early-fetch";
 import { pruneOtherUsers, readStoredResource, storeResource } from "@/app/sidebar-resource-store";
 
 // Session-wide cache of /api/app/sidebar-data responses, split by resource so
-// overlapping pages can reuse data. For example, dashboard lead previews can
-// satisfy the lead portion of Messages without repeating that Firestore read.
+// overlapping pages can reuse data (Agents and Overview both read "agents").
 // Every mount still revalidates in the background.
+//
+// A resource name may carry a query after "?" (one Leads page:
+// "leadPage?group=g1&page=2"). Those are cached in memory for back-and-forth
+// paging, capped, and never written to IndexedDB: only each page's default
+// view persists across visits.
 const responseCache = new Map<string, Record<string, unknown>>();
+const MAX_QUERY_RESPONSES = 30;
 const inflightRequests = new Map<string, Promise<Record<string, unknown> | null>>();
 // Per-resource-name refcount of the requests currently in flight. Keyed by name
 // rather than by the comma-joined resource string so a background prefetch can
@@ -21,9 +26,9 @@ const RESOURCE_FIELDS: Record<string, string[]> = {
   agentApiKeys: ["agentApiKeys"],
   groups: ["groups"],
   leadPreviews: ["leads"],
-  leadDashboardPreviews: ["leads"],
-  leadAgentRefs: ["leads"],
-  enrollmentPreviews: ["enrollments"],
+  leadPage: ["leadPage"],
+  overviewSummary: ["overviewSummary"],
+  agentMetrics: ["agentMetrics"],
   campaigns: ["campaigns"],
   conversations: ["conversations"],
   automationRuns: ["runs"],
@@ -34,29 +39,25 @@ const RESOURCE_FIELDS: Record<string, string[]> = {
   linkedinInbox: ["threads", "senderAccounts", "error"],
 };
 
-// Resources whose cached fragment is a strict superset of another's: a full
-// lead preview carries every field the dashboard/agent projections select, so a
-// page that already loaded the heavy list can satisfy the lighter ones from
-// cache instead of paying for a second lead query.
-const RESOURCE_SUPERSETS: Record<string, string> = {
-  leadDashboardPreviews: "leadPreviews",
-  leadAgentRefs: "leadPreviews",
-};
-
 function resourceNames(resource: string) {
   return resource.split(",").filter(Boolean);
 }
 
+function hasQuery(name: string) {
+  return name.includes("?");
+}
+
+function baseName(name: string) {
+  const queryAt = name.indexOf("?");
+  return queryAt === -1 ? name : name.slice(0, queryAt);
+}
+
 function cachedFragment(name: string) {
-  const superset = RESOURCE_SUPERSETS[name];
-  return responseCache.get(name) ?? (superset ? responseCache.get(superset) : undefined);
+  return responseCache.get(name);
 }
 
 function isSatisfied(name: string) {
-  const superset = RESOURCE_SUPERSETS[name];
-  return Boolean(
-    cachedFragment(name) || inflightNames.has(name) || (superset && inflightNames.has(superset)),
-  );
+  return Boolean(cachedFragment(name) || inflightNames.has(name));
 }
 
 function readCachedResponse(resource: string) {
@@ -69,12 +70,18 @@ function readCachedResponse(resource: string) {
 
 function cacheResponse(resource: string, data: Record<string, unknown>) {
   for (const name of resourceNames(resource)) {
-    const fields = RESOURCE_FIELDS[name];
+    const fields = RESOURCE_FIELDS[baseName(name)];
     if (!fields) continue;
     const fragment = Object.fromEntries(
       fields.filter((field) => field in data).map((field) => [field, data[field]]),
     );
+    // Re-insert so Map order is least recently stored first.
+    responseCache.delete(name);
     responseCache.set(name, fragment);
+  }
+  const queryNames = [...responseCache.keys()].filter(hasQuery);
+  for (const name of queryNames.slice(0, Math.max(0, queryNames.length - MAX_QUERY_RESPONSES))) {
+    responseCache.delete(name);
   }
 }
 
@@ -181,18 +188,31 @@ export function useSidebarResource<T>(
   const [loading, setLoading] = useState(enabled && !readCachedResponse(resource));
   const [reloadCount, setReloadCount] = useState(0);
   const scope = useContext(SidebarCacheScopeContext);
+  // When the resource changes (the next Leads page) and memory already holds
+  // it, show it in this render instead of the previous page.
+  const [shownResource, setShownResource] = useState(resource);
+  if (shownResource !== resource) {
+    setShownResource(resource);
+    const cached = enabled ? readCachedResponse(resource) : undefined;
+    if (cached) {
+      setValue(select(cached));
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
     if (!enabled) return;
     let cancelled = false;
     let fresh = false;
     const pick = (data: Record<string, unknown>) => select(data);
+    // Paged views are short-lived and many; only default views persist.
+    const persisted = scope && !resourceNames(resource).some(hasQuery) ? scope : "";
 
     // Nothing in memory (reload or new visit): paint the last visit's data from
     // IndexedDB while the request runs. A slow disk read must never overwrite
     // the fresh response, hence the `fresh` guard.
-    if (scope && !readCachedResponse(resource)) {
-      void readStoredResource(scope, resource).then((stored) => {
+    if (persisted && !readCachedResponse(resource)) {
+      void readStoredResource(persisted, resource).then((stored) => {
         if (cancelled || fresh || !stored) return;
         setValue(pick(stored));
         setLoading(false);
@@ -207,7 +227,7 @@ export function useSidebarResource<T>(
       fresh = true;
       if (data) {
         setValue(pick(data));
-        if (scope) storeResource(scope, resource, data);
+        if (persisted) storeResource(persisted, resource, data);
       }
       setLoading(false);
     });

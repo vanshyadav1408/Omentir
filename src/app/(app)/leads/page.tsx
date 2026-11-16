@@ -13,7 +13,7 @@ export const metadata = createPageMetadata({
 });
 
 async function LeadsContent() {
-  return <LeadsView groups={[]} leads={[]} />;
+  return <LeadsView groups={[]} />;
 }
 
 export default async function LeadsPage() {

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
-import { setAverageTicketSizeAction } from "@/app/actions";
+import { matchReplyLeadsAction, setAverageTicketSizeAction } from "@/app/actions";
 import { useToast, userFacingError } from "@/app/toast";
 import { unwrapAction } from "@/lib/action-result";
 import AnalysisChart from "@/app/analysis-chart";
@@ -17,22 +17,8 @@ import NewAgentButton from "@/app/(app)/agents/new-agent-button";
 import { HotLeadSkeletonRows, ReplySkeletonRows, Skeleton } from "@/app/app-skeletons";
 import { useBodyScrollLock } from "@/app/use-body-scroll-lock";
 import { useHydrated } from "@/app/use-hydrated";
-import type {
-  ActivityDay,
-  Agent,
-  CampaignEnrollmentPreview,
-  Conversation,
-  Group,
-  LeadDashboardPreview,
-  LinkedInInboxThread,
-} from "@/lib/server/types";
-import { sumAgentLeadTotals } from "@/lib/agent-lead-totals";
-import {
-  STAGE_CONTACTED,
-  STAGE_MESSAGED,
-  countAcceptedConnections,
-  combinedOutreachStage,
-} from "@/lib/outreach-stage";
+import type { ActivityDay, LinkedInInboxThread } from "@/lib/server/types";
+import type { OverviewSummary, ReplyLead } from "@/lib/overview-summary";
 import { toActivityDayKey } from "@/lib/activity-overview";
 import { TextField } from "@/app/ui/text-field";
 import { useWorkspaceTimeZone } from "@/app/workspace-time-zone";
@@ -41,10 +27,6 @@ import ActivityHeatmap, { heatmapTotal } from "./activity-heatmap";
 import { LeadAvatar } from "@/app/lead-avatar";
 
 type OverviewViewProps = {
-  agents: Agent[];
-  leads: LeadDashboardPreview[];
-  enrollments: CampaignEnrollmentPreview[];
-  conversations: Conversation[];
   linkedInThreads: LinkedInInboxThread[];
   workspace: { id: string; name: string };
   userName: string;
@@ -71,15 +53,15 @@ const RANGE_OPTIONS: Array<{ key: RangeKey; label: string; caption: string; days
 
 const selectLinkedInThreads = (data: Record<string, unknown>) =>
   data.threads as LinkedInInboxThread[] || [];
-const selectDashboardData = (data: Record<string, unknown>) => ({
-  agents: data.agents as Agent[] || [],
-  groups: data.groups as Group[] || [],
-  leads: data.leads as LeadDashboardPreview[] || [],
-  enrollments: data.enrollments as CampaignEnrollmentPreview[] || [],
-  conversations: data.conversations as Conversation[] || [],
-});
+const selectDashboardData = (data: Record<string, unknown>) =>
+  (data.overviewSummary as OverviewSummary | undefined) ?? null;
 const selectActivityDays = (data: Record<string, unknown>) =>
   data.activityDays as ActivityDay[] || [];
+
+// Unread threads are matched to leads on the server; this keys the answers.
+function replyIdentityKey(thread: Pick<LinkedInInboxThread, "profileUrl" | "profileName">) {
+  return `${thread.profileUrl ?? ""}|${thread.profileName ?? ""}`;
+}
 
 function timeAgo(iso?: string) {
   if (!iso) return "";
@@ -105,31 +87,16 @@ function FitScore({ score }: { score: number }) {
 }
 
 export default function OverviewView({
-  agents,
-  leads,
-  enrollments,
-  conversations,
   linkedInThreads,
   averageTicketSize,
 }: OverviewViewProps) {
-  const dashboardResource = useSidebarResource(
+  // Stat cards, hot leads and the chart's live days, computed on the server.
+  const dashboardResource = useSidebarResource<OverviewSummary | null>(
     DASHBOARD_RESOURCE,
-    {
-      agents,
-      groups: [] as Group[],
-      leads,
-      enrollments,
-      conversations,
-    },
+    null,
     selectDashboardData,
   );
-  const {
-    agents: loadedAgents,
-    groups: loadedGroups,
-    leads: loadedLeads,
-    enrollments: loadedEnrollments,
-    conversations: loadedConversations,
-  } = dashboardResource.value;
+  const summary = dashboardResource.value;
   const reloadDashboard = dashboardResource.reload;
   const dashboardLoading = dashboardResource.loading;
   const activityDaysResource = useSidebarResource(
@@ -148,7 +115,8 @@ export default function OverviewView({
   );
   const loadedLinkedInThreads = linkedInInboxResource.value;
   const reloadLinkedInInbox = linkedInInboxResource.reload;
-  const repliesLoading = linkedInInboxResource.loading || dashboardLoading;
+  // Lead behind each unread thread, by replyIdentityKey; null = no lead.
+  const [replyLeads, setReplyLeads] = useState<Record<string, ReplyLead | null>>({});
   const dashboardLoadingRef = useRef(dashboardLoading);
   const activityDaysLoadingRef = useRef(activityDaysLoading);
   const inboxLoadingRef = useRef(linkedInInboxResource.loading);
@@ -169,10 +137,9 @@ export default function OverviewView({
   const chartStartDateKey = toActivityDayKey(new Date(rangeStart).toISOString()) || undefined;
   const chartEndDateKey = toActivityDayKey(new Date(now).toISOString()) || undefined;
 
-  // Each dashboard reload returns every lead and enrollment in the workspace
-  // (9 MB on the largest one). Reloading that every 15 s in every open tab kept
-  // the server busy enough to slow every other page, so data refreshes once a
-  // minute while visible and when the user returns. The clock still ticks.
+  // Data refreshes once a minute while visible and when the user returns. The
+  // summary is small now, but each refresh still re-reads the LinkedIn inbox.
+  // The clock still ticks.
   useEffect(() => {
     let dataLoadedAt = Date.now();
     const refresh = (maxAgeMs: number) => {
@@ -233,77 +200,96 @@ export default function OverviewView({
     });
   }
 
-  const stats = useMemo(() => {
-    const cutoff = rangeStart;
-    const inRange = (stamp?: string) =>
-      Boolean(stamp) && new Date(stamp as string).getTime() >= cutoff;
-
-    const hotOpportunities = sumAgentLeadTotals(loadedAgents, loadedGroups, loadedLeads);
-    const acceptedConnections = countAcceptedConnections(loadedLeads, loadedEnrollments);
-
-    // These count sends, so the unit stays the enrollment. Its status is not a
-    // record of what was sent though - it collapses to "stopped"/"error" when
-    // the sequence ends, expires or is cut short, which used to drop those
-    // invites and messages out of the totals. Where the stage was lost, the
-    // lead's own status still remembers how far it got.
-    const leadStatusById = new Map(
-      loadedLeads.map((lead) => [lead.id, lead.outreachStatus]),
-    );
-    const stageOf = (enrollment: CampaignEnrollmentPreview) =>
-      combinedOutreachStage(enrollment.status, leadStatusById.get(enrollment.leadId));
-    const invitationsSent = loadedEnrollments.filter(
-      (enrollment) =>
-        stageOf(enrollment) >= STAGE_CONTACTED && inRange(enrollment.connectionSentAt),
-    ).length;
-    const messagesSent = loadedEnrollments.filter(
-      (enrollment) =>
-        stageOf(enrollment) >= STAGE_MESSAGED && inRange(enrollment.updatedAt),
-    ).length;
-
-    return { hotOpportunities, acceptedConnections, invitationsSent, messagesSent };
-  }, [loadedAgents, loadedGroups, loadedLeads, loadedEnrollments, rangeStart]);
+  // Range counts are cut at the time of the last refresh (at most a minute
+  // old); see buildOverviewSummary for the stage rules.
+  const rangeSends = summary?.sends[activeRange.key];
+  const stats = {
+    hotOpportunities: summary?.hotOpportunities ?? 0,
+    acceptedConnections: summary?.acceptedConnections ?? 0,
+    invitationsSent: rangeSends?.invitationsSent ?? 0,
+    messagesSent: rangeSends?.messagesSent ?? 0,
+  };
 
   // Pipeline = accepted connections × average ticket size, not all leads
   // ever discovered.
   const pipelineGenerated =
     ticketSize !== undefined ? stats.acceptedConnections * ticketSize : undefined;
 
-  const hotLeads = useMemo(
-    () =>
-      [...loadedLeads].sort((a, b) => (b.fitScore || 0) - (a.fitScore || 0)).slice(0, 5),
-    [loadedLeads],
-  );
+  const hotLeads = summary?.hotLeads ?? [];
 
-  const recentReplies = useMemo(() => {
+  // The five newest unread replies. Which lead each one is does not change the
+  // order, so only these five are matched to leads.
+  const latestReplies = useMemo(() => {
     return loadedLinkedInThreads
       .filter((thread) => thread.unread)
       .map((thread) => {
-        const lead = loadedLeads.find(
-          (item) =>
-            (item.linkedInUrl && thread.profileUrl && item.linkedInUrl === thread.profileUrl) ||
-            (item.name &&
-              thread.profileName &&
-              item.name.trim().toLowerCase() === thread.profileName.trim().toLowerCase()),
-        );
         const inbound = [...thread.messages]
           .reverse()
           .find((message) => message.direction === "inbound");
-        if (!inbound) return null;
-        return {
-          id: thread.id,
-          leadName: lead?.name ?? thread.profileName ?? thread.title ?? "LinkedIn lead",
-          title: lead?.title ?? thread.profileHeadline ?? "",
-          company: lead?.company ?? "",
-          avatarUrl: lead?.avatarUrl || thread.avatarUrl,
-          leadId: lead?.id,
-          body: inbound.body,
-          when: inbound.createdAt,
-        };
+        return inbound ? { thread, inbound } : null;
       })
       .filter((reply): reply is NonNullable<typeof reply> => Boolean(reply))
-      .sort((a, b) => new Date(b.when ?? 0).getTime() - new Date(a.when ?? 0).getTime())
+      .sort(
+        (a, b) =>
+          new Date(b.inbound.createdAt ?? 0).getTime() -
+          new Date(a.inbound.createdAt ?? 0).getTime(),
+      )
       .slice(0, 5);
-  }, [loadedLinkedInThreads, loadedLeads]);
+  }, [loadedLinkedInThreads]);
+
+  const unmatchedReplies = latestReplies.filter(
+    ({ thread }) => !(replyIdentityKey(thread) in replyLeads),
+  );
+  const unmatchedKey = unmatchedReplies.map(({ thread }) => replyIdentityKey(thread)).join("\n");
+
+  useEffect(() => {
+    if (!unmatchedKey) return;
+    const threads = unmatchedReplies.map(({ thread }) => ({
+      profileUrl: thread.profileUrl,
+      profileName: thread.profileName,
+    }));
+    const keys = unmatchedReplies.map(({ thread }) => replyIdentityKey(thread));
+    let cancelled = false;
+    void matchReplyLeadsAction(threads)
+      .then((result) => unwrapAction(result))
+      // A failed match only costs the lead's title and company; the thread's
+      // own name and headline still show.
+      .catch(() => keys.map(() => null))
+      .then((leads) => {
+        if (cancelled) return;
+        setReplyLeads((current) => {
+          const next = { ...current };
+          keys.forEach((key, index) => {
+            next[key] = leads[index] ?? null;
+          });
+          return next;
+        });
+      });
+    return () => {
+      cancelled = true;
+    };
+    // unmatchedKey captures unmatchedReplies' identities.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unmatchedKey]);
+
+  const recentReplies = latestReplies.map(({ thread, inbound }) => {
+    const lead = replyLeads[replyIdentityKey(thread)];
+    return {
+      id: thread.id,
+      leadName: lead?.name ?? thread.profileName ?? thread.title ?? "LinkedIn lead",
+      title: lead?.title ?? thread.profileHeadline ?? "",
+      company: lead?.company ?? "",
+      avatarUrl: lead?.avatarUrl || thread.avatarUrl,
+      leadId: lead?.id,
+      body: inbound.body,
+      when: inbound.createdAt,
+    };
+  });
+  // Skeleton until the first matches land; a reply that arrives later shows
+  // with the thread's own details for the moment its match takes.
+  const repliesLoading =
+    linkedInInboxResource.loading ||
+    (unmatchedReplies.length > 0 && Object.keys(replyLeads).length === 0);
 
   const activityHeading = (
     <div>
@@ -411,9 +397,7 @@ export default function OverviewView({
           ) : (
             <AnalysisChart
               heading={activityHeading}
-              leads={loadedLeads}
-              conversations={loadedConversations}
-              enrollments={loadedEnrollments}
+              liveTotals={summary?.liveActivity ?? []}
               activityDays={loadedActivityDays}
               maxDays={
                 activeRange.key === "month"

@@ -90,7 +90,16 @@ export function storeResource(scope: string, resource: string, data: Record<stri
   else setTimeout(write, 0);
 }
 
-/** Drop every record that does not belong to this user. */
+// Whole-workspace lists the pages used to persist before Leads, Overview and
+// Agents moved to server-side pages and counts. Nothing reads them any more,
+// and on big workspaces each one is several MB of disk.
+const RETIRED_RESOURCES = [
+  "groups,leadPreviews",
+  "agents,groups,leadDashboardPreviews,enrollmentPreviews,conversations",
+  "agents,groups,leadAgentRefs,enrollmentPreviews",
+];
+
+/** Drop every record that does not belong to this user, and retired ones. */
 export async function pruneOtherUsers(userId: string) {
   const prefix = `${userId}:`;
   await withStore("readwrite", (store) => {
@@ -98,7 +107,9 @@ export async function pruneOtherUsers(userId: string) {
     cursorRequest.onsuccess = () => {
       const cursor = cursorRequest.result;
       if (!cursor) return;
-      if (!String(cursor.key).startsWith(prefix)) cursor.delete();
+      const key = String(cursor.key);
+      const resource = key.slice(key.indexOf("|") + 1);
+      if (!key.startsWith(prefix) || RETIRED_RESOURCES.includes(resource)) cursor.delete();
       cursor.continue();
     };
   });

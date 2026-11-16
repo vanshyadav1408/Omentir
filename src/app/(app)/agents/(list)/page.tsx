@@ -46,8 +46,6 @@ export default async function AgentsPage() {
       // an unpaid workspace gets to see, each marked as stopped.
       agents={subscriptionActive ? [] : agents}
       groups={[]}
-      leads={[]}
-      enrollments={[]}
       agentLimit={serializablePlanLimit(agentLimit)}
       atAgentLimit={isAtPlanLimit(agents.length, agentLimit)}
       subscriptionActive={subscriptionActive}

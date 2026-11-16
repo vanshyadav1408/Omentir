@@ -62,7 +62,6 @@ import {
   conversationHasMeetingBooked,
 } from "@/lib/conversation-category";
 import {
-  isInStatsRange,
   statsRangeStartMs,
   WORKSPACE_STATS_RANGES,
 } from "@/lib/workspace-stats-range";
@@ -85,13 +84,8 @@ import {
   productProfileIsReadyForSteal,
   targetingFromProductProfile,
 } from "@/lib/steal-customers-targeting";
-import {
-  STAGE_CONTACTED,
-  STAGE_MESSAGED,
-  STAGE_REPLIED,
-  countAcceptedConnections,
-  combinedOutreachStage,
-} from "@/lib/outreach-stage";
+import { countAcceptedConnections } from "@/lib/outreach-stage";
+import { countSendsInRange } from "@/lib/overview-summary";
 
 export class AgentApiOperationError extends Error {
   status: number;
@@ -440,24 +434,13 @@ export async function getWorkspaceStatsResource(context: AgentApiContext, payloa
   const totalLeads = leads.length;
   const hotOpportunities = sumAgentLeadTotals(agents, groups, leads);
   const acceptedConnections = countAcceptedConnections(leads, enrollments);
-  const leadStatusById = new Map(leads.map((lead) => [lead.id, lead.outreachStatus]));
-  const stageOf = (enrollment: (typeof enrollments)[number]) =>
-    combinedOutreachStage(enrollment.status, leadStatusById.get(enrollment.leadId));
   // Overview only windows invites and messages. Pipeline and accepted
   // connections stay lifetime so a 7-day view does not shrink deal size.
-  const invitationsSent = enrollments.filter(
-    (enrollment) =>
-      stageOf(enrollment) >= STAGE_CONTACTED &&
-      isInStatsRange(enrollment.connectionSentAt, rangeStart),
-  ).length;
-  const messagesSent = enrollments.filter(
-    (enrollment) =>
-      stageOf(enrollment) >= STAGE_MESSAGED && isInStatsRange(enrollment.updatedAt, rangeStart),
-  ).length;
-  const repliesReceived = enrollments.filter(
-    (enrollment) =>
-      stageOf(enrollment) >= STAGE_REPLIED && isInStatsRange(enrollment.updatedAt, rangeStart),
-  ).length;
+  const { invitationsSent, messagesSent, repliesReceived } = countSendsInRange(
+    leads,
+    enrollments,
+    rangeStart,
+  );
   const averageTicketSize = profile?.averageTicketSize;
   const pipelineGenerated =
     averageTicketSize !== undefined ? acceptedConnections * averageTicketSize : null;

@@ -14,12 +14,19 @@ import {
   listConversations,
   listConversationsForActivity,
   listGroups,
-  listLeadAgentRefs,
-  listLeadDashboardPreviews,
   listLeadPreviews,
   listLinkedInAccounts,
   reconcileActivityFromLive,
 } from "@/lib/server/data";
+import {
+  cachedEnrollmentPreviews,
+  cachedLeadPreviews,
+} from "@/lib/server/workspace-list-cache";
+import { pageLeads, parseLeadPageQuery } from "@/lib/lead-page";
+import { buildOverviewSummary } from "@/lib/overview-summary";
+import { buildAgentMetrics } from "@/lib/agent-metrics";
+import { resolveTimeZone } from "@/lib/time-zone";
+import type { Workspace } from "@/lib/server/types";
 import {
   getVerifiedLinkedInAccount,
   listVerifiedLinkedInAccounts,
@@ -31,9 +38,11 @@ import { listLinkedInInbox } from "@/lib/server/linkedin";
 import { resolveActiveWorkspace } from "@/lib/server/active-workspace";
 import { loadDurableActivityDays } from "@/lib/server/sidebar-activity-days";
 
+// Small reads several resources in one request need (e.g. "agents,groups,
+// agentMetrics"), made once per request.
 type SidebarFetchCache = {
-  leadDashboardPreviews?: ReturnType<typeof listLeadDashboardPreviews>;
-  enrollmentPreviews?: ReturnType<typeof listCampaignEnrollmentPreviews>;
+  agents?: ReturnType<typeof listAgents>;
+  groups?: ReturnType<typeof listGroups>;
 };
 
 const ACTIVITY_RECONCILE_MIN_MS = 30_000;
@@ -47,14 +56,29 @@ const lastGoodInbox = new Map<
   { threads: Awaited<ReturnType<typeof listLinkedInInbox>>; at: number }
 >();
 
-function cachedLeadDashboardPreviews(workspaceId: string, cache: SidebarFetchCache) {
-  cache.leadDashboardPreviews ||= listLeadDashboardPreviews(workspaceId);
-  return cache.leadDashboardPreviews;
+function requestAgents(workspaceId: string, cache: SidebarFetchCache) {
+  cache.agents ||= listAgents(workspaceId);
+  return cache.agents;
 }
 
-function cachedEnrollmentPreviews(workspaceId: string, cache: SidebarFetchCache) {
-  cache.enrollmentPreviews ||= listCampaignEnrollmentPreviews(workspaceId);
-  return cache.enrollmentPreviews;
+function requestGroups(workspaceId: string, cache: SidebarFetchCache) {
+  cache.groups ||= listGroups(workspaceId);
+  return cache.groups;
+}
+
+// Warm the persisted avatar for leads about to be shown, so their pictures
+// survive LinkedIn's expiring media URLs.
+function warmLeadAvatars(workspaceId: string, leads: Array<{ id: string; avatarUrl?: string }>) {
+  after(() => {
+    let warmed = 0;
+    for (const lead of leads) {
+      if (warmed >= 100) break;
+      const url = httpsAvatarUrl(lead.avatarUrl);
+      if (!url || isExpiredLinkedInMediaUrl(url)) continue;
+      queueLeadAvatarPersist(lead.id, workspaceId, url);
+      warmed += 1;
+    }
+  });
 }
 
 async function reconcileActivityForSidebar(
@@ -84,34 +108,61 @@ async function reconcileActivityForSidebar(
 }
 
 async function loadFirestoreResource(
-  resource: string,
-  workspaceId: string,
+  item: string,
+  workspace: Workspace,
   cache: SidebarFetchCache,
 ) {
-  if (resource === "agents") return { agents: await listAgents(workspaceId) };
+  const workspaceId = workspace.id;
+  // A resource can carry its own query after "?" (e.g. one Leads page).
+  const queryAt = item.indexOf("?");
+  const resource = queryAt === -1 ? item : item.slice(0, queryAt);
+  const query = queryAt === -1 ? "" : item.slice(queryAt + 1);
+
+  if (resource === "agents") return { agents: await requestAgents(workspaceId, cache) };
   if (resource === "agentStatus") return { agentStatus: await loadAgentStatusFacts(workspaceId) };
   if (resource === "agentApiKeys") return { agentApiKeys: await listAgentApiKeys(workspaceId) };
-  if (resource === "groups") return { groups: await listGroups(workspaceId) };
+  if (resource === "groups") return { groups: await requestGroups(workspaceId, cache) };
   if (resource === "leadPreviews") {
-    const leads = await listLeadPreviews(workspaceId);
-    after(() => {
-      let warmed = 0;
-      for (const lead of leads) {
-        if (warmed >= 100) break;
-        const url = httpsAvatarUrl(lead.avatarUrl);
-        if (!url || isExpiredLinkedInMediaUrl(url)) continue;
-        queueLeadAvatarPersist(lead.id, workspaceId, url);
-        warmed += 1;
-      }
-    });
+    // Messages still matches threads against every lead.
+    const leads = await cachedLeadPreviews(workspaceId);
+    warmLeadAvatars(workspaceId, leads);
     return { leads };
   }
-  if (resource === "leadDashboardPreviews") {
-    return { leads: await cachedLeadDashboardPreviews(workspaceId, cache) };
+  if (resource === "leadPage") {
+    const [leads, groups] = await Promise.all([
+      cachedLeadPreviews(workspaceId),
+      requestGroups(workspaceId, cache),
+    ]);
+    const leadPage = pageLeads(leads, groups, parseLeadPageQuery(query));
+    warmLeadAvatars(workspaceId, leadPage.leads);
+    return { leadPage };
   }
-  if (resource === "leadAgentRefs") return { leads: await listLeadAgentRefs(workspaceId) };
-  if (resource === "enrollmentPreviews") {
-    return { enrollments: await cachedEnrollmentPreviews(workspaceId, cache) };
+  if (resource === "overviewSummary") {
+    const [agents, groups, leads, enrollments, conversations] = await Promise.all([
+      requestAgents(workspaceId, cache),
+      requestGroups(workspaceId, cache),
+      cachedLeadPreviews(workspaceId),
+      cachedEnrollmentPreviews(workspaceId),
+      listConversations(workspaceId),
+    ]);
+    return {
+      overviewSummary: buildOverviewSummary({
+        agents,
+        groups,
+        leads,
+        enrollments,
+        conversations,
+        timeZone: resolveTimeZone(workspace.timezone),
+      }),
+    };
+  }
+  if (resource === "agentMetrics") {
+    const [agents, leads, enrollments] = await Promise.all([
+      requestAgents(workspaceId, cache),
+      cachedLeadPreviews(workspaceId),
+      cachedEnrollmentPreviews(workspaceId),
+    ]);
+    return { agentMetrics: buildAgentMetrics(agents, leads, enrollments) };
   }
   if (resource === "campaigns") return { campaigns: await listCampaigns(workspaceId) };
   if (resource === "conversations") return { conversations: await listConversations(workspaceId) };
@@ -126,8 +177,8 @@ async function loadFirestoreResource(
       },
       reconcileLive: async () => {
         const [leads, enrollments, conversations] = await Promise.all([
-          cachedLeadDashboardPreviews(workspaceId, cache),
-          cachedEnrollmentPreviews(workspaceId, cache),
+          cachedLeadPreviews(workspaceId),
+          cachedEnrollmentPreviews(workspaceId),
           listConversationsForActivity(workspaceId),
         ]);
         await reconcileActivityForSidebar(workspaceId, {
@@ -169,7 +220,7 @@ export async function GET(request: Request) {
     if (!subscribed) return subscriptionRequired();
     const cache: SidebarFetchCache = {};
     const results = await Promise.all(
-      requestedResources.map((item) => loadFirestoreResource(item, workspace.id, cache)),
+      requestedResources.map((item) => loadFirestoreResource(item, workspace, cache)),
     );
     if (results.every((result) => result !== null)) {
       return NextResponse.json(Object.assign({}, ...results));

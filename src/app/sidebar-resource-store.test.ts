@@ -7,7 +7,7 @@ import {
   storeResource,
 } from "./sidebar-resource-store";
 
-const LEADS = "groups,leadPreviews";
+const LEADS = "groups,leadPage";
 const alice = "user_alice:ws_1";
 const aliceOther = "user_alice:ws_2";
 const bob = "user_bob:ws_9";
@@ -43,6 +43,24 @@ describe("persisted sidebar data", () => {
     expect(await readStoredResource(alice, LEADS)).toBeUndefined();
     expect(await readStoredResource(aliceOther, LEADS)).toBeUndefined();
     expect(await readStoredResource(bob, LEADS)).toEqual({ leads: [] });
+  });
+
+  test("drops the old whole-workspace lists, which nothing reads and can be MBs each", async () => {
+    storeResource(alice, "groups,leadPreviews", { leads: [{ id: "lead-1" }] });
+    storeResource(alice, "agents,groups,leadAgentRefs,enrollmentPreviews", { leads: [] });
+    // Messages still uses the plain lead list, so that record stays.
+    storeResource(alice, "leadPreviews", { leads: [] });
+    storeResource(alice, LEADS, { leadPage: {} });
+    await flushWrites();
+
+    await pruneOtherUsers("user_alice");
+
+    expect(await readStoredResource(alice, "groups,leadPreviews")).toBeUndefined();
+    expect(
+      await readStoredResource(alice, "agents,groups,leadAgentRefs,enrollmentPreviews"),
+    ).toBeUndefined();
+    expect(await readStoredResource(alice, "leadPreviews")).toEqual({ leads: [] });
+    expect(await readStoredResource(alice, LEADS)).toEqual({ leadPage: {} });
   });
 
   test("keeps every workspace of the same user so switching back is still instant", async () => {

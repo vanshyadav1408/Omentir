@@ -89,10 +89,6 @@ export default async function HomePage({
       {/* The reads behind this view are started before hydration from the root
           layout's early-fetch script (see sidebar-early-fetch). */}
       <OverviewView
-        agents={[]}
-        leads={[]}
-        enrollments={[]}
-        conversations={[]}
         linkedInThreads={[]}
         workspace={{ id: workspace.id, name: workspace.name }}
         userName={userName}

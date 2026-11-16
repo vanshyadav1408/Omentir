@@ -90,6 +90,11 @@ import { resolveWebsiteFavicon } from "@/lib/server/website-favicon";
 import { withActionErrors } from "@/lib/server/action-errors";
 import { buildLeadsCsv } from "@/lib/leads-csv";
 import { resolveTimeZone } from "@/lib/time-zone";
+import {
+  cachedLeadPreviews,
+  invalidateWorkspaceLists,
+} from "@/lib/server/workspace-list-cache";
+import { findReplyLead, type ReplyLead } from "@/lib/overview-summary";
 
 async function requireWorkspace() {
   const { userId } = await auth();
@@ -864,6 +869,7 @@ async function runScheduledActionNowActionImpl(formData: FormData) {
   if (!enrollmentId) throw new Error("Scheduled action id is required.");
 
   const result = await executeScheduledActionNow(workspace.id, enrollmentId);
+  invalidateWorkspaceLists(workspace.id);
   revalidatePath("/actions");
   revalidatePath("/agents");
   revalidatePath("/leads");
@@ -935,6 +941,28 @@ export async function exportLeadGroupCsvAction(...args: Parameters<typeof export
   return withActionErrors(() => exportLeadGroupCsvActionImpl(...args));
 }
 
+// Overview's Replies card shows the lead behind each unread inbox thread. The
+// page no longer has every lead, so the match runs here against the cached
+// workspace list. Answers line up with `threads` by index (null = no lead).
+async function matchReplyLeadsActionImpl(
+  threads: Array<{ profileUrl?: string; profileName?: string }>,
+): Promise<Array<ReplyLead | null>> {
+  const workspace = await requireWorkspace();
+  requireActiveSubscription(workspace);
+  if (!Array.isArray(threads) || !threads.length) return [];
+  const leads = await cachedLeadPreviews(workspace.id);
+  return threads.slice(0, 200).map((thread) =>
+    findReplyLead(leads, {
+      profileUrl: typeof thread?.profileUrl === "string" ? thread.profileUrl : undefined,
+      profileName: typeof thread?.profileName === "string" ? thread.profileName : undefined,
+    }),
+  );
+}
+
+export async function matchReplyLeadsAction(...args: Parameters<typeof matchReplyLeadsActionImpl>) {
+  return withActionErrors(() => matchReplyLeadsActionImpl(...args));
+}
+
 async function stopLeadOutreachActionImpl(formData: FormData) {
   const workspace = await requireWorkspace();
   requireActiveSubscription(workspace);
@@ -942,6 +970,7 @@ async function stopLeadOutreachActionImpl(formData: FormData) {
   if (!leadId) throw new Error("Lead id is required.");
 
   await stopLeadOutreach(workspace.id, leadId);
+  invalidateWorkspaceLists(workspace.id);
   revalidatePath("/actions");
   revalidatePath("/agents");
   revalidatePath("/leads");
@@ -1128,6 +1157,7 @@ async function importLinkedInCsvLeadsActionImpl(formData: FormData) {
       outreachStatus: "new",
     });
   }
+  invalidateWorkspaceLists(workspace.id);
   revalidatePath("/leads");
   return { imported: leads.length };
 }
@@ -1382,6 +1412,7 @@ async function deleteAgentActionImpl(formData: FormData) {
   if (!agentId) throw new Error("Agent id is required.");
 
   await deleteAgent(workspace.id, agentId);
+  invalidateWorkspaceLists(workspace.id);
   revalidateWorkspaceDataPages();
 }
 
@@ -1396,6 +1427,7 @@ async function deleteGroupActionImpl(formData: FormData) {
   if (!groupId) throw new Error("Lead group id is required.");
 
   await deleteGroup(workspace.id, groupId);
+  invalidateWorkspaceLists(workspace.id);
   revalidatePath("/leads");
   revalidateWorkspaceDataPages();
 }

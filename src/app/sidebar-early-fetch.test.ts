@@ -22,9 +22,16 @@ describe("overview early-fetch", () => {
       resource.split(",").includes("activityDays"),
     );
     expect(activityRequests).toEqual(["activityDays"]);
-    expect(overview.some((resource) => resource.includes("leadDashboardPreviews"))).toBe(
-      true,
-    );
+    expect(overview).toContain("overviewSummary");
+  });
+
+  test("only Messages still asks for the whole lead list; Leads, Overview and Agents get pages and counts", async () => {
+    const { EARLY_FETCH_ROUTES } = await import("./sidebar-early-fetch");
+    const wholeList = /(^|,)(leadPreviews|leadDashboardPreviews|leadAgentRefs|enrollmentPreviews)(,|$)/;
+    const routesWithWholeList = Object.entries(EARLY_FETCH_ROUTES)
+      .filter(([, resources]) => resources.some((resource) => wholeList.test(resource)))
+      .map(([route]) => route);
+    expect(routesWithWholeList).toEqual(["/messages"]);
   });
 });
 
@@ -42,12 +49,20 @@ describe("early-fetch routes", () => {
   };
 
   test("every route's resources are exactly the keys its page asks for", async () => {
-    const { EARLY_FETCH_ROUTES, DASHBOARD_RESOURCE, ACTIVITY_DAYS_RESOURCE, LINKEDIN_INBOX_RESOURCE } =
-      await import("./sidebar-early-fetch");
+    const {
+      EARLY_FETCH_ROUTES,
+      DASHBOARD_RESOURCE,
+      ACTIVITY_DAYS_RESOURCE,
+      LINKEDIN_INBOX_RESOURCE,
+      LEADS_RESOURCE,
+      AGENTS_RESOURCE,
+    } = await import("./sidebar-early-fetch");
     const constants: Record<string, string> = {
       DASHBOARD_RESOURCE,
       ACTIVITY_DAYS_RESOURCE,
       LINKEDIN_INBOX_RESOURCE,
+      LEADS_RESOURCE,
+      AGENTS_RESOURCE,
     };
     expect(Object.keys(EARLY_FETCH_ROUTES).sort()).toEqual(Object.keys(views).sort());
     for (const [route, resources] of Object.entries(EARLY_FETCH_ROUTES)) {

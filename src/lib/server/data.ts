@@ -69,7 +69,6 @@ import type {
   Group,
   Lead,
   LeadAgentRef,
-  LeadDashboardPreview,
   LeadPreview,
   LeadSignal,
   LinkedInAccount,
@@ -2048,42 +2047,6 @@ export async function listLeadPreviews(
   }
   const snap = await projected.get();
   return snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as LeadPreview);
-}
-
-// Dashboard projection. The dashboard is the slowest page to first paint and
-// leads are its heaviest read, so it selects only the fields its stat cards,
-// hot-lead list, activity chart and reply matching actually render. On a
-// 367-lead workspace this cuts the response from ~630 KB to ~230 KB and the
-// query from ~2.9s to ~1.5s.
-export async function listLeadDashboardPreviews(
-  workspaceId: string,
-  // No default page: invitations/messages totals need every lead's stage.
-  // Pass limit only when a caller intentionally wants a bound.
-  limit?: number,
-): Promise<LeadDashboardPreview[]> {
-  // .select() widens the Firestore generic to DocumentData; keep the query
-  // untyped and cast the projected row after merge.
-  let query: FirebaseFirestore.Query = collection<Lead>("leads")
-    .where("workspaceId", "==", workspaceId)
-    .select(
-      "linkedInUrl",
-      "avatarUrl",
-      "name",
-      "title",
-      "company",
-      "fitScore",
-      "sourceAgentId",
-      "outreachStatus",
-      "createdAt",
-      "updatedAt",
-    );
-  if (limit != null && Number.isFinite(limit) && limit > 0) {
-    query = query.limit(limit);
-  }
-  const snap = await query.get();
-  return snap.docs.map(
-    (doc) => ({ ...doc.data(), id: doc.id }) as LeadDashboardPreview,
-  );
 }
 
 // Resolve specific leads by id in batches. List views load the full workspace
