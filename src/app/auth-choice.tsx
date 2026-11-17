@@ -74,8 +74,12 @@ type ClerkBrowser = {
         params:
           | { strategy: "email_code"; code: string }
           | { strategy: "password"; password: string }
-          | { strategy: "reset_password_email_code"; code: string; password: string },
+          | { strategy: "reset_password_email_code"; code: string },
       ) => Promise<ClerkSignInResult>;
+      resetPassword: (params: {
+        password: string;
+        signOutOfOtherSessions: boolean;
+      }) => Promise<ClerkSignInResult>;
       attemptSecondFactor: (params: {
         strategy: ClerkSignInCodeStrategy;
         code: string;
@@ -227,6 +231,24 @@ function isCompleteSignIn(
   result: ClerkSignInResult,
 ): result is ClerkSignInResult & { status: "complete"; createdSessionId: string } {
   return result.status === "complete" && Boolean(result.createdSessionId);
+}
+
+/**
+ * Forgot-password reset. Returns the new session id, or null if Clerk did not
+ * finish. A reset is how someone locks out whoever has their account, so it
+ * must end every other session. Passing the password straight into
+ * attemptFirstFactor (the old flow) left other browsers signed in.
+ */
+export async function resetPasswordEverywhere(
+  signIn: Pick<LoadedClerkBrowser["client"]["signIn"], "attemptFirstFactor" | "resetPassword">,
+  code: string,
+  password: string,
+) {
+  const verified = await signIn.attemptFirstFactor({ strategy: "reset_password_email_code", code });
+  if (verified.status !== "needs_new_password") return null;
+
+  const result = await signIn.resetPassword({ password, signOutOfOtherSessions: true });
+  return isCompleteSignIn(result) ? result.createdSessionId : null;
 }
 
 type VerifyMode = "signup" | "signin-first" | "signin-second";
@@ -548,15 +570,10 @@ export default function AuthChoice({
 
     try {
       const clerk = await getLoadedClerk();
+      const sessionId = await resetPasswordEverywhere(clerk.client.signIn, code, password);
 
-      const result = await clerk.client.signIn.attemptFirstFactor({
-        strategy: "reset_password_email_code",
-        code,
-        password,
-      });
-
-      if (result.status === "complete" && result.createdSessionId) {
-        await activateSession(clerk, result.createdSessionId, loginReturnUrl);
+      if (sessionId) {
+        await activateSession(clerk, sessionId, loginReturnUrl);
         return;
       }
 
