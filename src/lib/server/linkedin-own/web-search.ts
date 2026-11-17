@@ -79,7 +79,7 @@ function flightCompanyIdBySlug(flight: string) {
 function segments(html: string) {
   return decodeHtml(
     html
-      .replace(/<script\b[\s\S]*?<\/script\s*>/gi, " ")
+      .replace(/<script\b[\s\S]*?<\/script\b[^>]*>/gi, " ")
       .replace(/<style\b[\s\S]*?<\/style\s*>/gi, " ")
       .replace(/<[^>]+>/g, "\n"),
   ).replace(/\\u2022/g, "•")

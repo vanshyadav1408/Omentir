@@ -82,7 +82,10 @@ export function isAllowedRedirectUri(value: string) {
   }
   // A private scheme such as cursor:// or vscode:// - no host to verify, but the
   // OS routes it to a locally installed application rather than the network.
-  return /^[a-z][a-z0-9+.-]*:$/.test(url.protocol) && url.protocol !== "javascript:" && url.protocol !== "data:";
+  return (
+    /^[a-z][a-z0-9+.-]*:$/.test(url.protocol) &&
+    !["javascript:", "data:", "vbscript:"].includes(url.protocol)
+  );
 }
 
 export function verifyPkceS256(verifier: string, challenge: string) {

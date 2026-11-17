@@ -5,6 +5,7 @@ import {
   parseForms,
   startLinkedInLogin,
   submitLinkedInChallenge,
+  textContent,
   type LoginOutcome,
 } from "./login";
 
@@ -258,4 +259,10 @@ test("invisible reCAPTCHA v3 badges and LIX flags on checkpoint pages are not mi
   if (outcome.kind === "challenge") {
     expect(outcome.method).toBe("app");
   }
+});
+
+test("script text never leaks into page text, even when the closing tag carries whitespace or junk", () => {
+  expect(textContent(`<p>Enter the code</p><script>var lix = "captcha";</script\t\n bar><p>we sent</p>`)).toBe(
+    "Enter the code we sent",
+  );
 });

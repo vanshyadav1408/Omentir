@@ -144,7 +144,7 @@ export function formFields(form: HtmlForm): Array<[string, string]> {
 export function textContent(html: string) {
   return decodeHtml(
     html
-      .replace(/<script\b[\s\S]*?<\/script\s*>/gi, " ")
+      .replace(/<script\b[\s\S]*?<\/script\b[^>]*>/gi, " ")
       .replace(/<style\b[\s\S]*?<\/style\s*>/gi, " ")
       .replace(/<[^>]+>/g, " "),
   )
@@ -175,7 +175,7 @@ const CODE_ERROR = /not the right code|wrong code|incorrect|invalid (?:code|pin|
 // checkpoint page, which must not be mistaken for an interactive puzzle).
 function stripInertMarkup(html: string) {
   return html
-    .replace(/<script\b[\s\S]*?<\/script\s*>/gi, " ")
+    .replace(/<script\b[\s\S]*?<\/script\b[^>]*>/gi, " ")
     .replace(/<style\b[\s\S]*?<\/style\s*>/gi, " ")
     .replace(/<code\b[\s\S]*?<\/code\s*>/gi, " ");
 }

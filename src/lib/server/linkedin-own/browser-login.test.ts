@@ -3,6 +3,7 @@ import {
   classifyBrowserPage,
   closeLiveBrowserLogin,
   getLiveBrowserLogin,
+  linkedInCookies,
   registerLiveBrowserLogin,
   startBrowserLinkedInLogin,
   submitBrowserLinkedInChallenge,
@@ -206,4 +207,15 @@ test("live checkpoint login markup (hidden error slots, reCAPTCHA v3 badge, in-f
       settledTicks: 0,
     }),
   ).toEqual({ kind: "waiting" });
+});
+
+test("only LinkedIn's own cookies are kept from the sign-in browser, so a lookalike host cannot plant cookies in the saved session", () => {
+  expect(
+    linkedInCookies([
+      { domain: ".linkedin.com", name: "li_at", value: "session" },
+      { domain: "www.linkedin.com", name: "JSESSIONID", value: "ajax:1" },
+      { domain: "evillinkedin.com", name: "li_at", value: "planted" },
+      { domain: ".notlinkedin.com", name: "bcookie", value: "planted" },
+    ]),
+  ).toEqual({ li_at: "session", JSESSIONID: "ajax:1" });
 });

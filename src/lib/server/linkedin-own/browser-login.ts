@@ -197,9 +197,16 @@ async function launchBrowser(input: ProxyIdentity & { userAgent: string; timezon
 }
 
 async function cookiesOf(context: BrowserContext) {
+  return linkedInCookies(await context.cookies());
+}
+
+// Only cookies LinkedIn set. A bare endsWith("linkedin.com") would also keep
+// cookies from a lookalike host such as evillinkedin.com.
+export function linkedInCookies(all: Array<{ domain: string; name: string; value: string }>) {
   const cookies: Record<string, string> = {};
-  for (const cookie of await context.cookies()) {
-    if (cookie.domain.endsWith("linkedin.com")) cookies[cookie.name] = cookie.value;
+  for (const cookie of all) {
+    const domain = cookie.domain.replace(/^\./, "").toLowerCase();
+    if (domain === "linkedin.com" || domain.endsWith(".linkedin.com")) cookies[cookie.name] = cookie.value;
   }
   return cookies;
 }
