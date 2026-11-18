@@ -92,10 +92,21 @@ describe("CMS markdown twins", () => {
 
   test("keeps the security page's mailto links whole so a security team can reach us from the .md twin", async () => {
     const markdown = await renderPublicMarkdown("/security");
-    expect(markdown).toContain("## Your LinkedIn account");
-    expect(markdown).toContain("### Do you store our LinkedIn password?");
     expect(markdown).toContain("[vansh@omentir.com](mailto:vansh@omentir.com)");
-    expect(markdown).toContain("- **Your LinkedIn password:** Used once to sign in. Never stored or logged.");
-    expect(markdown).toContain("| Clerk | Sign-in for Omentir accounts. |");
+    // Reviewers check claims against the code, so the source links must survive.
+    expect(markdown).toContain(
+      "[session-crypto.ts](https://github.com/vanshyadav1408/Omentir/blob/main/src/lib/server/linkedin-own/session-crypto.ts)"
+    );
+    expect(markdown).toContain("Byteful supplies the IP address each LinkedIn account connects through.");
+  });
+
+  test("numbers legal sections in the .md twin the same way the page does, so a review can cite section numbers", async () => {
+    const security = await renderPublicMarkdown("/security");
+    expect(security).toContain("## 1. Your LinkedIn password");
+    const guarantee = await renderPublicMarkdown("/minimum-booking-guarantee");
+    expect(guarantee).toContain("## 1. Overview");
+    expect(guarantee).toContain("## 10. Relationship to other terms");
+    const safety = await renderPublicMarkdown("/linkedin-account-safety");
+    expect(safety).toContain("## 2. Your own IP address");
   });
 });

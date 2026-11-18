@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import JsonLd from "@/app/json-ld";
-import { CalPageHero, MarketingFooter, MarketingHeader } from "@/app/marketing-shell";
+import { LegalShell } from "@/app/legal-shell";
 import {
   createBreadcrumbJsonLd,
   createWebPageJsonLd,
@@ -31,11 +31,6 @@ function renderInline(text: string): ReactNode[] {
   });
 }
 
-const LEGAL_LINKS = [
-  { label: "Terms of Service", href: "/terms-of-service" },
-  { label: "Privacy Policy", href: "/privacy-policy" },
-];
-
 export function LegalPageView({ page }: { page: CmsLegalPage }) {
   const path = `/${page.slug}`;
   const jsonLd = [
@@ -54,42 +49,17 @@ export function LegalPageView({ page }: { page: CmsLegalPage }) {
   return (
     <>
       <JsonLd id={`${page.slug}-jsonld`} data={jsonLd} />
-      {/* Calendly-style: cream hero with the document switcher, then one
-          plain reading column. No sign-up box on legal pages. */}
-      <main className="site-theme min-h-screen overflow-x-hidden">
-        <MarketingHeader transparentAtTop />
-        <CalPageHero title={page.title}>
-          {page.updatedDate ? (
-            <p className="cal-page-meta">Last updated {page.updatedDate}</p>
-          ) : null}
-          <nav aria-label="Legal" className="mt-6">
-            <ul className="flex flex-wrap justify-center gap-2">
-              {LEGAL_LINKS.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    aria-current={link.href === path ? "page" : undefined}
-                    className="cal-filter-pill inline-block"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        </CalPageHero>
-
-        <article className="site-legal-body cal-read">
-          {page.lede || page.description ? <p>{page.lede || page.description}</p> : null}
-          {page.sections.map((section) => (
-            <section key={section.title} className="mt-8">
-              <h2>{section.title}</h2>
-              <p className="mt-3">{renderInline(section.body)}</p>
-            </section>
-          ))}
-        </article>
-        <MarketingFooter />
-      </main>
+      <LegalShell
+        path={path}
+        title={page.title}
+        updated={page.updatedDate || undefined}
+        lede={page.lede || page.description || undefined}
+        // CMS titles carry their own "1. " prefix; the shell numbers sections.
+        sections={page.sections.map((section) => ({
+          title: section.title.replace(/^\d+\.\s*/, ""),
+          paragraphs: [renderInline(section.body)],
+        }))}
+      />
     </>
   );
 }

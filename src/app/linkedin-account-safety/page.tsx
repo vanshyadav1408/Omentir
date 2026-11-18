@@ -1,11 +1,6 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
 import JsonLd from "../json-ld";
-import {
-  CalPageHero,
-  MarketingFooter,
-  MarketingHeader,
-} from "../marketing-shell";
+import { LegalShell, type LegalSection } from "../legal-shell";
 import {
   createBreadcrumbJsonLd,
   createPageMetadata,
@@ -28,11 +23,11 @@ export const metadata = createPageMetadata({
   ],
 });
 
+const updated = "November 18, 2026";
+
 const email = <a href="mailto:vansh@omentir.com">vansh@omentir.com</a>;
 
-type Section = { title: string; paragraphs: ReactNode[] };
-
-const sections: Section[] = [
+const sections: LegalSection[] = [
   {
     title: "Signing in with your password",
     paragraphs: [
@@ -48,6 +43,34 @@ const sections: Section[] = [
         not come from a real browser. The browser runs on our server, signs in,
         and closes.
       </>,
+      <>
+        Your password is encrypted the whole way. It goes over HTTPS from your
+        browser to our server, then over HTTPS from the browser on our server to
+        linkedin.com. It is used for that one sign-in request and never written
+        to the database, logs, or analytics.
+      </>,
+      <>
+        Only a signed-in Omentir user on omentir.com can use the connect form,
+        and each user gets 5 sign-in attempts a minute.
+      </>,
+    ],
+  },
+  {
+    title: "Your own IP address",
+    paragraphs: [
+      <>
+        Each connected LinkedIn account gets its own IP address, picked in or
+        near the country you connect from. The sign-in and everything Omentir
+        does for that account go through it, so LinkedIn does not see many
+        accounts arriving from one shared server. If Omentir has no free IP for
+        a new account, it tells you and does not connect it.
+      </>,
+      <>
+        Byteful supplies these IP addresses. It carries the traffic but only
+        sees an encrypted connection to linkedin.com, not your password or your
+        messages. The omentir.com server refuses to send any LinkedIn request
+        without an IP of the account&apos;s own.
+      </>,
     ],
   },
   {
@@ -58,8 +81,10 @@ const sections: Section[] = [
         sent to your email or phone, a code from an authenticator app, or a tap
         to approve the sign-in in the LinkedIn app on your phone. When that
         happens, the connect form tells you which check LinkedIn picked, and the
-        sign-in waits up to ten minutes while you finish it. If the wait runs
-        out, you just start the sign-in again.
+        sign-in waits up to ten minutes while you finish it, with 5 tries at the
+        code. If the wait runs out, you just start the sign-in again. What
+        Omentir saves during that wait is encrypted and never includes your
+        password.
       </>,
     ],
   },
@@ -84,8 +109,13 @@ const sections: Section[] = [
         into the database, and never written to logs. The session is what lets
         Omentir act as your account: send connection requests and messages, read
         replies, and notice when someone accepts a request. Omentir never stores
-        your LinkedIn password, and nobody at Omentir can read your session out
-        of the database.
+        your LinkedIn password.
+      </>,
+      <>
+        Each time a session is encrypted it gets a fresh random nonce and an
+        authentication tag, so a record that was changed fails to decrypt
+        instead of being used. The 256-bit key is kept on the app server, not in
+        the database, so a copy of the database on its own cannot be read.
       </>,
       <>
         The session lives with the rest of your workspace data on Google Cloud
@@ -114,9 +144,10 @@ const sections: Section[] = [
         Every workspace has daily caps for connection requests and messages. The
         defaults are 10 invites and 20 messages a day. You can raise or lower
         them in Settings, up to 100 invites and 200 messages a day. Campaigns
-        only send inside the send window you pick, in the lead&apos;s time zone,
-        and requests go out one at a time with gaps between them rather than all
-        at once.
+        only send inside the send window you pick, in the lead&apos;s time zone.
+        Requests for one account go out one at a time: Omentir waits a random
+        1.2 to 2.8 seconds between reads and 3 to 6.5 seconds between invites
+        and messages.
       </>,
       <>
         Profile views through the connected account are limited to 75 a day.
@@ -189,7 +220,16 @@ const sections: Section[] = [
           GitHub
         </a>
         , so your team can check anything on this page against what the software
-        actually does.
+        actually does. The files that do the work are{" "}
+        <a href="https://github.com/vanshyadav1408/Omentir/blob/main/src/lib/server/linkedin-own/browser-login.ts" target="_blank" rel="noopener">browser-login.ts</a>{" "}
+        (sign-in),{" "}
+        <a href="https://github.com/vanshyadav1408/Omentir/blob/main/src/lib/server/linkedin-own/session-crypto.ts" target="_blank" rel="noopener">session-crypto.ts</a>{" "}
+        (encryption),{" "}
+        <a href="https://github.com/vanshyadav1408/Omentir/blob/main/src/lib/server/linkedin-own/transport.ts" target="_blank" rel="noopener">transport.ts</a>{" "}
+        (pacing), and{" "}
+        <a href="https://github.com/vanshyadav1408/Omentir/blob/main/src/lib/server/linkedin-own/proxy-pool.ts" target="_blank" rel="noopener">proxy-pool.ts</a>{" "}
+        (IP addresses). The <Link href="/security">Security page</Link> covers
+        the rest.
       </>,
     ],
   },
@@ -201,7 +241,7 @@ export default function LinkedInAccountSafetyPage() {
       name: "How Omentir Handles Your LinkedIn Account",
       description,
       url: `${siteUrl}/linkedin-account-safety`,
-      dateModified: "November 16, 2026",
+      dateModified: updated,
     }),
     createBreadcrumbJsonLd([
       { name: "Home", url: siteUrl },
@@ -215,35 +255,13 @@ export default function LinkedInAccountSafetyPage() {
   return (
     <>
       <JsonLd id="linkedin-account-safety-jsonld" data={jsonLd} />
-      {/* Same layout as the legal pages: cream hero, then one plain
-          reading column. */}
-      <main className="site-theme min-h-screen overflow-x-hidden">
-        <MarketingHeader transparentAtTop />
-        <CalPageHero title="How Omentir handles your LinkedIn account">
-          <p className="cal-page-meta">Last updated November 16, 2026</p>
-        </CalPageHero>
-
-        <article className="site-legal-body cal-read">
-          <p>
-            This page explains how Omentir signs in to your LinkedIn account,
-            what it stores and what it never stores, the limits it works within,
-            and what happens when you disconnect or your plan ends.
-          </p>
-          {sections.map((section, index) => (
-            <section key={section.title} className="mt-8">
-              <h2>
-                {index + 1}. {section.title}
-              </h2>
-              {section.paragraphs.map((paragraph, i) => (
-                <p key={i} className="mt-3">
-                  {paragraph}
-                </p>
-              ))}
-            </section>
-          ))}
-        </article>
-        <MarketingFooter />
-      </main>
+      <LegalShell
+        path="/linkedin-account-safety"
+        title="How Omentir handles your LinkedIn account"
+        updated={updated}
+        lede="This page explains how Omentir signs in to your LinkedIn account, what it stores and what it never stores, the limits it works within, and what happens when you disconnect or your plan ends."
+        sections={sections}
+      />
     </>
   );
 }

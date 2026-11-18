@@ -1,7 +1,6 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
 import JsonLd from "../json-ld";
-import { MarketingArticle } from "../marketing-shell";
+import { LegalShell, type LegalSection } from "../legal-shell";
 import {
   createBreadcrumbJsonLd,
   createPageMetadata,
@@ -22,9 +21,9 @@ export const metadata = createPageMetadata({
   ],
 });
 
-const policySections: Array<{ title: string; paragraphs: ReactNode[] }> = [
+const policySections: LegalSection[] = [
   {
-    title: "1. Overview",
+    title: "Overview",
     paragraphs: [
       <>
         Omentir offers the Minimum Booking Guarantee to give eligible customers a
@@ -42,7 +41,7 @@ const policySections: Array<{ title: string; paragraphs: ReactNode[] }> = [
     ],
   },
   {
-    title: "2. Two-week warm-up period",
+    title: "Two-week warm-up period",
     paragraphs: [
       <>
         Every workspace begins with a two-week warm-up period. The warm-up starts
@@ -61,7 +60,7 @@ const policySections: Array<{ title: string; paragraphs: ReactNode[] }> = [
     ],
   },
   {
-    title: "3. Eligibility requirements",
+    title: "Eligibility requirements",
     paragraphs: [
       <>
         To be eligible for a weekly guarantee review, the workspace must have an
@@ -82,7 +81,7 @@ const policySections: Array<{ title: string; paragraphs: ReactNode[] }> = [
     ],
   },
   {
-    title: "4. What counts as a qualifying booking",
+    title: "What counts as a qualifying booking",
     paragraphs: [
       <>
         A qualifying booking is a new sales conversation scheduled by a prospect
@@ -103,7 +102,7 @@ const policySections: Array<{ title: string; paragraphs: ReactNode[] }> = [
     ],
   },
   {
-    title: "5. Weekly measurement",
+    title: "Weekly measurement",
     paragraphs: [
       <>
         After the warm-up period, Omentir measures completed seven-day periods
@@ -121,7 +120,7 @@ const policySections: Array<{ title: string; paragraphs: ReactNode[] }> = [
     ],
   },
   {
-    title: "6. Refund entitlement",
+    title: "Refund entitlement",
     paragraphs: [
       <>
         For an approved claim, Omentir will refund the applicable current
@@ -145,7 +144,7 @@ const policySections: Array<{ title: string; paragraphs: ReactNode[] }> = [
     ],
   },
   {
-    title: "7. How to apply for a refund",
+    title: "How to apply for a refund",
     paragraphs: [
       <>
         Submit your request within 14 calendar days after the eligible week ends.
@@ -164,7 +163,7 @@ const policySections: Array<{ title: string; paragraphs: ReactNode[] }> = [
     ],
   },
   {
-    title: "8. Review and payment process",
+    title: "Review and payment process",
     paragraphs: [
       <>
         Omentir will review the workspace subscription status, warm-up dates,
@@ -183,7 +182,7 @@ const policySections: Array<{ title: string; paragraphs: ReactNode[] }> = [
     ],
   },
   {
-    title: "9. Circumstances that are not eligible",
+    title: "Circumstances that are not eligible",
     paragraphs: [
       <>
         The guarantee does not apply to a week that has not been completed, a
@@ -204,17 +203,12 @@ const policySections: Array<{ title: string; paragraphs: ReactNode[] }> = [
     ],
   },
   {
-    title: "10. Relationship to other terms",
+    title: "Relationship to other terms",
     paragraphs: [
       <>
         This policy is part of the public terms for the Minimum Booking
         Guarantee. It supplements the{" "}
-        <Link
-          href="/terms-of-service"
-          className="font-medium text-[var(--md-sys-color-primary)] underline underline-offset-4"
-        >
-          Terms of Service
-        </Link>
+        <Link href="/terms-of-service">Terms of Service</Link>
         . If there is a conflict between the standard refund language in the
         Terms of Service and an approved eligible claim under this policy, this
         policy controls for that claim.
@@ -250,39 +244,21 @@ export default function MinimumBookingGuaranteePage() {
   return (
     <>
       <JsonLd id="minimum-booking-guarantee-jsonld" data={jsonLd} />
-      <MarketingArticle
-        path="minimum-booking-guarantee"
+      <LegalShell
+        path="/minimum-booking-guarantee"
         title="Minimum Booking Guarantee"
-        description="The eligibility, warm-up, weekly measurement, and refund terms behind Omentir's booking guarantee."
         updated="October 7, 2026"
-      >
-        <p className="text-base font-semibold leading-7 text-[var(--md-sys-color-on-surface)]">
-          {minimumBookingGuaranteeStatement}
-        </p>
-        <ul className="mt-4 list-disc space-y-2 pl-5 text-base font-medium leading-7 text-[var(--md-sys-color-on-surface)]">
-          <li>The two-week warm-up period must be complete.</li>
-          <li>At least one agent must remain active for the full week.</li>
-          <li>If there are fewer than three qualifying bookings, you may apply for a refund, minus transaction charges (usually 3.5% to 5%).</li>
-        </ul>
-
-        <div className="mt-12 space-y-10">
-          {policySections.map((section) => (
-            <section key={section.title}>
-              <h2
-                style={{ fontFamily: "var(--font-cal-display)" }}
-                className="text-xl font-medium tracking-tight text-[var(--md-sys-color-on-surface)]"
-              >
-                {section.title}
-              </h2>
-              <div className="mt-4 space-y-5 text-base font-medium leading-8 text-[var(--md-sys-color-on-surface)]">
-                {section.paragraphs.map((paragraph, index) => (
-                  <p key={index}>{paragraph}</p>
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
-      </MarketingArticle>
+        lede={
+          <>
+            {minimumBookingGuaranteeStatement} It applies once the two-week
+            warm-up period is complete and at least one agent stays active for
+            the full week. If a week ends with fewer than three qualifying
+            bookings, you may apply for a refund, minus transaction charges
+            (usually 3.5% to 5%).
+          </>
+        }
+        sections={policySections}
+      />
     </>
   );
 }

@@ -564,6 +564,11 @@ function sectionsFromBlock(block: string) {
   });
 }
 
+// Legal pages number their sections on screen (LegalShell); the twins match.
+function numberedSections(sections: string[]) {
+  return sections.map((section, index) => section.replace(/^## /, `## ${index + 1}. `));
+}
+
 function linkedInAccountSafetyMarkdown() {
   const source = readAppFile("linkedin-account-safety", "page.tsx").replace(
     /\{email\}/g,
@@ -577,8 +582,8 @@ function linkedInAccountSafetyMarkdown() {
         "How Omentir signs in to your LinkedIn account, what it stores and what it never stores, the limits it works within, and what happens when you disconnect or your plan ends.",
         "/linkedin-account-safety"
       ),
-      `Last updated: November 16, 2026`,
-      sections.join("\n\n"),
+      `Last updated: November 18, 2026`,
+      numberedSections(sections).join("\n\n"),
     ].join("\n\n")
   );
 }
@@ -606,38 +611,13 @@ function agentsDeckMarkdown() {
 }
 
 function securityMarkdown() {
-  const source = readAppFile("security", "page.tsx");
   // The page's `{email}` shorthand is a mailto link; expand it so the twin
   // carries the address instead of an empty expression.
-  const expanded = source.replace(
+  const source = readAppFile("security", "page.tsx").replace(
     /\{email\}/g,
     '<a href="mailto:vansh@omentir.com">vansh@omentir.com</a>'
   );
-  const glance = [...expanded.matchAll(/label:\s*"([^"]+)",\s*value:\s*"([^"]+)"/g)].map(
-    (match) => `- **${match[1]}:** ${match[2]}`
-  );
-  // Each group is `heading: "..."` followed by its `title:` sections.
-  const groupsStart = expanded.indexOf("const securityGroups");
-  const groupsEnd = expanded.indexOf("const subprocessors", groupsStart);
-  const groupsBlock = groupsStart < 0 ? "" : expanded.slice(groupsStart, groupsEnd);
-  const groups = groupsBlock
-    .split(/heading:\s*"/)
-    .slice(1)
-    .map((chunk) => {
-      const headingEnd = chunk.indexOf('"');
-      const heading = chunk.slice(0, headingEnd);
-      const sections = sectionsFromBlock(chunk.slice(headingEnd)).map((section) =>
-        section.replace(/^## /, "### ")
-      );
-      return `## ${heading}\n\n${sections.join("\n\n")}`;
-    });
-  const vendors = [
-    "| Vendor | What it does | Data it touches |",
-    "| --- | --- | --- |",
-    ...[...expanded.matchAll(/name:\s*"([^"]+)",\s*purpose:\s*"([^"]+)",\s*data:\s*"([^"]+)"/g)].map(
-      (match) => `| ${match[1]} | ${match[2]} | ${match[3]} |`
-    ),
-  ];
+  const sections = sectionsMarkdown(source, "sections", "export default function");
   return collapseMarkdown(
     [
       pageHeader(
@@ -645,10 +625,9 @@ function securityMarkdown() {
         "How Omentir handles your LinkedIn login, where your data is stored, who can reach it, which vendors process it, and what we do not have yet.",
         "/security"
       ),
-      glance.join("\n"),
-      `Last updated: September 7, 2026`,
-      groups.join("\n\n"),
-      `## Which vendors process our data?\n\nThese are the companies that touch your data when you use the hosted version of Omentir. Self-hosting removes Clerk, Whop, and PostHog from the list.\n\n${vendors.join("\n")}`,
+      `Last updated: November 18, 2026`,
+      "How Omentir protects your LinkedIn login and your data. Omentir is open source, so where this page makes a technical claim, it links to the file in our public code that does the work. Your team can read it and check.",
+      numberedSections(sections).join("\n\n"),
     ].join("\n\n")
   );
 }
@@ -663,12 +642,9 @@ function guaranteeMarkdown() {
         "The eligibility, warm-up, weekly measurement, and refund terms behind Omentir's booking guarantee.",
         "/minimum-booking-guarantee"
       ),
-      "**Minimum 3 bookings per week or you pay nothing.**",
-      `- The two-week warm-up period must be complete.`,
-      `- At least one agent must remain active for the full week.`,
-      `- If there are fewer than three qualifying bookings, you may apply for a refund, minus transaction charges (usually 3.5% to 5%).`,
       `Last updated: October 7, 2026`,
-      sections.join("\n\n"),
+      "Minimum 3 bookings per week or you pay nothing. It applies once the two-week warm-up period is complete and at least one agent stays active for the full week. If a week ends with fewer than three qualifying bookings, you may apply for a refund, minus transaction charges (usually 3.5% to 5%).",
+      numberedSections(sections).join("\n\n"),
     ].join("\n\n")
   );
 }
