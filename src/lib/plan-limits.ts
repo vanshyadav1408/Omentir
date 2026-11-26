@@ -1,4 +1,5 @@
 import type { WorkspaceBilling } from "@/lib/server/types";
+import { appSumoTierLimits, type AppSumoTier } from "./appsumo-tiers";
 import { extraLinkedInSeatsCount } from "./linkedin-seat-pricing";
 import { isLocalMode } from "./runtime-mode.ts";
 
@@ -9,6 +10,9 @@ export type PlanLimits = {
   agents: number;
   campaigns: number;
   dailyDiscoveredLeads: number;
+  // Workspaces one login can own. Uncapped on every plan; only an AppSumo
+  // license tier sets a number (see entitlementsFor).
+  workspaces: number;
 };
 
 const unlimitedLimits: PlanLimits = {
@@ -16,6 +20,7 @@ const unlimitedLimits: PlanLimits = {
   agents: Number.POSITIVE_INFINITY,
   campaigns: Number.POSITIVE_INFINITY,
   dailyDiscoveredLeads: Number.POSITIVE_INFINITY,
+  workspaces: Number.POSITIVE_INFINITY,
 };
 
 /**
@@ -31,6 +36,7 @@ export function commercialPlanLimits(plan: PlanId | undefined): PlanLimits {
       agents: Number.POSITIVE_INFINITY,
       campaigns: Number.POSITIVE_INFINITY,
       dailyDiscoveredLeads: Number.POSITIVE_INFINITY,
+      workspaces: Number.POSITIVE_INFINITY,
     };
   }
 
@@ -52,6 +58,7 @@ export function commercialPlanLimits(plan: PlanId | undefined): PlanLimits {
     agents: Number.POSITIVE_INFINITY,
     campaigns: Number.POSITIVE_INFINITY,
     dailyDiscoveredLeads: Number.POSITIVE_INFINITY,
+    workspaces: Number.POSITIVE_INFINITY,
   };
 }
 
@@ -63,11 +70,16 @@ export function planLimits(plan: PlanId | undefined): PlanLimits {
 
 // Extra paid LinkedIn seats stack on the plan's included account. Enterprise
 // stays uncapped. Callers in local mode must keep using planLimits() / entitlements.
+// An AppSumo license includes its tier's accounts in place of the plan's one;
+// pass appSumoTierOf(billing) for it.
 export function billedLinkedInAccountLimit(
   plan: PlanId | undefined,
   extraSeats: unknown = 0,
+  appSumoTier?: AppSumoTier,
 ) {
-  const base = commercialPlanLimits(plan).linkedInAccounts;
+  const base = appSumoTier
+    ? appSumoTierLimits(appSumoTier).linkedInAccounts
+    : commercialPlanLimits(plan).linkedInAccounts;
   if (!Number.isFinite(base)) return base;
   return base + extraLinkedInSeatsCount(extraSeats);
 }

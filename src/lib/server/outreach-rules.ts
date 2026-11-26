@@ -34,18 +34,40 @@ export function renderTemplate(
   return { text: rendered.trim(), natural };
 }
 
+export type AbVariant = "A" | "B";
+
+// Which side of an A/B test an enrollment is on. Derived from its id, so the
+// send path, previews and stats always agree without storing it up front, and
+// a lead keeps the same side for every step of the sequence.
+export function abVariantFor(enrollmentId: string): AbVariant {
+  let hash = 2166136261;
+  for (let index = 0; index < enrollmentId.length; index += 1) {
+    hash ^= enrollmentId.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0) % 2 === 0 ? "A" : "B";
+}
+
+export function stepHasVariant(step: { variantTemplate?: string }) {
+  return Boolean(step.variantTemplate?.trim());
+}
+
 // The text a sequence message step sends without AI, in the order the send
 // path, the Actions/Leads preview and AI pre-drafting all follow: the message
-// the user wrote for this lead, then the step's template if it renders
-// cleanly. Undefined means AI drafts it at send time.
+// the user wrote for this lead, then the step's template (variant B's when
+// the step is A/B tested and this lead is on B) if it renders cleanly.
+// Undefined means AI drafts it at send time.
 export function writtenSequenceMessage(
-  step: { id: string; messageTemplate: string },
+  step: { id: string; messageTemplate: string; variantTemplate?: string },
   lead: Pick<Lead, "name" | "company" | "title">,
   messageEdits: Record<string, string> | undefined,
+  variant: AbVariant = "A",
 ) {
   const edited = messageEdits?.[step.id]?.trim();
   if (edited) return { text: edited, edited: true };
-  const rendered = renderTemplate(step.messageTemplate, lead);
+  const template =
+    variant === "B" && stepHasVariant(step) ? step.variantTemplate! : step.messageTemplate;
+  const rendered = renderTemplate(template, lead);
   return rendered.natural && rendered.text ? { text: rendered.text, edited: false } : undefined;
 }
 
@@ -144,6 +166,20 @@ const INVITE_RESEND_BLOCKED_ERROR_TYPES = new Set([
 
 export function isInviteResendBlockedErrorType(errorType: string | undefined) {
   return Boolean(errorType && INVITE_RESEND_BLOCKED_ERROR_TYPES.has(errorType));
+}
+
+// LinkedIn answers every invite with HTTP 429 once the account has used its
+// week of invitations. Unlike cannot_resend_yet a 429 is never about the
+// recipient, so a single one is evidence about the account. Retried lead by
+// lead it kept sending invites into the limit every few minutes with the
+// owner never told (2026-11: 836 failed invites on one account in five days
+// and 353 on another; both cleared the following Monday). Connect steps only:
+// a rate-limited message is no reason to stop invites.
+export function isInviteRateLimitedErrorType(
+  errorType: string | undefined,
+  stepType: string | undefined,
+) {
+  return stepType === "connect" && errorType === "errors/too_many_requests";
 }
 
 // Noted invite failed in a way LinkedIn often still accepts as a bare Connect.

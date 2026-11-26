@@ -58,6 +58,10 @@ const outreachSteps = {
       enabled: { type: "boolean" },
       mode: { enum: ["ai", "manual"] },
       manualMessage: { type: "string" },
+      variantMessage: {
+        type: "string",
+        description: "Optional version B of a manual message. Half the leads get it instead of manualMessage (A/B test).",
+      },
       waitValue: { type: "number" },
       waitUnit: { enum: ["minutes", "hours", "days"] },
       includeNote: { type: "boolean" },

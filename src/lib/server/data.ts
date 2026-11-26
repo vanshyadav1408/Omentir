@@ -37,6 +37,9 @@ import {
   linkedInAccountIsOnOwnedWorkspace,
 } from "@/lib/linkedin-account-sharing";
 import { entitlementsFor } from "./entitlements";
+import { getExclusionKeys } from "./blacklist";
+import { isLeadExcluded } from "@/lib/exclusions";
+import { assignSenders, campaignSenderIds, rotatesSenders } from "@/lib/sender-rotation";
 import { isOriginalWorkspace, ownerBillingWorkspaceIds } from "@/lib/workspace-ownership";
 import {
   extraLinkedInSeatsCount,
@@ -405,6 +408,14 @@ export async function createOwnedWorkspace(
   input: { name: string; faviconUrl?: string },
 ) {
   const primary = await ensureWorkspace(ownerId);
+  // Uncapped on every plan except an AppSumo license, whose tier sets it.
+  const workspaceLimit = entitlementsFor(primary).limits.workspaces;
+  if (Number.isFinite(workspaceLimit)) {
+    const owned = await workspaceIdsForOwner(ownerId);
+    if (owned.length >= workspaceLimit) {
+      throw new Error(limitMessage("workspace", workspaceLimit));
+    }
+  }
   const ref = collection<Workspace>("workspaces").doc();
   const timestamp = nowIso();
   const name = input.name.trim().slice(0, 80) || "Workspace";
@@ -457,6 +468,7 @@ const WORKSPACE_SCOPED_COLLECTIONS = [
   "linkedInConnectTokens",
   "notificationLocks",
   "oauthCodes",
+  "exclusions",
 ] as const;
 
 async function deleteDocsForWorkspace(collectionName: string, workspaceId: string) {
@@ -762,6 +774,15 @@ export async function updateWorkspaceSettings(
     updatedAt: nowIso(),
   });
   return next;
+}
+
+// Workspaces whose outreach is switched off in Settings.
+export async function listOutreachPausedWorkspaceIds() {
+  const snap = await collection<Workspace>("workspaces")
+    .where("settings.outreachPaused", "==", true)
+    .select()
+    .get();
+  return new Set(snap.docs.map((doc) => doc.id));
 }
 
 // The workspace timezone is what send windows, daily quota resets and every
@@ -2506,6 +2527,7 @@ export async function updateCampaign(
       | "status"
       | "steps"
       | "linkedInAccountId"
+      | "senderAccountIds"
       | "replyHandling"
       | "bookingLink"
       | "sendWindow"
@@ -2743,6 +2765,10 @@ export async function enrollNewLeadsInCampaign(workspaceId: string, campaign: Ca
     return !source || source.status === "paused";
   };
 
+  // Blocked people, companies and countries are never enrolled. A read failure
+  // throws, so this tick enrolls nobody rather than ignoring the list.
+  const blacklist = await getExclusionKeys(workspaceId);
+
   const refs = leads.map((lead) =>
     collection<CampaignEnrollment>("campaignEnrollments").doc(`${campaign.id}-${lead.id}`),
   );
@@ -2760,7 +2786,8 @@ export async function enrollNewLeadsInCampaign(workspaceId: string, campaign: Ca
         !snap.exists &&
         canEnrollLeadForOutreach(lead.outreachStatus) &&
         !isSourcedByLeadsOnlyAgent(lead, agents) &&
-        !sourceAgentStopsOutreach(lead),
+        !sourceAgentStopsOutreach(lead) &&
+        !isLeadExcluded(lead, blacklist),
     );
 
   if (pending.length === 0) return 0;
@@ -2773,18 +2800,52 @@ export async function enrollNewLeadsInCampaign(workspaceId: string, campaign: Ca
   // local days as the caps and the send window actually require.
   const startsWithConnect = campaign.steps[0]?.type === "connect";
   const workspace = await getWorkspace(workspaceId);
-  const plan = await planActionSlots({
-    workspace,
-    campaign,
-    actions: pending.map(({ ref, lead }) => ({
-      id: ref.id,
-      kind: startsWithConnect ? "invite" : "message",
-      earliestAt: Date.parse(timestamp),
-      // Each lead's own window: a queue spanning several timezones spreads
-      // across each recipient's morning, not all into the workspace's.
-      timezone: sendWindowTimeZoneForLead(lead.location, workspace.timezone),
-    })),
-  });
+
+  // Sender rotation: each new lead goes to the connected sender with the
+  // fewest leads in this campaign, and stays with it for the whole sequence.
+  // A disconnected sender gets no new leads; its existing ones wait for it.
+  const senderById = new Map<string, string | undefined>();
+  if (rotatesSenders(campaign)) {
+    const connected = new Set((await listLinkedInAccounts(workspaceId)).map((account) => account.id));
+    const senders = campaignSenderIds(campaign).filter((id) => connected.has(id));
+    const existing = await collection<CampaignEnrollment>("campaignEnrollments")
+      .where("workspaceId", "==", workspaceId)
+      .where("campaignId", "==", campaign.id)
+      .select("linkedInAccountId")
+      .get();
+    const counts: Record<string, number> = {};
+    for (const doc of existing.docs) {
+      const sender = doc.data().linkedInAccountId || campaign.linkedInAccountId || "";
+      counts[sender] = (counts[sender] ?? 0) + 1;
+    }
+    const assigned = assignSenders(pending.length, senders, counts);
+    pending.forEach(({ ref }, index) => senderById.set(ref.id, assigned[index]));
+  }
+
+  // Caps and spacing are per sender, so each sender's leads are planned on
+  // that sender's own line.
+  const bySender = new Map<string, typeof pending>();
+  for (const entry of pending) {
+    const sender = senderById.get(entry.ref.id) || "";
+    bySender.set(sender, [...(bySender.get(sender) ?? []), entry]);
+  }
+  const plan = new Map<string, number>();
+  for (const [sender, entries] of bySender) {
+    const senderPlan = await planActionSlots({
+      workspace,
+      campaign,
+      linkedInAccountId: sender || undefined,
+      actions: entries.map(({ ref, lead }) => ({
+        id: ref.id,
+        kind: startsWithConnect ? "invite" : "message",
+        earliestAt: Date.parse(timestamp),
+        // Each lead's own window: a queue spanning several timezones spreads
+        // across each recipient's morning, not all into the workspace's.
+        timezone: sendWindowTimeZoneForLead(lead.location, workspace.timezone),
+      })),
+    });
+    for (const [id, slot] of senderPlan) plan.set(id, slot);
+  }
 
   // Chunked at 450: Firestore rejects a batch of more than 500 writes, and a
   // group large enough to exceed that is exactly the case this path exists for.
@@ -2796,6 +2857,7 @@ export async function enrollNewLeadsInCampaign(workspaceId: string, campaign: Ca
         workspaceId,
         campaignId: campaign.id,
         leadId: lead.id,
+        ...(senderById.get(ref.id) ? { linkedInAccountId: senderById.get(ref.id) } : {}),
         status: "queued",
         currentStepIndex: 0,
         nextActionAt: new Date(plan.get(ref.id) ?? Date.parse(timestamp)).toISOString(),
@@ -2825,12 +2887,32 @@ const RESERVED_SLOT_SCAN_LIMIT = 1000;
 
 async function listReservedActionSlots(workspaceId: string, linkedInAccountId?: string) {
   const campaigns = await listCampaigns(workspaceId);
+  // A campaign with no stored account sends from the workspace default, and
+  // the send path passes that default's real id. Resolve it so both name the
+  // same account; comparing raw fields missed every such campaign.
+  const defaultId =
+    !linkedInAccountId || campaigns.some((entry) => !entry.linkedInAccountId)
+      ? (await getLinkedInAccount(workspaceId))?.id || ""
+      : "";
+  const target = linkedInAccountId || defaultId;
+  const primaryOf = (campaign: Campaign) => campaign.linkedInAccountId || defaultId;
+  const campaignsById = new Map(campaigns.map((entry) => [entry.id, entry]));
+  // With rotation a campaign's enrollments are spread over several accounts,
+  // so the campaign filter only narrows the query; each enrollment's own
+  // sender decides whose line it is on.
   const sharingAccount = new Set(
     campaigns
-      .filter((entry) => (entry.linkedInAccountId || "") === (linkedInAccountId || ""))
+      .filter(
+        (entry) => primaryOf(entry) === target || campaignSenderIds(entry).includes(target),
+      )
       .map((entry) => entry.id),
   );
   if (sharingAccount.size === 0) return [];
+  const onThisAccount = (data: FirebaseFirestore.DocumentData) => {
+    const enrollment = data as Pick<CampaignEnrollment, "campaignId" | "linkedInAccountId">;
+    const campaign = campaignsById.get(enrollment.campaignId);
+    return Boolean(campaign) && (enrollment.linkedInAccountId || primaryOf(campaign!)) === target;
+  };
 
   try {
     // The campaign filter runs IN the query, not after it. Filtering a
@@ -2854,7 +2936,7 @@ async function listReservedActionSlots(workspaceId: string, linkedInAccountId?: 
           .where("campaignId", "in", chunk)
           .where("nextActionAt", ">=", since)
           .orderBy("nextActionAt", "asc")
-          .select("campaignId", "nextActionAt", "status")
+          .select("campaignId", "nextActionAt", "status", "linkedInAccountId")
           .limit(RESERVED_SLOT_SCAN_LIMIT)
           .get(),
       ),
@@ -2862,6 +2944,7 @@ async function listReservedActionSlots(workspaceId: string, linkedInAccountId?: 
 
     return results
       .flatMap((snap) => snap.docs.map((doc) => doc.data()))
+      .filter(onThisAccount)
       .filter((enrollment) => !["stopped", "replied", "connection_sent"].includes(enrollment.status))
       .map((enrollment) => Date.parse(enrollment.nextActionAt))
       .filter((ms) => Number.isFinite(ms));
@@ -2877,7 +2960,7 @@ async function listReservedActionSlots(workspaceId: string, linkedInAccountId?: 
     );
     const fallback = await collection<CampaignEnrollment>("campaignEnrollments")
       .where("workspaceId", "==", workspaceId)
-      .select("campaignId", "nextActionAt", "status")
+      .select("campaignId", "nextActionAt", "status", "linkedInAccountId")
       .get();
     const now = Date.now();
     return fallback.docs
@@ -2885,6 +2968,7 @@ async function listReservedActionSlots(workspaceId: string, linkedInAccountId?: 
       .filter(
         (enrollment) =>
           sharingAccount.has(enrollment.campaignId) &&
+          onThisAccount(enrollment) &&
           !["stopped", "replied", "connection_sent"].includes(enrollment.status),
       )
       .map((enrollment) => Date.parse(enrollment.nextActionAt))
@@ -2903,13 +2987,22 @@ export type SchedulingContext = {
   usedByDay: Record<string, { invites: number; messages: number }>;
 };
 
+// Caps and spacing are per sending account, so the context is too: pass the
+// account the action sends from (an enrollment's own sender under rotation).
+// Without one it is the campaign's account, or the workspace default.
 export async function loadSchedulingContext(
   workspace: Workspace,
   campaign: Campaign,
+  linkedInAccountId?: string,
 ): Promise<SchedulingContext> {
+  const accountId =
+    linkedInAccountId ||
+    campaign.linkedInAccountId ||
+    (await getLinkedInAccount(workspace.id))?.id ||
+    undefined;
   const [reservedSlots, usedByDay] = await Promise.all([
-    listReservedActionSlots(workspace.id, campaign.linkedInAccountId),
-    getDailyQuotaUsage(workspace.id, workspace.timezone),
+    listReservedActionSlots(workspace.id, accountId),
+    getDailyQuotaUsage(workspace.id, workspace.timezone, accountId),
   ]);
   return { reservedSlots, usedByDay };
 }
@@ -2932,9 +3025,12 @@ export async function planActionSlots(input: {
   additionalReserved?: number[];
   // Pre-fetched context, to avoid re-reading it per enrollment.
   context?: SchedulingContext;
+  // The account these actions send from. Defaults to the campaign's.
+  linkedInAccountId?: string;
 }) {
   const { workspace, campaign } = input;
-  const context = input.context || (await loadSchedulingContext(workspace, campaign));
+  const context =
+    input.context || (await loadSchedulingContext(workspace, campaign, input.linkedInAccountId));
 
   return planSendSchedule({
     nowMs: Date.now(),
@@ -3043,6 +3139,8 @@ export async function listCampaignEnrollmentPreviews(
       "status",
       "lastError",
       "connectionSentAt",
+      "abVariant",
+      "linkedInAccountId",
       "createdAt",
       "updatedAt",
     )
@@ -3469,6 +3567,69 @@ export async function releaseReplyNotification(workspaceId: string, leadId: stri
     .delete();
 }
 
+const OWNER_REQUEST_LOCK_HISTORY = 50;
+
+function ownerRequestLockRef(workspaceId: string, leadId: string) {
+  return getDb().collection("notificationLocks").doc(`${workspaceId}-${leadId}-owner-request`);
+}
+
+function ownerRequestLockMessageIds(data: FirebaseFirestore.DocumentData | undefined): string[] {
+  return Array.isArray(data?.messageIds) ? data.messageIds : [];
+}
+
+// A lead can ask for different things over time, so this is once per reply,
+// not once per lead. Reply sync reads the same reply again on every pass, long
+// after newer replies arrived, so the lock remembers each reply it emailed.
+export async function claimOwnerRequestNotification(
+  workspaceId: string,
+  leadId: string,
+  messageId: string,
+) {
+  const ref = ownerRequestLockRef(workspaceId, leadId);
+  return getDb().runTransaction(async (transaction) => {
+    const messageIds = ownerRequestLockMessageIds((await transaction.get(ref)).data());
+    if (messageIds.includes(messageId)) return false;
+
+    transaction.set(ref, {
+      workspaceId,
+      leadId,
+      kind: "owner-request",
+      messageIds: [...messageIds, messageId].slice(-OWNER_REQUEST_LOCK_HISTORY),
+      lastSentAt: Date.now(),
+      updatedAt: nowIso(),
+    });
+    return true;
+  });
+}
+
+// The AI reply asks this before it may write "I'll send it over": the promise
+// is only safe when the owner really was emailed about that reply.
+export async function ownerWasEmailedAboutRequest(
+  workspaceId: string,
+  leadId: string,
+  messageId: string,
+) {
+  const snap = await ownerRequestLockRef(workspaceId, leadId).get();
+  return ownerRequestLockMessageIds(snap.data()).includes(messageId);
+}
+
+// Only this reply is released: a failed send must not reopen older ones.
+export async function releaseOwnerRequestNotification(
+  workspaceId: string,
+  leadId: string,
+  messageId: string,
+) {
+  const ref = ownerRequestLockRef(workspaceId, leadId);
+  await getDb().runTransaction(async (transaction) => {
+    const snap = await transaction.get(ref);
+    if (!snap.exists) return;
+    transaction.update(ref, {
+      messageIds: ownerRequestLockMessageIds(snap.data()).filter((id) => id !== messageId),
+      updatedAt: nowIso(),
+    });
+  });
+}
+
 // Once per lead and outcome: a hot-interest email must not consume the later
 // confirmed-booking notification. Both remain individually idempotent.
 export async function claimLeadOutcomeNotification(
@@ -3660,6 +3821,7 @@ export async function setConversationReplyIntent(
     reason: string;
     confidence: number;
     nextStepHint?: string;
+    ownerRequest?: string;
   },
 ) {
   const id = `${workspaceId}-${leadId}`;
@@ -3673,6 +3835,8 @@ export async function setConversationReplyIntent(
       replyIntentReason: intent.reason,
       replyIntentConfidence: intent.confidence,
       replyIntentNextStepHint: intent.nextStepHint || "",
+      // Always written, so a later reply that asks for nothing clears it.
+      replyOwnerRequest: intent.ownerRequest || "",
       replyIntentAt: timestamp,
       ...(intent.intent === "meeting_booked" &&
       intent.confidence >= MEETING_BOOKED_CONFIDENCE
@@ -4052,29 +4216,65 @@ function quotaDayKey(timezone: string | undefined) {
   return zonedParts(timezone, Date.now()).dayKey;
 }
 
+// Invite and message caps are per LinkedIn account: LinkedIn rate-limits each
+// account, and sender rotation only spreads volume if every sender gets its
+// own allowance. They count in `sender-<account>-<day>` docs. The old
+// workspace-wide doc is still added on read: on the day this shipped it held
+// that day's sends, and every day after it has no invites or messages left in
+// it, so adding it can only under-send. "leadFilters" stays per workspace.
+function usageRefs(
+  workspaceId: string,
+  day: string,
+  kind: "invites" | "messages" | "leadFilters",
+  linkedInAccountId?: string,
+) {
+  const workspaceRef = getDb().collection("usageDays").doc(`${workspaceId}-${day}`);
+  const senderRef =
+    linkedInAccountId && kind !== "leadFilters"
+      ? getDb().collection("usageDays").doc(`sender-${cleanId(linkedInAccountId)}-${day}`)
+      : null;
+  return { workspaceRef, senderRef };
+}
+
 export async function hasDailyQuotaRemaining(
   workspaceId: string,
   kind: "invites" | "messages" | "leadFilters",
   limit: number,
   timezone: string | undefined,
+  linkedInAccountId?: string,
 ) {
   const today = quotaDayKey(timezone);
-  const snap = await getDb().collection("usageDays").doc(`${workspaceId}-${today}`).get();
-  const current = Number(snap.data()?.[kind] || 0);
+  const { workspaceRef, senderRef } = usageRefs(workspaceId, today, kind, linkedInAccountId);
+  const [workspaceSnap, senderSnap] = await Promise.all([
+    workspaceRef.get(),
+    senderRef ? senderRef.get() : null,
+  ]);
+  const current =
+    Number(workspaceSnap.data()?.[kind] || 0) + Number(senderSnap?.data()?.[kind] || 0);
   return current < limit;
 }
 
 // How much of each local day's allowance is already spent, for the planner's
 // usedByDay input. Only today is read: future days are always empty, and the
-// planner treats a missing key as zero.
-export async function getDailyQuotaUsage(workspaceId: string, timezone: string | undefined) {
+// planner treats a missing key as zero. Pass the sending account for its own
+// count; without one this is the old workspace-wide total.
+export async function getDailyQuotaUsage(
+  workspaceId: string,
+  timezone: string | undefined,
+  linkedInAccountId?: string,
+) {
   const today = quotaDayKey(timezone);
-  const snap = await getDb().collection("usageDays").doc(`${workspaceId}-${today}`).get();
-  const data = snap.data() || {};
+  const { workspaceRef, senderRef } = usageRefs(workspaceId, today, "invites", linkedInAccountId);
+  const [workspaceSnap, senderSnap] = await Promise.all([
+    workspaceRef.get(),
+    senderRef ? senderRef.get() : null,
+  ]);
+  const data = workspaceSnap.data() || {};
+  const sender = senderSnap?.data() || {};
   return {
     [today]: {
-      invites: Number(data.invites || 0),
-      messages: Number(data.messages || 0),
+      invites: Number(data.invites || 0) + Number(sender.invites || 0),
+      messages: Number(data.messages || 0) + Number(sender.messages || 0),
     },
   };
 }
@@ -4140,22 +4340,26 @@ export async function consumeDailyQuota(
   kind: "invites" | "messages" | "leadFilters",
   limit: number,
   timezone: string | undefined,
+  linkedInAccountId?: string,
 ) {
   const today = quotaDayKey(timezone);
-  const ref = getDb().collection("usageDays").doc(`${workspaceId}-${today}`);
+  const { workspaceRef, senderRef } = usageRefs(workspaceId, today, kind, linkedInAccountId);
+  const ref = senderRef ?? workspaceRef;
 
   return getDb().runTransaction(async (transaction) => {
     const snap = await transaction.get(ref);
+    const legacy = senderRef ? await transaction.get(workspaceRef) : null;
     const data = snap.exists ? snap.data() || {} : {};
     const current = Number(data[kind] || 0);
 
-    if (current >= limit) return false;
+    if (current + Number(legacy?.data()?.[kind] || 0) >= limit) return false;
 
     transaction.set(
       ref,
       {
         workspaceId,
         day: today,
+        ...(senderRef ? { linkedInAccountId } : {}),
         [kind]: current + 1,
         updatedAt: nowIso(),
       },
@@ -4326,6 +4530,22 @@ export async function recordManualActionSlot(workspaceId: string, linkedInAccoun
     },
     { merge: true },
   );
+}
+
+// Last send per LinkedIn account row, automated or manual, read from the docs
+// the two functions above write. An account that never sent is absent.
+export async function listLastActionTimes(linkedInAccountIds: string[]) {
+  const ids = [...new Set(linkedInAccountIds.filter(Boolean))];
+  const times = new Map<string, number>();
+  if (!ids.length) return times;
+  const snaps = await getDb().getAll(
+    ...ids.map((id) => getDb().collection("actionSpacing").doc(id)),
+  );
+  for (const snap of snaps) {
+    const lastSentAt = Number(snap.data()?.lastSentAt || 0);
+    if (lastSentAt) times.set(snap.id, lastSentAt);
+  }
+  return times;
 }
 
 // Single-flight lock for the automation tick so overlapping cron runs (a long

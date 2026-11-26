@@ -16,6 +16,8 @@ import {
 import { cleanId, normalizeLinkedInProfileUrl, nowIso } from "./firebase";
 import { wasWorkspaceLeadProcessed } from "./workspace-lead-history";
 import { agentTargetLocations, matchesTargetLocation, searchableLocationNames } from "./geo";
+import { getBlockedCountryKeys } from "./blacklist";
+import { isLocationBlocked } from "../exclusions";
 import { isAnonymousLinkedInProfile } from "./outreach-rules";
 import {
   balanceTitleSeniority,
@@ -1255,6 +1257,8 @@ export async function runPeopleEngineForAgent(input: {
   const targetLocations = stealOnly
     ? []
     : agentTargetLocations(input.agent, input.profile);
+  // Countries blocked in Settings apply to every agent, steal-customers too.
+  const blockedCountries = await getBlockedCountryKeys(input.agent.workspaceId);
   const candidates = new Map<string, Candidate>();
   const sources = input.agent.signalSources || {
     competitorUrls: [],
@@ -1694,7 +1698,8 @@ export async function runPeopleEngineForAgent(input: {
     if (
       failsLocationGate(candidate.lead.location, targetLocations, candidate.signals, {
         allowBlankForEnrichment: true,
-      })
+      }) ||
+      isLocationBlocked(candidate.lead.location, blockedCountries)
     ) {
       outOfRegionCandidates += 1;
       continue;
@@ -1830,7 +1835,10 @@ export async function runPeopleEngineForAgent(input: {
 
     // Present location must match targets. Blank location is allowed only for
     // people-search hits (LinkedIn often omits city on otherwise valid profiles).
-    if (failsLocationGate(enrichedLead.location, targetLocations, candidate.signals)) {
+    if (
+      failsLocationGate(enrichedLead.location, targetLocations, candidate.signals) ||
+      isLocationBlocked(enrichedLead.location, blockedCountries)
+    ) {
       outOfRegionCandidates += 1;
       continue;
     }

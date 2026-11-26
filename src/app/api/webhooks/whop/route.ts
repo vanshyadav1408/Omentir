@@ -177,7 +177,22 @@ async function activateWorkspace(
   plan: BillingPlan,
   payerEmail?: string | null,
   currentPeriodEnd?: string,
-): Promise<{ ok: true; workspaceId: string }> {
+): Promise<{ ok: true; workspaceId: string; ignored?: string }> {
+  // A buyer can hold an AppSumo license and a Whop plan at once (a subscriber
+  // who then bought the lifetime deal). The license is the larger grant, so a
+  // Whop renewal must not write the one-account Pro plan over it. If the
+  // license is refunded, billing sync restores the Whop plan on its own.
+  const existing = await getWorkspace(workspaceId).catch(() => null);
+  if (existing?.billing?.provider === "appsumo" && existing.billing.status === "active") {
+    await logAutomationRun({
+      workspaceId,
+      kind: "webhook",
+      status: "completed",
+      message: `Kept the AppSumo license over Whop ${sourceId}: this account has both.`,
+    });
+    return { ok: true, workspaceId, ignored: "appsumo_license" };
+  }
+
   await updateWorkspaceBilling(workspaceId, {
     provider: "whop",
     plan,

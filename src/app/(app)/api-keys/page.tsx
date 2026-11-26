@@ -8,8 +8,8 @@ import { planHasApiAccess } from "@/lib/plan-limits";
 import { createPageMetadata } from "@/app/seo";
 
 export const metadata = createPageMetadata({
-  title: "API - Omentir",
-  description: "Create API keys for AI agents and scripts, and explore the Omentir agent API.",
+  title: "Assistants - Omentir",
+  description: "See which AI assistants are connected to Omentir, connect a new one, or disconnect one.",
   path: "/api-keys",
   noIndex: true,
 });

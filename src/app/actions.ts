@@ -2,7 +2,7 @@
 
 import { auth, currentUser } from "@/lib/server/auth";
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { after } from "next/server";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -52,7 +52,9 @@ import {
   stopLeadOutreach,
 } from "@/lib/server/data";
 import { parseAgentMessageTone } from "@/lib/agent-setup-defaults";
-import { parseLinkedInLeadCsv } from "@/lib/linkedin-csv";
+import { buildLinkedInLeadCsv, parseLinkedInLeadCsv } from "@/lib/linkedin-csv";
+import { parseLinkedInSearchUrl } from "@/lib/server/linkedin-own/web-search";
+import { isAnonymousLinkedInProfile } from "@/lib/server/outreach-rules";
 import { normalizeLinkedInProfileUrl } from "@/lib/server/firebase";
 import {
   INVALID_SCHEDULING_LINK_MESSAGE,
@@ -71,10 +73,18 @@ import { getLeadOutreach, saveScheduledMessageEdit } from "@/lib/server/schedule
 import { analyzeWebsiteOrSearch, draftAgentSetupWithGemini } from "@/lib/server/gemini";
 import { hasActiveSubscription, requireActiveSubscription } from "@/lib/server/subscription";
 import {
+  APPSUMO_CLAIM_COOKIE,
+  APPSUMO_REDEEM_PATH,
+  attachAppSumoLicense,
+} from "@/lib/server/appsumo";
+import {
   linkedInChatBelongsToAccount,
+  searchLinkedInProfilesByUrl,
   sendLinkedInChatMessage,
 } from "@/lib/server/linkedin";
 import { forgetLinkedInSession } from "@/lib/server/linkedin-accounts";
+import { addExclusions, listExclusions, removeExclusion } from "@/lib/server/blacklist";
+import { BLOCKABLE_COUNTRIES, parseCountryExclusion, parseExclusionInput } from "@/lib/exclusions";
 import type { CampaignReplyHandling, CampaignStep, ProductProfile, SendWindow } from "@/lib/server/types";
 import { isLocalMode } from "@/lib/runtime-mode";
 import {
@@ -238,6 +248,39 @@ export async function deleteWorkspaceAction(...args: Parameters<typeof deleteWor
   return withActionErrors(() => deleteWorkspaceActionImpl(...args));
 }
 
+// Form action on /appsumo/redeem. Every outcome is a redirect back to a page
+// that explains it, so there is no ActionFailure to return.
+export async function activateAppSumoLicenseAction() {
+  const { userId } = await auth();
+  if (!userId) redirect(`/login?next=${encodeURIComponent(APPSUMO_REDEEM_PATH)}`);
+
+  const cookieStore = await cookies();
+  const user = await currentUser();
+  let result: Awaited<ReturnType<typeof attachAppSumoLicense>>;
+  try {
+    result = await attachAppSumoLicense({
+      cookieValue: cookieStore.get(APPSUMO_CLAIM_COOKIE)?.value,
+      userId,
+      email: user?.primaryEmailAddress?.emailAddress,
+    });
+  } catch (error) {
+    // The claim is still valid, so the buyer can press the button again.
+    console.error("[appsumo redeem] attaching the license failed:", error);
+    redirect(`${APPSUMO_REDEEM_PATH}?error=failed`);
+  }
+
+  if (!result.ok) {
+    // Keep the claim only where another login could still use it.
+    if (result.reason !== "has_license") cookieStore.delete(APPSUMO_CLAIM_COOKIE);
+    redirect(`${APPSUMO_REDEEM_PATH}?error=${result.reason}`);
+  }
+
+  cookieStore.delete(APPSUMO_CLAIM_COOKIE);
+  revalidatePath("/", "layout");
+  // Onboarding sends an account that already finished setup on to Overview.
+  redirect("/onboarding");
+}
+
 function splitList(value: FormDataEntryValue | null) {
   return String(value || "")
     .split(/[\n,]+/)
@@ -306,6 +349,30 @@ async function assertCampaignCanRun(
   if (usesAiMessages && !(profile?.description || profile?.painPointsText)) {
     throw new Error("Add your product profile before starting AI-message campaigns.");
   }
+}
+
+// Sender rotation picked on the setup form: the main account plus any extra
+// accounts ticked under it. Every one must be connected in this workspace.
+// Fewer than two means no rotation, stored as an empty list.
+async function senderAccountIdsFromForm(
+  workspaceId: string,
+  formData: FormData,
+  primaryId: string | undefined,
+) {
+  const ids = [
+    ...new Set(
+      [primaryId || "", ...formData.getAll("senderAccountIds").map((value) => String(value))]
+        .map((value) => value.trim())
+        .filter(Boolean),
+    ),
+  ];
+  if (ids.length < 2) return [];
+  for (const id of ids) {
+    if (!(await getLinkedInAccountForWorkspace(workspaceId, id))) {
+      throw new Error("One of the LinkedIn accounts picked to send from is not connected.");
+    }
+  }
+  return ids;
 }
 
 async function requireSelectedLinkedInAccount(workspaceId: string, formData: FormData) {
@@ -802,6 +869,21 @@ export async function saveSettingsAction(...args: Parameters<typeof saveSettings
   return withActionErrors(() => saveSettingsActionImpl(...args));
 }
 
+// Saved on its own, the moment the switch is flipped: turning outreach off
+// must not wait for someone to press Save.
+async function setOutreachPausedActionImpl(paused: boolean) {
+  const workspace = await requireWorkspace();
+  await updateWorkspaceSettings(workspace.id, { outreachPaused: paused === true });
+  revalidatePath("/settings");
+  revalidatePath("/agents");
+  revalidatePath("/actions");
+  return { outreachPaused: paused === true };
+}
+
+export async function setOutreachPausedAction(...args: Parameters<typeof setOutreachPausedActionImpl>) {
+  return withActionErrors(() => setOutreachPausedActionImpl(...args));
+}
+
 const PROFILE_IMAGE_MAX_BYTES = 2 * 1024 * 1024;
 const LOCAL_PROFILE_IMAGE_MAX_CHARS = 900_000;
 
@@ -1138,6 +1220,10 @@ async function importLinkedInCsvLeadsActionImpl(formData: FormData) {
     throw new Error("Outreach agent not found.");
   }
   const { leads } = parseLinkedInLeadCsv(String(formData.get("csvContents") || ""));
+  const reason =
+    formData.get("importSource") === "search"
+      ? "Imported by the user from a LinkedIn search"
+      : "Imported by the user from CSV";
   const existingLeads = await listLeads(workspace.id, undefined, 5000);
   const existingByUrl = new Map(
     existingLeads.map((lead) => [normalizeLinkedInProfileUrl(lead.linkedInUrl), lead]),
@@ -1150,9 +1236,9 @@ async function importLinkedInCsvLeadsActionImpl(formData: FormData) {
       // pausing this campaign never changes the ownership of existing outreach.
       sourceAgentId: existing?.sourceAgentId || agent.id,
       fitScore: 100,
-      scoreReasons: ["Imported by the user from CSV"],
-      summary: "Imported from CSV for outreach.",
-      leadReason: "Imported by the user from CSV",
+      scoreReasons: [reason],
+      summary: `${reason.replace("Imported by the user", "Imported")} for outreach.`,
+      leadReason: reason,
       outreachStatus: "new",
     });
   }
@@ -1163,6 +1249,61 @@ async function importLinkedInCsvLeadsActionImpl(formData: FormData) {
 
 export async function importLinkedInCsvLeadsAction(...args: Parameters<typeof importLinkedInCsvLeadsActionImpl>) {
   return withActionErrors(() => importLinkedInCsvLeadsActionImpl(...args));
+}
+
+// One search page holds 10 people and each page is a LinkedIn page load on
+// the user's own account, so an import stops at 10 pages.
+const SEARCH_IMPORT_LIMIT = 100;
+
+// Runs a LinkedIn people search the user copied from their browser and returns
+// the people as CSV text for the outreach import step. Nothing is saved here:
+// the people are only imported when the agent launches, like an uploaded CSV.
+async function findLinkedInSearchLeadsActionImpl(rawUrl: string) {
+  const workspace = await requireWorkspace();
+  requireActiveSubscription(workspace);
+  const url = String(rawUrl || "").trim();
+  const parsed = parseLinkedInSearchUrl(url);
+  if (parsed?.kind === "search" && !parsed.pageUrl) {
+    // Sales Navigator runs on its own search API, which this client does not
+    // call yet. Running its keywords as a normal search would import people
+    // the user never filtered for.
+    throw new Error(
+      "Sales Navigator links are not supported yet. Run the same search on linkedin.com/search and paste that link.",
+    );
+  }
+  if (!parsed || parsed.kind !== "search" || parsed.resultType !== "PEOPLE") {
+    throw new Error(
+      "Paste a LinkedIn people search link. It looks like linkedin.com/search/results/people/?keywords=...",
+    );
+  }
+  const account = await getLinkedInAccount(workspace.id);
+  if (!account) throw new Error("Connect a LinkedIn account in Settings first. The search runs on it.");
+  const profiles = await searchLinkedInProfilesByUrl({
+    accountId: account.accountId,
+    url: parsed.pageUrl!,
+    limit: SEARCH_IMPORT_LIMIT,
+  });
+  const leads = profiles
+    .filter((profile) => profile.linkedInUrl && !isAnonymousLinkedInProfile(profile))
+    .map((profile) => ({
+      linkedInUrl: profile.linkedInUrl,
+      name: profile.name,
+      title: profile.title,
+      company: profile.company,
+      location: profile.location,
+    }));
+  if (!leads.length) {
+    throw new Error(
+      "That search returned nobody Omentir can contact. Check the link opens results on LinkedIn, or try a broader search.",
+    );
+  }
+  const csv = buildLinkedInLeadCsv(leads);
+  // Drops anything the CSV path would refuse, so the count shown is the count imported.
+  return { csv, count: parseLinkedInLeadCsv(csv).leads.length, limit: SEARCH_IMPORT_LIMIT };
+}
+
+export async function findLinkedInSearchLeadsAction(...args: Parameters<typeof findLinkedInSearchLeadsActionImpl>) {
+  return withActionErrors(() => findLinkedInSearchLeadsActionImpl(...args));
 }
 
 async function updateAgentFromForm(
@@ -1267,6 +1408,18 @@ async function updateAgentActionImpl(formData: FormData) {
   const campaigns = (await listCampaigns(workspace.id)).filter(
     (campaign) => campaign.groupId === agent.targetGroupId,
   );
+  // Only forms that show the sender picker send this marker, so an edit from
+  // an older form never clears a rotation it did not display.
+  const editsSenders = formData.get("senderRotationShown") === "on";
+  const sendersByCampaign = new Map<string, string[]>();
+  if (editsSenders) {
+    for (const campaign of campaigns) {
+      sendersByCampaign.set(
+        campaign.id,
+        await senderAccountIdsFromForm(workspace.id, formData, campaign.linkedInAccountId),
+      );
+    }
+  }
   await Promise.all(
     campaigns.map((campaign) =>
       updateCampaign(workspace.id, campaign.id, {
@@ -1274,6 +1427,7 @@ async function updateAgentActionImpl(formData: FormData) {
         bookingLink: bookingLink || "",
         ...(messageTone ? { messageTone } : {}),
         ...(steps ? { steps } : {}),
+        ...(editsSenders ? { senderAccountIds: sendersByCampaign.get(campaign.id) || [] } : {}),
       }),
     ),
   );
@@ -1495,10 +1649,12 @@ async function createCampaignActionImpl(formData: FormData) {
   }
 
   const messageTone = parseAgentMessageTone(String(formData.get("messageTone") || ""));
+  const senderAccountIds = await senderAccountIdsFromForm(workspace.id, formData, account.id);
   const campaign = await createCampaign(workspace.id, {
     name: String(formData.get("name") || "LinkedIn campaign").trim(),
     groupId,
     linkedInAccountId: account.id,
+    ...(senderAccountIds.length ? { senderAccountIds } : {}),
     status,
     steps,
     replyHandling,
@@ -1680,6 +1836,7 @@ async function sendLinkedInChatMessageActionImpl(formData: FormData) {
     "messages",
     workspace.settings.dailyMessageLimit,
     workspace.timezone,
+    linkedInAccount.id,
   );
   const leadId = String(formData.get("leadId") || "").trim();
   if (leadId && body) {
@@ -1719,3 +1876,55 @@ async function completeConversationManualFollowUpActionImpl(formData: FormData) 
 export async function completeConversationManualFollowUpAction(...args: Parameters<typeof completeConversationManualFollowUpActionImpl>) {
   return withActionErrors(() => completeConversationManualFollowUpActionImpl(...args));
 }
+
+async function listBlacklistActionImpl() {
+  const workspace = await requireWorkspace();
+  const entries = (await listExclusions(workspace.id)).map(({ id, kind, value, createdAt }) => ({
+    id,
+    kind,
+    value,
+    createdAt,
+  }));
+  return { entries, countryOptions: BLOCKABLE_COUNTRIES };
+}
+
+export async function listBlacklistAction() {
+  return withActionErrors(() => listBlacklistActionImpl());
+}
+
+async function addToBlacklistActionImpl(text: string) {
+  const workspace = await requireWorkspace();
+  const entries = parseExclusionInput(String(text || "").slice(0, 500_000));
+  if (!entries.length) {
+    throw new Error("Add LinkedIn profile links or company names, one per line.");
+  }
+  const result = await addExclusions(workspace.id, entries);
+  return { added: result.added, parsed: entries.length };
+}
+
+export async function addToBlacklistAction(...args: Parameters<typeof addToBlacklistActionImpl>) {
+  return withActionErrors(() => addToBlacklistActionImpl(...args));
+}
+
+async function blockCountryActionImpl(country: string) {
+  const workspace = await requireWorkspace();
+  const entry = parseCountryExclusion(String(country || ""));
+  if (!entry) throw new Error("Pick a country from the list.");
+  await addExclusions(workspace.id, [entry]);
+  return { ok: true as const };
+}
+
+export async function blockCountryAction(...args: Parameters<typeof blockCountryActionImpl>) {
+  return withActionErrors(() => blockCountryActionImpl(...args));
+}
+
+async function removeFromBlacklistActionImpl(id: string) {
+  const workspace = await requireWorkspace();
+  await removeExclusion(workspace.id, String(id || ""));
+  return { ok: true as const };
+}
+
+export async function removeFromBlacklistAction(...args: Parameters<typeof removeFromBlacklistActionImpl>) {
+  return withActionErrors(() => removeFromBlacklistActionImpl(...args));
+}
+

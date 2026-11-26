@@ -13,12 +13,17 @@ export type WorkspaceSettings = {
   // means 28 (on for every workspace by default); 0 is off. Withdrawing cannot
   // be undone and LinkedIn blocks re-inviting the person for about three weeks.
   inviteWithdrawAfterDays?: number;
+  // The Settings outreach switch. True stops every automated invite, message
+  // and AI reply for the workspace, whatever its agents and campaigns say.
+  // Lead finding and reply syncing keep running. Unset means outreach is on.
+  outreachPaused?: boolean;
 };
 
 export type WorkspaceBilling = {
-  provider: "manual" | "whop";
+  provider: "manual" | "whop" | "appsumo";
   // "startup" is retired but still held by existing workspaces. Enterprise is
-  // sales-assisted, while "lifetime" is the retired one-time plan.
+  // sales-assisted. "lifetime" is a one-time purchase: the retired Whop plan,
+  // or an AppSumo license (provider "appsumo", limits set by appsumoTier).
   plan: "solo" | "lifetime" | "startup" | "enterprise";
   status:
     | "pending"
@@ -35,6 +40,11 @@ export type WorkspaceBilling = {
   extraLinkedInSeats?: number;
   seatMembershipId?: string;
   extraSeatMonthlyUsd?: number;
+  // AppSumo license behind this workspace. Both count only while provider is
+  // "appsumo": billing writes merge, so they can outlive a later Whop plan.
+  // The key changes on every upgrade or downgrade.
+  appsumoLicenseKey?: string;
+  appsumoTier?: number;
   updatedAt: string;
 };
 
@@ -342,6 +352,18 @@ export type LeadSignal = {
   updatedAt: string;
 };
 
+// Restriction entry: a person (by LinkedIn profile id), a company (by name) or
+// a country (by profile location) that outreach must never contact. Matching
+// lives in lib/exclusions.ts.
+export type ExclusionEntry = {
+  id: string;
+  workspaceId: string;
+  kind: "profile" | "company" | "country";
+  value: string;
+  key: string;
+  createdAt: string;
+};
+
 export type CampaignStep =
   | {
       id: string;
@@ -358,6 +380,9 @@ export type CampaignStep =
       id: string;
       type: "message";
       messageTemplate: string;
+      // A/B test: half the leads (picked by abVariantFor) get this text
+      // instead of messageTemplate. Empty or unset means no test on this step.
+      variantTemplate?: string;
     };
 
 // When this campaign is allowed to send, interpreted in each LEAD's local
@@ -381,7 +406,11 @@ export type Campaign = {
   id: string;
   workspaceId: string;
   name: string;
+  // The sending account, or the first of senderAccountIds when rotating.
   linkedInAccountId?: string;
+  // Sender rotation: two or more accounts this campaign spreads new leads
+  // across (see lib/sender-rotation.ts). Unset or one entry means no rotation.
+  senderAccountIds?: string[];
   groupId: string;
   status: "draft" | "active" | "paused";
   steps: CampaignStep[];
@@ -413,6 +442,11 @@ export type CampaignEnrollment = {
   workspaceId: string;
   campaignId: string;
   leadId: string;
+  // The LinkedIn account this lead's sequence sends from, picked once at
+  // enrollment so the invite and every message come from the same person.
+  // Unset on enrollments from before sender rotation: they use the campaign's
+  // linkedInAccountId.
+  linkedInAccountId?: string;
   status:
     | "queued"
     | "connection_sent"
@@ -451,6 +485,9 @@ export type CampaignEnrollment = {
   // Messages the user wrote for this lead on /leads or /actions, keyed by
   // campaign step id. Sent verbatim in place of the step's template or AI draft.
   messageEdits?: Record<string, string>;
+  // Set once a step with an A/B variant actually sends this lead its A or B
+  // text. Leads who never reached such a step stay out of the comparison.
+  abVariant?: "A" | "B";
   pendingAction?: {
     kind: "connection" | "message" | "reply";
     stepIndex: number;
@@ -469,6 +506,8 @@ export type CampaignEnrollmentPreview = Pick<
   | "status"
   | "lastError"
   | "connectionSentAt"
+  | "abVariant"
+  | "linkedInAccountId"
   | "createdAt"
   | "updatedAt"
 >;
@@ -507,6 +546,10 @@ export type Conversation = {
   replyIntentReason?: string;
   replyIntentConfidence?: number;
   replyIntentNextStepHint?: string;
+  // What the latest reply asked for that a text message can't deliver (a PDF,
+  // a demo video, an email). Empty when it asked for nothing like that. The
+  // owner is emailed about it, and only then may the AI reply say "I'll send it".
+  replyOwnerRequest?: string;
   replyIntentAt?: string;
   // Sticky outcome timestamp. Later replies may change replyIntent, but a
   // confirmed booking remains part of the conversation's history.

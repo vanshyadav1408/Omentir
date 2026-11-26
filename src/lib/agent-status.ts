@@ -22,6 +22,9 @@ export type AgentStatusFacts = {
   accountConnected: boolean;
   // Omentir-side kill switch for the workspace (AUTOMATION_PAUSED_WORKSPACE_IDS).
   automationPaused: boolean;
+  // The user's own switch for the workspace (Settings and the Workspace page).
+  // Stops sends only: agents keep finding leads.
+  outreachOff: boolean;
   // The campaign on the agent's lead group, if any. Groups are shared, so this
   // is the sequence that contacts the agent's leads.
   campaignStatus?: "draft" | "active" | "paused";
@@ -106,6 +109,18 @@ export function describeAgentStatus(
       tone: "active",
       label: "Finding leads",
       text: `This agent only finds leads and never contacts them.${nextSearch()}`,
+    };
+  }
+  // Settings beats the campaign: an active sequence with sends lined up still
+  // contacts nobody while the switch is off, so this comes before every
+  // campaign state below.
+  if (facts.outreachOff) {
+    return {
+      tone: "paused",
+      label: "Outreach off",
+      text: facts.findsLeads
+        ? `Outreach is off for this workspace, so nobody is being contacted. This agent still finds leads.${nextSearch()}`
+        : "Outreach is off for this workspace, so nobody is being contacted.",
     };
   }
   if (!facts.campaignStatus || facts.campaignStatus === "draft") {

@@ -3,7 +3,7 @@ import "server-only";
 import type { AgentSendKind, AgentStatusFacts } from "@/lib/agent-status";
 import { getAutomationSafetyMode, isWorkspaceAutomationPaused } from "./automation-safety";
 import { findNextScheduledStepIndex } from "./campaign-sequence";
-import { getInviteCooldown, getLinkedInAccountForWorkspace, listAgents, listCampaigns, listLinkedInAccounts } from "./data";
+import { findWorkspace, getInviteCooldown, getLinkedInAccountForWorkspace, listAgents, listCampaigns, listLinkedInAccounts } from "./data";
 import { getDb } from "./firebase";
 import type { Campaign, CampaignEnrollment, LinkedInAccount } from "./types";
 
@@ -104,10 +104,11 @@ export async function loadAgentStatusFacts(
   workspaceId: string,
   agentId?: string,
 ): Promise<Record<string, AgentStatusFacts>> {
-  const [allAgents, campaigns, connected] = await Promise.all([
+  const [allAgents, campaigns, connected, workspace] = await Promise.all([
     listAgents(workspaceId),
     listCampaigns(workspaceId),
     listLinkedInAccounts(workspaceId),
+    findWorkspace(workspaceId),
   ]);
   const agents = agentId ? allAgents.filter((agent) => agent.id === agentId) : allAgents;
   const automationPaused = isWorkspaceAutomationPaused(getAutomationSafetyMode(), workspaceId);
@@ -163,6 +164,7 @@ export async function loadAgentStatusFacts(
         nextRunAt: agent.nextRunAt,
         accountConnected: facts?.accountConnected ?? agentAccountConnected.get(agent.id) ?? false,
         automationPaused,
+        outreachOff: workspace?.settings.outreachPaused === true,
         campaignStatus: campaign?.status,
         inviteLimitUntil: facts?.inviteLimitUntil,
         nextSend: facts?.nextSend,

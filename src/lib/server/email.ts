@@ -551,8 +551,21 @@ export type InterestedLeadEmailInput = {
   interestSignal?: string;
   /** Short AI reason (not shown in the email body) */
   interestReason?: string;
+  /** Something they asked for that only the owner can send ("A demo video"). */
+  ownerRequest?: string;
   idempotencyKey?: string;
 };
+
+type MailMeta = Array<[string, string]>;
+
+/** The small "Account: X · Outreach: Y" line under the main content. */
+function metaLineHtml(meta: MailMeta) {
+  return meta.length
+    ? `<p class="m-faint" style="margin:16px 0 0;font-family:${SANS};font-size:13px;line-height:1.6;color:${MAIL.textFaint};">${meta
+        .map(([label, value]) => `${escapeHtml(label)}: <span class="m-muted" style="color:${MAIL.textMuted};">${escapeHtml(value)}</span>`)
+        .join(" &nbsp;·&nbsp; ")}</p>`
+    : "";
+}
 
 const LEAD_PHOTO_CID = "lead-photo";
 
@@ -563,9 +576,10 @@ function buildInterestedLeadEmail(input: Omit<InterestedLeadEmailInput, "to" | "
   const intro = "Omentir read their latest reply and marked it as interest. Worth answering while it's fresh.";
   const role = [lead.title, lead.company].filter(Boolean).join(" at ");
   const account = input.linkedInAccountName?.trim();
-  const meta: Array<[string, string]> = [
-    ...(account ? ([["Account", account]] as Array<[string, string]>) : []),
-    ...(input.campaignName ? ([["Outreach", input.campaignName]] as Array<[string, string]>) : []),
+  const meta: MailMeta = [
+    ...(input.ownerRequest ? ([["Asked for", input.ownerRequest]] as MailMeta) : []),
+    ...(account ? ([["Account", account]] as MailMeta) : []),
+    ...(input.campaignName ? ([["Outreach", input.campaignName]] as MailMeta) : []),
   ];
   const photoType = lead.photo?.contentType.split(";")[0]?.trim().toLowerCase();
   const photoExt = photoType === "image/png" ? "png" : photoType === "image/gif" ? "gif" : "jpg";
@@ -593,11 +607,7 @@ function buildInterestedLeadEmail(input: Omit<InterestedLeadEmailInput, "to" | "
               </td></tr>`
     : "";
 
-  const metaHtml = meta.length
-    ? `<p class="m-faint" style="margin:16px 0 0;font-family:${SANS};font-size:13px;line-height:1.6;color:${MAIL.textFaint};">${meta
-        .map(([label, value]) => `${escapeHtml(label)}: <span class="m-muted" style="color:${MAIL.textMuted};">${escapeHtml(value)}</span>`)
-        .join(" &nbsp;·&nbsp; ")}</p>`
-    : "";
+  const metaHtml = metaLineHtml(meta);
 
   const html = emailShell({
     title: headline,
@@ -663,6 +673,111 @@ export async function sendInterestedLeadNotification(input: InterestedLeadEmailI
         text: email.text,
         ...(email.attachments ? { attachments: email.attachments } : {}),
         tags: [{ name: "kind", value: "interested_lead" }],
+      },
+      input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : undefined,
+    ),
+  );
+}
+
+// -----------------------------------------------------------------------------
+// 4. Owner request: the lead asked for something only the owner can send
+// -----------------------------------------------------------------------------
+
+export type OwnerRequestEmailInput = {
+  to: string;
+  lead: {
+    name: string;
+    title?: string;
+    company?: string;
+    linkedInUrl?: string;
+  };
+  campaignName?: string;
+  linkedInAccountName?: string;
+  /** What they asked for, in a few words ("A demo video"). */
+  request: string;
+  /** Their message, as they wrote it. */
+  message: string;
+  /** The message they were answering, so a bare "Yes please!" makes sense. */
+  previousMessage?: string;
+  /** False when Omentir is not answering this reply (they said not now, for example). */
+  aiWillReply: boolean;
+  idempotencyKey?: string;
+};
+
+const OWNER_REQUEST_CONTEXT_LIMIT = 500;
+
+function buildOwnerRequestEmail(input: Omit<OwnerRequestEmailInput, "to" | "idempotencyKey">) {
+  const leadName = input.lead.name || "A lead";
+  const headline = `${leadName} asked for something only you can send`;
+  const intro = "Omentir can only type messages on LinkedIn. Files, videos and links have to come from you.";
+  const closing = input.aiWillReply
+    ? "Omentir will tell them you'll send it over, so they are expecting it from you. When you message them yourself, Omentir stops replying to this lead and the conversation is yours."
+    : "Omentir is not answering this reply. The next message is yours.";
+  const previous = input.previousMessage?.trim();
+  const previousMessage =
+    previous && previous.length > OWNER_REQUEST_CONTEXT_LIMIT
+      ? `${previous.slice(0, OWNER_REQUEST_CONTEXT_LIMIT).trimEnd()}...`
+      : previous;
+  const role = [input.lead.title, input.lead.company].filter(Boolean).join(" at ");
+  const account = input.linkedInAccountName?.trim();
+  const meta: MailMeta = [
+    ...(role ? ([["Lead", role]] as MailMeta) : []),
+    ...(account ? ([["Account", account]] as MailMeta) : []),
+    ...(input.campaignName ? ([["Outreach", input.campaignName]] as MailMeta) : []),
+  ];
+
+  const html = emailShell({
+    title: headline,
+    preheader: `${input.request}. ${input.message}`,
+    footerHtml: notificationFooterHtml(),
+    bodyHtml: `
+          ${headlineHtml(headline)}
+          ${introHtml(intro)}
+          ${sectionLabelHtml("They asked for")}
+          <p class="m-text" style="margin:0;font-family:${SERIF};font-size:22px;line-height:1.35;color:${MAIL.text};">${escapeHtml(input.request)}</p>
+          ${previousMessage ? messageBubbleHtml("You", previousMessage) : ""}
+          ${messageBubbleHtml(leadName, input.message)}
+          ${paragraphHtml(closing, "24px 0 0")}
+          ${metaLineHtml(meta)}
+          ${textLinkHtml(messagesUrl(), "Send it in Omentir", input.lead.linkedInUrl ? { href: input.lead.linkedInUrl, label: "View LinkedIn profile" } : undefined)}`,
+  });
+
+  const text = notificationFooterText(
+    [
+      headline,
+      intro,
+      "",
+      `They asked for: ${input.request}`,
+      "",
+      ...(previousMessage ? [`You: "${previousMessage}"`] : []),
+      `${leadName}: "${input.message}"`,
+      "",
+      closing,
+      ...(meta.length ? ["", ...meta.map(([label, value]) => `${label}: ${value}`)] : []),
+      ...(input.lead.linkedInUrl ? ["", input.lead.linkedInUrl] : []),
+      "",
+      `Send it in Omentir: ${messagesUrl()}`,
+    ].join("\n"),
+  );
+
+  return { html, text, subject: headline };
+}
+
+export async function sendOwnerRequestNotification(input: OwnerRequestEmailInput) {
+  const resend = getResend();
+  if (!resend) return { skipped: true };
+
+  const email = buildOwnerRequestEmail(input);
+
+  return ensureResendAccepted(
+    await resend.emails.send(
+      {
+        from: transactionalFrom(),
+        to: input.to,
+        subject: email.subject,
+        html: email.html,
+        text: email.text,
+        tags: [{ name: "kind", value: "owner_request" }],
       },
       input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : undefined,
     ),

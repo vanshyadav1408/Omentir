@@ -420,6 +420,7 @@ export async function replyToChatResource(context: AgentApiContext, payload: unk
       "messages",
       context.workspace.settings.dailyMessageLimit,
       context.workspace.timezone,
+      account.id,
     ))
   ) {
     throw new AgentApiOperationError("Daily message limit reached. Try again tomorrow.", 429);
@@ -443,6 +444,7 @@ export async function replyToChatResource(context: AgentApiContext, payload: unk
     "messages",
     context.workspace.settings.dailyMessageLimit,
     context.workspace.timezone,
+    account.id,
   );
   if (parsed.data.leadId && body) {
     await createConversationMessage({

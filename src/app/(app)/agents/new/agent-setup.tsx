@@ -1,6 +1,7 @@
 "use client";
 
 import { unwrapAction, type ActionFailure } from "@/lib/action-result";
+import { findLinkedInSearchLeadsAction } from "@/app/actions";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
@@ -93,6 +94,8 @@ type AgentSetupProps = {
   hasExistingCampaign?: boolean;
   // Saved campaign steps on edit, so the sequence opens with the real messages.
   initialSteps?: CampaignStep[];
+  // Sender rotation of the existing campaign, main account included.
+  initialSenderAccountIds?: string[];
   initialReplyHandling?: CampaignReplyHandling;
   initialBookingLink?: string;
   linkedInAccounts?: { id: string; displayName: string; accountId: string; avatarUrl?: string }[];
@@ -134,6 +137,8 @@ type SeqAction = {
   enabled: boolean;
   mode: "ai" | "manual";
   manualMessage: string;
+  // A/B test: variant B text for a manual message. Empty means no test.
+  variantMessage?: string;
   aiPrompt: string;
   goal: string;
   tone: string;
@@ -437,6 +442,7 @@ function seqActionsFromSteps(steps: CampaignStep[] | undefined): SeqAction[] | n
       ...makeSeqAction(messages.length ? "follow" : "message"),
       mode: "manual",
       manualMessage: step.messageTemplate,
+      variantMessage: step.variantTemplate || "",
       waitUnit,
       waitValue: waitUnit === "days" ? minutes / 1440 : waitUnit === "hours" ? minutes / 60 : minutes,
     });
@@ -770,6 +776,7 @@ export default function AgentSetup({
   initialReplyHandling,
   initialBookingLink,
   linkedInAccounts = [],
+  initialSenderAccountIds,
   setupMode = false,
   leadsOnly = false,
   outreachOnly = false,
@@ -815,6 +822,11 @@ export default function AgentSetup({
   const [preparedAgentId, setPreparedAgentId] = useState("");
   const [csvContents, setCsvContents] = useState("");
   const [csvFileName, setCsvFileName] = useState("");
+  // A pasted LinkedIn search fills csvContents with its results, so the rest
+  // of the import (review, launch) is the CSV path unchanged.
+  const [searchLink, setSearchLink] = useState("");
+  const [searchingLink, setSearchingLink] = useState(false);
+  const [csvFromSearch, setCsvFromSearch] = useState(false);
   const csvImport = useMemo(() => {
     if (!outreachOnly || !csvContents.trim()) return { leads: 0, skipped: 0 };
     try {
@@ -830,6 +842,10 @@ export default function AgentSetup({
   const [groupName, setGroupName] = useState(initialAgent?.targetGroupName || "");
   const [linkedInAccountId, setLinkedInAccountId] = useState(
     initialAgent?.linkedInAccountId || linkedInAccounts[0]?.id || "",
+  );
+  // Extra accounts this agent's outreach rotates through, besides the main one.
+  const [extraSenderIds, setExtraSenderIds] = useState<string[]>(
+    () => initialSenderAccountIds?.filter((id) => id !== (initialAgent?.linkedInAccountId || "")) ?? [],
   );
   const linkedInAccountSelectOptions = useMemo(
     () => linkedInAccountOptions(linkedInAccounts),
@@ -954,6 +970,8 @@ export default function AgentSetup({
   const [editStepWait, setEditStepWait] = useState(1);
   const [editStepWaitUnit, setEditStepWaitUnit] = useState<"hours" | "days">("days");
   const [editStepIncludeNote, setEditStepIncludeNote] = useState(true);
+  const [editStepVariantOn, setEditStepVariantOn] = useState(false);
+  const [editStepVariant, setEditStepVariant] = useState("");
 
   // Inline wait-time editor between sequence blocks
   const [editWaitId, setEditWaitId] = useState<string | null>(null);
@@ -1441,7 +1459,7 @@ export default function AgentSetup({
             </h2>
             <p className="mt-1 text-[14px] font-medium text-zinc-700">
               {outreachOnly
-                ? "Bring your own CSV of people you want to contact. Importing does not send messages."
+                ? "Upload a CSV or paste a LinkedIn search link with the people you want to contact. Importing does not send messages."
                 : stealCustomers
                   ? "Name the lead group for people found in competitor comments."
                   : "Choose where qualified leads should go and how strict the agent should be."}
@@ -1475,6 +1493,7 @@ export default function AgentSetup({
                   const input = event.currentTarget;
                   const file = input.files?.[0];
                   setDiscoveryError("");
+                  setCsvFromSearch(false);
                   if (!file) {
                     setCsvContents("");
                     setCsvFileName("");
@@ -1511,6 +1530,56 @@ export default function AgentSetup({
                 </span>
               ) : null}
             </label>
+          ) : null}
+          {outreachOnly ? (
+            <div className="grid gap-2 rounded-md border border-zinc-200 bg-white p-5">
+              <span className="text-[14px] font-semibold text-zinc-900">Or paste a LinkedIn search link</span>
+              <span className="text-[13px] leading-5 text-zinc-600">
+                Run a people search on LinkedIn with any filters, copy the link from your browser and paste it here. Omentir imports up to 100 people from it using your connected LinkedIn account.
+              </span>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <input
+                  type="url"
+                  value={searchLink}
+                  onChange={(event) => setSearchLink(event.target.value)}
+                  placeholder="https://www.linkedin.com/search/results/people/?keywords=..."
+                  className="min-w-0 flex-1 rounded-md border border-zinc-300 bg-white px-3 py-2 text-[14px] text-zinc-900 outline-none focus:border-[#ba3871]"
+                />
+                <button
+                  type="button"
+                  disabled={searchingLink || !searchLink.trim()}
+                  onClick={async () => {
+                    setDiscoveryError("");
+                    setSearchingLink(true);
+                    try {
+                      const result = unwrapAction(await findLinkedInSearchLeadsAction(searchLink));
+                      setCsvContents(result.csv);
+                      setCsvFileName("LinkedIn search");
+                      setCsvFromSearch(true);
+                    } catch (error) {
+                      setDiscoveryError(
+                        error instanceof Error ? error.message : "Could not run that LinkedIn search.",
+                      );
+                    } finally {
+                      setSearchingLink(false);
+                    }
+                  }}
+                  className="rounded-md bg-[#ba3871] px-4 py-2 text-[14px] font-semibold text-white disabled:opacity-50"
+                >
+                  {searchingLink ? "Searching..." : "Load people"}
+                </button>
+              </div>
+              {searchingLink ? (
+                <span className="text-[12px] font-medium text-zinc-600">
+                  Reading up to 10 result pages on LinkedIn. This can take a minute.
+                </span>
+              ) : null}
+              {csvFromSearch && csvImport.leads ? (
+                <span className="text-[12px] font-medium text-emerald-700">
+                  Ready: {csvImport.leads} profile{csvImport.leads === 1 ? "" : "s"} from your LinkedIn search
+                </span>
+              ) : null}
+            </div>
           ) : null}
           {/* Setup no longer asks for a discovery hour: the agent starts the
               moment it is created and keeps that time daily. Existing agents
@@ -1593,12 +1662,12 @@ export default function AgentSetup({
               style={{ fontFamily: "var(--font-varta)" }}
               className="text-[12px] font-bold uppercase tracking-wider text-zinc-900"
             >
-              CSV list
+              Imported list
             </div>
             <div className="mt-3 grid gap-2 text-[14px] leading-6 text-zinc-700">
               <p>
-                <span className="font-semibold text-zinc-900">File: </span>
-                {csvFileName || "No CSV selected"}
+                <span className="font-semibold text-zinc-900">Source: </span>
+                {csvFileName || "Nothing imported yet"}
               </p>
               <p>
                 <span className="font-semibold text-zinc-900">People to contact: </span>
@@ -1812,6 +1881,38 @@ export default function AgentSetup({
           onChange={setLinkedInAccountId}
           placeholder="Select LinkedIn account"
         />
+
+        {linkedInAccounts.length > 1 ? (
+          <div className="rounded-md border border-zinc-200 bg-white p-4">
+            <div style={{ fontFamily: "var(--font-varta)" }} className="text-[14px] font-semibold text-zinc-950">
+              Also send from
+            </div>
+            <p className="mt-1 text-[13px] font-medium text-zinc-700">
+              New leads are split across the accounts you tick here and the one above. Each lead gets the invite and every message from the same account, and each account keeps its own daily limits.
+            </p>
+            <div className="mt-3 grid gap-2">
+              {linkedInAccounts
+                .filter((account) => account.id !== linkedInAccountId)
+                .map((account) => {
+                  const on = extraSenderIds.includes(account.id);
+                  return (
+                    <label key={account.id} className="flex cursor-pointer items-center gap-2 text-[14px] text-zinc-900">
+                      <input
+                        type="checkbox"
+                        checked={on}
+                        onChange={() =>
+                          setExtraSenderIds((current) =>
+                            on ? current.filter((id) => id !== account.id) : [...current, account.id],
+                          )
+                        }
+                      />
+                      {account.displayName || "LinkedIn account"}
+                    </label>
+                  );
+                })}
+            </div>
+          </div>
+        ) : null}
 
         {/* AI / Manual selector — steal customers is AI-only */}
         {!stealCustomers ? (
@@ -2116,6 +2217,8 @@ export default function AgentSetup({
     setEditStepWait(action.waitValue);
     setEditStepWaitUnit(action.waitUnit === "minutes" ? "hours" : action.waitUnit);
     setEditStepIncludeNote(action.includeNote !== false);
+    setEditStepVariantOn(Boolean(action.variantMessage?.trim()));
+    setEditStepVariant(action.variantMessage || "");
   }
 
   function saveEditStep() {
@@ -2129,6 +2232,8 @@ export default function AgentSetup({
               waitValue: editStepWait,
               waitUnit: editStepWaitUnit,
               includeNote: editStepIncludeNote,
+              variantMessage:
+                a.kind !== "connect" && editStepVariantOn ? editStepVariant.trim() : "",
             }
           : a,
       ),
@@ -2296,8 +2401,15 @@ export default function AgentSetup({
                     ) : (
                       <div className="mt-3 rounded-md border border-zinc-100 bg-zinc-50 px-3 py-2.5">
                         <p className="text-[13px] italic leading-5 font-medium text-zinc-700">
+                          {action.variantMessage?.trim() ? <span className="mr-1 not-italic font-semibold text-zinc-900">A:</span> : null}
                           {messagePreview ? `"${messagePreview}"` : <span className="not-italic font-medium text-zinc-600">No message written yet.</span>}
                         </p>
+                        {action.variantMessage?.trim() ? (
+                          <p className="mt-1.5 text-[13px] italic leading-5 font-medium text-zinc-700">
+                            <span className="mr-1 not-italic font-semibold text-zinc-900">B:</span>
+                            {`"${action.variantMessage.length > 80 ? action.variantMessage.slice(0, 80) + "..." : action.variantMessage}"`}
+                          </p>
+                        ) : null}
                       </div>
                     )}
 
@@ -2495,6 +2607,33 @@ export default function AgentSetup({
                       ))}
                       <span className="ml-auto text-[12px] font-medium text-zinc-600">{editStepMessage.length}/1900</span>
                     </div>
+                    {editingAction.kind !== "connect" ? (
+                      <div className="flex flex-col gap-3 rounded-lg border border-zinc-200 px-4 py-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <div style={{ fontFamily: "var(--font-varta)" }} className="text-[14px] font-semibold text-zinc-950">A/B test this message</div>
+                            <div className="text-[12px] font-medium text-zinc-700">Half your leads get version A above, half get version B. Reply rates for each show on the agent page.</div>
+                          </div>
+                          <button
+                            type="button"
+                            aria-label="A/B test this message"
+                            onClick={() => setEditStepVariantOn((v) => !v)}
+                            className={"relative h-5 w-9 shrink-0 cursor-pointer rounded-full " + (editStepVariantOn ? "bg-[#e85e6b]" : "bg-zinc-300")}
+                          >
+                            <span className={"absolute top-0.5 h-4 w-4 rounded-full bg-white transition " + (editStepVariantOn ? "left-4" : "left-0.5")} />
+                          </button>
+                        </div>
+                        {editStepVariantOn ? (
+                          <TextAreaField
+                            label="Version B"
+                            value={editStepVariant}
+                            onChange={(e) => setEditStepVariant(e.target.value)}
+                            rows={5}
+                            placeholder="Write a different version of this message..."
+                          />
+                        ) : null}
+                      </div>
+                    ) : null}
                   </div>
                 ) : null}
 
@@ -2601,12 +2740,19 @@ export default function AgentSetup({
       />
       <input type="hidden" name="agentId" value={initialAgent?.id || ""} />
       <input type="hidden" name="linkedInAccountId" value={linkedInAccountId} />
+      {linkedInAccounts.length > 1 ? <input type="hidden" name="senderRotationShown" value="on" /> : null}
+      {extraSenderIds
+        .filter((id) => id !== linkedInAccountId && linkedInAccounts.some((account) => account.id === id))
+        .map((id) => (
+          <input key={`sender-${id}`} type="hidden" name="senderAccountIds" value={id} />
+        ))}
       <input type="hidden" name="name" value={name} />
       <input type="hidden" name="groupName" value={groupName} />
       <input type="hidden" name="groupId" value="__new__" />
       <input type="hidden" name="newGroupName" value={groupName} />
       <input type="hidden" name="preparedAgentId" value={preparedAgentId} />
       {outreachOnly ? <textarea hidden name="csvContents" value={csvContents} readOnly /> : null}
+      {outreachOnly && csvFromSearch ? <input type="hidden" name="importSource" value="search" /> : null}
       <input type="hidden" name="prompt" value={prompt} />
       {titles.map((value) => <input key={`title-${value}`} type="hidden" name="titles" value={value} />)}
       {industries.map((value) => <input key={`industry-${value}`} type="hidden" name="industries" value={value} />)}
@@ -2642,6 +2788,9 @@ export default function AgentSetup({
       <input type="hidden" name="secondMessage" value={secondMessageAction?.manualMessage || ""} />
       <input type="hidden" name="thirdWaitHours" value={waitAsHours(thirdMessageAction, 30)} />
       <input type="hidden" name="thirdMessage" value={thirdMessageAction?.manualMessage || ""} />
+      <input type="hidden" name="firstMessageB" value={firstMessageAction?.variantMessage || ""} />
+      <input type="hidden" name="secondMessageB" value={secondMessageAction?.variantMessage || ""} />
+      <input type="hidden" name="thirdMessageB" value={thirdMessageAction?.variantMessage || ""} />
       {stealCustomers || outreachMode === "automatic" ? (
         <input type="hidden" name="aiDefaultOutreach" value="on" />
       ) : (

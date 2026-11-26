@@ -7,6 +7,21 @@ import {
   seoPageToMarkdown,
 } from "./public-page-markdown";
 
+describe("Homepage markdown twin", () => {
+  test("opens with the headline a visitor sees and nothing else, because assistants quote the first line as what Omentir is", async () => {
+    const markdown = await renderPublicMarkdown("/");
+    const h1 = markdown?.split("\n")[0] ?? "";
+    // Pinned to the hero in home-story.tsx. If the headline moves or changes,
+    // this fails instead of the twin silently titling itself with a fallback.
+    expect(h1).toBe("# Omentir will find you customers or you pay nothing.");
+    // The title once ran on into page.tsx source (the metadata keywords and
+    // the FAQ array) because the match was not bounded to the headline.
+    expect(h1).not.toMatch(/[{}[\];"]/);
+    expect(markdown).not.toContain("keywords:");
+    expect(markdown).not.toContain("const faqItems");
+  });
+});
+
 describe("CMS markdown twins", () => {
   test("writes guide tables, steps and the short answer to the .md twin so agents get the same comparison as readers", () => {
     const markdown = guidePageToMarkdown({

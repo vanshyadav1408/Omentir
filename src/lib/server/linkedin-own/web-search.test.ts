@@ -69,6 +69,12 @@ test("copied LinkedIn URLs parse into the search they describe", () => {
       { key: "geoUrn", values: ["101282230"] },
       { key: "currentCompany", values: ["853178"] },
     ],
+    pageUrl: "https://www.linkedin.com/search/results/people/?keywords=founder&geoUrn=%5B%22101282230%22%5D&currentCompany=%5B%22853178%22%5D",
+  });
+  // The copied page is what gets paged, so filters this parser does not read
+  // (title, network, industry) still apply. A stale page number is dropped.
+  expect(parseLinkedInSearchUrl("https://www.linkedin.com/search/results/people/?keywords=cto&network=%5B%22S%22%5D&titleFreeText=cto&page=4")).toMatchObject({
+    pageUrl: "https://www.linkedin.com/search/results/people/?keywords=cto&network=%5B%22S%22%5D&titleFreeText=cto",
   });
   expect(parseLinkedInSearchUrl("https://www.linkedin.com/search/results/companies/?keywords=tech")).toMatchObject({ kind: "search", resultType: "COMPANIES", keywords: "tech" });
   expect(parseLinkedInSearchUrl("https://www.linkedin.com/search/results/content/?keywords=AI")).toMatchObject({ kind: "search", resultType: "CONTENT" });

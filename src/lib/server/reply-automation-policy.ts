@@ -25,6 +25,18 @@ export function isMeetingBooked(intent: ReplyIntent | undefined, confidence?: nu
   return intent === "meeting_booked" && (confidence ?? 1) >= MEETING_BOOKED_CONFIDENCE;
 }
 
+const OWNER_REQUEST_MAX_LENGTH = 120;
+
+// The classifier names what the lead asked the owner to send. Models write
+// "none" or "N/A" for "nothing" as often as they leave the field empty, and an
+// email saying a lead asked for "None" is worse than no email.
+export function normalizeOwnerRequest(value: unknown) {
+  if (typeof value !== "string") return "";
+  const text = value.replace(/\s+/g, " ").trim().replace(/[.\s]+$/, "");
+  if (!text || /^(?:none|nothing|n\/?a|no|null|false|empty|-+)$/i.test(text)) return "";
+  return text.slice(0, OWNER_REQUEST_MAX_LENGTH);
+}
+
 export function asksAboutPricing(message: string) {
   return (
     /\b(?:price|pricing|cost|costs|fee|fees)\b/i.test(message) ||

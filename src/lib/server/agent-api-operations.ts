@@ -16,6 +16,7 @@ import {
   deleteAgent,
   findLeadForWorkspace,
   getCampaign,
+  getCampaignEnrollment,
   getConversation,
   getDailyQuotaUsage,
   getLinkedInAccountForWorkspace,
@@ -86,6 +87,7 @@ import {
 } from "@/lib/steal-customers-targeting";
 import { countAcceptedConnections } from "@/lib/outreach-stage";
 import { countSendsInRange } from "@/lib/overview-summary";
+import { enrollmentSenderId } from "@/lib/sender-rotation";
 
 export class AgentApiOperationError extends Error {
   status: number;
@@ -317,10 +319,19 @@ export async function getAgentWorkspaceContext(context: AgentApiContext) {
     ]);
 
   const timeZone = resolveTimeZone(context.workspace.timezone);
-  const [today, usedToday] = Object.entries(quotaUsage)[0] || [
-    "",
-    { invites: 0, messages: 0 },
-  ];
+  // Caps count per LinkedIn account. The top-level numbers describe the first
+  // connected account (the one a single-account workspace has); byAccount has
+  // every account's own count.
+  const usageByAccount = await Promise.all(
+    linkedInAccounts.map(async (account) => ({
+      account,
+      usage: Object.values(
+        await getDailyQuotaUsage(workspaceId, context.workspace.timezone, account.id),
+      )[0] || { invites: 0, messages: 0 },
+    })),
+  );
+  const [today] = Object.entries(quotaUsage)[0] || [""];
+  const usedToday = usageByAccount[0]?.usage || { invites: 0, messages: 0 };
   const { dailyInviteLimit, dailyMessageLimit } = context.workspace.settings;
 
   return {
@@ -350,11 +361,17 @@ export async function getAgentWorkspaceContext(context: AgentApiContext) {
         limit: dailyMessageLimit,
         remaining: Math.max(0, dailyMessageLimit - usedToday.messages),
       },
+      byAccount: usageByAccount.map(({ account, usage }) => ({
+        linkedInAccountId: account.id,
+        displayName: account.displayName,
+        invites: { used: usage.invites, remaining: Math.max(0, dailyInviteLimit - usage.invites) },
+        messages: { used: usage.messages, remaining: Math.max(0, dailyMessageLimit - usage.messages) },
+      })),
       // Invites and follow-ups share one line per LinkedIn account. AI replies
       // skip the send window and that queue, then wait a random 2-15 minutes.
       spacingMinutes: SPACING_MINUTES,
       guidance:
-        "Caps reset at local midnight in timeZone. Each lead finder's send window (always, business, extended) decides the hours connection requests and follow-ups may go out, measured in each lead's own time zone (resolved from their profile location; timeZone is the fallback when it cannot be). AI replies ignore that window and wait a random 2 to 15 minutes after the inbound message. Use omentir_list_scheduled_actions for the exact planned send times of invites and follow-ups.",
+        "Invite and message caps apply to each LinkedIn account separately (see byAccount) and reset at local midnight in timeZone. Each lead finder's send window (always, business, extended) decides the hours connection requests and follow-ups may go out, measured in each lead's own time zone (resolved from their profile location; timeZone is the fallback when it cannot be). AI replies ignore that window and wait a random 2 to 15 minutes after the inbound message. Use omentir_list_scheduled_actions for the exact planned send times of invites and follow-ups.",
     },
     setup: {
       hasProductProfile: Boolean(profile?.description?.trim()),
@@ -1325,9 +1342,14 @@ export async function sendReplyToLead(
   const campaign = conversation.campaignId
     ? await getCampaign(workspace.id, conversation.campaignId)
     : null;
+  // Reply from the account that has been talking to this lead: under sender
+  // rotation that is the enrollment's sender, not the campaign's first account.
+  const enrollment = campaign
+    ? await getCampaignEnrollment(workspace.id, `${campaign.id}-${lead.id}`)
+    : null;
   const account = await getLinkedInAccountForWorkspace(
     workspace.id,
-    campaign?.linkedInAccountId,
+    campaign ? enrollmentSenderId(campaign, enrollment ?? {}) : undefined,
     { fallbackToDefault: true },
   );
   if (!account) {
@@ -1343,6 +1365,7 @@ export async function sendReplyToLead(
         "messages",
         workspace.settings.dailyMessageLimit,
         workspace.timezone,
+        account.id,
       ))
     ) {
       throw new AgentApiOperationError("Daily message limit reached. Try again tomorrow.", 429);
@@ -1368,6 +1391,7 @@ export async function sendReplyToLead(
     "messages",
     workspace.settings.dailyMessageLimit,
     workspace.timezone,
+    account.id,
   );
   await createConversationMessage({
     workspaceId: workspace.id,

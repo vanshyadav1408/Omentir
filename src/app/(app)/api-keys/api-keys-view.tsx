@@ -11,6 +11,7 @@ import { TextField } from "@/app/ui/text-field";
 import { useBodyScrollLock } from "@/app/use-body-scroll-lock";
 import { useWorkspaceTimeZone } from "@/app/workspace-time-zone";
 import { formatZonedDate } from "@/lib/time-zone";
+import { groupConnectedAgents, type ConnectedAgent } from "@/lib/connected-agents";
 
 type ApiKeysViewProps = {
   agentApiKeys: AgentApiKey[];
@@ -45,7 +46,7 @@ const CONNECT_METHODS: ConnectMethod[] = [
       "Paste one URL and sign in. These apps have no place to put an API key, so Omentir issues one for them after you approve the connection.",
     details: [
       "No key to create, copy, or paste - approving the prompt is the whole setup.",
-      "Approving creates a key named after the app on this page; revoking it disconnects the app at once.",
+      "Approving adds the app to Connected assistants on this page. Disconnect it there to cut it off at once.",
       "Included with every paid Omentir plan, the same as every other API connection.",
     ],
     steps: [
@@ -67,7 +68,7 @@ const CONNECT_METHODS: ConnectMethod[] = [
       "No tools after connecting: switch the connector on in the chat's tools menu, then send a new message.",
       "Sent back with an error: your plan may not include API access. Check the plan, then add the connector again.",
       "Stuck on the Omentir sign-in page: open omentir.com, sign in there first, then retry adding the connector.",
-      "To disconnect, revoke the key named after the app on this page.",
+      "To disconnect, press Disconnect next to the app under Connected assistants.",
     ],
   },
   {
@@ -123,7 +124,7 @@ const CONNECT_METHODS: ConnectMethod[] = [
         code: `${siteUrl}/agents.md`,
       },
       {
-        text: "The agent reads agents.md, then stops and asks for your Omentir token. Paste a key you created above; do not give it your Omentir password.",
+        text: "The agent reads agents.md, then stops and asks for your Omentir token. Paste a key you created under API keys on this page; do not give it your Omentir password.",
       },
       {
         text: "It runs get_context + get_stats and briefs you on readiness before touching anything. Say \"find buyers\" when you're ready.",
@@ -319,7 +320,7 @@ export default function ApiKeysView({
     agentApiKeys,
     selectAgentApiKeys,
   );
-  const loadedAgentApiKeys = agentApiKeysResource.value;
+  const connectedAgents = groupConnectedAgents(agentApiKeysResource.value);
 
   function handleCreateKey() {
     const formData = new FormData();
@@ -332,12 +333,19 @@ export default function ApiKeysView({
     });
   }
 
-  function handleRevokeKey(keyId: string) {
-    const formData = new FormData();
-    formData.set("keyId", keyId);
+  // An agent that reconnected holds a key per connection. All of them go:
+  // revoking one would leave the agent connected through the others.
+  function handleDisconnect(agent: ConnectedAgent) {
     startTransition(async () => {
-      unwrapAction(await revokeAgentApiKeyAction(formData));
-      agentApiKeysResource.reload();
+      try {
+        for (const key of agent.keys) {
+          const formData = new FormData();
+          formData.set("keyId", key.id);
+          unwrapAction(await revokeAgentApiKeyAction(formData));
+        }
+      } finally {
+        agentApiKeysResource.reload();
+      }
     });
   }
 
@@ -349,7 +357,7 @@ export default function ApiKeysView({
           style={{ fontFamily: "var(--font-varta)" }}
           className="text-2xl font-semibold leading-none tracking-tight text-[var(--md-sys-color-on-surface)]"
         >
-          API
+          Assistants
         </h1>
       </div>
 
@@ -358,8 +366,8 @@ export default function ApiKeysView({
         <div className="app-x h-full overflow-y-auto">
           <div className="max-w-5xl pb-8 pt-1 sm:pb-10 sm:pt-2 md:pb-3">
             <SectionHeader
-              title="API keys"
-              description="Connect Omentir to your favorite AI app."
+              title="Connected assistants"
+              description="AI apps and scripts that can use this workspace. Disconnect removes an assistant's access to Omentir. It stays set up in the app itself until you remove it there."
             />
 
             <div className="relative">
@@ -367,64 +375,59 @@ export default function ApiKeysView({
                 inert={locked || undefined}
                 className={locked ? "select-none blur-[5px]" : undefined}
               >
-                <div className="grid grid-cols-[1fr_auto] items-end gap-3">
-                  <TextField
-                    label="Key label"
-                    value={keyLabel}
-                    onChange={(event) => setKeyLabel(event.target.value)}
-                    placeholder="Claude, Hermes, my-script..."
-                  />
-                  <button
-                    type="button"
-                    onClick={handleCreateKey}
-                    disabled={pending}
-                    className="m3-btn m3-btn-filled m3-btn-field disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    Create
-                  </button>
-                </div>
-
-                <div className="mt-4 rounded-md border border-zinc-200 bg-white">
+                <div className="rounded-md border border-zinc-200 bg-white">
                   {agentApiKeysResource.loading ? (
                     <ApiKeyRowsSkeleton />
-                  ) : loadedAgentApiKeys.length ? (
+                  ) : connectedAgents.length ? (
                     <ContentReveal className="divide-y divide-zinc-100">
-                    {loadedAgentApiKeys.map((key) => (
+                    {connectedAgents.map((agent) => (
                       <div
-                        key={key.id}
+                        key={agent.name}
                         className="flex flex-col items-start justify-between gap-3 px-4 py-3.5 sm:flex-row sm:items-center"
                       >
-                        <div className="min-w-0">
-                          <div
-                            style={{ fontFamily: "var(--font-varta)" }}
-                            className="text-[14px] font-semibold text-zinc-950"
+                        <div className="flex min-w-0 items-center gap-3">
+                          <span
+                            className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-zinc-100 text-zinc-700"
+                            aria-hidden="true"
                           >
-                            {key.label}
-                          </div>
-                          <div className="mt-0.5 text-[13px] font-medium text-zinc-700">
-                            <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-[11px]">{key.tokenPrefix}...</code>
-                            {" "}· Created {formatZonedDate(key.createdAt, timeZone)}
-                            {key.lastUsedAt
-                              ? ` · Last used ${formatZonedDate(key.lastUsedAt, timeZone)}`
-                              : " · Never used"}
+                            <span className="material-symbols-outlined text-[18px] leading-none">smart_toy</span>
+                          </span>
+                          <div className="min-w-0">
+                            <div
+                              style={{ fontFamily: "var(--font-varta)" }}
+                              className="text-[14px] font-semibold text-zinc-950"
+                            >
+                              {agent.name}
+                            </div>
+                            <div className="mt-0.5 text-[13px] font-medium text-zinc-700">
+                              {agent.lastUsedAt
+                                ? `Last active ${formatZonedDate(agent.lastUsedAt, timeZone)}`
+                                : "Never used"}
+                              {" "}· Connected {formatZonedDate(agent.connectedAt, timeZone)} ·{" "}
+                              {agent.keys.length > 1 ? (
+                                `${agent.keys.length} keys`
+                              ) : (
+                                <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-[11px]">{agent.keys[0].tokenPrefix}...</code>
+                              )}
+                            </div>
                           </div>
                         </div>
                         <button
                           type="button"
-                          onClick={() => handleRevokeKey(key.id)}
+                          onClick={() => handleDisconnect(agent)}
                           disabled={pending}
                           className="flex h-9 cursor-pointer items-center justify-center rounded-md border border-red-200 bg-white px-3 text-[13px] font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                          <span className="translate-y-px">Revoke</span>
+                          <span className="translate-y-px">Disconnect</span>
                         </button>
                       </div>
                     ))}
                     </ContentReveal>
                   ) : (
                     <ContentReveal className="grid place-items-center px-4 py-8 text-center">
-                      <span className="material-symbols-outlined text-3xl text-zinc-400">key</span>
-                      <h2 className="mt-3 text-sm font-semibold text-zinc-900">No API keys yet</h2>
-                      <p className="mt-1 text-xs text-zinc-500">Create one to use your regular chatbots for outreach.</p>
+                      <span className="material-symbols-outlined text-3xl text-zinc-400">smart_toy</span>
+                      <h2 className="mt-3 text-sm font-semibold text-zinc-900">No assistants connected yet</h2>
+                      <p className="mt-1 text-xs text-zinc-500">Connect one with the steps below.</p>
                     </ContentReveal>
                   )}
                 </div>
@@ -436,7 +439,7 @@ export default function ApiKeysView({
 
             <SectionHeader
               title="How to connect"
-              description="Create a key above, then pick the app you're connecting."
+              description="Pick the app you're connecting. If it asks for a key, create one under API keys below."
             />
 
             <div className="relative mb-4 max-w-sm">
@@ -516,7 +519,7 @@ export default function ApiKeysView({
                       <ul className="mt-1.5 space-y-1.5">
                         {method.troubleshooting.map((item) => (
                           <li key={item} className="flex gap-2 text-[13px] font-medium leading-relaxed text-zinc-700">
-                            <span className="material-symbols-outlined -mt-[1px] text-[14px] leading-none text-zinc-500" aria-hidden="true">
+                            <span className="material-symbols-outlined ms-size-16 mt-[1.5px] shrink-0 self-start text-zinc-500" aria-hidden="true">
                               help
                             </span>
                             <span>{item}</span>
@@ -527,6 +530,34 @@ export default function ApiKeysView({
                   ) : null}
                 </div>
               ))}
+            </div>
+
+            <div className="my-8 h-px bg-zinc-200" />
+
+            <SectionHeader
+              title="API keys"
+              description="Cursor, Claude Code and scripts need a key. Name the assistant and create one. Chat apps like Claude and ChatGPT connect by signing in, with no key."
+            />
+
+            {/* Locked plans see the upgrade prompt over the list above; this stays unusable too. */}
+            <div
+              inert={locked || undefined}
+              className={`grid grid-cols-[1fr_auto] items-end gap-3 ${locked ? "select-none blur-[5px]" : ""}`}
+            >
+              <TextField
+                label="Assistant name"
+                value={keyLabel}
+                onChange={(event) => setKeyLabel(event.target.value)}
+                placeholder="Cursor, Hermes, my-script..."
+              />
+              <button
+                type="button"
+                onClick={handleCreateKey}
+                disabled={pending}
+                className="m3-btn m3-btn-filled m3-btn-field disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Create key
+              </button>
             </div>
 
             <div className="my-8 h-px bg-zinc-200" />

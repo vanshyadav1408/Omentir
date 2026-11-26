@@ -81,6 +81,65 @@ describe("outreachMessageViolations", () => {
     ).toEqual([]);
   });
 
+  // The AI can only type text. Before this check it told a lead "I'll send
+  // that over to you today" and nobody ever sent anything, because the account
+  // owner never heard about it.
+  test("a reply can't promise to send something unless the owner was emailed about the request", () => {
+    const reply = { kind: "reply" as const, leadHasReplied: true };
+    const promise = "I'll send that over to you. Is your team mostly using email right now?";
+    expect(check(promise, reply)).toContain("promises to send something");
+    expect(check(promise, { ...reply, sendPromiseAllowed: true })).toEqual([]);
+    for (const message of [
+      "Let me email you the deck.",
+      "Sure, sending it over now.",
+      "I'll get that over this week.",
+      "We'll share the case study.",
+    ]) {
+      expect(check(message, reply)).toContain("promises to send something");
+    }
+  });
+
+  // The owner sends it whenever they read the email. A deadline the AI made
+  // up is the part of the promise most likely to be broken.
+  test("a backed promise still can't say when, because only the owner knows when they'll send it", () => {
+    const backed = { kind: "reply" as const, leadHasReplied: true, sendPromiseAllowed: true };
+    for (const message of [
+      "I'll send that over to you today.",
+      "I'll send it over shortly.",
+      "Let me email you the deck right away.",
+    ]) {
+      expect(check(message, backed)).toContain("says when it will be sent");
+    }
+    // "right now" belongs to the question, not to the promise.
+    expect(check("I'll send that over. Are your reps doing their own messaging right now?", backed)).toEqual([]);
+  });
+
+  test("an offer is not a promise, since the lead still has to say yes before anyone owes them anything", () => {
+    expect(
+      check("I can send a short video of it if that's useful. Are you on email for outbound today?", {
+        kind: "reply",
+        leadHasReplied: true,
+      }),
+    ).toEqual([]);
+  });
+
+  test("nothing is ever attached, even when the owner knows about the request", () => {
+    expect(
+      check("I've attached the overview.", { kind: "reply", leadHasReplied: true, sendPromiseAllowed: true }),
+    ).toContain("claims an attachment");
+  });
+
+  test("sharing the approved booking link is delivered in the message, so it is not an empty promise", () => {
+    const link = "https://cal.com/vansh/demo";
+    expect(
+      check(`Let me share my calendar so you can book a call: ${link}`, {
+        kind: "reply",
+        leadHasReplied: true,
+        allowedLink: link,
+      }),
+    ).toEqual([]);
+  });
+
   test("rejects over-length drafts instead of truncating them mid-thought", () => {
     expect(check(`Hi, ${"a ".repeat(140)}?`)).toContain("over 250 characters");
   });

@@ -12,6 +12,7 @@ import { SelectField } from "@/app/ui/select";
 import { TextField } from "@/app/ui/text-field";
 import { useWorkspaceTimeZone } from "@/app/workspace-time-zone";
 import { formatZonedDate } from "@/lib/time-zone";
+import { APPSUMO_PRODUCTS_URL, appSumoTierOf } from "@/lib/appsumo-tiers";
 import { billedLinkedInAccountLimit, formatPlanLimit } from "@/lib/plan-limits";
 import {
   DAILY_DIGEST_HOUR_OPTIONS,
@@ -20,6 +21,7 @@ import {
 import { extraLinkedInSeatsCount, extraSeatMonthlyPriceLabel } from "@/lib/linkedin-seat-pricing";
 import { WHOP_MEMBERSHIPS_URL } from "@/lib/whop-billing-url";
 import LinkedInSeatsCard from "./linkedin-seats-card";
+import BlacklistPanel from "./blacklist-panel";
 import LinkedInHealthCard, {
   INVITE_WITHDRAW_HELP,
   INVITE_WITHDRAW_SELECT_OPTIONS,
@@ -29,6 +31,8 @@ import {
   type LinkedInAccountHealth,
 } from "@/lib/linkedin-health";
 import DeleteWorkspaceCard from "@/app/delete-workspace-card";
+import OutreachSwitch from "@/app/outreach-switch";
+import { ToggleRow } from "@/app/ui/toggle-row";
 
 type SettingsViewProps = {
   workspace: Workspace;
@@ -42,7 +46,7 @@ type SettingsViewProps = {
   notificationsEnabled?: boolean;
 };
 
-const TABS = ["Profile", "Connected Accounts", "Subscription"] as const;
+const TABS = ["Profile", "Connected Accounts", "Restrictions", "Subscription"] as const;
 type Tab = (typeof TABS)[number];
 
 const selectLinkedInAccounts = (data: Record<string, unknown>) =>
@@ -404,54 +408,6 @@ function NumberField({
   );
 }
 
-function ToggleRow({
-  title,
-  description,
-  enabled,
-  onChange,
-  disabled = false,
-}: {
-  title: string;
-  description: string;
-  enabled: boolean;
-  onChange: (next: boolean) => void;
-  disabled?: boolean;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-4 py-3">
-      <div className="min-w-0">
-        <div
-          style={{ fontFamily: "var(--font-varta)" }}
-          className="text-[14px] font-semibold text-zinc-950"
-        >
-          {title}
-        </div>
-        <div className="mt-0.5 text-[13px] font-medium text-zinc-700">{description}</div>
-      </div>
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={() => {
-          if (disabled) return;
-          onChange(!enabled);
-        }}
-        aria-pressed={enabled}
-        aria-disabled={disabled}
-        aria-label={title}
-        className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-200 ${
-          disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"
-        } ${enabled ? "bg-emerald-500" : "bg-zinc-200"}`}
-      >
-        <span
-          className={`inline-block h-5 w-5 transform rounded-full bg-white shadow ring-1 ring-black/5 transition-transform duration-200 ${
-            enabled ? "translate-x-[22px]" : "translate-x-0.5"
-          }`}
-        />
-      </button>
-    </div>
-  );
-}
-
 export default function SettingsView({
   workspace,
   linkedInAccounts,
@@ -507,16 +463,21 @@ export default function SettingsView({
   );
   const [notifEmail, setNotifEmail] = useState(workspace.notificationEmail || user.email);
   const plan = workspace.billing?.plan || "solo";
-  const planName =
-    plan === "startup"
+  // Set for an AppSumo license, which is the lifetime plan sold in tiers.
+  const appSumoTier = appSumoTierOf(workspace.billing);
+  const planName = appSumoTier
+    ? "AppSumo Lifetime"
+    : plan === "startup"
       ? "Current subscription"
       : plan === "lifetime"
         ? "Lifetime"
         : plan === "enterprise"
           ? "Enterprise"
           : "Pro";
-  const planPrice =
-    plan === "startup"
+  // The price paid on AppSumo varies with their sales, so the tier is shown.
+  const planPrice = appSumoTier
+    ? `Tier ${appSumoTier}`
+    : plan === "startup"
       ? "Active"
       : plan === "lifetime"
         ? "$99"
@@ -525,9 +486,10 @@ export default function SettingsView({
           : "$49/month";
   // Same ceilings as plan-limits enforcement. Local/self-hosted is unlimited.
   const extraLinkedInSeats = extraLinkedInSeatsCount(workspace.billing?.extraLinkedInSeats);
+  const includedLinkedInAccounts = billedLinkedInAccountLimit(plan, 0, appSumoTier);
   const linkedInAccountCap = localMode
     ? Number.POSITIVE_INFINITY
-    : billedLinkedInAccountLimit(plan, extraLinkedInSeats);
+    : billedLinkedInAccountLimit(plan, extraLinkedInSeats, appSumoTier);
   const linkedInLimit = formatPlanLimit(linkedInAccountCap);
   const linkedInLimitLabel =
     linkedInLimit === "unlimited" ? "unlimited" : linkedInLimit;
@@ -765,8 +727,15 @@ export default function SettingsView({
                 {/* Automation limits */}
                 <SectionHeader
                   title="Automation limits"
-                  description="Control how aggressively your agents and campaigns reach out."
+                  description="Control how aggressively your agents and campaigns reach out. The daily invite and message limits apply to each connected LinkedIn account on its own."
                 />
+
+                <div className="mb-4">
+                  <OutreachSwitch
+                    workspaceName={workspace.name}
+                    initialPaused={workspace.settings.outreachPaused === true}
+                  />
+                </div>
 
                 <div className="grid gap-x-6 gap-y-6 md:grid-cols-2">
                   <NumberField
@@ -1054,6 +1023,16 @@ export default function SettingsView({
               </>
             )}
 
+            {tab === "Restrictions" && (
+              <>
+                <SectionHeader
+                  title="Restrictions"
+                  description="Countries, people and companies Omentir must never contact, across every agent in this workspace."
+                />
+                <BlacklistPanel />
+              </>
+            )}
+
             {tab === "Subscription" && (
               <>
                 <SectionHeader
@@ -1066,10 +1045,18 @@ export default function SettingsView({
                     name={planName}
                     price={planPrice}
                     status={billing}
-                    manageHref="/billing/manage"
-                    manageHint="Cancel or upgrade anytime"
+                    manageHref={appSumoTier ? APPSUMO_PRODUCTS_URL : "/billing/manage"}
+                    manageHint={
+                      appSumoTier
+                        ? "Change tier or request a refund on AppSumo"
+                        : "Cancel or upgrade anytime"
+                    }
                     detail={
-                      plan === "lifetime" ? (
+                      appSumoTier ? (
+                        `${includedLinkedInAccounts} LinkedIn ${
+                          includedLinkedInAccounts === 1 ? "account" : "accounts"
+                        } included. Lifetime access. No renewal.`
+                      ) : plan === "lifetime" ? (
                         "Lifetime access. No renewal."
                       ) : plan === "enterprise" ? (
                         "Custom billing terms."
@@ -1095,12 +1082,19 @@ export default function SettingsView({
                       )}
                       status={billing}
                       manageHref={WHOP_MEMBERSHIPS_URL}
-                      manageHint="Cancel extra seats without cancelling Pro"
+                      manageHint={
+                        appSumoTier
+                          ? "Cancel extra seats without touching your license"
+                          : "Cancel extra seats without cancelling Pro"
+                      }
                       detail={
                         <>
                           {extraLinkedInSeats} extra LinkedIn{" "}
-                          {extraLinkedInSeats === 1 ? "account" : "accounts"} on top of the
-                          included account.
+                          {extraLinkedInSeats === 1 ? "account" : "accounts"} on top of the{" "}
+                          {Number.isFinite(includedLinkedInAccounts) && includedLinkedInAccounts > 1
+                            ? `${includedLinkedInAccounts} included accounts`
+                            : "included account"}
+                          .
                         </>
                       }
                     />

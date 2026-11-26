@@ -11,6 +11,7 @@ import {
   hasInviteResendBlockedError,
   renderTemplate,
   writtenSequenceMessage,
+  abVariantFor,
 } from "./outreach-rules";
 import {
   isSourcedByLeadsOnlyAgent,
@@ -168,7 +169,12 @@ export async function listScheduledActions(
     const messagePreviews = Object.fromEntries(
       campaign.steps.flatMap((candidate, index): [string, TimelineMessagePreview][] => {
         if (candidate.type !== "message") return [];
-        const written = writtenSequenceMessage(candidate, lead, enrollment.messageEdits);
+        const written = writtenSequenceMessage(
+          candidate,
+          lead,
+          enrollment.messageEdits,
+          abVariantFor(enrollment.id),
+        );
         if (written) {
           return [[candidate.id, { message: written.text, ...(written.edited ? { edited: true } : {}) }]];
         }

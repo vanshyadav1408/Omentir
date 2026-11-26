@@ -294,7 +294,10 @@ export function parsePostResults(html: string) {
 // ------------------------------------------------------------ URL search
 
 export type ParsedLinkedInUrl =
-  | { kind: "search"; resultType: "PEOPLE" | "COMPANIES" | "CONTENT"; keywords: string; filters: Array<{ key: string; values: string[] }> }
+  // pageUrl is the copied classic search page itself. Paging that exact URL keeps
+  // every filter the person set (title, industry, network, school...), where
+  // rebuilding it from keywords + filters kept only location and company.
+  | { kind: "search"; resultType: "PEOPLE" | "COMPANIES" | "CONTENT"; keywords: string; filters: Array<{ key: string; values: string[] }>; pageUrl?: string }
   | { kind: "profile"; identifier: string }
   | { kind: "company"; identifier: string };
 
@@ -342,7 +345,10 @@ export function parseLinkedInSearchUrl(raw: string): ParsedLinkedInUrl | null {
         : resultType === "COMPANIES"
           ? [{ key: "companyHqGeo", values: geo }]
           : [];
-    return { kind: "search", resultType, keywords: url.searchParams.get("keywords") || "", filters };
+    const pageUrl = new URL(url.toString());
+    pageUrl.hash = "";
+    pageUrl.searchParams.delete("page");
+    return { kind: "search", resultType, keywords: url.searchParams.get("keywords") || "", filters, pageUrl: pageUrl.toString() };
   }
 
   if (/^\/sales\/search\/people/.test(path) || /^\/sales\/lists\/people/.test(path)) {
@@ -366,7 +372,12 @@ export function parseLinkedInSearchUrl(raw: string): ParsedLinkedInUrl | null {
   return null;
 }
 
-function searchUrl(input: { resultType: "PEOPLE" | "COMPANIES" | "CONTENT"; keywords: string; filters: Array<{ key: string; values: string[] }>; page: number }) {
+function searchUrl(input: { resultType: "PEOPLE" | "COMPANIES" | "CONTENT"; keywords: string; filters: Array<{ key: string; values: string[] }>; page: number; pageUrl?: string }) {
+  if (input.pageUrl) {
+    const copied = new URL(input.pageUrl);
+    copied.searchParams.set("page", String(input.page));
+    return copied;
+  }
   const path = input.resultType === "PEOPLE" ? "people" : input.resultType === "COMPANIES" ? "companies" : "content";
   const url = new URL(`https://www.linkedin.com/search/results/${path}/`);
   if (input.keywords.trim()) url.searchParams.set("keywords", input.keywords.trim());
@@ -390,6 +401,7 @@ export async function webSearch(
     filters: Array<{ key: string; values: string[] }>;
     start: number;
     limit: number;
+    pageUrl?: string;
   },
   hooks: SessionHooks = {},
 ) {

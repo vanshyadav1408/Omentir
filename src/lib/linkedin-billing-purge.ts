@@ -40,11 +40,18 @@ function lapsedAt(billing: BillingDates) {
 }
 
 export function shouldPurgeLinkedInAccounts(
-  billing: (Pick<WorkspaceBilling, "plan" | "status"> & BillingDates) | undefined,
+  billing:
+    | (Pick<WorkspaceBilling, "plan" | "status"> &
+        Partial<Pick<WorkspaceBilling, "provider">> &
+        BillingDates)
+    | undefined,
   now = Date.now(),
 ) {
   if (!billing) return false;
-  if (billing.plan === "lifetime") return false;
+  // A Whop lifetime purchase never lapses, whatever status a stray webhook
+  // left behind. An AppSumo license can: a refund cancels it, and then it is
+  // treated like any other ended plan below.
+  if (billing.plan === "lifetime" && billing.provider !== "appsumo") return false;
   if (billing.status === "bypassed") return false;
   if (!INACTIVE_BILLING.has(billing.status) && !shouldMarkBillingExpired(billing, now)) return false;
   const lapsed = lapsedAt(billing);

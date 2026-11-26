@@ -7,7 +7,7 @@ import AppDataPrefetch from "@/app/(app)/app-data-prefetch";
 import { SidebarCacheScope } from "@/app/use-sidebar-resource";
 import { WorkspaceTimeZoneProvider } from "@/app/workspace-time-zone";
 import { resolveActiveWorkspace, listOwnedWorkspaces } from "@/lib/server/active-workspace";
-import { hasActiveSubscription } from "@/lib/server/subscription";
+import { entitlementsFor } from "@/lib/server/entitlements";
 import { backfillWorkspaceFavicons } from "@/lib/server/workspace-favicons";
 import { isLocalMode } from "@/lib/runtime-mode";
 import { workspaceDisplayName } from "@/lib/workspace-ownership";
@@ -41,7 +41,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       ]);
       timeZone = workspace.timezone;
       activeWorkspaceId = workspace.id;
-      canCreateWorkspace = hasActiveSubscription(workspace);
+      const entitlements = entitlementsFor(workspace);
+      // An AppSumo license caps workspaces by tier; hide the create button at the cap.
+      canCreateWorkspace =
+        entitlements.subscriptionActive && owned.length < entitlements.limits.workspaces;
       workspaces = owned.map((item) => ({
         id: item.id,
         name: workspaceDisplayName(item),

@@ -38,7 +38,11 @@ export default async function LoginPage({
   }
   return (
     <AuthShell marketing footer={<AuthLegalFooter />}>
-      <AuthChoice primary="login" loginReturnUrl={returnTo} />
+      <AuthChoice
+        primary="login"
+        loginReturnUrl={returnTo}
+        switchReturnUrl={next ? returnTo : undefined}
+      />
     </AuthShell>
   );
 }

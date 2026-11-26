@@ -491,6 +491,20 @@ function detectCountry(haystack: string) {
   return undefined;
 }
 
+// Every country a location can be placed in, as lowercase keys. Settings
+// offers exactly these to block: a country that cannot be recognised on a
+// profile could never be enforced.
+export const RESOLVABLE_COUNTRIES = Object.keys(COUNTRY_ZONES);
+
+/**
+ * The country a lead's location names (a RESOLVABLE_COUNTRIES key), or null
+ * when the location is blank or names nowhere we recognise.
+ */
+export function resolveLeadCountry(location: string | undefined): string | null {
+  const haystack = canonical(location || "");
+  return (haystack && detectCountry(haystack)) || null;
+}
+
 // Last resort for a location that names no country at all ("Boise", "Greater
 // Seattle Area"): try every multi-zone country's metros, most specific first.
 // Ordered so the largest market wins a genuine tie.

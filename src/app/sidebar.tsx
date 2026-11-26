@@ -82,7 +82,7 @@ function getPageTitle(pathname: string) {
   if (pathname.startsWith("/leads")) return "Leads";
   if (pathname.startsWith("/workspace")) return "Workspace";
   if (pathname.startsWith("/my-product")) return "Workspace";
-  if (pathname.startsWith("/api-keys")) return "API";
+  if (pathname.startsWith("/api-keys")) return "Assistants";
   if (pathname.startsWith("/settings")) return "Settings";
   if (pathname.startsWith("/connect")) return "Connect";
   if (pathname.startsWith("/onboarding")) return "Get Started";
@@ -210,8 +210,8 @@ export default function Sidebar({
           aria-current={apiActive ? "page" : undefined}
           className={`mb-0.5 last:mb-0 ${navClassName(apiActive)}`}
         >
-          <NavIcon name="key" />
-          <span>API</span>
+          <NavIcon name="smart_toy" />
+          <span>Assistants</span>
         </Link>
       ) : null}
       <Link
@@ -369,12 +369,12 @@ export default function Sidebar({
             <Link
               href="/api-keys"
               prefetch
-              title={isCollapsed ? "API" : undefined}
+              title={isCollapsed ? "Assistants" : undefined}
               aria-current={apiActive ? "page" : undefined}
               className={`mb-0.5 last:mb-0 ${desktopNavClassName(apiActive)}`}
             >
-              <NavIcon name="key" />
-              <SidebarLabel collapsed={isCollapsed}>API</SidebarLabel>
+              <NavIcon name="smart_toy" />
+              <SidebarLabel collapsed={isCollapsed}>Assistants</SidebarLabel>
             </Link>
           ) : null}
           <Link

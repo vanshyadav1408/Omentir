@@ -134,6 +134,10 @@ type AuthChoiceProps = {
   // Where a completed login goes, e.g. back to an OAuth consent screen. Must
   // already be a safe same-origin path (see safeReturnPath).
   loginReturnUrl?: string;
+  // Set when the page was opened with ?next=. The link that switches between
+  // login and signup carries it over, so the flow that sent the visitor here
+  // still gets them back.
+  switchReturnUrl?: string;
 };
 
 function getErrorMessage(error: unknown) {
@@ -259,6 +263,7 @@ export default function AuthChoice({
   initialWebsite = "",
   signupReturnUrl,
   loginReturnUrl = "/overview",
+  switchReturnUrl,
 }: AuthChoiceProps) {
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
@@ -782,7 +787,12 @@ export default function AuthChoice({
       {formMode === "default" && !verifyingEmail ? (
         <AuthSwitchLine>
           {isSignup ? "Already have an account? " : "Don't have an account? "}
-          <Link href={isSignup ? "/login" : "/signup"} className="auth-link auth-switch-link">
+          <Link
+            href={`${isSignup ? "/login" : "/signup"}${
+              switchReturnUrl ? `?next=${encodeURIComponent(switchReturnUrl)}` : ""
+            }`}
+            className="auth-link auth-switch-link"
+          >
             {isSignup ? "Log in" : "Sign up"} <span aria-hidden="true">&rarr;</span>
           </Link>
         </AuthSwitchLine>

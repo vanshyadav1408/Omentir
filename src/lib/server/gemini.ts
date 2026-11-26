@@ -6,6 +6,7 @@ import { cachedApiResult } from "./api-result-cache";
 import {
   asksAboutPricing,
   containsPricingDetails,
+  normalizeOwnerRequest,
   shouldShareBookingLink,
 } from "./reply-automation-policy";
 import { hasCalendarBookingEvidence } from "@/lib/conversation-category";
@@ -1910,6 +1911,9 @@ export type ReplyIntentClassification = {
   confidence: number;
   reason: string;
   nextStepHint: string;
+  // What the lead asked for that a text reply can't deliver, phrased for the
+  // seller ("A demo video"). Empty when there is nothing of the kind.
+  ownerRequest: string;
 };
 
 const REPLY_INTENTS = [
@@ -1936,6 +1940,7 @@ function prefilterReplyIntent(
       confidence: 1,
       reason: "Empty message",
       nextStepHint: "",
+      ownerRequest: "",
     };
   }
 
@@ -1949,6 +1954,7 @@ function prefilterReplyIntent(
       confidence: 0.9,
       reason: "The prospect shared a calendar event link after asking to book",
       nextStepHint: "",
+      ownerRequest: "",
     };
   }
 
@@ -1970,6 +1976,7 @@ function prefilterReplyIntent(
       confidence: 0.95,
       reason: "The lead explicitly confirmed that the meeting is scheduled",
       nextStepHint: "",
+      ownerRequest: "",
     };
   }
   if (
@@ -1982,6 +1989,7 @@ function prefilterReplyIntent(
       confidence: 0.95,
       reason: "Out-of-office or auto-reply",
       nextStepHint: "",
+      ownerRequest: "",
     };
   }
   if (
@@ -1994,6 +2002,7 @@ function prefilterReplyIntent(
       confidence: 0.9,
       reason: "Clear opt-out or not interested",
       nextStepHint: "",
+      ownerRequest: "",
     };
   }
   return null;
@@ -2023,6 +2032,7 @@ export async function classifyReplyIntent(input: {
     confidence: 0.4,
     reason: "Could not classify confidently",
     nextStepHint: "",
+    ownerRequest: "",
   };
 
   try {
@@ -2038,6 +2048,7 @@ export async function classifyReplyIntent(input: {
       confidence: number;
       reason: string;
       nextStepHint: string;
+      ownerRequest: string;
     }>(
       `You classify a LinkedIn prospect's latest reply for a B2B sales product ("${companyName}").
 
@@ -2046,6 +2057,16 @@ Return only JSON with fields:
 - confidence: number from 0 to 1
 - reason: one short sentence explaining the label (for the seller)
 - nextStepHint: short hint if intent is hot or warm (e.g. "Wants a 15-min demo"), else empty string
+- ownerRequest: what the prospect is now waiting to receive that cannot be typed as a plain text reply in this chat, as a short phrase for the seller (e.g. "A demo video", "The pricing PDF", "A case study, sent to their email"). Empty string if there is nothing like that.
+
+What counts as an ownerRequest:
+- A file or document: PDF, deck, brochure, one-pager, case study, proposal, quote, contract.
+- A video or recording, a link or website, screenshots, samples, trial or account access.
+- Being contacted outside this chat: an email, a phone call, a message on another app.
+- An introduction to someone else.
+- It counts when they ask for it, and also when they say yes to an offer. If "You" offered to send something earlier in the conversation and the latest message accepts ("yes please", "sure", "send it over"), name the thing that was offered.
+- It does not count when a text answer covers it (a question about the product, pricing, or how it works), or when all they want is to book a meeting or call time. Those are covered by intent.
+- intent and ownerRequest are separate. Pick intent exactly as you would without this field.
 
 Intent definitions:
 - hot: clear buying or meeting intent (demo, call, "let's talk", "send me a link to book", "interested - when works?"). A pricing question alone is not hot.
@@ -2098,6 +2119,7 @@ ${input.latestInbound}`,
       confidence,
       reason: String(result.reason || "").trim().slice(0, 240) || fallback.reason,
       nextStepHint: String(result.nextStepHint || "").trim().slice(0, 160),
+      ownerRequest: normalizeOwnerRequest(result.ownerRequest),
     };
   } catch (error) {
     console.error("[gemini] classifyReplyIntent failed:", error);
@@ -2143,9 +2165,17 @@ export async function draftCampaignReplyMessage(input: {
   messageTone?: string;
   replyHandling?: CampaignReplyHandling;
   bookingLink?: string;
+  // What their latest message asked for that text can't deliver. Pass it only
+  // when the account owner was emailed about it: that email is what makes
+  // "I'll send it over" a promise someone will keep.
+  ownerRequest?: string;
 }) {
   const companyName = input.productProfile?.companyName || "our company";
   const leadFirstName = input.lead.name.split(" ")[0] || "Lead";
+  const ownerRequest = normalizeOwnerRequest(input.ownerRequest);
+  const sendingGuidance = ownerRequest
+    ? `They asked for this, and you can't attach or link anything from this chat: ${ownerRequest}. Tell them in a few plain words that you'll send it over yourself, and leave it there. Don't say when: no "today", "shortly", "right away", or "in a moment". Nothing has been sent yet, so don't say it's attached or already sent, and don't describe what's in it.`
+    : "You can only type text in this chat. Don't promise to send, share, email, or attach anything.";
   const latestInboundBody =
     [...input.conversation].reverse().find((message) => message.direction === "inbound")?.body || "";
   const latestInboundAsksAboutPricing = asksAboutPricing(latestInboundBody);
@@ -2199,6 +2229,7 @@ Write your next reply in this conversation. Their latest message is what matters
 ${intentReplyGuidance(input.replyIntent, input.nextStepHint)}
 - ${pricingGuidance}
 - ${bookingGuidance}
+- ${sendingGuidance}
 - Never claim a meeting is booked until they say they booked it.`,
     facts: `${campaignIntentForDrafting(input)}
 
@@ -2220,6 +2251,7 @@ ${conversationContext}`,
       pricingAllowed: leadHasAskedAboutPricing,
       allowedLink: shareBookingLinkNow ? input.bookingLink : undefined,
       requireAllowedLink: shareBookingLinkNow,
+      sendPromiseAllowed: Boolean(ownerRequest),
       maxChars: AI_OUTBOUND_MESSAGE_LIMIT,
     },
     judgeFocus: "Answers the prospect's latest message directly and follows the brief.",

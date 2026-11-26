@@ -38,6 +38,7 @@ import { portableTextToMarkdown } from "@/lib/cms/portable-text-markdown";
 import { withoutFaqHeadings } from "@/lib/cms/portable-text-toc";
 import {
   collapseMarkdown,
+  extractJsxElement,
   extractTsxScope,
   faqItemsFromSource,
   jsxChildrenToMarkdown,
@@ -377,10 +378,10 @@ function familyIndexMarkdown(
 }
 
 function homeMarkdown() {
-  // Headline lives in page.tsx; the product tabs under the hero live in
-  // home-product-tabs.tsx.
+  // The FAQ lives in page.tsx, the hero headline in home-story.tsx, and the
+  // product tabs in home-product-tabs.tsx.
   const source = readAppFile("page.tsx");
-  const hero = source;
+  const hero = readAppFile("home-story.tsx");
   const capabilities = extractTsxScope(readAppFile("home-product-tabs.tsx"));
   const slideRows = objectRows(capabilities.get("TABS")).map((slide) => {
     const body = objectString(slide.body);
@@ -388,12 +389,14 @@ function homeMarkdown() {
       ? `- **${objectString(slide.title)}**: ${body}`
       : `- **${objectString(slide.title)}**`;
   });
+  // Read the <h1> element itself. Matching a phrase across the whole file ran
+  // on into unrelated source once the headline moved out of page.tsx.
   const heroTitle =
-    /Omentir[\s\S]*?or you pay nothing\./.exec(hero)?.[0]
+    extractJsxElement(hero, "h1")
       ?.replace(/\{["']\s*["']\}/g, " ")
       .replace(/<[^>]+>/g, "")
       .replace(/\s+/g, " ")
-      .trim() ?? brandTagline;
+      .trim() || brandTagline;
 
   return collapseMarkdown(
     [

@@ -50,7 +50,7 @@ No API key is pasted into the chat app. The 401 challenge advertises protected-r
 
 Works with **Claude Code**, **Cursor**, **Codex**, scripts, and any HTTP client.
 
-1. User opens \`${siteUrl}/api-keys\` (or **API** in the app) and creates a token.
+1. User opens \`${siteUrl}/api-keys\` (or **Assistants** in the app) and creates a token.
 2. Client sends on every request:
 
 \`\`\`text
@@ -60,7 +60,7 @@ Authorization: Bearer <omentir_agent_token>
 3. MCP endpoint (same tools): \`POST ${siteUrl}/api/agent/v1/mcp\`
 4. REST fallback: \`${siteUrl}/api/agent/v1/*\` (OpenAPI: \`${siteUrl}/api/agent/v1/openapi.json\`)
 
-Tokens are never accepted in URLs. Store them in the client's secret store, never in a prompt or outbound message. Revoking a token on the API page disconnects that integration immediately.
+Tokens are never accepted in URLs. Store them in the client's secret store, never in a prompt or outbound message. Disconnecting an assistant on the Assistants page revokes its tokens and cuts that integration off immediately.
 
 ### Path C: Operator prompt (manual agents)
 
@@ -82,7 +82,7 @@ They cannot access billing, LinkedIn connect, workspace create/delete, or the us
 
 **OAuth MCP clients:** point at \`${siteUrl}/api/agent/v1/mcp\` with no credential. Follow \`WWW-Authenticate\` → protected-resource metadata → authorization server (\`/.well-known/oauth-authorization-server\`) → authorization code + PKCE S256.
 
-**Bearer tokens:** user-created on the API page:
+**Bearer tokens:** user-created on the Assistants page:
 
 \`\`\`text
 Authorization: Bearer <omentir_agent_token>

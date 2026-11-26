@@ -230,3 +230,18 @@ export function parseLinkedInLeadCsv(csv: string): ParsedLinkedInLeadCsv {
   }
   return { leads, skipped };
 }
+
+function csvField(value: string) {
+  return /[",\r\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
+}
+
+// The people a pasted LinkedIn search returned, written as the CSV the import
+// step already reads. Search import then shares the CSV path end to end: the
+// same 500-profile cap, dedupe, review summary and launch.
+export function buildLinkedInLeadCsv(leads: CsvLinkedInLead[]) {
+  const rows = [["LinkedIn URL", "Name", "Title", "Company", "Location"]];
+  for (const lead of leads) {
+    rows.push([lead.linkedInUrl, lead.name, lead.title, lead.company, lead.location]);
+  }
+  return rows.map((row) => row.map((cell) => csvField(cell.replace(/\s+/g, " ").trim())).join(",")).join("\n");
+}

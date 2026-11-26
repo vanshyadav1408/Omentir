@@ -323,6 +323,7 @@ export default function AgentsView({
           findsLeads: agent.mode !== "outreach",
           accountConnected: true,
           automationPaused: false,
+          outreachOff: false,
           awaitingAcceptance: 0,
         },
         options,

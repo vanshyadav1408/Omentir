@@ -18,6 +18,11 @@ export type OutreachCheckContext = {
   allowedLink?: string;
   // A reply that must carry the scheduling link fails without it.
   requireAllowedLink?: boolean;
+  // True only when the account owner was emailed that the lead asked for
+  // something. The AI can type text and nothing else, so "I'll send it over"
+  // is a promise the owner has to keep, and they can't keep one they never
+  // heard about.
+  sendPromiseAllowed?: boolean;
   maxChars: number;
 };
 
@@ -59,6 +64,21 @@ const GREETING = /^(?:hi|hey|hello)\b/i;
 // Asking a stranger what hurts reads as a discovery script.
 const PAIN_PROBE =
   /\b(?:struggl\w*|headaches?|pain points?|frustrat\w*|biggest challenge|run into (?:issues|problems|mistakes|trouble))\b/i;
+
+// A commitment to send something: "I'll send that over", "let me email you
+// the deck", "sending it now". An offer ("I can send a short video if that's
+// useful") is not one, because the lead still has to say yes.
+const SEND_PROMISE =
+  /\b(?:I'll|I will|I'm going to|I am going to|we'll|we will|let me)\s+(?:(?:just|also|gladly|happily)\s+)?(?:send|share|email|forward|shoot|drop|attach)\b|\b(?:I'll|I will|let me) get (?:it|that|this|them|one) (?:over|across)\b|\b(?:sending|forwarding|emailing)\s+(?:you|it|that|this|them|over)\b/i;
+
+// The owner sends it when they read their email, and nobody knows when that
+// is. "I'll send that over to you today" becomes a lie by midnight.
+const SEND_TIMING =
+  /\b(?:today|tonight|tomorrow|shortly|soon|asap|now|right away|straight away|in a (?:moment|minute|second|sec|bit|few)|this (?:morning|afternoon|evening|week)|by (?:end of day|eod|monday|tuesday|wednesday|thursday|friday))\b/i;
+
+// Nothing can be attached to these messages, whoever was told what.
+const ATTACHMENT_CLAIM =
+  /\b(?:I've|I have|I) attached\b|\battached (?:is|are|below|here)\b|\b(?:see|find) (?:the )?attached\b/i;
 
 function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -121,6 +141,19 @@ export function outreachMessageViolations(
   }
 
   if (!context.pricingAllowed && containsPricingDetails(text)) violations.push("mentions pricing");
+
+  // "Let me share my calendar" next to the approved link is delivered on the spot.
+  const carriesAllowedLink = Boolean(context.allowedLink && text.includes(context.allowedLink));
+  if (!carriesAllowedLink) {
+    // Checked per sentence: "right now" in a later question is not a deadline.
+    const promises = text.split(/(?<=[.!?])\s+/).filter((sentence) => SEND_PROMISE.test(sentence));
+    if (promises.length && !context.sendPromiseAllowed) {
+      violations.push("promises to send something");
+    } else if (promises.some((sentence) => SEND_TIMING.test(sentence))) {
+      violations.push("says when it will be sent");
+    }
+  }
+  if (ATTACHMENT_CLAIM.test(text)) violations.push("claims an attachment");
 
   if (cold) {
     // Nobody has answered yet: pressure and hype are what get a stranger ignored.

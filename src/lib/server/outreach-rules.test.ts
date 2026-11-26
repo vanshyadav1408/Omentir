@@ -1,5 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import { connectionNoteFor, inviteNotesFor, renderTemplate, writtenSequenceMessage } from "./outreach-rules";
+import {
+  connectionNoteFor,
+  inviteNotesFor,
+  isInviteRateLimitedErrorType,
+  renderTemplate,
+  writtenSequenceMessage,
+} from "./outreach-rules";
 
 describe("renderTemplate", () => {
   test("fills {{lastName}} because the sequence editor offers it, and an unfilled token would reach the lead as literal braces", () => {
@@ -85,5 +91,22 @@ describe("inviteNotesFor", () => {
       { name: "Ada Lovelace", company: "Acme", title: "Engineer" },
     );
     expect(notes).toEqual(["Hi Ada, saw your work at Acme."]);
+  });
+});
+
+describe("isInviteRateLimitedErrorType", () => {
+  // LinkedIn answers every invite with 429 once the week's invitations are
+  // used. Sent down the per-lead retry, one account made 836 failed invite
+  // attempts in five days.
+  test("a 429 on a connection request is about the account, so it reaches the account pause instead of the per-lead retry", () => {
+    expect(isInviteRateLimitedErrorType("errors/too_many_requests", "connect")).toBe(true);
+  });
+
+  test("a rate-limited message does not pause invites", () => {
+    expect(isInviteRateLimitedErrorType("errors/too_many_requests", "message")).toBe(false);
+  });
+
+  test("a resend block stays with the three-distinct-leads rule, because one of those is usually about that one person", () => {
+    expect(isInviteRateLimitedErrorType("errors/cannot_resend_yet", "connect")).toBe(false);
   });
 });

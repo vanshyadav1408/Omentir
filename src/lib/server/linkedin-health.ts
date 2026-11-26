@@ -1,5 +1,6 @@
 import "server-only";
 
+import { enrollmentSenderId } from "@/lib/sender-rotation";
 import { FieldValue } from "firebase-admin/firestore";
 import {
   MAX_DAILY_INVITE_WITHDRAWALS,
@@ -53,13 +54,15 @@ export async function loadLinkedInHealth(workspace: Workspace): Promise<LinkedIn
   );
   const nowMs = Date.now();
   const leadStatus = new Map(leads.map((lead) => [lead.id, lead.outreachStatus]));
-  const accountByCampaign = new Map(
-    campaigns.map((campaign) => [campaign.id, sendingAccountId(accounts, campaign.linkedInAccountId)]),
-  );
+  const campaignsById = new Map(campaigns.map((campaign) => [campaign.id, campaign]));
   const invitesByAccount = new Map<string, Array<{ sentAt?: string; accepted: boolean }>>();
   for (const enrollment of enrollments) {
     if (!enrollment.connectionSentAt) continue;
-    const accountId = accountByCampaign.get(enrollment.campaignId);
+    const campaign = campaignsById.get(enrollment.campaignId);
+    // Under sender rotation the invite came from the enrollment's own sender.
+    const accountId = campaign
+      ? sendingAccountId(accounts, enrollmentSenderId(campaign, enrollment))
+      : undefined;
     if (!accountId) continue;
     // Either record can be the one that remembers the accept: the enrollment
     // collapses to "stopped" and the lead's status gets written back down.

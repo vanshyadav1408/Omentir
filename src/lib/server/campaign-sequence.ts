@@ -19,6 +19,8 @@ type CampaignSequenceAction = {
   enabled?: boolean;
   mode?: "ai" | "manual";
   manualMessage?: string;
+  // A/B test text for a manual message step. Ignored on connect and AI steps.
+  variantMessage?: string;
   waitValue?: number;
   waitUnit?: "minutes" | "hours" | "days";
   includeNote?: boolean;
@@ -30,6 +32,7 @@ const campaignSequenceActionSchema = z.object({
   enabled: z.boolean().optional(),
   mode: z.enum(["ai", "manual"]).optional(),
   manualMessage: z.string().optional(),
+  variantMessage: z.string().optional(),
   waitValue: z.coerce.number().finite().min(1).max(10_080).optional(),
   waitUnit: z.enum(["minutes", "hours", "days"]).optional(),
   includeNote: z.boolean().optional(),
@@ -77,11 +80,14 @@ export function campaignStepsFromActions(actions: unknown): CampaignStep[] | nul
         return;
       }
 
+      const variantTemplate =
+        action.mode === "ai" ? "" : String(action.variantMessage || "").trim();
       steps.push({
         id,
         type: "message",
         messageTemplate:
           action.mode === "ai" ? "" : String(action.manualMessage || "").trim(),
+        ...(variantTemplate ? { variantTemplate } : {}),
       });
     });
 
@@ -210,6 +216,11 @@ export function buildCampaignSteps(formData: FormData, fallbackFirstMessageDelay
   const firstMessage = String(formData.get("firstMessage") || "").trim();
   const secondMessage = String(formData.get("secondMessage") || "").trim();
   const thirdMessage = String(formData.get("thirdMessage") || "").trim();
+  // Optional A/B variants of the three manual messages.
+  const variant = (name: string) => {
+    const text = String(formData.get(name) || "").trim();
+    return text ? { variantTemplate: text } : {};
+  };
 
   const sequenceSteps = parseCampaignSequence(formData.get("sequence"));
   const steps: CampaignStep[] =
@@ -229,11 +240,11 @@ export function buildCampaignSteps(formData: FormData, fallbackFirstMessageDelay
               noteTemplate: connectionNote,
             },
             { id: "wait-after-approval", type: "wait", delayMinutes: afterApprovalMinutes },
-            { id: "first-message", type: "message", messageTemplate: firstMessage },
+            { id: "first-message", type: "message", messageTemplate: firstMessage, ...variant("firstMessageB") },
             { id: "wait-second-message", type: "wait", delayMinutes: secondWaitMinutes },
-            { id: "second-message", type: "message", messageTemplate: secondMessage },
+            { id: "second-message", type: "message", messageTemplate: secondMessage, ...variant("secondMessageB") },
             { id: "wait-third-message", type: "wait", delayMinutes: thirdWaitMinutes },
-            { id: "third-message", type: "message", messageTemplate: thirdMessage },
+            { id: "third-message", type: "message", messageTemplate: thirdMessage, ...variant("thirdMessageB") },
           ])
         : [
             {

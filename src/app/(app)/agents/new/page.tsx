@@ -191,6 +191,7 @@ export default async function NewAgentPage({
       initialMessageTone={existingCampaign?.messageTone}
       hasExistingCampaign={Boolean(existingCampaign)}
       initialSteps={existingCampaign?.steps}
+      initialSenderAccountIds={existingCampaign?.senderAccountIds}
       initialReplyHandling={existingCampaign?.replyHandling}
       initialBookingLink={existingCampaign?.bookingLink}
       timezone={workspace.timezone}

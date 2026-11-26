@@ -93,6 +93,29 @@ export function nextInviteLimitRetryAt(input: {
   };
 }
 
+// What a rate-limited (429) invite does to the account's invite pause. A pause
+// that is still running has just had its one live probe refused, so it is kept
+// as it is: starting a new window would hand out another probe and keep
+// hitting a real weekly limit. Otherwise the next stage starts. The first
+// 6-hour pause is silent because one 429 can be a passing rate limit; the
+// owner is told only once invites are still refused after it (2026-07-13: a
+// single rejection sent a customer a false limit warning).
+export function inviteRateLimitPause(input: {
+  prior?: { until: string; stage: number; active: boolean } | null;
+  timezone?: string;
+  nowMs?: number;
+}) {
+  if (input.prior?.active) {
+    return { until: input.prior.until, stage: input.prior.stage, started: false, notifyOwner: false };
+  }
+  const next = nextInviteLimitRetryAt({
+    previousStage: input.prior?.stage ?? 0,
+    timezone: input.timezone,
+    nowMs: input.nowMs,
+  });
+  return { ...next, started: true, notifyOwner: next.stage > 1 };
+}
+
 // LinkedIn's weekly invitation limit is retried at the start of the next
 // workweek, rather than repeatedly probing the restricted account. Monday at
 // 9am is interpreted in the workspace timezone, including DST transitions.

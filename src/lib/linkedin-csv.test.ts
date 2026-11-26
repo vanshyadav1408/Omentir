@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { decodeCsvBytes, parseLinkedInLeadCsv } from "./linkedin-csv";
+import { buildLinkedInLeadCsv, decodeCsvBytes, parseLinkedInLeadCsv } from "./linkedin-csv";
 
 function csv(lines: string[]) {
   return lines.join("\n");
@@ -213,5 +213,17 @@ describe("decodeCsvBytes", () => {
     }
     const parsed = parseLinkedInLeadCsv(decodeCsvBytes(bytes));
     expect(parsed.leads[0]?.name).toBe("Utf");
+  });
+});
+
+describe("buildLinkedInLeadCsv", () => {
+  // Search import hands its results to the CSV import step, so whatever the
+  // search found must survive the parser unchanged, commas and quotes included.
+  test("round-trips through the CSV parser", () => {
+    const leads = [
+      { linkedInUrl: "https://www.linkedin.com/in/jane-doe", name: "Jane Doe", title: "VP Sales, EMEA", company: 'Acme "Labs"', location: "Berlin, Germany" },
+      { linkedInUrl: "https://www.linkedin.com/in/raj", name: "Raj K", title: "", company: "", location: "" },
+    ];
+    expect(parseLinkedInLeadCsv(buildLinkedInLeadCsv(leads))).toEqual({ leads, skipped: 0 });
   });
 });

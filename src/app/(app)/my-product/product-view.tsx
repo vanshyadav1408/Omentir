@@ -5,6 +5,7 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { ProductProfile, Workspace } from "@/lib/server/types";
 import DeleteWorkspaceCard from "@/app/delete-workspace-card";
+import OutreachSwitch from "@/app/outreach-switch";
 import AiLoadingOverlay from "@/app/ai-loading-overlay";
 import MobileHeaderPortal from "@/app/mobile-header-portal";
 import { SelectField } from "@/app/ui/select";
@@ -21,7 +22,7 @@ type SaveProductResult = { ok: true } | { ok: false; error: string };
 
 type ProductViewProps = {
   profile?: ProductProfile;
-  workspace: Pick<Workspace, "id" | "ownerId" | "name">;
+  workspace: Pick<Workspace, "id" | "ownerId" | "name" | "settings">;
   faviconUrl?: string;
   workspaceName?: string;
   saveAction: (formData: FormData) => Promise<void | SaveProductResult | ActionFailure>;
@@ -554,6 +555,25 @@ export default function ProductView({
                 placeholder="https://linkedin.com/company/your-company"
               />
             </div>
+
+            <div className="my-8 h-px bg-zinc-200" />
+
+            <div className="mb-2">
+              <h2
+                style={{ fontFamily: "var(--font-varta)" }}
+                className="text-xl font-semibold tracking-tight text-zinc-950"
+              >
+                Outreach
+              </h2>
+              <span className="mt-1.5 block h-0.5 w-8 rounded-full bg-[#ba3871]/60" aria-hidden />
+              <p className="mt-2 text-sm leading-relaxed text-zinc-600">
+                Pause sending for this workspace without touching its agents or your other workspaces.
+              </p>
+            </div>
+            <OutreachSwitch
+              workspaceName={workspace.name}
+              initialPaused={workspace.settings.outreachPaused === true}
+            />
 
             <div className="my-8 h-px bg-zinc-200" />
 

@@ -46,7 +46,7 @@ const STRICT_FILES = [
 
 const BLOG_ROOT = "src/app/blogs";
 
-const BANNED_WORDS = [
+export const BANNED_WORDS = [
   "additionally",
   "align with",
   "cutting-edge",
@@ -77,7 +77,7 @@ const BANNED_WORDS = [
   "vibrant",
 ];
 
-const CHATBOT_PHRASES: Array<{ id: string; pattern: RegExp }> = [
+export const CHATBOT_PHRASES: Array<{ id: string; pattern: RegExp }> = [
   { id: "chatbot-hope", pattern: /\bI hope this helps\b/i },
   { id: "chatbot-dive", pattern: /\blet's dive in\b/i },
   { id: "chatbot-explore", pattern: /\blet's explore\b/i },
@@ -90,8 +90,8 @@ const CHATBOT_PHRASES: Array<{ id: string; pattern: RegExp }> = [
   { id: "chatbot-absolutely-right", pattern: /\bYou're absolutely right\b/i },
 ];
 
-const EM_DASH = /[—–]/;
-const CURLY_QUOTES = /[\u201C\u201D\u2018\u2019]/;
+export const EM_DASH = /[—–]/;
+export const CURLY_QUOTES = /[\u201C\u201D\u2018\u2019]/;
 
 function walk(dir: string, out: string[]) {
   for (const entry of readdirSync(dir)) {
@@ -308,4 +308,5 @@ function main() {
   process.exit(1);
 }
 
-main();
+// Other scripts import the word lists above, so only run when executed.
+if (import.meta.main) main();

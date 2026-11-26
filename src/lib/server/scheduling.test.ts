@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   canClaimAgentRun,
+  inviteRateLimitPause,
   localDayAndHour,
   nextInviteLimitRetryAt,
   nextLocalMondayAt,
@@ -30,6 +31,41 @@ describe("nextInviteLimitRetryAt", () => {
     expect(nextInviteLimitRetryAt({ previousStage: 1, nowMs, timezone: "UTC" })).toEqual({
       until: "2026-09-25T10:00:00.000Z",
       stage: 2,
+    });
+  });
+});
+
+describe("inviteRateLimitPause", () => {
+  test("the first 429 pauses invites for 6 hours without emailing the owner, because one can be a passing rate limit", () => {
+    const nowMs = Date.parse("2026-11-24T20:00:00.000Z");
+    expect(inviteRateLimitPause({ prior: null, nowMs, timezone: "UTC" })).toEqual({
+      until: "2026-11-25T02:00:00.000Z",
+      stage: 1,
+      started: true,
+      notifyOwner: false,
+    });
+  });
+
+  test("a 429 once the 6-hour pause has run out is the weekly limit: wait for Monday and tell the owner", () => {
+    // Saturday, with the week's invitations used up.
+    const nowMs = Date.parse("2026-11-21T10:00:00.000Z");
+    const prior = { until: "2026-11-21T08:00:00.000Z", stage: 1, active: false };
+    expect(inviteRateLimitPause({ prior, nowMs, timezone: "UTC" })).toEqual({
+      until: "2026-11-23T09:00:00.000Z",
+      stage: 2,
+      started: true,
+      notifyOwner: true,
+    });
+  });
+
+  test("a refused probe keeps the running pause, so a real weekly limit gets one live attempt per window and not one per tick", () => {
+    const nowMs = Date.parse("2026-11-24T20:04:00.000Z");
+    const prior = { until: "2026-11-25T02:00:00.000Z", stage: 1, active: true };
+    expect(inviteRateLimitPause({ prior, nowMs, timezone: "UTC" })).toEqual({
+      until: "2026-11-25T02:00:00.000Z",
+      stage: 1,
+      started: false,
+      notifyOwner: false,
     });
   });
 });

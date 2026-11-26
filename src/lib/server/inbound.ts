@@ -7,6 +7,7 @@ import "server-only";
 
 import {
   claimLeadOutcomeNotification,
+  claimOwnerRequestNotification,
   claimReplyNotification,
   createConversationMessage,
   findLeadForWorkspace,
@@ -21,6 +22,7 @@ import {
   logAutomationRun,
   planActionSlots,
   releaseLeadOutcomeNotification,
+  releaseOwnerRequestNotification,
   releaseReplyNotification,
   setConversationReplyIntent,
   updateEnrollment,
@@ -31,7 +33,8 @@ import { sendWindowTimeZoneForLead } from "./lead-time-zone";
 import { nextAiReplyAt } from "./send-schedule";
 import { capturePostHogEvent } from "@/lib/posthog-server";
 import { classifyReplyIntent, draftCampaignMessage, type ReplyIntentClassification } from "./gemini";
-import { writtenSequenceMessage } from "./outreach-rules";
+import { abVariantFor, writtenSequenceMessage } from "./outreach-rules";
+import { enrollmentSenderId } from "@/lib/sender-rotation";
 import { findMigratedMessage, MIGRATED_REPLY_WINDOW } from "./migrated-message-match";
 import {
   enrollmentBlocksAiReply,
@@ -45,6 +48,7 @@ import { leadAvatarBytes } from "./lead-avatar-cache";
 import {
   emailWasSkipped,
   sendInterestedLeadNotification,
+  sendOwnerRequestNotification,
   sendReplyNotification,
 } from "./email";
 import {
@@ -74,6 +78,13 @@ export async function refreshLeadProfileForDrafting(
       retrieveLinkedInProfile({
         accountId: account.accountId,
         identifier,
+        // The first message to an accepted connection must not lose to the
+        // daily discovery cap. Discovery spent all 75 views in the first hours
+        // of the day, so every lead without stored profile context failed here
+        // for the rest of it, day after day (2026-11: 131 accepted leads never
+        // got their first message). Only first messages read here, so views
+        // stay bounded by acceptances and the daily message quota.
+        ignoreViewBudget: true,
       }),
       listLinkedInPostsForProfile({
         accountId: account.accountId,
@@ -151,13 +162,16 @@ export async function draftUpcomingMessagePreview(input: {
   // First step index the enrollment will look at after the wait completes.
   fromStepIndex: number;
   messageEdits?: CampaignEnrollment["messageEdits"];
+  enrollmentId: string;
 }): Promise<CampaignEnrollment["nextMessageDraft"]> {
   const { campaign, lead, account, fromStepIndex, messageEdits } = input;
   const messageStepIndex = findNextScheduledStepIndex(campaign.steps, fromStepIndex);
   const messageStep = campaign.steps[messageStepIndex];
   if (!messageStep || messageStep.type !== "message") return undefined;
   // The user wrote this one, or the template renders cleanly: nothing to draft.
-  if (writtenSequenceMessage(messageStep, lead, messageEdits)) return undefined;
+  if (writtenSequenceMessage(messageStep, lead, messageEdits, abVariantFor(input.enrollmentId))) {
+    return undefined;
+  }
 
   try {
     const sequencePosition = campaign.steps
@@ -200,6 +214,8 @@ export async function draftUpcomingMessagePreview(input: {
 async function planFirstAvailableSlot(input: {
   workspaceId: string;
   campaign: Campaign | undefined;
+  // The enrollment's sender, whose caps and spacing the slot must respect.
+  linkedInAccountId?: string;
   enrollmentId: string;
   kind: "message";
   earliestAt: number;
@@ -215,6 +231,7 @@ async function planFirstAvailableSlot(input: {
     const plan = await planActionSlots({
       workspace,
       campaign: input.campaign,
+      linkedInAccountId: input.linkedInAccountId,
       actions: [
         {
           id: input.enrollmentId,
@@ -259,6 +276,7 @@ export async function applyConnectionAccepted(input: {
   const nextActionAt = await planFirstAvailableSlot({
     workspaceId,
     campaign,
+    linkedInAccountId: campaign ? enrollmentSenderId(campaign, enrollment) : undefined,
     enrollmentId: enrollment.id,
     kind: "message",
     earliestAt,
@@ -286,11 +304,11 @@ export async function applyConnectionAccepted(input: {
 
   try {
     if (!campaign) return;
+    const senderId = enrollmentSenderId(campaign, enrollment);
     const campaignAccount =
-      input.account &&
-      (!campaign.linkedInAccountId || campaign.linkedInAccountId === input.account.id)
+      input.account && (!senderId || senderId === input.account.id)
         ? input.account
-        : await getLinkedInAccountForWorkspace(workspaceId, campaign.linkedInAccountId, {
+        : await getLinkedInAccountForWorkspace(workspaceId, senderId, {
             fallbackToDefault: true,
           });
     if (!campaignAccount) return;
@@ -304,6 +322,7 @@ export async function applyConnectionAccepted(input: {
       account: campaignAccount,
       fromStepIndex: draftFromStepIndex,
       messageEdits: enrollment.messageEdits,
+      enrollmentId: enrollment.id,
     });
 
     if (nextMessageDraft) {
@@ -551,6 +570,7 @@ export async function persistInboundReply(
           confidence: existingConversation.replyIntentConfidence || 0,
           reason: existingConversation.replyIntentReason || "",
           nextStepHint: existingConversation.replyIntentNextStepHint || "",
+          ownerRequest: existingConversation.replyOwnerRequest || "",
         }
       : undefined;
 
@@ -725,6 +745,7 @@ export async function finishInboundReplyClassification(
           confidence: existingConversation.replyIntentConfidence || 0,
           reason: existingConversation.replyIntentReason || "",
           nextStepHint: existingConversation.replyIntentNextStepHint || "",
+          ownerRequest: existingConversation.replyOwnerRequest || "",
         }
       : await classifyReplyIntent({
           lead,
@@ -739,6 +760,7 @@ export async function finishInboundReplyClassification(
       reason: classification.reason,
       confidence: classification.confidence,
       nextStepHint: classification.nextStepHint,
+      ownerRequest: classification.ownerRequest,
     });
   }
 
@@ -762,6 +784,7 @@ export async function finishInboundReplyClassification(
     ),
   );
 
+  const ownerRequest = (classification.ownerRequest || "").trim();
   const isHotInterest = isHotReply(classification.intent, classification.confidence);
   const meetingBooked = isMeetingBooked(classification.intent, classification.confidence);
   const stoppedAtInterest =
@@ -800,6 +823,7 @@ export async function finishInboundReplyClassification(
           campaignName: campaign?.name,
           linkedInAccountName: persisted.account?.displayName,
           interestSignal: persisted.body,
+          ownerRequest: ownerRequest || undefined,
           interestReason:
             classification.nextStepHint ||
             classification.reason ||
@@ -852,6 +876,60 @@ export async function finishInboundReplyClassification(
         console.error("[inbound] failed to release reply notification claim:", releaseError);
       });
       console.error("[inbound] failed to send reply notification:", error);
+    }
+  }
+
+  // The lead asked for something a text reply can't deliver (a PDF, a demo
+  // video, an email) on a thread the AI runs. The AI will answer on its own,
+  // or has gone quiet, so without this email nobody would send it. A reply
+  // that already earns the interest or meeting email carries the request
+  // there instead: one email per reply.
+  const messageId = persisted.providerMessageId;
+  if (
+    notifyEmail &&
+    ownerRequest &&
+    messageId &&
+    armedEnrollmentIds.length > 0 &&
+    !meetingBooked &&
+    !stoppedAtInterest &&
+    (await claimOwnerRequestNotification(workspaceId, lead.id, messageId))
+  ) {
+    try {
+      const result = await sendOwnerRequestNotification({
+        to: notifyEmail,
+        lead: {
+          name: lead.name,
+          title: lead.title,
+          company: lead.company,
+          linkedInUrl: lead.linkedInUrl,
+        },
+        campaignName: campaign?.name,
+        linkedInAccountName: persisted.account?.displayName,
+        request: ownerRequest,
+        message: persisted.body,
+        previousMessage: existingMessages.findLast((message) => message.direction === "outbound")
+          ?.body,
+        aiWillReply: armedEnrollmentIds.some(
+          (id) => !toStopForIntent.some((enrollment) => enrollment.id === id),
+        ),
+        idempotencyKey: `owner-request-${workspaceId}-${lead.id}-${messageId}`,
+      });
+      if (emailWasSkipped(result)) {
+        throw new Error("Email delivery is not configured.");
+      }
+      await logAutomationRun({
+        workspaceId,
+        kind: "webhook",
+        status: "completed",
+        message: `Owner emailed: ${lead.name} asked for ${ownerRequest}`,
+      });
+    } catch (error) {
+      await releaseOwnerRequestNotification(workspaceId, lead.id, messageId).catch(
+        (releaseError) => {
+          console.error("[inbound] failed to release owner request claim:", releaseError);
+        },
+      );
+      console.error("[inbound] failed to send owner request notification:", error);
     }
   }
 

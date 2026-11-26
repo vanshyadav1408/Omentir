@@ -498,7 +498,7 @@ export function OverviewPageSkeleton() {
             <span className="material-symbols-outlined text-[20px]">smart_toy</span>
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-[var(--md-sys-color-on-surface)]">Connect an AI app</p>
+            <p className="text-sm font-semibold text-[var(--md-sys-color-on-surface)]">Connect an assistant</p>
             <p className="mt-0.5 text-xs text-[var(--md-sys-color-on-surface-variant)]">
               Claude, ChatGPT, and Cursor can run this workspace from chat.
             </p>

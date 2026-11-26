@@ -53,6 +53,21 @@ describe("shouldPurgeLinkedInAccounts", () => {
     expect(shouldPurgeLinkedInAccounts({ plan: "solo", status: "bypassed" }, now)).toBe(false);
     expect(shouldPurgeLinkedInAccounts(undefined, now)).toBe(false);
   });
+
+  test("a refunded AppSumo license is lifetime on paper but ended, so its LinkedIn sessions go after the same 7 days and a refunded buyer cannot keep a connected account for free", () => {
+    const refunded = {
+      provider: "appsumo" as const,
+      plan: "lifetime" as const,
+      status: "cancelled" as const,
+      updatedAt: "2026-09-05T00:00:00.000Z",
+    };
+    expect(shouldPurgeLinkedInAccounts(refunded, Date.parse("2026-09-10T00:00:00.000Z"))).toBe(false);
+    expect(shouldPurgeLinkedInAccounts(refunded, Date.parse("2026-09-13T00:00:00.000Z"))).toBe(true);
+    // A license that is still active is never touched.
+    expect(
+      shouldPurgeLinkedInAccounts({ ...refunded, status: "active" }, Date.parse("2027-09-13T00:00:00.000Z")),
+    ).toBe(false);
+  });
 });
 
 describe("shouldMarkBillingExpired", () => {

@@ -32,6 +32,9 @@ import {
   leadStage,
 } from "@/lib/outreach-stage";
 import { formatZonedDate } from "@/lib/time-zone";
+import { buildAbResults, type AbResults } from "@/lib/ab-test-stats";
+import { stepHasVariant } from "@/lib/server/outreach-rules";
+import { campaignSenderIds, rotatesSenders } from "@/lib/sender-rotation";
 import { AgentActionsSkeleton, AgentLeadsSkeleton, AgentOverviewSkeleton } from "@/app/app-skeletons";
 import { LeadAvatar } from "@/app/lead-avatar";
 import ActivityDashboard from "../../actions/activity-dashboard";
@@ -236,6 +239,13 @@ async function AgentOverview({
   const campaign = contactingCampaign(agent, campaigns, agentEnrollments);
   const accountId = campaign?.linkedInAccountId ?? agent.linkedInAccountId;
   const account = accounts.find((item) => item.id === accountId) ?? accounts[0];
+  // Rotating campaigns send from several accounts; name them all.
+  const senderNames = campaign && rotatesSenders(campaign)
+    ? campaignSenderIds(campaign)
+        .map((id) => accounts.find((item) => item.id === id)?.displayName)
+        .filter(Boolean)
+        .join(", ")
+    : "";
 
   const stageOf = leadStages(agent, agentEnrollments);
   const stages = leads.map(stageOf);
@@ -347,7 +357,20 @@ async function AgentOverview({
           <LeadFinding agent={agent} timezone={timezone} />
         </Panel>
         <Panel title="How it reaches out">
-          <Outreach agent={agent} campaign={campaign} accountName={account?.displayName} />
+          <Outreach
+            agent={agent}
+            campaign={campaign}
+            accountName={senderNames || account?.displayName}
+            abResults={
+              campaign?.steps.some((step) => step.type === "message" && stepHasVariant(step))
+                ? buildAbResults(
+                    agentEnrollments,
+                    campaign.id,
+                    new Set(leads.filter((lead) => stageOf(lead) >= STAGE_REPLIED).map((lead) => lead.id)),
+                  )
+                : undefined
+            }
+          />
         </Panel>
       </div>
     </div>
@@ -409,7 +432,17 @@ function LeadFinding({ agent, timezone }: { agent: Agent; timezone?: string }) {
   );
 }
 
-function Outreach({ agent, campaign, accountName }: { agent: Agent; campaign?: Campaign; accountName?: string }) {
+function Outreach({
+  agent,
+  campaign,
+  accountName,
+  abResults,
+}: {
+  agent: Agent;
+  campaign?: Campaign;
+  accountName?: string;
+  abResults?: AbResults;
+}) {
   if (agent.leadsOnly) {
     return (
       <p className="text-sm leading-relaxed text-[var(--md-sys-color-on-surface)]">
@@ -455,6 +488,42 @@ function Outreach({ agent, campaign, accountName }: { agent: Agent; campaign?: C
         <Fact label="Send hours">{SEND_WINDOW_LABEL[campaign.sendWindow ?? "always"]}</Fact>
         {campaign.replyHandling ? <Fact label="Replies">{REPLY_HANDLING_LABEL[campaign.replyHandling]}</Fact> : null}
       </Facts>
+      {abResults ? <AbTestTable results={abResults} /> : null}
+    </div>
+  );
+}
+
+// Reply rate per version of the A/B-tested messages. Leads only count once a
+// tested message was actually sent to them.
+function AbTestTable({ results }: { results: AbResults }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="text-sm font-semibold text-[var(--md-sys-color-on-surface)]">A/B test</p>
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="text-left text-xs text-[var(--md-sys-color-on-surface-variant)]">
+            <th className="py-1 font-medium">Version</th>
+            <th className="py-1 font-medium">Sent</th>
+            <th className="py-1 font-medium">Replied</th>
+            <th className="py-1 font-medium">Reply rate</th>
+          </tr>
+        </thead>
+        <tbody>
+          {(["A", "B"] as const).map((side) => (
+            <tr key={side} className="border-t border-[var(--md-sys-color-outline-variant)] text-[var(--md-sys-color-on-surface)]">
+              <td className="py-1.5 font-semibold">{side}</td>
+              <td className="py-1.5">{results[side].sent}</td>
+              <td className="py-1.5">{results[side].replied}</td>
+              <td className="py-1.5">{results[side].replyRate === null ? "-" : `${results[side].replyRate}%`}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {results.A.sent + results.B.sent < 40 ? (
+        <p className="text-xs text-[var(--md-sys-color-on-surface-variant)]">
+          Too few sends to call a winner yet. Wait for at least 20 on each side.
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -482,7 +551,11 @@ function StepTimeline({ steps }: { steps: CampaignStep[] }) {
       sent.push({
         id: step.id,
         title: `Message ${messages}`,
-        detail: step.messageTemplate.trim() ? "Your template" : "AI writes it when it's due",
+        detail: stepHasVariant(step)
+          ? "A/B test: two versions"
+          : step.messageTemplate.trim()
+            ? "Your template"
+            : "AI writes it when it's due",
         after: waited,
       });
     }

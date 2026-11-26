@@ -859,7 +859,7 @@ async function search({ session, query, body }: HandlerInput) {
     }
     const web = await webSearch(
       session,
-      { resultType: parsed.resultType, keywords: parsed.keywords, filters: parsed.filters, start: Math.max(0, Number(input.cursor) || 0), limit },
+      { resultType: parsed.resultType, keywords: parsed.keywords, filters: parsed.filters, pageUrl: parsed.pageUrl, start: Math.max(0, Number(input.cursor) || 0), limit },
       sessionHooks(session.accountId, session.version),
     );
     if (web.limitReached) warnSearchLimit(session.accountId);

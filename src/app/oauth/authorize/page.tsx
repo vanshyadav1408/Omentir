@@ -124,8 +124,8 @@ export default async function OAuthAuthorizePage({
       </ul>
 
       <p className="mt-3 text-[12px] leading-relaxed text-zinc-500">
-        Approving creates an API key named &ldquo;{client.clientName}&rdquo;. You can revoke it at any
-        time from the API page, which disconnects the app immediately.
+        Approving adds &ldquo;{client.clientName}&rdquo; to Connected assistants on the Assistants page. You can
+        disconnect it there at any time, which cuts the app off immediately.
       </p>
 
       <form action="/api/oauth/authorize/decision" method="post" className="mt-5 grid gap-3">

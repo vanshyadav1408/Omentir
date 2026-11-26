@@ -12,6 +12,7 @@ const sending: AgentStatusFacts = {
   nextRunAt: "2026-09-26T08:00:00.000Z",
   accountConnected: true,
   automationPaused: false,
+  outreachOff: false,
   campaignStatus: "active",
   nextSend: { kind: "invite", at: "2026-09-25T14:40:00.000Z" },
   awaitingAcceptance: 0,
@@ -111,6 +112,25 @@ describe("describeAgentStatus", () => {
     );
     expect(line.text).toContain("never contacts them");
     expect(line.text).not.toContain("invite");
+  });
+
+  test("outreach switched off for the workspace beats an active campaign with a send lined up", () => {
+    // The workspace switch overrides every agent and campaign. A card that
+    // still said "Next invite at 2:40" would promise a send that cannot
+    // happen, which is the silent stall this line exists to prevent.
+    const line = describeAgentStatus({ ...sending, outreachOff: true }, options);
+    expect(line.tone).toBe("paused");
+    expect(line.label).toBe("Outreach off");
+    expect(line.text).toContain("Outreach is off for this workspace");
+    expect(line.text).not.toContain("Next invite");
+    // Lead finding is not outreach, so the agent keeps searching and says so.
+    expect(line.text).toContain("still finds leads");
+    expect(line.text).toContain("Next lead search <2026-09-26T08:00:00.000Z>.");
+  });
+
+  test("the outreach switch does not relabel an agent that never contacts anyone", () => {
+    const line = describeAgentStatus({ ...sending, outreachOff: true, leadsOnly: true }, options);
+    expect(line.text).toContain("never contacts them");
   });
 
   test("an outreach-only agent with an empty queue asks for more leads rather than promising a search", () => {
