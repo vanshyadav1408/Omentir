@@ -1,5 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { parseAppSumoWebhook, verifyAppSumoSignature } from "@/lib/appsumo-license";
+import {
+  isFreshAppSumoTimestamp,
+  parseAppSumoWebhook,
+  verifyAppSumoSignature,
+} from "@/lib/appsumo-license";
 import { isLocalMode } from "@/lib/runtime-mode";
 import { appSumoConfig, handleAppSumoWebhook } from "@/lib/server/appsumo";
 import { logAutomationRun } from "@/lib/server/data";
@@ -28,25 +32,26 @@ export async function POST(request: NextRequest) {
     throw error;
   }
 
-  const webhook = parseAppSumoWebhook(body);
-  if (!webhook) return refused(400, "Invalid AppSumo webhook payload.");
-
-  const signature = request.headers.get("x-appsumo-signature");
-  const timestamp = request.headers.get("x-appsumo-timestamp");
-  // The Partner Portal checks the URL with a test event before it will save
-  // it. A test event changes nothing, so an unsigned one is safe to answer and
-  // the URL can be saved before APPSUMO_API_KEY is in place.
-  if (webhook.test && !signature && !timestamp) return delivered(webhook.event);
-
+  // AppSumo signs every webhook, test events included. Both checks run before
+  // anything is read from the body, as AppSumo's webhook security rules ask.
   const { apiKey } = appSumoConfig();
   if (!apiKey) {
-    console.error("[appsumo webhook] APPSUMO_API_KEY is not set; refusing a signed webhook.");
+    console.error("[appsumo webhook] APPSUMO_API_KEY is not set; refusing a webhook.");
     return refused(503, "AppSumo webhooks are not configured.");
   }
-  if (!verifyAppSumoSignature({ apiKey, timestamp, signature, body })) {
-    console.error(`[appsumo webhook] signature check failed for ${webhook.event}.`);
+  const signature = request.headers.get("x-appsumo-signature");
+  const timestamp = request.headers.get("x-appsumo-timestamp");
+  if (!isFreshAppSumoTimestamp(timestamp)) {
+    console.error("[appsumo webhook] refused a webhook with a missing or stale timestamp.");
     return refused(401, "AppSumo webhook verification failed.");
   }
+  if (!verifyAppSumoSignature({ apiKey, timestamp, signature, body })) {
+    console.error("[appsumo webhook] signature check failed.");
+    return refused(401, "AppSumo webhook verification failed.");
+  }
+
+  const webhook = parseAppSumoWebhook(body);
+  if (!webhook) return refused(400, "Invalid AppSumo webhook payload.");
   if (webhook.test) return delivered(webhook.event);
 
   try {

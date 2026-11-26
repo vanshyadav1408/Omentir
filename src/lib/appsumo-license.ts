@@ -22,6 +22,10 @@ export type AppSumoLicense = {
   claimHash?: string;
   claimExpiresAt?: string;
   lastEvent: string;
+  // created_at (ms) and rank of the last event applied to this key, so a late
+  // retry of an older event cannot undo a newer one.
+  lastEventCreatedAt?: number;
+  lastEventRank?: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -31,8 +35,10 @@ export type AppSumoWebhook = {
   licenseKey: string;
   prevLicenseKey?: string;
   tier?: number;
-  // Sent when the webhook URL is saved in the Partner Portal. Must be
-  // answered with success and must change nothing.
+  // When AppSumo created the event, in ms. Unchanged on retries, so it orders
+  // events for one license key.
+  createdAt?: number;
+  // AppSumo's test events. Must be answered with success and must change nothing.
   test: boolean;
   // Set only on add-on webhooks. Omentir sells no add-ons.
   parentLicenseKey?: string;
@@ -59,6 +65,7 @@ export function parseAppSumoWebhook(body: string): AppSumoWebhook | null {
   const event = typeof payload.event === "string" ? payload.event.trim().toLowerCase() : "";
   if (!event || !isAppSumoLicenseKey(payload.license_key)) return null;
   const tier = Number(payload.tier);
+  const createdAt = payload.created_at;
   return {
     event,
     licenseKey: payload.license_key,
@@ -66,6 +73,10 @@ export function parseAppSumoWebhook(body: string): AppSumoWebhook | null {
       ? payload.prev_license_key
       : undefined,
     tier: Number.isInteger(tier) && tier > 0 ? tier : undefined,
+    createdAt:
+      typeof createdAt === "number" && Number.isSafeInteger(createdAt) && createdAt > 0
+        ? createdAt
+        : undefined,
     test: payload.test === true,
     parentLicenseKey: isAppSumoLicenseKey(payload.parent_license_key)
       ? payload.parent_license_key
@@ -91,13 +102,40 @@ export function verifyAppSumoSignature(input: {
   return expected.length === given.length && timingSafeEqual(expected, given);
 }
 
+// AppSumo signs every delivery, retries included, with the current time in ms.
+// A request further than this from our clock either way is a replay.
+export const APPSUMO_TIMESTAMP_TOLERANCE_MS = 5 * 60 * 1000;
+
+export function isFreshAppSumoTimestamp(timestamp: string | null | undefined, now = Date.now()) {
+  if (!timestamp || !/^\d{1,16}$/.test(timestamp.trim())) return false;
+  return Math.abs(now - Number(timestamp.trim())) <= APPSUMO_TIMESTAMP_TOLERANCE_MS;
+}
+
+// Breaks a created_at tie: a refund always wins over an activation made in the
+// same millisecond.
+export function appSumoEventRank(event: string) {
+  if (event === "purchase") return 0;
+  if (event === "deactivate") return 2;
+  return 1;
+}
+
+function isOlderThanApplied(webhook: AppSumoWebhook, license: AppSumoLicense) {
+  if (webhook.createdAt === undefined || license.lastEventCreatedAt === undefined) return false;
+  if (webhook.createdAt !== license.lastEventCreatedAt) {
+    return webhook.createdAt < license.lastEventCreatedAt;
+  }
+  return appSumoEventRank(webhook.event) < (license.lastEventRank ?? 0);
+}
+
 /**
  * The license documents after one webhook, or null when the event changes
  * nothing (add-ons, migrate, anything unknown).
  *
  * `current` is the stored license for the webhook's key and `previous` the one
  * for prev_license_key. Applying the same webhook twice gives the same result,
- * because AppSumo retries any delivery that did not get a 200.
+ * because AppSumo retries any delivery that did not get a 200. An event older
+ * than the last one applied to the key also returns null: a retried activate
+ * arriving after a refund must not switch the license back on.
  */
 export function applyAppSumoWebhook(input: {
   webhook: AppSumoWebhook;
@@ -107,6 +145,7 @@ export function applyAppSumoWebhook(input: {
 }): { license: AppSumoLicense; previous?: AppSumoLicense } | null {
   const { webhook, current, previous, now } = input;
   if (webhook.parentLicenseKey) return null;
+  if (current && isOlderThanApplied(webhook, current)) return null;
 
   const base: AppSumoLicense = current ?? {
     licenseKey: webhook.licenseKey,
@@ -120,6 +159,9 @@ export function applyAppSumoWebhook(input: {
     ...base,
     tier: webhook.tier ?? base.tier,
     lastEvent: webhook.event,
+    ...(webhook.createdAt !== undefined
+      ? { lastEventCreatedAt: webhook.createdAt, lastEventRank: appSumoEventRank(webhook.event) }
+      : {}),
     updatedAt: now,
   };
 

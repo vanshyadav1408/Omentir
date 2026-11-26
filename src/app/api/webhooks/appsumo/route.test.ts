@@ -26,11 +26,14 @@ const { POST } = await import("./route");
 
 const KEY = "3794577c-3dbc-11ec-9bbc-0242ac130002";
 
-function request(payload: Record<string, unknown>, options: { sign?: boolean; signWith?: string } = {}) {
+function request(
+  payload: Record<string, unknown>,
+  options: { sign?: boolean; signWith?: string; sentAt?: number } = {},
+) {
   const body = JSON.stringify(payload);
   const headers: Record<string, string> = { "content-type": "application/json" };
   if (options.sign !== false) {
-    const timestamp = "1625165884119";
+    const timestamp = String(options.sentAt ?? Date.now());
     headers["x-appsumo-timestamp"] = timestamp;
     headers["x-appsumo-signature"] = createHmac("sha256", options.signWith ?? API_KEY)
       .update(`${timestamp}${body}`)
@@ -56,13 +59,20 @@ test("a signed webhook is processed and answered the way AppSumo requires", asyn
   expect(handled).toEqual([{ event: "activate", licenseKey: KEY }]);
 });
 
-test("the Partner Portal's unsigned test event is acknowledged without changing anything, so the URL can be saved", async () => {
-  apiKey = undefined;
+test("an unsigned test event is refused: AppSumo signs every webhook, tests included", async () => {
   const response = await POST(
     request({ license_key: "00000000-aaaa-1111-bbbb-abcdef012345", event: "deactivate", test: true }, { sign: false }),
   );
-  expect(response.status).toBe(200);
-  expect(await response.json()).toEqual({ success: true, event: "deactivate" });
+  expect(response.status).toBe(401);
+  expect(handled).toEqual([]);
+});
+
+test("a correctly signed webhook sent 10 minutes ago is refused as a replay, as AppSumo's QA check requires", async () => {
+  const tenMinutes = 10 * 60 * 1000;
+  const old = await POST(request({ license_key: KEY, event: "activate", tier: 1 }, { sentAt: Date.now() - tenMinutes }));
+  expect(old.status).toBe(401);
+  const future = await POST(request({ license_key: KEY, event: "activate", tier: 1 }, { sentAt: Date.now() + tenMinutes }));
+  expect(future.status).toBe(401);
   expect(handled).toEqual([]);
 });
 

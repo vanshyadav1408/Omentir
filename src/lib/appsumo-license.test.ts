@@ -6,6 +6,7 @@ import {
   applyAppSumoWebhook,
   exchangeAppSumoCode,
   hashAppSumoClaimToken,
+  isFreshAppSumoTimestamp,
   parseAppSumoClaim,
   parseAppSumoWebhook,
   verifyAppSumoSignature,
@@ -55,6 +56,41 @@ describe("verifyAppSumoSignature", () => {
     expect(verifyAppSumoSignature({ apiKey, timestamp: null, signature, body })).toBe(false);
     expect(verifyAppSumoSignature({ apiKey: undefined, timestamp, signature, body })).toBe(false);
   });
+
+  test("matches the known example on AppSumo's webhook security page byte for byte", () => {
+    const exampleBody =
+      '{"license_key":"3794577c-3dbc-11ec-9bbc-0242ac130002","event":"purchase","event_timestamp":1625165884119,"created_at":1625165884100,"license_status":"inactive","tier":1,"extra":{"reason":"Purchased by customer"}}';
+    expect(
+      verifyAppSumoSignature({
+        apiKey,
+        timestamp: "1625165884119",
+        signature: "461692dfb71bd544a78f38c5896886a7c3326611d55d15dc5f5231c6a377e5c3",
+        body: exampleBody,
+      }),
+    ).toBe(true);
+  });
+});
+
+describe("isFreshAppSumoTimestamp", () => {
+  const sentAt = 1_764_000_000_000;
+
+  test("accepts a delivery signed within 5 minutes of our clock, either way", () => {
+    expect(isFreshAppSumoTimestamp(String(sentAt), sentAt)).toBe(true);
+    expect(isFreshAppSumoTimestamp(String(sentAt), sentAt + 5 * 60 * 1000)).toBe(true);
+    expect(isFreshAppSumoTimestamp(String(sentAt), sentAt - 5 * 60 * 1000)).toBe(true);
+  });
+
+  test("refuses a replay: AppSumo's QA check sends a correctly signed webhook dated 10 minutes ago and fails the listing if it is accepted", () => {
+    expect(isFreshAppSumoTimestamp(String(sentAt - 10 * 60 * 1000), sentAt)).toBe(false);
+    expect(isFreshAppSumoTimestamp(String(sentAt + 10 * 60 * 1000), sentAt)).toBe(false);
+  });
+
+  test("refuses a missing or non-numeric timestamp instead of guessing", () => {
+    expect(isFreshAppSumoTimestamp(null, sentAt)).toBe(false);
+    expect(isFreshAppSumoTimestamp("", sentAt)).toBe(false);
+    expect(isFreshAppSumoTimestamp("2026-11-26T10:00:00Z", sentAt)).toBe(false);
+    expect(isFreshAppSumoTimestamp("-1", sentAt)).toBe(false);
+  });
 });
 
 describe("parseAppSumoWebhook", () => {
@@ -68,6 +104,7 @@ describe("parseAppSumoWebhook", () => {
           license_status: "inactive",
           tier: 2,
           test: false,
+          created_at: 1625165884100,
         }),
       ),
     ).toEqual({
@@ -75,6 +112,7 @@ describe("parseAppSumoWebhook", () => {
       licenseKey: NEW_KEY,
       prevLicenseKey: KEY,
       tier: 2,
+      createdAt: 1625165884100,
       test: false,
       parentLicenseKey: undefined,
     });
@@ -201,6 +239,56 @@ describe("applyAppSumoWebhook", () => {
       now,
     });
     expect(result?.license).toMatchObject({ tier: 1, ownerId: "user-1", status: "active" });
+  });
+
+  test("a retried activate that arrives after the refund is ignored, so a refunded buyer does not get the product back", () => {
+    const refunded = license({ status: "deactivated", ownerId: "user-1", lastEventCreatedAt: 2_000, lastEventRank: 2 });
+    const lateActivate = applyAppSumoWebhook({
+      webhook: webhook({ event: "activate", createdAt: 1_000 }),
+      current: refunded,
+      previous: null,
+      now,
+    });
+    expect(lateActivate).toBeNull();
+  });
+
+  test("in a same-millisecond tie the refund wins, whichever arrives first", () => {
+    const deactivatedFirst = applyAppSumoWebhook({
+      webhook: webhook({ event: "activate", createdAt: 2_000 }),
+      current: license({ status: "deactivated", lastEventCreatedAt: 2_000, lastEventRank: 2 }),
+      previous: null,
+      now,
+    });
+    expect(deactivatedFirst).toBeNull();
+
+    const activatedFirst = applyAppSumoWebhook({
+      webhook: webhook({ event: "deactivate", createdAt: 2_000 }),
+      current: license({ status: "active", lastEventCreatedAt: 2_000, lastEventRank: 1 }),
+      previous: null,
+      now,
+    });
+    expect(activatedFirst?.license.status).toBe("deactivated");
+  });
+
+  test("a newer event is applied and becomes the one later events are compared with", () => {
+    const result = applyAppSumoWebhook({
+      webhook: webhook({ event: "deactivate", createdAt: 3_000 }),
+      current: license({ status: "active", lastEventCreatedAt: 2_000, lastEventRank: 1 }),
+      previous: null,
+      now,
+    });
+    expect(result?.license).toMatchObject({ status: "deactivated", lastEventCreatedAt: 3_000, lastEventRank: 2 });
+  });
+
+  test("the same event delivered again still applies and gives the same result, because AppSumo retries", () => {
+    const current = license({ status: "active", ownerId: "user-1", lastEventCreatedAt: 2_000, lastEventRank: 1 });
+    const result = applyAppSumoWebhook({
+      webhook: webhook({ event: "activate", createdAt: 2_000 }),
+      current,
+      previous: null,
+      now,
+    });
+    expect(result?.license).toMatchObject({ status: "active", ownerId: "user-1", lastEventCreatedAt: 2_000 });
   });
 
   test("add-on webhooks and events with no license meaning change nothing: Omentir sells no add-ons", () => {
