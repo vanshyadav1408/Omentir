@@ -39,6 +39,13 @@ jobs:
       # in browser code. Without this, posthog-js never inits, Web Analytics
       # unique users freeze, and only server events still flow.
       NEXT_PUBLIC_POSTHOG_KEY: ${{ secrets.NEXT_PUBLIC_POSTHOG_KEY }}
+      # Clerk publishable key (public, but gitleaks flags it inline, so it is a
+      # secret like the PostHog key). Prerendered pages (homepage, pricing,
+      # blog) and the client bundle take it from this build, not from the VPS.
+      # Without it they ship with an empty key and never load Clerk, and since
+      # the root layout is kept across in-app navigation, everyone who clicks
+      # through to /login or /signup gets "Sign in could not load".
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
@@ -52,6 +59,15 @@ jobs:
             echo "NEXT_PUBLIC_POSTHOG_KEY is required. This job's .next is what the VPS serves; without the key, posthog-js never inits and Web Analytics freezes." >&2
             exit 1
           fi
+      - name: Require Clerk live publishable key
+        run: |
+          case "${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:-}" in
+            pk_live_*) ;;
+            *)
+              echo "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY must be the pk_live_ key the VPS runs with. This job's .next is what the VPS serves; without the key, prerendered pages never load Clerk and nobody can log in or sign up from them." >&2
+              exit 1
+              ;;
+          esac
       - name: bun run build
         env:
           # The header's GitHub star count is fetched while prerendering. This
