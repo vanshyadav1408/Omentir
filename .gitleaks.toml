@@ -23,6 +23,8 @@ disabledRules = ["linkedin-client-id"]
 # - IndexNow's published proof token (Bing fetches it from the site).
 # - Sidebar resource names and variable names that sit next to the word
 #   "linkedin" and trip the default linkedin-client-secret rule.
+# - The example license key and API key from AppSumo's licensing docs, used as
+#   fixtures in the AppSumo tests (the signature test reproduces their recipe).
 [allowlist]
 paths = [
   '''(^|/)node_modules/''',
@@ -34,6 +36,8 @@ regexes = [
   '''linkedinConnected''',
   '''linkedinAccounts''',
   '''requestedAccount''',
+  '''3794577c-3dbc-11ec-9bbc-0242ac130002''',
+  '''c73455d8-0f64-4354-bd64-1f454a227104''',
 ]
 
 # Public provider identifiers are not authorization secrets, but Omentir does
